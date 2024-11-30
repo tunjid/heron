@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2024 Adetunji Dahunsi
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ private fun KotlinTarget.configureKsp(project: Project) {
                         ) else it.toString()
                     }
                 }",
-                dependencyNotation = project.versionCatalog.findLibrary("tartaka-kotlin-inject-compiler")
+                dependencyNotation = project.versionCatalog.findLibrary("kotlin-inject-compiler")
                     .get()
             )
         }

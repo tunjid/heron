@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.compose")
-    kotlin("plugin.serialization")
-}
+package com.tunjid.heron.data.local.models
 
-kotlin {
-    configureKotlinMultiplatform(this)
-    configureUiModule(this)
-}
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class SessionRequest(
+    val username: String,
+    val password: String,
+)

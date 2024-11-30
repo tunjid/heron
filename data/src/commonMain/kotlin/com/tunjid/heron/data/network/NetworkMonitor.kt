@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.compose")
-    kotlin("plugin.serialization")
-}
+package com.tunjid.heron.data.network
 
-kotlin {
-    configureKotlinMultiplatform(this)
-    configureUiModule(this)
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * An interface that reports if there's a network connection
+ */
+expect class NetworkMonitor {
+    val isConnected: Flow<Boolean>
 }

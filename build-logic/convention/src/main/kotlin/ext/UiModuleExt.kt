@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2024 Adetunji Dahunsi
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ fun org.gradle.api.Project.configureUiModule(
 //                implementation(project(":common:scaffold"))
 //                implementation(project(":common:ui:template"))
 
-                api(libs.findLibrary("androidx-lifecycle-runtime").get())
-                api(libs.findLibrary("androidx-lifecycle-runtime-compose").get())
-                api(libs.findLibrary("androidx-lifecycle-viewmodel").get())
-                api(libs.findLibrary("androidx-lifecycle-viewmodel-compose").get())
+                api(libs.findLibrary("lifecycle-runtime").get())
+                api(libs.findLibrary("lifecycle-runtime-compose").get())
+                api(libs.findLibrary("lifecycle-viewmodel").get())
+                api(libs.findLibrary("lifecycle-viewmodel-compose").get())
 
                 implementation(libs.findLibrary("compose-runtime").get())
                 implementation(libs.findLibrary("compose-animation").get())
