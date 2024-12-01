@@ -17,6 +17,7 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
+    id("ksp-convention")
     kotlin("plugin.serialization")
 }
 android {

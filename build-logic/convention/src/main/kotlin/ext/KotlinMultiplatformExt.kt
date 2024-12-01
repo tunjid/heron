@@ -25,8 +25,6 @@ import java.util.Locale
 fun Project.configureKotlinMultiplatform(
     kotlinMultiplatformExtension: KotlinMultiplatformExtension
 ) {
-    val project = this@configureKotlinMultiplatform
-
     kotlinMultiplatformExtension.apply{
         androidTarget()
         jvm("desktop")
@@ -60,42 +58,5 @@ fun Project.configureKotlinMultiplatform(
             }
         }
         configureKotlinJvm()
-//        tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
-//            if (name != "kspCommonMainKotlinMetadata") {
-//                dependsOn("kspCommonMainKotlinMetadata")
-//            }
-//            kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
-//        }
-        targets.configureEach {
-            configureKsp(project = project)
-        }
     }
-}
-
-private fun KotlinTarget.configureKsp(project: Project) {
-
-    println("Target name: $targetName. Metadata? ${targetName == "metadata"}")
-    if (targetName != "metadata") {
-        project.dependencies {
-            add(
-                configurationName = "ksp${
-                    targetName.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(
-                            Locale.getDefault()
-                        ) else it.toString()
-                    }
-                }",
-                dependencyNotation = project.versionCatalog.findLibrary("kotlin-inject-compiler")
-                    .get()
-            )
-        }
-    }
-
-//    compilations.configureEach {
-//        kotlinSourceSets.forEach { sourceSet ->
-//            println("Target name: $targetName. sourceSet name: ${sourceSet.name}")
-//
-//            sourceSet.kotlin.srcDir("build/generated/ksp/$targetName/${sourceSet.name}/kotlin")
-//        }
-//    }
 }

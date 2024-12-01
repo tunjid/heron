@@ -18,6 +18,7 @@ plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
     id("ui-module-convention")
+    id("ksp-convention")
 }
 android {
     namespace = "com.tunjid.heron.feature.auth"
