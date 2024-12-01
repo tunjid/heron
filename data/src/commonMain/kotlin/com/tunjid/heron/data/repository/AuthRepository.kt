@@ -27,11 +27,11 @@ import sh.christian.ozone.api.response.AtpResponse
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
 
-    suspend fun createSession(request: SessionRequest): Boolean
+    suspend fun createSession(request: SessionRequest): Result<Unit>
 }
 
 @Inject
-internal class AuthTokenRepository(
+class AuthTokenRepository(
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : AuthRepository {
@@ -39,8 +39,8 @@ internal class AuthTokenRepository(
     override val isSignedIn: Flow<Boolean> =
         savedStateRepository.savedState.map { it.auth != null }
 
-    override suspend fun createSession(request: SessionRequest): Boolean {
-        val result = networkService.createSession(
+    override suspend fun createSession(request: SessionRequest): Result<Unit> {
+        val result = networkService.api.createSession(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
@@ -48,8 +48,11 @@ internal class AuthTokenRepository(
         )
 
         return when (result) {
-            is AtpResponse.Failure -> false
-            is AtpResponse.Success -> {
+            is AtpResponse.Failure -> Result.failure(
+                Exception(result.error?.message)
+            )
+
+            is AtpResponse.Success -> Result.success(
                 savedStateRepository.updateState {
                     copy(
                         auth = SavedState.AuthTokens(
@@ -58,8 +61,7 @@ internal class AuthTokenRepository(
                         )
                     )
                 }
-                true
-            }
+            )
         }
     }
 }

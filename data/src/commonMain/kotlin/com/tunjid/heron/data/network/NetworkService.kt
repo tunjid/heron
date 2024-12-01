@@ -30,43 +30,46 @@ import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.XrpcBlueskyApi
 
-
-internal interface NetworkService : BlueskyApi
+interface NetworkService {
+    val api: BlueskyApi
+}
 
 @Inject
-internal class KtorNetworkService(
+class KtorNetworkService(
     private val json: Json,
     savedStateRepository: SavedStateRepository,
-) : NetworkService, BlueskyApi by XrpcBlueskyApi(
-    HttpClient {
-        expectSuccess = true
-        install(ContentNegotiation) {
-            json(
-                json = json,
-                contentType = ContentType.Application.Json
-            )
-        }
+) : NetworkService {
+    override val api = XrpcBlueskyApi(
+        HttpClient {
+            expectSuccess = true
+            install(ContentNegotiation) {
+                json(
+                    json = json,
+                    contentType = ContentType.Application.Json
+                )
+            }
 
-        install(AuthPlugin) {
-            this.networkErrorConverter = {
-                json.decodeFromString(it)
+            install(AuthPlugin) {
+                this.networkErrorConverter = {
+                    json.decodeFromString(it)
+                }
+                this.readAuth = {
+                    savedStateRepository.savedState.first().auth
+                }
+                this.saveAuth = {
+                    savedStateRepository.updateState {
+                        copy(auth = it)
+                    }
+                }
             }
-            this.readAuth = {
-                savedStateRepository.savedState.first().auth
-            }
-            this.saveAuth = {
-                savedStateRepository.updateState {
-                    copy(auth = it)
+            install(Logging) {
+                level = LogLevel.INFO
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        println("Logger Ktor => $message")
+                    }
                 }
             }
         }
-        install(Logging) {
-            level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-                    println("Logger Ktor => $message")
-                }
-            }
-        }
-    }
-)
+    )
+}

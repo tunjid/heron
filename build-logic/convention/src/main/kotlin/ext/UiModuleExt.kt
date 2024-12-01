@@ -43,6 +43,7 @@ fun org.gradle.api.Project.configureUiModule(
 //                implementation(compose.desktop.currentOs)
 
                 implementation(libs.findLibrary("kotlinx-coroutines-core").get())
+
                 api(libs.findLibrary("tunjid-treenav-compose-common").get())
                 api(libs.findLibrary("tunjid-treenav-core-common").get())
                 api(libs.findLibrary("tunjid-treenav-strings-common").get())

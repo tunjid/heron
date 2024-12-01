@@ -16,43 +16,58 @@
 
 package com.tunjid.heron.data.di
 
-import com.tunjid.heron.data.network.ApiUrl
-import com.tunjid.heron.data.network.BaseUrl
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
+import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.di.SingletonScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
+import okio.FileSystem
+import okio.Path
 
 class DataModule(
-
+    val appScope: CoroutineScope,
+    val savedStatePath: Path,
+    val savedStateFileSystem: FileSystem,
 )
-
 
 @SingletonScope
 @Component
-abstract class InjectedDataComponent(
+abstract class DataComponent(
     private val module: DataModule
 ) {
 
     @Provides
-    internal fun appUrl(): BaseUrl = ApiUrl
+    fun appScope(): CoroutineScope = module.appScope
 
     @Provides
-    internal fun provideAppJson() = Json {
+    fun savedStatePath(): Path = module.savedStatePath
+
+    @Provides
+    fun savedStateFileSystem(): FileSystem = module.savedStateFileSystem
+
+    @Provides
+    fun provideAppJson() = Json {
         explicitNulls = false
         ignoreUnknownKeys = true
     }
 
     @Provides
-    internal fun provideAppProtoBuff() = ProtoBuf {
+    fun provideAppProtoBuff() = ProtoBuf {
     }
 
-
-    internal val KtorNetworkService.bind: NetworkService
-        @SingletonScope
+    val KtorNetworkService.bind: NetworkService
         @Provides get() = this
 
+     val DataStoreSavedStateRepository.bind: SavedStateRepository
+        @Provides get() = this
+
+    val AuthTokenRepository.bind: AuthRepository
+        @Provides get() = this
 }

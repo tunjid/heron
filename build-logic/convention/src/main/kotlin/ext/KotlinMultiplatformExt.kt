@@ -27,9 +27,14 @@ fun Project.configureKotlinMultiplatform(
 ) {
     val project = this@configureKotlinMultiplatform
 
-    kotlinMultiplatformExtension.apply {
+    kotlinMultiplatformExtension.apply{
         androidTarget()
         jvm("desktop")
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        )
         sourceSets.apply {
             all {
                 languageSettings.apply {
