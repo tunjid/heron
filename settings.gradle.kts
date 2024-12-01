@@ -33,4 +33,7 @@ include(
     ":composeApp",
     ":data",
     ":di",
+    ":domain-navigation",
+    ":feature-auth",
+    ":feature-template",
 )

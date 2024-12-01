@@ -53,13 +53,14 @@ interface SavedStateRepository {
 @Inject
 class DataStoreSavedStateRepository(
     path: Path,
+    fileSystem: FileSystem,
     appScope: CoroutineScope,
     protoBuf: ProtoBuf
 ) : SavedStateRepository {
 
     private val dataStore: DataStore<SavedState> = DataStoreFactory.create(
         storage = OkioStorage(
-            fileSystem = FileSystem.SYSTEM,
+            fileSystem = fileSystem,
             serializer = SavedStateOkioSerializer(protoBuf),
             producePath = { path }
         ),

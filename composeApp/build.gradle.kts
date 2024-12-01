@@ -5,9 +5,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("android-application-convention")
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    id("ksp-convention")
+    id("kotlin-jvm-convention")
 }
 
 kotlin {
@@ -39,14 +42,25 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation(project(":data"))
+            implementation(project(":domain-navigation"))
+            implementation(project(":feature-auth"))
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation.foundation)
             implementation(libs.compose.material)
             implementation(libs.compose.ui.ui)
+
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+
             implementation(libs.lifecycle.viewmodel)
             implementation(libs.lifecycle.runtime.compose)
+
+            implementation(libs.kotlinx.serialization.protobuf)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.okio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -60,8 +74,6 @@ android {
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
     }
