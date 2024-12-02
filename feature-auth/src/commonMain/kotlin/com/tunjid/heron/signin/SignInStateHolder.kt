@@ -22,9 +22,9 @@ package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.navigation.NavigationContext
-import com.tunjid.heron.navigation.NavigationMutation
-import com.tunjid.heron.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.NavigationContext
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.mutator.ActionStateMutator

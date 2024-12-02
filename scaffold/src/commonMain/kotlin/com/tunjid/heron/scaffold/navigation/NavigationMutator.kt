@@ -15,7 +15,7 @@
  */
 
 
-package com.tunjid.heron.navigation
+package com.tunjid.heron.scaffold.navigation
 
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository

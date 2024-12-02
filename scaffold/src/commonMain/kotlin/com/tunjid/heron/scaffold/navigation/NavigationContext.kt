@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.navigation
+package com.tunjid.heron.scaffold.navigation
 
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.Route

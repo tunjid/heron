@@ -43,7 +43,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":data"))
-            implementation(project(":domain-navigation"))
+            implementation(project(":scaffold"))
             implementation(project(":feature-auth"))
 
             implementation(libs.compose.runtime)

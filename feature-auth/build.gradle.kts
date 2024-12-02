@@ -29,7 +29,7 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data"))
-                implementation(project(":domain-navigation"))
+                implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
 
                 implementation(libs.compose.runtime)

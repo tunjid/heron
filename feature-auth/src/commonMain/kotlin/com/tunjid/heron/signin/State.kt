@@ -19,8 +19,8 @@ package com.tunjid.heron.signin
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
-import com.tunjid.heron.navigation.NavigationAction
-import com.tunjid.heron.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

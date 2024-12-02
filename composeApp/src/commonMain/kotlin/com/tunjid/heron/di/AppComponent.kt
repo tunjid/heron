@@ -16,10 +16,10 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.AppState
+import com.tunjid.heron.scaffold.app.AppState
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.navigation.NavigationStateHolder
-import com.tunjid.heron.navigation.di.NavigationComponent
+import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.signin.di.SignInScreenHolderComponent
 import com.tunjid.treenav.compose.PaneStrategy
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -30,7 +30,7 @@ import me.tatarka.inject.annotations.Provides
 @Component
 abstract class AppComponent(
     @Component val dataComponent: DataComponent,
-    @Component val navigationComponent: NavigationComponent,
+    @Component val scaffoldComponent: ScaffoldComponent,
     @Component val signInComponent: SignInScreenHolderComponent,
 ) {
 
