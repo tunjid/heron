@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
+import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.ActualSignInStateHolder
 import com.tunjid.heron.signin.SignInRoute
 import com.tunjid.heron.signin.SignInScreen
@@ -35,7 +36,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/sign-in"
+private const val RoutePattern = "/auth"
 
 @Component
 abstract class SignInNavigationComponent {
@@ -73,8 +74,7 @@ abstract class SignInScreenHolderComponent(
             SignInScreen(
                 state = state,
                 actions = viewModel.accept,
-                modifier = Modifier,
-//                modifier = Modifier.predictiveBackBackgroundModifier(paneScope = this),
+                modifier = Modifier.predictiveBackBackgroundModifier(paneScope = this),
             )
         }
     )

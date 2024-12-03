@@ -118,7 +118,7 @@ fun App(
                     ) {
                         NavScaffold(
                             isVisible = true,
-                            useRail = true,
+                            useRail = appState.splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp,
                             modifier = Modifier.fillMaxSize(),
                             navItems = appState.navItems,
                             onNavItemSelected = appState::onNavItemSelected

@@ -148,7 +148,6 @@ internal val LocalAppState = staticCompositionLocalOf<AppState> {
 }
 
 private fun MultiStackNav.toSavedState() = SavedState.Navigation(
-    isEmpty = false,
     activeNav = currentIndex,
     backStacks = stacks.fold(listOf()) { listOfLists, stackNav ->
         listOfLists.plus(

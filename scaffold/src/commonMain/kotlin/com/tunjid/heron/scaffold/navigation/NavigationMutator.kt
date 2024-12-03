@@ -48,12 +48,12 @@ interface NavigationAction {
     val navigationMutation: NavigationMutation
 }
 
-private val EmptyNavigationState = MultiStackNav(
+private val SignedOutNavigationState = MultiStackNav(
     name = "emptyMultiStack",
     stacks = listOf(
         StackNav(
-            name = "emptyStack",
-            children = listOf()
+            name = "authStack",
+            children = listOf(routeOf("/auth"))
         )
     )
 )
@@ -65,14 +65,15 @@ class PersistedNavigationStateHolder(
     routeParser: RouteParser,
 ) : NavigationStateHolder,
     ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
-        initialState = EmptyNavigationState,
+        initialState = SignedOutNavigationState,
         started = SharingStarted.Eagerly,
         actionTransform = { navMutations ->
             flow {
                 // Restore saved nav from disk first
-                val savedState =
-                    savedStateRepository.savedState.map { it.navigation }.first { !it.isEmpty }
-                val multiStackNav = routeParser.parseMultiStackNav(savedState)
+                val savedNavigationState = savedStateRepository.savedState
+                    .map { it.navigation }
+                    .first { it.backStacks.isNotEmpty() }
+                val multiStackNav = routeParser.parseMultiStackNav(savedNavigationState)
 
                 emit { multiStackNav }
                 emitAll(
