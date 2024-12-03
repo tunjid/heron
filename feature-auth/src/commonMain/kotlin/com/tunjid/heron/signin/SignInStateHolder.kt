@@ -22,11 +22,12 @@ package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.navigation.NavigationContext
-import com.tunjid.heron.navigation.NavigationMutation
-import com.tunjid.heron.navigation.consumeNavigationActions
-import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.feature.AssistedViewModelFactory
+import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.scaffold.navigation.NavigationContext
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.canGoUp
+import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -35,7 +36,6 @@ import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.mutator.mutationOf
 import com.tunjid.treenav.MultiStackNav
-import com.tunjid.treenav.canPop
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.switch
@@ -132,5 +132,3 @@ private fun NavigationContext.resetNav(): MultiStackNav {
     }
     return newNav.switch(0)
 }
-
-private val MultiStackNav.canGoUp get() = stacks.getOrNull(currentIndex)?.canPop == true

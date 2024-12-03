@@ -1,4 +1,4 @@
-package com.tunjid.heron.navigation
+package com.tunjid.heron.scaffold.navigation
 
 import com.tunjid.treenav.Node
 import com.tunjid.treenav.strings.Route

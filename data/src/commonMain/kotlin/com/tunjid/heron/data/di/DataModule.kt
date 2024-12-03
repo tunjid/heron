@@ -63,11 +63,14 @@ abstract class DataComponent(
     }
 
     val KtorNetworkService.bind: NetworkService
+        @SingletonScope
         @Provides get() = this
 
      val DataStoreSavedStateRepository.bind: SavedStateRepository
-        @Provides get() = this
+         @SingletonScope
+         @Provides get() = this
 
     val AuthTokenRepository.bind: AuthRepository
+        @SingletonScope
         @Provides get() = this
 }

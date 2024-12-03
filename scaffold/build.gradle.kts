@@ -18,20 +18,34 @@ plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.composeCompiler)
 }
 android {
     namespace = "com.tunjid.heron.domain.navigation"
     buildFeatures {
-        compose = false
+        compose = true
     }
 }
 
 kotlin {
     sourceSets {
+        named("androidMain") {
+            dependencies {
+                implementation(libs.androidx.activity.compose)
+            }
+        }
         named("commonMain") {
             dependencies {
                 implementation(project(":data"))
+
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.animation)
+                implementation(libs.compose.material)
+                implementation(libs.compose.material.icons)
+                implementation(libs.compose.material3)
+                implementation(libs.compose.foundation.foundation)
+                implementation(libs.compose.foundation.layout)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
@@ -40,6 +54,8 @@ kotlin {
                 implementation(libs.kotlinx.serialization.protobuf)
 
                 implementation(libs.okio)
+
+                implementation(libs.tunjid.composables)
 
                 implementation(libs.tunjid.mutator.core.common)
                 implementation(libs.tunjid.mutator.coroutines.common)

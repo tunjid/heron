@@ -3,8 +3,8 @@ package com.tunjid.heron
 import com.tunjid.heron.data.di.DataModule
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.di.AppComponent
-import com.tunjid.heron.navigation.di.NavigationComponent
-import com.tunjid.heron.navigation.di.NavigationModule
+import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldModule
 import com.tunjid.heron.signin.di.SignInScreenHolderComponent
 import com.tunjid.heron.signin.di.create
 import kotlinx.coroutines.CoroutineScope
@@ -14,10 +14,11 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import java.io.File
-import com.tunjid.heron.navigation.di.create
+import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.create
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 
 class JVMPlatform: Platform {
@@ -41,8 +42,8 @@ fun createAppState(): AppState {
         )
     )
 
-    val navigationComponent = NavigationComponent::class.create(
-        module = NavigationModule(
+    val scaffoldComponent = ScaffoldComponent::class.create(
+        module = ScaffoldModule(
             routeMatchers = listOf()
         ),
         dataComponent = dataComponent,
@@ -50,9 +51,9 @@ fun createAppState(): AppState {
 
     val appComponent = AppComponent::class.create(
         dataComponent = dataComponent,
-        navigationComponent = navigationComponent,
+        scaffoldComponent = scaffoldComponent,
         signInComponent = SignInScreenHolderComponent::class.create(
-            navigationComponent = navigationComponent,
+            scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
     )

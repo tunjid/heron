@@ -40,7 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.treenav.strings.RouteParams
 
 fun SignInRoute(

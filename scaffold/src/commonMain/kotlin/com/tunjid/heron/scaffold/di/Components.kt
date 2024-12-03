@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.navigation.di
+package com.tunjid.heron.scaffold.di
 
 
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.navigation.NavigationMutation
-import com.tunjid.heron.navigation.NavigationStateHolder
-import com.tunjid.heron.navigation.PersistedNavigationStateHolder
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.scaffold.navigation.PersistedNavigationStateHolder
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
@@ -30,13 +30,13 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
 
 
-class NavigationModule(
+class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
 )
 
 @Component
-abstract class NavigationComponent(
-    private val module: NavigationModule,
+abstract class ScaffoldComponent(
+    private val module: ScaffoldModule,
     @Component val dataComponent: DataComponent,
 ) {
 

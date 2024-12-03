@@ -23,8 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.navigation.di.NavigationComponent
-import com.tunjid.heron.navigation.routeAndMatcher
+import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.signin.ActualSignInStateHolder
 import com.tunjid.heron.signin.SignInRoute
 import com.tunjid.heron.signin.SignInScreen
@@ -53,7 +53,7 @@ abstract class SignInNavigationComponent {
 @Component
 abstract class SignInScreenHolderComponent(
     @Component val dataComponent: DataComponent,
-    @Component val navigationComponent: NavigationComponent,
+    @Component val scaffoldComponent: ScaffoldComponent,
 ) {
 
     @IntoMap
