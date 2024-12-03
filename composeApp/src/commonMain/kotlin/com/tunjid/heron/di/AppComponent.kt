@@ -16,8 +16,9 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.scaffold.app.AppState
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.signin.di.SignInScreenHolderComponent
@@ -39,9 +40,11 @@ abstract class AppComponent(
     @Provides
     fun appState(
         navigationStateHolder: NavigationStateHolder,
+        savedStateRepository: SavedStateRepository,
     ): AppState = AppState(
         routeConfigurationMap = routeConfigurationMap,
         navigationStateHolder = navigationStateHolder,
+        savedStateRepository = savedStateRepository,
     )
 
     abstract val appState: AppState

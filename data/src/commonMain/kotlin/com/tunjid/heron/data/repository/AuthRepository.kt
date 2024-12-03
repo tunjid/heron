@@ -19,6 +19,7 @@ package com.tunjid.heron.data.repository
 import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
@@ -30,6 +31,7 @@ interface AuthRepository {
     suspend fun createSession(request: SessionRequest): Result<Unit>
 }
 
+@SingletonScope
 @Inject
 class AuthTokenRepository(
     private val networkService: NetworkService,

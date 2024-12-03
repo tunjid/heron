@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.di.SingletonScope
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -34,6 +35,7 @@ interface NetworkService {
     val api: BlueskyApi
 }
 
+@SingletonScope
 @Inject
 class KtorNetworkService(
     private val json: Json,

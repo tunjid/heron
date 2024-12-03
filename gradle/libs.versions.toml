@@ -54,6 +54,7 @@ compose-animation = { group = "org.jetbrains.compose.animation", name = "animati
 compose-foundation-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
 compose-foundation-layout = { group = "org.jetbrains.compose.foundation", name = "foundation-layout", version.ref = "compose-multiplatform" }
 compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
+compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-multiplatform" }
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform" }
 compose-gradlePlugin = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose-multiplatform" }
 compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }

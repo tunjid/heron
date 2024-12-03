@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
+import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +51,7 @@ interface SavedStateRepository {
     suspend fun updateState(update: SavedState.() -> SavedState)
 }
 
+@SingletonScope
 @Inject
 class DataStoreSavedStateRepository(
     path: Path,

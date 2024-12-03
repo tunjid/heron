@@ -8,7 +8,7 @@ import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppComponent
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.create
-import com.tunjid.heron.scaffold.app.AppState
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
 import com.tunjid.heron.scaffold.di.create

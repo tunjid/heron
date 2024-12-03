@@ -18,7 +18,7 @@ import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.create
-import com.tunjid.heron.scaffold.app.AppState
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 
 class JVMPlatform: Platform {
