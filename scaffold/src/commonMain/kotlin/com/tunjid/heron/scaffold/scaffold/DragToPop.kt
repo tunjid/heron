@@ -23,7 +23,9 @@ import com.tunjid.treenav.strings.Route
 @Stable
 class DragToPopState {
     var isDraggingToPop by mutableStateOf(false)
-    internal val dragToDismissState = DragToDismissState()
+    internal val dragToDismissState = DragToDismissState(
+        enabled = false,
+    )
 }
 
 @Composable

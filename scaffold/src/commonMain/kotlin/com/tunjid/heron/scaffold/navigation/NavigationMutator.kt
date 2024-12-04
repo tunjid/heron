@@ -22,7 +22,7 @@ import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.mutationOf
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.strings.RouteParser
@@ -32,10 +32,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Inject
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
@@ -76,16 +78,27 @@ class PersistedNavigationStateHolder(
                 val multiStackNav = routeParser.parseMultiStackNav(savedNavigationState)
 
                 emit { multiStackNav }
+
+                val forceSignOutMutations = savedStateRepository.savedState
+                    // No auth token and is displaying main navigation
+                    .filter { it.auth == null && it.navigation.backStacks.size != 1 }
+                    .map<SavedState, NavigationMutation> { _ ->
+                        { SignedOutNavigationState }
+                    }
+
+                val allNavMutations = merge(
+                    navMutations,
+                    forceSignOutMutations,
+                )
+
                 emitAll(
-                    navMutations.map { navMutation ->
-                        mutationOf {
-                            navMutation(
-                                ImmutableNavigationContext(
-                                    state = this,
-                                    routeParser = routeParser
-                                )
+                    allNavMutations.mapToMutation { navMutation ->
+                        navMutation(
+                            ImmutableNavigationContext(
+                                state = this,
+                                routeParser = routeParser
                             )
-                        }
+                        )
                     }
                 )
             }

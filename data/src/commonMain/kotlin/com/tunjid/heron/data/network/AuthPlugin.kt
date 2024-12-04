@@ -36,7 +36,7 @@ import sh.christian.ozone.api.response.AtpErrorDescription
 class ErrorInterceptorConfig {
     internal var networkErrorConverter: ((String) -> AtpErrorDescription)? = null
     internal var readAuth: (suspend () -> SavedState.AuthTokens?)? = null
-    internal var saveAuth: (suspend (SavedState.AuthTokens) -> Unit)? = null
+    internal var saveAuth: (suspend (SavedState.AuthTokens?) -> Unit)? = null
 }
 
 /**
@@ -45,7 +45,7 @@ class ErrorInterceptorConfig {
 internal class AuthPlugin(
     private val networkErrorConverter: ((String) -> AtpErrorDescription)?,
     private val readAuth: (suspend () -> SavedState.AuthTokens?)?,
-    private val saveAuth: (suspend (SavedState.AuthTokens) -> Unit)?,
+    private val saveAuth: (suspend (SavedState.AuthTokens?) -> Unit)?,
 ) {
 
     companion object : HttpClientPlugin<ErrorInterceptorConfig, AuthPlugin> {
@@ -101,6 +101,8 @@ internal class AuthPlugin(
                             context.bearerAuth(newAccessToken)
                             result = execute(context)
                         }
+                        // Delete existing token and force a log out
+                        ?: plugin.saveAuth?.invoke(null)
                 }
                 result
             }

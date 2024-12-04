@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
@@ -30,6 +31,7 @@ data class FormField(
     val id: String,
     val value: String,
     val transformation: VisualTransformation,
+    val autofillTypes: List<AutofillType> = emptyList()
 )
 
 fun List<FormField>.update(updatedField: FormField) = map { field ->
@@ -50,7 +52,8 @@ data class State(
         FormField(
             id = "password",
             value = "",
-            transformation = PasswordVisualTransformation()
+            transformation = PasswordVisualTransformation(),
+            autofillTypes = listOf(AutofillType.Password)
         )
     ),
     @Transient
@@ -67,7 +70,7 @@ val State.sessionRequest: SessionRequest
         )
     }
 
-sealed class Action(key: String) {
+sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
     data class Submit(val request: SessionRequest) : Action("Submit")
     data class MessageConsumed(

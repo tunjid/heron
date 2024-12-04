@@ -9,6 +9,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -54,6 +55,7 @@ class AppState @Inject constructor(
         ThreePane.Primary,
     )
 
+    internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf { multiStackNavState.value.navItems }
     internal val navigation by multiStackNavState
     internal val backPreviewState = BackPreviewState()
