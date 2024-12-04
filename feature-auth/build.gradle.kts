@@ -32,21 +32,12 @@ kotlin {
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
 
-                implementation(libs.compose.runtime)
-                implementation(libs.compose.animation)
-                implementation(libs.compose.material3)
-                implementation(libs.compose.foundation.layout)
-
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.tunjid.tiler.tiler)
-
-                implementation(libs.tunjid.mutator.core.common)
-                implementation(libs.tunjid.mutator.coroutines.common)
-
             }
         }
     }

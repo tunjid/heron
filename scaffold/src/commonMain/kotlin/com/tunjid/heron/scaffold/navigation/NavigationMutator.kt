@@ -22,7 +22,7 @@ import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.mutationOf
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.strings.RouteParser
@@ -32,10 +32,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Inject
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
@@ -48,12 +50,12 @@ interface NavigationAction {
     val navigationMutation: NavigationMutation
 }
 
-private val EmptyNavigationState = MultiStackNav(
+private val SignedOutNavigationState = MultiStackNav(
     name = "emptyMultiStack",
     stacks = listOf(
         StackNav(
-            name = "emptyStack",
-            children = listOf()
+            name = "authStack",
+            children = listOf(routeOf("/auth"))
         )
     )
 )
@@ -65,26 +67,38 @@ class PersistedNavigationStateHolder(
     routeParser: RouteParser,
 ) : NavigationStateHolder,
     ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
-        initialState = EmptyNavigationState,
+        initialState = SignedOutNavigationState,
         started = SharingStarted.Eagerly,
         actionTransform = { navMutations ->
             flow {
                 // Restore saved nav from disk first
-                val savedState =
-                    savedStateRepository.savedState.map { it.navigation }.first { !it.isEmpty }
-                val multiStackNav = routeParser.parseMultiStackNav(savedState)
+                val savedNavigationState = savedStateRepository.savedState
+                    .map { it.navigation }
+                    .first { it.backStacks.isNotEmpty() }
+                val multiStackNav = routeParser.parseMultiStackNav(savedNavigationState)
 
                 emit { multiStackNav }
+
+                val forceSignOutMutations = savedStateRepository.savedState
+                    // No auth token and is displaying main navigation
+                    .filter { it.auth == null && it.navigation.backStacks.size != 1 }
+                    .map<SavedState, NavigationMutation> { _ ->
+                        { SignedOutNavigationState }
+                    }
+
+                val allNavMutations = merge(
+                    navMutations,
+                    forceSignOutMutations,
+                )
+
                 emitAll(
-                    navMutations.map { navMutation ->
-                        mutationOf {
-                            navMutation(
-                                ImmutableNavigationContext(
-                                    state = this,
-                                    routeParser = routeParser
-                                )
+                    allNavMutations.mapToMutation { navMutation ->
+                        navMutation(
+                            ImmutableNavigationContext(
+                                state = this,
+                                routeParser = routeParser
                             )
-                        }
+                        )
                     }
                 )
             }

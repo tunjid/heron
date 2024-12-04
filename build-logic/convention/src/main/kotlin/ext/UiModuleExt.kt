@@ -27,22 +27,26 @@ fun org.gradle.api.Project.configureUiModule(
 
         named("commonMain") {
             dependencies {
-//                implementation(project(":common:data"))
-//                implementation(project(":common:scaffold"))
-//                implementation(project(":common:ui:template"))
+                implementation(project(":data"))
+                implementation(project(":scaffold"))
+                implementation(project(":feature-template"))
 
                 api(libs.findLibrary("lifecycle-runtime").get())
                 api(libs.findLibrary("lifecycle-runtime-compose").get())
                 api(libs.findLibrary("lifecycle-viewmodel").get())
                 api(libs.findLibrary("lifecycle-viewmodel-compose").get())
 
-                implementation(libs.findLibrary("compose-runtime").get())
-                implementation(libs.findLibrary("compose-animation").get())
-                implementation(libs.findLibrary("compose-material3").get())
-                implementation(libs.findLibrary("compose-foundation-layout").get())
-//                implementation(compose.desktop.currentOs)
+                api(libs.findLibrary("compose-components-resources").get())
 
-                implementation(libs.findLibrary("kotlinx-coroutines-core").get())
+                api(libs.findLibrary("compose-runtime").get())
+                api(libs.findLibrary("compose-animation").get())
+                api(libs.findLibrary("compose-material3").get())
+                api(libs.findLibrary("compose-foundation-layout").get())
+
+                api(libs.findLibrary("kotlinx-coroutines-core").get())
+
+                api(libs.findLibrary("tunjid-mutator-core-common").get())
+                api(libs.findLibrary("tunjid-mutator-coroutines-common").get())
 
                 api(libs.findLibrary("tunjid-treenav-compose-common").get())
                 api(libs.findLibrary("tunjid-treenav-core-common").get())

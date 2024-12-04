@@ -76,7 +76,9 @@ class ActualSignInStateHolder(
         authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
     ),
     actionTransform = { actions ->
-        actions.toMutationStream {
+        actions.toMutationStream(
+            keySelector = Action::key
+        ) {
             when (val action = type()) {
                 is Action.FieldChanged -> action.flow.formEditMutations()
                 is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
@@ -115,11 +117,11 @@ private fun Flow<Action.Submit>.submissionMutations(
             emit { copy(isSubmitting = true) }
             when (val exception =
                 authRepository.createSession(request = request).exceptionOrNull()) {
-                null -> emit {
-                    copy(messages = exception?.message?.let(messages::plus) ?: messages)
-                }
+                null -> navActions(NavigationContext::resetNav)
 
-                else -> navActions(NavigationContext::resetNav)
+                else -> emit {
+                    copy(messages = exception.message?.let(messages::plus)?.distinct() ?: messages)
+                }
             }
             emit { copy(isSubmitting = false) }
         }

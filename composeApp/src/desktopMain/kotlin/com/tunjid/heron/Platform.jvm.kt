@@ -17,6 +17,7 @@ import java.io.File
 import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppNavigationComponent
+import com.tunjid.heron.di.allRouteMatchers
 import com.tunjid.heron.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInNavigationComponent
@@ -30,7 +31,7 @@ actual fun getPlatform(): Platform = JVMPlatform()
 fun createAppState(): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    AppNavigationComponent::class.create(
+    val navigationComponent = AppNavigationComponent::class.create(
         signInNavigationComponent = SignInNavigationComponent::class.create()
     )
 
@@ -44,7 +45,7 @@ fun createAppState(): AppState {
 
     val scaffoldComponent = ScaffoldComponent::class.create(
         module = ScaffoldModule(
-            routeMatchers = listOf()
+            routeMatchers = navigationComponent.allRouteMatchers
         ),
         dataComponent = dataComponent,
     )

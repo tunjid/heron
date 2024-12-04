@@ -22,6 +22,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.io.IOException
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
 
@@ -41,15 +42,14 @@ class AuthTokenRepository(
     override val isSignedIn: Flow<Boolean> =
         savedStateRepository.savedState.map { it.auth != null }
 
-    override suspend fun createSession(request: SessionRequest): Result<Unit> {
+    override suspend fun createSession(request: SessionRequest): Result<Unit> = try {
         val result = networkService.api.createSession(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
             )
         )
-
-        return when (result) {
+        when (result) {
             is AtpResponse.Failure -> Result.failure(
                 Exception(result.error?.message)
             )
@@ -65,5 +65,8 @@ class AuthTokenRepository(
                 }
             )
         }
+
+    } catch (ioe: IOException) {
+        Result.failure(Exception("There was an error"))
     }
 }
