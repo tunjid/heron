@@ -46,6 +46,8 @@ kotlin {
             implementation(project(":scaffold"))
             implementation(project(":feature-auth"))
 
+            implementation(libs.androidx.room.runtime)
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation.foundation)
             implementation(libs.compose.material)

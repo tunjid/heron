@@ -32,44 +32,17 @@ kotlin {
         named("commonMain") {
             dependencies {
                 api(project(":di"))
-                api(project(":data-core"))
-                api(project(":data-database"))
 
                 implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.serialization.cbor)
-                implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.protobuf)
-
-                implementation(libs.ktor.core)
-                implementation(libs.ktor.client.contentNegotiation)
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.client.resources)
-                implementation(libs.ktor.serialization.kotlinx.json)
-
-                implementation(libs.androidx.room.runtime)
-                implementation(libs.androidx.room.runtime)
-                implementation(libs.androidx.sqlite)
-                implementation(libs.androidx.sqlite.bundled)
-                implementation(libs.androidx.datastore.core.okio)
-
-                implementation(libs.okio)
-                implementation(libs.ozone.bluesky.api)
-
-                implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.mutator.core.common)
-                implementation(libs.tunjid.mutator.coroutines.common)
             }
         }
         named("androidMain") {
             dependencies {
-                implementation(libs.androidx.core.ktx)
-
-                implementation(libs.ktor.client.android)
             }
         }
         named("desktopMain") {
             dependencies {
-                implementation(libs.ktor.client.java)
             }
         }
         named("commonTest") {
