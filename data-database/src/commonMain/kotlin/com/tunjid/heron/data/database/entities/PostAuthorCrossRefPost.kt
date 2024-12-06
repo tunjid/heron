@@ -1,6 +1,5 @@
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -32,7 +31,7 @@ import com.tunjid.heron.data.core.types.Id
         Index(value = ["authorId"]),
     ],
 )
-data class PostAuthorCrossRef(
+data class PostAuthorCrossRefPost(
     val postId: Id,
     val authorId: Id,
-): EmbedEntityCrossRef
+)

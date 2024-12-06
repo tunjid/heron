@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Junction
@@ -89,7 +88,7 @@ data class PopulatedPost(
         parentColumn = "cid",
         entityColumn = "fullSize",
         associateBy = Junction(
-            value = PostImageCrossRef::class,
+            value = PostImageEntity::class,
             parentColumn = "postId",
             entityColumn = "imageUri",
         ),
@@ -99,7 +98,7 @@ data class PopulatedPost(
         parentColumn = "cid",
         entityColumn = "uri",
         associateBy = Junction(
-            value = PostVideoCrossRef::class,
+            value = PostVideoEntity::class,
             parentColumn = "postId",
             entityColumn = "videoId",
         ),
@@ -109,7 +108,7 @@ data class PopulatedPost(
         parentColumn = "cid",
         entityColumn = "uri",
         associateBy = Junction(
-            value = PostExternalEmbedCrossRef::class,
+            value = PostExternalEmbedEntity::class,
             parentColumn = "postId",
             entityColumn = "externalEmbedUri",
         ),

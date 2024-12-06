@@ -9,9 +9,9 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.PostExternalEmbedCrossRef
-import com.tunjid.heron.data.database.entities.PostImageCrossRef
-import com.tunjid.heron.data.database.entities.PostVideoCrossRef
+import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.PostImageEntity
+import com.tunjid.heron.data.database.entities.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.VideoEntity
 
@@ -21,9 +21,9 @@ import com.tunjid.heron.data.database.entities.VideoEntity
         ExternalEmbedEntity::class,
         ImageEntity::class,
         VideoEntity::class,
-        PostExternalEmbedCrossRef::class,
-        PostImageCrossRef::class,
-        PostVideoCrossRef::class,
+        PostExternalEmbedEntity::class,
+        PostImageEntity::class,
+        PostVideoEntity::class,
         PostEntity::class,
         ProfileEntity::class,
     ],

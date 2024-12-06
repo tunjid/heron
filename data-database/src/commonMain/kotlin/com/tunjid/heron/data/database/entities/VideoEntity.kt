@@ -34,7 +34,7 @@ data class VideoEntity(
     val alt: String?,
     val width: Long?,
     val height: Long?,
-): EmbedEntity
+): PostEmbed
 
 fun VideoEntity.asExternalModel() = Video(
     cid = cid,

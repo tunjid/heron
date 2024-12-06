@@ -23,8 +23,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 
-sealed interface EmbedEntity
-sealed interface EmbedEntityCrossRef
+sealed interface PostEmbed
 
 /**
  * Cross reference for many to many relationship between [Post] and [VideoEntity]
@@ -51,10 +50,10 @@ sealed interface EmbedEntityCrossRef
         Index(value = ["videoId"]),
     ],
 )
-data class PostVideoCrossRef(
+data class PostVideoEntity(
     val postId: Id,
     val videoId: Id,
-) : EmbedEntityCrossRef
+)
 
 /**
  * Cross reference for many to many relationship between [Post] and [ImageEntity]
@@ -81,10 +80,10 @@ data class PostVideoCrossRef(
         Index(value = ["imageUri"]),
     ],
 )
-data class PostImageCrossRef(
+data class PostImageEntity(
     val postId: Id,
     val imageUri: Uri,
-) : EmbedEntityCrossRef
+)
 
 /**
  * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
@@ -111,7 +110,7 @@ data class PostImageCrossRef(
         Index(value = ["externalEmbedUri"]),
     ],
 )
-data class PostExternalEmbedCrossRef(
+data class PostExternalEmbedEntity(
     val postId: Id,
     val externalEmbedUri: Uri,
-) : EmbedEntityCrossRef
+)

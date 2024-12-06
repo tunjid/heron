@@ -9,12 +9,12 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.EmbedEntity
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
-import com.tunjid.heron.data.database.entities.PostExternalEmbedCrossRef
-import com.tunjid.heron.data.database.entities.PostImageCrossRef
-import com.tunjid.heron.data.database.entities.PostVideoCrossRef
+import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.PostImageEntity
+import com.tunjid.heron.data.database.entities.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.VideoEntity
 import com.tunjid.heron.data.network.NetworkService
@@ -49,17 +49,17 @@ class ImplFeedRepository(
             )
         )
 
-        val postEntities = mutableListOf<FeedEntity>()
+        val postEntities = mutableListOf<PostEntity>()
         val postAuthorEntities = mutableListOf<ProfileEntity>()
 
         val externalEmbedEntities by lazy { mutableListOf<ExternalEmbedEntity>() }
-        val externalEmbedCrossRefEntities by lazy { mutableListOf<PostExternalEmbedCrossRef>() }
+        val externalEmbedCrossRefEntities by lazy { mutableListOf<PostExternalEmbedEntity>() }
 
         val imageEntities by lazy { mutableListOf<ImageEntity>() }
-        val imageCrossRefEmbedEntities by lazy { mutableListOf<PostImageCrossRef>() }
+        val imageCrossRefEmbedEntities by lazy { mutableListOf<PostImageEntity>() }
 
         val videoEntities by lazy { mutableListOf<VideoEntity>() }
-        val videoCrossRefEntities by lazy { mutableListOf<PostVideoCrossRef>() }
+        val videoCrossRefEntities by lazy { mutableListOf<PostVideoEntity>() }
 
         networkPostsResponse.requireResponse().feed.forEach { feedView ->
             val postEntity = feedView.post.postEntity()
@@ -70,21 +70,21 @@ class ImplFeedRepository(
                     is ExternalEmbedEntity -> {
                         externalEmbedEntities.add(embedEntity)
                         externalEmbedCrossRefEntities.add(
-                            postEntity.postExternalEmbedCrossRef(embedEntity)
+                            postEntity.postExternalEmbedEntity(embedEntity)
                         )
                     }
 
                     is ImageEntity -> {
                         imageEntities.add(embedEntity)
                         imageCrossRefEmbedEntities.add(
-                            postEntity.postImageCrossRef(embedEntity)
+                            postEntity.postImageEntity(embedEntity)
                         )
                     }
 
                     is VideoEntity -> {
                         videoEntities.add(embedEntity)
                         videoCrossRefEntities.add(
-                            postEntity.postVideoCrossRef(embedEntity)
+                            postEntity.postVideoEntity(embedEntity)
                         )
                     }
                 }
@@ -103,23 +103,23 @@ class ImplFeedRepository(
         postDao.insertOrIgnoreVideoCrossRefEntities(videoCrossRefEntities)
     }
 
-    private fun FeedEntity.postVideoCrossRef(
+    private fun PostEntity.postVideoEntity(
         embedEntity: VideoEntity
-    ) = PostVideoCrossRef(
+    ) = PostVideoEntity(
         postId = cid,
         videoId = embedEntity.cid,
     )
 
-    private fun FeedEntity.postImageCrossRef(
+    private fun PostEntity.postImageEntity(
         embedEntity: ImageEntity
-    ) = PostImageCrossRef(
+    ) = PostImageEntity(
         postId = cid,
         imageUri = embedEntity.fullSize,
     )
 
-    private fun FeedEntity.postExternalEmbedCrossRef(
+    private fun PostEntity.postExternalEmbedEntity(
         embedEntity: ExternalEmbedEntity
-    ) = PostExternalEmbedCrossRef(
+    ) = PostExternalEmbedEntity(
         postId = cid,
         externalEmbedUri = embedEntity.uri,
     )
@@ -127,10 +127,10 @@ class ImplFeedRepository(
 }
 
 private fun PostView.postEntity() =
-    FeedEntity(
+    PostEntity(
         cid = Id(cid.cid),
         uri = Uri(uri.atUri),
-        author = Id(author.did.did),
+        authorId = Id(author.did.did),
         replyCount = replyCount,
         repostCount = repostCount,
         likeCount = likeCount,
@@ -191,22 +191,3 @@ private fun PostView.embedEntities() =
 
         null -> emptyList()
     }
-
-private fun FeedEntity.crossRef(
-    embedEntity: EmbedEntity
-) = when (embedEntity) {
-    is ExternalEmbedEntity -> PostExternalEmbedCrossRef(
-        postId = cid,
-        externalEmbedUri = embedEntity.uri
-    )
-
-    is ImageEntity -> PostImageCrossRef(
-        postId = cid,
-        imageUri = embedEntity.fullSize,
-    )
-
-    is VideoEntity -> PostVideoCrossRef(
-        postId = cid,
-        videoId = embedEntity.cid,
-    )
-}

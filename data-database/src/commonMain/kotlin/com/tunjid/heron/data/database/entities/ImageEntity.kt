@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Image
@@ -32,7 +31,7 @@ data class ImageEntity(
     val alt: String,
     val width: Long?,
     val height: Long?,
-): EmbedEntity
+): PostEmbed
 
 fun ImageEntity.asExternalModel() = Image(
     fullsize = fullSize,
