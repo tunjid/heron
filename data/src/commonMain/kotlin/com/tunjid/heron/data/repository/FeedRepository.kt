@@ -12,7 +12,6 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.EmbedEntity
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
-import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostExternalEmbedCrossRef
 import com.tunjid.heron.data.database.entities.PostImageCrossRef
 import com.tunjid.heron.data.database.entities.PostVideoCrossRef
@@ -50,7 +49,7 @@ class ImplFeedRepository(
             )
         )
 
-        val postEntities = mutableListOf<PostEntity>()
+        val postEntities = mutableListOf<FeedEntity>()
         val postAuthorEntities = mutableListOf<ProfileEntity>()
 
         val externalEmbedEntities by lazy { mutableListOf<ExternalEmbedEntity>() }
@@ -104,21 +103,21 @@ class ImplFeedRepository(
         postDao.insertOrIgnoreVideoCrossRefEntities(videoCrossRefEntities)
     }
 
-    private fun PostEntity.postVideoCrossRef(
+    private fun FeedEntity.postVideoCrossRef(
         embedEntity: VideoEntity
     ) = PostVideoCrossRef(
         postId = cid,
         videoId = embedEntity.cid,
     )
 
-    private fun PostEntity.postImageCrossRef(
+    private fun FeedEntity.postImageCrossRef(
         embedEntity: ImageEntity
     ) = PostImageCrossRef(
         postId = cid,
         imageUri = embedEntity.fullSize,
     )
 
-    private fun PostEntity.postExternalEmbedCrossRef(
+    private fun FeedEntity.postExternalEmbedCrossRef(
         embedEntity: ExternalEmbedEntity
     ) = PostExternalEmbedCrossRef(
         postId = cid,
@@ -128,7 +127,7 @@ class ImplFeedRepository(
 }
 
 private fun PostView.postEntity() =
-    PostEntity(
+    FeedEntity(
         cid = Id(cid.cid),
         uri = Uri(uri.atUri),
         author = Id(author.did.did),
@@ -193,7 +192,7 @@ private fun PostView.embedEntities() =
         null -> emptyList()
     }
 
-private fun PostEntity.crossRef(
+private fun FeedEntity.crossRef(
     embedEntity: EmbedEntity
 ) = when (embedEntity) {
     is ExternalEmbedEntity -> PostExternalEmbedCrossRef(

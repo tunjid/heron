@@ -27,7 +27,6 @@ import com.tunjid.heron.data.core.types.Uri
 )
 data class ImageEntity(
     @PrimaryKey
-    @ColumnInfo(name = "full_size")
     val fullSize: Uri,
     val thumb: Uri,
     val alt: String,

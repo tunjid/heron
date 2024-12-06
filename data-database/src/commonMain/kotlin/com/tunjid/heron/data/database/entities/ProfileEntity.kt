@@ -9,7 +9,7 @@ import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "profile",
+    tableName = "profiles",
 )
 data class ProfileEntity(
     @PrimaryKey

@@ -17,25 +17,17 @@
 package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 
 
 @Entity(
-    tableName = "externalEmbeds",
+    tableName = "feedItems",
 )
-data class ExternalEmbedEntity(
-    @PrimaryKey
-    val uri: Uri,
-    val title: String,
-    val description: String,
-    val thumb: Uri?,
-): EmbedEntity
-
-fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
-    uri = uri,
-    title = title,
-    description = description,
-    thumb = thumb
+data class FeedItemEntity(
+    val postId: Id,
+    val source: Uri?,
+    val replyRootPostId: Id?,
+    val replyParentPostId: Id?,
+    val reason: String
 )

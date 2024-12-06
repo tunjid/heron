@@ -30,9 +30,6 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
-/**
- * Defines an NiA news resource.
- */
 @Entity(
     tableName = "posts",
 )
@@ -40,14 +37,10 @@ data class PostEntity(
     @PrimaryKey
     val cid: Id,
     val uri: Uri,
-    val author: Id,
-    @ColumnInfo(name = "reply_count")
+    val authorId: Id,
     val replyCount: Long?,
-    @ColumnInfo(name = "repost_count")
     val repostCount: Long?,
-    @ColumnInfo(name = "like_count")
     val likeCount: Long?,
-    @ColumnInfo(name = "quote_count")
     val quoteCount: Long?,
     val indexedAt: Instant,
 //    public val record: JsonContent,
@@ -63,7 +56,7 @@ fun PostEntity.asExternalModel(
     cid = cid,
     uri = uri,
     author = Profile(
-        did = author,
+        did = authorId,
         handle = handle,
         displayName = null,
         description = null,
@@ -84,24 +77,21 @@ fun PostEntity.asExternalModel(
     embed = UnknownEmbed,
 )
 
-/**
- * External data layer representation of a fully populated NiA news resource
- */
 data class PopulatedPost(
     @Embedded
     val entity: PostEntity,
     @Relation(
-        parentColumn = "author",
+        parentColumn = "authorId",
         entityColumn = "did"
     )
     val author: ProfileEntity,
     @Relation(
         parentColumn = "cid",
-        entityColumn = "full_size",
+        entityColumn = "fullSize",
         associateBy = Junction(
             value = PostImageCrossRef::class,
-            parentColumn = "post_id",
-            entityColumn = "image_uri",
+            parentColumn = "postId",
+            entityColumn = "imageUri",
         ),
     )
     val images: List<ImageEntity>,
@@ -110,8 +100,8 @@ data class PopulatedPost(
         entityColumn = "uri",
         associateBy = Junction(
             value = PostVideoCrossRef::class,
-            parentColumn = "post_id",
-            entityColumn = "video_id",
+            parentColumn = "postId",
+            entityColumn = "videoId",
         ),
     )
     val videos: List<VideoEntity>,
@@ -120,8 +110,8 @@ data class PopulatedPost(
         entityColumn = "uri",
         associateBy = Junction(
             value = PostExternalEmbedCrossRef::class,
-            parentColumn = "post_id",
-            entityColumn = "external_embed_uri",
+            parentColumn = "postId",
+            entityColumn = "externalEmbedUri",
         ),
     )
     val externalEmbeds: List<ExternalEmbedEntity>,
