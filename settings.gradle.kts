@@ -32,6 +32,8 @@ dependencyResolutionManagement {
 include(
     ":composeApp",
     ":data",
+    ":data-core",
+    ":data-database",
     ":di",
     ":scaffold",
     ":feature-auth",

@@ -1,5 +1,6 @@
 package com.tunjid.heron
 
+import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataModule
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.di.AppComponent
@@ -22,7 +23,7 @@ import com.tunjid.heron.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 
-class JVMPlatform: Platform {
+class JVMPlatform : Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
 }
 
@@ -40,6 +41,7 @@ fun createAppState(): AppState {
             appScope = appScope,
             savedStatePath = savedStatePath(),
             savedStateFileSystem = FileSystem.SYSTEM,
+            databaseBuilder = getDatabaseBuilder(),
         )
     )
 

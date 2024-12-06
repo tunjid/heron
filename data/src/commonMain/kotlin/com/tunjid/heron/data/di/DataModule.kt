@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.di
 
+import androidx.room.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
@@ -24,6 +27,7 @@ import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
@@ -35,6 +39,7 @@ class DataModule(
     val appScope: CoroutineScope,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
+    val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
 
 @SingletonScope
@@ -51,6 +56,14 @@ abstract class DataComponent(
 
     @Provides
     fun savedStateFileSystem(): FileSystem = module.savedStateFileSystem
+
+    @Provides
+    fun getRoomDatabase(): AppDatabase = module.databaseBuilder
+//        .addMigrations(MIGRATIONS)
+        .fallbackToDestructiveMigrationOnDowngrade(true)
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()
 
     @Provides
     fun provideAppJson() = Json {

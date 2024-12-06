@@ -2,6 +2,7 @@ package com.tunjid.heron
 
 import android.content.Context
 import android.os.Build
+import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.di.DataModule
 import com.tunjid.heron.data.di.create
@@ -41,6 +42,7 @@ fun createAppState(context: Context): AppState {
             appScope = appScope,
             savedStatePath = context.savedStatePath(),
             savedStateFileSystem = FileSystem.SYSTEM,
+            databaseBuilder = getDatabaseBuilder(context),
         )
     )
 
