@@ -21,6 +21,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
+
+sealed interface EmbedEntity
+sealed interface EmbedEntityCrossRef
 
 /**
  * Cross reference for many to many relationship between [Post] and [VideoEntity]
@@ -31,7 +36,7 @@ import com.tunjid.heron.data.core.models.Post
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["id"],
+            parentColumns = ["cid"],
             childColumns = ["post_id"],
             onDelete = ForeignKey.CASCADE,
         ),
@@ -49,10 +54,10 @@ import com.tunjid.heron.data.core.models.Post
 )
 data class PostVideoCrossRef(
     @ColumnInfo(name = "post_id")
-    val postId: String,
+    val postId: Id,
     @ColumnInfo(name = "video_id")
-    val videoId: String,
-)
+    val videoId: Id,
+): EmbedEntityCrossRef
 
 /**
  * Cross reference for many to many relationship between [Post] and [ImageEntity]
@@ -63,7 +68,7 @@ data class PostVideoCrossRef(
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["id"],
+            parentColumns = ["cid"],
             childColumns = ["post_id"],
             onDelete = ForeignKey.CASCADE,
         ),
@@ -81,10 +86,10 @@ data class PostVideoCrossRef(
 )
 data class PostImageCrossRef(
     @ColumnInfo(name = "post_id")
-    val postId: String,
+    val postId: Id,
     @ColumnInfo(name = "image_uri")
-    val imageUri: String,
-)
+    val imageUri: Uri,
+): EmbedEntityCrossRef
 
 /**
  * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
@@ -95,7 +100,7 @@ data class PostImageCrossRef(
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["id"],
+            parentColumns = ["cid"],
             childColumns = ["post_id"],
             onDelete = ForeignKey.CASCADE,
         ),
@@ -113,7 +118,7 @@ data class PostImageCrossRef(
 )
 data class PostExternalEmbedCrossRef(
     @ColumnInfo(name = "post_id")
-    val postId: String,
+    val postId: Id,
     @ColumnInfo(name = "external_embed_uri")
-    val externalEmbedUri: String,
-)
+    val externalEmbedUri: Uri,
+): EmbedEntityCrossRef

@@ -2,7 +2,6 @@ package com.tunjid.heron.data.database
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.tunjid.heron.data.local.db.AppDatabase
 import java.io.File
 
 fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {

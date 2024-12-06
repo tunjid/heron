@@ -2,7 +2,6 @@ package com.tunjid.heron.data.database
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.tunjid.heron.data.local.db.AppDatabase
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager

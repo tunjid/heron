@@ -1,6 +1,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
@@ -10,8 +11,8 @@ data class Profile(
     val handle: Id,
     val displayName: String?,
     val description: String?,
-    val avatar: String?,
-    val banner: String?,
+    val avatar: Uri?,
+    val banner: Uri?,
     val followersCount: Long?,
     val followsCount: Long?,
     val postsCount: Long?,

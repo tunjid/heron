@@ -31,7 +31,7 @@ data class ExternalEmbedEntity(
     val title: String,
     val description: String,
     val thumb: Uri?,
-)
+): EmbedEntity
 
 fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
     uri = uri,

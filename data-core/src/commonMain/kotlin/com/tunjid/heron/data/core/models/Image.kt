@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.Uri
+
 data class Image(
-    val thumb: String,
-    val fullsize: String,
+    val thumb: Uri,
+    val fullsize: Uri,
     val alt: String,
     val width: Long?,
     val height: Long?,

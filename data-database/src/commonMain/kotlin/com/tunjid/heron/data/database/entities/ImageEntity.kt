@@ -20,6 +20,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Image
+import com.tunjid.heron.data.core.types.Uri
 
 @Entity(
     tableName = "images",
@@ -27,12 +28,12 @@ import com.tunjid.heron.data.core.models.Image
 data class ImageEntity(
     @PrimaryKey
     @ColumnInfo(name = "full_size")
-    val fullSize: String,
-    val thumb: String,
+    val fullSize: Uri,
+    val thumb: Uri,
     val alt: String,
     val width: Long?,
     val height: Long?,
-)
+): EmbedEntity
 
 fun ImageEntity.asExternalModel() = Image(
     fullsize = fullSize,

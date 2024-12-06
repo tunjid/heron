@@ -18,7 +18,7 @@ package com.tunjid.heron.data.di
 
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import com.tunjid.heron.data.local.db.AppDatabase
+import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository

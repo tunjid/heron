@@ -1,4 +1,4 @@
-package com.tunjid.heron.data.local.db
+package com.tunjid.heron.data.database
 
 import androidx.room.ConstructedBy
 import androidx.room.Database
