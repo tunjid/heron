@@ -20,11 +20,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 
 @Composable
 internal fun SignInScreen(
@@ -40,14 +46,23 @@ internal fun SignInScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         state.fields.forEach { field ->
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier,
                 value = field.value,
                 onValueChange = {
                     actions(Action.FieldChanged(field = field.copy(value = it)))
                 },
+                shape = MaterialTheme.shapes.large,
                 visualTransformation = field.transformation,
-                label = { Text(text = field.id) }
+                label = { Text(text = field.id) },
+                leadingIcon = {
+                    if (field.leadingIcon != null) {
+                        Icon(
+                            imageVector = field.leadingIcon,
+                            contentDescription = "Password",
+                        )
+                    }
+                },
             )
         }
     }

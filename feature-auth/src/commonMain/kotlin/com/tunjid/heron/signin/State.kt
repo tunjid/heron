@@ -16,7 +16,12 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Password
 import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
@@ -30,7 +35,11 @@ import kotlinx.serialization.Transient
 data class FormField(
     val id: String,
     val value: String,
-    val transformation: VisualTransformation,
+    @Transient
+    val leadingIcon: ImageVector? = null,
+    @Transient
+    val transformation: VisualTransformation = VisualTransformation.None,
+    @Transient
     val autofillTypes: List<AutofillType> = emptyList()
 )
 
@@ -47,11 +56,13 @@ data class State(
         FormField(
             id = "username",
             value = "",
+            leadingIcon = Icons.Rounded.AccountCircle,
             transformation = VisualTransformation.None,
         ),
         FormField(
             id = "password",
             value = "",
+            leadingIcon = Icons.Rounded.Lock,
             transformation = PasswordVisualTransformation(),
             autofillTypes = listOf(AutofillType.Password)
         )
