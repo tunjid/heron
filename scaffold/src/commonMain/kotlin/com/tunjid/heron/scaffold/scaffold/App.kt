@@ -21,6 +21,7 @@ import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
+import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.compose.PanedNavHost
 import com.tunjid.treenav.compose.configurations.animatePaneBoundsConfiguration
@@ -42,116 +43,118 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    CompositionLocalProvider(
-        LocalAppState provides appState,
-    ) {
-        Surface {
-            Box(
-                modifier = modifier.fillMaxSize()
-            ) {
-                // Root LookaheadScope used to anchor all shared element transitions
-                SharedTransitionScope { sharedElementModifier ->
-                    val movableSharedElementHostState = remember {
-                        MovableSharedElementHostState<ThreePane, Route>(
-                            sharedTransitionScope = this@SharedTransitionScope,
-                        )
-                    }
-                    PanedNavHost(
-                        modifier = Modifier.fillMaxSize(),
-                        state = appState.rememberPanedNavHostState {
-                            this
-                                .paneModifierConfiguration {
-                                    Modifier
-                                        .fillMaxSize()
-                                        .constrainedSizePlacement(
-                                            orientation = Orientation.Horizontal,
-                                            minSize = 180.dp,
-                                            atStart = paneState.pane == ThreePane.Secondary,
-                                        )
-                                        .padding(
-                                            horizontal =
-                                            if (appState.splitLayoutState.visibleCount > 1) 16.dp
-                                            else 0.dp
-                                        )
-                                        .run {
-                                            if (paneState.pane == ThreePane.TransientPrimary) backPreview(
-                                                appState.backPreviewState
-                                            )
-                                            else this
-                                        }
-                                }
-                                .threePanedNavHostConfiguration(
-                                    secondaryPaneBreakPoint = mutableStateOf(
-                                        SecondaryPaneMinWidthBreakpointDp
-                                    ),
-                                    tertiaryPaneBreakPoint = mutableStateOf(
-                                        TertiaryPaneMinWidthBreakpointDp
-                                    ),
-                                    windowWidthState = derivedStateOf {
-                                        appState.splitLayoutState.size
-                                    }
-                                )
-                                .predictiveBackConfiguration(
-                                    isPreviewingBack = derivedStateOf {
-                                        appState.isPreviewingBack
-                                    },
-                                    backPreviewTransform = MultiStackNav::pop,
-                                )
-                                .threePanedMovableSharedElementConfiguration(
-                                    movableSharedElementHostState
-                                )
-                                .animatePaneBoundsConfiguration(
-                                    lookaheadScope = this@SharedTransitionScope,
-                                    shouldAnimatePane = {
-                                        when (paneState.pane) {
-                                            ThreePane.Primary,
-                                            ThreePane.Secondary,
-                                            ThreePane.Tertiary -> !appState.paneAnchorState.hasInteractions
-
-                                            ThreePane.TransientPrimary -> true
-                                            ThreePane.Overlay,
-                                            null -> false
-                                        }
-                                    }
-                                )
-                        },
-                    ) {
-                        NavScaffold(
-                            isVisible = appState.showNavigation,
-                            useRail = appState.splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp,
+    AppTheme {
+        CompositionLocalProvider(
+            LocalAppState provides appState,
+        ) {
+            Surface {
+                Box(
+                    modifier = modifier.fillMaxSize()
+                ) {
+                    // Root LookaheadScope used to anchor all shared element transitions
+                    SharedTransitionScope { sharedElementModifier ->
+                        val movableSharedElementHostState = remember {
+                            MovableSharedElementHostState<ThreePane, Route>(
+                                sharedTransitionScope = this@SharedTransitionScope,
+                            )
+                        }
+                        PanedNavHost(
                             modifier = Modifier.fillMaxSize(),
-                            navItems = appState.navItems,
-                            onNavItemSelected = appState::onNavItemSelected
+                            state = appState.rememberPanedNavHostState {
+                                this
+                                    .paneModifierConfiguration {
+                                        Modifier
+                                            .fillMaxSize()
+                                            .constrainedSizePlacement(
+                                                orientation = Orientation.Horizontal,
+                                                minSize = 180.dp,
+                                                atStart = paneState.pane == ThreePane.Secondary,
+                                            )
+                                            .padding(
+                                                horizontal =
+                                                if (appState.splitLayoutState.visibleCount > 1) 16.dp
+                                                else 0.dp
+                                            )
+                                            .run {
+                                                if (paneState.pane == ThreePane.TransientPrimary) backPreview(
+                                                    appState.backPreviewState
+                                                )
+                                                else this
+                                            }
+                                    }
+                                    .threePanedNavHostConfiguration(
+                                        secondaryPaneBreakPoint = mutableStateOf(
+                                            SecondaryPaneMinWidthBreakpointDp
+                                        ),
+                                        tertiaryPaneBreakPoint = mutableStateOf(
+                                            TertiaryPaneMinWidthBreakpointDp
+                                        ),
+                                        windowWidthState = derivedStateOf {
+                                            appState.splitLayoutState.size
+                                        }
+                                    )
+                                    .predictiveBackConfiguration(
+                                        isPreviewingBack = derivedStateOf {
+                                            appState.isPreviewingBack
+                                        },
+                                        backPreviewTransform = MultiStackNav::pop,
+                                    )
+                                    .threePanedMovableSharedElementConfiguration(
+                                        movableSharedElementHostState
+                                    )
+                                    .animatePaneBoundsConfiguration(
+                                        lookaheadScope = this@SharedTransitionScope,
+                                        shouldAnimatePane = {
+                                            when (paneState.pane) {
+                                                ThreePane.Primary,
+                                                ThreePane.Secondary,
+                                                ThreePane.Tertiary -> !appState.paneAnchorState.hasInteractions
+
+                                                ThreePane.TransientPrimary -> true
+                                                ThreePane.Overlay,
+                                                null -> false
+                                            }
+                                        }
+                                    )
+                            },
                         ) {
-                            val filteredPaneOrder by remember {
-                                derivedStateOf { appState.filteredPaneOrder(this) }
-                            }
-                            appState.splitLayoutState.visibleCount = filteredPaneOrder.size
-                            appState.paneAnchorState.updateMaxWidth(
-                                with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
-                            )
-                            SplitLayout(
-                                state = appState.splitLayoutState,
-                                modifier = modifier
-                                    .fillMaxSize()
-                                    .then(sharedElementModifier),
-                                itemSeparators = { _, offset ->
-                                    DraggableThumb(
-                                        splitLayoutState = appState.splitLayoutState,
-                                        paneAnchorState = appState.paneAnchorState,
-                                        offset = offset
-                                    )
-                                },
-                                itemContent = { index ->
-                                    DragToPopLayout(
-                                        state = appState,
-                                        pane = filteredPaneOrder[index]
-                                    )
+                            NavScaffold(
+                                isVisible = appState.showNavigation,
+                                useRail = appState.splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp,
+                                modifier = Modifier.fillMaxSize(),
+                                navItems = appState.navItems,
+                                onNavItemSelected = appState::onNavItemSelected
+                            ) {
+                                val filteredPaneOrder by remember {
+                                    derivedStateOf { appState.filteredPaneOrder(this) }
                                 }
-                            )
-                            LaunchedEffect(filteredPaneOrder) {
-                                if (filteredPaneOrder.size != 1) return@LaunchedEffect
-                                appState.paneAnchorState.onClosed()
+                                appState.splitLayoutState.visibleCount = filteredPaneOrder.size
+                                appState.paneAnchorState.updateMaxWidth(
+                                    with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
+                                )
+                                SplitLayout(
+                                    state = appState.splitLayoutState,
+                                    modifier = modifier
+                                        .fillMaxSize()
+                                        .then(sharedElementModifier),
+                                    itemSeparators = { _, offset ->
+                                        DraggableThumb(
+                                            splitLayoutState = appState.splitLayoutState,
+                                            paneAnchorState = appState.paneAnchorState,
+                                            offset = offset
+                                        )
+                                    },
+                                    itemContent = { index ->
+                                        DragToPopLayout(
+                                            state = appState,
+                                            pane = filteredPaneOrder[index]
+                                        )
+                                    }
+                                )
+                                LaunchedEffect(filteredPaneOrder) {
+                                    if (filteredPaneOrder.size != 1) return@LaunchedEffect
+                                    appState.paneAnchorState.onClosed()
+                                }
                             }
                         }
                     }
