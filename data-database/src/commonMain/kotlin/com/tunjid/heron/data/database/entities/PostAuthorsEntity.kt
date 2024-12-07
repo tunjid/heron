@@ -31,7 +31,7 @@ import com.tunjid.heron.data.core.types.Id
         Index(value = ["authorId"]),
     ],
 )
-data class PostAuthorCrossRefPost(
+data class PostAuthorsEntity(
     val postId: Id,
     val authorId: Id,
 )
