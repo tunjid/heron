@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -27,7 +28,12 @@ import com.tunjid.heron.data.core.types.Uri
 data class FeedItemEntity(
     val postId: Id,
     val source: Uri?,
-    val replyRootPostId: Id?,
-    val replyParentPostId: Id?,
+    @Embedded
+    val reply: FeedReplyEntity?,
     val reason: String
+)
+
+data class FeedReplyEntity(
+    val rootPostId: Id,
+    val parentPostId: Id,
 )

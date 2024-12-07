@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Upsert
-import com.tunjid.heron.data.database.entities.PostAuthorCrossRefPost
+import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.PostImageEntity
@@ -20,7 +20,7 @@ interface PostDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnoreAuthorCrossRefEntities(
-        crossReferences: List<PostAuthorCrossRefPost>,
+        crossReferences: List<PostAuthorsEntity>,
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

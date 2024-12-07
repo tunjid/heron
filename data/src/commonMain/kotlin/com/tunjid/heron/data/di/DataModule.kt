@@ -24,10 +24,13 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
+import com.tunjid.heron.data.repository.FeedRepository
+import com.tunjid.heron.data.repository.OfflineFeedRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
@@ -66,6 +69,26 @@ abstract class DataComponent(
         .build()
 
     @Provides
+    fun providePostDao(
+        database: AppDatabase,
+    ) = database.postDao()
+
+    @Provides
+    fun provideProfileDao(
+        database: AppDatabase,
+    ) = database.profileDao()
+
+    @Provides
+    fun provideEmbedDao(
+        database: AppDatabase,
+    ) = database.embedDao()
+
+    @Provides
+    fun provideFeedDao(
+        database: AppDatabase,
+    ) = database.feedDao()
+
+    @Provides
     fun provideAppJson() = Json {
         explicitNulls = false
         ignoreUnknownKeys = true
@@ -79,11 +102,15 @@ abstract class DataComponent(
         @SingletonScope
         @Provides get() = this
 
-     val DataStoreSavedStateRepository.bind: SavedStateRepository
-         @SingletonScope
-         @Provides get() = this
+    val DataStoreSavedStateRepository.bind: SavedStateRepository
+        @SingletonScope
+        @Provides get() = this
 
     val AuthTokenRepository.bind: AuthRepository
+        @SingletonScope
+        @Provides get() = this
+
+    val OfflineFeedRepository.bind: FeedRepository
         @SingletonScope
         @Provides get() = this
 }
