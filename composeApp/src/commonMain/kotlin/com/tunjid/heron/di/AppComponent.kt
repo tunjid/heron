@@ -19,9 +19,10 @@ package com.tunjid.heron.di
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.signin.di.SignInScreenHolderComponent
+import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.treenav.compose.PaneStrategy
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -32,8 +33,9 @@ import me.tatarka.inject.annotations.Provides
 abstract class AppComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
-    @Component val signInComponent: SignInScreenHolderComponent,
-) {
+    @Component val signInComponent: SignInComponent,
+    @Component val homeComponent: HomeComponent,
+    ) {
 
     abstract val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>
 
@@ -44,7 +46,6 @@ abstract class AppComponent(
     ): AppState = AppState(
         routeConfigurationMap = routeConfigurationMap,
         navigationStateHolder = navigationStateHolder,
-        savedStateRepository = savedStateRepository,
     )
 
     abstract val appState: AppState

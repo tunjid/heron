@@ -64,4 +64,6 @@ kotlin {
 }
 dependencies {
     implementation(project(":di"))
+    add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspDesktop", libs.androidx.room.compiler)
 }

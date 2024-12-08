@@ -122,6 +122,8 @@ class OfflineFeedRepository(
             }
         }
 
+        feedDao.deleteAllFeedsFor(query.source)
+
         profileDao.upsertProfiles(postAuthorEntities)
         postDao.upsertPosts(postEntities)
 

@@ -37,6 +37,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
 import okio.FileSystem
 import okio.Path
+import sh.christian.ozone.BlueskyJson
 
 class DataModule(
     val appScope: CoroutineScope,
@@ -89,10 +90,7 @@ abstract class DataComponent(
     ) = database.feedDao()
 
     @Provides
-    fun provideAppJson() = Json {
-        explicitNulls = false
-        ignoreUnknownKeys = true
-    }
+    fun provideAppJson() = BlueskyJson
 
     @Provides
     fun provideAppProtoBuff() = ProtoBuf {

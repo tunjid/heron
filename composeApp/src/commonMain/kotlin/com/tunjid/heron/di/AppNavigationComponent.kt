@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.di
 
+import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
 import me.tatarka.inject.annotations.Component
@@ -24,6 +25,7 @@ import me.tatarka.inject.annotations.Component
 @Component
 abstract class AppNavigationComponent(
     @Component val signInNavigationComponent: SignInNavigationComponent,
+    @Component val homeNavigationComponent: HomeNavigationComponent,
 ) {
     internal abstract val routeMatcherMap: Map<String, RouteMatcher>
 }

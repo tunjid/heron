@@ -39,7 +39,7 @@ data class SavedState(
     )
 }
 
-private val defaultSavedState = SavedState(
+val EmptySavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(),
 )
@@ -69,7 +69,7 @@ class DataStoreSavedStateRepository(
     override val savedState = dataStore.data.stateIn(
         scope = appScope,
         started = SharingStarted.Eagerly,
-        initialValue = defaultSavedState,
+        initialValue = EmptySavedState,
     )
 
     override suspend fun updateState(update: SavedState.() -> SavedState) {
@@ -80,7 +80,7 @@ class DataStoreSavedStateRepository(
 private class SavedStateOkioSerializer(
     private val protoBuf: ProtoBuf
 ) : OkioSerializer<SavedState> {
-    override val defaultValue: SavedState = defaultSavedState
+    override val defaultValue: SavedState = EmptySavedState
 
     override suspend fun readFrom(source: BufferedSource): SavedState =
         protoBuf.decodeFromByteArray(source.readByteArray())

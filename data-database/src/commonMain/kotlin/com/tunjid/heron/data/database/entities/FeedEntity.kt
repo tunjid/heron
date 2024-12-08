@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 
@@ -26,6 +27,8 @@ import com.tunjid.heron.data.core.types.Uri
     tableName = "feedItems",
 )
 data class FeedItemEntity(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int = 0,
     val postId: Id,
     val source: Uri?,
     @Embedded

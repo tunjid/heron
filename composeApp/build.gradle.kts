@@ -45,6 +45,7 @@ kotlin {
             implementation(project(":data"))
             implementation(project(":scaffold"))
             implementation(project(":feature-auth"))
+            implementation(project(":feature-home"))
 
             implementation(libs.androidx.room.runtime)
 

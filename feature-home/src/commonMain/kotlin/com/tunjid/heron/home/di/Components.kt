@@ -14,52 +14,39 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.signin.di
+package com.tunjid.heron.home.di
 
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.home.ActualHomeStateHolder
+import com.tunjid.heron.home.HomeScreen
+import com.tunjid.heron.home.HomeStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.signin.Action
-import com.tunjid.heron.signin.ActualSignInStateHolder
-import com.tunjid.heron.signin.SignInScreen
-import com.tunjid.heron.signin.SignInStateHolderCreator
-import com.tunjid.heron.signin.sessionRequest
-import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
-import heron.feature_auth.generated.resources.Res
-import heron.feature_auth.generated.resources.create_an_account
-import heron.feature_auth.generated.resources.sign_in
-import heron.feature_auth.generated.resources.submit
+import heron.feature_home.generated.resources.Res
+import heron.feature_home.generated.resources.create_an_account
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/auth"
+private const val RoutePattern = "/home"
 
 private fun signInRoute(
     routeParams: RouteParams,
@@ -68,7 +55,7 @@ private fun signInRoute(
 )
 
 @Component
-abstract class SignInNavigationComponent {
+abstract class HomeNavigationComponent {
 
     @IntoMap
     @Provides
@@ -81,7 +68,7 @@ abstract class SignInNavigationComponent {
 }
 
 @Component
-abstract class SignInComponent(
+abstract class HomeComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
@@ -89,11 +76,11 @@ abstract class SignInComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SignInStateHolderCreator
+        creator: HomeStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualSignInStateHolder> {
+            val viewModel = viewModel<ActualHomeStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
@@ -104,24 +91,15 @@ abstract class SignInComponent(
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
-                showNavigation = false,
+                showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.MessageConsumed(it))
                 },
                 topBar = {
                     TopBar()
                 },
-                floatingActionButton = {
-                    Fab(
-                        modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
-                        onSubmit = {
-                            if (state.submitButtonEnabled) viewModel.accept(Action.Submit(state.sessionRequest))
-                        }
-                    )
-                },
                 content = { paddingValues ->
-                    SignInScreen(
+                    HomeScreen(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
@@ -148,24 +126,5 @@ private fun TopBar() {
                 }
             )
         },
-    )
-}
-
-@Composable
-private fun Fab(
-    modifier: Modifier = Modifier,
-    onSubmit: () -> Unit
-) {
-    ExtendedFloatingActionButton(
-        modifier = modifier,
-        onClick = onSubmit,
-        content = {
-            Text(stringResource(Res.string.sign_in))
-            Spacer(Modifier.size(8.dp))
-            Icon(
-                imageVector = Icons.Rounded.Check,
-                contentDescription = stringResource(Res.string.submit)
-            )
-        }
     )
 }
