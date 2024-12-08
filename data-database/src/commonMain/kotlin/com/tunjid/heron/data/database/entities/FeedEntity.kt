@@ -32,7 +32,7 @@ import com.tunjid.heron.data.core.types.Uri
 )
 data class FeedItemEntity(
     @PrimaryKey(autoGenerate = true)
-    var id: Int = 0,
+    var id: Long = 0,
     val postId: Id,
     val source: Uri?,
     @Embedded

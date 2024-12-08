@@ -29,11 +29,13 @@ import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.response.AtpResponse
 
 data class FeedQuery(
     /**
@@ -70,37 +72,49 @@ class OfflineFeedRepository(
 ) : FeedRepository {
 
     override fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>> = flow {
-        val networkPostsResponse = networkService.api.getTimeline(
-            GetTimelineQueryParams(
-                limit = query.limit,
-                cursor = query.nextItemCursor,
+        kotlin.runCatching {
+            val networkPostsResponse = networkService.api.getTimeline(
+                GetTimelineQueryParams(
+                    limit = query.limit,
+                    cursor = query.nextItemCursor,
+                )
             )
-        )
 
-        saveFeed(networkPostsResponse.requireResponse().feed, query)
-
-        val feed = readFeed(query).first()
-        println(feed)
+            when (networkPostsResponse) {
+                is AtpResponse.Failure -> TODO()
+                is AtpResponse.Success -> {
+                    saveFeed(networkPostsResponse.response.feed, query)
+                    emitAll(
+                        readFeed(query).map { feed ->
+                            CursorList(
+                                items = feed,
+                                nextCursor = networkPostsResponse.response.cursor
+                            )
+                        }
+                    )
+                }
+            }
+        }
     }
 
     private suspend fun saveFeed(
-        feed: List<FeedViewPost>,
+        feedViews: List<FeedViewPost>,
         query: FeedQuery
     ) {
         val feedItemEntities = mutableListOf<FeedItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
         val postAuthorEntities = mutableListOf<ProfileEntity>()
 
-        val externalEmbedEntities by lazy { mutableListOf<ExternalEmbedEntity>() }
-        val postExternalEmbedEntities by lazy { mutableListOf<PostExternalEmbedEntity>() }
+        val externalEmbedEntities = mutableListOf<ExternalEmbedEntity>()
+        val postExternalEmbedEntities = mutableListOf<PostExternalEmbedEntity>()
 
-        val imageEntities by lazy { mutableListOf<ImageEntity>() }
-        val postImageEntities by lazy { mutableListOf<PostImageEntity>() }
+        val imageEntities = mutableListOf<ImageEntity>()
+        val postImageEntities = mutableListOf<PostImageEntity>()
 
-        val videoEntities by lazy { mutableListOf<VideoEntity>() }
-        val postVideoEntities by lazy { mutableListOf<PostVideoEntity>() }
+        val videoEntities = mutableListOf<VideoEntity>()
+        val postVideoEntities = mutableListOf<PostVideoEntity>()
 
-        feed.forEach { feedView ->
+        for (feedView in feedViews) {
             // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.source))
 
