@@ -54,7 +54,13 @@ interface NavigationAction {
 
 private val InitialNavigationState = MultiStackNav(
     name = "splash-app",
-    stacks = emptyList(),
+    // TODO: Make this a splash screen
+    stacks = listOf(
+        StackNav(
+            name = "splashStack",
+            children = listOf(routeOf("/auth"))
+        )
+    )
 )
 
 private val SignedOutNavigationState = MultiStackNav(
