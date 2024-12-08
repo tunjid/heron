@@ -28,7 +28,9 @@ import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
@@ -77,36 +79,8 @@ class OfflineFeedRepository(
 
         saveFeed(networkPostsResponse.requireResponse().feed, query)
 
-        val fetched = feedDao.feedItems(
-            source = query.source,
-            limit = 10,
-        )
-            .first()
-
-        fetched.forEachIndexed { index, feedItemEntity ->
-            postDao.post(
-                postId = feedItemEntity.postId
-            )
-                .first()
-                .asExternalModel()
-                .also { println("main post @$index. embed: ${it.embed}") }
-            feedItemEntity.reply?.let { reply ->
-                println(reply)
-                postDao.post(
-                    postId = reply.rootPostId
-                ).first()
-                    .asExternalModel()
-                    .also { println("post reply root @$index. embed: ${it.embed}") }
-                postDao.post(
-                    postId = reply.parentPostId
-                )
-                    .first()
-                    .asExternalModel()
-                    .also { println("post reply parent @$index. embed: ${it.embed}") }
-            }
-        }
-
-        println(fetched)
+        val feed = readFeed(query).first()
+        println(feed)
     }
 
     private suspend fun saveFeed(
@@ -183,4 +157,46 @@ class OfflineFeedRepository(
 
         feedDao.upsertFeedItems(feedItemEntities)
     }
+
+    private fun readFeed(
+        query: FeedQuery
+    ): Flow<List<FeedItem>> =
+        feedDao.feedItems(
+            source = query.source,
+            limit = 10,
+        )
+            .flatMapLatest { itemEntities ->
+                combine(
+                    postDao.posts(
+                        itemEntities.map { it.postId }
+                    ),
+                    postDao.posts(
+                        itemEntities.mapNotNull { it.reply?.parentPostId }
+                    ),
+                    postDao.posts(
+                        itemEntities.mapNotNull { it.reply?.rootPostId }
+                    ),
+                ) { mainPosts, replyParents, replyRoots ->
+                    val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
+                    val idsToReplyParents = replyParents.associateBy { it.entity.cid }
+                    val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
+
+                    itemEntities.map { entity ->
+                        val mainPost = idsToMainPosts.getValue(entity.postId)
+                        val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
+                        val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
+
+                        when {
+                            replyRoot != null && replyParent != null -> FeedItem.Reply(
+                                mainPost.asExternalModel(),
+                                rootPost = replyRoot.asExternalModel(),
+                                parentPost = replyParent.asExternalModel()
+                            )
+
+                            else -> FeedItem.Single(mainPost.asExternalModel())
+                        }
+                    }
+                }
+            }
+
 }

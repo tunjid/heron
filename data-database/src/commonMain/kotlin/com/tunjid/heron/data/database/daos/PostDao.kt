@@ -45,11 +45,11 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            WHERE cid = :postId
+            WHERE cid IN (:postIds)
         """
     )
-    fun post(
-        postId: Id,
-    ): Flow<PopulatedPostEntity>
+    fun posts(
+        postIds: List<Id>,
+    ): Flow<List<PopulatedPostEntity>>
 
 }
