@@ -10,7 +10,9 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.FeedItemEntity
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.emptyPostEntity
+import kotlinx.datetime.Instant
 
 internal fun FeedViewPost.feedItemEntity(
     source: Uri,
@@ -23,11 +25,16 @@ internal fun FeedViewPost.feedItemEntity(
             parentPostId = it.parent.postEntity().cid,
         )
     },
-    reason = when (reason) {
-        is FeedViewPostReasonUnion.ReasonPin -> "reasonPin"
-        is FeedViewPostReasonUnion.ReasonRepost -> "reasonRepost"
+    reposter = when (val reason = reason) {
+        is FeedViewPostReasonUnion.ReasonRepost -> Id(reason.value.by.did.did)
+        else -> null
+    },
+    isPinned = reason is FeedViewPostReasonUnion.ReasonPin,
+    indexedAt = when (val reason = reason) {
+        is FeedViewPostReasonUnion.ReasonPin -> Instant.DISTANT_PAST
+        is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
         is FeedViewPostReasonUnion.Unknown,
-        null -> "unknownReason"
+        null -> post.indexedAt
     },
 )
 
@@ -80,3 +87,23 @@ internal fun ReplyRefParentUnion.postEntity() = when (this) {
         id = Constants.unknownPostId,
     )
 }
+
+internal fun FeedViewPostReasonUnion.profileEntity() =
+    when (this) {
+        is FeedViewPostReasonUnion.ReasonRepost -> ProfileEntity(
+            did = Id(value.by.did.did),
+            handle = Id(value.by.handle.handle),
+            displayName = value.by.displayName,
+            description = null,
+            avatar = value.by.avatar?.uri?.let(::Uri),
+            banner = null,
+            followersCount = 0,
+            followsCount = 0,
+            postsCount = 0,
+            joinedViaStarterPack = null,
+            indexedAt = null,
+            createdAt = value.by.createdAt,
+        )
+
+        else -> null
+    }

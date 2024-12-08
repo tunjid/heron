@@ -103,7 +103,7 @@ class OfflineFeedRepository(
     ) {
         val feedItemEntities = mutableListOf<FeedItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
-        val postAuthorEntities = mutableListOf<ProfileEntity>()
+        val profileEntities = mutableListOf<ProfileEntity>()
 
         val externalEmbedEntities = mutableListOf<ExternalEmbedEntity>()
         val postExternalEmbedEntities = mutableListOf<PostExternalEmbedEntity>()
@@ -123,11 +123,13 @@ class OfflineFeedRepository(
                 postEntities.add(it.parent.postEntity())
             }
 
+            feedView.reason?.profileEntity()?.let(profileEntities::add)
+
             // Extract data from post
             val postEntity = feedView.post.postEntity()
 
             postEntities.add(postEntity)
-            postAuthorEntities.add(feedView.post.profileEntity())
+            profileEntities.add(feedView.post.profileEntity())
 
             feedView.post.embedEntities().forEach { embedEntity ->
                 when (embedEntity) {
@@ -158,7 +160,7 @@ class OfflineFeedRepository(
         feedDao.deleteAllFeedsFor(query.source)
 
         // Order matters to satisfy foreign key constraints
-        profileDao.upsertProfiles(postAuthorEntities)
+        profileDao.upsertProfiles(profileEntities)
         postDao.upsertPosts(postEntities)
 
         embedDao.upsertExternalEmbeds(externalEmbedEntities)
@@ -190,24 +192,40 @@ class OfflineFeedRepository(
                     postDao.posts(
                         itemEntities.mapNotNull { it.reply?.rootPostId }
                     ),
-                ) { mainPosts, replyParents, replyRoots ->
+                    profileDao.profiles(
+                        itemEntities.mapNotNull { it.reposter }
+                    )
+                ) { mainPosts, replyParents, replyRoots, reposters ->
                     val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
                     val idsToReplyParents = replyParents.associateBy { it.entity.cid }
                     val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
+                    val idsToReposters = reposters.associateBy { it.did }
 
                     itemEntities.map { entity ->
                         val mainPost = idsToMainPosts.getValue(entity.postId)
                         val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
                         val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
+                        val reposter = entity.reposter?.let { idsToReposters[it] }
 
                         when {
                             replyRoot != null && replyParent != null -> FeedItem.Reply(
-                                mainPost.asExternalModel(),
+                                post = mainPost.asExternalModel(),
                                 rootPost = replyRoot.asExternalModel(),
-                                parentPost = replyParent.asExternalModel()
+                                parentPost = replyParent.asExternalModel(),
                             )
 
-                            else -> FeedItem.Single(mainPost.asExternalModel())
+                            reposter != null -> FeedItem.Repost(
+                                post = mainPost.asExternalModel(),
+                                by = reposter.asExternalModel(),
+                            )
+
+                            entity.isPinned -> FeedItem.Pinned(
+                                post = mainPost.asExternalModel(),
+                            )
+
+                            else -> FeedItem.Single(
+                                post = mainPost.asExternalModel(),
+                            )
                         }
                     }
                 }

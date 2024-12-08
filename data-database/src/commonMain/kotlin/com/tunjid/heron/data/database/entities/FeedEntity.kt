@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.datetime.Instant
 
 
 @Entity(
@@ -37,7 +38,9 @@ data class FeedItemEntity(
     val source: Uri?,
     @Embedded
     val reply: FeedReplyEntity?,
-    val reason: String
+    val reposter: Id?,
+    val isPinned: Boolean,
+    val indexedAt: Instant,
 )
 
 data class FeedReplyEntity(
