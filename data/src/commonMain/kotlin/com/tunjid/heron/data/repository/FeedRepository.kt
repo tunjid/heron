@@ -58,7 +58,6 @@ interface FeedRepository {
     fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>>
 }
 
-@SingletonScope
 @Inject
 class OfflineFeedRepository(
     private val feedDao: FeedDao,

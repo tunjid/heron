@@ -66,5 +66,5 @@ fun createAppState(): AppState {
 
 private fun savedStatePath(): Path = File(
     System.getProperty("java.io.tmpdir"),
-    "tunji-heron-saved-state-9.ser"
+    "tunji-heron-saved-state-16.ser"
 ).toOkioPath()

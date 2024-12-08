@@ -28,12 +28,17 @@ import com.tunjid.treenav.strings.routeParserFrom
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
+import me.tatarka.inject.annotations.Scope
 
+@Scope
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
+annotation class ScaffoldScope
 
 class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
 )
 
+@ScaffoldScope
 @Component
 abstract class ScaffoldComponent(
     private val module: ScaffoldModule,
@@ -53,6 +58,7 @@ abstract class ScaffoldComponent(
     fun navActions(): (NavigationMutation) -> Unit = navStateHolder.accept
 
     val PersistedNavigationStateHolder.bind: NavigationStateHolder
+        @ScaffoldScope
         @Provides get() = this
 
     abstract val navStateHolder: NavigationStateHolder

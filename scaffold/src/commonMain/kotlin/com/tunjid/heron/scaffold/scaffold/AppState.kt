@@ -96,8 +96,7 @@ class AppState @Inject constructor(
         },
         strategyTransform = { node ->
             configurationTrie[node] ?: threePaneListDetailStrategy(
-                paneMapping = { emptyMap() },
-                render = {},
+                render = { },
             )
         }
     )
