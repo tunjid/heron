@@ -57,19 +57,19 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
-    fun appScope(): CoroutineScope = module.appScope
+    fun provideAppScope(): CoroutineScope = module.appScope
 
     @DataScope
     @Provides
-    fun savedStatePath(): Path = module.savedStatePath
+    fun provideSavedStatePath(): Path = module.savedStatePath
 
     @DataScope
     @Provides
-    fun savedStateFileSystem(): FileSystem = module.savedStateFileSystem
+    fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
 
     @DataScope
     @Provides
-    fun getRoomDatabase(): AppDatabase = module.databaseBuilder
+    fun provideRoomDatabase(): AppDatabase = module.databaseBuilder
 //        .addMigrations(MIGRATIONS)
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .setDriver(BundledSQLiteDriver())
