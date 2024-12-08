@@ -17,13 +17,14 @@
 package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedStateRepository
-import com.tunjid.heron.di.SingletonScope
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
+import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
@@ -35,7 +36,6 @@ interface NetworkService {
     val api: BlueskyApi
 }
 
-@SingletonScope
 @Inject
 class KtorNetworkService(
     private val json: Json,
@@ -44,6 +44,11 @@ class KtorNetworkService(
     override val api = XrpcBlueskyApi(
         HttpClient {
             expectSuccess = true
+
+            install(DefaultRequest) {
+                url.takeFrom("https://bsky.social")
+            }
+
             install(ContentNegotiation) {
                 json(
                     json = json,

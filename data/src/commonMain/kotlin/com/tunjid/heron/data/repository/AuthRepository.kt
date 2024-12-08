@@ -19,12 +19,10 @@ package com.tunjid.heron.data.repository
 import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.di.SingletonScope
+import com.tunjid.heron.data.runCatchingWithIoMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.io.IOException
 import me.tatarka.inject.annotations.Inject
-import sh.christian.ozone.api.response.AtpResponse
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
@@ -32,7 +30,6 @@ interface AuthRepository {
     suspend fun createSession(request: SessionRequest): Result<Unit>
 }
 
-@SingletonScope
 @Inject
 class AuthTokenRepository(
     private val networkService: NetworkService,
@@ -42,31 +39,24 @@ class AuthTokenRepository(
     override val isSignedIn: Flow<Boolean> =
         savedStateRepository.savedState.map { it.auth != null }
 
-    override suspend fun createSession(request: SessionRequest): Result<Unit> = try {
-        val result = networkService.api.createSession(
+    override suspend fun createSession(
+        request: SessionRequest
+    ): Result<Unit> = runCatchingWithIoMessage {
+        networkService.api.createSession(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
             )
         )
-        when (result) {
-            is AtpResponse.Failure -> Result.failure(
-                Exception(result.error?.message)
-            )
-
-            is AtpResponse.Success -> Result.success(
-                savedStateRepository.updateState {
-                    copy(
-                        auth = SavedState.AuthTokens(
-                            auth = result.response.accessJwt,
-                            refresh = result.response.refreshJwt,
-                        )
-                    )
-                }
-            )
-        }
-
-    } catch (ioe: IOException) {
-        Result.failure(Exception("There was an error"))
     }
+        .mapCatching { result ->
+            savedStateRepository.updateState {
+                copy(
+                    auth = SavedState.AuthTokens(
+                        auth = result.accessJwt,
+                        refresh = result.refreshJwt,
+                    )
+                )
+            }
+        }
 }

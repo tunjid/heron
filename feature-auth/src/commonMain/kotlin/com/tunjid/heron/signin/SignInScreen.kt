@@ -31,6 +31,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import heron.feature_auth.generated.resources.Res
+import heron.feature_auth.generated.resources.password
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SignInScreen(
@@ -59,7 +62,7 @@ internal fun SignInScreen(
                     if (field.leadingIcon != null) {
                         Icon(
                             imageVector = field.leadingIcon,
-                            contentDescription = "Password",
+                            contentDescription = stringResource(Res.string.password),
                         )
                     }
                 },

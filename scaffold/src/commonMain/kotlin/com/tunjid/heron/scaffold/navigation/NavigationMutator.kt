@@ -60,6 +60,32 @@ private val SignedOutNavigationState = MultiStackNav(
     )
 )
 
+private val SignedInNavigationState = MultiStackNav(
+    name = "heron-app",
+    stacks = listOf(
+        StackNav(
+            name = "homeStack",
+            children = listOf(routeOf("/home"))
+        ),
+        StackNav(
+            name = "searchStack",
+            children = listOf(routeOf("/search"))
+        ),
+        StackNav(
+            name = "messagesStack",
+            children = listOf(routeOf("/messages"))
+        ),
+        StackNav(
+            name = "notificationsStack",
+            children = listOf(routeOf("/notifications"))
+        ),
+        StackNav(
+            name = "homeStack",
+            children = listOf(routeOf("/me"))
+        ),
+    )
+)
+
 @Inject
 class PersistedNavigationStateHolder(
     appScope: CoroutineScope,
@@ -104,6 +130,10 @@ class PersistedNavigationStateHolder(
             }
         },
     )
+
+@Suppress("UnusedReceiverParameter")
+fun NavigationContext.resetAuthNavigation(): MultiStackNav =
+    SignedInNavigationState
 
 /**
  * A helper function for generic state producers to consume navigation actions
