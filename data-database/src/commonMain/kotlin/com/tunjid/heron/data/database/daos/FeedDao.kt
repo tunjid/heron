@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.FeedItemEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FeedDao {
@@ -23,4 +24,16 @@ interface FeedDao {
     suspend fun upsertFeedItems(
         entities: List<FeedItemEntity>,
     )
+
+    @Query(
+        """
+            SELECT * FROM feedItems
+            WHERE source = :source
+            LIMIT :limit
+        """
+    )
+    fun feedItems(
+        source: Uri,
+        limit: Long,
+    ): Flow<List<FeedItemEntity>>
 }
