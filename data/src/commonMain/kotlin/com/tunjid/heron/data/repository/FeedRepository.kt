@@ -195,17 +195,17 @@ class OfflineFeedRepository(
                     profileDao.profiles(
                         itemEntities.mapNotNull { it.reposter }
                     )
-                ) { mainPosts, replyParents, replyRoots, reposters ->
+                ) { mainPosts, replyParents, replyRoots, repostProfiles ->
                     val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
                     val idsToReplyParents = replyParents.associateBy { it.entity.cid }
                     val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
-                    val idsToReposters = reposters.associateBy { it.did }
+                    val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                     itemEntities.map { entity ->
                         val mainPost = idsToMainPosts.getValue(entity.postId)
                         val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
                         val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
-                        val reposter = entity.reposter?.let { idsToReposters[it] }
+                        val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
                         when {
                             replyRoot != null && replyParent != null -> FeedItem.Reply(
@@ -214,9 +214,9 @@ class OfflineFeedRepository(
                                 parentPost = replyParent.asExternalModel(),
                             )
 
-                            reposter != null -> FeedItem.Repost(
+                            repostedBy != null -> FeedItem.Repost(
                                 post = mainPost.asExternalModel(),
-                                by = reposter.asExternalModel(),
+                                by = repostedBy.asExternalModel(),
                             )
 
                             entity.isPinned -> FeedItem.Pinned(
