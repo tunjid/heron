@@ -27,7 +27,6 @@ import com.tunjid.heron.data.database.entities.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.VideoEntity
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Instant
