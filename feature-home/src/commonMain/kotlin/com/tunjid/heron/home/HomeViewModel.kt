@@ -19,6 +19,9 @@ package com.tunjid.heron.home
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.data.repository.FeedRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -28,12 +31,16 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.QueryFetcher
+import com.tunjid.tiler.utilities.NeighboredFetchResult
+import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -63,10 +70,10 @@ class ActualHomeStateHolder(
     initialState = State(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-//        authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
         flow {
             feedRepository.timeline(
                 FeedQuery(
+                    page = 0,
                     source = Constants.timelineFeed,
                     firstRequestInstant = Clock.System.now(),
                 )
@@ -84,5 +91,34 @@ class ActualHomeStateHolder(
                 )
             }
         }
+    }
+)
+
+
+fun feedItemQueryFetcher(
+    source: Uri,
+    feedRepository: FeedRepository,
+): QueryFetcher<FeedQuery, FeedItem> = neighboredQueryFetcher(
+    // 5 tokens are held in a LIFO queue
+    maxTokens = 5,
+    // Make sure the first page has an entry for its cursor/token
+    seedQueryTokenMap = mapOf<FeedQuery, CursorList.DoubleCursor?>(
+        FeedQuery(
+            page = 0,
+            source = source,
+            firstRequestInstant = Clock.System.now(),
+        ) to null
+    ),
+    fetcher = { query, cursor ->
+        feedRepository
+            .timeline(query.copy(nextItemCursor = cursor))
+            .map { feedItemCursorList ->
+                NeighboredFetchResult(
+                    // Set the cursor for the next page and any other page with data available.
+                    // This will cause the fetcher for the pages to be invoked if they are in scope.
+                    mapOf(query.copy(page = query.page + 1) to feedItemCursorList.nextCursor),
+                    items = feedItemCursorList
+                )
+            }
     }
 )

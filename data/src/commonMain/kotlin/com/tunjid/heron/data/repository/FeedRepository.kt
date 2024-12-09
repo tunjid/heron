@@ -41,6 +41,7 @@ import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
 
 data class FeedQuery(
+    val page: Int,
     /**
      * The backing source of the feed, be it a list or other feed generator output.
      * It is null for a signed in user's timeline.
