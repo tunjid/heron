@@ -5,6 +5,7 @@ import app.bsky.feed.GetTimelineQueryParams
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -32,7 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
@@ -55,7 +56,7 @@ data class FeedQuery(
     /**
      * The cursor used to fetch items. Null if this is the first request.
      */
-    val nextItemCursor: String? = null,
+    val nextItemCursor: CursorList.DoubleCursor? = null,
 )
 
 interface FeedRepository {
@@ -68,36 +69,50 @@ class OfflineFeedRepository(
     private val postDao: PostDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
+    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
 ) : FeedRepository {
 
     override fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>> = flow {
-        kotlin.runCatching {
-            val networkPostsResponse = networkService.api.getTimeline(
-                GetTimelineQueryParams(
-                    limit = query.limit,
-                    cursor = query.nextItemCursor,
-                )
-            )
-
-            when (networkPostsResponse) {
-                is AtpResponse.Failure -> TODO()
-                is AtpResponse.Success -> {
-                    saveFeed(networkPostsResponse.response.feed, query)
-                    emitAll(
-                        readFeed(query).map { feed ->
-                            CursorList(
-                                items = feed,
-                                nextCursor = networkPostsResponse.response.cursor
-                            )
-                        }
+        val networkCursorFlow = flow {
+            emit(null)
+            kotlin.runCatching {
+                val networkPostsResponse = networkService.api.getTimeline(
+                    GetTimelineQueryParams(
+                        limit = query.limit,
+                        cursor = query.nextItemCursor?.remote,
                     )
+                )
+
+                when (networkPostsResponse) {
+                    is AtpResponse.Failure -> {
+                        // TODO
+                    }
+
+                    is AtpResponse.Success -> {
+                        emit(networkPostsResponse.response.cursor)
+                        transactionWriter.saveFeed(networkPostsResponse.response.feed, query)
+                    }
                 }
             }
         }
+        emitAll(
+            combine(
+                networkCursorFlow,
+                readFeed(query),
+            ) { networkCursor, feed ->
+                CursorList(
+                    items = feed,
+                    nextCursor = CursorList.DoubleCursor(
+                        remote = networkCursor,
+                        local = feed.lastOrNull()?.indexedAt
+                    )
+                )
+            }
+        )
     }
 
-    private suspend fun saveFeed(
+    private suspend fun TransactionWriter.saveFeed(
         feedViews: List<FeedViewPost>,
         query: FeedQuery
     ) {
@@ -157,21 +172,23 @@ class OfflineFeedRepository(
             }
         }
 
-        feedDao.deleteAllFeedsFor(query.source)
+        inTransaction {
+            feedDao.deleteAllFeedsFor(query.source)
 
-        // Order matters to satisfy foreign key constraints
-        profileDao.upsertProfiles(profileEntities)
-        postDao.upsertPosts(postEntities)
+            // Order matters to satisfy foreign key constraints
+            profileDao.upsertProfiles(profileEntities)
+            postDao.upsertPosts(postEntities)
 
-        embedDao.upsertExternalEmbeds(externalEmbedEntities)
-        embedDao.upsertImages(imageEntities)
-        embedDao.upsertVideos(videoEntities)
+            embedDao.upsertExternalEmbeds(externalEmbedEntities)
+            embedDao.upsertImages(imageEntities)
+            embedDao.upsertVideos(videoEntities)
 
-        postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
-        postDao.insertOrIgnorePostImages(postImageEntities)
-        postDao.insertOrIgnorePostVideos(postVideoEntities)
+            postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
+            postDao.insertOrIgnorePostImages(postImageEntities)
+            postDao.insertOrIgnorePostVideos(postVideoEntities)
 
-        feedDao.upsertFeedItems(feedItemEntities)
+            feedDao.upsertFeedItems(feedItemEntities)
+        }
     }
 
     private fun readFeed(
@@ -179,6 +196,7 @@ class OfflineFeedRepository(
     ): Flow<List<FeedItem>> =
         feedDao.feedItems(
             source = query.source,
+            before = query.nextItemCursor?.local ?: Clock.System.now(),
             limit = 10,
         )
             .flatMapLatest { itemEntities ->
@@ -217,6 +235,7 @@ class OfflineFeedRepository(
                             repostedBy != null -> FeedItem.Repost(
                                 post = mainPost.asExternalModel(),
                                 by = repostedBy.asExternalModel(),
+                                at = entity.indexedAt,
                             )
 
                             entity.isPinned -> FeedItem.Pinned(

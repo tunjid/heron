@@ -17,8 +17,10 @@
 package com.tunjid.heron.data.di
 
 import androidx.room.RoomDatabase
+import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.AppDatabase
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
@@ -99,6 +101,17 @@ abstract class DataComponent(
     fun provideFeedDao(
         database: AppDatabase,
     ) = database.feedDao()
+
+    @DataScope
+    @Provides
+    fun provideTransactionWriter(
+        database: AppDatabase,
+    ): TransactionWriter = TransactionWriter { block ->
+        //  TODO: Figure out how to do this in a transaction in KMP
+        database.useWriterConnection {
+            block()
+        }
+    }
 
     @DataScope
     @Provides

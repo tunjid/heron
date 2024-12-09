@@ -58,7 +58,11 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
 
-class DateConverters {
+fun interface TransactionWriter {
+    suspend fun inTransaction(block: suspend () -> Unit)
+}
+
+internal class DateConverters {
     @TypeConverter
     fun fromTimestamp(value: Long?): Instant? {
         return value?.let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
@@ -70,7 +74,7 @@ class DateConverters {
     }
 }
 
-class UriConverters {
+internal class UriConverters {
 
     @TypeConverter
     fun fromString(value: String?): Uri? {
@@ -84,7 +88,7 @@ class UriConverters {
 
 }
 
-class IdConverters {
+internal class IdConverters {
     @TypeConverter
     fun fromString(value: String?): Id? {
         return value?.let { Id(it) }
