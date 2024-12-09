@@ -4,6 +4,7 @@ import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetTimelineQueryParams
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.isInitialRequest
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
@@ -11,6 +12,7 @@ import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
 import com.tunjid.heron.data.database.entities.FeedItemEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -173,7 +175,17 @@ class OfflineFeedRepository(
         }
 
         inTransaction {
-            feedDao.deleteAllFeedsFor(query.source)
+            if (query.nextItemCursor.isInitialRequest
+                && feedDao.lastFetchKey(query.source)?.lastFetchedAt != query.firstRequestInstant
+            ) {
+                feedDao.deleteAllFeedsFor(query.source)
+                feedDao.upsertFeedFetchKey(
+                    FeedFetchKeyEntity(
+                        feedUri = query.source,
+                        lastFetchedAt = query.firstRequestInstant
+                    )
+                )
+            }
 
             // Order matters to satisfy foreign key constraints
             profileDao.upsertProfiles(profileEntities)

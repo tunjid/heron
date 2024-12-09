@@ -13,6 +13,7 @@ import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
 import com.tunjid.heron.data.database.entities.FeedItemEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
@@ -37,6 +38,7 @@ import kotlinx.datetime.Instant
         ProfileEntity::class,
         FeedItemEntity::class,
         PostAuthorsEntity::class,
+        FeedFetchKeyEntity::class,
     ],
 )
 @TypeConverters(

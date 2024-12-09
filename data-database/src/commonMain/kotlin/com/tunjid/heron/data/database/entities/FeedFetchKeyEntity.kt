@@ -16,38 +16,18 @@
 
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.Junction
 import androidx.room.PrimaryKey
-import androidx.room.Relation
-import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "feedItems",
-    indices = [
-        Index(value = ["indexedAt"]),
-    ],
+    tableName = "feedFetchKeys",
 )
-data class FeedItemEntity(
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0,
-    val postId: Id,
-    val source: Uri?,
-    @Embedded
-    val reply: FeedReplyEntity?,
-    val reposter: Id?,
-    val isPinned: Boolean,
-    val indexedAt: Instant,
+data class FeedFetchKeyEntity(
+    @PrimaryKey
+    var feedUri: Uri,
+    val lastFetchedAt: Instant,
 )
 
-data class FeedReplyEntity(
-    val rootPostId: Id,
-    val parentPostId: Id,
-)
