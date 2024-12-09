@@ -12,6 +12,7 @@ androidx-espresso-core = "3.6.1"
 lifecycle = "2.8.4"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
+coil = "3.0.1"
 compose-multiplatform = "1.7.1"
 junit = "4.13.2"
 kotlin-inject = "0.7.2"
@@ -49,6 +50,8 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-sqlite = { group = "androidx.sqlite", name = "sqlite", version.ref = "androidx-sqlite" }
 androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "androidx-sqlite" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor2", version.ref = "coil" }
 compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 compose-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
 compose-animation = { group = "org.jetbrains.compose.animation", name = "animation", version.ref = "compose-multiplatform" }
