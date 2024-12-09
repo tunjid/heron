@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.data.repository.FeedRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory

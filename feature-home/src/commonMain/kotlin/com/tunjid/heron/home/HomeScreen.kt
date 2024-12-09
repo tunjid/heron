@@ -32,7 +32,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.data.core.models.id
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable

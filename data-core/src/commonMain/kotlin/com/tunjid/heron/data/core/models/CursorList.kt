@@ -13,8 +13,3 @@ data class CursorList<T>(
         val remote: String?,
     )
 }
-
-val CursorList.DoubleCursor?.isInitialRequest
-    get() = this != null
-            && local == null
-            && remote == null
