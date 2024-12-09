@@ -206,8 +206,9 @@ fun feedItemQueryFetcher(
     startingQuery: FeedQuery,
     feedRepository: FeedRepository,
 ): QueryFetcher<FeedQuery, FeedItem> = neighboredQueryFetcher(
-    // 5 tokens are held in a LIFO queue
-    maxTokens = 5,
+    // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
+    // in memory
+    maxTokens = 50,
     // Make sure the first page has an entry for its cursor/token
     seedQueryTokenMap = mapOf(
         startingQuery to CursorList.DoubleCursor(

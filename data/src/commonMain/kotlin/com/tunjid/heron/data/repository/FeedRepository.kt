@@ -33,9 +33,9 @@ import com.tunjid.heron.data.network.models.profileEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -209,60 +209,63 @@ class OfflineFeedRepository(
     private fun readFeed(
         query: FeedQuery
     ): Flow<List<FeedItem>> =
-        feedDao.feedItems(
-            source = query.source,
-            before = query.nextItemCursor?.local ?: Clock.System.now(),
-            limit = 10,
-        )
-            .flatMapLatest { itemEntities ->
-                combine(
-                    postDao.posts(
-                        itemEntities.map { it.postId }
-                    ),
-                    postDao.posts(
-                        itemEntities.mapNotNull { it.reply?.parentPostId }
-                    ),
-                    postDao.posts(
-                        itemEntities.mapNotNull { it.reply?.rootPostId }
-                    ),
-                    profileDao.profiles(
-                        itemEntities.mapNotNull { it.reposter }
-                    )
-                ) { mainPosts, replyParents, replyRoots, repostProfiles ->
-                    val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
-                    val idsToReplyParents = replyParents.associateBy { it.entity.cid }
-                    val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
-                    val idsToRepostProfiles = repostProfiles.associateBy { it.did }
+        when(val local = query.nextItemCursor?.local) {
+            null -> emptyFlow()
+            else -> feedDao.feedItems(
+                source = query.source,
+                before = local,
+                limit = query.limit,
+            )
+                .flatMapLatest { itemEntities ->
+                    combine(
+                        postDao.posts(
+                            itemEntities.map { it.postId }
+                        ),
+                        postDao.posts(
+                            itemEntities.mapNotNull { it.reply?.parentPostId }
+                        ),
+                        postDao.posts(
+                            itemEntities.mapNotNull { it.reply?.rootPostId }
+                        ),
+                        profileDao.profiles(
+                            itemEntities.mapNotNull { it.reposter }
+                        )
+                    ) { mainPosts, replyParents, replyRoots, repostProfiles ->
+                        val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
+                        val idsToReplyParents = replyParents.associateBy { it.entity.cid }
+                        val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
+                        val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
-                    itemEntities.map { entity ->
-                        val mainPost = idsToMainPosts.getValue(entity.postId)
-                        val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
-                        val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
-                        val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
+                        itemEntities.map { entity ->
+                            val mainPost = idsToMainPosts.getValue(entity.postId)
+                            val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
+                            val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
+                            val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
-                        when {
-                            replyRoot != null && replyParent != null -> FeedItem.Reply(
-                                post = mainPost.asExternalModel(),
-                                rootPost = replyRoot.asExternalModel(),
-                                parentPost = replyParent.asExternalModel(),
-                            )
+                            when {
+                                replyRoot != null && replyParent != null -> FeedItem.Reply(
+                                    post = mainPost.asExternalModel(),
+                                    rootPost = replyRoot.asExternalModel(),
+                                    parentPost = replyParent.asExternalModel(),
+                                )
 
-                            repostedBy != null -> FeedItem.Repost(
-                                post = mainPost.asExternalModel(),
-                                by = repostedBy.asExternalModel(),
-                                at = entity.indexedAt,
-                            )
+                                repostedBy != null -> FeedItem.Repost(
+                                    post = mainPost.asExternalModel(),
+                                    by = repostedBy.asExternalModel(),
+                                    at = entity.indexedAt,
+                                )
 
-                            entity.isPinned -> FeedItem.Pinned(
-                                post = mainPost.asExternalModel(),
-                            )
+                                entity.isPinned -> FeedItem.Pinned(
+                                    post = mainPost.asExternalModel(),
+                                )
 
-                            else -> FeedItem.Single(
-                                post = mainPost.asExternalModel(),
-                            )
+                                else -> FeedItem.Single(
+                                    post = mainPost.asExternalModel(),
+                                )
+                            }
                         }
                     }
                 }
-            }
+        }
 
 }
