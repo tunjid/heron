@@ -36,3 +36,4 @@ sealed class FeedItem {
     ) : FeedItem()
 }
 
+val FeedItem.id get() = post.cid.id

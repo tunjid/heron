@@ -37,9 +37,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
 
+@Serializable
 data class FeedQuery(
     val page: Int,
     /**
