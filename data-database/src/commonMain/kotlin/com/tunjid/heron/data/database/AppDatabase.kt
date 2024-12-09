@@ -4,11 +4,16 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
 import com.tunjid.heron.data.database.entities.FeedItemEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
@@ -18,6 +23,7 @@ import com.tunjid.heron.data.database.entities.PostImageEntity
 import com.tunjid.heron.data.database.entities.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.VideoEntity
+import kotlinx.datetime.Instant
 
 @Database(
     version = 1,
@@ -32,7 +38,13 @@ import com.tunjid.heron.data.database.entities.VideoEntity
         ProfileEntity::class,
         FeedItemEntity::class,
         PostAuthorsEntity::class,
+        FeedFetchKeyEntity::class,
     ],
+)
+@TypeConverters(
+    DateConverters::class,
+    UriConverters::class,
+    IdConverters::class,
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -46,4 +58,46 @@ abstract class AppDatabase : RoomDatabase() {
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
+}
+
+fun interface TransactionWriter {
+    suspend fun inTransaction(block: suspend () -> Unit)
+}
+
+internal class DateConverters {
+    @TypeConverter
+    fun fromTimestamp(value: Long?): Instant? {
+        return value?.let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
+    }
+
+    @TypeConverter
+    fun dateToTimestamp(instant: Instant?): Long? {
+        return instant?.toEpochMilliseconds()
+    }
+}
+
+internal class UriConverters {
+
+    @TypeConverter
+    fun fromString(value: String?): Uri? {
+        return value?.let { Uri(it) }
+    }
+
+    @TypeConverter
+    fun toUriString(uri: Uri?): String? {
+        return uri?.uri
+    }
+
+}
+
+internal class IdConverters {
+    @TypeConverter
+    fun fromString(value: String?): Id? {
+        return value?.let { Id(it) }
+    }
+
+    @TypeConverter
+    fun toUriString(id: Id?): String? {
+        return id?.id
+    }
 }

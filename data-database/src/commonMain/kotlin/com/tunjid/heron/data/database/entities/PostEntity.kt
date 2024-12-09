@@ -21,12 +21,14 @@ import androidx.room.Entity
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -35,8 +37,8 @@ import kotlinx.datetime.Instant
 data class PostEntity(
     @PrimaryKey
     val cid: Id,
-    val uri: Uri,
-    val authorId: Id,
+    val uri: Uri?,
+    val authorId: Id?,
     val replyCount: Long?,
     val repostCount: Long?,
     val likeCount: Long?,
@@ -49,12 +51,27 @@ data class PostEntity(
 //    public val threadgate: ThreadgateView? = null,
 )
 
+fun emptyPostEntity(
+    id: Id
+) = PostEntity(
+    cid = id,
+    uri = null,
+    authorId = null,
+    replyCount = null,
+    repostCount = null,
+    likeCount = null,
+    quoteCount = null,
+    indexedAt = Clock.System.now(),
+)
+
 fun PostEntity.asExternalModel(
     handle: Id
 ) = Post(
     cid = cid,
     uri = uri,
-    author = Profile(
+    author =
+    if (authorId == null) null
+    else Profile(
         did = authorId,
         handle = handle,
         displayName = null,
@@ -76,14 +93,14 @@ fun PostEntity.asExternalModel(
     embed = UnknownEmbed,
 )
 
-data class PopulatedPost(
+data class PopulatedPostEntity(
     @Embedded
     val entity: PostEntity,
     @Relation(
         parentColumn = "authorId",
         entityColumn = "did"
     )
-    val author: ProfileEntity,
+    val author: ProfileEntity?,
     @Relation(
         parentColumn = "cid",
         entityColumn = "fullSize",
@@ -96,7 +113,7 @@ data class PopulatedPost(
     val images: List<ImageEntity>,
     @Relation(
         parentColumn = "cid",
-        entityColumn = "uri",
+        entityColumn = "cid",
         associateBy = Junction(
             value = PostVideoEntity::class,
             parentColumn = "postId",
@@ -116,7 +133,7 @@ data class PopulatedPost(
     val externalEmbeds: List<ExternalEmbedEntity>,
 )
 
-fun PopulatedPost.asExternalModel() = Post(
+fun PopulatedPostEntity.asExternalModel() = Post(
     cid = entity.cid,
     uri = entity.uri,
     replyCount = entity.replyCount,
@@ -124,7 +141,7 @@ fun PopulatedPost.asExternalModel() = Post(
     likeCount = entity.likeCount,
     quoteCount = entity.quoteCount,
     indexedAt = entity.indexedAt,
-    author = author.asExternalModel(),
+    author = author?.asExternalModel(),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()

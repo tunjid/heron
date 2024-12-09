@@ -1,24 +1,19 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.feed.FeedViewPost
-import app.bsky.feed.FeedViewPostReasonUnion
 import app.bsky.feed.GetTimelineQueryParams
-import app.bsky.feed.PostView
-import app.bsky.feed.PostViewEmbedUnion
-import app.bsky.feed.ReplyRefParentUnion
-import app.bsky.feed.ReplyRefRootUnion
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.models.isInitialRequest
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
 import com.tunjid.heron.data.database.entities.FeedItemEntity
-import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ImageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
@@ -26,14 +21,27 @@ import com.tunjid.heron.data.database.entities.PostImageEntity
 import com.tunjid.heron.data.database.entities.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.VideoEntity
+import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.di.SingletonScope
+import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.feedItemEntity
+import com.tunjid.heron.data.network.models.postEntity
+import com.tunjid.heron.data.network.models.postExternalEmbedEntity
+import com.tunjid.heron.data.network.models.postImageEntity
+import com.tunjid.heron.data.network.models.postVideoEntity
+import com.tunjid.heron.data.network.models.profileEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.response.AtpResponse
 
 data class FeedQuery(
+    val page: Int,
     /**
      * The backing source of the feed, be it a list or other feed generator output.
      * It is null for a signed in user's timeline.
@@ -51,7 +59,7 @@ data class FeedQuery(
     /**
      * The cursor used to fetch items. Null if this is the first request.
      */
-    val nextItemCursor: String? = null,
+    val nextItemCursor: CursorList.DoubleCursor? = null,
 )
 
 interface FeedRepository {
@@ -64,57 +72,102 @@ class OfflineFeedRepository(
     private val postDao: PostDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
+    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
 ) : FeedRepository {
 
     override fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>> = flow {
-        val networkPostsResponse = networkService.api.getTimeline(
-            GetTimelineQueryParams(
-                limit = query.limit,
-                cursor = query.nextItemCursor,
-            )
-        )
+        val networkCursorFlow = flow {
+            emit(null)
+            kotlin.runCatching {
+                val networkPostsResponse = networkService.api.getTimeline(
+                    GetTimelineQueryParams(
+                        limit = query.limit,
+                        cursor = query.nextItemCursor?.remote,
+                    )
+                )
 
+                when (networkPostsResponse) {
+                    is AtpResponse.Failure -> {
+                        // TODO
+                    }
+
+                    is AtpResponse.Success -> {
+                        emit(networkPostsResponse.response.cursor)
+                        transactionWriter.saveFeed(networkPostsResponse.response.feed, query)
+                    }
+                }
+            }
+        }
+        emitAll(
+            combine(
+                networkCursorFlow,
+                readFeed(query),
+            ) { networkCursor, feed ->
+                CursorList(
+                    items = feed,
+                    nextCursor = CursorList.DoubleCursor(
+                        remote = networkCursor,
+                        local = feed.lastOrNull()?.indexedAt
+                    )
+                )
+            }
+        )
+    }
+
+    private suspend fun TransactionWriter.saveFeed(
+        feedViews: List<FeedViewPost>,
+        query: FeedQuery
+    ) {
         val feedItemEntities = mutableListOf<FeedItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
-        val postAuthorEntities = mutableListOf<ProfileEntity>()
+        val profileEntities = mutableListOf<ProfileEntity>()
 
-        val externalEmbedEntities by lazy { mutableListOf<ExternalEmbedEntity>() }
-        val externalEmbedCrossRefEntities by lazy { mutableListOf<PostExternalEmbedEntity>() }
+        val externalEmbedEntities = mutableListOf<ExternalEmbedEntity>()
+        val postExternalEmbedEntities = mutableListOf<PostExternalEmbedEntity>()
 
-        val imageEntities by lazy { mutableListOf<ImageEntity>() }
-        val imageCrossRefEmbedEntities by lazy { mutableListOf<PostImageEntity>() }
+        val imageEntities = mutableListOf<ImageEntity>()
+        val postImageEntities = mutableListOf<PostImageEntity>()
 
-        val videoEntities by lazy { mutableListOf<VideoEntity>() }
-        val videoCrossRefEntities by lazy { mutableListOf<PostVideoEntity>() }
+        val videoEntities = mutableListOf<VideoEntity>()
+        val postVideoEntities = mutableListOf<PostVideoEntity>()
 
-        networkPostsResponse.requireResponse().feed.forEach { feedView ->
+        for (feedView in feedViews) {
+            // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.source))
 
+            feedView.reply?.let {
+                postEntities.add(it.root.postEntity())
+                postEntities.add(it.parent.postEntity())
+            }
+
+            feedView.reason?.profileEntity()?.let(profileEntities::add)
+
+            // Extract data from post
             val postEntity = feedView.post.postEntity()
 
             postEntities.add(postEntity)
-            postAuthorEntities.add(feedView.post.profileEntity())
+            profileEntities.add(feedView.post.profileEntity())
 
             feedView.post.embedEntities().forEach { embedEntity ->
                 when (embedEntity) {
                     is ExternalEmbedEntity -> {
                         externalEmbedEntities.add(embedEntity)
-                        externalEmbedCrossRefEntities.add(
+                        postExternalEmbedEntities.add(
                             postEntity.postExternalEmbedEntity(embedEntity)
                         )
                     }
 
                     is ImageEntity -> {
                         imageEntities.add(embedEntity)
-                        imageCrossRefEmbedEntities.add(
+                        postImageEntities.add(
                             postEntity.postImageEntity(embedEntity)
                         )
                     }
 
                     is VideoEntity -> {
                         videoEntities.add(embedEntity)
-                        videoCrossRefEntities.add(
+                        postVideoEntities.add(
                             postEntity.postVideoEntity(embedEntity)
                         )
                     }
@@ -122,133 +175,92 @@ class OfflineFeedRepository(
             }
         }
 
-        profileDao.upsertProfiles(postAuthorEntities)
-        postDao.upsertPosts(postEntities)
+        inTransaction {
+            if (query.nextItemCursor.isInitialRequest
+                && feedDao.lastFetchKey(query.source)?.lastFetchedAt != query.firstRequestInstant
+            ) {
+                feedDao.deleteAllFeedsFor(query.source)
+                feedDao.upsertFeedFetchKey(
+                    FeedFetchKeyEntity(
+                        feedUri = query.source,
+                        lastFetchedAt = query.firstRequestInstant
+                    )
+                )
+            }
 
-        embedDao.upsertExternalEmbeds(externalEmbedEntities)
-        embedDao.upsertImages(imageEntities)
-        embedDao.upsertVideos(videoEntities)
+            // Order matters to satisfy foreign key constraints
+            profileDao.upsertProfiles(profileEntities)
+            postDao.upsertPosts(postEntities)
 
-        postDao.insertOrIgnoreExternalEmbedCrossRefEntities(externalEmbedCrossRefEntities)
-        postDao.insertOrIgnoreImageCrossRefEntities(imageCrossRefEmbedEntities)
-        postDao.insertOrIgnoreVideoCrossRefEntities(videoCrossRefEntities)
+            embedDao.upsertExternalEmbeds(externalEmbedEntities)
+            embedDao.upsertImages(imageEntities)
+            embedDao.upsertVideos(videoEntities)
 
-        feedDao.upsertFeedItems(feedItemEntities)
-    }
-}
+            postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
+            postDao.insertOrIgnorePostImages(postImageEntities)
+            postDao.insertOrIgnorePostVideos(postVideoEntities)
 
-private fun FeedViewPost.feedItemEntity(
-    source: Uri,
-) = FeedItemEntity(
-    postId = Id(post.cid.cid),
-    source = source,
-    reply = reply?.let {
-        FeedReplyEntity(
-            rootPostId = when (val root = it.root) {
-                is ReplyRefRootUnion.BlockedPost -> Constants.blockedPostId
-                is ReplyRefRootUnion.NotFoundPost -> Constants.notFoundPostId
-                is ReplyRefRootUnion.PostView -> Id(root.value.cid.cid)
-                is ReplyRefRootUnion.Unknown -> Constants.unknownPostId
-            },
-            parentPostId = when (val parent = it.parent) {
-                is ReplyRefParentUnion.BlockedPost -> Constants.blockedPostId
-                is ReplyRefParentUnion.NotFoundPost -> Constants.notFoundPostId
-                is ReplyRefParentUnion.PostView -> Id(parent.value.cid.cid)
-                is ReplyRefParentUnion.Unknown -> Constants.unknownPostId
-            },
-        )
-    },
-    reason = when (reason) {
-        is FeedViewPostReasonUnion.ReasonPin -> "reasonPin"
-        is FeedViewPostReasonUnion.ReasonRepost -> "reasonRepost"
-        is FeedViewPostReasonUnion.Unknown,
-        null -> "unknownReason"
-    },
-)
-
-private fun PostEntity.postVideoEntity(
-    embedEntity: VideoEntity
-) = PostVideoEntity(
-    postId = cid,
-    videoId = embedEntity.cid,
-)
-
-private fun PostEntity.postImageEntity(
-    embedEntity: ImageEntity
-) = PostImageEntity(
-    postId = cid,
-    imageUri = embedEntity.fullSize,
-)
-
-private fun PostEntity.postExternalEmbedEntity(
-    embedEntity: ExternalEmbedEntity
-) = PostExternalEmbedEntity(
-    postId = cid,
-    externalEmbedUri = embedEntity.uri,
-)
-
-private fun PostView.postEntity() =
-    PostEntity(
-        cid = Id(cid.cid),
-        uri = Uri(uri.atUri),
-        authorId = Id(author.did.did),
-        replyCount = replyCount,
-        repostCount = repostCount,
-        likeCount = likeCount,
-        quoteCount = quoteCount,
-        indexedAt = indexedAt,
-    )
-
-private fun PostView.profileEntity() =
-    ProfileEntity(
-        did = Id(author.did.did),
-        handle = Id(author.handle.handle),
-        displayName = author.displayName,
-        description = null,
-        avatar = author.avatar?.uri?.let(::Uri),
-        banner = null,
-        followersCount = 0,
-        followsCount = 0,
-        postsCount = 0,
-        joinedViaStarterPack = null,
-        indexedAt = null,
-        createdAt = author.createdAt,
-    )
-
-private fun PostView.embedEntities() =
-    when (val embed = embed) {
-        is PostViewEmbedUnion.ExternalView -> listOf(
-            ExternalEmbedEntity(
-                uri = Uri(embed.value.external.uri.uri),
-                title = embed.value.external.title,
-                description = embed.value.external.description,
-                thumb = embed.value.external.thumb?.uri?.let(::Uri),
-            )
-        )
-
-        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
-            ImageEntity(
-                fullSize = Uri(it.fullsize.uri),
-                thumb = Uri(it.thumb.uri),
-                alt = it.alt,
-                width = it.aspectRatio?.width,
-                height = it.aspectRatio?.height,
-            )
+            feedDao.upsertFeedItems(feedItemEntities)
         }
-
-        is PostViewEmbedUnion.RecordView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
-        is PostViewEmbedUnion.Unknown -> emptyList()
-        is PostViewEmbedUnion.VideoView -> listOf(
-            VideoEntity(
-                cid = Id(embed.value.cid.cid),
-                playlist = Uri(embed.value.playlist.uri),
-                thumbnail = embed.value.thumbnail?.uri?.let(::Uri),
-                alt = embed.value.alt,
-                width = embed.value.aspectRatio?.width,
-                height = embed.value.aspectRatio?.height,
-            )
-        )
-
-        null -> emptyList()
     }
+
+    private fun readFeed(
+        query: FeedQuery
+    ): Flow<List<FeedItem>> =
+        feedDao.feedItems(
+            source = query.source,
+            before = query.nextItemCursor?.local ?: Clock.System.now(),
+            limit = 10,
+        )
+            .flatMapLatest { itemEntities ->
+                combine(
+                    postDao.posts(
+                        itemEntities.map { it.postId }
+                    ),
+                    postDao.posts(
+                        itemEntities.mapNotNull { it.reply?.parentPostId }
+                    ),
+                    postDao.posts(
+                        itemEntities.mapNotNull { it.reply?.rootPostId }
+                    ),
+                    profileDao.profiles(
+                        itemEntities.mapNotNull { it.reposter }
+                    )
+                ) { mainPosts, replyParents, replyRoots, repostProfiles ->
+                    val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
+                    val idsToReplyParents = replyParents.associateBy { it.entity.cid }
+                    val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
+                    val idsToRepostProfiles = repostProfiles.associateBy { it.did }
+
+                    itemEntities.map { entity ->
+                        val mainPost = idsToMainPosts.getValue(entity.postId)
+                        val replyParent = entity.reply?.let { idsToReplyParents[it.parentPostId] }
+                        val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
+                        val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
+
+                        when {
+                            replyRoot != null && replyParent != null -> FeedItem.Reply(
+                                post = mainPost.asExternalModel(),
+                                rootPost = replyRoot.asExternalModel(),
+                                parentPost = replyParent.asExternalModel(),
+                            )
+
+                            repostedBy != null -> FeedItem.Repost(
+                                post = mainPost.asExternalModel(),
+                                by = repostedBy.asExternalModel(),
+                                at = entity.indexedAt,
+                            )
+
+                            entity.isPinned -> FeedItem.Pinned(
+                                post = mainPost.asExternalModel(),
+                            )
+
+                            else -> FeedItem.Single(
+                                post = mainPost.asExternalModel(),
+                            )
+                        }
+                    }
+                }
+            }
+
+}

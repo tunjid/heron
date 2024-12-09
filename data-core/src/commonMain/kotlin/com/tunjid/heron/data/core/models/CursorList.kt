@@ -1,6 +1,18 @@
 package com.tunjid.heron.data.core.models
 
+import kotlinx.datetime.Instant
+
 data class CursorList<T>(
-    val nextCursor: String,
     val items: List<T>,
-): List<T> by items
+    val nextCursor: DoubleCursor?,
+) : List<T> by items {
+    data class DoubleCursor(
+        val local: Instant?,
+        val remote: String?,
+    )
+}
+
+val CursorList.DoubleCursor?.isInitialRequest
+    get() = this != null
+            && local == null
+            && remote == null

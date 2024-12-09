@@ -17,8 +17,10 @@
 package com.tunjid.heron.data.di
 
 import androidx.room.RoomDatabase
+import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.AppDatabase
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
@@ -27,16 +29,20 @@ import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.FeedRepository
 import com.tunjid.heron.data.repository.OfflineFeedRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
-import com.tunjid.heron.di.SingletonScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
+import me.tatarka.inject.annotations.Scope
 import okio.FileSystem
 import okio.Path
+import sh.christian.ozone.BlueskyJson
+
+@Scope
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
+annotation class DataScope
 
 class DataModule(
     val appScope: CoroutineScope,
@@ -45,72 +51,90 @@ class DataModule(
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
 
-@SingletonScope
+@DataScope
 @Component
 abstract class DataComponent(
     private val module: DataModule
 ) {
 
+    @DataScope
     @Provides
-    fun appScope(): CoroutineScope = module.appScope
+    fun provideAppScope(): CoroutineScope = module.appScope
 
+    @DataScope
     @Provides
-    fun savedStatePath(): Path = module.savedStatePath
+    fun provideSavedStatePath(): Path = module.savedStatePath
 
+    @DataScope
     @Provides
-    fun savedStateFileSystem(): FileSystem = module.savedStateFileSystem
+    fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
 
+    @DataScope
     @Provides
-    fun getRoomDatabase(): AppDatabase = module.databaseBuilder
+    fun provideRoomDatabase(): AppDatabase = module.databaseBuilder
 //        .addMigrations(MIGRATIONS)
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 
+    @DataScope
     @Provides
     fun providePostDao(
         database: AppDatabase,
     ) = database.postDao()
 
+    @DataScope
     @Provides
     fun provideProfileDao(
         database: AppDatabase,
     ) = database.profileDao()
 
+    @DataScope
     @Provides
     fun provideEmbedDao(
         database: AppDatabase,
     ) = database.embedDao()
 
+    @DataScope
     @Provides
     fun provideFeedDao(
         database: AppDatabase,
     ) = database.feedDao()
 
+    @DataScope
     @Provides
-    fun provideAppJson() = Json {
-        explicitNulls = false
-        ignoreUnknownKeys = true
+    fun provideTransactionWriter(
+        database: AppDatabase,
+    ): TransactionWriter = TransactionWriter { block ->
+        //  TODO: Figure out how to do this in a transaction in KMP
+        database.useWriterConnection {
+            block()
+        }
     }
 
+    @DataScope
+    @Provides
+    fun provideAppJson() = BlueskyJson
+
+    @DataScope
     @Provides
     fun provideAppProtoBuff() = ProtoBuf {
     }
 
     val KtorNetworkService.bind: NetworkService
-        @SingletonScope
+        @DataScope
         @Provides get() = this
 
     val DataStoreSavedStateRepository.bind: SavedStateRepository
-        @SingletonScope
+        @DataScope
         @Provides get() = this
 
     val AuthTokenRepository.bind: AuthRepository
-        @SingletonScope
+        @DataScope
         @Provides get() = this
 
     val OfflineFeedRepository.bind: FeedRepository
-        @SingletonScope
+        @DataScope
         @Provides get() = this
 }

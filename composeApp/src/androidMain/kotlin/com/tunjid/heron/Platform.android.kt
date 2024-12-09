@@ -15,7 +15,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
 import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.signin.di.SignInNavigationComponent
-import com.tunjid.heron.signin.di.SignInScreenHolderComponent
+import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.create
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ fun createAppState(context: Context): AppState {
     val appComponent = AppComponent::class.create(
         dataComponent = dataComponent,
         scaffoldComponent = scaffoldComponent,
-        signInComponent = SignInScreenHolderComponent::class.create(
+        signInComponent = SignInComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

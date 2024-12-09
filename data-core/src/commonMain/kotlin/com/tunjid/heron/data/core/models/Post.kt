@@ -23,8 +23,8 @@ import kotlinx.datetime.Instant
 
 data class Post(
     val cid: Id,
-    val uri: Uri,
-    val author: Profile,
+    val uri: Uri?,
+    val author: Profile?,
     val replyCount: Long?,
     val repostCount: Long?,
     val likeCount: Long?,

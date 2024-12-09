@@ -6,7 +6,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.di.AppComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
-import com.tunjid.heron.signin.di.SignInScreenHolderComponent
+import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.create
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +20,9 @@ import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.allRouteMatchers
 import com.tunjid.heron.di.create
+import com.tunjid.heron.home.di.HomeComponent
+import com.tunjid.heron.home.di.HomeNavigationComponent
+import com.tunjid.heron.home.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 
@@ -33,7 +36,8 @@ fun createAppState(): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = AppNavigationComponent::class.create(
-        signInNavigationComponent = SignInNavigationComponent::class.create()
+        signInNavigationComponent = SignInNavigationComponent::class.create(),
+        homeNavigationComponent = HomeNavigationComponent::class.create(),
     )
 
     val dataComponent = DataComponent::class.create(
@@ -55,7 +59,11 @@ fun createAppState(): AppState {
     val appComponent = AppComponent::class.create(
         dataComponent = dataComponent,
         scaffoldComponent = scaffoldComponent,
-        signInComponent = SignInScreenHolderComponent::class.create(
+        signInComponent = SignInComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        homeComponent = HomeComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
@@ -66,5 +74,5 @@ fun createAppState(): AppState {
 
 private fun savedStatePath(): Path = File(
     System.getProperty("java.io.tmpdir"),
-    "tunji-heron-saved-state-16.ser"
+    "tunji-heron-saved-state-20.ser"
 ).toOkioPath()

@@ -37,5 +37,6 @@ include(
     ":di",
     ":scaffold",
     ":feature-auth",
+    ":feature-home",
     ":feature-template",
 )
