@@ -40,7 +40,6 @@ import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_home.generated.resources.Res
-import heron.feature_home.generated.resources.create_an_account
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -119,10 +118,7 @@ private fun TopBar() {
             TextButton(
                 onClick = {},
                 content = {
-                    Text(
-                        text = stringResource(Res.string.create_an_account),
-                        maxLines = 1,
-                    )
+
                 }
             )
         },

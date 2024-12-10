@@ -21,11 +21,9 @@ import androidx.room.Entity
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Clock
@@ -62,35 +60,6 @@ fun emptyPostEntity(
     likeCount = null,
     quoteCount = null,
     indexedAt = Clock.System.now(),
-)
-
-fun PostEntity.asExternalModel(
-    handle: Id
-) = Post(
-    cid = cid,
-    uri = uri,
-    author =
-    if (authorId == null) null
-    else Profile(
-        did = authorId,
-        handle = handle,
-        displayName = null,
-        description = null,
-        avatar = null,
-        banner = null,
-        followersCount = null,
-        followsCount = null,
-        postsCount = null,
-        joinedViaStarterPack = null,
-        indexedAt = null,
-        createdAt = null,
-    ),
-    replyCount = replyCount,
-    repostCount = repostCount,
-    likeCount = likeCount,
-    quoteCount = quoteCount,
-    indexedAt = indexedAt,
-    embed = UnknownEmbed,
 )
 
 data class PopulatedPostEntity(
@@ -136,12 +105,12 @@ data class PopulatedPostEntity(
 fun PopulatedPostEntity.asExternalModel() = Post(
     cid = entity.cid,
     uri = entity.uri,
-    replyCount = entity.replyCount,
-    repostCount = entity.repostCount,
-    likeCount = entity.likeCount,
-    quoteCount = entity.quoteCount,
+    replyCount = entity.replyCount.orZero(),
+    repostCount = entity.repostCount.orZero(),
+    likeCount = entity.likeCount.orZero(),
+    quoteCount = entity.quoteCount.orZero(),
     indexedAt = entity.indexedAt,
-    author = author?.asExternalModel(),
+    author = author?.asExternalModel() ?: emptyProfile(),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()
@@ -152,3 +121,20 @@ fun PopulatedPostEntity.asExternalModel() = Post(
         else -> null
     },
 )
+
+private fun emptyProfile() = Profile(
+    did = Id(""),
+    handle = Id(""),
+    displayName = null,
+    description = null,
+    avatar = null,
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = null,
+)
+
+private fun Long?.orZero() = this ?: 0L

@@ -39,4 +39,6 @@ include(
     ":feature-auth",
     ":feature-home",
     ":feature-template",
+    ":ui-feed",
+    ":ui-images",
 )
