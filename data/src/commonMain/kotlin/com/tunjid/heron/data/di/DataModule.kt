@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.di
 
 import androidx.room.RoomDatabase
+import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.AppDatabase
@@ -107,10 +108,13 @@ abstract class DataComponent(
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
-        //  TODO: Figure out how to do this in a transaction in KMP
-        database.useWriterConnection {
-            block()
+        //  TODO: Rewrite this when https://issuetracker.google.com/issues/340606803 is fixed
+        database.useWriterConnection { transactor ->
+            transactor.immediateTransaction {
+                block()
+            }
         }
+        database.invalidationTracker.refreshAsync()
     }
 
     @DataScope
