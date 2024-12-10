@@ -2,9 +2,9 @@ package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
 import androidx.room.Upsert
-import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.ImageEntity
-import com.tunjid.heron.data.database.entities.VideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 
 @Dao
 interface EmbedDao {

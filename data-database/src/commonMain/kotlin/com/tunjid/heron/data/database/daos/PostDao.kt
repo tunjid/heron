@@ -9,9 +9,9 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.PostImageEntity
-import com.tunjid.heron.data.database.entities.PostVideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

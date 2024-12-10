@@ -4,14 +4,14 @@ import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.entities.ExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.PostExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.PostImageEntity
-import com.tunjid.heron.data.database.entities.PostVideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.VideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 
 
 internal fun PostEntity.postVideoEntity(

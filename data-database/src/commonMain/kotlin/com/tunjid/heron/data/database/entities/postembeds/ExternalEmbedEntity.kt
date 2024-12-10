@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities
+package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -14,28 +14,32 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities
+package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.Image
+import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 
+
 @Entity(
-    tableName = "images",
+    tableName = "videos",
 )
-data class ImageEntity(
+data class VideoEntity(
     @PrimaryKey
-    val fullSize: Uri,
-    val thumb: Uri,
-    val alt: String,
+    val cid: Id,
+    val playlist: Uri,
+    val thumbnail: Uri?,
+    val alt: String?,
     val width: Long?,
     val height: Long?,
 ): PostEmbed
 
-fun ImageEntity.asExternalModel() = Image(
-    fullsize = fullSize,
-    thumb = thumb,
+fun VideoEntity.asExternalModel() = Video(
+    cid = cid,
+    playlist = playlist,
+    thumbnail = thumbnail,
     alt = alt,
     width = width,
     height = height,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities
+package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -22,6 +22,7 @@ import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.PostEntity
 
 sealed interface PostEmbed
 

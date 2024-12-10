@@ -26,6 +26,13 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
