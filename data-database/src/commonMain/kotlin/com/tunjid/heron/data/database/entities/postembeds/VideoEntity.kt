@@ -17,10 +17,14 @@
 package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.PostEntity
 
 
 @Entity(
@@ -35,6 +39,36 @@ data class VideoEntity(
     val width: Long?,
     val height: Long?,
 ): PostEmbed
+
+/**
+ * Cross reference for many to many relationship between [Post] and [VideoEntity]
+ */
+@Entity(
+    tableName = "postVideos",
+    primaryKeys = ["postId", "videoId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = VideoEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["videoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["videoId"]),
+    ],
+)
+data class PostVideoEntity(
+    val postId: Id,
+    val videoId: Id,
+)
 
 fun VideoEntity.asExternalModel() = Video(
     cid = cid,

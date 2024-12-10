@@ -17,9 +17,14 @@
 package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.PostEntity
 
 
 @Entity(
@@ -32,6 +37,36 @@ data class ExternalEmbedEntity(
     val description: String,
     val thumb: Uri?,
 ): PostEmbed
+
+/**
+ * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
+ */
+@Entity(
+    tableName = "postExternalEmbeds",
+    primaryKeys = ["postId", "externalEmbedUri"],
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ExternalEmbedEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["externalEmbedUri"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["externalEmbedUri"]),
+    ],
+)
+data class PostExternalEmbedEntity(
+    val postId: Id,
+    val externalEmbedUri: Uri,
+)
 
 fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
     uri = uri,

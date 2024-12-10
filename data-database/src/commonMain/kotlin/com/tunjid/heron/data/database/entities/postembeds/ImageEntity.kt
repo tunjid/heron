@@ -17,9 +17,14 @@
 package com.tunjid.heron.data.database.entities.postembeds
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Image
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.PostEntity
 
 @Entity(
     tableName = "images",
@@ -32,6 +37,38 @@ data class ImageEntity(
     val width: Long?,
     val height: Long?,
 ): PostEmbed
+
+
+/**
+ * Cross reference for many to many relationship between [Post] and [ImageEntity]
+ */
+@Entity(
+    tableName = "postImages",
+    primaryKeys = ["postId", "imageUri"],
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ImageEntity::class,
+            parentColumns = ["fullSize"],
+            childColumns = ["imageUri"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["imageUri"]),
+    ],
+)
+data class PostImageEntity(
+    val postId: Id,
+    val imageUri: Uri,
+)
+
 
 fun ImageEntity.asExternalModel() = Image(
     fullsize = fullSize,
