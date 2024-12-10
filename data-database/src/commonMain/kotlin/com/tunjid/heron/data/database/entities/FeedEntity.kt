@@ -36,8 +36,6 @@ import kotlinx.datetime.Instant
     ],
 )
 data class FeedItemEntity(
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0,
     val postId: Id,
     val source: Uri?,
     @Embedded
@@ -45,6 +43,9 @@ data class FeedItemEntity(
     val reposter: Id?,
     val isPinned: Boolean,
     val indexedAt: Instant,
+    // TODO: Figure out a better ID for this
+    @PrimaryKey
+    val id: String = "${postId.id}-$isPinned-${reposter?.id}"
 )
 
 data class FeedReplyEntity(

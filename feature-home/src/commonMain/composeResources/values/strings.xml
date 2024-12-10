@@ -1,7 +1,7 @@
 <resources>
-    <string name="create_an_account">Create an account</string>
-    <string name="submit">Submit</string>
-    <string name="sign_in">Sign In</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
+    <string name="reply">Reply</string>
+    <string name="reply_to">Reply to %1$s</string>
+    <string name="repost">Reply</string>
+    <string name="repost_by">Repost by %1$s</string>
+    <string name="pinned">Pinned</string>
 </resources>

@@ -17,28 +17,24 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
-    id("ui-module-convention")
-    id("ksp-convention")
+    alias(libs.plugins.composeCompiler)
 }
 android {
-    namespace = "com.tunjid.heron.feature.auth"
+    namespace = "com.tunjid.heron.ui.feed"
 }
 
 kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation(project(":data"))
-                implementation(project(":scaffold"))
-                implementation(project(":feature-template"))
+                implementation(project(":ui-images"))
+
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.ui.ui)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
-
-                implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.tiler.compose)
             }
         }
     }
