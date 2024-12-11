@@ -9,7 +9,6 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.FeedItemEntity
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
-import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.emptyPostEntity
 import kotlinx.datetime.Instant
@@ -38,6 +37,20 @@ internal fun FeedViewPost.feedItemEntity(
     },
 )
 
+internal fun ReplyRefRootUnion.profileEntity() = when (this) {
+    is ReplyRefRootUnion.PostView -> value.profileEntity()
+    is ReplyRefRootUnion.BlockedPost,
+    is ReplyRefRootUnion.NotFoundPost,
+    is ReplyRefRootUnion.Unknown -> null
+}
+
+internal fun ReplyRefParentUnion.profileEntity() = when (this) {
+    is ReplyRefParentUnion.PostView -> value.profileEntity()
+    is ReplyRefParentUnion.BlockedPost,
+    is ReplyRefParentUnion.NotFoundPost,
+    is ReplyRefParentUnion.Unknown -> null
+}
+
 internal fun ReplyRefRootUnion.postEntity() = when (this) {
     is ReplyRefRootUnion.BlockedPost -> emptyPostEntity(
         id = Constants.blockedPostId,
@@ -47,16 +60,7 @@ internal fun ReplyRefRootUnion.postEntity() = when (this) {
         id = Constants.notFoundPostId,
     )
 
-    is ReplyRefRootUnion.PostView -> PostEntity(
-        cid = Id(value.cid.cid),
-        uri = Uri(value.uri.atUri),
-        authorId = Id(value.author.did.did),
-        replyCount = value.replyCount,
-        repostCount = value.repostCount,
-        likeCount = value.likeCount,
-        quoteCount = value.quoteCount,
-        indexedAt = value.indexedAt,
-    )
+    is ReplyRefRootUnion.PostView -> value.postEntity()
 
     is ReplyRefRootUnion.Unknown -> emptyPostEntity(
         id = Constants.unknownPostId,
@@ -72,16 +76,7 @@ internal fun ReplyRefParentUnion.postEntity() = when (this) {
         id = Constants.notFoundPostId,
     )
 
-    is ReplyRefParentUnion.PostView -> PostEntity(
-        cid = Id(value.cid.cid),
-        uri = Uri(value.uri.atUri),
-        authorId = Id(value.author.did.did),
-        replyCount = value.replyCount,
-        repostCount = value.repostCount,
-        likeCount = value.likeCount,
-        quoteCount = value.quoteCount,
-        indexedAt = value.indexedAt,
-    )
+    is ReplyRefParentUnion.PostView -> value.postEntity()
 
     is ReplyRefParentUnion.Unknown -> emptyPostEntity(
         id = Constants.unknownPostId,

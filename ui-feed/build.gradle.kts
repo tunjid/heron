@@ -17,18 +17,27 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
+    id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
 android {
     namespace = "com.tunjid.heron.ui.feed"
+    buildFeatures {
+        compose = true
+    }
 }
 
 kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":ui-images"))
 
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.foundation.foundation)
+                implementation(libs.compose.material.icons.extended)
+                implementation(libs.compose.material3)
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui.ui)
 
