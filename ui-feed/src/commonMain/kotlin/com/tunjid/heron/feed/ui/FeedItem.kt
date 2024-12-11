@@ -1,16 +1,25 @@
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
@@ -57,26 +66,14 @@ fun FeedItem(
                 )
             }
             if (item is FeedItem.Reply) {
-                SinglePost(
-                    post = item.rootPost,
+                PostReplies(
+                    item = item,
                     now = now,
-                    createdAt = item.rootPost.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
                     onImageClicked = onImageClicked,
                     onReplyToPost = onReplyToPost
                 )
-                Spacer(Modifier.height(16.dp))
-                SinglePost(
-                    post = item.parentPost,
-                    now = now,
-                    createdAt = item.parentPost.createdAt,
-                    onProfileClicked = onProfileClicked,
-                    onPostClicked = onPostClicked,
-                    onImageClicked = onImageClicked,
-                    onReplyToPost = onReplyToPost
-                )
-                Spacer(Modifier.height(16.dp))
             }
             SinglePost(
                 post = item.post,
@@ -87,6 +84,53 @@ fun FeedItem(
                 onImageClicked = onImageClicked,
                 onReplyToPost = onReplyToPost
             )
+        }
+    }
+}
+
+@Composable
+private fun PostReplies(
+    item: FeedItem.Reply,
+    now: Instant,
+    onProfileClicked: (Profile) -> Unit,
+    onPostClicked: (Post) -> Unit,
+    onImageClicked: (Uri) -> Unit,
+    onReplyToPost: () -> Unit
+) {
+    Box {
+        Box(
+            Modifier
+                .matchParentSize()
+        ) {
+            Spacer(
+                Modifier
+                    .offset(x = 8.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .fillMaxHeight()
+                    .width(2.dp)
+            )
+        }
+        Column {
+            SinglePost(
+                post = item.rootPost,
+                now = now,
+                createdAt = item.rootPost.createdAt,
+                onProfileClicked = onProfileClicked,
+                onPostClicked = onPostClicked,
+                onImageClicked = onImageClicked,
+                onReplyToPost = onReplyToPost
+            )
+            Spacer(Modifier.height(16.dp))
+            SinglePost(
+                post = item.parentPost,
+                now = now,
+                createdAt = item.parentPost.createdAt,
+                onProfileClicked = onProfileClicked,
+                onPostClicked = onPostClicked,
+                onImageClicked = onImageClicked,
+                onReplyToPost = onReplyToPost
+            )
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
