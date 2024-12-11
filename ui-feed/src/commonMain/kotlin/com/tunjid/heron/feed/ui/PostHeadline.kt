@@ -1,6 +1,7 @@
 package com.tunjid.heron.feed.ui
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -15,41 +16,36 @@ import kotlinx.datetime.Instant
 
 @Composable
 internal fun PostHeadline(
-  now: Instant,
-  createdAt: Instant,
-  author: Profile,
+    now: Instant,
+    createdAt: Instant,
+    author: Profile,
 ) {
-  Row(horizontalArrangement = spacedBy(4.dp)) {
-    val primaryText = author.displayName ?: author.handle.id
-    val secondaryText = author.handle.id.takeUnless { it == primaryText }
+    Column {
+        val primaryText = author.displayName ?: author.handle.id
+        val secondaryText = author.handle.id.takeUnless { it == primaryText }
 
-    Text(
-      modifier = Modifier.alignByBaseline(),
-      text = primaryText,
-      maxLines = 1,
-      style = LocalTextStyle.current.copy(fontWeight = Bold),
-    )
+        Row(horizontalArrangement = spacedBy(4.dp)) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = primaryText,
+                maxLines = 1,
+                style = LocalTextStyle.current.copy(fontWeight = Bold),
+            )
 
-    if (secondaryText != null) {
-      Text(
-        modifier = Modifier.alignByBaseline().weight(1f, fill = false),
-        text = author.handle.id,
-        overflow = TextOverflow.Ellipsis,
-        maxLines = 1,
-        style = MaterialTheme.typography.bodySmall,
-      )
+            TimeDelta(
+                modifier = Modifier.alignByBaseline(),
+                delta = now - createdAt,
+            )
+        }
+        if (secondaryText != null) {
+            Text(
+                modifier = Modifier,
+                text = author.handle.id,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                style = MaterialTheme.typography.bodySmall,
+            )
 
-      Text(
-        modifier = Modifier.alignByBaseline(),
-        text = "•",
-        maxLines = 1,
-        style = MaterialTheme.typography.bodySmall,
-      )
+        }
     }
-
-    TimeDelta(
-      modifier = Modifier.alignByBaseline(),
-      delta = now - createdAt,
-    )
-  }
 }

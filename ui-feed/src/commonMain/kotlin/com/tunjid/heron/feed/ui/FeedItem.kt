@@ -1,17 +1,16 @@
 package com.tunjid.heron.feed.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
@@ -39,10 +38,14 @@ fun FeedItem(
     ) {
         Column(
             modifier = Modifier
-                .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
+                .padding(
+                    top = 16.dp,
+                    bottom = 8.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                ),
         ) {
             Row(
-
                 horizontalArrangement = spacedBy(16.dp),
             ) {
                 val author: Profile = item.post.author
@@ -56,9 +59,8 @@ fun FeedItem(
                         shape = CircleShape,
                     ),
                 )
-//      onClick = { onOpenUser(UserDid(author.did)) },
-//      fallbackColor = author.handle.color(),
-
+                //      onClick = { onOpenUser(UserDid(author.did)) },
+                //      fallbackColor = author.handle.color(),
                 Column(Modifier.weight(1f)) {
                     PostHeadline(
                         now = now,
@@ -74,8 +76,12 @@ fun FeedItem(
                     }
                 }
             }
+            Spacer(Modifier.height(4.dp))
             Column(
-                modifier = Modifier.padding(bottom = 8.dp),
+                modifier = Modifier.padding(
+                    start = 32.dp,
+                    bottom = 8.dp
+                ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
