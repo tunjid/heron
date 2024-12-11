@@ -4,4 +4,5 @@
     <string name="repost">Reply</string>
     <string name="repost_by">Repost by %1$s</string>
     <string name="pinned">Pinned</string>
+    <string name="liked">Liked</string>
 </resources>

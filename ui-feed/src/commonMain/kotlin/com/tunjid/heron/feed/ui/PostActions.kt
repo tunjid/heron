@@ -29,6 +29,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import heron.ui_feed.generated.resources.Res
+import heron.ui_feed.generated.resources.liked
+import heron.ui_feed.generated.resources.reply
+import heron.ui_feed.generated.resources.reply_to
+import heron.ui_feed.generated.resources.repost
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PostActions(
@@ -38,24 +44,25 @@ internal fun PostActions(
     reposted: Boolean,
     liked: Boolean,
     iconSize: Dp,
+    modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = SpaceBetween,
     ) {
         PostAction(
             icon = Icons.Default.ChatBubbleOutline,
             iconSize = iconSize,
-            contentDescription = "Reply",
+            contentDescription = stringResource(Res.string.reply),
             text = replyCount,
             onClick = onReplyToPost,
         )
         PostAction(
             icon = Icons.Default.Repeat,
             iconSize = iconSize,
-            contentDescription = "Repost",
+            contentDescription = stringResource(Res.string.repost),
             text = repostCount,
             onClick = {},
             tint = if (reposted) {
@@ -71,7 +78,7 @@ internal fun PostActions(
                 Icons.Default.FavoriteBorder
             },
             iconSize = iconSize,
-            contentDescription = "Like",
+            contentDescription = stringResource(Res.string.liked),
             text = likeCount,
             onClick = {},
             tint = if (liked) {
