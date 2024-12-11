@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
@@ -41,12 +40,12 @@ fun FeedThreadItem(
             val author: Profile = post.author
             AsyncImage(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
+                    .size(48.dp),
                 args = ImageArgs(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
+                    shape = CircleShape,
                 ),
             )
             Column(Modifier.weight(1f)) {

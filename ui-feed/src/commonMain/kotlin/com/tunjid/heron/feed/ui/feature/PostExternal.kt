@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSizeIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ fun PostExternal(
             url = feature.thumb?.uri,
             contentDescription = feature.title,
             contentScale = ContentScale.Crop,
+            shape = RoundedCornerShape(16.dp)
           ),
 //          onClick = { uriHandler.openUri(feature.uri.uri) },
 //          fallbackColor = MaterialTheme.colorScheme.outline,

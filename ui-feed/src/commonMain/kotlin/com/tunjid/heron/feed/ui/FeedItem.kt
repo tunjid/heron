@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,68 +33,72 @@ fun FeedItem(
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .clickable { onPostClicked(item.post) }
-            .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
+    ElevatedCard(
+        modifier = modifier,
+        onClick = { onPostClicked(item.post) }
     ) {
-        Row(
-
-            horizontalArrangement = spacedBy(16.dp),
+        Column(
+            modifier = Modifier
+                .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
         ) {
-            val author: Profile = item.post.author
-            AsyncImage(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
-                args = ImageArgs(
-                    url = author.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = author.displayName ?: author.handle.id,
-                ),
-            )
+            Row(
+
+                horizontalArrangement = spacedBy(16.dp),
+            ) {
+                val author: Profile = item.post.author
+                AsyncImage(
+                    modifier = Modifier
+                        .size(48.dp),
+                    args = ImageArgs(
+                        url = author.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = author.displayName ?: author.handle.id,
+                        shape = CircleShape,
+                    ),
+                )
 //      onClick = { onOpenUser(UserDid(author.did)) },
 //      fallbackColor = author.handle.color(),
 
-            Column(Modifier.weight(1f)) {
-                PostHeadline(
-                    now = now,
-                    createdAt = item.indexedAt,
-                    author = author,
-                )
-                PostReasonLine(
-                    item = item,
-                    onOpenUser = onProfileClicked,
-                )
-                if (item is FeedItem.Reply) {
-                    PostReplyLine(item.parentPost.author, onProfileClicked)
+                Column(Modifier.weight(1f)) {
+                    PostHeadline(
+                        now = now,
+                        createdAt = item.indexedAt,
+                        author = author,
+                    )
+                    PostReasonLine(
+                        item = item,
+                        onOpenUser = onProfileClicked,
+                    )
+                    if (item is FeedItem.Reply) {
+                        PostReplyLine(item.parentPost.author, onProfileClicked)
+                    }
                 }
             }
-        }
-        Column(
-            modifier = Modifier.padding(bottom = 8.dp),
-            verticalArrangement = spacedBy(8.dp),
-        ) {
-            PostText(
-                post = item.post,
-                onClick = { onPostClicked(item.post) },
-                onOpenUser = onProfileClicked
+            Column(
+                modifier = Modifier.padding(bottom = 8.dp),
+                verticalArrangement = spacedBy(8.dp),
+            ) {
+                PostText(
+                    post = item.post,
+                    onClick = { onPostClicked(item.post) },
+                    onOpenUser = onProfileClicked
+                )
+                PostFeature(
+                    now = now,
+                    post = item.post,
+                    onOpenImage = onImageClicked,
+                    onOpenPost = onPostClicked
+                )
+            }
+            PostActions(
+                replyCount = format(item.post.replyCount),
+                repostCount = format(item.post.repostCount),
+                likeCount = format(item.post.likeCount),
+                reposted = false,
+                liked = false,
+                iconSize = 16.dp,
+                onReplyToPost = onReplyToPost,
             )
-            PostFeature(
-                now = now,
-                post = item.post,
-                onOpenImage = onImageClicked,
-                onOpenPost = onPostClicked
-            )
         }
-        PostActions(
-            replyCount = format(item.post.replyCount),
-            repostCount = format(item.post.repostCount),
-            likeCount = format(item.post.likeCount),
-            reposted = false,
-            liked = false,
-            iconSize = 16.dp,
-            onReplyToPost = onReplyToPost,
-        )
     }
 }
