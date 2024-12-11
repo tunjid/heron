@@ -49,12 +49,18 @@ data class PostEntity(
     val likeCount: Long?,
     val quoteCount: Long?,
     val indexedAt: Instant,
-//    public val record: JsonContent,
+    @Embedded
+    val record: RecordData?,
 //    public val embed: PostViewEmbedUnion?,
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
-)
+) {
+    data class RecordData(
+        val text: String,
+        val createdAt: Instant,
+    )
+}
 
 fun emptyPostEntity(
     id: Id
@@ -67,6 +73,7 @@ fun emptyPostEntity(
     likeCount = null,
     quoteCount = null,
     indexedAt = Clock.System.now(),
+    record = null,
 )
 
 data class PopulatedPostEntity(
@@ -127,6 +134,13 @@ fun PopulatedPostEntity.asExternalModel() = Post(
 
         else -> null
     },
+    record = entity.record?.let {
+        Post.Record(
+            text = it.text,
+            createdAt = it.createdAt,
+            tags = emptyList(),
+        )
+    }
 )
 
 private fun emptyProfile() = Profile(

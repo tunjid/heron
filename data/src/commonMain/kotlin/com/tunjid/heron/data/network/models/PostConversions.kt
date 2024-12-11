@@ -4,14 +4,16 @@ import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
-import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import sh.christian.ozone.api.model.JsonContent
+import app.bsky.feed.Post as BskyPost
 
 
 internal fun PostEntity.postVideoEntity(
@@ -45,6 +47,7 @@ internal fun PostView.postEntity() =
         likeCount = likeCount,
         quoteCount = quoteCount,
         indexedAt = indexedAt,
+        record = record.asPostEntityRecordData(),
     )
 
 internal fun PostView.profileEntity() =
@@ -99,4 +102,17 @@ internal fun PostView.embedEntities() =
         )
 
         null -> emptyList()
+    }
+
+
+private fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
+    // TODO can this be deterministic?
+    try {
+        val bskyPost = decodeAs<BskyPost>()
+        PostEntity.RecordData(
+            text = bskyPost.text,
+            createdAt = bskyPost.createdAt,
+        )
+    } catch (e: Exception) {
+        null
     }
