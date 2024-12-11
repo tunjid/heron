@@ -1,7 +1,6 @@
 package com.tunjid.heron.feed.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,16 +17,14 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.feed.utilities.createdAt
+import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import kotlinx.datetime.Instant
@@ -104,7 +101,8 @@ private fun PostReplies(
         ) {
             Spacer(
                 Modifier
-                    .offset(x = 8.dp)
+                    .offset(x = 12.dp)
+                    .padding(top = 48.dp)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .fillMaxHeight()
                     .width(2.dp)
