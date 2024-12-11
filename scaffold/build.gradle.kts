@@ -20,6 +20,7 @@ plugins {
     id("ksp-convention")
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeCompiler)
+    id("org.jetbrains.compose")
 }
 android {
     namespace = "com.tunjid.heron.domain.navigation"
@@ -39,14 +40,15 @@ kotlin {
             dependencies {
                 implementation(project(":data"))
 
-                implementation(libs.compose.runtime)
                 implementation(libs.compose.animation)
-                implementation(libs.compose.material)
-                implementation(libs.compose.material.icons)
-                api(libs.compose.material.icons.extended)
-                implementation(libs.compose.material3)
+                implementation(libs.compose.components.resources)
                 implementation(libs.compose.foundation.foundation)
                 implementation(libs.compose.foundation.layout)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.material)
+                implementation(libs.compose.material.icons)
+                implementation(libs.compose.material.icons.extended)
+                implementation(libs.compose.material3)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
