@@ -1,0 +1,7 @@
+<resources>
+    <string name="reply">Reply</string>
+    <string name="reply_to">Reply to %1$s</string>
+    <string name="repost">Reply</string>
+    <string name="repost_by">Repost by %1$s</string>
+    <string name="pinned">Pinned</string>
+</resources>

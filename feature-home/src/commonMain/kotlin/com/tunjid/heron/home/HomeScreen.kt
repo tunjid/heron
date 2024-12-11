@@ -28,11 +28,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.feed.ui.TimelinePostItem
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlinx.datetime.Clock
 
 @Composable
 internal fun HomeScreen(
@@ -53,11 +56,16 @@ internal fun HomeScreen(
             items = items,
             key = FeedItem::id,
             itemContent = { item ->
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(item.post.author?.displayName ?: "hi")
-                }
+                TimelinePostItem(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    now = remember { Clock.System.now() },
+                    item = item,
+                    onPostClicked = {},
+                    onProfileClicked = {},
+                    onImageClicked = {},
+                    onReplyToPost = {},
+                )
             }
         )
     }
