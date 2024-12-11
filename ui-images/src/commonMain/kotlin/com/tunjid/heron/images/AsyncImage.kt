@@ -8,7 +8,7 @@ import coil3.compose.AsyncImage as CoilAsyncImage
 
 data class ImageArgs(
     val url: String?,
-    val description: String? = null,
+    val contentDescription: String? = null,
     val contentScale: ContentScale,
 )
 
@@ -20,7 +20,7 @@ fun AsyncImage(
     CoilAsyncImage(
         modifier = modifier,
         model = args.url,
-        contentDescription = args.description,
+        contentDescription = args.contentDescription,
         contentScale = args.contentScale.animate()
     )
 }

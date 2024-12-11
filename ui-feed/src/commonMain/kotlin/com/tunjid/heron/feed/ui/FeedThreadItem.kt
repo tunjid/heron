@@ -45,7 +45,7 @@ fun FeedThreadItem(
                     .clip(CircleShape),
                 args = ImageArgs(
                     url = author.avatar?.uri,
-                    description = author.displayName ?: author.handle.id,
+                    contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
                 ),
             )

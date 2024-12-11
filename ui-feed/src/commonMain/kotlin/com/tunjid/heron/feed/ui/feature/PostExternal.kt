@@ -29,10 +29,14 @@ fun PostExternal(
     Row(horizontalArrangement = spacedBy(16.dp)) {
       if (!feature.thumb?.uri.isNullOrBlank()) {
         AsyncImage(
-          modifier = Modifier.requiredSizeIn(maxWidth = 96.dp, maxHeight = 96.dp),
+          modifier = Modifier
+            .requiredSizeIn(
+              maxWidth = 96.dp,
+              maxHeight = 96.dp,
+            ),
           args = ImageArgs(
             url = feature.thumb?.uri,
-            description = feature.title,
+            contentDescription = feature.title,
             contentScale = ContentScale.Crop,
           ),
 //          onClick = { uriHandler.openUri(feature.uri.uri) },

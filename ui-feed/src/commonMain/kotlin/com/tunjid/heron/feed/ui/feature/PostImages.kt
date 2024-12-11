@@ -29,7 +29,7 @@ internal fun PostImages(
                 modifier = modifier,
                 args = ImageArgs(
                     url = image.thumb.uri,
-                    description = image.alt,
+                    contentDescription = image.alt,
                     contentScale = ContentScale.Crop,
                 )
             )

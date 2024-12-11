@@ -45,12 +45,10 @@ fun FeedItem(
             args = ImageArgs(
                 url = author.avatar?.uri,
                 contentScale = ContentScale.Crop,
-                description = "",
+                contentDescription = author.displayName ?: author.handle.id,
             ),
         )
-//      avatarUrl = author.avatar,
 //      onClick = { onOpenUser(UserDid(author.did)) },
-//      contentDescription = author.displayName ?: author.handle.handle,
 //      fallbackColor = author.handle.color(),
 
         Column(Modifier.weight(1f)) {
