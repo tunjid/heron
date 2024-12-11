@@ -18,11 +18,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.scaffold.navigation.NavItem
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun NavScaffold(
@@ -33,7 +33,6 @@ internal fun NavScaffold(
     onNavItemSelected: (NavItem) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Scaffold {  }
     Column(
         modifier = modifier,
     ) {
@@ -93,11 +92,11 @@ private fun BottomAppBar(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.name
+                        imageVector = item.stack.icon,
+                        contentDescription = null,
                     )
                 },
-                label = { Text(item.name) },
+                label = { Text(text = stringResource(item.stack.titleRes)) },
                 selected = item.selected,
                 onClick = {
                     onNavItemSelected(item)
@@ -121,12 +120,12 @@ private fun NavigationRail(
                 selected = item.selected,
                 icon = {
                     Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.name,
+                        imageVector = item.stack.icon,
+                        contentDescription = null,
                     )
                 },
                 label = {
-                    Text(text = item.name)
+                    Text(text = stringResource(item.stack.titleRes))
                 },
                 onClick = {
                     onNavItemSelected(item)

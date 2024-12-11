@@ -1,0 +1,9 @@
+<resources>
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="messages">Messages</string>
+    <string name="notifications">Notifications</string>
+    <string name="profile">Profile</string>
+    <string name="auth">Auth</string>
+    <string name="splash">Splash</string>
+</resources>

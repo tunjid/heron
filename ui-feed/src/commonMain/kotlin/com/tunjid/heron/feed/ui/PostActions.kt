@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubbleOutline
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import heron.ui_feed.generated.resources.Res
 import heron.ui_feed.generated.resources.liked
 import heron.ui_feed.generated.resources.reply
-import heron.ui_feed.generated.resources.reply_to
 import heron.ui_feed.generated.resources.repost
 import org.jetbrains.compose.resources.stringResource
 
@@ -53,14 +52,14 @@ internal fun PostActions(
         horizontalArrangement = SpaceBetween,
     ) {
         PostAction(
-            icon = Icons.Default.ChatBubbleOutline,
+            icon = Icons.Rounded.ChatBubbleOutline,
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.reply),
             text = replyCount,
             onClick = onReplyToPost,
         )
         PostAction(
-            icon = Icons.Default.Repeat,
+            icon = Icons.Rounded.Repeat,
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.repost),
             text = repostCount,
@@ -73,9 +72,9 @@ internal fun PostActions(
         )
         PostAction(
             icon = if (liked) {
-                Icons.Default.Favorite
+                Icons.Rounded.Favorite
             } else {
-                Icons.Default.FavoriteBorder
+                Icons.Rounded.FavoriteBorder
             },
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.liked),

@@ -39,9 +39,9 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.findLibrary("lifecycle-viewmodel-compose").get())
 
                 api(libs.findLibrary("compose-components-resources").get())
-
                 api(libs.findLibrary("compose-runtime").get())
                 api(libs.findLibrary("compose-animation").get())
+                api(libs.findLibrary("compose-material-icons-extended").get())
                 api(libs.findLibrary("compose-material3").get())
                 api(libs.findLibrary("compose-foundation-layout").get())
 

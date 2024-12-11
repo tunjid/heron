@@ -17,6 +17,15 @@
 
 package com.tunjid.heron.scaffold.navigation
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Message
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Start
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
@@ -28,6 +37,14 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParser
+import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.auth
+import heron.scaffold.generated.resources.home
+import heron.scaffold.generated.resources.messages
+import heron.scaffold.generated.resources.notifications
+import heron.scaffold.generated.resources.profile
+import heron.scaffold.generated.resources.search
+import heron.scaffold.generated.resources.splash
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,6 +58,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
+import org.jetbrains.compose.resources.StringResource
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
@@ -51,53 +69,6 @@ typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 interface NavigationAction {
     val navigationMutation: NavigationMutation
 }
-
-private val InitialNavigationState = MultiStackNav(
-    name = "splash-app",
-    // TODO: Make this a splash screen
-    stacks = listOf(
-        StackNav(
-            name = "splashStack",
-            children = listOf(routeOf("/auth"))
-        )
-    )
-)
-
-private val SignedOutNavigationState = MultiStackNav(
-    name = "signed-out-app",
-    stacks = listOf(
-        StackNav(
-            name = "authStack",
-            children = listOf(routeOf("/auth"))
-        )
-    )
-)
-
-private val SignedInNavigationState = MultiStackNav(
-    name = "signed-in-app",
-    stacks = listOf(
-        StackNav(
-            name = "homeStack",
-            children = listOf(routeOf("/home"))
-        ),
-        StackNav(
-            name = "searchStack",
-            children = listOf(routeOf("/search"))
-        ),
-        StackNav(
-            name = "messagesStack",
-            children = listOf(routeOf("/messages"))
-        ),
-        StackNav(
-            name = "notificationsStack",
-            children = listOf(routeOf("/notifications"))
-        ),
-        StackNav(
-            name = "homeStack",
-            children = listOf(routeOf("/me"))
-        ),
-    )
-)
 
 @Inject
 class PersistedNavigationStateHolder(
@@ -222,3 +193,93 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
         )
     },
 )
+
+private val InitialNavigationState = MultiStackNav(
+    name = "splash-app",
+    // TODO: Make this a splash screen
+    stacks = listOf(
+        StackNav(
+            name = AppStack.Splash.stackName,
+            children = listOf(routeOf("/auth"))
+        )
+    )
+)
+
+private val SignedOutNavigationState = MultiStackNav(
+    name = "signed-out-app",
+    stacks = listOf(
+        StackNav(
+            name = AppStack.Auth.stackName,
+            children = listOf(routeOf("/auth"))
+        )
+    )
+)
+
+private val SignedInNavigationState = MultiStackNav(
+    name = "signed-in-app",
+    stacks = listOf(
+        StackNav(
+            name = AppStack.Home.stackName,
+            children = listOf(routeOf("/home"))
+        ),
+        StackNav(
+            name = AppStack.Search.stackName,
+            children = listOf(routeOf("/search"))
+        ),
+        StackNav(
+            name = AppStack.Messages.stackName,
+            children = listOf(routeOf("/messages"))
+        ),
+        StackNav(
+            name = AppStack.Notifications.stackName,
+            children = listOf(routeOf("/notifications"))
+        ),
+        StackNav(
+            name = AppStack.Profile.stackName,
+            children = listOf(routeOf("/me"))
+        ),
+    )
+)
+
+
+internal enum class AppStack(
+    val stackName: String,
+    val titleRes: StringResource,
+    val icon: ImageVector,
+) {
+    Home(
+        stackName = "home-stack",
+        titleRes = Res.string.home,
+        icon = Icons.Rounded.Home,
+    ),
+    Search(
+        stackName = "search-stack",
+        titleRes = Res.string.search,
+        icon = Icons.Rounded.Search,
+    ),
+    Messages(
+        stackName = "messages-stack",
+        titleRes = Res.string.messages,
+        icon = Icons.AutoMirrored.Rounded.Message,
+    ),
+    Notifications(
+        stackName = "notifications-stack",
+        titleRes = Res.string.notifications,
+        icon = Icons.Rounded.Notifications,
+    ),
+    Profile(
+        stackName = "profile-stack",
+        titleRes = Res.string.profile,
+        icon = Icons.Rounded.AccountCircle,
+    ),
+    Auth(
+        stackName = "auth-stack",
+        titleRes = Res.string.auth,
+        icon = Icons.Rounded.Lock,
+    ),
+    Splash(
+        stackName = "splash-stack",
+        titleRes = Res.string.splash,
+        icon = Icons.Rounded.Start,
+    );
+}
