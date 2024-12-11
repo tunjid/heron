@@ -18,6 +18,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.feed.utilities.format
+import com.tunjid.heron.feed.utilities.createdAt
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import kotlinx.datetime.Instant
@@ -56,7 +57,7 @@ fun FeedItem(
                 SinglePost(
                     post = item.rootPost,
                     now = now,
-                    indexedAt = item.indexedAt,
+                    createdAt = item.rootPost.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
                     onImageClicked = onImageClicked,
@@ -65,7 +66,7 @@ fun FeedItem(
                 SinglePost(
                     post = item.parentPost,
                     now = now,
-                    indexedAt = item.indexedAt,
+                    createdAt = item.parentPost.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
                     onImageClicked = onImageClicked,
@@ -75,7 +76,7 @@ fun FeedItem(
             SinglePost(
                 post = item.post,
                 now = now,
-                indexedAt = item.indexedAt,
+                createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
                 onImageClicked = onImageClicked,
@@ -89,7 +90,7 @@ fun FeedItem(
 private fun SinglePost(
     now: Instant,
     post: Post,
-    indexedAt: Instant,
+    createdAt: Instant,
     onProfileClicked: (Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
@@ -99,16 +100,15 @@ private fun SinglePost(
         modifier = Modifier,
     ) {
         Row(
-            horizontalArrangement = spacedBy(16.dp),
+            horizontalArrangement = spacedBy(8.dp),
         ) {
-            val author: Profile = post.author
             AsyncImage(
                 modifier = Modifier
                     .size(48.dp),
                 args = ImageArgs(
-                    url = author.avatar?.uri,
+                    url = post.author.avatar?.uri,
                     contentScale = ContentScale.Crop,
-                    contentDescription = author.displayName ?: author.handle.id,
+                    contentDescription = post.author.displayName ?: post.author.handle.id,
                     shape = CircleShape,
                 ),
             )
@@ -117,8 +117,8 @@ private fun SinglePost(
             Column(Modifier.weight(1f)) {
                 PostHeadline(
                     now = now,
-                    createdAt = indexedAt,
-                    author = author,
+                    createdAt = createdAt,
+                    author = post.author,
                 )
 
 //                if (item is FeedItem.Reply) {
@@ -145,16 +145,15 @@ private fun SinglePost(
                 onOpenImage = onImageClicked,
                 onOpenPost = onPostClicked
             )
+            PostActions(
+                replyCount = format(post.replyCount),
+                repostCount = format(post.repostCount),
+                likeCount = format(post.likeCount),
+                reposted = false,
+                liked = false,
+                iconSize = 16.dp,
+                onReplyToPost = onReplyToPost,
+            )
         }
-        PostActions(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            replyCount = format(post.replyCount),
-            repostCount = format(post.repostCount),
-            likeCount = format(post.likeCount),
-            reposted = false,
-            liked = false,
-            iconSize = 16.dp,
-            onReplyToPost = onReplyToPost,
-        )
     }
 }

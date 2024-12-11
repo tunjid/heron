@@ -3,6 +3,8 @@ package com.tunjid.heron.feed.ui
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +40,7 @@ internal fun PostHeadline(
             )
         }
         if (secondaryText != null) {
+            Spacer(Modifier.height(4.dp))
             Text(
                 modifier = Modifier,
                 text = author.handle.id,
