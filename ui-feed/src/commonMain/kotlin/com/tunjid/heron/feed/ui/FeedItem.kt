@@ -119,16 +119,18 @@ private fun PostReplies(
                 onReplyToPost = onReplyToPost
             )
             Spacer(Modifier.height(16.dp))
-            SinglePost(
-                post = item.parentPost,
-                now = now,
-                createdAt = item.parentPost.createdAt,
-                onProfileClicked = onProfileClicked,
-                onPostClicked = onPostClicked,
-                onImageClicked = onImageClicked,
-                onReplyToPost = onReplyToPost
-            )
-            Spacer(Modifier.height(16.dp))
+            if (item.rootPost.cid != item.parentPost.cid) {
+                SinglePost(
+                    post = item.parentPost,
+                    now = now,
+                    createdAt = item.parentPost.createdAt,
+                    onProfileClicked = onProfileClicked,
+                    onPostClicked = onPostClicked,
+                    onImageClicked = onImageClicked,
+                    onReplyToPost = onReplyToPost
+                )
+                Spacer(Modifier.height(16.dp))
+            }
         }
     }
 }
