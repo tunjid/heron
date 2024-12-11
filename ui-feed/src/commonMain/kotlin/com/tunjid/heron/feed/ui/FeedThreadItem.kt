@@ -24,7 +24,7 @@ import com.tunjid.heron.images.ImageArgs
 import kotlinx.datetime.Instant
 
 @Composable
-fun ThreadPostItem(
+fun FeedThreadItem(
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,

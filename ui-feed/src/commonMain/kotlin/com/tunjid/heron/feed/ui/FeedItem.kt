@@ -22,7 +22,7 @@ import com.tunjid.heron.images.ImageArgs
 import kotlinx.datetime.Instant
 
 @Composable
-fun TimelinePostItem(
+fun FeedItem(
     modifier: Modifier = Modifier,
     now: Instant,
     item: FeedItem,
@@ -75,12 +75,12 @@ fun TimelinePostItem(
                     onClick = { onPostClicked(item.post) },
                     onOpenUser = onProfileClicked
                 )
-//                PostFeature(
-//                    now = now,
-//                    post = item.feature,
-//                    onOpenImage = onImageClicked,
-//                    onOpenPost = onPostClicked
-//                )
+                PostFeature(
+                    now = now,
+                    post = item.post,
+                    onOpenImage = onImageClicked,
+                    onOpenPost = onPostClicked
+                )
             }
             PostActions(
                 replyCount = format(item.post.replyCount),

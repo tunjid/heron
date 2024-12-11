@@ -16,16 +16,12 @@
 
 package com.tunjid.heron.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -33,7 +29,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.feed.ui.TimelinePostItem
+import com.tunjid.heron.feed.ui.FeedItem
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
@@ -56,7 +52,7 @@ internal fun HomeScreen(
             items = items,
             key = FeedItem::id,
             itemContent = { item ->
-                TimelinePostItem(
+                FeedItem(
                     modifier = Modifier
                         .fillMaxWidth(),
                     now = remember { Clock.System.now() },

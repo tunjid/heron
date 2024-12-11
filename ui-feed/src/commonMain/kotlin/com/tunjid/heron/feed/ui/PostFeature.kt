@@ -8,6 +8,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.feed.ui.feature.PostExternal
+import com.tunjid.heron.feed.ui.feature.PostImages
+import com.tunjid.heron.feed.ui.feature.UnknownPostPost
 import kotlinx.datetime.Instant
 
 @Composable
@@ -18,10 +21,13 @@ internal fun PostFeature(
     onOpenPost: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
-    when (post?.embed) {
-        is ExternalEmbed -> Unit
-        is ImageList -> Unit
-        UnknownEmbed -> Unit
+    when (val embed = post?.embed) {
+        is ExternalEmbed -> PostExternal(embed, onClick = {
+            uriHandler.openUri(embed.uri.uri)
+        })
+
+        is ImageList -> PostImages(embed)
+        UnknownEmbed -> UnknownPostPost(onClick = {})
         is Video -> Unit
 //        is ImagesFeature -> PostImages(post, onOpenImage)
 //        is ExternalFeature -> PostExternal(post, onClick = {
