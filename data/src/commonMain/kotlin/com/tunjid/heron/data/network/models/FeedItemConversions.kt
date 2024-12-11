@@ -37,6 +37,20 @@ internal fun FeedViewPost.feedItemEntity(
     },
 )
 
+internal fun ReplyRefRootUnion.profileEntity() = when (this) {
+    is ReplyRefRootUnion.PostView -> value.profileEntity()
+    is ReplyRefRootUnion.BlockedPost,
+    is ReplyRefRootUnion.NotFoundPost,
+    is ReplyRefRootUnion.Unknown -> null
+}
+
+internal fun ReplyRefParentUnion.profileEntity() = when (this) {
+    is ReplyRefParentUnion.PostView -> value.profileEntity()
+    is ReplyRefParentUnion.BlockedPost,
+    is ReplyRefParentUnion.NotFoundPost,
+    is ReplyRefParentUnion.Unknown -> null
+}
+
 internal fun ReplyRefRootUnion.postEntity() = when (this) {
     is ReplyRefRootUnion.BlockedPost -> emptyPostEntity(
         id = Constants.blockedPostId,

@@ -140,7 +140,10 @@ class OfflineFeedRepository(
 
             feedView.reply?.let {
                 postEntities.add(it.root.postEntity())
+                it.root.profileEntity()?.let(profileEntities::add)
+
                 postEntities.add(it.parent.postEntity())
+                it.parent.profileEntity()?.let(profileEntities::add)
             }
 
             feedView.reason?.profileEntity()?.let(profileEntities::add)
