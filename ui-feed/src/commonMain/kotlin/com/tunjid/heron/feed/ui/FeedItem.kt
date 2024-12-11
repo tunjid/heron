@@ -37,7 +37,6 @@ fun FeedItem(
         modifier = modifier,
         onClick = { onPostClicked(item.post) }
     ) {
-
         Column(
             modifier = Modifier
                 .padding(
@@ -49,6 +48,10 @@ fun FeedItem(
         ) {
             if (item is FeedItem.Repost) {
                 PostReasonLine(
+                    modifier = Modifier.padding(
+                        start = 32.dp,
+                        bottom = 4.dp
+                    ),
                     item = item,
                     onOpenUser = onProfileClicked,
                 )

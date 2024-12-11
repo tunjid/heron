@@ -20,22 +20,25 @@ import com.tunjid.heron.data.core.models.Profile
 import heron.ui_feed.generated.resources.Res
 import heron.ui_feed.generated.resources.repost
 import heron.ui_feed.generated.resources.repost_by
-//import heron.feature_home.generated.resources.Res
-//import heron.feature_home.generated.resources.repost
-//import heron.feature_home.generated.resources.repost_by
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PostReasonLine(
+    modifier: Modifier = Modifier,
     item: FeedItem,
     onOpenUser: (Profile) -> Unit,
 ) {
     when (item) {
-        is FeedItem.Pinned -> PostPinnedReasonLine()
+        is FeedItem.Pinned -> PostPinnedReasonLine(
+            modifier = modifier
+        )
+
         is FeedItem.Repost -> PostRepostReasonLine(
+            modifier = modifier,
             repostBy = item.by,
             onOpenUser = onOpenUser
         )
+
         is FeedItem.Reply,
         is FeedItem.Single -> Unit
     }
@@ -43,11 +46,12 @@ internal fun PostReasonLine(
 
 @Composable
 private fun PostRepostReasonLine(
+    modifier: Modifier = Modifier,
     repostBy: Profile,
     onOpenUser: (Profile) -> Unit,
 ) {
     PostReasonLine(
-        modifier = Modifier.clickable { onOpenUser(repostBy) },
+        modifier = modifier.clickable { onOpenUser(repostBy) },
         imageVector = Icons.Rounded.Repeat,
         iconContentDescription = stringResource(Res.string.repost),
         text = stringResource(
@@ -58,8 +62,11 @@ private fun PostRepostReasonLine(
 }
 
 @Composable
-private fun PostPinnedReasonLine() {
+private fun PostPinnedReasonLine(
+    modifier: Modifier = Modifier,
+) {
     PostReasonLine(
+        modifier = modifier,
         imageVector = Icons.Rounded.Star,
         iconContentDescription = "Pinned",
         text = "Pinned",
