@@ -116,6 +116,13 @@ data class PopulatedPostEntity(
     val externalEmbeds: List<ExternalEmbedEntity>,
 )
 
+data class EmbeddedPopulatedPostEntity(
+    @Embedded
+    val entity: PopulatedPostEntity,
+    val postId: Id,
+    val embeddedPostId: Id,
+)
+
 fun PopulatedPostEntity.asExternalModel() = Post(
     cid = entity.cid,
     uri = entity.uri,

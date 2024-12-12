@@ -16,4 +16,41 @@
 
 package com.tunjid.heron.data.database.entities.postembeds
 
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.entities.PostEntity
+
 sealed interface PostEmbed
+
+/**
+ * Cross reference for many to many relationship between [Post] and another [Post].
+ */
+@Entity(
+    tableName = "postPosts",
+    primaryKeys = ["postId", "embeddedPostId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["cid"],
+            childColumns = ["embeddedPostId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["embeddedPostId"]),
+    ],
+)
+data class PostPostEntity(
+    val postId: Id,
+    val embeddedPostId: Id,
+)

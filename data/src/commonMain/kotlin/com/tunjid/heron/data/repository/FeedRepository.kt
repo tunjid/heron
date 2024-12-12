@@ -10,20 +10,22 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
 import com.tunjid.heron.data.database.entities.FeedItemEntity
-import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.embeddedPostEntity
+import com.tunjid.heron.data.network.models.embeddedPostProfileEntity
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
@@ -124,6 +126,7 @@ class OfflineFeedRepository(
         val feedItemEntities = mutableListOf<FeedItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
         val profileEntities = mutableListOf<ProfileEntity>()
+        val postPostEntities = mutableListOf<PostPostEntity>()
 
         val externalEmbedEntities = mutableListOf<ExternalEmbedEntity>()
         val postExternalEmbedEntities = mutableListOf<PostExternalEmbedEntity>()
@@ -153,6 +156,17 @@ class OfflineFeedRepository(
 
             postEntities.add(postEntity)
             profileEntities.add(feedView.post.profileEntity())
+
+            feedView.post.embeddedPostEntity()?.let { embeddedPost ->
+                postEntities.add(embeddedPost)
+                postPostEntities.add(
+                    PostPostEntity(
+                        postId = postEntity.cid,
+                        embeddedPostId = embeddedPost.cid,
+                    )
+                )
+            }
+            feedView.post.embeddedPostProfileEntity()?.let(profileEntities::add)
 
             feedView.post.embedEntities().forEach { embedEntity ->
                 when (embedEntity) {
@@ -201,6 +215,8 @@ class OfflineFeedRepository(
             embedDao.upsertImages(imageEntities)
             embedDao.upsertVideos(videoEntities)
 
+            postDao.insertOrIgnorePostPosts(postPostEntities)
+
             postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
             postDao.insertOrIgnorePostImages(postImageEntities)
             postDao.insertOrIgnorePostVideos(postVideoEntities)
@@ -222,28 +238,31 @@ class OfflineFeedRepository(
                 .flatMapLatest { itemEntities ->
                     combine(
                         postDao.posts(
-                            itemEntities.map { it.postId }
+                            itemEntities.flatMap {
+                                listOfNotNull(
+                                    it.postId,
+                                    it.reply?.parentPostId,
+                                    it.reply?.rootPostId
+                                )
+                            }
+                                .toSet()
                         ),
-                        postDao.posts(
-                            itemEntities.mapNotNull { it.reply?.parentPostId }
-                        ),
-                        postDao.posts(
-                            itemEntities.mapNotNull { it.reply?.rootPostId }
+                        postDao.embeddedPosts(
+                            itemEntities.map { it.postId }.toSet()
                         ),
                         profileDao.profiles(
                             itemEntities.mapNotNull { it.reposter }
                         )
-                    ) { mainPosts, replyParents, replyRoots, repostProfiles ->
-                        val idsToMainPosts = mainPosts.associateBy { it.entity.cid }
-                        val idsToReplyParents = replyParents.associateBy { it.entity.cid }
-                        val idsToReplyRoots = replyRoots.associateBy { it.entity.cid }
+                    ) { posts, embeddedPosts, repostProfiles ->
+                        val idsToPosts = posts.associateBy { it.entity.cid }
+                        val idsToEmbeddedPosts = embeddedPosts.associateBy { it.postId }
                         val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                         itemEntities.map { entity ->
-                            val mainPost = idsToMainPosts.getValue(entity.postId)
-                            val replyParent =
-                                entity.reply?.let { idsToReplyParents[it.parentPostId] }
-                            val replyRoot = entity.reply?.let { idsToReplyRoots[it.rootPostId] }
+                            val mainPost = idsToPosts.getValue(entity.postId)
+                            val embeddedPost = idsToEmbeddedPosts[entity.postId]
+                            val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
+                            val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
                             val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
                             when {
@@ -252,6 +271,13 @@ class OfflineFeedRepository(
                                     post = mainPost.asExternalModel(),
                                     rootPost = replyRoot.asExternalModel(),
                                     parentPost = replyParent.asExternalModel(),
+                                )
+
+                                embeddedPost != null -> FeedItem.Quote(
+                                    id = entity.id,
+                                    post = mainPost.asExternalModel(),
+                                    quotedPost = embeddedPost.entity.asExternalModel(),
+                                    at = entity.indexedAt,
                                 )
 
                                 repostedBy != null -> FeedItem.Repost(

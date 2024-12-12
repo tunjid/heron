@@ -36,7 +36,7 @@ data class Post(
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
-) {
+): Embed {
     data class Record(
         val text: String,
         val createdAt: Instant,

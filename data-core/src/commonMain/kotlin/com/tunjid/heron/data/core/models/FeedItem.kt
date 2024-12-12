@@ -11,6 +11,7 @@ sealed class FeedItem {
         get() = when (this) {
             is Pinned,
             is Reply,
+            is Quote,
             is Single -> post.indexedAt
 
             is Repost -> at
@@ -25,6 +26,13 @@ sealed class FeedItem {
         override val id: String,
         override val post: Post,
         val by: Profile,
+        val at: Instant,
+    ) : FeedItem()
+
+    data class Quote(
+        override val id: String,
+        override val post: Post,
+        val quotedPost: Post,
         val at: Instant,
     ) : FeedItem()
 

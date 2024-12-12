@@ -59,7 +59,7 @@ fun FeedThreadItem(
                     CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) {
                         PostText(post, {}, onOpenUser)
                     }
-                    PostFeature(now, post, onOpenImage, onOpenPost)
+                    PostEmbed(now, post, onOpenImage, onOpenPost)
                     post.record?.let {
                         PostDate(it.createdAt)
                     }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedItem
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -74,6 +75,10 @@ fun FeedItem(
             }
             SinglePost(
                 post = item.post,
+                embed = when (item) {
+                    is FeedItem.Quote -> item.quotedPost
+                    else -> item.post.embed
+                },
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -111,6 +116,7 @@ private fun PostReplies(
         Column {
             SinglePost(
                 post = item.rootPost,
+                embed = item.rootPost.embed,
                 now = now,
                 createdAt = item.rootPost.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -122,6 +128,7 @@ private fun PostReplies(
             if (item.rootPost.cid != item.parentPost.cid) {
                 SinglePost(
                     post = item.parentPost,
+                    embed = item.parentPost.embed,
                     now = now,
                     createdAt = item.parentPost.createdAt,
                     onProfileClicked = onProfileClicked,
@@ -139,6 +146,7 @@ private fun PostReplies(
 private fun SinglePost(
     now: Instant,
     post: Post,
+    embed: Embed?,
     createdAt: Instant,
     onProfileClicked: (Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -188,9 +196,9 @@ private fun SinglePost(
                 onClick = { onPostClicked(post) },
                 onOpenUser = onProfileClicked
             )
-            PostFeature(
+            PostEmbed(
                 now = now,
-                post = post,
+                embed = embed,
                 onOpenImage = onImageClicked,
                 onOpenPost = onPostClicked
             )
