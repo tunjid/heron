@@ -95,9 +95,6 @@ abstract class ProfileComponent(
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
-                topBar = {
-                    TopBar()
-                },
                 content = { paddingValues ->
                     ProfileScreen(
                         state = state,
@@ -108,20 +105,5 @@ abstract class ProfileComponent(
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
     )
 }

@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,11 +31,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,6 +47,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -56,6 +61,8 @@ import com.tunjid.heron.data.core.models.FeedItem
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.feed.ui.FeedItem
 import com.tunjid.heron.feed.utilities.format
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 import kotlin.math.roundToInt
@@ -150,7 +157,7 @@ private fun ProfileHeader(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = modifier
+            modifier = modifier.padding(horizontal = 16.dp)
         ) {
             ProfileHeadline(
                 modifier = Modifier.fillMaxWidth(),
@@ -162,6 +169,18 @@ private fun ProfileHeader(
             )
             Text(text = profile.description ?: "")
         }
+
+        AsyncImage(
+            modifier = Modifier
+                .size(48.dp)
+                .align(Alignment.TopCenter),
+            args = ImageArgs(
+                url = profile.avatar?.uri,
+                contentScale = ContentScale.Crop,
+                contentDescription = profile.displayName ?: profile.handle.id,
+                shape = CircleShape,
+            ),
+        )
     }
 }
 
@@ -176,7 +195,7 @@ private fun ProfileHeadline(
             val secondaryText = profile.handle.id.takeUnless { it == primaryText }
 
             Text(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier,
                 text = primaryText,
                 maxLines = 1,
                 style = LocalTextStyle.current.copy(fontWeight = Bold),
@@ -201,7 +220,8 @@ private fun ProfileStats(
     profile: Profile,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Statistic(
             value = profile.followersCount ?: 0,

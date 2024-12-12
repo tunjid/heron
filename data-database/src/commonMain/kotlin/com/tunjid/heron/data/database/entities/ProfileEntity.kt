@@ -25,6 +25,20 @@ data class ProfileEntity(
     val joinedViaStarterPack: Id?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
+) {
+    data class Partial(
+        val did: Id,
+        val handle: Id,
+        val displayName: String?,
+        val avatar: Uri?,
+    )
+}
+
+fun ProfileEntity.partial() = ProfileEntity.Partial(
+    did = did,
+    handle = handle,
+    displayName = displayName,
+    avatar = avatar
 )
 
 fun ProfileEntity.asExternalModel() = Profile(

@@ -4,7 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
 
-internal inline fun < R: Any> runCatchingWithIoMessage(
+internal inline fun <R : Any> runCatchingWithIoMessage(
     block: () -> AtpResponse<R>,
 ): Result<R> = try {
     when (val atpResponse = block()) {
@@ -16,26 +16,21 @@ internal inline fun < R: Any> runCatchingWithIoMessage(
             atpResponse.response
         )
     }
-}
-catch (cancellationException: CancellationException) {
+} catch (cancellationException: CancellationException) {
     throw cancellationException
-}
-catch (ioe: IOException) {
+} catch (ioe: IOException) {
     // TODO: Pare IO exception errors better
     Result.failure(Exception("There was an error"))
-}
-catch (e: Throwable) {
+} catch (e: Throwable) {
     Result.failure(e)
 }
 
 inline fun <R> runCatchingCoroutines(block: () -> R): Result<R> {
     return try {
         Result.success(block())
-    }
-    catch (cancellationException: CancellationException) {
+    } catch (cancellationException: CancellationException) {
         throw cancellationException
-    }
-    catch (e: Throwable) {
+    } catch (e: Throwable) {
         Result.failure(e)
     }
 }
