@@ -33,7 +33,6 @@ data class Post(
     val embed: Embed?,
     val quote: Post?,
     val record: Record?,
-//    public val embed: PostViewEmbedUnion?,
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
