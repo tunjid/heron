@@ -39,7 +39,6 @@ internal fun PostReasonLine(
             onOpenUser = onOpenUser
         )
 
-        is FeedItem.Quote,
         is FeedItem.Reply,
         is FeedItem.Single -> Unit
     }

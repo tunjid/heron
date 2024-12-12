@@ -17,6 +17,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -24,6 +25,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.embeddedPostEmbedEntities
 import com.tunjid.heron.data.network.models.embeddedPostEntity
 import com.tunjid.heron.data.network.models.embeddedPostProfileEntity
 import com.tunjid.heron.data.network.models.feedItemEntity
@@ -157,40 +159,40 @@ class OfflineFeedRepository(
             postEntities.add(postEntity)
             profileEntities.add(feedView.post.profileEntity())
 
-            feedView.post.embeddedPostEntity()?.let { embeddedPost ->
-                postEntities.add(embeddedPost)
+            feedView.post.embeddedPostEntity()?.let { embeddedPostEntity ->
+                postEntities.add(embeddedPostEntity)
                 postPostEntities.add(
                     PostPostEntity(
                         postId = postEntity.cid,
-                        embeddedPostId = embeddedPost.cid,
+                        embeddedPostId = embeddedPostEntity.cid,
                     )
                 )
+                feedView.post.embeddedPostEmbedEntities().forEach { embedEntity ->
+                    associatePostEmbeds(
+                        postEntity = embeddedPostEntity,
+                        embedEntity = embedEntity,
+                        externalEmbedEntities = externalEmbedEntities,
+                        postExternalEmbedEntities = postExternalEmbedEntities,
+                        imageEntities = imageEntities,
+                        postImageEntities = postImageEntities,
+                        videoEntities = videoEntities,
+                        postVideoEntities = postVideoEntities
+                    )
+                }
             }
             feedView.post.embeddedPostProfileEntity()?.let(profileEntities::add)
 
             feedView.post.embedEntities().forEach { embedEntity ->
-                when (embedEntity) {
-                    is ExternalEmbedEntity -> {
-                        externalEmbedEntities.add(embedEntity)
-                        postExternalEmbedEntities.add(
-                            postEntity.postExternalEmbedEntity(embedEntity)
-                        )
-                    }
-
-                    is ImageEntity -> {
-                        imageEntities.add(embedEntity)
-                        postImageEntities.add(
-                            postEntity.postImageEntity(embedEntity)
-                        )
-                    }
-
-                    is VideoEntity -> {
-                        videoEntities.add(embedEntity)
-                        postVideoEntities.add(
-                            postEntity.postVideoEntity(embedEntity)
-                        )
-                    }
-                }
+                associatePostEmbeds(
+                    postEntity = postEntity,
+                    embedEntity = embedEntity,
+                    externalEmbedEntities = externalEmbedEntities,
+                    postExternalEmbedEntities = postExternalEmbedEntities,
+                    imageEntities = imageEntities,
+                    postImageEntities = postImageEntities,
+                    videoEntities = videoEntities,
+                    postVideoEntities = postVideoEntities
+                )
             }
         }
 
@@ -222,6 +224,40 @@ class OfflineFeedRepository(
             postDao.insertOrIgnorePostVideos(postVideoEntities)
 
             feedDao.upsertFeedItems(feedItemEntities)
+        }
+    }
+
+    private fun associatePostEmbeds(
+        postEntity: PostEntity,
+        embedEntity: PostEmbed,
+        externalEmbedEntities: MutableList<ExternalEmbedEntity>,
+        postExternalEmbedEntities: MutableList<PostExternalEmbedEntity>,
+        imageEntities: MutableList<ImageEntity>,
+        postImageEntities: MutableList<PostImageEntity>,
+        videoEntities: MutableList<VideoEntity>,
+        postVideoEntities: MutableList<PostVideoEntity>
+    ) {
+        when (embedEntity) {
+            is ExternalEmbedEntity -> {
+                externalEmbedEntities.add(embedEntity)
+                postExternalEmbedEntities.add(
+                    postEntity.postExternalEmbedEntity(embedEntity)
+                )
+            }
+
+            is ImageEntity -> {
+                imageEntities.add(embedEntity)
+                postImageEntities.add(
+                    postEntity.postImageEntity(embedEntity)
+                )
+            }
+
+            is VideoEntity -> {
+                videoEntities.add(embedEntity)
+                postVideoEntities.add(
+                    postEntity.postVideoEntity(embedEntity)
+                )
+            }
         }
     }
 
@@ -260,7 +296,6 @@ class OfflineFeedRepository(
 
                         itemEntities.map { entity ->
                             val mainPost = idsToPosts.getValue(entity.postId)
-                            val embeddedPost = idsToEmbeddedPosts[entity.postId]
                             val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
                             val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
                             val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
@@ -268,33 +303,50 @@ class OfflineFeedRepository(
                             when {
                                 replyRoot != null && replyParent != null -> FeedItem.Reply(
                                     id = entity.id,
-                                    post = mainPost.asExternalModel(),
-                                    rootPost = replyRoot.asExternalModel(),
-                                    parentPost = replyParent.asExternalModel(),
-                                )
-
-                                embeddedPost != null -> FeedItem.Quote(
-                                    id = entity.id,
-                                    post = mainPost.asExternalModel(),
-                                    quotedPost = embeddedPost.entity.asExternalModel(),
-                                    at = entity.indexedAt,
+                                    post = mainPost.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
+                                    rootPost = replyRoot.asExternalModel(
+                                        quote = idsToEmbeddedPosts[replyRoot.entity.cid]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
+                                    parentPost = replyParent.asExternalModel(
+                                        quote = idsToEmbeddedPosts[replyParent.entity.cid]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
                                 )
 
                                 repostedBy != null -> FeedItem.Repost(
                                     id = entity.id,
-                                    post = mainPost.asExternalModel(),
+                                    post = mainPost.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
                                     by = repostedBy.asExternalModel(),
                                     at = entity.indexedAt,
                                 )
 
                                 entity.isPinned -> FeedItem.Pinned(
                                     id = entity.id,
-                                    post = mainPost.asExternalModel(),
+                                    post = mainPost.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
                                 )
 
                                 else -> FeedItem.Single(
                                     id = entity.id,
-                                    post = mainPost.asExternalModel(),
+                                    post = mainPost.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(null)
+                                    ),
                                 )
                             }
                         }

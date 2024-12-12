@@ -75,10 +75,7 @@ fun FeedItem(
             }
             SinglePost(
                 post = item.post,
-                embed = when (item) {
-                    is FeedItem.Quote -> item.quotedPost
-                    else -> item.post.embed
-                },
+                embed = item.post.embed,
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -199,6 +196,7 @@ private fun SinglePost(
             PostEmbed(
                 now = now,
                 embed = embed,
+                quote = post.quote,
                 onOpenImage = onImageClicked,
                 onOpenPost = onPostClicked
             )

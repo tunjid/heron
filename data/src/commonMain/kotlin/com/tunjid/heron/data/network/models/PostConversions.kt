@@ -124,43 +124,13 @@ internal fun PostView.embeddedPostProfileEntity(): ProfileEntity? =
         null -> null
     }
 
-internal fun PostView.profileEntity(): ProfileEntity =
-    ProfileEntity(
-        did = Id(author.did.did),
-        handle = Id(author.handle.handle),
-        displayName = author.displayName,
-        description = null,
-        avatar = author.avatar?.uri?.let(::Uri),
-        banner = null,
-        followersCount = 0,
-        followsCount = 0,
-        postsCount = 0,
-        joinedViaStarterPack = null,
-        indexedAt = null,
-        createdAt = author.createdAt,
-    )
-
-internal fun PostView.embedEntities(): List<PostEmbed> =
+internal fun PostView.embeddedPostEmbedEntities(): List<PostEmbed> =
     when (val embed = embed) {
-        is PostViewEmbedUnion.ExternalView -> listOf(
-            ExternalEmbedEntity(
-                uri = Uri(embed.value.external.uri.uri),
-                title = embed.value.external.title,
-                description = embed.value.external.description,
-                thumb = embed.value.external.thumb?.uri?.let(::Uri),
-            )
-        )
-
-        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
-            ImageEntity(
-                fullSize = Uri(it.fullsize.uri),
-                thumb = Uri(it.thumb.uri),
-                alt = it.alt,
-                width = it.aspectRatio?.width,
-                height = it.aspectRatio?.height,
-            )
-        }
-
+        is PostViewEmbedUnion.ExternalView -> emptyList()
+        is PostViewEmbedUnion.ImagesView -> emptyList()
+        is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
+        is PostViewEmbedUnion.Unknown -> emptyList()
+        is PostViewEmbedUnion.VideoView -> emptyList()
         is PostViewEmbedUnion.RecordView -> when (val innerEmbed = embed.value.record) {
             is RecordViewRecordUnion.FeedGeneratorView,
             is RecordViewRecordUnion.GraphListView,
@@ -210,6 +180,47 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                 }
         }.flatten()
 
+        null -> emptyList()
+    }
+
+internal fun PostView.profileEntity(): ProfileEntity =
+    ProfileEntity(
+        did = Id(author.did.did),
+        handle = Id(author.handle.handle),
+        displayName = author.displayName,
+        description = null,
+        avatar = author.avatar?.uri?.let(::Uri),
+        banner = null,
+        followersCount = 0,
+        followsCount = 0,
+        postsCount = 0,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = author.createdAt,
+    )
+
+internal fun PostView.embedEntities(): List<PostEmbed> =
+    when (val embed = embed) {
+        is PostViewEmbedUnion.ExternalView -> listOf(
+            ExternalEmbedEntity(
+                uri = Uri(embed.value.external.uri.uri),
+                title = embed.value.external.title,
+                description = embed.value.external.description,
+                thumb = embed.value.external.thumb?.uri?.let(::Uri),
+            )
+        )
+
+        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
+            ImageEntity(
+                fullSize = Uri(it.fullsize.uri),
+                thumb = Uri(it.thumb.uri),
+                alt = it.alt,
+                width = it.aspectRatio?.width,
+                height = it.aspectRatio?.height,
+            )
+        }
+
+        is PostViewEmbedUnion.RecordView -> emptyList()
         is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(

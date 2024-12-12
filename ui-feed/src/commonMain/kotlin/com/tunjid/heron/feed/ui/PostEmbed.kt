@@ -1,5 +1,6 @@
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalUriHandler
 import com.tunjid.heron.data.core.models.Constants
@@ -22,51 +23,39 @@ import kotlinx.datetime.Instant
 internal fun PostEmbed(
     now: Instant,
     embed: Embed?,
+    quote: Post?,
     onOpenImage: (Uri) -> Unit,
     onOpenPost: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
-    when (embed) {
-        is ExternalEmbed -> PostExternal(embed, onClick = {
-            uriHandler.openUri(embed.uri.uri)
-        })
+    Column {
+        when (embed) {
+            is ExternalEmbed -> PostExternal(embed, onClick = {
+                uriHandler.openUri(embed.uri.uri)
+            })
 
-        is ImageList -> PostImages(embed)
-        UnknownEmbed -> UnknownPostPost(onClick = {})
-        is Video -> Unit
+            is ImageList -> PostImages(embed)
+            UnknownEmbed -> UnknownPostPost(onClick = {})
+            is Video -> Unit
 
-        is Post -> when (embed.cid) {
+
+            null -> Unit
+        }
+        when (quote?.cid) {
+            null -> Unit
             Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
             Constants.blockedPostId -> BlockedPostPost(onClick = {})
             Constants.unknownPostId -> UnknownPostPost(onClick = {})
             else -> {
-                VisiblePostPost(now, embed, embed.author, onClick = {
+                VisiblePostPost(
+                    now = now,
+                    post = quote,
+                    author = quote.author,
+                    onClick = {
 //                    onOpenPost(ThreadProps.FromReference(embedPost.reference))
-                })
+                    }
+                )
             }
-
         }
-//
-//        is MediaPostFeature -> {
-//            when (val embedMedia = post.media) {
-//                is ImagesFeature -> PostImages(embedMedia, onOpenImage)
-//                is ExternalFeature -> PostExternal(embedMedia, onClick = {
-//                    uriHandler.openUri(embedMedia.uri.uri)
-//                })
-//            }
-//            when (val embedPost = post.post) {
-//                is EmbedPost.VisibleEmbedPost -> {
-//                    VisiblePostPost(now, embedPost.litePost, embedPost.author, onClick = {
-//                        onOpenPost(ThreadProps.FromReference(embedPost.reference))
-//                    })
-//                }
-//
-//                is EmbedPost.InvisibleEmbedPost -> InvisiblePostPost(onClick = {})
-//                is EmbedPost.BlockedEmbedPost -> BlockedPostPost(onClick = {})
-//                is EmbedPost.UnknownEmbedPost -> UnknownPostPost(onClick = {})
-//            }
-//        }
-
-        null -> Unit
     }
 }
