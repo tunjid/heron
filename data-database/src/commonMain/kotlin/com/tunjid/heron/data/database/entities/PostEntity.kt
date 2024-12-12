@@ -116,7 +116,16 @@ data class PopulatedPostEntity(
     val externalEmbeds: List<ExternalEmbedEntity>,
 )
 
-fun PopulatedPostEntity.asExternalModel() = Post(
+data class EmbeddedPopulatedPostEntity(
+    @Embedded
+    val entity: PopulatedPostEntity,
+    val postId: Id,
+    val embeddedPostId: Id,
+)
+
+fun PopulatedPostEntity.asExternalModel(
+    quote: Post?
+) = Post(
     cid = entity.cid,
     uri = entity.uri,
     replyCount = entity.replyCount.orZero(),
@@ -134,6 +143,7 @@ fun PopulatedPostEntity.asExternalModel() = Post(
 
         else -> null
     },
+    quote = quote,
     record = entity.record?.let {
         Post.Record(
             text = it.text,

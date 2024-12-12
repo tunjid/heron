@@ -1,5 +1,7 @@
 package com.tunjid.heron.data.network.models
 
+import app.bsky.embed.RecordViewRecordEmbedUnion
+import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.Id
@@ -8,6 +10,7 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
@@ -50,7 +53,7 @@ internal fun PostView.postEntity() =
         record = record.asPostEntityRecordData(),
     )
 
-internal fun PostView.profileEntity() =
+internal fun PostView.profileEntity(): ProfileEntity =
     ProfileEntity(
         did = Id(author.did.did),
         handle = Id(author.handle.handle),
@@ -66,7 +69,7 @@ internal fun PostView.profileEntity() =
         createdAt = author.createdAt,
     )
 
-internal fun PostView.embedEntities() =
+internal fun PostView.embedEntities(): List<PostEmbed> =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> listOf(
             ExternalEmbedEntity(
@@ -105,7 +108,7 @@ internal fun PostView.embedEntities() =
     }
 
 
-private fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
+internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     // TODO can this be deterministic?
     try {
         val bskyPost = decodeAs<BskyPost>()

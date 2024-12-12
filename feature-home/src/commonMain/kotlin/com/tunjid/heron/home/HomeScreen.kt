@@ -17,6 +17,7 @@
 package com.tunjid.heron.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -48,6 +49,7 @@ internal fun HomeScreen(
             .fillMaxSize(),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(400.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
         verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {

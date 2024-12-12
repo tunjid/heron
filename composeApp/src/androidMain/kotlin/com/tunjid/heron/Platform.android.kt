@@ -10,12 +10,15 @@ import com.tunjid.heron.di.AppComponent
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.allRouteMatchers
 import com.tunjid.heron.di.create
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.home.di.HomeComponent
+import com.tunjid.heron.home.di.HomeNavigationComponent
+import com.tunjid.heron.home.di.create
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
 import com.tunjid.heron.scaffold.di.create
-import com.tunjid.heron.signin.di.SignInNavigationComponent
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInComponent
+import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.signin.di.create
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +37,8 @@ fun createAppState(context: Context): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = AppNavigationComponent::class.create(
-        signInNavigationComponent = SignInNavigationComponent::class.create()
+        signInNavigationComponent = SignInNavigationComponent::class.create(),
+        homeNavigationComponent = HomeNavigationComponent::class.create(),
     )
 
     val dataComponent = DataComponent::class.create(
@@ -57,6 +61,10 @@ fun createAppState(context: Context): AppState {
         dataComponent = dataComponent,
         scaffoldComponent = scaffoldComponent,
         signInComponent = SignInComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        homeComponent = HomeComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
