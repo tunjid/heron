@@ -21,7 +21,7 @@ plugins {
     id("ksp-convention")
 }
 android {
-    namespace = "com.tunjid.heron.feature.home"
+    namespace = "com.tunjid.heron.feature.profile"
 }
 
 kotlin {
