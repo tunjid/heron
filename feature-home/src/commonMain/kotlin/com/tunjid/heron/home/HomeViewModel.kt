@@ -82,7 +82,7 @@ class ActualHomeStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), HomeStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        currentQuery = FeedQuery(
+        currentQuery = FeedQuery.Home(
             page = 0,
             source = Constants.timelineFeed,
             firstRequestInstant = Clock.System.now(),
@@ -175,7 +175,7 @@ private suspend fun Flow<Action.LoadFeed>.fetchListingFeedMutations(
 }
 
 private fun feedPivotRequest(numColumns: Int) =
-    PivotRequest<FeedQuery, FeedItem>(
+    PivotRequest<FeedQuery.Home, FeedItem>(
         onCount = numColumns * 3,
         offCount = numColumns * 2,
         comparator = ListingQueryComparator,
@@ -189,7 +189,7 @@ private fun feedPivotRequest(numColumns: Int) =
     )
 
 private fun feedItemListTiler(
-    startingQuery: FeedQuery,
+    startingQuery: FeedQuery.Home,
     feedRepository: FeedRepository,
 ) = listTiler(
     order = Tile.Order.PivotSorted(
@@ -199,12 +199,12 @@ private fun feedItemListTiler(
     fetcher = feedItemQueryFetcher(startingQuery, feedRepository)
 )
 
-private val ListingQueryComparator = compareBy(FeedQuery::page)
+private val ListingQueryComparator = compareBy(FeedQuery.Home::page)
 
 fun feedItemQueryFetcher(
-    startingQuery: FeedQuery,
+    startingQuery: FeedQuery.Home,
     feedRepository: FeedRepository,
-): QueryFetcher<FeedQuery, FeedItem> = neighboredQueryFetcher(
+): QueryFetcher<FeedQuery.Home, FeedItem> = neighboredQueryFetcher(
     // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
     // in memory
     maxTokens = 50,

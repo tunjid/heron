@@ -29,10 +29,10 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val currentQuery: FeedQuery,
+    val currentQuery: FeedQuery.Home,
     val numColumns: Int = 1,
     @Transient
-    val feed: TiledList<FeedQuery, FeedItem> = emptyTiledList(),
+    val feed: TiledList<FeedQuery.Home, FeedItem> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -41,7 +41,7 @@ data class State(
 sealed class Action(val key: String) {
 
     sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: FeedQuery) : LoadFeed()
+        data class LoadAround(val query: FeedQuery.Home) : LoadFeed()
         data class GridSize(val numColumns: Int) : LoadFeed()
     }
 

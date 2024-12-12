@@ -18,7 +18,6 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
@@ -27,7 +26,7 @@ import kotlinx.datetime.Instant
 )
 data class FeedFetchKeyEntity(
     @PrimaryKey
-    var feedUri: Uri,
+    var sourceId: String,
     val lastFetchedAt: Instant,
 )
 

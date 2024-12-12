@@ -18,13 +18,15 @@ package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.data.repository.FeedRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.profile.di.profileId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -77,14 +79,17 @@ class ActualProfileStateHolder(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        currentQuery = FeedQuery(
+        profile = stubProfile(
+            did = Id(route.profileId),
+            handle = Id(route.profileId),
+        ),
+        currentQuery = FeedQuery.Profile(
             page = 0,
-            source = Constants.timelineFeed,
+            profileId = Id(route.profileId),
             firstRequestInstant = Clock.System.now(),
         )
     ),
@@ -175,7 +180,7 @@ private suspend fun Flow<Action.LoadFeed>.fetchListingFeedMutations(
 }
 
 private fun feedPivotRequest(numColumns: Int) =
-    PivotRequest<FeedQuery, FeedItem>(
+    PivotRequest<FeedQuery.Profile, FeedItem>(
         onCount = numColumns * 3,
         offCount = numColumns * 2,
         comparator = ListingQueryComparator,
@@ -189,7 +194,7 @@ private fun feedPivotRequest(numColumns: Int) =
     )
 
 private fun feedItemListTiler(
-    startingQuery: FeedQuery,
+    startingQuery: FeedQuery.Profile,
     feedRepository: FeedRepository,
 ) = listTiler(
     order = Tile.Order.PivotSorted(
@@ -199,12 +204,12 @@ private fun feedItemListTiler(
     fetcher = feedItemQueryFetcher(startingQuery, feedRepository)
 )
 
-private val ListingQueryComparator = compareBy(FeedQuery::page)
+private val ListingQueryComparator = compareBy(FeedQuery.Profile::page)
 
 fun feedItemQueryFetcher(
-    startingQuery: FeedQuery,
+    startingQuery: FeedQuery.Profile,
     feedRepository: FeedRepository,
-): QueryFetcher<FeedQuery, FeedItem> = neighboredQueryFetcher(
+): QueryFetcher<FeedQuery.Profile, FeedItem> = neighboredQueryFetcher(
     // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
     // in memory
     maxTokens = 50,
@@ -217,7 +222,7 @@ fun feedItemQueryFetcher(
     ),
     fetcher = { query, cursor ->
         feedRepository
-            .timeline(query.copy(nextItemCursor = cursor))
+            .profileTimeline(query.copy(nextItemCursor = cursor))
             .map { feedItemCursorList ->
                 NeighboredFetchResult(
                     // Set the cursor for the next page and any other page with data available.

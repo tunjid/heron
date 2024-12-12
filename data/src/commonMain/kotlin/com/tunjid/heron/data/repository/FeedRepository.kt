@@ -1,9 +1,13 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.feed.FeedViewPost
+import app.bsky.feed.GetAuthorFeedQueryParams
+import app.bsky.feed.GetAuthorFeedResponse
 import app.bsky.feed.GetTimelineQueryParams
+import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
@@ -25,15 +29,15 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
-import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
-import com.tunjid.heron.data.network.models.quotedPostEntity
-import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
+import com.tunjid.heron.data.network.models.quotedPostEntity
+import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -43,33 +47,75 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
-@Serializable
-data class FeedQuery(
-    val page: Int,
+sealed interface FeedQuery {
+    val page: Int
+
     /**
-     * The backing source of the feed, be it a list or other feed generator output.
-     * It is null for a signed in user's timeline.
-     */
-    val source: Uri,
-    /**
-     * The instant the first request was made, as pagination is only valid for [FeedQuery] values
+     * The instant the first request was made, as pagination is only valid for [Home] values
      * that all share the same [firstRequestInstant].
      */
-    val firstRequestInstant: Instant,
+    val firstRequestInstant: Instant
+
     /**
      * How many items to fetch for a query.
      */
-    val limit: Long = 50,
+    val limit: Long get() = 50
+
     /**
      * The cursor used to fetch items. Null if this is the first request.
      */
-    val nextItemCursor: CursorList.DoubleCursor? = null,
-)
+    val nextItemCursor: CursorList.DoubleCursor?
+
+    @Serializable
+    data class Home(
+        override val page: Int,
+        /**
+         * The backing source of the feed, be it a list or other feed generator output.
+         * It is null for a signed in user's timeline.
+         */
+        val source: Uri,
+        /**
+         * The instant the first request was made, as pagination is only valid for [Home] values
+         * that all share the same [firstRequestInstant].
+         */
+        override val firstRequestInstant: Instant,
+
+        /**
+         * The cursor used to fetch items. Null if this is the first request.
+         */
+        override val nextItemCursor: CursorList.DoubleCursor? = null,
+    ) : FeedQuery
+
+    @Serializable
+    data class Profile(
+        val profileId: Id,
+        override val page: Int,
+
+        /**
+         * The instant the first request was made, as pagination is only valid for [Home] values
+         * that all share the same [firstRequestInstant].
+         */
+        override val firstRequestInstant: Instant,
+
+        /**
+         * The cursor used to fetch items. Null if this is the first request.
+         */
+        override val nextItemCursor: CursorList.DoubleCursor? = null,
+    ) : FeedQuery
+}
+
+val FeedQuery.sourceId
+    get() = when (this) {
+        is FeedQuery.Home -> source.uri
+        is FeedQuery.Profile -> profileId.id
+    }
 
 interface FeedRepository {
-    fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>>
+    fun timeline(query: FeedQuery.Home): Flow<CursorList<FeedItem>>
+    fun profileTimeline(query: FeedQuery.Profile): Flow<CursorList<FeedItem>>
 }
 
 @Inject
@@ -82,29 +128,70 @@ class OfflineFeedRepository(
     private val networkService: NetworkService,
 ) : FeedRepository {
 
-    override fun timeline(query: FeedQuery): Flow<CursorList<FeedItem>> = flow {
-        val networkCursorFlow = flow {
-            emit(null)
-            kotlin.runCatching {
-                val networkPostsResponse = networkService.api.getTimeline(
+    override fun timeline(
+        query: FeedQuery.Home
+    ): Flow<CursorList<FeedItem>> = fetchFeed(
+        query = query,
+        networkCursorFlow = networkCursorFlow(
+            query = query,
+            network = {
+                networkService.api.getTimeline(
                     GetTimelineQueryParams(
-                        limit = query.limit,
-                        cursor = query.nextItemCursor?.remote,
+                        limit = it.limit,
+                        cursor = it.nextItemCursor?.remote,
                     )
                 )
+            },
+            cursor = GetTimelineResponse::cursor,
+            feed = GetTimelineResponse::feed,
+        )
+    )
 
-                when (networkPostsResponse) {
-                    is AtpResponse.Failure -> {
-                        // TODO
-                    }
+    override fun profileTimeline(
+        query: FeedQuery.Profile
+    ): Flow<CursorList<FeedItem>> = fetchFeed(
+        query = query,
+        networkCursorFlow = networkCursorFlow(
+            query = query,
+            network = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(it.profileId.id),
+                        limit = it.limit,
+                        cursor = it.nextItemCursor?.remote,
+                    )
+                )
+            },
+            cursor = GetAuthorFeedResponse::cursor,
+            feed = GetAuthorFeedResponse::feed,
+        )
+    )
 
-                    is AtpResponse.Success -> {
-                        emit(networkPostsResponse.response.cursor)
-                        transactionWriter.saveFeed(networkPostsResponse.response.feed, query)
-                    }
+    private fun <Query : FeedQuery, NetworkResponse : Any> networkCursorFlow(
+        query: Query,
+        network: suspend (Query) -> AtpResponse<NetworkResponse>,
+        cursor: NetworkResponse.() -> String?,
+        feed: NetworkResponse.() -> List<FeedViewPost>,
+    ) = flow {
+        emit(null)
+        kotlin.runCatching {
+            when (val networkPostsResponse = network(query)) {
+                is AtpResponse.Failure -> {
+                    // TODO Exponential backoff / network monitoring
+                }
+
+                is AtpResponse.Success -> {
+                    emit(networkPostsResponse.response.cursor())
+                    transactionWriter.saveFeed(networkPostsResponse.response.feed(), query)
                 }
             }
         }
+    }
+
+    private fun fetchFeed(
+        query: FeedQuery,
+        networkCursorFlow: Flow<String?>,
+    ): Flow<CursorList<FeedItem>> = flow {
         emitAll(
             combine(
                 networkCursorFlow,
@@ -141,7 +228,7 @@ class OfflineFeedRepository(
 
         for (feedView in feedViews) {
             // Extract data from feed
-            feedItemEntities.add(feedView.feedItemEntity(query.source))
+            feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
 
             feedView.reply?.let {
                 postEntities.add(it.root.postEntity())
@@ -198,12 +285,12 @@ class OfflineFeedRepository(
 
         inTransaction {
             if (query.isInitialRequest()
-                && feedDao.lastFetchKey(query.source)?.lastFetchedAt != query.firstRequestInstant
+                && feedDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
             ) {
-                feedDao.deleteAllFeedsFor(query.source)
+                feedDao.deleteAllFeedsFor(query.sourceId)
                 feedDao.upsertFeedFetchKey(
                     FeedFetchKeyEntity(
-                        feedUri = query.source,
+                        sourceId = query.sourceId,
                         lastFetchedAt = query.firstRequestInstant
                     )
                 )
@@ -267,7 +354,7 @@ class OfflineFeedRepository(
         when (val local = query.nextItemCursor?.local) {
             null -> emptyFlow()
             else -> feedDao.feedItems(
-                source = query.source,
+                sourceId = query.sourceId,
                 before = local,
                 limit = query.limit,
             )

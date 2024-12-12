@@ -15,11 +15,11 @@ interface FeedDao {
     @Query(
         """
         DELETE FROM feedItems
-        WHERE source = :source
+        WHERE sourceId = :sourceId
     """
     )
     suspend fun deleteAllFeedsFor(
-        source: Uri,
+        sourceId: String,
     )
 
     @Upsert
@@ -30,7 +30,7 @@ interface FeedDao {
     @Query(
         """
             SELECT * FROM feedItems
-            WHERE source = :source
+            WHERE sourceId = :sourceId
             AND indexedAt < :before
             ORDER BY indexedAt
             DESC
@@ -38,7 +38,7 @@ interface FeedDao {
         """
     )
     fun feedItems(
-        source: Uri,
+        sourceId: String,
         before: Instant,
         limit: Long,
     ): Flow<List<FeedItemEntity>>
@@ -46,12 +46,12 @@ interface FeedDao {
     @Query(
         """
             SELECT * FROM feedFetchKeys
-            WHERE feedUri = :feedUri
+            WHERE sourceId = :sourceId
             LIMIT 1
         """
     )
     suspend fun lastFetchKey(
-        feedUri: Uri,
+        sourceId: String,
     ): FeedFetchKeyEntity?
 
     @Upsert
