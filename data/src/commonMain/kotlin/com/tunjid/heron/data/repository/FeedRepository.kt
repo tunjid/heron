@@ -25,9 +25,9 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
-import com.tunjid.heron.data.network.models.embeddedPostEmbedEntities
-import com.tunjid.heron.data.network.models.embeddedPostEntity
-import com.tunjid.heron.data.network.models.embeddedPostProfileEntity
+import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
+import com.tunjid.heron.data.network.models.quotedPostEntity
+import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
@@ -159,7 +159,7 @@ class OfflineFeedRepository(
             postEntities.add(postEntity)
             profileEntities.add(feedView.post.profileEntity())
 
-            feedView.post.embeddedPostEntity()?.let { embeddedPostEntity ->
+            feedView.post.quotedPostEntity()?.let { embeddedPostEntity ->
                 postEntities.add(embeddedPostEntity)
                 postPostEntities.add(
                     PostPostEntity(
@@ -167,7 +167,7 @@ class OfflineFeedRepository(
                         embeddedPostId = embeddedPostEntity.cid,
                     )
                 )
-                feedView.post.embeddedPostEmbedEntities().forEach { embedEntity ->
+                feedView.post.quotedPostEmbedEntities().forEach { embedEntity ->
                     associatePostEmbeds(
                         postEntity = embeddedPostEntity,
                         embedEntity = embedEntity,
@@ -180,7 +180,7 @@ class OfflineFeedRepository(
                     )
                 }
             }
-            feedView.post.embeddedPostProfileEntity()?.let(profileEntities::add)
+            feedView.post.quotedPostProfileEntity()?.let(profileEntities::add)
 
             feedView.post.embedEntities().forEach { embedEntity ->
                 associatePostEmbeds(
