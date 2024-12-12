@@ -297,7 +297,7 @@ class OfflineFeedRepository(
             }
 
             // Order matters to satisfy foreign key constraints
-            profileDao.upsertProfiles(profileEntities)
+            profileDao.insertOrPartiallyUpdateProfiles(profileEntities)
             postDao.upsertPosts(postEntities)
 
             embedDao.upsertExternalEmbeds(externalEmbedEntities)

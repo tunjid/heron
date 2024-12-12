@@ -48,6 +48,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +66,12 @@ import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import heron.feature_profile.generated.resources.Res
+import heron.feature_profile.generated.resources.followers
+import heron.feature_profile.generated.resources.following
+import heron.feature_profile.generated.resources.posts
 import kotlinx.datetime.Clock
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 @Composable
@@ -82,7 +89,7 @@ internal fun ProfileScreen(
     val headerState = remember {
         CollapsingHeaderState(
             collapsedHeight = collapsedHeight,
-            initialExpandedHeight = with(density) { 400.dp.toPx() },
+            initialExpandedHeight = with(density) { 800.dp.toPx() },
             decayAnimationSpec = splineBasedDecay(density)
         )
     }
@@ -94,17 +101,12 @@ internal fun ProfileScreen(
         state = headerState,
         headerContent = {
             ProfileHeader(
+                headerState = headerState,
                 modifier = Modifier
                     .clickable {
                         actions(Action.Navigate.Pop)
                     }
-                    .fillMaxWidth()
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = -headerState.translation.roundToInt()
-                        )
-                    },
+                    .fillMaxWidth(),
                 profile = state.profile,
             )
         },
@@ -150,15 +152,31 @@ internal fun ProfileScreen(
 
 @Composable
 private fun ProfileHeader(
+    headerState: CollapsingHeaderState,
     modifier: Modifier = Modifier,
     profile: Profile,
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
+        ProfileBanner(
+            modifier = Modifier
+                .align(Alignment.TopCenter),
+            headerState = headerState,
+            profile = profile,
+        )
         Column(
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier
+                .padding(start = 24.dp, end = 24.dp, top = 160.dp)
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = -headerState.translation.roundToInt()
+                    )
+                }
         ) {
+            Spacer(Modifier.height(24.dp))
             ProfileHeadline(
                 modifier = Modifier.fillMaxWidth(),
                 profile = profile,
@@ -168,21 +186,77 @@ private fun ProfileHeader(
                 profile = profile,
             )
             Text(text = profile.description ?: "")
+            Spacer(Modifier.height(16.dp))
         }
 
-        AsyncImage(
+        ProfilePhoto(
             modifier = Modifier
-                .size(48.dp)
                 .align(Alignment.TopCenter),
-            args = ImageArgs(
+            headerState = headerState,
+            profile = profile
+        )
+    }
+}
+
+@Composable
+private fun ProfileBanner(
+    modifier: Modifier = Modifier,
+    headerState: CollapsingHeaderState,
+    profile: Profile,
+) {
+    AsyncImage(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .graphicsLayer {
+                alpha  = 1f - (headerState.progress * 0.9f)
+            },
+        args = remember(
+            key1 = profile.banner?.uri,
+            key2 = profile.displayName,
+            key3 = profile.handle,
+        ) {
+            ImageArgs(
+                url = profile.banner?.uri,
+                contentScale = ContentScale.Crop,
+                contentDescription = profile.displayName ?: profile.handle.id,
+                shape = RectangleShape,
+            )
+        },
+    )
+}
+
+@Composable
+private fun ProfilePhoto(
+    modifier: Modifier = Modifier,
+    headerState: CollapsingHeaderState,
+    profile: Profile,
+) {
+    AsyncImage(
+        modifier = modifier
+            .padding(top = 130.dp)
+            .size(60.dp)
+            .offset {
+                IntOffset(
+                    x = 0,
+                    y = -headerState.translation.roundToInt()
+                )
+            },
+        args = remember(
+            key1 = profile.avatar?.uri,
+            key2 = profile.displayName,
+            key3 = profile.handle,
+        ) {
+            ImageArgs(
                 url = profile.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = profile.displayName ?: profile.handle.id,
                 shape = CircleShape,
-            ),
-        )
-    }
+            )
+        },
+    )
 }
+
 
 @Composable
 private fun ProfileHeadline(
@@ -221,21 +295,21 @@ private fun ProfileStats(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(40.dp)
     ) {
         Statistic(
             value = profile.followersCount ?: 0,
-            description = "Followers",
+            description = stringResource(Res.string.followers),
             onClick = {}
         )
         Statistic(
             value = profile.followsCount ?: 0,
-            description = "Following",
+            description = stringResource(Res.string.following),
             onClick = {}
         )
         Statistic(
             value = profile.postsCount ?: 0,
-            description = "Posts",
+            description = stringResource(Res.string.posts),
             onClick = {}
         )
     }

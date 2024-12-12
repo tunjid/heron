@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
@@ -14,8 +15,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProfileDao {
 
-    @Transaction
+    @Upsert
     suspend fun upsertProfiles(
+        entities: List<ProfileEntity>,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateProfiles(
         entities: List<ProfileEntity>
     ) = upsert(
         items = entities,
