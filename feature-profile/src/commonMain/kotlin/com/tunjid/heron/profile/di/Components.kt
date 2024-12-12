@@ -44,7 +44,7 @@ import me.tatarka.inject.annotations.Provides
 
 private const val RoutePattern = "/profile/{profileId}"
 
-private fun signInRoute(
+private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
@@ -58,7 +58,7 @@ abstract class ProfileNavigationComponent {
     fun profileRouteParser(): Pair<String, RouteMatcher> =
         routeAndMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::signInRoute,
+            routeMapper = ::createRoute,
         )
 
 }
