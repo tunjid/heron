@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.data.repository.FeedRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.profileId
@@ -75,6 +76,7 @@ class ProfileStateHolderCreator(
 
 @Inject
 class ActualProfileStateHolder(
+    profileRepository: ProfileRepository,
     feedRepository: FeedRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -84,17 +86,21 @@ class ActualProfileStateHolder(
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
         profile = stubProfile(
-            did = Id(route.profileId),
-            handle = Id(route.profileId),
+            did = route.profileId,
+            handle = route.profileId,
         ),
         currentQuery = FeedQuery.Profile(
             page = 0,
-            profileId = Id(route.profileId),
+            profileId = route.profileId,
             firstRequestInstant = Clock.System.now(),
         )
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(
+            profileId = route.profileId,
+            profileRepository = profileRepository
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -114,6 +120,16 @@ class ActualProfileStateHolder(
     }
 )
 
+/**
+ * Feed mutations as a function of the user's scroll position
+ */
+private fun loadProfileMutations(
+    profileId: Id,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.profile(profileId).mapToMutation {
+        copy(profile = it)
+    }
 
 /**
  * Feed mutations as a function of the user's scroll position

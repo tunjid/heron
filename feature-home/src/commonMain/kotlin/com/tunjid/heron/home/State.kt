@@ -17,12 +17,15 @@
 package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.push
+import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -49,6 +52,19 @@ sealed class Action(val key: String) {
         data object Pop : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.pop()
+            }
+        }
+
+        data class ToProfile(
+            val profileId: Id,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/profile/${profileId.id}",
+                        queryParams = emptyMap()
+                    ).toRoute
+                )
             }
         }
     }

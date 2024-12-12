@@ -88,6 +88,9 @@ internal fun ProfileScreen(
         headerContent = {
             ProfileHeader(
                 modifier = Modifier
+                    .clickable {
+                        actions(Action.Navigate.Pop)
+                    }
                     .fillMaxWidth()
                     .offset {
                         IntOffset(
@@ -95,7 +98,7 @@ internal fun ProfileScreen(
                             y = -headerState.translation.roundToInt()
                         )
                     },
-                profile = state.profile
+                profile = state.profile,
             )
         },
         body = {

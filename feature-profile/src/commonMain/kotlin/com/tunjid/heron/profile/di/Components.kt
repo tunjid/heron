@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.ActualProfileStateHolder
 import com.tunjid.heron.profile.ProfileScreen
@@ -51,7 +52,7 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.profileId get() = routeParams.pathArgs.getValue("profileId")
+internal val Route.profileId get() = Id(routeParams.pathArgs.getValue("profileId"))
 
 @Component
 abstract class ProfileNavigationComponent {
