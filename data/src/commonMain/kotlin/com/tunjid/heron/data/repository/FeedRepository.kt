@@ -306,17 +306,17 @@ class OfflineFeedRepository(
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                     rootPost = replyRoot.asExternalModel(
                                         quote = idsToEmbeddedPosts[replyRoot.entity.cid]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                     parentPost = replyParent.asExternalModel(
                                         quote = idsToEmbeddedPosts[replyParent.entity.cid]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                 )
 
@@ -325,7 +325,7 @@ class OfflineFeedRepository(
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                     by = repostedBy.asExternalModel(),
                                     at = entity.indexedAt,
@@ -336,7 +336,7 @@ class OfflineFeedRepository(
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                 )
 
@@ -345,7 +345,7 @@ class OfflineFeedRepository(
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
-                                            ?.asExternalModel(null)
+                                            ?.asExternalModel(quote = null)
                                     ),
                                 )
                             }
