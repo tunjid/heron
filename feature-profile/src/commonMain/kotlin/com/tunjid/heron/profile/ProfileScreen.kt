@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,12 +33,16 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -65,6 +70,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_profile.generated.resources.Res
+import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
@@ -101,11 +107,11 @@ internal fun ProfileScreen(
             ProfileHeader(
                 headerState = headerState,
                 modifier = Modifier
-                    .clickable {
-                        actions(Action.Navigate.Pop)
-                    }
                     .fillMaxWidth(),
                 profile = state.profile,
+                onBackPressed = {
+                    actions(Action.Navigate.Pop)
+                }
             )
         },
         body = {
@@ -153,6 +159,7 @@ private fun ProfileHeader(
     headerState: CollapsingHeaderState,
     modifier: Modifier = Modifier,
     profile: Profile,
+    onBackPressed: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -186,12 +193,15 @@ private fun ProfileHeader(
             Text(text = profile.description ?: "")
             Spacer(Modifier.height(16.dp))
         }
-
         ProfilePhoto(
             modifier = Modifier
                 .align(Alignment.TopCenter),
             headerState = headerState,
             profile = profile
+        )
+        BackButton(
+            headerState = headerState,
+            onBackPressed = onBackPressed,
         )
     }
 }
@@ -347,6 +357,29 @@ fun Statistic(
             text = description,
             maxLines = 1,
             style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
+        )
+    }
+}
+
+@Composable
+private fun BackButton(
+    headerState: CollapsingHeaderState,
+    onBackPressed: () -> Unit
+) {
+    FilledTonalIconButton(
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .offset{
+                IntOffset(
+                    x = 8.dp.roundToPx(),
+                    y = 4.dp.roundToPx() - headerState.translation.roundToInt(),
+                )
+            },
+        onClick = onBackPressed,
+    ) {
+        Image(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+            contentDescription = stringResource(Res.string.back),
         )
     }
 }
