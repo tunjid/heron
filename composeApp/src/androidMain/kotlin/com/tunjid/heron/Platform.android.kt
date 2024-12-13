@@ -13,19 +13,21 @@ import com.tunjid.heron.di.create
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.home.di.create
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.di.ScaffoldModule
-import com.tunjid.heron.scaffold.di.create
-import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
 import com.tunjid.heron.postdetail.di.create
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
 import com.tunjid.heron.profile.di.create
+import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldModule
+import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.signin.di.create
+import com.tunjid.heron.splash.di.PostDetailComponent
+import com.tunjid.heron.splash.di.SplashComponent
+import com.tunjid.heron.splash.di.SplashNavigationComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,6 +49,7 @@ fun createAppState(context: Context): AppState {
         homeNavigationComponent = HomeNavigationComponent::class.create(),
         postDetailNavigationComponent = PostDetailNavigationComponent::class.create(),
         profileNavigationComponent = ProfileNavigationComponent::class.create(),
+        splashNavigationComponent = SplashNavigationComponent::class.create(),
     )
 
     val dataComponent = DataComponent::class.create(
@@ -81,6 +84,10 @@ fun createAppState(context: Context): AppState {
             dataComponent = dataComponent,
         ),
         profileComponent = ProfileComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        splashComponent = SplashComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

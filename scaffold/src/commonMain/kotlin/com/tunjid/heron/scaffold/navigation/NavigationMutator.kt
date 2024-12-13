@@ -196,11 +196,10 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
 
 private val InitialNavigationState = MultiStackNav(
     name = "splash-app",
-    // TODO: Make this a splash screen
     stacks = listOf(
         StackNav(
             name = AppStack.Splash.stackName,
-            children = listOf(routeOf("/auth"))
+            children = listOf(routeOf("/splash"))
         )
     )
 )
