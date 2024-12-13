@@ -1,7 +1,5 @@
 package com.tunjid.heron.data.network.models
 
-import app.bsky.embed.RecordViewRecordEmbedUnion
-import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.Id
