@@ -16,15 +16,16 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.profile.di.ProfileComponent
-import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInComponent
+import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.treenav.compose.PaneStrategy
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -39,6 +40,7 @@ abstract class AppComponent(
     @Component val homeComponent: HomeComponent,
     @Component val postDetailComponent: PostDetailComponent,
     @Component val profileComponent: ProfileComponent,
+    @Component val splashComponent: SplashComponent,
 ) {
 
     abstract val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>

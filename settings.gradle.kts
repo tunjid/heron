@@ -40,6 +40,7 @@ include(
     ":feature-home",
     ":feature-post-detail",
     ":feature-profile",
+    ":feature-splash",
     ":feature-template",
     ":ui-feed",
     ":ui-images",

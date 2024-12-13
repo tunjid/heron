@@ -14,36 +14,27 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.home.di
+package com.tunjid.heron.splash.di
 
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.home.ActualHomeStateHolder
-import com.tunjid.heron.home.HomeScreen
-import com.tunjid.heron.home.HomeStateHolderCreator
+import com.tunjid.heron.splash.ActualSplashStateHolder
+import com.tunjid.heron.splash.SplashScreen
+import com.tunjid.heron.splash.SplashStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
@@ -52,7 +43,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/home"
+private const val RoutePattern = "/splash"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -61,7 +52,7 @@ private fun createRoute(
 )
 
 @Component
-abstract class HomeNavigationComponent {
+abstract class SplashNavigationComponent {
 
     @IntoMap
     @Provides
@@ -74,7 +65,7 @@ abstract class HomeNavigationComponent {
 }
 
 @Component
-abstract class HomeComponent(
+abstract class SplashComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
@@ -82,11 +73,11 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: HomeStateHolderCreator
+        creator: SplashStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualHomeStateHolder> {
+            val viewModel = viewModel<ActualSplashStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
@@ -102,15 +93,12 @@ abstract class HomeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar(
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
-                        animatedVisibilityScope = this,
-                    )
+                    TopBar()
                 },
                 content = { paddingValues ->
-                    HomeScreen(
-                        state = state,
-                        actions = viewModel.accept,
+                    SplashScreen(
+                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
+                        animatedVisibilityScope = this,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
@@ -120,29 +108,9 @@ abstract class HomeComponent(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun TopBar(
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-) = with(movableSharedElementScope) {
+private fun TopBar() {
     TopAppBar(
-        navigationIcon = {
-            Image(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(36.dp)
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(AppLogo),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        boundsTransform = { _, _ ->
-                            spring(stiffness = Spring.StiffnessLow)
-                        }
-                    ),
-                imageVector = AppLogo,
-                contentDescription = null,
-            )
-        },
         title = {},
         actions = {
             TextButton(
