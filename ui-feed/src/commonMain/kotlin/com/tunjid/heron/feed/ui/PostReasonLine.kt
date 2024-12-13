@@ -89,7 +89,6 @@ private fun PostReasonLine(
             modifier = Modifier.size(12.dp),
             imageVector = imageVector,
             contentDescription = iconContentDescription,
-            tint = MaterialTheme.typography.bodySmall.color,
         )
 
         Text(

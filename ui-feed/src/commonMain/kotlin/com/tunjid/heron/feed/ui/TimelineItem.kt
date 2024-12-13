@@ -18,6 +18,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -160,6 +161,7 @@ private fun SinglePost(
             AsyncImage(
                 modifier = Modifier
                     .size(48.dp)
+                    .clip(CircleShape)
                     .clickable { onProfileClicked(post.author) },
                 args = ImageArgs(
                     url = post.author.avatar?.uri,

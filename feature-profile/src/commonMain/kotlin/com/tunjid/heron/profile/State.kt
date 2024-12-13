@@ -16,14 +16,18 @@
 
 package com.tunjid.heron.profile
 
-import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
+import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.push
+import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -51,6 +55,21 @@ sealed class Action(val key: String) {
         data object Pop : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.pop()
+            }
+        }
+
+        data class ToProfile(
+            val profileId: Id,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                routeString(
+                    path = "/profile/${profileId.id}",
+                    queryParams = emptyMap()
+                )
+                    .toRoute
+                    .takeIf { it.id != navState.current?.id }
+                    ?.let(navState::push)
+                    ?: navState
             }
         }
     }

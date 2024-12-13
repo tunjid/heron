@@ -118,7 +118,7 @@ internal fun ProfileScreen(
         },
         body = {
             Surface(
-                modifier = Modifier
+                modifier = modifier
                     .padding(horizontal = 8.dp),
                 shape = RoundedCornerShape(
                     topStart = 16.dp,
@@ -126,7 +126,7 @@ internal fun ProfileScreen(
                 )
             ) {
                 LazyVerticalStaggeredGrid(
-                    modifier = modifier
+                    modifier = Modifier
                         .fillMaxSize(),
                     state = gridState,
                     columns = StaggeredGridCells.Adaptive(400.dp),
@@ -143,7 +143,9 @@ internal fun ProfileScreen(
                                 now = remember { Clock.System.now() },
                                 item = item,
                                 onPostClicked = {},
-                                onProfileClicked = {},
+                                onProfileClicked = {
+                                    actions(Action.Navigate.ToProfile(it.did))
+                                },
                                 onImageClicked = {},
                                 onReplyToPost = {},
                             )
