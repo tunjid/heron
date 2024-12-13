@@ -330,7 +330,7 @@ fun Statistic(
         modifier = Modifier
             .padding(vertical = 8.dp)
             .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(
