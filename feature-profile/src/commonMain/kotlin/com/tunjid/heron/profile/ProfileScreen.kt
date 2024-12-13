@@ -22,7 +22,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -39,12 +38,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,8 +63,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
-import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
@@ -76,6 +77,7 @@ import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Composable
@@ -115,33 +117,40 @@ internal fun ProfileScreen(
             )
         },
         body = {
-            LazyVerticalStaggeredGrid(
-                modifier = modifier
-                    .fillMaxSize(),
-                state = gridState,
-                columns = StaggeredGridCells.Adaptive(400.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp),
-                verticalItemSpacing = 8.dp,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = items,
-                    key = TimelineItem::id,
-                    itemContent = { item ->
-                        TimelineItem(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            now = remember { Clock.System.now() },
-                            item = item,
-                            onPostClicked = {},
-                            onProfileClicked = {},
-                            onImageClicked = {},
-                            onReplyToPost = {},
-                        )
-                    }
+            Surface(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp),
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
                 )
+            ) {
+                LazyVerticalStaggeredGrid(
+                    modifier = modifier
+                        .fillMaxSize(),
+                    state = gridState,
+                    columns = StaggeredGridCells.Adaptive(400.dp),
+                    verticalItemSpacing = 8.dp,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = items,
+                        key = TimelineItem::id,
+                        itemContent = { item ->
+                            TimelineItem(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                now = remember { Clock.System.now() },
+                                item = item,
+                                onPostClicked = {},
+                                onProfileClicked = {},
+                                onImageClicked = {},
+                                onReplyToPost = {},
+                            )
+                        }
+                    )
+                }
             }
-
         }
     )
 
@@ -192,6 +201,8 @@ private fun ProfileHeader(
             )
             Text(text = profile.description ?: "")
             Spacer(Modifier.height(16.dp))
+            // TODO Tabs
+            Spacer(Modifier.height(48.dp))
         }
         ProfilePhoto(
             modifier = Modifier
@@ -217,7 +228,7 @@ private fun ProfileBanner(
             .fillMaxWidth()
             .height(160.dp)
             .graphicsLayer {
-                alpha = 1f - (headerState.progress * 0.9f)
+                alpha = 1f - min(0.9f, (headerState.progress * 1.6f))
             },
         args = remember(
             key1 = profile.banner?.uri,
@@ -369,7 +380,7 @@ private fun BackButton(
     FilledTonalIconButton(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.statusBars)
-            .offset{
+            .offset {
                 IntOffset(
                     x = 8.dp.roundToPx(),
                     y = 4.dp.roundToPx() - headerState.translation.roundToInt(),
