@@ -27,6 +27,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.feedItemEntity
@@ -35,6 +37,8 @@ import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.profilePostStatisticsEntity
+import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
@@ -126,6 +130,7 @@ class OfflineTimelineRepository(
     private val profileDao: ProfileDao,
     private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
+    private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
 
     override fun timeline(
@@ -182,7 +187,12 @@ class OfflineTimelineRepository(
 
                 is AtpResponse.Success -> {
                     emit(networkPostsResponse.response.cursor())
-                    transactionWriter.saveFeed(networkPostsResponse.response.feed(), query)
+                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    if (authProfileId != null) transactionWriter.saveFeed(
+                        feedViews = networkPostsResponse.response.feed(),
+                        query = query,
+                        viewingProfileId = authProfileId,
+                    )
                 }
             }
         }
@@ -209,8 +219,9 @@ class OfflineTimelineRepository(
     }
 
     private suspend fun TransactionWriter.saveFeed(
+        viewingProfileId: Id,
         feedViews: List<FeedViewPost>,
-        query: TimelineQuery
+        query: TimelineQuery,
     ) {
         val feedItemEntities = mutableListOf<TimelineItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
@@ -226,6 +237,9 @@ class OfflineTimelineRepository(
         val videoEntities = mutableListOf<VideoEntity>()
         val postVideoEntities = mutableListOf<PostVideoEntity>()
 
+        val profilePostStatisticsEntities = mutableListOf<ProfilePostStatisticsEntity>()
+        val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
+
         for (feedView in feedViews) {
             // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
@@ -233,18 +247,34 @@ class OfflineTimelineRepository(
             feedView.reply?.let {
                 postEntities.add(it.root.postEntity())
                 it.root.profileEntity()?.let(profileEntities::add)
+                it.root.profilePostStatisticsEntity(viewingProfileId)
+                    ?.let(profilePostStatisticsEntities::add)
 
                 postEntities.add(it.parent.postEntity())
                 it.parent.profileEntity()?.let(profileEntities::add)
+                it.parent.profilePostStatisticsEntity(viewingProfileId)
+                    ?.let(profilePostStatisticsEntities::add)
             }
 
             feedView.reason?.profileEntity()?.let(profileEntities::add)
 
             // Extract data from post
             val postEntity = feedView.post.postEntity()
+            val postAuthorEntity = feedView.post.profileEntity()
+
+            feedView.post.viewer?.profilePostStatisticsEntity(
+                viewingProfileId = viewingProfileId,
+                postId = postEntity.cid,
+            )?.let(profilePostStatisticsEntities::add)
+
+            profileProfileRelationshipsEntities.addAll(
+                feedView.post.author.profileProfileRelationshipsEntities(
+                    viewingProfileId = viewingProfileId,
+                )
+            )
 
             postEntities.add(postEntity)
-            profileEntities.add(feedView.post.profileEntity())
+            profileEntities.add(postAuthorEntity)
 
             feedView.post.quotedPostEntity()?.let { embeddedPostEntity ->
                 postEntities.add(embeddedPostEntity)
@@ -311,6 +341,13 @@ class OfflineTimelineRepository(
             postDao.insertOrIgnorePostVideos(postVideoEntities)
 
             timelineDao.upsertTimelineItems(feedItemEntities)
+
+//            println("INSERTING")
+//            profileDao.upsertProfilePostStatistics(profilePostStatisticsEntities)
+//            profileDao.upsertProfileProfileRelationships(
+//                profileProfileRelationshipsEntities
+//            )
+//            println("INSERTED")
         }
     }
 

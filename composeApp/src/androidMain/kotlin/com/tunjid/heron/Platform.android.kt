@@ -13,6 +13,7 @@ import com.tunjid.heron.di.create
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.home.di.create
+import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
 import com.tunjid.heron.postdetail.di.create
 import com.tunjid.heron.profile.di.ProfileComponent
@@ -25,9 +26,9 @@ import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.signin.di.create
-import com.tunjid.heron.splash.di.PostDetailComponent
 import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
+import com.tunjid.heron.splash.di.create
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

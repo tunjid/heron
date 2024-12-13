@@ -9,13 +9,13 @@ import androidx.room.TypeConverters
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
@@ -24,9 +24,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileBlocksEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileFollowsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import kotlinx.datetime.Instant
 
 @Database(
@@ -42,8 +41,7 @@ import kotlinx.datetime.Instant
         PostEntity::class,
         PostAuthorsEntity::class,
         ProfilePostStatisticsEntity::class,
-        ProfileFollowsEntity::class,
-        ProfileBlocksEntity::class,
+        ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
         TimelineItemEntity::class,
         TimelineFetchKeyEntity::class,
