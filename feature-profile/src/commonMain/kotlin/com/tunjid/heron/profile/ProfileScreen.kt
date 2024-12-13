@@ -62,9 +62,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
-import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.feed.ui.FeedItem
+import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -126,9 +126,9 @@ internal fun ProfileScreen(
             ) {
                 items(
                     items = items,
-                    key = FeedItem::id,
+                    key = TimelineItem::id,
                     itemContent = { item ->
-                        FeedItem(
+                        TimelineItem(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             now = remember { Clock.System.now() },

@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
@@ -32,10 +32,10 @@ import com.tunjid.heron.images.ImageArgs
 import kotlinx.datetime.Instant
 
 @Composable
-fun FeedItem(
+fun TimelineItem(
     modifier: Modifier = Modifier,
     now: Instant,
-    item: FeedItem,
+    item: TimelineItem,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Profile) -> Unit,
     onImageClicked: (Uri) -> Unit,
@@ -54,7 +54,7 @@ fun FeedItem(
                     end = 16.dp
                 ),
         ) {
-            if (item is FeedItem.Repost) {
+            if (item is TimelineItem.Repost) {
                 PostReasonLine(
                     modifier = Modifier.padding(
                         start = 32.dp,
@@ -64,7 +64,7 @@ fun FeedItem(
                     onOpenUser = onProfileClicked,
                 )
             }
-            if (item is FeedItem.Reply) {
+            if (item is TimelineItem.Reply) {
                 PostReplies(
                     item = item,
                     now = now,
@@ -90,7 +90,7 @@ fun FeedItem(
 
 @Composable
 private fun PostReplies(
-    item: FeedItem.Reply,
+    item: TimelineItem.Reply,
     now: Instant,
     onProfileClicked: (Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -177,7 +177,7 @@ private fun SinglePost(
                     author = post.author,
                 )
 
-//                if (item is FeedItem.Reply) {
+//                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
             }

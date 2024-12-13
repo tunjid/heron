@@ -30,8 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.feed.ui.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
@@ -55,9 +55,9 @@ internal fun HomeScreen(
     ) {
         items(
             items = items,
-            key = FeedItem::id,
+            key = TimelineItem::id,
             itemContent = { item ->
-                FeedItem(
+                TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth(),
                     now = remember { Clock.System.now() },

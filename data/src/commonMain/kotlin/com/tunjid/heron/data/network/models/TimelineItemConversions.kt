@@ -7,7 +7,7 @@ import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.entities.FeedItemEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.emptyPostEntity
@@ -15,7 +15,7 @@ import kotlinx.datetime.Instant
 
 internal fun FeedViewPost.feedItemEntity(
     sourceId: String,
-) = FeedItemEntity(
+) = TimelineItemEntity(
     postId = Id(post.cid.cid),
     sourceId = sourceId,
     reply = reply?.let {

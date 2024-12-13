@@ -31,7 +31,7 @@ import kotlinx.datetime.Instant
         Index(value = ["indexedAt"]),
     ],
 )
-data class FeedItemEntity(
+data class TimelineItemEntity(
     val postId: Id,
     val sourceId: String,
     @Embedded

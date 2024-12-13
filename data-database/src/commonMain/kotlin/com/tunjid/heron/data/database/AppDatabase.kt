@@ -13,7 +13,7 @@ import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
-import com.tunjid.heron.data.database.entities.FeedItemEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -38,7 +38,7 @@ import kotlinx.datetime.Instant
         PostPostEntity::class,
         PostEntity::class,
         ProfileEntity::class,
-        FeedItemEntity::class,
+        TimelineItemEntity::class,
         PostAuthorsEntity::class,
         FeedFetchKeyEntity::class,
     ],

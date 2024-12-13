@@ -5,7 +5,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
-import com.tunjid.heron.data.database.entities.FeedItemEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
@@ -23,8 +23,8 @@ interface FeedDao {
     )
 
     @Upsert
-    suspend fun upsertFeedItems(
-        entities: List<FeedItemEntity>,
+    suspend fun upsertTimelineItems(
+        entities: List<TimelineItemEntity>,
     )
 
     @Query(
@@ -41,7 +41,7 @@ interface FeedDao {
         sourceId: String,
         before: Instant,
         limit: Long,
-    ): Flow<List<FeedItemEntity>>
+    ): Flow<List<TimelineItemEntity>>
 
     @Query(
         """
