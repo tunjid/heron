@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.repository.EmptySavedState
+import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.mutator.ActionStateMutator
@@ -87,9 +88,11 @@ class PersistedNavigationStateHolder(
                 // Restore saved nav from disk first
                 val savedState = savedStateRepository.savedState
                     // Wait for a non empty saved state to be read
-                    .first { it != EmptySavedState }
+                    .first { it != InitialSavedState }
 
-                val multiStackNav = routeParser.parseMultiStackNav(savedState)
+                val multiStackNav =
+                    if (savedState == EmptySavedState) SignedOutNavigationState
+                    else routeParser.parseMultiStackNav(savedState)
 
                 emit { multiStackNav }
 

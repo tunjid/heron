@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
+import com.tunjid.heron.data.core.types.Id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ data class SavedState(
 
     @Serializable
     data class AuthTokens(
+        val authProfileId: Id,
         val auth: String,
         val refresh: String,
     )
@@ -39,9 +41,14 @@ data class SavedState(
     )
 }
 
+val InitialSavedState = SavedState(
+    auth = null,
+    navigation = SavedState.Navigation(activeNav = -1),
+)
+
 val EmptySavedState = SavedState(
     auth = null,
-    navigation = SavedState.Navigation(),
+    navigation = SavedState.Navigation(activeNav = 0),
 )
 
 interface SavedStateRepository {
@@ -69,7 +76,7 @@ class DataStoreSavedStateRepository(
     override val savedState = dataStore.data.stateIn(
         scope = appScope,
         started = SharingStarted.Eagerly,
-        initialValue = EmptySavedState,
+        initialValue = InitialSavedState,
     )
 
     override suspend fun updateState(update: SavedState.() -> SavedState) {
