@@ -17,9 +17,6 @@
 package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -32,10 +29,12 @@ import com.tunjid.heron.profile.ActualProfileStateHolder
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.decodeRoutePathAndQueriesFromQueryParam
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -50,9 +49,15 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.referringRoute
+            ?.decodeRoutePathAndQueriesFromQueryParam()
+            ?.let(::routeOf)
+    )
 )
 
 internal val Route.profileId get() = Id(routeParams.pathArgs.getValue("profileId"))
+private val RouteParams.referringRoute get() = queryParams["referringRoute"]?.firstOrNull()
 
 @Component
 abstract class ProfileNavigationComponent {
@@ -78,6 +83,12 @@ abstract class ProfileComponent(
     fun routeAdaptiveConfiguration(
         creator: ProfileStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfileStateHolder> {

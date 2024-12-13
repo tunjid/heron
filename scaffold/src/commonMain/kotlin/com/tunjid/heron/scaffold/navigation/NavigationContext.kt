@@ -17,6 +17,7 @@
 package com.tunjid.heron.scaffold.navigation
 
 import com.tunjid.treenav.MultiStackNav
+import com.tunjid.treenav.current
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParser
 
@@ -27,6 +28,7 @@ import com.tunjid.treenav.strings.RouteParser
 interface NavigationContext {
     val navState: MultiStackNav
     val String.toRoute: Route
+    fun Route.encodeToQueryParam(): String
 }
 
 internal class ImmutableNavigationContext(
@@ -37,6 +39,16 @@ internal class ImmutableNavigationContext(
 
     override val String.toRoute: Route
         get() = routeParser.parse(this) ?: unknownRoute()
+
+    override fun Route.encodeToQueryParam(): String =
+        routeParams.pathAndQueries.encodeUrl()
 }
 
-fun unknownRoute(path: String = "404") = routeOf(path = path)
+fun unknownRoute(path: String = "/404") = routeOf(path = path)
+
+fun String.decodeRoutePathAndQueriesFromQueryParam() = decodeUrl()
+
+val NavigationContext.currentRoute get() = navState.current as Route
+
+internal expect fun String.encodeUrl(): String
+internal expect fun String.decodeUrl(): String

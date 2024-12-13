@@ -22,9 +22,9 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
-import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.routeString
@@ -64,10 +64,15 @@ sealed class Action(val key: String) {
             override val navigationMutation: NavigationMutation = {
                 routeString(
                     path = "/profile/${profileId.id}",
-                    queryParams = emptyMap()
+                    queryParams = mapOf(
+                        "referringRoute" to currentRoute
+                            .routeParams
+                            .queryParams
+                            .getOrElse("referringRoute", ::emptyList)
+                    )
                 )
                     .toRoute
-                    .takeIf { it.id != navState.current?.id }
+                    .takeIf { it.id != currentRoute.id }
                     ?.let(navState::push)
                     ?: navState
             }

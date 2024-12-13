@@ -19,8 +19,10 @@ package com.tunjid.heron.home
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
+import com.tunjid.heron.home.di.RoutePattern
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.pop
@@ -62,7 +64,9 @@ sealed class Action(val key: String) {
                 navState.push(
                     routeString(
                         path = "/profile/${profileId.id}",
-                        queryParams = emptyMap()
+                        queryParams =
+                        if (currentRoute.id != RoutePattern) emptyMap()
+                        else mapOf("referringRoute" to listOf(currentRoute.encodeToQueryParam()))
                     ).toRoute
                 )
             }
