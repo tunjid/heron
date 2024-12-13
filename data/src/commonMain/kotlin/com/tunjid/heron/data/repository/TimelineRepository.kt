@@ -11,10 +11,10 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.FeedDao
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -120,7 +120,7 @@ interface TimelineRepository {
 
 @Inject
 class OfflineTimelineRepository(
-    private val feedDao: FeedDao,
+    private val timelineDao: TimelineDao,
     private val postDao: PostDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
@@ -285,11 +285,11 @@ class OfflineTimelineRepository(
 
         inTransaction {
             if (query.isInitialRequest()
-                && feedDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
+                && timelineDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
             ) {
-                feedDao.deleteAllFeedsFor(query.sourceId)
-                feedDao.upsertFeedFetchKey(
-                    FeedFetchKeyEntity(
+                timelineDao.deleteAllFeedsFor(query.sourceId)
+                timelineDao.upsertFeedFetchKey(
+                    TimelineFetchKeyEntity(
                         sourceId = query.sourceId,
                         lastFetchedAt = query.firstRequestInstant
                     )
@@ -310,7 +310,7 @@ class OfflineTimelineRepository(
             postDao.insertOrIgnorePostImages(postImageEntities)
             postDao.insertOrIgnorePostVideos(postVideoEntities)
 
-            feedDao.upsertTimelineItems(feedItemEntities)
+            timelineDao.upsertTimelineItems(feedItemEntities)
         }
     }
 
@@ -353,7 +353,7 @@ class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         when (val local = query.nextItemCursor?.local) {
             null -> emptyFlow()
-            else -> feedDao.feedItems(
+            else -> timelineDao.feedItems(
                 sourceId = query.sourceId,
                 before = local,
                 limit = query.limit,

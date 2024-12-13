@@ -22,9 +22,9 @@ import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "feedFetchKeys",
+    tableName = "timelineFetchKeys",
 )
-data class FeedFetchKeyEntity(
+data class TimelineFetchKeyEntity(
     @PrimaryKey
     var sourceId: String,
     val lastFetchedAt: Instant,

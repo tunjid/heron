@@ -3,18 +3,17 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
 @Dao
-interface FeedDao {
+interface TimelineDao {
 
     @Query(
         """
-        DELETE FROM feedItems
+        DELETE FROM timelineItems
         WHERE sourceId = :sourceId
     """
     )
@@ -29,7 +28,7 @@ interface FeedDao {
 
     @Query(
         """
-            SELECT * FROM feedItems
+            SELECT * FROM timelineItems
             WHERE sourceId = :sourceId
             AND indexedAt < :before
             ORDER BY indexedAt
@@ -45,17 +44,17 @@ interface FeedDao {
 
     @Query(
         """
-            SELECT * FROM feedFetchKeys
+            SELECT * FROM timelineFetchKeys
             WHERE sourceId = :sourceId
             LIMIT 1
         """
     )
     suspend fun lastFetchKey(
         sourceId: String,
-    ): FeedFetchKeyEntity?
+    ): TimelineFetchKeyEntity?
 
     @Upsert
     suspend fun upsertFeedFetchKey(
-        entity: FeedFetchKeyEntity,
+        entity: TimelineFetchKeyEntity,
     )
 }

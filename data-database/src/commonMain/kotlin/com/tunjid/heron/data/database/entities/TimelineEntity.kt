@@ -21,12 +21,11 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "feedItems",
+    tableName = "timelineItems",
     indices = [
         Index(value = ["indexedAt"]),
     ],
@@ -41,7 +40,7 @@ data class TimelineItemEntity(
     val indexedAt: Instant,
     // TODO: Figure out a better ID for this
     @PrimaryKey
-    val id: String = "${postId.id}-$isPinned-${reposter?.id}"
+    val id: String = "${postId.id}-${reposter?.id}"
 )
 
 data class FeedReplyEntity(

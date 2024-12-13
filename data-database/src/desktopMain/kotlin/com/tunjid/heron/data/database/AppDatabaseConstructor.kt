@@ -6,7 +6,7 @@ import java.io.File
 
 fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
     val dbFile = File(System.getProperty("java.io.tmpdir"), "heron_room.db")
-    dbFile.takeIf { it.exists() }?.delete()
+//    dbFile.takeIf { it.exists() }?.delete()
     return Room.databaseBuilder<AppDatabase>(
         name = dbFile.absolutePath,
     )

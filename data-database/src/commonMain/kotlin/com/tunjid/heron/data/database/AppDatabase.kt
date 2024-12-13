@@ -9,10 +9,10 @@ import androidx.room.TypeConverters
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.FeedDao
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -40,13 +40,13 @@ import kotlinx.datetime.Instant
         PostVideoEntity::class,
         PostPostEntity::class,
         PostEntity::class,
+        PostAuthorsEntity::class,
         ProfilePostStatisticsEntity::class,
         ProfileFollowsEntity::class,
         ProfileBlocksEntity::class,
         ProfileEntity::class,
         TimelineItemEntity::class,
-        PostAuthorsEntity::class,
-        FeedFetchKeyEntity::class,
+        TimelineFetchKeyEntity::class,
     ],
 )
 @TypeConverters(
@@ -59,7 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
-    abstract fun feedDao(): FeedDao
+    abstract fun feedDao(): TimelineDao
 }
 
 // The Room compiler generates the `actual` implementations.
