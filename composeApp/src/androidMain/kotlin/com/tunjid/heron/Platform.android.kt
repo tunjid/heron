@@ -16,6 +16,12 @@ import com.tunjid.heron.home.di.create
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
 import com.tunjid.heron.scaffold.di.create
+import com.tunjid.heron.postdetail.di.PostDetailComponent
+import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
+import com.tunjid.heron.postdetail.di.create
+import com.tunjid.heron.profile.di.ProfileComponent
+import com.tunjid.heron.profile.di.ProfileNavigationComponent
+import com.tunjid.heron.profile.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
@@ -39,6 +45,8 @@ fun createAppState(context: Context): AppState {
     val navigationComponent = AppNavigationComponent::class.create(
         signInNavigationComponent = SignInNavigationComponent::class.create(),
         homeNavigationComponent = HomeNavigationComponent::class.create(),
+        postDetailNavigationComponent = PostDetailNavigationComponent::class.create(),
+        profileNavigationComponent = ProfileNavigationComponent::class.create(),
     )
 
     val dataComponent = DataComponent::class.create(
@@ -65,6 +73,14 @@ fun createAppState(context: Context): AppState {
             dataComponent = dataComponent,
         ),
         homeComponent = HomeComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        postDetailComponent = PostDetailComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        profileComponent = ProfileComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

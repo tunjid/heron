@@ -19,11 +19,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
-import androidx.room.Junction
 import androidx.room.PrimaryKey
-import androidx.room.Relation
-import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -37,7 +33,7 @@ import kotlinx.datetime.Instant
 )
 data class FeedItemEntity(
     val postId: Id,
-    val source: Uri?,
+    val sourceId: String,
     @Embedded
     val reply: FeedReplyEntity?,
     val reposter: Id?,

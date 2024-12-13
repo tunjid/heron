@@ -1,6 +1,7 @@
 package com.tunjid.heron.feed.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -158,7 +159,8 @@ private fun SinglePost(
         ) {
             AsyncImage(
                 modifier = Modifier
-                    .size(48.dp),
+                    .size(48.dp)
+                    .clickable { onProfileClicked(post.author) },
                 args = ImageArgs(
                     url = post.author.avatar?.uri,
                     contentScale = ContentScale.Crop,

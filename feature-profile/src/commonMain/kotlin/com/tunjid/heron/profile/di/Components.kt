@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.home.di
+package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.TextButton
@@ -26,23 +26,25 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.home.ActualHomeStateHolder
-import com.tunjid.heron.home.HomeScreen
-import com.tunjid.heron.home.HomeStateHolderCreator
+import com.tunjid.heron.profile.ActualProfileStateHolder
+import com.tunjid.heron.profile.ProfileScreen
+import com.tunjid.heron.profile.ProfileStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/home"
+private const val RoutePattern = "/profile/{profileId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -50,8 +52,10 @@ private fun createRoute(
     params = routeParams,
 )
 
+internal val Route.profileId get() = Id(routeParams.pathArgs.getValue("profileId"))
+
 @Component
-abstract class HomeNavigationComponent {
+abstract class ProfileNavigationComponent {
 
     @IntoMap
     @Provides
@@ -64,7 +68,7 @@ abstract class HomeNavigationComponent {
 }
 
 @Component
-abstract class HomeComponent(
+abstract class ProfileComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
@@ -72,11 +76,11 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: HomeStateHolderCreator
+        creator: ProfileStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualHomeStateHolder> {
+            val viewModel = viewModel<ActualProfileStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
@@ -91,11 +95,8 @@ abstract class HomeComponent(
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
-                topBar = {
-                    TopBar()
-                },
                 content = { paddingValues ->
-                    HomeScreen(
+                    ProfileScreen(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
@@ -104,20 +105,5 @@ abstract class HomeComponent(
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
     )
 }

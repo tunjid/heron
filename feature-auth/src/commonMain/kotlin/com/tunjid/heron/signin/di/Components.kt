@@ -61,7 +61,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
 
-private fun signInRoute(
+private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
@@ -75,7 +75,7 @@ abstract class SignInNavigationComponent {
     fun profileRouteParser(): Pair<String, RouteMatcher> =
         routeAndMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::signInRoute,
+            routeMapper = ::createRoute,
         )
 
 }

@@ -20,6 +20,8 @@ import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.home.di.HomeComponent
+import com.tunjid.heron.postdetail.di.PostDetailComponent
+import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.signin.di.SignInComponent
@@ -35,7 +37,9 @@ abstract class AppComponent(
     @Component val scaffoldComponent: ScaffoldComponent,
     @Component val signInComponent: SignInComponent,
     @Component val homeComponent: HomeComponent,
-    ) {
+    @Component val postDetailComponent: PostDetailComponent,
+    @Component val profileComponent: ProfileComponent,
+) {
 
     abstract val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>
 

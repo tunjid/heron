@@ -38,6 +38,8 @@ include(
     ":scaffold",
     ":feature-auth",
     ":feature-home",
+    ":feature-post-detail",
+    ":feature-profile",
     ":feature-template",
     ":ui-feed",
     ":ui-images",

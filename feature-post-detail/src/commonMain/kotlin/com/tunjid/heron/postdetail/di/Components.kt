@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.home.di
+package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.TextButton
@@ -27,9 +27,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.home.ActualHomeStateHolder
-import com.tunjid.heron.home.HomeScreen
-import com.tunjid.heron.home.HomeStateHolderCreator
+import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
+import com.tunjid.heron.postdetail.PostDetailScreen
+import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
@@ -42,7 +42,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/home"
+private const val RoutePattern = "/profile/{profileId}/post/{postId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -51,7 +51,7 @@ private fun createRoute(
 )
 
 @Component
-abstract class HomeNavigationComponent {
+abstract class PostDetailNavigationComponent {
 
     @IntoMap
     @Provides
@@ -64,7 +64,7 @@ abstract class HomeNavigationComponent {
 }
 
 @Component
-abstract class HomeComponent(
+abstract class PostDetailComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
@@ -72,11 +72,11 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: HomeStateHolderCreator
+        creator: PostDetailStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualHomeStateHolder> {
+            val viewModel = viewModel<ActualPostDetailStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
@@ -95,7 +95,7 @@ abstract class HomeComponent(
                     TopBar()
                 },
                 content = { paddingValues ->
-                    HomeScreen(
+                    PostDetailScreen(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

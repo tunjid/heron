@@ -29,6 +29,8 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.FeedRepository
 import com.tunjid.heron.data.repository.OfflineFeedRepository
+import com.tunjid.heron.data.repository.OfflineProfileRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -139,6 +141,10 @@ abstract class DataComponent(
         @Provides get() = this
 
     val OfflineFeedRepository.bind: FeedRepository
+        @DataScope
+        @Provides get() = this
+
+    val OfflineProfileRepository.bind: ProfileRepository
         @DataScope
         @Provides get() = this
 }

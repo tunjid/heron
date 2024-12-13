@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Android Open Source Project
+ * Copyright 2024 Adetunji Dahunsi
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities
+package com.tunjid.heron.postdetail
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import kotlinx.datetime.Instant
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 
+@Composable
+internal fun PostDetailScreen(
+    state: State,
+    actions: (Action) -> Unit,
+    modifier: Modifier = Modifier,
+) {
 
-@Entity(
-    tableName = "feedFetchKeys",
-)
-data class FeedFetchKeyEntity(
-    @PrimaryKey
-    var sourceId: String,
-    val lastFetchedAt: Instant,
-)
+}
 

@@ -46,6 +46,8 @@ kotlin {
             implementation(project(":scaffold"))
             implementation(project(":feature-auth"))
             implementation(project(":feature-home"))
+            implementation(project(":feature-post-detail"))
+            implementation(project(":feature-profile"))
 
             implementation(libs.androidx.room.runtime)
 

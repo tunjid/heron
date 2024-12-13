@@ -14,10 +14,10 @@ import com.tunjid.heron.data.database.entities.emptyPostEntity
 import kotlinx.datetime.Instant
 
 internal fun FeedViewPost.feedItemEntity(
-    source: Uri,
+    sourceId: String,
 ) = FeedItemEntity(
     postId = Id(post.cid.cid),
-    source = source,
+    sourceId = sourceId,
     reply = reply?.let {
         FeedReplyEntity(
             rootPostId = it.root.postEntity().cid,

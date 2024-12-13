@@ -1,0 +1,5 @@
+<resources>
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="posts">Posts</string>
+</resources>

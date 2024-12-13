@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.home
+package com.tunjid.heron.postdetail
 
-import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.pop
-import com.tunjid.treenav.push
-import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 
 @Serializable
 data class State(
-    val currentQuery: FeedQuery.Home,
-    val numColumns: Int = 1,
-    @Transient
-    val feed: TiledList<FeedQuery.Home, FeedItem> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -43,28 +32,10 @@ data class State(
 
 sealed class Action(val key: String) {
 
-    sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: FeedQuery.Home) : LoadFeed()
-        data class GridSize(val numColumns: Int) : LoadFeed()
-    }
-
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.pop()
-            }
-        }
-
-        data class ToProfile(
-            val profileId: Id,
-        ) : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/profile/${profileId.id}",
-                        queryParams = emptyMap()
-                    ).toRoute
-                )
             }
         }
     }

@@ -63,7 +63,9 @@ internal fun HomeScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     onPostClicked = {},
-                    onProfileClicked = {},
+                    onProfileClicked = {
+                        actions(Action.Navigate.ToProfile(it.did))
+                    },
                     onImageClicked = {},
                     onReplyToPost = {},
                 )

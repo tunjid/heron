@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package com.tunjid.heron.home
+package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.FeedQuery
 import com.tunjid.heron.data.repository.FeedRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.profile.di.profileId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -59,37 +62,45 @@ import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
+typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class HomeStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualHomeStateHolder
+class ProfileStateHolderCreator(
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileStateHolder
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route
-    ): ActualHomeStateHolder = creator.invoke(scope, route)
+    ): ActualProfileStateHolder = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualHomeStateHolder(
+class ActualProfileStateHolder(
+    profileRepository: ProfileRepository,
     feedRepository: FeedRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), HomeStateHolder by scope.actionStateFlowMutator(
+) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        currentQuery = FeedQuery.Home(
+        profile = stubProfile(
+            did = route.profileId,
+            handle = route.profileId,
+        ),
+        currentQuery = FeedQuery.Profile(
             page = 0,
-            source = Constants.timelineFeed,
+            profileId = route.profileId,
             firstRequestInstant = Clock.System.now(),
         )
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(
+            profileId = route.profileId,
+            profileRepository = profileRepository
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -109,6 +120,16 @@ class ActualHomeStateHolder(
     }
 )
 
+/**
+ * Feed mutations as a function of the user's scroll position
+ */
+private fun loadProfileMutations(
+    profileId: Id,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.profile(profileId).mapToMutation {
+        copy(profile = it)
+    }
 
 /**
  * Feed mutations as a function of the user's scroll position
@@ -175,7 +196,7 @@ private suspend fun Flow<Action.LoadFeed>.fetchListingFeedMutations(
 }
 
 private fun feedPivotRequest(numColumns: Int) =
-    PivotRequest<FeedQuery.Home, FeedItem>(
+    PivotRequest<FeedQuery.Profile, FeedItem>(
         onCount = numColumns * 3,
         offCount = numColumns * 2,
         comparator = ListingQueryComparator,
@@ -189,7 +210,7 @@ private fun feedPivotRequest(numColumns: Int) =
     )
 
 private fun feedItemListTiler(
-    startingQuery: FeedQuery.Home,
+    startingQuery: FeedQuery.Profile,
     feedRepository: FeedRepository,
 ) = listTiler(
     order = Tile.Order.PivotSorted(
@@ -199,12 +220,12 @@ private fun feedItemListTiler(
     fetcher = feedItemQueryFetcher(startingQuery, feedRepository)
 )
 
-private val ListingQueryComparator = compareBy(FeedQuery.Home::page)
+private val ListingQueryComparator = compareBy(FeedQuery.Profile::page)
 
 fun feedItemQueryFetcher(
-    startingQuery: FeedQuery.Home,
+    startingQuery: FeedQuery.Profile,
     feedRepository: FeedRepository,
-): QueryFetcher<FeedQuery.Home, FeedItem> = neighboredQueryFetcher(
+): QueryFetcher<FeedQuery.Profile, FeedItem> = neighboredQueryFetcher(
     // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
     // in memory
     maxTokens = 50,
@@ -217,7 +238,7 @@ fun feedItemQueryFetcher(
     ),
     fetcher = { query, cursor ->
         feedRepository
-            .timeline(query.copy(nextItemCursor = cursor))
+            .profileTimeline(query.copy(nextItemCursor = cursor))
             .map { feedItemCursorList ->
                 NeighboredFetchResult(
                     // Set the cursor for the next page and any other page with data available.
