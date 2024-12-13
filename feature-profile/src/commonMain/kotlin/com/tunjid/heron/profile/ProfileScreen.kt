@@ -17,7 +17,6 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.animation.splineBasedDecay
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +37,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,13 +47,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -209,7 +207,7 @@ private fun ProfileBanner(
             .fillMaxWidth()
             .height(160.dp)
             .graphicsLayer {
-                alpha  = 1f - (headerState.progress * 0.9f)
+                alpha = 1f - (headerState.progress * 0.9f)
             },
         args = remember(
             key1 = profile.banner?.uri,
@@ -232,29 +230,36 @@ private fun ProfilePhoto(
     headerState: CollapsingHeaderState,
     profile: Profile,
 ) {
-    AsyncImage(
+    Card(
         modifier = modifier
-            .padding(top = 130.dp)
-            .size(60.dp)
+            .padding(top = 124.dp)
+            .size(68.dp)
             .offset {
                 IntOffset(
                     x = 0,
                     y = -headerState.translation.roundToInt()
                 )
             },
-        args = remember(
-            key1 = profile.avatar?.uri,
-            key2 = profile.displayName,
-            key3 = profile.handle,
-        ) {
-            ImageArgs(
-                url = profile.avatar?.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = profile.displayName ?: profile.handle.id,
-                shape = CircleShape,
-            )
-        },
-    )
+        shape = CircleShape
+    ) {
+        AsyncImage(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(4.dp),
+            args = remember(
+                key1 = profile.avatar?.uri,
+                key2 = profile.displayName,
+                key3 = profile.handle,
+            ) {
+                ImageArgs(
+                    url = profile.avatar?.uri,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = profile.displayName ?: profile.handle.id,
+                    shape = CircleShape,
+                )
+            },
+        )
+    }
 }
 
 
@@ -272,7 +277,7 @@ private fun ProfileHeadline(
                 modifier = Modifier,
                 text = primaryText,
                 maxLines = 1,
-                style = LocalTextStyle.current.copy(fontWeight = Bold),
+                style = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold),
             )
             if (secondaryText != null) {
                 Spacer(Modifier.height(4.dp))
