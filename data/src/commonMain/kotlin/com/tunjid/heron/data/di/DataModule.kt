@@ -27,8 +27,8 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
-import com.tunjid.heron.data.repository.FeedRepository
-import com.tunjid.heron.data.repository.OfflineFeedRepository
+import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
@@ -140,7 +140,7 @@ abstract class DataComponent(
         @DataScope
         @Provides get() = this
 
-    val OfflineFeedRepository.bind: FeedRepository
+    val OfflineTimelineRepository.bind: TimelineRepository
         @DataScope
         @Provides get() = this
 

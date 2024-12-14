@@ -9,14 +9,14 @@ import androidx.room.TypeConverters
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
-import com.tunjid.heron.data.database.entities.FeedItemEntity
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -24,6 +24,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import kotlinx.datetime.Instant
 
 @Database(
@@ -37,10 +39,12 @@ import kotlinx.datetime.Instant
         PostVideoEntity::class,
         PostPostEntity::class,
         PostEntity::class,
-        ProfileEntity::class,
-        FeedItemEntity::class,
         PostAuthorsEntity::class,
-        FeedFetchKeyEntity::class,
+        ProfilePostStatisticsEntity::class,
+        ProfileProfileRelationshipsEntity::class,
+        ProfileEntity::class,
+        TimelineItemEntity::class,
+        TimelineFetchKeyEntity::class,
     ],
 )
 @TypeConverters(
@@ -53,7 +57,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
-    abstract fun feedDao(): FeedDao
+    abstract fun feedDao(): TimelineDao
 }
 
 // The Room compiler generates the `actual` implementations.
@@ -68,38 +72,32 @@ fun interface TransactionWriter {
 
 internal class DateConverters {
     @TypeConverter
-    fun fromTimestamp(value: Long?): Instant? {
-        return value?.let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
-    }
+    fun fromTimestamp(value: Long?): Instant? =
+        value?.let(Instant.Companion::fromEpochMilliseconds)
 
     @TypeConverter
-    fun dateToTimestamp(instant: Instant?): Long? {
-        return instant?.toEpochMilliseconds()
-    }
+    fun dateToTimestamp(instant: Instant?): Long? =
+        instant?.toEpochMilliseconds()
 }
 
 internal class UriConverters {
 
     @TypeConverter
-    fun fromString(value: String?): Uri? {
-        return value?.let { Uri(it) }
-    }
+    fun fromString(value: String?): Uri? =
+        value?.let(::Uri)
 
     @TypeConverter
-    fun toUriString(uri: Uri?): String? {
-        return uri?.uri
-    }
+    fun toUriString(uri: Uri?): String? =
+        uri?.uri
 
 }
 
 internal class IdConverters {
     @TypeConverter
-    fun fromString(value: String?): Id? {
-        return value?.let { Id(it) }
-    }
+    fun fromString(value: String?): Id? =
+        value?.let(::Id)
 
     @TypeConverter
-    fun toUriString(id: Id?): String? {
-        return id?.id
-    }
+    fun toUriString(id: Id?): String? =
+        id?.id
 }

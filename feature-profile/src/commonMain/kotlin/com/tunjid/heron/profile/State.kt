@@ -16,25 +16,29 @@
 
 package com.tunjid.heron.profile
 
-import com.tunjid.heron.data.core.models.FeedItem
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.repository.FeedQuery
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
+import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.push
+import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 
 @Serializable
 data class State(
-    val currentQuery: FeedQuery.Profile,
+    val currentQuery: TimelineQuery.Profile,
     val numColumns: Int = 1,
     val profile: Profile,
     @Transient
-    val feed: TiledList<FeedQuery.Profile, FeedItem> = emptyTiledList(),
+    val feed: TiledList<TimelineQuery.Profile, TimelineItem> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -43,7 +47,7 @@ data class State(
 sealed class Action(val key: String) {
 
     sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: FeedQuery.Profile) : LoadFeed()
+        data class LoadAround(val query: TimelineQuery.Profile) : LoadFeed()
         data class GridSize(val numColumns: Int) : LoadFeed()
     }
 
@@ -51,6 +55,21 @@ sealed class Action(val key: String) {
         data object Pop : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.pop()
+            }
+        }
+
+        data class ToProfile(
+            val profileId: Id,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                routeString(
+                    path = "/profile/${profileId.id}",
+                    queryParams = emptyMap()
+                )
+                    .toRoute
+                    .takeIf { it.id != navState.current?.id }
+                    ?.let(navState::push)
+                    ?: navState
             }
         }
     }

@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.repository
 
 import com.atproto.server.CreateSessionRequest
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.runCatchingWithIoMessage
@@ -53,6 +54,7 @@ class AuthTokenRepository(
             savedStateRepository.updateState {
                 copy(
                     auth = SavedState.AuthTokens(
+                        authProfileId = Id(result.did.did),
                         auth = result.accessJwt,
                         refresh = result.refreshJwt,
                     )

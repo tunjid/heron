@@ -6,18 +6,18 @@ import app.bsky.feed.GetAuthorFeedResponse
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.FeedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.FeedFetchKeyEntity
-import com.tunjid.heron.data.database.entities.FeedItemEntity
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
@@ -27,6 +27,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.feedItemEntity
@@ -35,6 +37,8 @@ import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.profilePostStatisticsEntity
+import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
@@ -50,7 +54,7 @@ import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
-sealed interface FeedQuery {
+sealed interface TimelineQuery {
     val page: Int
 
     /**
@@ -87,7 +91,7 @@ sealed interface FeedQuery {
          * The cursor used to fetch items. Null if this is the first request.
          */
         override val nextItemCursor: CursorList.DoubleCursor? = null,
-    ) : FeedQuery
+    ) : TimelineQuery
 
     @Serializable
     data class Profile(
@@ -104,33 +108,34 @@ sealed interface FeedQuery {
          * The cursor used to fetch items. Null if this is the first request.
          */
         override val nextItemCursor: CursorList.DoubleCursor? = null,
-    ) : FeedQuery
+    ) : TimelineQuery
 }
 
-val FeedQuery.sourceId
+val TimelineQuery.sourceId
     get() = when (this) {
-        is FeedQuery.Home -> source.uri
-        is FeedQuery.Profile -> profileId.id
+        is TimelineQuery.Home -> source.uri
+        is TimelineQuery.Profile -> profileId.id
     }
 
-interface FeedRepository {
-    fun timeline(query: FeedQuery.Home): Flow<CursorList<FeedItem>>
-    fun profileTimeline(query: FeedQuery.Profile): Flow<CursorList<FeedItem>>
+interface TimelineRepository {
+    fun timeline(query: TimelineQuery.Home): Flow<CursorList<TimelineItem>>
+    fun profileTimeline(query: TimelineQuery.Profile): Flow<CursorList<TimelineItem>>
 }
 
 @Inject
-class OfflineFeedRepository(
-    private val feedDao: FeedDao,
+class OfflineTimelineRepository(
+    private val timelineDao: TimelineDao,
     private val postDao: PostDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
     private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
-) : FeedRepository {
+    private val savedStateRepository: SavedStateRepository,
+) : TimelineRepository {
 
     override fun timeline(
-        query: FeedQuery.Home
-    ): Flow<CursorList<FeedItem>> = fetchFeed(
+        query: TimelineQuery.Home
+    ): Flow<CursorList<TimelineItem>> = fetchFeed(
         query = query,
         networkCursorFlow = networkCursorFlow(
             query = query,
@@ -148,8 +153,8 @@ class OfflineFeedRepository(
     )
 
     override fun profileTimeline(
-        query: FeedQuery.Profile
-    ): Flow<CursorList<FeedItem>> = fetchFeed(
+        query: TimelineQuery.Profile
+    ): Flow<CursorList<TimelineItem>> = fetchFeed(
         query = query,
         networkCursorFlow = networkCursorFlow(
             query = query,
@@ -167,7 +172,7 @@ class OfflineFeedRepository(
         )
     )
 
-    private fun <Query : FeedQuery, NetworkResponse : Any> networkCursorFlow(
+    private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
         query: Query,
         network: suspend (Query) -> AtpResponse<NetworkResponse>,
         cursor: NetworkResponse.() -> String?,
@@ -182,16 +187,21 @@ class OfflineFeedRepository(
 
                 is AtpResponse.Success -> {
                     emit(networkPostsResponse.response.cursor())
-                    transactionWriter.saveFeed(networkPostsResponse.response.feed(), query)
+                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    if (authProfileId != null) transactionWriter.saveFeed(
+                        feedViews = networkPostsResponse.response.feed(),
+                        query = query,
+                        viewingProfileId = authProfileId,
+                    )
                 }
             }
         }
     }
 
     private fun fetchFeed(
-        query: FeedQuery,
+        query: TimelineQuery,
         networkCursorFlow: Flow<String?>,
-    ): Flow<CursorList<FeedItem>> = flow {
+    ): Flow<CursorList<TimelineItem>> = flow {
         emitAll(
             combine(
                 networkCursorFlow,
@@ -209,10 +219,11 @@ class OfflineFeedRepository(
     }
 
     private suspend fun TransactionWriter.saveFeed(
+        viewingProfileId: Id,
         feedViews: List<FeedViewPost>,
-        query: FeedQuery
+        query: TimelineQuery,
     ) {
-        val feedItemEntities = mutableListOf<FeedItemEntity>()
+        val feedItemEntities = mutableListOf<TimelineItemEntity>()
         val postEntities = mutableListOf<PostEntity>()
         val profileEntities = mutableListOf<ProfileEntity>()
         val postPostEntities = mutableListOf<PostPostEntity>()
@@ -226,6 +237,9 @@ class OfflineFeedRepository(
         val videoEntities = mutableListOf<VideoEntity>()
         val postVideoEntities = mutableListOf<PostVideoEntity>()
 
+        val profilePostStatisticsEntities = mutableListOf<ProfilePostStatisticsEntity>()
+        val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
+
         for (feedView in feedViews) {
             // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
@@ -233,18 +247,34 @@ class OfflineFeedRepository(
             feedView.reply?.let {
                 postEntities.add(it.root.postEntity())
                 it.root.profileEntity()?.let(profileEntities::add)
+                it.root.profilePostStatisticsEntity(viewingProfileId)
+                    ?.let(profilePostStatisticsEntities::add)
 
                 postEntities.add(it.parent.postEntity())
                 it.parent.profileEntity()?.let(profileEntities::add)
+                it.parent.profilePostStatisticsEntity(viewingProfileId)
+                    ?.let(profilePostStatisticsEntities::add)
             }
 
             feedView.reason?.profileEntity()?.let(profileEntities::add)
 
             // Extract data from post
             val postEntity = feedView.post.postEntity()
+            val postAuthorEntity = feedView.post.profileEntity()
+
+            feedView.post.viewer?.profilePostStatisticsEntity(
+                viewingProfileId = viewingProfileId,
+                postId = postEntity.cid,
+            )?.let(profilePostStatisticsEntities::add)
+
+            profileProfileRelationshipsEntities.addAll(
+                feedView.post.author.profileProfileRelationshipsEntities(
+                    viewingProfileId = viewingProfileId,
+                )
+            )
 
             postEntities.add(postEntity)
-            profileEntities.add(feedView.post.profileEntity())
+            profileEntities.add(postAuthorEntity)
 
             feedView.post.quotedPostEntity()?.let { embeddedPostEntity ->
                 postEntities.add(embeddedPostEntity)
@@ -285,11 +315,11 @@ class OfflineFeedRepository(
 
         inTransaction {
             if (query.isInitialRequest()
-                && feedDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
+                && timelineDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
             ) {
-                feedDao.deleteAllFeedsFor(query.sourceId)
-                feedDao.upsertFeedFetchKey(
-                    FeedFetchKeyEntity(
+                timelineDao.deleteAllFeedsFor(query.sourceId)
+                timelineDao.upsertFeedFetchKey(
+                    TimelineFetchKeyEntity(
                         sourceId = query.sourceId,
                         lastFetchedAt = query.firstRequestInstant
                     )
@@ -310,7 +340,14 @@ class OfflineFeedRepository(
             postDao.insertOrIgnorePostImages(postImageEntities)
             postDao.insertOrIgnorePostVideos(postVideoEntities)
 
-            feedDao.upsertFeedItems(feedItemEntities)
+            timelineDao.upsertTimelineItems(feedItemEntities)
+
+//            println("INSERTING")
+//            profileDao.upsertProfilePostStatistics(profilePostStatisticsEntities)
+//            profileDao.upsertProfileProfileRelationships(
+//                profileProfileRelationshipsEntities
+//            )
+//            println("INSERTED")
         }
     }
 
@@ -349,11 +386,11 @@ class OfflineFeedRepository(
     }
 
     private fun readFeed(
-        query: FeedQuery
-    ): Flow<List<FeedItem>> =
+        query: TimelineQuery
+    ): Flow<List<TimelineItem>> =
         when (val local = query.nextItemCursor?.local) {
             null -> emptyFlow()
-            else -> feedDao.feedItems(
+            else -> timelineDao.feedItems(
                 sourceId = query.sourceId,
                 before = local,
                 limit = query.limit,
@@ -388,7 +425,7 @@ class OfflineFeedRepository(
                             val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
                             when {
-                                replyRoot != null && replyParent != null -> FeedItem.Reply(
+                                replyRoot != null && replyParent != null -> TimelineItem.Reply(
                                     id = entity.id,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
@@ -407,7 +444,7 @@ class OfflineFeedRepository(
                                     ),
                                 )
 
-                                repostedBy != null -> FeedItem.Repost(
+                                repostedBy != null -> TimelineItem.Repost(
                                     id = entity.id,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
@@ -418,7 +455,7 @@ class OfflineFeedRepository(
                                     at = entity.indexedAt,
                                 )
 
-                                entity.isPinned -> FeedItem.Pinned(
+                                entity.isPinned -> TimelineItem.Pinned(
                                     id = entity.id,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
@@ -427,7 +464,7 @@ class OfflineFeedRepository(
                                     ),
                                 )
 
-                                else -> FeedItem.Single(
+                                else -> TimelineItem.Single(
                                     id = entity.id,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
@@ -442,5 +479,5 @@ class OfflineFeedRepository(
         }
 }
 
-private fun FeedQuery.isInitialRequest() =
+private fun TimelineQuery.isInitialRequest() =
     page == 0 && nextItemCursor == null

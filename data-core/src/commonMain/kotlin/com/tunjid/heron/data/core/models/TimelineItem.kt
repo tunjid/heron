@@ -2,7 +2,7 @@ package com.tunjid.heron.data.core.models
 
 import kotlinx.datetime.Instant
 
-sealed class FeedItem {
+sealed class TimelineItem {
 
     abstract val id: String
     abstract val post: Post
@@ -19,24 +19,24 @@ sealed class FeedItem {
     data class Pinned(
         override val id: String,
         override val post: Post,
-    ) : FeedItem()
+    ) : TimelineItem()
 
     data class Repost(
         override val id: String,
         override val post: Post,
         val by: Profile,
         val at: Instant,
-    ) : FeedItem()
+    ) : TimelineItem()
 
     data class Reply(
         override val id: String,
         override val post: Post,
         val rootPost: Post,
         val parentPost: Post,
-    ) : FeedItem()
+    ) : TimelineItem()
 
     data class Single(
         override val id: String,
         override val post: Post,
-    ) : FeedItem()
+    ) : TimelineItem()
 }

@@ -16,17 +16,34 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.types.Id
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "feedFetchKeys",
+    tableName = "timelineItems",
+    indices = [
+        Index(value = ["indexedAt"]),
+    ],
 )
-data class FeedFetchKeyEntity(
+data class TimelineItemEntity(
+    val postId: Id,
+    val sourceId: String,
+    @Embedded
+    val reply: FeedReplyEntity?,
+    val reposter: Id?,
+    val isPinned: Boolean,
+    val indexedAt: Instant,
+    // TODO: Figure out a better ID for this
     @PrimaryKey
-    var sourceId: String,
-    val lastFetchedAt: Instant,
+    val id: String = "${postId.id}-${reposter?.id}"
 )
 
+data class FeedReplyEntity(
+    val rootPostId: Id,
+    val parentPostId: Id,
+)

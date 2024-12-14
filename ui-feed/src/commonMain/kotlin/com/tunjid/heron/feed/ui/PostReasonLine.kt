@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Profile
 import heron.ui_feed.generated.resources.Res
 import heron.ui_feed.generated.resources.repost
@@ -25,22 +25,22 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun PostReasonLine(
     modifier: Modifier = Modifier,
-    item: FeedItem,
+    item: TimelineItem,
     onOpenUser: (Profile) -> Unit,
 ) {
     when (item) {
-        is FeedItem.Pinned -> PostPinnedReasonLine(
+        is TimelineItem.Pinned -> PostPinnedReasonLine(
             modifier = modifier
         )
 
-        is FeedItem.Repost -> PostRepostReasonLine(
+        is TimelineItem.Repost -> PostRepostReasonLine(
             modifier = modifier,
             repostBy = item.by,
             onOpenUser = onOpenUser
         )
 
-        is FeedItem.Reply,
-        is FeedItem.Single -> Unit
+        is TimelineItem.Reply,
+        is TimelineItem.Single -> Unit
     }
 }
 
@@ -89,7 +89,6 @@ private fun PostReasonLine(
             modifier = Modifier.size(12.dp),
             imageVector = imageVector,
             contentDescription = iconContentDescription,
-            tint = MaterialTheme.typography.bodySmall.color,
         )
 
         Text(

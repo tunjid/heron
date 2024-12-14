@@ -17,21 +17,23 @@
 package com.tunjid.heron.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedItem
-import com.tunjid.heron.feed.ui.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
@@ -44,35 +46,42 @@ internal fun HomeScreen(
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.feed)
 
-    LazyVerticalStaggeredGrid(
+    Surface(
         modifier = modifier
-            .fillMaxSize(),
-        state = gridState,
-        columns = StaggeredGridCells.Adaptive(400.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        verticalItemSpacing = 8.dp,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(
-            items = items,
-            key = FeedItem::id,
-            itemContent = { item ->
-                FeedItem(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    now = remember { Clock.System.now() },
-                    item = item,
-                    onPostClicked = {},
-                    onProfileClicked = {
-                        actions(Action.Navigate.ToProfile(it.did))
-                    },
-                    onImageClicked = {},
-                    onReplyToPost = {},
-                )
-            }
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(
+            topStart = 16.dp,
+            topEnd = 16.dp,
         )
+    ) {
+        LazyVerticalStaggeredGrid(
+            modifier = Modifier
+                .fillMaxSize(),
+            state = gridState,
+            columns = StaggeredGridCells.Adaptive(400.dp),
+            verticalItemSpacing = 8.dp,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = items,
+                key = TimelineItem::id,
+                itemContent = { item ->
+                    TimelineItem(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        now = remember { Clock.System.now() },
+                        item = item,
+                        onPostClicked = {},
+                        onProfileClicked = {
+                            actions(Action.Navigate.ToProfile(it.did))
+                        },
+                        onImageClicked = {},
+                        onReplyToPost = {},
+                    )
+                }
+            )
+        }
     }
-
     gridState.PivotedTilingEffect(
         items = items,
         onQueryChanged = { query ->

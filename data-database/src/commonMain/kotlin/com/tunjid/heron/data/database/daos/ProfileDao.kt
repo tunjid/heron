@@ -10,10 +10,23 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
+import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.partial
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProfileDao {
+
+    @Query(
+        """
+            SELECT * FROM profiles
+            WHERE did IN (:ids)
+        """
+    )
+    fun profiles(
+        ids: List<Id>,
+    ): Flow<List<ProfileEntity>>
 
     @Upsert
     suspend fun upsertProfiles(
@@ -40,13 +53,33 @@ interface ProfileDao {
         entities: List<ProfileEntity.Partial>,
     )
 
-    @Query(
-        """
-            SELECT * FROM profiles
-            WHERE did IN (:ids)
-        """
+    @Upsert
+    suspend fun upsertProfileProfileRelationships(
+        entities: List<ProfileProfileRelationshipsEntity>,
     )
-    fun profiles(
-        ids: List<Id>,
-    ): Flow<List<ProfileEntity>>
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateProfileProfileRelationships(
+        entities: List<ProfileProfileRelationshipsEntity>
+    ) = upsert(
+        items = entities,
+        entityMapper = ProfileProfileRelationshipsEntity::partial,
+        insertMany = ::insertOrIgnoreProfileProfileRelationships,
+        updateMany = ::updatePartialProfileProfileRelationships
+    )
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreProfileProfileRelationships(
+        entities: List<ProfileProfileRelationshipsEntity>,
+    ): List<Long>
+
+    @Update(entity = ProfileProfileRelationshipsEntity::class)
+    suspend fun updatePartialProfileProfileRelationships(
+        entities: List<ProfileProfileRelationshipsEntity.Partial>,
+    )
+
+    @Upsert
+    suspend fun upsertProfilePostStatistics(
+        entities: List<ProfilePostStatisticsEntity>,
+    )
 }

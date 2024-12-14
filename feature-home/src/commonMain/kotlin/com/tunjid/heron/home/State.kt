@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.home
 
-import com.tunjid.heron.data.core.models.FeedItem
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.repository.FeedQuery
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.tiler.TiledList
@@ -32,10 +32,10 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val currentQuery: FeedQuery.Home,
+    val currentQuery: TimelineQuery.Home,
     val numColumns: Int = 1,
     @Transient
-    val feed: TiledList<FeedQuery.Home, FeedItem> = emptyTiledList(),
+    val feed: TiledList<TimelineQuery.Home, TimelineItem> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -44,7 +44,7 @@ data class State(
 sealed class Action(val key: String) {
 
     sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: FeedQuery.Home) : LoadFeed()
+        data class LoadAround(val query: TimelineQuery.Home) : LoadFeed()
         data class GridSize(val numColumns: Int) : LoadFeed()
     }
 
