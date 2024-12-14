@@ -52,7 +52,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/home"
+internal const val RoutePattern = "/home"
 
 private fun createRoute(
     routeParams: RouteParams,

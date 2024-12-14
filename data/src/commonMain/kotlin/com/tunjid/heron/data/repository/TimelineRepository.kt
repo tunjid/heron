@@ -27,8 +27,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.feedItemEntity
@@ -55,63 +55,46 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
 sealed interface TimelineQuery {
-    val page: Int
+    @Serializable
+    data class Data(
+        val page: Int,
+        /**
+         * The instant the first request was made, as pagination is only valid for [Home] values
+         * that all share the same [firstRequestInstant].
+         */
+        val firstRequestInstant: Instant,
 
-    /**
-     * The instant the first request was made, as pagination is only valid for [Home] values
-     * that all share the same [firstRequestInstant].
-     */
-    val firstRequestInstant: Instant
+        /**
+         * How many items to fetch for a query.
+         */
+        val limit: Long = 50L,
 
-    /**
-     * How many items to fetch for a query.
-     */
-    val limit: Long get() = 50
+        /**
+         * The cursor used to fetch items. Null if this is the first request.
+         */
+        val nextItemCursor: CursorList.DoubleCursor? = null,
+    )
 
-    /**
-     * The cursor used to fetch items. Null if this is the first request.
-     */
-    val nextItemCursor: CursorList.DoubleCursor?
+    val data: Data
 
     @Serializable
     data class Home(
-        override val page: Int,
         /**
          * The backing source of the feed, be it a list or other feed generator output.
          * It is null for a signed in user's timeline.
          */
         val source: Uri,
-        /**
-         * The instant the first request was made, as pagination is only valid for [Home] values
-         * that all share the same [firstRequestInstant].
-         */
-        override val firstRequestInstant: Instant,
-
-        /**
-         * The cursor used to fetch items. Null if this is the first request.
-         */
-        override val nextItemCursor: CursorList.DoubleCursor? = null,
+        override val data: Data,
     ) : TimelineQuery
 
     @Serializable
     data class Profile(
         val profileId: Id,
-        override val page: Int,
-
-        /**
-         * The instant the first request was made, as pagination is only valid for [Home] values
-         * that all share the same [firstRequestInstant].
-         */
-        override val firstRequestInstant: Instant,
-
-        /**
-         * The cursor used to fetch items. Null if this is the first request.
-         */
-        override val nextItemCursor: CursorList.DoubleCursor? = null,
+        override val data: Data,
     ) : TimelineQuery
 }
 
-val TimelineQuery.sourceId
+private val TimelineQuery.sourceId
     get() = when (this) {
         is TimelineQuery.Home -> source.uri
         is TimelineQuery.Profile -> profileId.id
@@ -142,8 +125,8 @@ class OfflineTimelineRepository(
             network = {
                 networkService.api.getTimeline(
                     GetTimelineQueryParams(
-                        limit = it.limit,
-                        cursor = it.nextItemCursor?.remote,
+                        limit = it.data.limit,
+                        cursor = it.data.nextItemCursor?.remote,
                     )
                 )
             },
@@ -162,8 +145,8 @@ class OfflineTimelineRepository(
                 networkService.api.getAuthorFeed(
                     GetAuthorFeedQueryParams(
                         actor = Did(it.profileId.id),
-                        limit = it.limit,
-                        cursor = it.nextItemCursor?.remote,
+                        limit = it.data.limit,
+                        cursor = it.data.nextItemCursor?.remote,
                     )
                 )
             },
@@ -315,13 +298,14 @@ class OfflineTimelineRepository(
 
         inTransaction {
             if (query.isInitialRequest()
-                && timelineDao.lastFetchKey(query.sourceId)?.lastFetchedAt != query.firstRequestInstant
+                && timelineDao.lastFetchKey(query.sourceId)
+                    ?.lastFetchedAt != query.data.firstRequestInstant
             ) {
                 timelineDao.deleteAllFeedsFor(query.sourceId)
                 timelineDao.upsertFeedFetchKey(
                     TimelineFetchKeyEntity(
                         sourceId = query.sourceId,
-                        lastFetchedAt = query.firstRequestInstant
+                        lastFetchedAt = query.data.firstRequestInstant
                     )
                 )
             }
@@ -388,12 +372,12 @@ class OfflineTimelineRepository(
     private fun readFeed(
         query: TimelineQuery
     ): Flow<List<TimelineItem>> =
-        when (val local = query.nextItemCursor?.local) {
+        when (val local = query.data.nextItemCursor?.local) {
             null -> emptyFlow()
             else -> timelineDao.feedItems(
                 sourceId = query.sourceId,
                 before = local,
-                limit = query.limit,
+                limit = query.data.limit,
             )
                 .flatMapLatest { itemEntities ->
                     combine(
@@ -480,4 +464,4 @@ class OfflineTimelineRepository(
 }
 
 private fun TimelineQuery.isInitialRequest() =
-    page == 0 && nextItemCursor == null
+    data.page == 0 && data.nextItemCursor == null

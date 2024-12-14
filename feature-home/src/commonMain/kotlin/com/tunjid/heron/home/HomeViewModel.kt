@@ -19,10 +19,11 @@ package com.tunjid.heron.home
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
+import com.tunjid.heron.domain.timeline.timelineLoadMutations
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -33,28 +34,15 @@ import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.PivotRequest
-import com.tunjid.tiler.QueryFetcher
-import com.tunjid.tiler.Tile
-import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.queries
-import com.tunjid.tiler.toPivotedTileInputs
-import com.tunjid.tiler.toTiledList
-import com.tunjid.tiler.utilities.NeighboredFetchResult
-import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -83,9 +71,11 @@ class ActualHomeStateHolder(
 ) : ViewModel(viewModelScope = scope), HomeStateHolder by scope.actionStateFlowMutator(
     initialState = State(
         currentQuery = TimelineQuery.Home(
-            page = 0,
             source = Constants.timelineFeed,
-            firstRequestInstant = Clock.System.now(),
+            data = TimelineQuery.Data(
+                page = 0,
+                firstRequestInstant = Clock.System.now(),
+            )
         )
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -96,7 +86,7 @@ class ActualHomeStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-                is Action.LoadFeed -> action.flow.fetchListingFeedMutations(
+                is Action.LoadFeed -> action.flow.timelineLoadMutations(
                     stateHolder = this@transform,
                     timelineRepository = timelineRepository,
                 )
@@ -113,182 +103,34 @@ class ActualHomeStateHolder(
 /**
  * Feed mutations as a function of the user's scroll position
  */
-private suspend fun Flow<Action.LoadFeed>.fetchListingFeedMutations(
+private suspend fun Flow<Action.LoadFeed>.timelineLoadMutations(
     stateHolder: SuspendingStateHolder<State>,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> = with(stateHolder) {
     // Read the starting state at the time of subscription
     val startingState = state()
 
-    return scan(
-        initial = Pair(
-            MutableStateFlow(startingState.currentQuery),
-            MutableStateFlow(startingState.numColumns)
-        )
-    ) { accumulator, action ->
-        val (queries, numColumns) = accumulator
-        // update backing states as a side effect
-        when (action) {
-            is Action.LoadFeed.GridSize -> numColumns.value = action.numColumns
-            is Action.LoadFeed.LoadAround -> queries.value = action.query
+    return map {
+        when (it) {
+            is Action.LoadFeed.GridSize -> TimelineLoadAction.GridSize(it.numColumns)
+            is Action.LoadFeed.LoadAround -> TimelineLoadAction.LoadAround(it.query)
         }
-        // Emit the same item with each action
-        accumulator
     }
-        // Only emit once
-        .distinctUntilChanged()
-        // Flatmap to the fields defined earlier
-        .flatMapLatest { (queries, numColumns) ->
-            val tileInputs = merge(
-                numColumns.map { columns ->
-                    Tile.Limiter(
-                        maxQueries = 3 * columns,
-                        itemSizeHint = null,
-                    )
-                },
-                queries.toPivotedTileInputs(
-                    numColumns.map(::feedPivotRequest)
-                )
-            )
-            // Merge all state changes that are a function of loading the list
-            merge(
-                queries.mapToMutation { copy(currentQuery = it) },
-                numColumns.mapToMutation { copy(numColumns = it) },
-                tileInputs.toTiledList(
-                    feedItemListTiler(
-                        startingQuery = queries.value,
-                        timelineRepository = timelineRepository,
-                    )
-                )
-                    .mapToMutation { fetchedList ->
-                        // Queries update independently of each other, so duplicates may be emitted.
-                        // The maximum amount of items returned is bound by the size of the
-                        // view port. Typically << 100 items so the
-                        // distinct operation is cheap and fixed.
+        .timelineLoadMutations(
+            startQuery = startingState.currentQuery,
+            startNumColumns = startingState.numColumns,
+            cursorListLoader = timelineRepository::timeline,
+            mutations = { queriesFlow, numColumnsFlow, tiledListFlow ->
+                merge(
+                    queriesFlow.mapToMutation { copy(currentQuery = it) },
+                    numColumnsFlow.mapToMutation { copy(numColumns = it) },
+                    tiledListFlow.mapToMutation { fetchedList ->
                         if (!fetchedList.queries().contains(currentQuery)) this
                         else copy(
                             feed = fetchedList.distinctBy(TimelineItem::id)
                         )
                     }
-            )
-        }
-}
-
-private fun feedPivotRequest(numColumns: Int) =
-    PivotRequest<TimelineQuery.Home, TimelineItem>(
-        onCount = numColumns * 3,
-        offCount = numColumns * 2,
-        comparator = ListingQueryComparator,
-        previousQuery = {
-            if ((page - 1) < 0) null
-            else copy(page = page - 1)
-        },
-        nextQuery = {
-            copy(page = page + 1)
-        }
-    )
-
-private fun feedItemListTiler(
-    startingQuery: TimelineQuery.Home,
-    timelineRepository: TimelineRepository,
-) = listTiler(
-    order = Tile.Order.PivotSorted(
-        query = startingQuery,
-        comparator = ListingQueryComparator,
-    ),
-    fetcher = feedItemQueryFetcher(startingQuery, timelineRepository)
-)
-
-private val ListingQueryComparator = compareBy(TimelineQuery.Home::page)
-
-fun feedItemQueryFetcher(
-    startingQuery: TimelineQuery.Home,
-    timelineRepository: TimelineRepository,
-): QueryFetcher<TimelineQuery.Home, TimelineItem> = neighboredQueryFetcher(
-    // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
-    // in memory
-    maxTokens = 50,
-    // Make sure the first page has an entry for its cursor/token
-    seedQueryTokenMap = mapOf(
-        startingQuery to CursorList.DoubleCursor(
-            local = startingQuery.firstRequestInstant,
-            remote = null,
-        )
-    ),
-    fetcher = { query, cursor ->
-        timelineRepository
-            .timeline(query.copy(nextItemCursor = cursor))
-            .map { feedItemCursorList ->
-                NeighboredFetchResult(
-                    // Set the cursor for the next page and any other page with data available.
-                    // This will cause the fetcher for the pages to be invoked if they are in scope.
-                    mapOf(
-                        query.copy(page = query.page + 1) to feedItemCursorList.nextCursor
-                    ),
-                    items = feedItemCursorList
                 )
             }
-    }
-)
-
-
-/**
- * When returning from the backstack, the paging pipeline will be started
- * again, causing placeholders to be emitted.
- *
- * To keep preserve the existing state from being overwritten by
- * placeholders, the following algorithm iterates over each tile (chunk) of queries in the
- * [TiledList] to see if placeholders are displacing loaded items.
- *
- * If a displacement were to occur, favor the existing items over the displacing placeholders.
- *
- * Algorithm is O(2 * (3*NumOfColumns)).
- * See the project readme for details: https://github.com/tunjid/Tiler
- */
-//private fun State.filterPlaceholdersFrom(
-//    fetchedList: TiledList<ListingQuery, TimelineItem>
-//) = buildTiledList {
-//    val existingMap = 0.until(listings.tileCount).associateBy(
-//        keySelector = listings::queryAtTile,
-//        valueTransform = { tileIndex ->
-//            val existingTile = listings.tileAt(tileIndex)
-//            listings.subList(
-//                fromIndex = existingTile.start,
-//                toIndex = existingTile.end
-//            )
-//        }
-//    )
-//    for (tileIndex in 0 until fetchedList.tileCount) {
-//        val fetchedTile = fetchedList.tileAt(tileIndex)
-//        val fetchedQuery = fetchedList.queryAtTile(tileIndex)
-//        when (fetchedList[fetchedTile.start]) {
-//            // Items are already loaded, no swap necessary
-//            is TimelineItem.Loaded -> addAll(
-//                query = fetchedQuery,
-//                items = fetchedList.subList(
-//                    fromIndex = fetchedTile.start,
-//                    toIndex = fetchedTile.end,
-//                )
-//            )
-//            // Placeholder chunk in fetched list, check if loaded items are in the previous list
-//            is TimelineItem.Preview,
-//            is TimelineItem.Loading -> when (val existingChunk = existingMap[fetchedQuery]) {
-//                // No existing items, reuse placeholders
-//                null -> addAll(
-//                    query = fetchedQuery,
-//                    items = fetchedList.subList(
-//                        fromIndex = fetchedTile.start,
-//                        toIndex = fetchedTile.end,
-//                    )
-//                )
-//
-//                // Reuse existing items
-//                else -> addAll(
-//                    query = fetchedQuery,
-//                    items = existingChunk
-//                )
-//            }
-//        }
-//    }
-//}
-
+        )
+}
