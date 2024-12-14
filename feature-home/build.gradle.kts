@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(project(":data"))
                 implementation(project(":scaffold"))
+                implementation(project(":domain-timeline"))
                 implementation(project(":feature-template"))
 
                 implementation(libs.kotlinx.coroutines.core)

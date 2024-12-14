@@ -17,11 +17,10 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
-    id("ui-module-convention")
     id("ksp-convention")
 }
 android {
-    namespace = "com.tunjid.heron.feature.profile"
+    namespace = "com.tunjid.heron.domain.timeline"
 }
 
 kotlin {
@@ -29,19 +28,15 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data"))
-                implementation(project(":scaffold"))
-                implementation(project(":domain-timeline"))
-                implementation(project(":feature-template"))
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(libs.tunjid.composables)
-
                 implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.tiler.compose)
+                implementation(libs.tunjid.mutator.core.common)
+                implementation(libs.tunjid.mutator.coroutines.common)
             }
         }
     }

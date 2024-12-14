@@ -35,6 +35,7 @@ include(
     ":data-core",
     ":data-database",
     ":di",
+    ":domain-timeline",
     ":scaffold",
     ":feature-auth",
     ":feature-home",
