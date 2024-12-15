@@ -1,6 +1,5 @@
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
 import kotlinx.datetime.Instant
 
 sealed class TimelineItem {

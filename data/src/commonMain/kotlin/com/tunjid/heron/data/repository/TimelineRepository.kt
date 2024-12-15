@@ -19,6 +19,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.emptyProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
@@ -223,6 +224,9 @@ class OfflineTimelineRepository(
         val profilePostStatisticsEntities = mutableListOf<ProfilePostStatisticsEntity>()
         val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
 
+        // Add the signed in user
+        profileEntities.add(emptyProfileEntity(viewingProfileId))
+
         for (feedView in feedViews) {
             // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
@@ -326,12 +330,10 @@ class OfflineTimelineRepository(
 
             timelineDao.upsertTimelineItems(feedItemEntities)
 
-//            println("INSERTING")
-//            profileDao.upsertProfilePostStatistics(profilePostStatisticsEntities)
-//            profileDao.upsertProfileProfileRelationships(
-//                profileProfileRelationshipsEntities
-//            )
-//            println("INSERTED")
+            profileDao.upsertProfilePostStatistics(profilePostStatisticsEntities)
+            profileDao.upsertProfileProfileRelationships(
+                profileProfileRelationshipsEntities
+            )
         }
     }
 

@@ -1,9 +1,12 @@
 package com.tunjid.heron.data.network.models
 
+import app.bsky.actor.GetProfileResponse
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import app.bsky.feed.ViewerState as ProfileViewerState
@@ -102,3 +105,19 @@ internal fun ReplyRefParentUnion.profilePostStatisticsEntity(
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown -> null
 }
+
+internal fun GetProfileResponse.signedInUserProfileEntity() =
+    ProfileEntity(
+        did = Id(did.did),
+        handle = Id(handle.handle),
+        displayName = displayName,
+        description = description,
+        avatar = avatar?.uri?.let(::Uri),
+        banner = banner?.uri?.let(::Uri),
+        followersCount = followersCount,
+        followsCount = followsCount,
+        postsCount = followsCount,
+        joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::Id),
+        indexedAt = indexedAt,
+        createdAt = createdAt,
+    )
