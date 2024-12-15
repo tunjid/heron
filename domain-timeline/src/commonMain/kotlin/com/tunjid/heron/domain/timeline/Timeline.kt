@@ -2,6 +2,7 @@ package com.tunjid.heron.domain.timeline
 
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.mutator.Mutation
 import com.tunjid.tiler.ListTiler
@@ -9,6 +10,7 @@ import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.filter
 import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
@@ -59,12 +61,14 @@ fun <Query : TimelineQuery, Action : TimelineLoadAction<Query>, State> Flow<Acti
     // Only emit once
     .distinctUntilChanged()
     .flatMapLatest { (queries, numColumns) ->
-        val tiledList = timelineTileInputs(numColumns, queries).toTiledList(
-            timelineTiler(
-                startingQuery = queries.value,
-                cursorListLoader = cursorListLoader,
+        val tiledList = timelineTileInputs(numColumns, queries)
+            .toTiledList(
+                timelineTiler(
+                    startingQuery = queries.value,
+                    cursorListLoader = cursorListLoader,
+                )
             )
-        )
+            .map(TiledList<Query, TimelineItem>::filterThreadDuplicates)
         mutations(queries, numColumns, tiledList)
     }
 
@@ -154,63 +158,12 @@ private fun <Query : TimelineQuery> timelineQueryComparator() = compareBy { quer
     query.data.page
 }
 
-
-/**
- * When returning from the backstack, the paging pipeline will be started
- * again, causing placeholders to be emitted.
- *
- * To keep preserve the existing state from being overwritten by
- * placeholders, the following algorithm iterates over each tile (chunk) of queries in the
- * [TiledList] to see if placeholders are displacing loaded items.
- *
- * If a displacement were to occur, favor the existing items over the displacing placeholders.
- *
- * Algorithm is O(2 * (3*NumOfColumns)).
- * See the project readme for details: https://github.com/tunjid/Tiler
- */
-//private fun State.filterPlaceholdersFrom(
-//    fetchedList: TiledList<ListingQuery, TimelineItem>
-//) = buildTiledList {
-//    val existingMap = 0.until(listings.tileCount).associateBy(
-//        keySelector = listings::queryAtTile,
-//        valueTransform = { tileIndex ->
-//            val existingTile = listings.tileAt(tileIndex)
-//            listings.subList(
-//                fromIndex = existingTile.start,
-//                toIndex = existingTile.end
-//            )
-//        }
-//    )
-//    for (tileIndex in 0 until fetchedList.tileCount) {
-//        val fetchedTile = fetchedList.tileAt(tileIndex)
-//        val fetchedQuery = fetchedList.queryAtTile(tileIndex)
-//        when (fetchedList[fetchedTile.start]) {
-//            // Items are already loaded, no swap necessary
-//            is TimelineItem.Loaded -> addAll(
-//                query = fetchedQuery,
-//                items = fetchedList.subList(
-//                    fromIndex = fetchedTile.start,
-//                    toIndex = fetchedTile.end,
-//                )
-//            )
-//            // Placeholder chunk in fetched list, check if loaded items are in the previous list
-//            is TimelineItem.Preview,
-//            is TimelineItem.Loading -> when (val existingChunk = existingMap[fetchedQuery]) {
-//                // No existing items, reuse placeholders
-//                null -> addAll(
-//                    query = fetchedQuery,
-//                    items = fetchedList.subList(
-//                        fromIndex = fetchedTile.start,
-//                        toIndex = fetchedTile.end,
-//                    )
-//                )
-//
-//                // Reuse existing items
-//                else -> addAll(
-//                    query = fetchedQuery,
-//                    items = existingChunk
-//                )
-//            }
-//        }
-//    }
-//}
+private fun <Query : TimelineQuery> TiledList<Query, TimelineItem>.filterThreadDuplicates(): TiledList<Query, TimelineItem> {
+    val threadRootIds = mutableSetOf<Id>()
+    return filter { item ->
+        if (item !is TimelineItem.Reply) return@filter true
+        threadRootIds.contains(item.rootPost.cid).also { contains ->
+            if (!contains) threadRootIds.add(item.rootPost.cid)
+        }
+    }
+}
