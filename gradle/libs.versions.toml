@@ -6,8 +6,11 @@ androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.15.0"
 androidx-datastore = "1.1.1"
-androidx-room = "2.7.0-alpha11"
-androidx-sqlite = "2.5.0-alpha11"
+androidx-graphics-core = "1.0.2"
+androidx-graphics-path = "1.0.1"
+androidx-graphics-shapes = "1.1.0-alpha01"
+androidx-room = "2.7.0-alpha12"
+androidx-sqlite = "2.5.0-alpha12"
 androidx-espresso-core = "3.6.1"
 lifecycle = "2.8.4"
 androidx-material = "1.12.0"
@@ -45,6 +48,9 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-datastore-core-okio = { group = "androidx.datastore", name = "datastore-core-okio", version.ref = "androidx-datastore" }
 androidx-datastore-core-preferences = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "androidx-datastore" }
+androidx-graphics-core = { group = "androidx.graphics", name = "graphics-core", version.ref = "androidx-graphics-core" }
+androidx-graphics-path = { group = "androidx.graphics", name = "graphics-path", version.ref = "androidx-graphics-path" }
+androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "androidx-graphics-shapes" }
 androidx-room-GradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }

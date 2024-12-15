@@ -18,75 +18,75 @@ import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.toImageShape
 
 @Composable
 fun PostExternal(
-  feature: ExternalEmbed,
-  onClick: () -> Unit,
+    feature: ExternalEmbed,
+    onClick: () -> Unit,
 ) {
-  val uriHandler = LocalUriHandler.current
-
-  FeatureContainer(onClick = onClick) {
-    Row(horizontalArrangement = spacedBy(16.dp)) {
-      if (!feature.thumb?.uri.isNullOrBlank()) {
-        AsyncImage(
-          modifier = Modifier
-            .requiredSizeIn(
-              maxWidth = 96.dp,
-              maxHeight = 96.dp,
-            ),
-          args = ImageArgs(
-            url = feature.thumb?.uri,
-            contentDescription = feature.title,
-            contentScale = ContentScale.Crop,
-            shape = RoundedCornerShape(16.dp)
-          ),
+    val uriHandler = LocalUriHandler.current
+    FeatureContainer(onClick = onClick) {
+        Row(horizontalArrangement = spacedBy(16.dp)) {
+            if (!feature.thumb?.uri.isNullOrBlank()) {
+                AsyncImage(
+                    modifier = Modifier
+                        .requiredSizeIn(
+                            maxWidth = 96.dp,
+                            maxHeight = 96.dp,
+                        ),
+                    args = ImageArgs(
+                        url = feature.thumb?.uri,
+                        contentDescription = feature.title,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedCornerShape(16.dp).toImageShape()
+                    ),
 //          onClick = { uriHandler.openUri(feature.uri.uri) },
 //          fallbackColor = MaterialTheme.colorScheme.outline,
-        )
-      }
-      PostFeatureTextContent(
-        modifier = Modifier.weight(1f),
-        title = feature.title,
-        description = feature.description,
-        uri = feature.uri,
-      )
+                )
+            }
+            PostFeatureTextContent(
+                modifier = Modifier.weight(1f),
+                title = feature.title,
+                description = feature.description,
+                uri = feature.uri,
+            )
+        }
     }
-  }
 }
 
 @Composable
 fun PostFeatureTextContent(
-  modifier: Modifier = Modifier,
-  title: String?,
-  description: String?,
-  uri: Uri?,
+    modifier: Modifier = Modifier,
+    title: String?,
+    description: String?,
+    uri: Uri?,
 ) {
-  Column(modifier, verticalArrangement = spacedBy(4.dp)) {
-    if (!title.isNullOrBlank()) {
-      Text(
-        text = title,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = Bold),
-      )
+    Column(modifier, verticalArrangement = spacedBy(4.dp)) {
+        if (!title.isNullOrBlank()) {
+            Text(
+                text = title,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = Bold),
+            )
+        }
+        if (!description.isNullOrBlank()) {
+            Text(
+                text = description,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+        val url = uri?.uri
+        if (!url.isNullOrBlank()) {
+            Text(
+                text = url,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
     }
-    if (!description.isNullOrBlank()) {
-      Text(
-        text = description,
-        maxLines = 3,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.bodyLarge,
-      )
-    }
-    val url = uri?.uri
-    if (!url.isNullOrBlank()) {
-      Text(
-        text = url,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.bodySmall,
-      )
-    }
-  }
 }

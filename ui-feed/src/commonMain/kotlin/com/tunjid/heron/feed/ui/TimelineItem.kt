@@ -22,14 +22,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.feed.utilities.createdAt
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.ImageShape
 import kotlinx.datetime.Instant
 
 @Composable
@@ -167,7 +168,7 @@ private fun SinglePost(
                     url = post.author.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = post.author.displayName ?: post.author.handle.id,
-                    shape = CircleShape,
+                    shape = ImageShape.Circle,
                 ),
             )
             //      onClick = { onOpenUser(UserDid(author.did)) },

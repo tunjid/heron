@@ -53,7 +53,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -69,6 +68,7 @@ import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
@@ -241,7 +241,7 @@ private fun ProfileBanner(
                 url = profile.banner?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = profile.displayName ?: profile.handle.id,
-                shape = RectangleShape,
+                shape = ImageShape.Rectangle,
             )
         },
     )
@@ -278,7 +278,7 @@ private fun ProfilePhoto(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = CircleShape,
+                    shape = ImageShape.Circle,
                 )
             },
         )
