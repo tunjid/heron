@@ -13,10 +13,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -31,6 +32,7 @@ import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.images.shapes.toImageShape
 import kotlinx.datetime.Instant
 
 @Composable
@@ -79,6 +81,9 @@ fun TimelineItem(
             SinglePost(
                 post = item.post,
                 embed = item.post.embed,
+                avatarShape =
+                if (item is TimelineItem.Reply) ReplyThreadEndImageShape
+                else ImageShape.Circle,
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -104,19 +109,13 @@ private fun PostReplies(
             Modifier
                 .matchParentSize()
         ) {
-            Spacer(
-                Modifier
-                    .offset(x = 12.dp)
-                    .padding(top = 48.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .fillMaxHeight()
-                    .width(2.dp)
-            )
+            TimelineThread()
         }
         Column {
             SinglePost(
                 post = item.rootPost,
                 embed = item.rootPost.embed,
+                avatarShape = ReplyThreadStartImageShape,
                 now = now,
                 createdAt = item.rootPost.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -129,6 +128,7 @@ private fun PostReplies(
                 SinglePost(
                     post = item.parentPost,
                     embed = item.parentPost.embed,
+                    avatarShape = ReplyThreadImageShape,
                     now = now,
                     createdAt = item.parentPost.createdAt,
                     onProfileClicked = onProfileClicked,
@@ -147,6 +147,7 @@ private fun SinglePost(
     now: Instant,
     post: Post,
     embed: Embed?,
+    avatarShape: ImageShape,
     createdAt: Instant,
     onProfileClicked: (Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -162,13 +163,13 @@ private fun SinglePost(
             AsyncImage(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(CircleShape)
+                    .clip(avatarShape)
                     .clickable { onProfileClicked(post.author) },
                 args = ImageArgs(
                     url = post.author.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = post.author.displayName ?: post.author.handle.id,
-                    shape = ImageShape.Circle,
+                    shape = avatarShape,
                 ),
             )
             //      onClick = { onOpenUser(UserDid(author.did)) },
@@ -217,3 +218,40 @@ private fun SinglePost(
         }
     }
 }
+
+@Composable
+private fun TimelineThread() {
+    Spacer(
+        Modifier
+            .offset(x = 2.dp)
+            .padding(top = 52.dp, bottom = 4.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .fillMaxHeight()
+            .width(2.dp)
+    )
+}
+
+private val ReplyThreadStartImageShape =
+    RoundedCornerShape(
+        topStartPercent = 100,
+        topEndPercent = 100,
+        bottomStartPercent = 30,
+        bottomEndPercent = 100,
+    ).toImageShape()
+
+private val ReplyThreadImageShape =
+    ImageShape.Polygon(
+        cornerSizeAtIndex = (0..4).map { index ->
+            if (index == 2 || index == 3) 14.dp
+            else 48.dp
+        }
+    )
+
+private val ReplyThreadEndImageShape =
+    RoundedCornerShape(
+        topStartPercent = 30,
+        topEndPercent = 100,
+        bottomStartPercent = 100,
+        bottomEndPercent = 100,
+    ).toImageShape()
+

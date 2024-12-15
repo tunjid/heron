@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Cubic
@@ -30,6 +32,7 @@ import androidx.graphics.shapes.circle
 import androidx.graphics.shapes.rectangle
 import kotlin.math.max
 
+@Stable
 sealed class ImageShape : Shape {
 
     private var path = Path()
@@ -55,7 +58,10 @@ sealed class ImageShape : Shape {
         lastPolygon = polygon
         lastSize = size
         lastDensity = density
-        lastBounds = polygon.calculateBounds(bounds).let { Rect(it[0], it[1], it[2], it[3]) }
+        lastBounds = polygon.calculateBounds(
+            bounds = bounds,
+            approximate = this !is Polygon,
+        ).let { Rect(it[0], it[1], it[2], it[3]) }
     }
 
     override fun createOutline(
@@ -83,6 +89,7 @@ sealed class ImageShape : Shape {
         return Outline.Generic(path)
     }
 
+    @Stable
     data object Circle : ImageShape() {
         private val polygon = RoundedPolygon.circle(numVertices = 8)
         override fun createPolygon(
@@ -91,6 +98,7 @@ sealed class ImageShape : Shape {
         ): RoundedPolygon = polygon
     }
 
+    @Stable
     data object Rectangle : ImageShape() {
         private val polygon = RoundedPolygon.rectangle()
         override fun createPolygon(
@@ -99,6 +107,7 @@ sealed class ImageShape : Shape {
         ): RoundedPolygon = polygon
     }
 
+    @Stable
     data class RoundedRectangle(
         val roundedCornerShape: RoundedCornerShape,
     ) : ImageShape() {
@@ -106,22 +115,20 @@ sealed class ImageShape : Shape {
             size: Size,
             density: Density
         ): RoundedPolygon = RoundedPolygon.rectangle(
-            width = size.width,
-            height = size.height,
             perVertexRounding = listOf(
-                roundedCornerShape.topStart.normalize(
-                    size = size,
-                    density = density,
-                ),
-                roundedCornerShape.topEnd.normalize(
-                    size = size,
-                    density = density,
-                ),
                 roundedCornerShape.bottomEnd.normalize(
                     size = size,
                     density = density,
                 ),
                 roundedCornerShape.bottomStart.normalize(
+                    size = size,
+                    density = density,
+                ),
+                roundedCornerShape.topStart.normalize(
+                    size = size,
+                    density = density,
+                ),
+                roundedCornerShape.topEnd.normalize(
                     size = size,
                     density = density,
                 ),
@@ -137,30 +144,29 @@ sealed class ImageShape : Shape {
                 shapeSize = size,
                 density = density,
             )
-            val ratio = maxDimension / absoluteCornerSize
-            return CornerRounding(
-                radius = ratio
-            )
+            val radius = (absoluteCornerSize / maxDimension) * 2f
+
+            return CornerRounding(radius = radius)
         }
     }
 
-    data object CornerSe : ImageShape() {
-        private val polygon = RoundedPolygon(
-            vertices = floatArrayOf(1f, 1f, -1f, 1f, -1f, -1f, 1f, -1f),
-            perVertexRounding = listOf(
-                CornerRounding(radius = 1f),
-                CornerRounding(radius = 1f / 3),
-                CornerRounding(radius = 1f),
-                CornerRounding(radius = 1f)
-            ),
-            centerX = 0f,
-            centerY = 0f,
-        )
+    @Stable
+    data class Polygon(
+        val cornerSizeAtIndex: List<Dp>,
+    ) : ImageShape() {
 
         override fun createPolygon(
             size: Size,
             density: Density
-        ): RoundedPolygon = polygon
+        ): RoundedPolygon = RoundedPolygon(
+            numVertices = cornerSizeAtIndex.size,
+            perVertexRounding = cornerSizeAtIndex.map {
+                val maxDimension = max(size.width, size.height)
+                val absoluteCornerSize = with(density) { it.toPx() }
+                val radius = (absoluteCornerSize / maxDimension) * 2f
+                 CornerRounding(radius = radius)
+            },
+        )
     }
 }
 
@@ -277,18 +283,17 @@ private fun pathFromCubics(
     var first = true
     path.rewind()
     for (element in cubics) {
-        val cubic = element
         if (first) {
-            path.moveTo(cubic.anchor0X, cubic.anchor0Y)
+            path.moveTo(element.anchor0X, element.anchor0Y)
             first = false
         }
         path.cubicTo(
-            cubic.control0X,
-            cubic.control0Y,
-            cubic.control1X,
-            cubic.control1Y,
-            cubic.anchor1X,
-            cubic.anchor1Y
+            element.control0X,
+            element.control0Y,
+            element.control1X,
+            element.control1Y,
+            element.anchor1X,
+            element.anchor1Y
         )
     }
     path.close()
