@@ -18,6 +18,7 @@ package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.home.di.RoutePattern
@@ -60,14 +61,23 @@ sealed class Action(val key: String) {
 
         data class ToProfile(
             val profileId: Id,
+            val profileAvatar: Uri?,
+            val avatarSharedElementKey: String?,
         ) : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
                         path = "/profile/${profileId.id}",
                         queryParams =
-                        if (currentRoute.id != RoutePattern) emptyMap()
-                        else mapOf("referringRoute" to listOf(currentRoute.encodeToQueryParam()))
+                        if (currentRoute.id != RoutePattern) mapOf(
+                            "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                            "profileAvatar" to listOfNotNull(profileAvatar?.uri),
+                        )
+                        else mapOf(
+                            "referringRoute" to listOf(currentRoute.encodeToQueryParam()),
+                            "profileAvatar" to listOfNotNull(profileAvatar?.uri),
+                            "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        )
                     ).toRoute
                 )
             }

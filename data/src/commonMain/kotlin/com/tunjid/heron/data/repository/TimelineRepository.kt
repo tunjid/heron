@@ -411,6 +411,7 @@ class OfflineTimelineRepository(
                             when {
                                 replyRoot != null && replyParent != null -> TimelineItem.Reply(
                                     id = entity.id,
+                                    sourceId = query.sourceId,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
@@ -430,6 +431,7 @@ class OfflineTimelineRepository(
 
                                 repostedBy != null -> TimelineItem.Repost(
                                     id = entity.id,
+                                    sourceId = query.sourceId,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
@@ -441,6 +443,7 @@ class OfflineTimelineRepository(
 
                                 entity.isPinned -> TimelineItem.Pinned(
                                     id = entity.id,
+                                    sourceId = query.sourceId,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
@@ -450,6 +453,7 @@ class OfflineTimelineRepository(
 
                                 else -> TimelineItem.Single(
                                     id = entity.id,
+                                    sourceId = query.sourceId,
                                     post = mainPost.asExternalModel(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity

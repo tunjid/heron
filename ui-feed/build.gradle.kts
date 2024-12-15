@@ -48,6 +48,8 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
+
+                implementation(libs.tunjid.treenav.compose.common)
             }
         }
     }

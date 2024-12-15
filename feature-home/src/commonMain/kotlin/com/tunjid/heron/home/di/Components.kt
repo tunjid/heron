@@ -109,6 +109,7 @@ abstract class HomeComponent(
                 },
                 content = { paddingValues ->
                     HomeScreen(
+                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

@@ -1,5 +1,6 @@
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -33,15 +35,18 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
 fun TimelineItem(
     modifier: Modifier = Modifier,
+    movableSharedElementScope: MovableSharedElementScope,
     now: Instant,
     item: TimelineItem,
     onPostClicked: (Post) -> Unit,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
 ) {
@@ -65,11 +70,12 @@ fun TimelineItem(
                         bottom = 4.dp
                     ),
                     item = item,
-                    onOpenUser = onProfileClicked,
+                    onProfileClicked = onProfileClicked,
                 )
             }
             if (item is TimelineItem.Reply) {
                 PostReplies(
+                    movableSharedElementScope = movableSharedElementScope,
                     item = item,
                     now = now,
                     onProfileClicked = onProfileClicked,
@@ -79,11 +85,13 @@ fun TimelineItem(
                 )
             }
             SinglePost(
+                movableSharedElementScope = movableSharedElementScope,
                 post = item.post,
                 embed = item.post.embed,
                 avatarShape =
                 if (item is TimelineItem.Reply) ReplyThreadEndImageShape
                 else ImageShape.Circle,
+                avatarSharedElementKey = item.post.avatarSharedElementKey(item.sourceId),
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -97,18 +105,20 @@ fun TimelineItem(
 
 @Composable
 private fun PostReplies(
+    movableSharedElementScope: MovableSharedElementScope,
     item: TimelineItem.Reply,
     now: Instant,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit
 ) {
     Column {
         SinglePost(
-            post = item.rootPost,
+            movableSharedElementScope = movableSharedElementScope, post = item.rootPost,
             embed = item.rootPost.embed,
             avatarShape = ReplyThreadStartImageShape,
+            avatarSharedElementKey = item.rootPost.avatarSharedElementKey(item.sourceId),
             now = now,
             createdAt = item.rootPost.createdAt,
             onProfileClicked = onProfileClicked,
@@ -125,10 +135,11 @@ private fun PostReplies(
         )
         Timeline(Modifier.height(16.dp))
         if (item.rootPost.cid != item.parentPost.cid) {
-            SinglePost(
+            SinglePost(movableSharedElementScope = movableSharedElementScope,
                 post = item.parentPost,
                 embed = item.parentPost.embed,
                 avatarShape = ReplyThreadImageShape,
+                avatarSharedElementKey = item.parentPost.avatarSharedElementKey(item.sourceId),
                 now = now,
                 createdAt = item.parentPost.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -149,14 +160,17 @@ private fun PostReplies(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SinglePost(
+    movableSharedElementScope: MovableSharedElementScope,
     now: Instant,
     post: Post,
     embed: Embed?,
     avatarShape: ImageShape,
+    avatarSharedElementKey: String,
     createdAt: Instant,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
@@ -170,17 +184,23 @@ private fun SinglePost(
             Row(
                 horizontalArrangement = spacedBy(8.dp),
             ) {
-                AsyncImage(
+                movableSharedElementScope.updatedMovableSharedElementOf(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(avatarShape)
-                        .clickable { onProfileClicked(post.author) },
-                    args = ImageArgs(
-                        url = post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = post.author.displayName ?: post.author.handle.id,
-                        shape = avatarShape,
-                    ),
+                        .clickable { onProfileClicked(post, post.author) },
+                    key = avatarSharedElementKey,
+                    state = remember(post.author.avatar) {
+                        ImageArgs(
+                            url = post.author.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = post.author.displayName ?: post.author.handle.id,
+                            shape = avatarShape,
+                        )
+                    },
+                    sharedElement = { state, modifier ->
+                        AsyncImage(state, modifier)
+                    }
                 )
                 //      onClick = { onOpenUser(UserDid(author.did)) },
                 //      fallbackColor = author.handle.color(),
@@ -207,7 +227,7 @@ private fun SinglePost(
                 PostText(
                     post = post,
                     onClick = { onPostClicked(post) },
-                    onOpenUser = onProfileClicked
+                    onProfileClicked = onProfileClicked
                 )
                 PostEmbed(
                     now = now,
@@ -269,3 +289,7 @@ private val ReplyThreadEndImageShape =
         bottomEndPercent = 100,
     ).toImageShape()
 
+
+fun Post.avatarSharedElementKey(
+    sourceId: String,
+): String = "$sourceId-${cid.id}-${author.did.id}"

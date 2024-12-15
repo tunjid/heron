@@ -1,11 +1,13 @@
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.Id
 import kotlinx.datetime.Instant
 
 sealed class TimelineItem {
 
     abstract val id: String
     abstract val post: Post
+    abstract val sourceId: String
 
     val indexedAt
         get() = when (this) {
@@ -19,11 +21,13 @@ sealed class TimelineItem {
     data class Pinned(
         override val id: String,
         override val post: Post,
+        override val sourceId: String,
     ) : TimelineItem()
 
     data class Repost(
         override val id: String,
         override val post: Post,
+        override val sourceId: String,
         val by: Profile,
         val at: Instant,
     ) : TimelineItem()
@@ -31,6 +35,7 @@ sealed class TimelineItem {
     data class Reply(
         override val id: String,
         override val post: Post,
+        override val sourceId: String,
         val rootPost: Post,
         val parentPost: Post,
     ) : TimelineItem()
@@ -38,5 +43,6 @@ sealed class TimelineItem {
     data class Single(
         override val id: String,
         override val post: Post,
+        override val sourceId: String,
     ) : TimelineItem()
 }
