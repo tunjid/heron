@@ -2,6 +2,7 @@ package com.tunjid.heron.images.shapes
 
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,10 +69,7 @@ sealed class ImageShape : Shape {
         path = polygon.toPath(path)
         matrix.reset()
 
-//        if (this !is RoundedRectangle) {
-//            val maxDimension = max(lastBounds.width, lastBounds.height)
-//            matrix.scale(size.width / maxDimension, size.height / maxDimension)
-//        }
+        matrix.scale(size.width / lastBounds.width, size.height / lastBounds.height)
 
         matrix.translate(-lastBounds.left, -lastBounds.top)
         path.transform(matrix)
@@ -85,7 +83,6 @@ sealed class ImageShape : Shape {
             density: Density
         ): RoundedPolygon = RoundedPolygon.circle(
             numVertices = 8,
-            radius = size.width / 2,
         )
     }
 
@@ -93,10 +90,7 @@ sealed class ImageShape : Shape {
         override fun createPolygon(
             size: Size,
             density: Density
-        ): RoundedPolygon = RoundedPolygon.rectangle(
-            width = size.width,
-            height = size.height
-        )
+        ): RoundedPolygon = RoundedPolygon.rectangle()
     }
 
     data class RoundedRectangle(
@@ -109,32 +103,39 @@ sealed class ImageShape : Shape {
             width = size.width,
             height = size.height,
             perVertexRounding = listOf(
-                CornerRounding(
-                    roundedCornerShape.topStart.toPx(
-                        shapeSize = size,
-                        density = density,
-                    )
+                roundedCornerShape.topStart.normalize(
+                    size = size,
+                    density = density,
                 ),
-                CornerRounding(
-                    roundedCornerShape.topEnd.toPx(
-                        shapeSize = size,
-                        density = density,
-                    )
+                roundedCornerShape.topEnd.normalize(
+                    size = size,
+                    density = density,
                 ),
-                CornerRounding(
-                    roundedCornerShape.bottomEnd.toPx(
-                        shapeSize = size,
-                        density = density,
-                    )
+                roundedCornerShape.bottomEnd.normalize(
+                    size = size,
+                    density = density,
                 ),
-                CornerRounding(
-                    roundedCornerShape.bottomEnd.toPx(
-                        shapeSize = size,
-                        density = density,
-                    )
+                roundedCornerShape.bottomStart.normalize(
+                    size = size,
+                    density = density,
                 ),
             )
         )
+
+        private fun CornerSize.normalize(
+            size: Size,
+            density: Density
+        ): CornerRounding {
+            val maxDimension = max(size.width, size.height)
+            val absoluteCornerSize = toPx(
+                shapeSize = size,
+                density = density,
+            )
+            val ratio = maxDimension / absoluteCornerSize
+            return CornerRounding(
+                radius = ratio
+            )
+        }
     }
 
     data object CornerSe : ImageShape() {
@@ -142,23 +143,12 @@ sealed class ImageShape : Shape {
             size: Size,
             density: Density
         ): RoundedPolygon = RoundedPolygon(
-            vertices = (size.width / 2).let { dimension ->
-                floatArrayOf(
-                    dimension,
-                    dimension,
-                    -dimension,
-                    dimension,
-                    -dimension,
-                    -dimension,
-                    dimension,
-                    -dimension
-                )
-            },
+            vertices = floatArrayOf(1f, 1f, -1f, 1f, -1f, -1f, 1f, -1f),
             perVertexRounding = listOf(
-                CornerRounding(radius = size.width),
-                CornerRounding(radius = size.width / 3),
-                CornerRounding(radius = size.width),
-                CornerRounding(radius = size.width)
+                CornerRounding(radius = 1f),
+                CornerRounding(radius = 1f / 3),
+                CornerRounding(radius = 1f),
+                CornerRounding(radius = 1f)
             ),
             centerX = 0f,
             centerY = 0f,
