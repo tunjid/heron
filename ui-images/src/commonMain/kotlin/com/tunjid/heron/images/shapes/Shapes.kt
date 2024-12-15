@@ -78,19 +78,19 @@ sealed class ImageShape : Shape {
     }
 
     data object Circle : ImageShape() {
+        private val polygon = RoundedPolygon.circle(numVertices = 8)
         override fun createPolygon(
             size: Size,
             density: Density
-        ): RoundedPolygon = RoundedPolygon.circle(
-            numVertices = 8,
-        )
+        ): RoundedPolygon = polygon
     }
 
     data object Rectangle : ImageShape() {
+        private val polygon = RoundedPolygon.rectangle()
         override fun createPolygon(
             size: Size,
             density: Density
-        ): RoundedPolygon = RoundedPolygon.rectangle()
+        ): RoundedPolygon = polygon
     }
 
     data class RoundedRectangle(
@@ -139,10 +139,7 @@ sealed class ImageShape : Shape {
     }
 
     data object CornerSe : ImageShape() {
-        override fun createPolygon(
-            size: Size,
-            density: Density
-        ): RoundedPolygon = RoundedPolygon(
+        private val polygon = RoundedPolygon(
             vertices = floatArrayOf(1f, 1f, -1f, 1f, -1f, -1f, 1f, -1f),
             perVertexRounding = listOf(
                 CornerRounding(radius = 1f),
@@ -153,6 +150,11 @@ sealed class ImageShape : Shape {
             centerX = 0f,
             centerY = 0f,
         )
+
+        override fun createPolygon(
+            size: Size,
+            density: Density
+        ): RoundedPolygon = polygon
     }
 }
 
