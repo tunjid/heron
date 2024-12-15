@@ -36,7 +36,7 @@ sealed class ImageShape : Shape {
     private var matrix: Matrix = Matrix()
     private var lastSize = Size.Unspecified
     private var lastDensity = Density(1f)
-    private var lastBounds: Rect = Rect.Zero
+    internal var lastBounds: Rect = Rect.Zero
     internal var lastPolygon by mutableStateOf<RoundedPolygon?>(null)
 
     private val bounds = FloatArray(4)
@@ -204,15 +204,12 @@ fun ImageShape.animate(
         }
     }
 
-    return remember(currentScale.lastPolygon, previousScale.lastPolygon) {
+    return remember(currentScale, currentScale.lastPolygon, previousScale.lastPolygon) {
         object : Shape {
+            private var path = Path()
             val matrix = Matrix()
             val morph by lazy {
-                previousScale.lastPolygon?.let { previousPolygon ->
-                    currentScale.lastPolygon?.let { currentPolygon ->
-                        Morph(previousPolygon, currentPolygon)
-                    }
-                }
+                Morph(previousScale.lastPolygon!!, currentScale.lastPolygon!!)
             }
 
             override fun createOutline(
@@ -220,27 +217,34 @@ fun ImageShape.animate(
                 layoutDirection: LayoutDirection,
                 density: Density
             ): Outline {
+                if (size == Size.Zero) return RectangleShape.createOutline(
+                    size = size,
+                    layoutDirection = layoutDirection,
+                    density = density,
+                )
+
                 previousScale.ensurePolygon(size, density)
                 currentScale.ensurePolygon(size, density)
 
-                when (val currentMorph = morph) {
-                    null -> return RectangleShape.createOutline(
-                        size,
-                        layoutDirection,
-                        density
-                    )
+                path.rewind()
+                path = morph.toPath(
+                    progress = interpolation,
+                    path = path,
+                )
+                matrix.reset()
 
-                    // Below assumes that you haven't changed the default radius of 1f, nor the centerX and centerY of 0f
-                    // By default this stretches the path to the size of the container, if you don't want stretching, use the same size.width for both x and y.
-                    else -> {
-                        matrix.scale(size.width / 2f, size.height / 2f)
-                        matrix.translate(1f, 1f)
+                matrix.scale(
+                    x = size.width / currentScale.lastBounds.width,
+                    y = size.height / currentScale.lastBounds.height,
+                )
 
-                        val path = currentMorph.toPath(progress = interpolation)
-                        path.transform(matrix)
-                        return Outline.Generic(path)
-                    }
-                }
+                matrix.translate(
+                    x = -currentScale.lastBounds.left,
+                    y = -currentScale.lastBounds.top
+                )
+                path.transform(matrix)
+
+                return Outline.Generic(path)
             }
         }
     }

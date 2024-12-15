@@ -6,6 +6,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.images.shapes.animate
 import coil3.compose.AsyncImage as CoilAsyncImage
 
 data class ImageArgs(
@@ -21,7 +22,7 @@ fun AsyncImage(
     modifier: Modifier = Modifier,
 ) {
     CoilAsyncImage(
-        modifier = modifier.clip(args.shape),
+        modifier = modifier.clip(args.shape.animate()),
         model = args.url,
         contentDescription = args.contentDescription,
         contentScale = args.contentScale.animate()
