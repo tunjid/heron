@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.models.Profile
 internal fun PostText(
     post: Post,
     onClick: () -> Unit,
-    onOpenUser: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
 ) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()

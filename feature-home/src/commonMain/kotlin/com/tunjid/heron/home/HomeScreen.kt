@@ -34,11 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
+import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Clock
 
 @Composable
 internal fun HomeScreen(
+    movableSharedElementScope: MovableSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -58,9 +61,10 @@ internal fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize(),
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(400.dp),
+            columns = StaggeredGridCells.Adaptive(340.dp),
             verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = !movableSharedElementScope.isTransitionActive,
         ) {
             items(
                 items = items,
@@ -69,11 +73,20 @@ internal fun HomeScreen(
                     TimelineItem(
                         modifier = Modifier
                             .fillMaxWidth(),
+                        movableSharedElementScope = movableSharedElementScope,
                         now = remember { Clock.System.now() },
                         item = item,
                         onPostClicked = {},
-                        onProfileClicked = {
-                            actions(Action.Navigate.ToProfile(it.did))
+                        onProfileClicked = { profile ->
+                            actions(
+                                Action.Navigate.ToProfile(
+                                    profileId = profile.did,
+                                    profileAvatar = profile.avatar,
+                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                        item.sourceId,
+                                    )
+                                )
+                            )
                         },
                         onImageClicked = {},
                         onReplyToPost = {},

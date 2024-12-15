@@ -28,7 +28,7 @@ fun FeedThreadItem(
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
-    onOpenUser: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
     onOpenImage: (Uri) -> Unit,
     onOpenPost: (Post) -> Unit,
     onReplyToPost: () -> Unit,
@@ -57,7 +57,7 @@ fun FeedThreadItem(
                     verticalArrangement = spacedBy(8.dp),
                 ) {
                     CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) {
-                        PostText(post, {}, onOpenUser)
+                        PostText(post, {}, onProfileClicked)
                     }
                     PostEmbed(
                         now = now,

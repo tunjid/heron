@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -65,11 +67,14 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
+import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.followers
@@ -82,6 +87,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun ProfileScreen(
+    movableSharedElementScope: MovableSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -107,10 +113,12 @@ internal fun ProfileScreen(
         state = headerState,
         headerContent = {
             ProfileHeader(
+                movableSharedElementScope = movableSharedElementScope,
                 headerState = headerState,
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                avatarSharedElementKey = state.avatarSharedElementKey,
                 onBackPressed = {
                     actions(Action.Navigate.Pop)
                 }
@@ -129,7 +137,7 @@ internal fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxSize(),
                     state = gridState,
-                    columns = StaggeredGridCells.Adaptive(400.dp),
+                    columns = StaggeredGridCells.Adaptive(340.dp),
                     verticalItemSpacing = 8.dp,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -140,11 +148,20 @@ internal fun ProfileScreen(
                             TimelineItem(
                                 modifier = Modifier
                                     .fillMaxWidth(),
+                                movableSharedElementScope = movableSharedElementScope,
                                 now = remember { Clock.System.now() },
                                 item = item,
                                 onPostClicked = {},
-                                onProfileClicked = {
-                                    actions(Action.Navigate.ToProfile(it.did))
+                                onProfileClicked = { profile ->
+                                    actions(
+                                        Action.Navigate.ToProfile(
+                                            profileId = profile.did,
+                                            profileAvatar = profile.avatar,
+                                            avatarSharedElementKey = this?.avatarSharedElementKey(
+                                                item.sourceId,
+                                            )
+                                        )
+                                    )
                                 },
                                 onImageClicked = {},
                                 onReplyToPost = {},
@@ -167,9 +184,11 @@ internal fun ProfileScreen(
 
 @Composable
 private fun ProfileHeader(
+    movableSharedElementScope: MovableSharedElementScope,
     headerState: CollapsingHeaderState,
     modifier: Modifier = Modifier,
     profile: Profile,
+    avatarSharedElementKey: String,
     onBackPressed: () -> Unit,
 ) {
     Box(
@@ -207,10 +226,12 @@ private fun ProfileHeader(
             Spacer(Modifier.height(48.dp))
         }
         ProfilePhoto(
+            movableSharedElementScope = movableSharedElementScope,
             modifier = Modifier
                 .align(Alignment.TopCenter),
             headerState = headerState,
-            profile = profile
+            profile = profile,
+            avatarSharedElementKey = avatarSharedElementKey,
         )
         BackButton(
             headerState = headerState,
@@ -247,11 +268,14 @@ private fun ProfileBanner(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfilePhoto(
     modifier: Modifier = Modifier,
+    movableSharedElementScope: MovableSharedElementScope,
     headerState: CollapsingHeaderState,
     profile: Profile,
+    avatarSharedElementKey: String,
 ) {
     Card(
         modifier = modifier
@@ -263,13 +287,17 @@ private fun ProfilePhoto(
                     y = -headerState.translation.roundToInt()
                 )
             },
-        shape = CircleShape
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        AsyncImage(
+        movableSharedElementScope.updatedMovableSharedElementOf(
+            key = avatarSharedElementKey,
             modifier = modifier
                 .fillMaxSize()
                 .padding(4.dp),
-            args = remember(
+            state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName,
                 key3 = profile.handle,
@@ -281,6 +309,9 @@ private fun ProfilePhoto(
                     shape = ImageShape.Circle,
                 )
             },
+            sharedElement = { state, modifier ->
+                AsyncImage(state, modifier)
+            }
         )
     }
 }

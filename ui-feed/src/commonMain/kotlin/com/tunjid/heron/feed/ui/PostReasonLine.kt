@@ -15,8 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelineItem
 import heron.ui_feed.generated.resources.Res
 import heron.ui_feed.generated.resources.repost
 import heron.ui_feed.generated.resources.repost_by
@@ -26,7 +27,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostReasonLine(
     modifier: Modifier = Modifier,
     item: TimelineItem,
-    onOpenUser: (Profile) -> Unit,
+    onProfileClicked: Post?.(Profile) -> Unit,
 ) {
     when (item) {
         is TimelineItem.Pinned -> PostPinnedReasonLine(
@@ -36,7 +37,9 @@ internal fun PostReasonLine(
         is TimelineItem.Repost -> PostRepostReasonLine(
             modifier = modifier,
             repostBy = item.by,
-            onOpenUser = onOpenUser
+            onProfileClicked = {
+                onProfileClicked(item.post, it)
+            }
         )
 
         is TimelineItem.Reply,
@@ -48,10 +51,10 @@ internal fun PostReasonLine(
 private fun PostRepostReasonLine(
     modifier: Modifier = Modifier,
     repostBy: Profile,
-    onOpenUser: (Profile) -> Unit,
+    onProfileClicked: (Profile) -> Unit,
 ) {
     PostReasonLine(
-        modifier = modifier.clickable { onOpenUser(repostBy) },
+        modifier = modifier.clickable { onProfileClicked(repostBy) },
         imageVector = Icons.Rounded.Repeat,
         iconContentDescription = stringResource(Res.string.repost),
         text = stringResource(

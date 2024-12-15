@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.ActualProfileStateHolder
 import com.tunjid.heron.profile.ProfileScreen
@@ -35,6 +36,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -56,8 +58,17 @@ private fun createRoute(
     )
 )
 
-internal val Route.profileId get() = Id(routeParams.pathArgs.getValue("profileId"))
-private val RouteParams.referringRoute get() = queryParams["referringRoute"]?.firstOrNull()
+internal val Route.profileId
+    get() = Id(routeParams.pathArgs.getValue("profileId"))
+
+internal val Route.avatarSharedElementKey
+    get() = routeParams.queryParams["avatarSharedElementKey"]?.firstOrNull()
+
+internal val Route.profileAvatar
+    get() = routeParams.queryParams["profileAvatar"]?.firstOrNull()?.let(::Uri)
+
+private val RouteParams.referringRoute
+    get() = queryParams["referringRoute"]?.firstOrNull()
 
 @Component
 abstract class ProfileNavigationComponent {
@@ -108,6 +119,7 @@ abstract class ProfileComponent(
                 },
                 content = { paddingValues ->
                     ProfileScreen(
+                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
