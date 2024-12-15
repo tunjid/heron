@@ -36,6 +36,10 @@ kotlin {
                 implementation(libs.coil.compose)
                 implementation(libs.coil.ktor)
 
+                implementation(libs.androidx.graphics.core)
+                implementation(libs.androidx.graphics.path)
+                implementation(libs.androidx.graphics.shapes)
+
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.tunjid.composables)

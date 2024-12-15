@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +20,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.feed.utilities.createdAt
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.ImageShape
 import kotlinx.datetime.Instant
 
 @Composable
@@ -46,7 +46,7 @@ fun FeedThreadItem(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
-                    shape = CircleShape,
+                    shape = ImageShape.Circle,
                 ),
             )
             Column(Modifier.weight(1f)) {
