@@ -2,23 +2,13 @@ package com.tunjid.heron.data.database.entities.profile
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
-    tableName = "profilePostStatistics",
-    primaryKeys = [
-        "profileId",
-        "postId",
-    ],
+    tableName = "postViewerStatistics",
     foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["profileId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["cid"],
@@ -27,8 +17,8 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
         ),
     ],
 )
-data class ProfilePostStatisticsEntity(
-    val profileId: Id,
+data class PostViewerStatisticsEntity(
+    @PrimaryKey
     val postId: Id,
     val liked: Boolean,
     val reposted: Boolean,

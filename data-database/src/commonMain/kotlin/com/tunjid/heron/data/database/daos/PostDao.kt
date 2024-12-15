@@ -14,6 +14,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntit
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -71,4 +72,8 @@ interface PostDao {
         postIds: Set<Id>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
 
+    @Upsert
+    suspend fun upsertPostStatistics(
+        entities: List<PostViewerStatisticsEntity>,
+    )
 }

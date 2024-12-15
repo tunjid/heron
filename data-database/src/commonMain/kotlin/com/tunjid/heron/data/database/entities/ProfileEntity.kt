@@ -34,6 +34,23 @@ data class ProfileEntity(
     )
 }
 
+fun emptyProfileEntity(
+    did: Id
+) = ProfileEntity(
+    did = did,
+    handle = did,
+    displayName = null,
+    description = null,
+    avatar = null,
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = null,
+)
+
 fun ProfileEntity.partial() = ProfileEntity.Partial(
     did = did,
     handle = handle,

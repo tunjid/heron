@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
@@ -84,6 +85,11 @@ data class PopulatedPostEntity(
         entityColumn = "did"
     )
     val author: ProfileEntity?,
+    @Relation(
+        parentColumn = "cid",
+        entityColumn = "postId",
+    )
+    val viewerStats: PostViewerStatisticsEntity?,
     @Relation(
         parentColumn = "cid",
         entityColumn = "fullSize",
@@ -150,7 +156,17 @@ fun PopulatedPostEntity.asExternalModel(
             createdAt = it.createdAt,
             tags = emptyList(),
         )
-    }
+    },
+    viewerStats = viewerStats?.let {
+        Post.ViewerStats(
+            liked = it.liked,
+            reposted = it.reposted,
+            threadMuted = it.threadMuted,
+            replyDisabled = it.replyDisabled,
+            embeddingDisabled = it.embeddingDisabled,
+            pinned = it.pinned,
+        )
+    },
 )
 
 private fun emptyProfile() = Profile(

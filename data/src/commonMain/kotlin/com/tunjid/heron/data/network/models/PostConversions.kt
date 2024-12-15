@@ -2,6 +2,9 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
+import app.bsky.feed.ReplyRefParentUnion
+import app.bsky.feed.ReplyRefRootUnion
+import app.bsky.feed.ViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -13,6 +16,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntit
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import sh.christian.ozone.api.model.JsonContent
 import app.bsky.feed.Post as BskyPost
 
@@ -88,8 +92,8 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
             )
         }
 
-        is PostViewEmbedUnion.RecordView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
+        is PostViewEmbedUnion.RecordView -> embed.embedEntities()
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.embedEntities()
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
             VideoEntity(
@@ -105,6 +109,38 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
         null -> emptyList()
     }
 
+
+internal fun ViewerState.postViewerStatisticsEntity(
+    postId: Id,
+) = PostViewerStatisticsEntity(
+    postId = postId,
+    liked = like != null,
+    reposted = repost != null,
+    threadMuted = threadMuted == true,
+    replyDisabled = replyDisabled == true,
+    embeddingDisabled = embeddingDisabled == true,
+    pinned = pinned == true,
+)
+
+internal fun ReplyRefRootUnion.postViewerStatisticsEntity() = when (this) {
+    is ReplyRefRootUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
+        postId = Id(value.cid.cid),
+    )
+
+    is ReplyRefRootUnion.BlockedPost,
+    is ReplyRefRootUnion.NotFoundPost,
+    is ReplyRefRootUnion.Unknown -> null
+}
+
+internal fun ReplyRefParentUnion.postViewerStatisticsEntity() = when (this) {
+    is ReplyRefParentUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
+        postId = Id(value.cid.cid),
+    )
+
+    is ReplyRefParentUnion.BlockedPost,
+    is ReplyRefParentUnion.NotFoundPost,
+    is ReplyRefParentUnion.Unknown -> null
+}
 
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     // TODO can this be deterministic?

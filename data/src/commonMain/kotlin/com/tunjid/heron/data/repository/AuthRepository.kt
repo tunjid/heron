@@ -16,23 +16,34 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.GetProfileQueryParams
 import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.models.signedInUserProfileEntity
+import com.tunjid.heron.data.runCatchingCoroutines
 import com.tunjid.heron.data.runCatchingWithIoMessage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.Did
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
 
     suspend fun createSession(request: SessionRequest): Result<Unit>
+
+    suspend fun updateSignedInUser()
 }
 
 @Inject
 class AuthTokenRepository(
+    private val profileDao: ProfileDao,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : AuthRepository {
@@ -51,14 +62,42 @@ class AuthTokenRepository(
         )
     }
         .mapCatching { result ->
-            savedStateRepository.updateState {
-                copy(
-                    auth = SavedState.AuthTokens(
-                        authProfileId = Id(result.did.did),
-                        auth = result.accessJwt,
-                        refresh = result.refreshJwt,
-                    )
+            coroutineScope {
+                awaitAll(
+                    async {
+                        updateSignedInUser(result.did)
+                    },
+                    async {
+                        savedStateRepository.updateState {
+                            copy(
+                                auth = SavedState.AuthTokens(
+                                    authProfileId = Id(result.did.did),
+                                    auth = result.accessJwt,
+                                    refresh = result.refreshJwt,
+                                )
+                            )
+                        }
+                    }
                 )
             }
         }
+
+
+    override suspend fun updateSignedInUser() {
+        runCatchingCoroutines {
+            networkService.api.getSession()
+                .maybeResponse()
+                ?.did
+                ?.let { updateSignedInUser(it) }
+        }
+    }
+
+    private suspend fun updateSignedInUser(did: Did) {
+        runCatchingCoroutines {
+            networkService.api.getProfile(GetProfileQueryParams(actor = did))
+                .maybeResponse()
+                ?.signedInUserProfileEntity()
+                ?.let { profileDao.upsertProfiles(listOf(it)) }
+        }
+    }
 }
