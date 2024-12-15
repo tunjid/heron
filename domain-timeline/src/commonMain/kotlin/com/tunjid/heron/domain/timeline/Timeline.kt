@@ -161,9 +161,15 @@ private fun <Query : TimelineQuery> timelineQueryComparator() = compareBy { quer
 private fun <Query : TimelineQuery> TiledList<Query, TimelineItem>.filterThreadDuplicates(): TiledList<Query, TimelineItem> {
     val threadRootIds = mutableSetOf<Id>()
     return filter { item ->
-        if (item !is TimelineItem.Reply) return@filter true
-        threadRootIds.contains(item.rootPost.cid).also { contains ->
-            if (!contains) threadRootIds.add(item.rootPost.cid)
+        when(item) {
+            is TimelineItem.Pinned -> true
+            is TimelineItem.Reply -> !threadRootIds.contains(item.rootPost.cid).also { contains ->
+                if (!contains) threadRootIds.add(item.rootPost.cid)
+            }
+            is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
+                if (!contains) threadRootIds.add(item.post.cid)
+            }
+            is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
         }
     }
 }
