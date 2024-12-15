@@ -17,6 +17,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.feed.ui.PostHeadline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.images.shapes.toImageShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -38,7 +39,7 @@ fun VisiblePostPost(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
-                    shape = RoundedCornerShape(16.dp).toImageShape()
+                    shape = ImageShape.Circle,
                 )
             )
             PostHeadline(
