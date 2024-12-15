@@ -69,9 +69,15 @@ sealed class ImageShape : Shape {
         path = polygon.toPath(path)
         matrix.reset()
 
-        matrix.scale(size.width / lastBounds.width, size.height / lastBounds.height)
+        matrix.scale(
+            x = size.width / lastBounds.width,
+            y = size.height / lastBounds.height,
+        )
 
-        matrix.translate(-lastBounds.left, -lastBounds.top)
+        matrix.translate(
+            x = -lastBounds.left,
+            y = -lastBounds.top,
+        )
         path.transform(matrix)
 
         return Outline.Generic(path)
