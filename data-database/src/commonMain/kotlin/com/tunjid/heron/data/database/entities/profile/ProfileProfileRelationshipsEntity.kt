@@ -2,6 +2,7 @@ package com.tunjid.heron.data.database.entities.profile
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.ProfileEntity
 
@@ -44,5 +45,12 @@ internal fun ProfileProfileRelationshipsEntity.partial() =
     ProfileProfileRelationshipsEntity.Partial(
         profileId = profileId,
         otherProfileId = otherProfileId,
+        follows = follows,
+    )
+
+fun ProfileProfileRelationshipsEntity.asExternalModel() =
+    ProfileRelationship(
+        blocking = blocking,
+        muted = muted,
         follows = follows,
     )
