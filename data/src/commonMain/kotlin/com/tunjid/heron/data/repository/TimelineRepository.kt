@@ -28,7 +28,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
@@ -38,7 +38,7 @@ import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.network.models.profilePostStatisticsEntity
+import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
@@ -221,7 +221,7 @@ class OfflineTimelineRepository(
         val videoEntities = mutableListOf<VideoEntity>()
         val postVideoEntities = mutableListOf<PostVideoEntity>()
 
-        val profilePostStatisticsEntities = mutableListOf<ProfilePostStatisticsEntity>()
+        val postViewerStatisticsEntities = mutableListOf<PostViewerStatisticsEntity>()
         val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
 
         // Add the signed in user
@@ -234,13 +234,13 @@ class OfflineTimelineRepository(
             feedView.reply?.let {
                 postEntities.add(it.root.postEntity())
                 it.root.profileEntity()?.let(profileEntities::add)
-                it.root.profilePostStatisticsEntity(viewingProfileId)
-                    ?.let(profilePostStatisticsEntities::add)
+                it.root.postViewerStatisticsEntity()
+                    ?.let(postViewerStatisticsEntities::add)
 
                 postEntities.add(it.parent.postEntity())
                 it.parent.profileEntity()?.let(profileEntities::add)
-                it.parent.profilePostStatisticsEntity(viewingProfileId)
-                    ?.let(profilePostStatisticsEntities::add)
+                it.parent.postViewerStatisticsEntity()
+                    ?.let(postViewerStatisticsEntities::add)
             }
 
             feedView.reason?.profileEntity()?.let(profileEntities::add)
@@ -249,10 +249,9 @@ class OfflineTimelineRepository(
             val postEntity = feedView.post.postEntity()
             val postAuthorEntity = feedView.post.profileEntity()
 
-            feedView.post.viewer?.profilePostStatisticsEntity(
-                viewingProfileId = viewingProfileId,
+            feedView.post.viewer?.postViewerStatisticsEntity(
                 postId = postEntity.cid,
-            )?.let(profilePostStatisticsEntities::add)
+            )?.let(postViewerStatisticsEntities::add)
 
             profileProfileRelationshipsEntities.addAll(
                 feedView.post.author.profileProfileRelationshipsEntities(
@@ -330,7 +329,7 @@ class OfflineTimelineRepository(
 
             timelineDao.upsertTimelineItems(feedItemEntities)
 
-            profileDao.upsertProfilePostStatistics(profilePostStatisticsEntities)
+            postDao.upsertPostStatistics(postViewerStatisticsEntities)
             profileDao.upsertProfileProfileRelationships(
                 profileProfileRelationshipsEntities
             )

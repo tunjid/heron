@@ -240,8 +240,8 @@ private fun SinglePost(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
                     likeCount = format(post.likeCount),
-                    reposted = false,
-                    liked = false,
+                    reposted = post.viewerStats?.reposted == true,
+                    liked = post.viewerStats?.liked == true,
                     iconSize = 16.dp,
                     onReplyToPost = onReplyToPost,
                 )

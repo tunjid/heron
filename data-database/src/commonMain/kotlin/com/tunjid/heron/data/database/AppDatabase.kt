@@ -24,7 +24,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import kotlinx.datetime.Instant
 
@@ -40,7 +40,7 @@ import kotlinx.datetime.Instant
         PostPostEntity::class,
         PostEntity::class,
         PostAuthorsEntity::class,
-        ProfilePostStatisticsEntity::class,
+        PostViewerStatisticsEntity::class,
         ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
         TimelineItemEntity::class,

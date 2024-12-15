@@ -10,7 +10,6 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
-import com.tunjid.heron.data.database.entities.profile.ProfilePostStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.database.entities.profile.partial
 import kotlinx.coroutines.flow.Flow
@@ -78,8 +77,4 @@ interface ProfileDao {
         entities: List<ProfileProfileRelationshipsEntity.Partial>,
     )
 
-    @Upsert
-    suspend fun upsertProfilePostStatistics(
-        entities: List<ProfilePostStatisticsEntity>,
-    )
 }

@@ -33,6 +33,7 @@ data class Post(
     val embed: Embed?,
     val quote: Post?,
     val record: Record?,
+    val viewerStats: ViewerStats?,
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
@@ -41,6 +42,15 @@ data class Post(
         val text: String,
         val createdAt: Instant,
         val tags: List<String>,
+    )
+
+    data class ViewerStats(
+        val liked: Boolean,
+        val reposted: Boolean,
+        val threadMuted: Boolean,
+        val replyDisabled: Boolean,
+        val embeddingDisabled: Boolean,
+        val pinned: Boolean,
     )
 }
 
