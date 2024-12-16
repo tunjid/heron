@@ -72,7 +72,8 @@ internal fun HomeScreen(
                 itemContent = { item ->
                     TimelineItem(
                         modifier = Modifier
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .animateItem(),
                         movableSharedElementScope = movableSharedElementScope,
                         now = remember { Clock.System.now() },
                         item = item,
