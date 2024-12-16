@@ -219,7 +219,7 @@ private fun SinglePost(
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
-                    start = 32.dp,
+                    start = 24.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
@@ -276,7 +276,7 @@ private val ReplyThreadStartImageShape =
 private val ReplyThreadImageShape =
     ImageShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
-            if (index == 2 || index == 3) 14.dp
+            if (index == 2 || index == 3) 32.dp
             else 48.dp
         }
     )
