@@ -1,6 +1,7 @@
 package com.tunjid.heron.domain.timeline
 
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.NetworkCursor
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
@@ -40,7 +41,7 @@ sealed interface TimelineLoadAction<out Query : TimelineQuery> {
 fun <Query : TimelineQuery, Action : TimelineLoadAction<Query>, State> Flow<Action>.timelineLoadMutations(
     startQuery: Query,
     startNumColumns: Int,
-    cursorListLoader: (Query) -> Flow<CursorList<TimelineItem>>,
+    cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
     mutations: (queries: Flow<Query>, numColumns: Flow<Int>, Flow<TiledList<Query, TimelineItem>>) -> Flow<Mutation<State>>
 ): Flow<Mutation<State>> = scan(
     initial = Pair(
@@ -103,7 +104,7 @@ private inline fun <Query : TimelineQuery> timelinePivotRequest(numColumns: Int)
 
 private inline fun <Query : TimelineQuery> timelineTiler(
     startingQuery: Query,
-    crossinline cursorListLoader: (Query) -> Flow<CursorList<TimelineItem>>,
+    crossinline cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
 ): ListTiler<Query, TimelineItem> = listTiler(
     order = Tile.Order.PivotSorted(
         query = startingQuery,
@@ -117,28 +118,25 @@ private inline fun <Query : TimelineQuery> timelineTiler(
 
 private inline fun <Query : TimelineQuery> timelineQueryFetcher(
     startingQuery: Query,
-    crossinline cursorListLoader: (Query) -> Flow<CursorList<TimelineItem>>,
-): QueryFetcher<Query, TimelineItem> = neighboredQueryFetcher(
+    crossinline cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+): QueryFetcher<Query, TimelineItem> = neighboredQueryFetcher<Query, TimelineItem, NetworkCursor>(
     // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
     // in memory
     maxTokens = 50,
     // Make sure the first page has an entry for its cursor/token
     seedQueryTokenMap = mapOf(
-        startingQuery to CursorList.DoubleCursor(
-            local = startingQuery.data.firstRequestInstant,
-            remote = null,
-        )
+        startingQuery to NetworkCursor.Initial
     ),
     fetcher = { query, cursor ->
-        cursorListLoader(query.updateData { copy(nextItemCursor = cursor) })
-            .map { feedItemCursorList ->
+        cursorListLoader(query, cursor)
+            .map { networkCursorList ->
                 NeighboredFetchResult(
                     // Set the cursor for the next page and any other page with data available.
                     //
                     mapOf(
-                        query.updateData { copy(page = page + 1) } to feedItemCursorList.nextCursor
+                        query.updateData { copy(page = page + 1) } to networkCursorList.nextCursor
                     ),
-                    items = feedItemCursorList
+                    items = networkCursorList
                 )
             }
     }
@@ -161,14 +159,16 @@ private fun <Query : TimelineQuery> timelineQueryComparator() = compareBy { quer
 private fun <Query : TimelineQuery> TiledList<Query, TimelineItem>.filterThreadDuplicates(): TiledList<Query, TimelineItem> {
     val threadRootIds = mutableSetOf<Id>()
     return filter { item ->
-        when(item) {
+        when (item) {
             is TimelineItem.Pinned -> true
             is TimelineItem.Reply -> !threadRootIds.contains(item.rootPost.cid).also { contains ->
                 if (!contains) threadRootIds.add(item.rootPost.cid)
             }
+
             is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
                 if (!contains) threadRootIds.add(item.post.cid)
             }
+
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
         }
     }

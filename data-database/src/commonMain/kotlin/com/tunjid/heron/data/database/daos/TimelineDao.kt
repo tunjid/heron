@@ -34,12 +34,14 @@ interface TimelineDao {
             ORDER BY indexedAt
             DESC
             LIMIT :limit
+            OFFSET :offset
         """
     )
     fun feedItems(
         sourceId: String,
         before: Instant,
         limit: Long,
+        offset: Long,
     ): Flow<List<TimelineItemEntity>>
 
     @Query(
