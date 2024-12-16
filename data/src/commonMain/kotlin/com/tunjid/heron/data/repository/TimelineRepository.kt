@@ -300,10 +300,7 @@ class OfflineTimelineRepository(
         }
 
         inTransaction {
-            if (query.isInitialRequest()
-                && timelineDao.lastFetchKey(query.sourceId)
-                    ?.lastFetchedAt != query.data.firstRequestInstant
-            ) {
+            if (timelineDao.isFirstRequest(query)) {
                 timelineDao.deleteAllFeedsFor(query.sourceId)
                 timelineDao.upsertFeedFetchKey(
                     TimelineFetchKeyEntity(
@@ -468,5 +465,8 @@ class OfflineTimelineRepository(
         }
 }
 
-private fun TimelineQuery.isInitialRequest() =
-    data.page == 0 && data.nextItemCursor == null
+private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
+    if(query.data.page != 0) return false
+    val lastFetchedAt = lastFetchKey(query.sourceId)?.lastFetchedAt
+    return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
+}
