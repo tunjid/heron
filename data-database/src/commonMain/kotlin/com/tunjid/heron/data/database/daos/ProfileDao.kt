@@ -37,7 +37,7 @@ interface ProfileDao {
     fun relationships(
         profileId: String,
         otherProfileId: String,
-    ): Flow<ProfileProfileRelationshipsEntity>
+    ): Flow<ProfileProfileRelationshipsEntity?>
 
     @Upsert
     suspend fun upsertProfiles(

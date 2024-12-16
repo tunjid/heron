@@ -40,7 +40,7 @@ data class TimelineItemEntity(
     val indexedAt: Instant,
     // TODO: Figure out a better ID for this
     @PrimaryKey
-    val id: String = "${postId.id}-${reposter?.id}"
+    val id: String = "$sourceId-${postId.id}-${reposter?.id}"
 )
 
 data class FeedReplyEntity(

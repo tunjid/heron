@@ -75,7 +75,7 @@ class ActualProfileStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        avatarSharedElementKey = route.avatarSharedElementKey?.also { println("KEY: $it") } ?: "",
+        avatarSharedElementKey = route.avatarSharedElementKey ?: "",
         profile = stubProfile(
             did = route.profileId,
             handle = route.profileId,

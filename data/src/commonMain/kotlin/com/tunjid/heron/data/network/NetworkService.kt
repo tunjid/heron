@@ -73,7 +73,7 @@ class KtorNetworkService(
                 level = LogLevel.INFO
                 logger = object : Logger {
                     override fun log(message: String) {
-                        println("Logger Ktor => $message")
+//                        println("Logger Ktor => $message")
                     }
                 }
             }

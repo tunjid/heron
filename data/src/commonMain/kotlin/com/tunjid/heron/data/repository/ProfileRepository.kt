@@ -67,7 +67,7 @@ class OfflineProfileRepository @Inject constructor(
                     otherProfileId = profileId.id,
                 )
             }
-            .map(ProfileProfileRelationshipsEntity::asExternalModel)
+            .mapNotNull { it?.asExternalModel() }
 
     private fun signedInProfileId() = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }
