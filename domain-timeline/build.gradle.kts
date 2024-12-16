@@ -21,6 +21,9 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.domain.timeline"
+    buildFeatures {
+        compose = false
+    }
 }
 
 kotlin {
