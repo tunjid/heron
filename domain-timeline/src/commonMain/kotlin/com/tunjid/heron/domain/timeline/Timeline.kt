@@ -12,16 +12,19 @@ import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.filter
 import com.tunjid.tiler.listTiler
+import com.tunjid.tiler.queries
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 
 sealed interface TimelineLoadAction<out Query : TimelineQuery> {
@@ -69,6 +72,14 @@ fun <Query : TimelineQuery, Action : TimelineLoadAction<Query>, State> Flow<Acti
                 )
             )
             .map(TiledList<Query, TimelineItem>::filterThreadDuplicates)
+
+            .debounce {
+                if(it.queries().size < 3) 3000
+                else 0
+            }
+                    .onEach {
+                println("Size: ${it.size}; query size: ${it.queries().size}")
+            }
         mutations(queries, numColumns, tiledList)
     }
 

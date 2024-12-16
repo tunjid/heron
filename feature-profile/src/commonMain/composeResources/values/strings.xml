@@ -1,6 +1,9 @@
 <resources>
     <string name="followers">Followers</string>
     <string name="following">Following</string>
+    <string name="follow">Follow</string>
+    <string name="block">Block</string>
+    <string name="blocked">Blocked</string>
     <string name="posts">Posts</string>
     <string name="back">Back</string>
 </resources>

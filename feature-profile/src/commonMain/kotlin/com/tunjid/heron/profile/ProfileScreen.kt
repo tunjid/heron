@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.Image
@@ -42,9 +43,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -65,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
@@ -77,6 +83,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScop
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
+import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
@@ -118,6 +125,7 @@ internal fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                profileRelationship = state.profileRelationship,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onBackPressed = {
                     actions(Action.Navigate.Pop)
@@ -147,7 +155,8 @@ internal fun ProfileScreen(
                         itemContent = { item ->
                             TimelineItem(
                                 modifier = Modifier
-                                    .fillMaxWidth(),
+                                    .fillMaxWidth()
+                                    .animateItem(),
                                 movableSharedElementScope = movableSharedElementScope,
                                 now = remember { Clock.System.now() },
                                 item = item,
@@ -188,6 +197,7 @@ private fun ProfileHeader(
     headerState: CollapsingHeaderState,
     modifier: Modifier = Modifier,
     profile: Profile,
+    profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
     onBackPressed: () -> Unit,
 ) {
@@ -215,6 +225,7 @@ private fun ProfileHeader(
             ProfileHeadline(
                 modifier = Modifier.fillMaxWidth(),
                 profile = profile,
+                profileRelationship = profileRelationship,
             )
             ProfileStats(
                 modifier = Modifier.fillMaxWidth(),
@@ -321,8 +332,13 @@ private fun ProfilePhoto(
 private fun ProfileHeadline(
     modifier: Modifier = Modifier,
     profile: Profile,
+    profileRelationship: ProfileRelationship?,
 ) {
-    Row(modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column {
             val primaryText = profile.displayName ?: profile.handle.id
             val secondaryText = profile.handle.id.takeUnless { it == primaryText }
@@ -344,6 +360,30 @@ private fun ProfileHeadline(
                 )
             }
         }
+        AnimatedVisibility(
+            visible = profileRelationship != null,
+            content = {
+                val follows = profileRelationship?.follows == true
+                val followStatusText = stringResource(
+                    if (follows) Res.string.following
+                    else Res.string.follow
+                )
+                FilterChip(
+                    selected = follows,
+                    onClick = {},
+                    shape = RoundedCornerShape(16.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (follows) Icons.Rounded.Check else Icons.Rounded.Add,
+                            contentDescription = followStatusText,
+                        )
+                    },
+                    label = {
+                        Text(followStatusText)
+                    },
+                )
+            },
+        )
     }
 }
 

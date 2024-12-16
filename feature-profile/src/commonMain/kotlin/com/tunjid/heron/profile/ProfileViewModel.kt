@@ -75,7 +75,7 @@ class ActualProfileStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        avatarSharedElementKey = route.avatarSharedElementKey?.also{ println("KEY: $it") } ?: "",
+        avatarSharedElementKey = route.avatarSharedElementKey?.also { println("KEY: $it") } ?: "",
         profile = stubProfile(
             did = route.profileId,
             handle = route.profileId,
@@ -93,7 +93,11 @@ class ActualProfileStateHolder(
     inputs = listOf(
         loadProfileMutations(
             profileId = route.profileId,
-            profileRepository = profileRepository
+            profileRepository = profileRepository,
+        ),
+        profileRelationshipMutations(
+            profileId = route.profileId,
+            profileRepository = profileRepository,
         )
     ),
     actionTransform = transform@{ actions ->
@@ -114,9 +118,6 @@ class ActualProfileStateHolder(
     }
 )
 
-/**
- * Feed mutations as a function of the user's scroll position
- */
 private fun loadProfileMutations(
     profileId: Id,
     profileRepository: ProfileRepository,
@@ -125,9 +126,14 @@ private fun loadProfileMutations(
         copy(profile = it)
     }
 
-/**
- * Feed mutations as a function of the user's scroll position
- */
+private fun profileRelationshipMutations(
+    profileId: Id,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.profileRelationship(profileId).mapToMutation {
+        copy(profileRelationship = it)
+    }
+
 private suspend fun Flow<Action.LoadFeed>.timelineLoadMutations(
     stateHolder: SuspendingStateHolder<State>,
     timelineRepository: TimelineRepository,
