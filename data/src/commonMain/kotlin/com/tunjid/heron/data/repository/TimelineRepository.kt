@@ -211,7 +211,7 @@ class OfflineTimelineRepository(
         val feedItemEntities = mutableListOf<TimelineItemEntity>()
 
         // Add the signed in user
-        profileEntities.add(emptyProfileEntity(viewingProfileId))
+        add(emptyProfileEntity(viewingProfileId))
 
         for (feedView in feedViews) {
             // Extract data from feed
@@ -223,18 +223,18 @@ class OfflineTimelineRepository(
 
             feedView.reply?.let {
                 val rootPostEntity = it.root.postEntity()
-                postEntities.add(rootPostEntity)
-                it.root.profileEntity()?.let(profileEntities::add)
+                add(rootPostEntity)
+                it.root.profileEntity()?.let(::add)
                 it.root.postViewerStatisticsEntity()
-                    ?.let(postViewerStatisticsEntities::add)
+                    ?.let(::add)
 
                 val parentPostEntity = it.parent.postEntity()
-                postEntities.add(parentPostEntity)
-                it.parent.profileEntity()?.let(profileEntities::add)
+                add(parentPostEntity)
+                it.parent.profileEntity()?.let(::add)
                 it.parent.postViewerStatisticsEntity()
-                    ?.let(postViewerStatisticsEntities::add)
+                    ?.let(::add)
 
-                postThreadEntities.add(
+                add(
                     PostThreadEntity(
                         postId = postEntity.cid,
                         parentPostId = parentPostEntity.cid,
@@ -243,24 +243,22 @@ class OfflineTimelineRepository(
                 )
             }
 
-            feedView.reason?.profileEntity()?.let(profileEntities::add)
+            feedView.reason?.profileEntity()?.let(::add)
 
             feedView.post.viewer?.postViewerStatisticsEntity(
                 postId = postEntity.cid,
-            )?.let(postViewerStatisticsEntities::add)
+            )?.let(::add)
 
-            profileProfileRelationshipsEntities.addAll(
-                feedView.post.author.profileProfileRelationshipsEntities(
-                    viewingProfileId = viewingProfileId,
-                )
-            )
+            feedView.post.author.profileProfileRelationshipsEntities(
+                viewingProfileId = viewingProfileId,
+            ).forEach(::add)
 
-            postEntities.add(postEntity)
-            profileEntities.add(postAuthorEntity)
+            add(postEntity)
+            add(postAuthorEntity)
 
             feedView.post.quotedPostEntity()?.let { embeddedPostEntity ->
-                postEntities.add(embeddedPostEntity)
-                postPostEntities.add(
+                add(embeddedPostEntity)
+                add(
                     PostPostEntity(
                         postId = postEntity.cid,
                         embeddedPostId = embeddedPostEntity.cid,
@@ -273,7 +271,7 @@ class OfflineTimelineRepository(
                     )
                 }
             }
-            feedView.post.quotedPostProfileEntity()?.let(profileEntities::add)
+            feedView.post.quotedPostProfileEntity()?.let(::add)
 
             feedView.post.embedEntities().forEach { embedEntity ->
                 associatePostEmbeds(

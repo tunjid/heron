@@ -32,17 +32,18 @@ internal class MultipleEntitySaver(
 ) {
     private val allLists = mutableListOf<MutableList<out Any>>()
 
-    val postEntities =
+    private val postEntities =
         mutableListOf<PostEntity>().also(allLists::add)
 
-    val profileEntities =
+    private val profileEntities =
         mutableListOf<ProfileEntity>().also(allLists::add)
 
-    val postPostEntities =
+    private val postPostEntities =
         mutableListOf<PostPostEntity>().also(allLists::add)
 
     private val externalEmbedEntities =
         mutableListOf<ExternalEmbedEntity>().also(allLists::add)
+
     private val postExternalEmbedEntities =
         mutableListOf<PostExternalEmbedEntity>().also(allLists::add)
 
@@ -58,13 +59,13 @@ internal class MultipleEntitySaver(
     private val postVideoEntities =
         mutableListOf<PostVideoEntity>().also(allLists::add)
 
-    val postThreadEntities =
+    private val postThreadEntities =
         mutableListOf<PostThreadEntity>().also(allLists::add)
 
-    val postViewerStatisticsEntities =
+    private val postViewerStatisticsEntities =
         mutableListOf<PostViewerStatisticsEntity>().also(allLists::add)
 
-    val profileProfileRelationshipsEntities =
+    private val profileProfileRelationshipsEntities =
         mutableListOf<ProfileProfileRelationshipsEntity>().also(allLists::add)
 
     /**
@@ -130,6 +131,29 @@ internal class MultipleEntitySaver(
             }
         }
     }
+
+    fun add(entity: PostEntity) = postEntities.add(entity)
+
+    fun add(entity: ProfileEntity) = profileEntities.add(entity)
+
+    fun add(entity: PostPostEntity) = postPostEntities.add(entity)
+
+    fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
+
+    fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
+
+    fun add(entity: ImageEntity) = imageEntities.add(entity)
+
+    fun add(entity: PostImageEntity) = postImageEntities.add(entity)
+
+    fun add(entity: VideoEntity) = videoEntities.add(entity)
+
+    fun add(entity: PostThreadEntity) = postThreadEntities.add(entity)
+
+    fun add(entity: PostViewerStatisticsEntity) = postViewerStatisticsEntities.add(entity)
+
+    fun add(entity: ProfileProfileRelationshipsEntity) =
+        profileProfileRelationshipsEntities.add(entity)
 
 }
 
