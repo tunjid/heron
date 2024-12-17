@@ -160,7 +160,17 @@ internal fun ProfileScreen(
                                 movableSharedElementScope = movableSharedElementScope,
                                 now = remember { Clock.System.now() },
                                 item = item,
-                                onPostClicked = {},
+                                onPostClicked = { post ->
+                                    post.uri?.let {
+                                        actions(
+                                            Action.Navigate.ToPost(
+                                                profileId = post.author.did,
+                                                postId = post.cid,
+                                                postUri = it,
+                                            )
+                                        )
+                                    }
+                                },
                                 onProfileClicked = { profile ->
                                     actions(
                                         Action.Navigate.ToProfile(

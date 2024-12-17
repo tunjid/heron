@@ -18,15 +18,21 @@ package com.tunjid.heron.postdetail
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.postdetail.di.postUri
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
@@ -46,6 +52,7 @@ class PostDetailStateHolderCreator(
 
 @Inject
 class ActualPostDetailStateHolder(
+    timelineRepository: TimelineRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -57,6 +64,10 @@ class ActualPostDetailStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        postThreadsMutations(
+            postUri = route.postUri,
+            timelineRepository = timelineRepository,
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -72,3 +83,10 @@ class ActualPostDetailStateHolder(
         }
     }
 )
+
+fun postThreadsMutations(
+    postUri: Uri,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.postThread(postUri = postUri)
+        .mapToMutation { copy(postThreads = it) }

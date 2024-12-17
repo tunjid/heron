@@ -16,7 +16,11 @@
 
 package com.tunjid.heron.postdetail.di
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -26,7 +30,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
@@ -36,11 +42,15 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import heron.feature_post_detail.generated.resources.Res
+import heron.feature_post_detail.generated.resources.back
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileId}/post/{postId}"
 
@@ -49,6 +59,15 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
 )
+
+//internal val Route.profileId
+//    get() = Id(routeParams.pathArgs.getValue("profileId"))
+//
+//internal val Route.postId
+//    get() = Id(routeParams.pathArgs.getValue("postId"))
+
+internal val Route.postUri
+    get() = Uri(routeParams.queryParams.getValue("postUri").first())
 
 @Component
 abstract class PostDetailNavigationComponent {
@@ -92,7 +111,7 @@ abstract class PostDetailComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar()
+                    TopBar { viewModel.accept(Action.Navigate.Pop) }
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
@@ -108,8 +127,21 @@ abstract class PostDetailComponent(
 }
 
 @Composable
-private fun TopBar() {
+private fun TopBar(
+    onBackPressed: () -> Unit
+) {
     TopAppBar(
+        navigationIcon = {
+            FilledTonalIconButton(
+                modifier = Modifier,
+                onClick = onBackPressed,
+            ) {
+                Image(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(Res.string.back),
+                )
+            }
+        },
         title = {},
         actions = {
             TextButton(

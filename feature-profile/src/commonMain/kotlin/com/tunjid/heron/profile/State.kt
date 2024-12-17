@@ -85,5 +85,22 @@ sealed class Action(val key: String) {
                     ?: navState
             }
         }
+
+        data class ToPost(
+            val postUri: Uri,
+            val postId: Id,
+            val profileId: Id,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/profile/${profileId.id}/post/${postId.id}",
+                        queryParams = mapOf(
+                            "postUri" to listOf(postUri.uri),
+                        )
+                    ).toRoute
+                )
+            }
+        }
     }
 }

@@ -20,7 +20,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.home.di.RoutePattern
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -77,6 +76,23 @@ sealed class Action(val key: String) {
                             "referringRoute" to listOf(currentRoute.encodeToQueryParam()),
                             "profileAvatar" to listOfNotNull(profileAvatar?.uri),
                             "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        )
+                    ).toRoute
+                )
+            }
+        }
+
+        data class ToPost(
+            val postUri: Uri,
+            val postId: Id,
+            val profileId: Id,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/profile/${profileId.id}/post/${postId.id}",
+                        queryParams = mapOf(
+                            "postUri" to listOf(postUri.uri),
                         )
                     ).toRoute
                 )

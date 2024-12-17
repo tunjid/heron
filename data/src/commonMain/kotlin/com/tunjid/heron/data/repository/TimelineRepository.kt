@@ -3,12 +3,15 @@ package com.tunjid.heron.data.repository
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
+import app.bsky.feed.GetPostThreadQueryParams
+import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.MultipleEntitySaver
 import com.tunjid.heron.data.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.PostThread
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.cursor
 import com.tunjid.heron.data.core.types.Id
@@ -28,14 +31,20 @@ import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
@@ -87,25 +96,22 @@ interface TimelineRepository {
         query: TimelineQuery.Profile,
         networkCursor: NetworkCursor,
     ): Flow<CursorList<TimelineItem>>
+
+    fun postThread(
+        postUri: Uri
+    ): Flow<List<PostThread>>
 }
 
 @Inject
 class OfflineTimelineRepository(
-    embedDao: EmbedDao,
+    private val embedDao: EmbedDao,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
-    transactionWriter: TransactionWriter,
+    private val transactionWriter: TransactionWriter,
 ) : TimelineRepository {
-
-    private val multipleEntitySaver = MultipleEntitySaver(
-        postDao = postDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        transactionWriter = transactionWriter,
-    )
 
     override fun timeline(
         query: TimelineQuery.Home,
@@ -150,6 +156,56 @@ class OfflineTimelineRepository(
         )
     )
 
+    override fun postThread(
+        postUri: Uri
+    ): Flow<List<PostThread>> =
+        merge(
+            flow {
+
+                runCatchingCoroutines {
+                    val thread = networkService.api.getPostThread(
+                        GetPostThreadQueryParams(
+                            uri = AtUri(postUri.uri)
+                        )
+                    )
+                        .maybeResponse()
+                        ?.thread
+
+                    when (thread) {
+                        is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
+                        is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
+                        is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                            val authProfileId =
+                                savedStateRepository.savedState.value.auth?.authProfileId
+                            if (authProfileId != null)
+                                multipleEntitySaver().apply {
+                                    add(
+                                        viewingProfileId = authProfileId,
+                                        threadViewPost = thread.value,
+                                    )
+                                    saveInTransaction()
+                                }
+
+                        }
+
+                        is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                        null -> Unit
+                    }
+
+                }
+            },
+            flow {
+                val postId = postDao.post(postUri = postUri.uri).filterNotNull().first().cid
+                emitAll(
+                    postDao.postThreads(postId = postId.id)
+                        .map {
+                            println(it)
+                            emptyList()
+                        }
+                )
+            }
+        )
+
     private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
         query: Query,
         currentNetworkCursor: NetworkCursor,
@@ -175,7 +231,7 @@ class OfflineTimelineRepository(
                         ?.let { emit(it) }
 
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaver.persistTimeline(
+                    if (authProfileId != null) multipleEntitySaver().persistTimeline(
                         feedViews = networkPostsResponse.response.networkFeed(),
                         query = query,
                         viewingProfileId = authProfileId,
@@ -185,18 +241,22 @@ class OfflineTimelineRepository(
         }
     }
 
+    private fun multipleEntitySaver() = MultipleEntitySaver(
+        postDao = postDao,
+        embedDao = embedDao,
+        profileDao = profileDao,
+        transactionWriter = transactionWriter,
+    )
+
     private fun fetchFeed(
         query: TimelineQuery,
         networkCursorFlow: Flow<NetworkCursor>,
-    ): Flow<CursorList<TimelineItem>> = flow {
-        emitAll(
-            combine(
-                observeTimeline(query),
-                networkCursorFlow,
-                ::CursorList,
-            )
+    ): Flow<CursorList<TimelineItem>> =
+        combine(
+            observeTimeline(query),
+            networkCursorFlow,
+            ::CursorList,
         )
-    }
 
     private suspend fun MultipleEntitySaver.persistTimeline(
         viewingProfileId: Id,

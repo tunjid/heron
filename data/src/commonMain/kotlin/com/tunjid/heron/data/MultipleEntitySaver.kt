@@ -1,6 +1,9 @@
 package com.tunjid.heron.data
 
 import app.bsky.feed.PostView
+import app.bsky.feed.ThreadViewPost
+import app.bsky.feed.ThreadViewPostParentUnion
+import app.bsky.feed.ThreadViewPostReplieUnion
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
@@ -40,43 +43,41 @@ internal class MultipleEntitySaver(
     private val profileDao: ProfileDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    private val allLists = mutableListOf<MutableList<out Any>>()
-
     private val postEntities =
-        mutableListOf<PostEntity>().also(allLists::add)
+        mutableListOf<PostEntity>()
 
     private val profileEntities =
-        mutableListOf<ProfileEntity>().also(allLists::add)
+        mutableListOf<ProfileEntity>()
 
     private val postPostEntities =
-        mutableListOf<PostPostEntity>().also(allLists::add)
+        mutableListOf<PostPostEntity>()
 
     private val externalEmbedEntities =
-        mutableListOf<ExternalEmbedEntity>().also(allLists::add)
+        mutableListOf<ExternalEmbedEntity>()
 
     private val postExternalEmbedEntities =
-        mutableListOf<PostExternalEmbedEntity>().also(allLists::add)
+        mutableListOf<PostExternalEmbedEntity>()
 
     private val imageEntities =
-        mutableListOf<ImageEntity>().also(allLists::add)
+        mutableListOf<ImageEntity>()
 
     private val postImageEntities =
-        mutableListOf<PostImageEntity>().also(allLists::add)
+        mutableListOf<PostImageEntity>()
 
     private val videoEntities =
-        mutableListOf<VideoEntity>().also(allLists::add)
+        mutableListOf<VideoEntity>()
 
     private val postVideoEntities =
-        mutableListOf<PostVideoEntity>().also(allLists::add)
+        mutableListOf<PostVideoEntity>()
 
     private val postThreadEntities =
-        mutableListOf<PostThreadEntity>().also(allLists::add)
+        mutableListOf<PostThreadEntity>()
 
     private val postViewerStatisticsEntities =
-        mutableListOf<PostViewerStatisticsEntity>().also(allLists::add)
+        mutableListOf<PostViewerStatisticsEntity>()
 
     private val profileProfileRelationshipsEntities =
-        mutableListOf<ProfileProfileRelationshipsEntity>().also(allLists::add)
+        mutableListOf<ProfileProfileRelationshipsEntity>()
 
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
@@ -110,8 +111,6 @@ internal class MultipleEntitySaver(
         )
 
         afterSave()
-
-        allLists.forEach(MutableList<out Any>::clear)
     }
 
     fun MultipleEntitySaver.associatePostEmbeds(
@@ -203,3 +202,57 @@ internal fun MultipleEntitySaver.add(
     postView.quotedPostProfileEntity()?.let(::add)
 }
 
+internal fun MultipleEntitySaver.add(
+    viewingProfileId: Id,
+    threadViewPost: ThreadViewPost
+) {
+    add(
+        viewingProfileId = viewingProfileId,
+        postView = threadViewPost.post,
+    )
+
+    generateSequence(
+        threadViewPost.parent as? ThreadViewPostParentUnion.ThreadViewPost
+    ) { parent ->
+        parent.value.parent as? ThreadViewPostParentUnion.ThreadViewPost
+    }
+        .windowed(
+            size = 2,
+            step = 1,
+        )
+        .forEach { window ->
+            if (window.size > 1) add(
+                viewingProfileId = viewingProfileId,
+                childThreadView = window[0].value,
+                parentThreadView = window[1].value,
+            )
+        }
+
+    threadViewPost.replies
+        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        .forEach {
+            add(
+                viewingProfileId = viewingProfileId,
+                parentThreadView = threadViewPost,
+                childThreadView = it.value,
+            )
+        }
+}
+
+
+private fun MultipleEntitySaver.add(
+    viewingProfileId: Id,
+    childThreadView: ThreadViewPost,
+    parentThreadView: ThreadViewPost,
+) {
+    add(
+        viewingProfileId = viewingProfileId,
+        threadViewPost = parentThreadView,
+    )
+    add(
+        PostThreadEntity(
+            postId = childThreadView.post.cid.cid.let(::Id),
+            parentPostId = parentThreadView.post.cid.cid.let(::Id),
+        )
+    )
+}

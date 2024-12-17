@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import com.tunjid.heron.data.core.models.PostThread
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -25,6 +26,8 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    @Transient
+    val postThreads: List<PostThread> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
