@@ -4,12 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -50,6 +52,7 @@ interface PostDao {
         crossReferences: List<PostPostEntity>,
     )
 
+    @Transaction
     @Query(
         """
             SELECT * FROM posts
@@ -60,6 +63,7 @@ interface PostDao {
         postIds: Set<Id>,
     ): Flow<List<PopulatedPostEntity>>
 
+    @Transaction
     @Query(
         """
             SELECT * FROM posts
@@ -76,4 +80,20 @@ interface PostDao {
     suspend fun upsertPostStatistics(
         entities: List<PostViewerStatisticsEntity>,
     )
+
+    @Upsert
+    suspend fun upsertPostThreads(
+        entities: List<PostThreadEntity>,
+    )
+
+    @Query(
+        """
+            SELECT * FROM postThreads
+	        WHERE postId IN (:postIds)
+            ORDER BY postId
+        """
+    )
+    fun postThreads(
+        postIds: Set<Id>,
+    ): Flow<List<PostThreadEntity>>
 }

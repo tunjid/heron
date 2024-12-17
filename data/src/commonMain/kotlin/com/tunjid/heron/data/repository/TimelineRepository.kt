@@ -17,6 +17,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -227,6 +228,7 @@ class OfflineTimelineRepository(
         val videoEntities = mutableListOf<VideoEntity>()
         val postVideoEntities = mutableListOf<PostVideoEntity>()
 
+        val postThreadEntities = mutableListOf<PostThreadEntity>()
         val postViewerStatisticsEntities = mutableListOf<PostViewerStatisticsEntity>()
         val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
 
@@ -237,23 +239,33 @@ class OfflineTimelineRepository(
             // Extract data from feed
             feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
 
+            // Extract data from post
+            val postEntity = feedView.post.postEntity()
+            val postAuthorEntity = feedView.post.profileEntity()
+
             feedView.reply?.let {
-                postEntities.add(it.root.postEntity())
+                val rootPostEntity = it.root.postEntity()
+                postEntities.add(rootPostEntity)
                 it.root.profileEntity()?.let(profileEntities::add)
                 it.root.postViewerStatisticsEntity()
                     ?.let(postViewerStatisticsEntities::add)
 
-                postEntities.add(it.parent.postEntity())
+                val parentPostEntity = it.parent.postEntity()
+                postEntities.add(parentPostEntity)
                 it.parent.profileEntity()?.let(profileEntities::add)
                 it.parent.postViewerStatisticsEntity()
                     ?.let(postViewerStatisticsEntities::add)
+
+                postThreadEntities.add(
+                    PostThreadEntity(
+                        postId = postEntity.cid,
+                        parentPostId = parentPostEntity.cid,
+                        rootPostId = rootPostEntity.cid
+                    )
+                )
             }
 
             feedView.reason?.profileEntity()?.let(profileEntities::add)
-
-            // Extract data from post
-            val postEntity = feedView.post.postEntity()
-            val postAuthorEntity = feedView.post.profileEntity()
 
             feedView.post.viewer?.postViewerStatisticsEntity(
                 postId = postEntity.cid,
@@ -332,6 +344,7 @@ class OfflineTimelineRepository(
 
             timelineDao.upsertTimelineItems(feedItemEntities)
 
+            postDao.upsertPostThreads(postThreadEntities)
             postDao.upsertPostStatistics(postViewerStatisticsEntities)
             profileDao.upsertProfileProfileRelationships(
                 profileProfileRelationshipsEntities
