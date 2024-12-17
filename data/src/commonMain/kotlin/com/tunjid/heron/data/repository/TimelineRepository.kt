@@ -5,6 +5,7 @@ import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import com.tunjid.heron.data.MultipleEntitySaver
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -16,30 +17,16 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.emptyProfileEntity
-import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
-import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
-import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
-import com.tunjid.heron.data.network.models.postExternalEmbedEntity
-import com.tunjid.heron.data.network.models.postImageEntity
-import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
@@ -109,14 +96,21 @@ interface TimelineRepository {
 
 @Inject
 class OfflineTimelineRepository(
-    private val timelineDao: TimelineDao,
+    embedDao: EmbedDao,
     private val postDao: PostDao,
-    private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
-    private val transactionWriter: TransactionWriter,
+    private val timelineDao: TimelineDao,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
+    transactionWriter: TransactionWriter,
 ) : TimelineRepository {
+
+    private val multipleEntitySaver = MultipleEntitySaver(
+        postDao = postDao,
+        embedDao = embedDao,
+        profileDao = profileDao,
+        transactionWriter = transactionWriter,
+    )
 
     override fun timeline(
         query: TimelineQuery.Home,
@@ -186,7 +180,7 @@ class OfflineTimelineRepository(
                         ?.let { emit(it) }
 
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) transactionWriter.persistTimeline(
+                    if (authProfileId != null) multipleEntitySaver.persistTimeline(
                         feedViews = networkPostsResponse.response.networkFeed(),
                         query = query,
                         viewingProfileId = authProfileId,
@@ -209,28 +203,12 @@ class OfflineTimelineRepository(
         )
     }
 
-    private suspend fun TransactionWriter.persistTimeline(
+    private suspend fun MultipleEntitySaver.persistTimeline(
         viewingProfileId: Id,
         feedViews: List<FeedViewPost>,
         query: TimelineQuery,
     ) {
         val feedItemEntities = mutableListOf<TimelineItemEntity>()
-        val postEntities = mutableListOf<PostEntity>()
-        val profileEntities = mutableListOf<ProfileEntity>()
-        val postPostEntities = mutableListOf<PostPostEntity>()
-
-        val externalEmbedEntities = mutableListOf<ExternalEmbedEntity>()
-        val postExternalEmbedEntities = mutableListOf<PostExternalEmbedEntity>()
-
-        val imageEntities = mutableListOf<ImageEntity>()
-        val postImageEntities = mutableListOf<PostImageEntity>()
-
-        val videoEntities = mutableListOf<VideoEntity>()
-        val postVideoEntities = mutableListOf<PostVideoEntity>()
-
-        val postThreadEntities = mutableListOf<PostThreadEntity>()
-        val postViewerStatisticsEntities = mutableListOf<PostViewerStatisticsEntity>()
-        val profileProfileRelationshipsEntities = mutableListOf<ProfileProfileRelationshipsEntity>()
 
         // Add the signed in user
         profileEntities.add(emptyProfileEntity(viewingProfileId))
@@ -292,12 +270,6 @@ class OfflineTimelineRepository(
                     associatePostEmbeds(
                         postEntity = embeddedPostEntity,
                         embedEntity = embedEntity,
-                        externalEmbedEntities = externalEmbedEntities,
-                        postExternalEmbedEntities = postExternalEmbedEntities,
-                        imageEntities = imageEntities,
-                        postImageEntities = postImageEntities,
-                        videoEntities = videoEntities,
-                        postVideoEntities = postVideoEntities
                     )
                 }
             }
@@ -307,83 +279,26 @@ class OfflineTimelineRepository(
                 associatePostEmbeds(
                     postEntity = postEntity,
                     embedEntity = embedEntity,
-                    externalEmbedEntities = externalEmbedEntities,
-                    postExternalEmbedEntities = postExternalEmbedEntities,
-                    imageEntities = imageEntities,
-                    postImageEntities = postImageEntities,
-                    videoEntities = videoEntities,
-                    postVideoEntities = postVideoEntities
                 )
             }
         }
 
-        inTransaction {
-            if (timelineDao.isFirstRequest(query)) {
-                timelineDao.deleteAllFeedsFor(query.sourceId)
-                timelineDao.upsertFeedFetchKey(
-                    TimelineFetchKeyEntity(
-                        sourceId = query.sourceId,
-                        lastFetchedAt = query.data.firstRequestInstant
+        saveInTransaction(
+            beforeSave = {
+                if (timelineDao.isFirstRequest(query)) {
+                    timelineDao.deleteAllFeedsFor(query.sourceId)
+                    timelineDao.upsertFeedFetchKey(
+                        TimelineFetchKeyEntity(
+                            sourceId = query.sourceId,
+                            lastFetchedAt = query.data.firstRequestInstant
+                        )
                     )
-                )
+                }
+            },
+            afterSave = {
+                timelineDao.upsertTimelineItems(feedItemEntities)
             }
-
-            // Order matters to satisfy foreign key constraints
-            profileDao.insertOrPartiallyUpdateProfiles(profileEntities)
-            postDao.upsertPosts(postEntities)
-
-            embedDao.upsertExternalEmbeds(externalEmbedEntities)
-            embedDao.upsertImages(imageEntities)
-            embedDao.upsertVideos(videoEntities)
-
-            postDao.insertOrIgnorePostPosts(postPostEntities)
-
-            postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
-            postDao.insertOrIgnorePostImages(postImageEntities)
-            postDao.insertOrIgnorePostVideos(postVideoEntities)
-
-            timelineDao.upsertTimelineItems(feedItemEntities)
-
-            postDao.upsertPostThreads(postThreadEntities)
-            postDao.upsertPostStatistics(postViewerStatisticsEntities)
-            profileDao.upsertProfileProfileRelationships(
-                profileProfileRelationshipsEntities
-            )
-        }
-    }
-
-    private fun associatePostEmbeds(
-        postEntity: PostEntity,
-        embedEntity: PostEmbed,
-        externalEmbedEntities: MutableList<ExternalEmbedEntity>,
-        postExternalEmbedEntities: MutableList<PostExternalEmbedEntity>,
-        imageEntities: MutableList<ImageEntity>,
-        postImageEntities: MutableList<PostImageEntity>,
-        videoEntities: MutableList<VideoEntity>,
-        postVideoEntities: MutableList<PostVideoEntity>
-    ) {
-        when (embedEntity) {
-            is ExternalEmbedEntity -> {
-                externalEmbedEntities.add(embedEntity)
-                postExternalEmbedEntities.add(
-                    postEntity.postExternalEmbedEntity(embedEntity)
-                )
-            }
-
-            is ImageEntity -> {
-                imageEntities.add(embedEntity)
-                postImageEntities.add(
-                    postEntity.postImageEntity(embedEntity)
-                )
-            }
-
-            is VideoEntity -> {
-                videoEntities.add(embedEntity)
-                postVideoEntities.add(
-                    postEntity.postVideoEntity(embedEntity)
-                )
-            }
-        }
+        )
     }
 
     private fun observeTimeline(
