@@ -18,7 +18,6 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -221,7 +220,7 @@ class OfflineTimelineRepository(
             feedView.reason?.profileEntity()?.let(::add)
 
             feedView.reply?.let {
-                val rootPostEntity = it.root.postEntity().also(::add)
+                it.root.postEntity().let(::add)
                 it.root.profileEntity()?.let(::add)
                 it.root.postViewerStatisticsEntity()?.let(::add)
 
@@ -233,7 +232,6 @@ class OfflineTimelineRepository(
                     PostThreadEntity(
                         postId = feedView.post.postEntity().cid,
                         parentPostId = parentPostEntity.cid,
-                        rootPostId = rootPostEntity.cid
                     )
                 )
             }

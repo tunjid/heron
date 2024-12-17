@@ -10,12 +10,6 @@ import com.tunjid.heron.data.core.types.Id
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["cid"],
-            childColumns = ["rootPostId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["cid"],
             childColumns = ["parentPostId"],
             onDelete = ForeignKey.CASCADE,
         ),
@@ -27,13 +21,11 @@ import com.tunjid.heron.data.core.types.Id
         ),
     ],
     primaryKeys = [
-        "rootPostId",
         "parentPostId",
         "postId",
     ],
 )
 data class PostThreadEntity(
-    val rootPostId: Id,
     val parentPostId: Id,
     val postId: Id,
 )
