@@ -1,5 +1,7 @@
 package com.tunjid.heron.data
 
+import app.bsky.feed.PostView
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -17,9 +19,17 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
+import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
+import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
+import com.tunjid.heron.data.network.models.quotedPostEntity
+import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 
 /**
  * Utility class for persisting multiple entities in a transaction.
@@ -110,24 +120,18 @@ internal class MultipleEntitySaver(
     ) {
         when (embedEntity) {
             is ExternalEmbedEntity -> {
-                externalEmbedEntities.add(embedEntity)
-                postExternalEmbedEntities.add(
-                    postEntity.postExternalEmbedEntity(embedEntity)
-                )
+                add(embedEntity)
+                add(postEntity.postExternalEmbedEntity(embedEntity))
             }
 
             is ImageEntity -> {
-                imageEntities.add(embedEntity)
-                postImageEntities.add(
-                    postEntity.postImageEntity(embedEntity)
-                )
+                add(embedEntity)
+                add(postEntity.postImageEntity(embedEntity))
             }
 
             is VideoEntity -> {
-                videoEntities.add(embedEntity)
-                postVideoEntities.add(
-                    postEntity.postVideoEntity(embedEntity)
-                )
+                add(embedEntity)
+                add(postEntity.postVideoEntity(embedEntity))
             }
         }
     }
@@ -138,16 +142,6 @@ internal class MultipleEntitySaver(
 
     fun add(entity: PostPostEntity) = postPostEntities.add(entity)
 
-    fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
-
-    fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
-
-    fun add(entity: ImageEntity) = imageEntities.add(entity)
-
-    fun add(entity: PostImageEntity) = postImageEntities.add(entity)
-
-    fun add(entity: VideoEntity) = videoEntities.add(entity)
-
     fun add(entity: PostThreadEntity) = postThreadEntities.add(entity)
 
     fun add(entity: PostViewerStatisticsEntity) = postViewerStatisticsEntities.add(entity)
@@ -155,5 +149,57 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileProfileRelationshipsEntity) =
         profileProfileRelationshipsEntities.add(entity)
 
+    private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
+
+    private fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
+
+    private fun add(entity: ImageEntity) = imageEntities.add(entity)
+
+    private fun add(entity: PostImageEntity) = postImageEntities.add(entity)
+
+    private fun add(entity: VideoEntity) = videoEntities.add(entity)
+
+    private fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
+
+}
+
+internal fun MultipleEntitySaver.add(
+    viewingProfileId: Id,
+    postView: PostView
+) {
+    val postEntity = postView.postEntity().also(::add)
+
+    postView.profileEntity().let(::add)
+    postView.embedEntities().forEach { embedEntity ->
+        associatePostEmbeds(
+            postEntity = postEntity,
+            embedEntity = embedEntity,
+        )
+    }
+
+    postView.viewer?.postViewerStatisticsEntity(
+        postId = postEntity.cid,
+    )?.let(::add)
+
+    postView.author.profileProfileRelationshipsEntities(
+        viewingProfileId = viewingProfileId,
+    ).forEach(::add)
+
+    postView.quotedPostEntity()?.let { embeddedPostEntity ->
+        add(embeddedPostEntity)
+        add(
+            PostPostEntity(
+                postId = postEntity.cid,
+                embeddedPostId = embeddedPostEntity.cid,
+            )
+        )
+        postView.quotedPostEmbedEntities().forEach { embedEntity ->
+            associatePostEmbeds(
+                postEntity = embeddedPostEntity,
+                embedEntity = embedEntity,
+            )
+        }
+    }
+    postView.quotedPostProfileEntity()?.let(::add)
 }
 

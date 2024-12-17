@@ -6,6 +6,7 @@ import app.bsky.feed.GetAuthorFeedResponse
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.MultipleEntitySaver
+import com.tunjid.heron.data.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -17,22 +18,17 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.emptyProfileEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
-import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
-import com.tunjid.heron.data.network.models.quotedPostEntity
-import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -218,65 +214,27 @@ class OfflineTimelineRepository(
             feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
 
             // Extract data from post
-            val postEntity = feedView.post.postEntity()
-            val postAuthorEntity = feedView.post.profileEntity()
+            add(
+                viewingProfileId = viewingProfileId,
+                postView = feedView.post,
+            )
+            feedView.reason?.profileEntity()?.let(::add)
 
             feedView.reply?.let {
-                val rootPostEntity = it.root.postEntity()
-                add(rootPostEntity)
+                val rootPostEntity = it.root.postEntity().also(::add)
                 it.root.profileEntity()?.let(::add)
-                it.root.postViewerStatisticsEntity()
-                    ?.let(::add)
+                it.root.postViewerStatisticsEntity()?.let(::add)
 
-                val parentPostEntity = it.parent.postEntity()
-                add(parentPostEntity)
+                val parentPostEntity = it.parent.postEntity().also(::add)
                 it.parent.profileEntity()?.let(::add)
-                it.parent.postViewerStatisticsEntity()
-                    ?.let(::add)
+                it.parent.postViewerStatisticsEntity()?.let(::add)
 
                 add(
                     PostThreadEntity(
-                        postId = postEntity.cid,
+                        postId = feedView.post.postEntity().cid,
                         parentPostId = parentPostEntity.cid,
                         rootPostId = rootPostEntity.cid
                     )
-                )
-            }
-
-            feedView.reason?.profileEntity()?.let(::add)
-
-            feedView.post.viewer?.postViewerStatisticsEntity(
-                postId = postEntity.cid,
-            )?.let(::add)
-
-            feedView.post.author.profileProfileRelationshipsEntities(
-                viewingProfileId = viewingProfileId,
-            ).forEach(::add)
-
-            add(postEntity)
-            add(postAuthorEntity)
-
-            feedView.post.quotedPostEntity()?.let { embeddedPostEntity ->
-                add(embeddedPostEntity)
-                add(
-                    PostPostEntity(
-                        postId = postEntity.cid,
-                        embeddedPostId = embeddedPostEntity.cid,
-                    )
-                )
-                feedView.post.quotedPostEmbedEntities().forEach { embedEntity ->
-                    associatePostEmbeds(
-                        postEntity = embeddedPostEntity,
-                        embedEntity = embedEntity,
-                    )
-                }
-            }
-            feedView.post.quotedPostProfileEntity()?.let(::add)
-
-            feedView.post.embedEntities().forEach { embedEntity ->
-                associatePostEmbeds(
-                    postEntity = postEntity,
-                    embedEntity = embedEntity,
                 )
             }
         }
