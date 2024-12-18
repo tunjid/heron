@@ -73,23 +73,20 @@ fun TimelineItem(
                     onProfileClicked = onProfileClicked,
                 )
             }
-            if (item is TimelineItem.Reply) {
-                PostReplies(
-                    movableSharedElementScope = movableSharedElementScope,
-                    item = item,
-                    now = now,
-                    onProfileClicked = onProfileClicked,
-                    onPostClicked = onPostClicked,
-                    onImageClicked = onImageClicked,
-                    onReplyToPost = onReplyToPost
-                )
-            }
-            SinglePost(
+            if (item is TimelineItem.Thread) ThreadedPost(
+                movableSharedElementScope = movableSharedElementScope,
+                item = item,
+                now = now,
+                onProfileClicked = onProfileClicked,
+                onPostClicked = onPostClicked,
+                onImageClicked = onImageClicked,
+                onReplyToPost = onReplyToPost
+            ) else SinglePost(
                 movableSharedElementScope = movableSharedElementScope,
                 post = item.post,
                 embed = item.post.embed,
                 avatarShape =
-                if (item is TimelineItem.Reply) ReplyThreadEndImageShape
+                if (item is TimelineItem.Thread) ReplyThreadEndImageShape
                 else ImageShape.Circle,
                 avatarSharedElementKey = item.post.avatarSharedElementKey(item.sourceId),
                 now = now,
@@ -104,9 +101,9 @@ fun TimelineItem(
 }
 
 @Composable
-private fun PostReplies(
+private fun ThreadedPost(
     movableSharedElementScope: MovableSharedElementScope,
-    item: TimelineItem.Reply,
+    item: TimelineItem.Thread,
     now: Instant,
     onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -114,48 +111,37 @@ private fun PostReplies(
     onReplyToPost: () -> Unit
 ) {
     Column {
-        SinglePost(
-            movableSharedElementScope = movableSharedElementScope, post = item.rootPost,
-            embed = item.rootPost.embed,
-            avatarShape = ReplyThreadStartImageShape,
-            avatarSharedElementKey = item.rootPost.avatarSharedElementKey(item.sourceId),
-            now = now,
-            createdAt = item.rootPost.createdAt,
-            onProfileClicked = onProfileClicked,
-            onPostClicked = onPostClicked,
-            onImageClicked = onImageClicked,
-            onReplyToPost = onReplyToPost,
-            timeline = {
-                Timeline(
-                    Modifier
-                        .matchParentSize()
-                        .padding(top = 52.dp)
+        item.posts.forEachIndexed { index, post ->
+            if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
+                SinglePost(
+                    movableSharedElementScope = movableSharedElementScope,
+                    post = post,
+                    embed = post.embed,
+                    avatarShape = when (index) {
+                        0 -> ReplyThreadStartImageShape
+                        item.posts.lastIndex -> ReplyThreadEndImageShape
+                        else -> ReplyThreadImageShape
+                    },
+                    avatarSharedElementKey = post.avatarSharedElementKey(item.sourceId),
+                    now = now,
+                    createdAt = post.createdAt,
+                    onProfileClicked = onProfileClicked,
+                    onPostClicked = onPostClicked,
+                    onImageClicked = onImageClicked,
+                    onReplyToPost = onReplyToPost,
+                    timeline = {
+                        if (index != item.posts.lastIndex) Timeline(
+                            Modifier
+                                .matchParentSize()
+                                .padding(top = 52.dp)
+                        )
+                    }
                 )
+                if (index != item.posts.lastIndex) Timeline(
+                    Modifier.height(if (index == 0) 16.dp else 12.dp)
+                )
+                if (index == item.posts.lastIndex - 1) Spacer(Modifier.height(4.dp))
             }
-        )
-        Timeline(Modifier.height(16.dp))
-        if (item.rootPost.cid != item.parentPost.cid) {
-            SinglePost(movableSharedElementScope = movableSharedElementScope,
-                post = item.parentPost,
-                embed = item.parentPost.embed,
-                avatarShape = ReplyThreadImageShape,
-                avatarSharedElementKey = item.parentPost.avatarSharedElementKey(item.sourceId),
-                now = now,
-                createdAt = item.parentPost.createdAt,
-                onProfileClicked = onProfileClicked,
-                onPostClicked = onPostClicked,
-                onImageClicked = onImageClicked,
-                onReplyToPost = onReplyToPost,
-                timeline = {
-                    Timeline(
-                        Modifier
-                            .matchParentSize()
-                            .padding(top = 48.dp)
-                    )
-                }
-            )
-            Timeline(Modifier.height(12.dp))
-            Spacer(Modifier.height(4.dp))
         }
     }
 }

@@ -42,7 +42,7 @@ internal fun PostReasonLine(
             }
         )
 
-        is TimelineItem.Reply,
+        is TimelineItem.Thread,
         is TimelineItem.Single -> Unit
     }
 }

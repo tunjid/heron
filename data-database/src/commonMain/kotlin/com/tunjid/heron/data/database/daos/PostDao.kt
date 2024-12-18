@@ -7,12 +7,10 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.PostThreadAndGenerationEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -70,12 +68,12 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            WHERE uri IN (:postUris)
+            WHERE uri = :postUri
         """
     )
-    fun postsByUri(
-        postUris: Set<Uri>,
-    ): Flow<List<PopulatedPostEntity>>
+    fun postByUri(
+        postUri: String,
+    ): Flow<PostEntity>
 
     @Transaction
     @Query(
@@ -106,7 +104,8 @@ interface PostDao {
             WITH RECURSIVE generation AS (
                 SELECT postId,
                     parentPostId,
-                    0 AS generation
+                    0 AS generation,
+                    postId AS rootPostId
                 FROM postThreads
                 WHERE parentPostId = :postId
              
@@ -114,7 +113,8 @@ interface PostDao {
              
                 SELECT reply.postId,
                     reply.parentPostId,
-                    generation+1 AS generation
+                    generation+1 AS generation,
+                    rootPostId
                 FROM postThreads reply
                 JOIN generation g
                   ON g.postId = reply.parentPostId
@@ -124,7 +124,7 @@ interface PostDao {
             FROM posts
             JOIN generation
             ON cid = generation.postId
-            ORDER BY generation;
+            ORDER BY rootPostId, generation;
         """
     )
     fun postReplies(

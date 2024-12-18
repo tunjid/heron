@@ -132,9 +132,10 @@ data class EmbeddedPopulatedPostEntity(
 data class ThreadedPopulatedPostEntity(
     @Embedded
     val entity: PopulatedPostEntity,
+    val generation: Long,
     val postId: Id,
     val parentPostId: Id,
-    val generation: Long,
+    val rootPostId: Id?,
 )
 
 fun PopulatedPostEntity.asExternalModel(

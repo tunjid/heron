@@ -89,4 +89,4 @@ fun postThreadsMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     timelineRepository.postThread(postUri = postUri)
-        .mapToMutation { copy(postThreads = it) }
+        .mapToMutation { copy(items = it) }

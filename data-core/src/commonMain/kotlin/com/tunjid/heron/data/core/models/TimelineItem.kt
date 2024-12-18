@@ -11,7 +11,7 @@ sealed class TimelineItem {
     val indexedAt
         get() = when (this) {
             is Pinned,
-            is Reply,
+            is Thread,
             is Single -> post.indexedAt
 
             is Repost -> at
@@ -31,13 +31,15 @@ sealed class TimelineItem {
         val at: Instant,
     ) : TimelineItem()
 
-    data class Reply(
+    data class Thread(
         override val id: String,
-        override val post: Post,
         override val sourceId: String,
-        val rootPost: Post,
-        val parentPost: Post,
-    ) : TimelineItem()
+        val anchorPostIndex: Int,
+        val posts: List<Post>,
+    ) : TimelineItem() {
+        override val post: Post
+            get() = posts[anchorPostIndex]
+    }
 
     data class Single(
         override val id: String,

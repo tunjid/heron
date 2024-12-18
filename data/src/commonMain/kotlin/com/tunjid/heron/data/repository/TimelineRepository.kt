@@ -11,7 +11,6 @@ import com.tunjid.heron.data.MultipleEntitySaver
 import com.tunjid.heron.data.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
-import com.tunjid.heron.data.core.models.PostThread
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.cursor
 import com.tunjid.heron.data.core.types.Id
@@ -22,6 +21,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -35,10 +35,8 @@ import com.tunjid.heron.data.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -98,7 +96,7 @@ interface TimelineRepository {
 
     fun postThread(
         postUri: Uri
-    ): Flow<List<PostThread>>
+    ): Flow<List<TimelineItem>>
 }
 
 @Inject
@@ -157,7 +155,7 @@ class OfflineTimelineRepository(
 
     override fun postThread(
         postUri: Uri
-    ): Flow<List<PostThread>> =
+    ): Flow<List<TimelineItem>> =
         merge(
             flow {
 
@@ -193,34 +191,58 @@ class OfflineTimelineRepository(
 
                 }
             },
-            postDao.postsByUri(postUris = setOf(postUri))
-                .filter { it.isNotEmpty() }
-                .map { it.first() }
-                .distinctUntilChangedBy { it.entity.cid.id }
+            postDao.postByUri(postUri = postUri.uri)
+                .distinctUntilChangedBy { it.cid.id }
                 .flatMapLatest { entity ->
                     combine(
-                        postDao
-                            .postParents(postId = entity.entity.cid.id),
-                        postDao
-                            .postReplies(postId = entity.entity.cid.id)
-
+                        postDao.postParents(postId = entity.cid.id),
+                        postDao.postReplies(postId = entity.cid.id)
                     ) { parents, replies ->
-                        val p = parents.map { " ${it.entity.entity.record?.text}" ?: "" }
-                        val r = replies.map { "${it.entity.entity.record?.text}" ?: "" }
 
-                        println("parent")
-                        println(p.joinToString(separator = "\n"))
-                        println("self")
-                        println(entity.entity.record?.text)
-                        println("children")
-                        println(r.joinToString(separator = "\n"))
-                        println("-----")
+                        val thread: MutableList<TimelineItem.Thread> =
+                            parents.fold(mutableListOf()) { list, parent ->
+                                loom(list, parent)
+                                list
+                            }
 
-
-                        emptyList()
+                        replies.fold(thread) { list, reply ->
+                            loom(list, reply)
+                            list
+                        }
                     }
                 },
         )
+
+    private fun loom(
+        list: MutableList<TimelineItem.Thread>,
+        thread: ThreadedPopulatedPostEntity
+    ) {
+        when {
+            list.isEmpty()
+                    || list.last().posts.first().cid != thread.rootPostId -> list.add(
+                TimelineItem.Thread(
+                    id = thread.postId.id,
+                    sourceId = "",
+                    anchorPostIndex = 0,
+                    posts = listOf(
+                        thread.entity.asExternalModel(
+                            quote = null
+                        )
+                    )
+                )
+            )
+
+            else -> list.add(
+                list.removeLast().let {
+                    it.copy(
+                        posts = it.posts + thread.entity.asExternalModel(
+                            quote = null
+                        )
+                    )
+                }
+            )
+        }
+    }
 
     private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
         query: Query,
@@ -370,23 +392,26 @@ class OfflineTimelineRepository(
                         val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
                         when {
-                            replyRoot != null && replyParent != null -> TimelineItem.Reply(
+                            replyRoot != null && replyParent != null -> TimelineItem.Thread(
                                 id = entity.id,
                                 sourceId = query.sourceId,
-                                post = mainPost.asExternalModel(
-                                    quote = idsToEmbeddedPosts[entity.postId]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
-                                ),
-                                rootPost = replyRoot.asExternalModel(
-                                    quote = idsToEmbeddedPosts[replyRoot.entity.cid]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
-                                ),
-                                parentPost = replyParent.asExternalModel(
-                                    quote = idsToEmbeddedPosts[replyParent.entity.cid]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
+                                anchorPostIndex = 2,
+                                posts = listOf(
+                                    replyRoot.asExternalModel(
+                                        quote = idsToEmbeddedPosts[replyRoot.entity.cid]
+                                            ?.entity
+                                            ?.asExternalModel(quote = null)
+                                    ),
+                                    replyParent.asExternalModel(
+                                        quote = idsToEmbeddedPosts[replyParent.entity.cid]
+                                            ?.entity
+                                            ?.asExternalModel(quote = null)
+                                    ),
+                                    mainPost.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(quote = null)
+                                    )
                                 ),
                             )
 
