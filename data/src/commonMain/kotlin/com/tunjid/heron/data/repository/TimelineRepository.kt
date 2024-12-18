@@ -11,7 +11,6 @@ import com.tunjid.heron.data.MultipleEntitySaver
 import com.tunjid.heron.data.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostThread
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.cursor
@@ -22,7 +21,6 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.PostThreadAndGenerationEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -36,7 +34,6 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -202,24 +199,19 @@ class OfflineTimelineRepository(
                 .distinctUntilChangedBy { it.entity.cid.id }
                 .flatMapLatest { entity ->
                     combine(
-                        m(
-                            postDao,
-                            postDao
-                                .postParents(postId = entity.entity.cid.id)
-                        ),
-                        m(
-                            postDao,
-                            postDao
-                                .postReplies(postId = entity.entity.cid.id)
-                        )
+                        postDao
+                            .postParents(postId = entity.entity.cid.id),
+                        postDao
+                            .postReplies(postId = entity.entity.cid.id)
+
                     ) { parents, replies ->
-                        val p = parents.map { " ${it.record?.text}" ?: "" }
-                        val r = replies.map { "${it.record?.text}" ?: "" }
+                        val p = parents.map { " ${it.entity.entity.record?.text}" ?: "" }
+                        val r = replies.map { "${it.entity.entity.record?.text}" ?: "" }
 
                         println("parent")
                         println(p.joinToString(separator = "\n"))
                         println("self")
-println(entity.entity.record?.text)
+                        println(entity.entity.record?.text)
                         println("children")
                         println(r.joinToString(separator = "\n"))
                         println("-----")
@@ -228,50 +220,6 @@ println(entity.entity.record?.text)
                         emptyList()
                     }
                 },
-//            postDao.posts(postUris = setOf(postUri))
-//                .filter { it.isNotEmpty() }
-//                .map { it.first() }
-//                .distinctUntilChangedBy { it.entity.cid.id }
-//                .flatMapLatest { entity ->
-//                    val pop = postDao.posts(setOf(entity.entity.cid))
-//                        .first { it.isNotEmpty() }
-//                        .first()
-//
-//                    println("Getting thread for: ${pop.entity.record?.text}")
-//
-//                    val list = mutableListOf<PopulatedPostEntity?>(pop)
-//                    while (list.lastOrNull() != null) {
-//                        val post = list.last()!!
-//                        val parent = postDao.postParents(post.entity.cid.id)
-//                        parent.let(list::add)
-//                        println("----")
-//
-//                    }
-//                    println("DONE. Have size ${list.size}. They are:")
-//
-//                  val out =  list.mapIndexed { index, it ->  "$index: ${it?.entity?.record?.text}" ?: ""}
-//                    println(out.joinToString(separator = "\n"))
-//                    println("----")
-//
-//                    postDao.postReplies(postId = pop.entity.cid.id)
-//                        .filterNotNull()
-//                        .first()
-//                        .let { threads ->
-//                            println("There are ${threads.maxByOrNull { it.generation }?.generation} generations")
-//                            postDao.posts(
-//                                threads.map { it.entity.postId }.toSet()
-//                            )
-//                                .first { it.isNotEmpty() }
-//                                .let { threaded ->
-//                                    val out2 =  threaded.map {   "THREAD: ${it?.entity?.record?.text}" ?: ""}
-//
-//                                    println(out2.joinToString(separator = "\n"))
-//
-//                                    println("----")
-//                                }
-//                        }
-//                    emptyFlow()
-//                }
         )
 
     private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
@@ -478,25 +426,6 @@ println(entity.entity.record?.text)
                 }
             }
 }
-
-private fun m(
-    postDao: PostDao,
-    flow: Flow<List<PostThreadAndGenerationEntity>>
-): Flow<List<Post>> = flow
-    .distinctUntilChanged()
-    .flatMapLatest { threadGenerations ->
-        val idToGeneration = threadGenerations.associateBy { it.entity.postId }
-        postDao.posts(
-            threadGenerations.map { threadGeneration ->
-                threadGeneration.entity.postId
-            }.toSet()
-        )
-            .map {
-                it
-                    .map { it.asExternalModel(quote = null) }
-                    .sortedBy { idToGeneration.getValue(it.cid).generation }
-            }
-    }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false

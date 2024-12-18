@@ -14,6 +14,7 @@ import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadAndGenerationEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -119,16 +120,16 @@ interface PostDao {
                   ON g.postId = reply.parentPostId
             )
              
-            SELECT postId,
-                 parentPostId,
-                 generation
-            FROM generation
+            SELECT *
+            FROM posts
+            JOIN generation
+            ON cid = generation.postId
             ORDER BY generation;
         """
     )
     fun postReplies(
         postId: String,
-    ): Flow<List<PostThreadAndGenerationEntity>>
+    ): Flow<List<ThreadedPopulatedPostEntity>>
 
     @Transaction
     @Query(
@@ -150,15 +151,15 @@ interface PostDao {
                   ON g.parentPostId = parent.postId
             )
              
-            SELECT postId,
-                 parentPostId,
-                 generation
-            FROM generation
+            SELECT *
+            FROM posts
+            JOIN generation
+            ON cid = generation.postId
             ORDER BY generation;
         """
     )
     fun postParents(
         postId: String,
-    ): Flow<List<PostThreadAndGenerationEntity>>
+    ): Flow<List<ThreadedPopulatedPostEntity>>
 
 }
