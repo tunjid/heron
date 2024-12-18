@@ -23,8 +23,8 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.signedInUserProfileEntity
-import com.tunjid.heron.data.runCatchingCoroutines
-import com.tunjid.heron.data.runCatchingWithIoMessage
+import com.tunjid.heron.data.utilities.runCatchingCoroutines
+import com.tunjid.heron.data.utilities.runCatchingWithIoMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope

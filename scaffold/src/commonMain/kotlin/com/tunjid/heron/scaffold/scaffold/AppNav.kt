@@ -21,6 +21,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.scaffold.navigation.NavItem
 import org.jetbrains.compose.resources.stringResource
 
@@ -96,7 +97,12 @@ private fun BottomAppBar(
                         contentDescription = null,
                     )
                 },
-                label = { Text(text = stringResource(item.stack.titleRes)) },
+                label = {
+                    Text(
+                        text = stringResource(item.stack.titleRes),
+                        fontSize = 11.sp,
+                    )
+                },
                 selected = item.selected,
                 onClick = {
                     onNavItemSelected(item)

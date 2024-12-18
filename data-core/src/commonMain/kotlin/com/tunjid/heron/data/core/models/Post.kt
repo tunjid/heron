@@ -54,6 +54,10 @@ data class Post(
     )
 }
 
+data class PostThread(
+    val posts: List<Post>
+)
+
 //enum class LinkTarget {
 //    UserHandleMention,
 //    UserDidMention,

@@ -1,4 +1,4 @@
-package com.tunjid.heron.data
+package com.tunjid.heron.data.utilities
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException

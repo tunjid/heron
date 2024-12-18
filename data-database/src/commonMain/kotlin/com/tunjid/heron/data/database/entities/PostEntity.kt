@@ -52,8 +52,6 @@ data class PostEntity(
     val indexedAt: Instant,
     @Embedded
     val record: RecordData?,
-//    public val embed: PostViewEmbedUnion?,
-//    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
 ) {
@@ -127,6 +125,15 @@ data class EmbeddedPopulatedPostEntity(
     val entity: PopulatedPostEntity,
     val postId: Id,
     val embeddedPostId: Id,
+)
+
+data class ThreadedPopulatedPostEntity(
+    @Embedded
+    val entity: PopulatedPostEntity,
+    val generation: Long,
+    val postId: Id,
+    val parentPostId: Id?,
+    val rootPostId: Id?,
 )
 
 fun PopulatedPostEntity.asExternalModel(

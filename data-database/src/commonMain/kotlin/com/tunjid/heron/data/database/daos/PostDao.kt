@@ -4,12 +4,16 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -50,6 +54,7 @@ interface PostDao {
         crossReferences: List<PostPostEntity>,
     )
 
+    @Transaction
     @Query(
         """
             SELECT * FROM posts
@@ -60,6 +65,18 @@ interface PostDao {
         postIds: Set<Id>,
     ): Flow<List<PopulatedPostEntity>>
 
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM posts
+	        WHERE uri IN (:postUris)
+        """
+    )
+    fun postsByUri(
+        postUris: Set<Uri>,
+    ): Flow<List<PopulatedPostEntity>>
+
+    @Transaction
     @Query(
         """
             SELECT * FROM posts
@@ -76,4 +93,77 @@ interface PostDao {
     suspend fun upsertPostStatistics(
         entities: List<PostViewerStatisticsEntity>,
     )
+
+    @Upsert
+    suspend fun upsertPostThreads(
+        entities: List<PostThreadEntity>,
+    )
+
+    @Transaction
+    @Query(
+        """
+            WITH RECURSIVE generation AS (
+                SELECT postId,
+                    parentPostId,
+                    0 AS generation,
+                    postId AS rootPostId
+                FROM postThreads
+                WHERE parentPostId = :postId
+             
+            UNION ALL
+             
+                SELECT reply.postId,
+                    reply.parentPostId,
+                    generation+1 AS generation,
+                    rootPostId
+                FROM postThreads reply
+                JOIN generation g
+                  ON g.postId = reply.parentPostId
+            )
+             
+            SELECT *
+            FROM posts
+            JOIN generation
+            ON cid = generation.postId
+            ORDER BY rootPostId, generation;
+        """
+    )
+    fun postReplies(
+        postId: String,
+    ): Flow<List<ThreadedPopulatedPostEntity>>
+
+    @Transaction
+    @Query(
+        """
+            WITH RECURSIVE generation AS (
+                SELECT postId,
+                    parentPostId,
+                    0 AS generation,
+                    postId AS rootPostId
+                FROM postThreads
+                WHERE postId = :postId
+             
+            UNION ALL
+             
+                SELECT parent.postId,
+                    parent.parentPostId,
+                    generation-1 AS generation,
+                    rootPostId
+                FROM postThreads parent
+                JOIN generation g
+                  ON g.parentPostId = parent.postId
+            )
+             
+            SELECT DISTINCT *
+            FROM posts
+            JOIN generation
+            ON cid = generation.postId
+
+            ORDER BY generation;
+        """
+    )
+    fun postParents(
+        postId: String,
+    ): Flow<List<ThreadedPopulatedPostEntity>>
+
 }

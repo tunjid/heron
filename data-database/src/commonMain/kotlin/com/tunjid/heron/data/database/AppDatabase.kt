@@ -1,5 +1,6 @@
 package com.tunjid.heron.data.database
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -14,6 +15,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -29,7 +31,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import kotlinx.datetime.Instant
 
 @Database(
-    version = 1,
+    version = 2,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -40,12 +42,20 @@ import kotlinx.datetime.Instant
         PostPostEntity::class,
         PostEntity::class,
         PostAuthorsEntity::class,
+        PostThreadEntity::class,
         PostViewerStatisticsEntity::class,
         ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
         TimelineItemEntity::class,
         TimelineFetchKeyEntity::class,
     ],
+    autoMigrations = [
+        AutoMigration (
+            from = 1,
+            to = 2
+        ),
+    ],
+    exportSchema = true,
 )
 @TypeConverters(
     DateConverters::class,

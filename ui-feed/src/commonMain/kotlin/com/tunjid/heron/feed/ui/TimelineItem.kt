@@ -45,6 +45,7 @@ fun TimelineItem(
     movableSharedElementScope: MovableSharedElementScope,
     now: Instant,
     item: TimelineItem,
+    sharedElementPrefix: String,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: Post?.(Profile) -> Unit,
     onImageClicked: (Uri) -> Unit,
@@ -73,25 +74,23 @@ fun TimelineItem(
                     onProfileClicked = onProfileClicked,
                 )
             }
-            if (item is TimelineItem.Reply) {
-                PostReplies(
-                    movableSharedElementScope = movableSharedElementScope,
-                    item = item,
-                    now = now,
-                    onProfileClicked = onProfileClicked,
-                    onPostClicked = onPostClicked,
-                    onImageClicked = onImageClicked,
-                    onReplyToPost = onReplyToPost
-                )
-            }
-            SinglePost(
+            if (item is TimelineItem.Thread) ThreadedPost(
+                movableSharedElementScope = movableSharedElementScope,
+                item = item,
+                now = now,
+                sharedElementPrefix = sharedElementPrefix,
+                onProfileClicked = onProfileClicked,
+                onPostClicked = onPostClicked,
+                onImageClicked = onImageClicked,
+                onReplyToPost = onReplyToPost
+            ) else SinglePost(
                 movableSharedElementScope = movableSharedElementScope,
                 post = item.post,
                 embed = item.post.embed,
                 avatarShape =
-                if (item is TimelineItem.Reply) ReplyThreadEndImageShape
+                if (item is TimelineItem.Thread) ReplyThreadEndImageShape
                 else ImageShape.Circle,
-                avatarSharedElementKey = item.post.avatarSharedElementKey(item.sourceId),
+                avatarSharedElementKey = item.post.avatarSharedElementKey(sharedElementPrefix),
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -104,9 +103,10 @@ fun TimelineItem(
 }
 
 @Composable
-private fun PostReplies(
+private fun ThreadedPost(
     movableSharedElementScope: MovableSharedElementScope,
-    item: TimelineItem.Reply,
+    item: TimelineItem.Thread,
+    sharedElementPrefix: String,
     now: Instant,
     onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -114,48 +114,37 @@ private fun PostReplies(
     onReplyToPost: () -> Unit
 ) {
     Column {
-        SinglePost(
-            movableSharedElementScope = movableSharedElementScope, post = item.rootPost,
-            embed = item.rootPost.embed,
-            avatarShape = ReplyThreadStartImageShape,
-            avatarSharedElementKey = item.rootPost.avatarSharedElementKey(item.sourceId),
-            now = now,
-            createdAt = item.rootPost.createdAt,
-            onProfileClicked = onProfileClicked,
-            onPostClicked = onPostClicked,
-            onImageClicked = onImageClicked,
-            onReplyToPost = onReplyToPost,
-            timeline = {
-                Timeline(
-                    Modifier
-                        .matchParentSize()
-                        .padding(top = 52.dp)
+        item.posts.forEachIndexed { index, post ->
+            if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
+                SinglePost(
+                    movableSharedElementScope = movableSharedElementScope,
+                    post = post,
+                    embed = post.embed,
+                    avatarShape = when (index) {
+                        0 -> ReplyThreadStartImageShape
+                        item.posts.lastIndex -> ReplyThreadEndImageShape
+                        else -> ReplyThreadImageShape
+                    },
+                    avatarSharedElementKey = post.avatarSharedElementKey(sharedElementPrefix),
+                    now = now,
+                    createdAt = post.createdAt,
+                    onProfileClicked = onProfileClicked,
+                    onPostClicked = onPostClicked,
+                    onImageClicked = onImageClicked,
+                    onReplyToPost = onReplyToPost,
+                    timeline = {
+                        if (index != item.posts.lastIndex) Timeline(
+                            Modifier
+                                .matchParentSize()
+                                .padding(top = 52.dp)
+                        )
+                    }
                 )
+                if (index != item.posts.lastIndex) Timeline(
+                    Modifier.height(if (index == 0) 16.dp else 12.dp)
+                )
+                if (index == item.posts.lastIndex - 1) Spacer(Modifier.height(4.dp))
             }
-        )
-        Timeline(Modifier.height(16.dp))
-        if (item.rootPost.cid != item.parentPost.cid) {
-            SinglePost(movableSharedElementScope = movableSharedElementScope,
-                post = item.parentPost,
-                embed = item.parentPost.embed,
-                avatarShape = ReplyThreadImageShape,
-                avatarSharedElementKey = item.parentPost.avatarSharedElementKey(item.sourceId),
-                now = now,
-                createdAt = item.parentPost.createdAt,
-                onProfileClicked = onProfileClicked,
-                onPostClicked = onPostClicked,
-                onImageClicked = onImageClicked,
-                onReplyToPost = onReplyToPost,
-                timeline = {
-                    Timeline(
-                        Modifier
-                            .matchParentSize()
-                            .padding(top = 48.dp)
-                    )
-                }
-            )
-            Timeline(Modifier.height(12.dp))
-            Spacer(Modifier.height(4.dp))
         }
     }
 }
@@ -219,7 +208,7 @@ private fun SinglePost(
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
-                    start = 32.dp,
+                    start = 24.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
@@ -276,7 +265,7 @@ private val ReplyThreadStartImageShape =
 private val ReplyThreadImageShape =
     ImageShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
-            if (index == 2 || index == 3) 14.dp
+            if (index == 2 || index == 3) 32.dp
             else 48.dp
         }
     )
@@ -291,5 +280,5 @@ private val ReplyThreadEndImageShape =
 
 
 fun Post.avatarSharedElementKey(
-    sourceId: String,
-): String = "$sourceId-${cid.id}-${author.did.id}"
+    prefix: String,
+): String = "$prefix-${cid.id}-${author.did.id}"

@@ -33,8 +33,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Clock
@@ -76,15 +78,31 @@ internal fun HomeScreen(
                             .animateItem(),
                         movableSharedElementScope = movableSharedElementScope,
                         now = remember { Clock.System.now() },
+                        sharedElementPrefix = TimelineQuery.Home.toString(),
                         item = item,
-                        onPostClicked = {},
+                        onPostClicked = { post ->
+                            post.uri?.let {
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            sharedElementPrefix = TimelineQuery.Home.toString(),
+                                            profileId = post.author.did,
+                                            postId = post.cid,
+                                            postUri = it,
+                                        )
+                                    )
+                                )
+                            }
+                        },
                         onProfileClicked = { profile ->
                             actions(
-                                Action.Navigate.ToProfile(
-                                    profileId = profile.did,
-                                    profileAvatar = profile.avatar,
-                                    avatarSharedElementKey = this?.avatarSharedElementKey(
-                                        item.sourceId,
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        profileId = profile.did,
+                                        profileAvatar = profile.avatar,
+                                        avatarSharedElementKey = this?.avatarSharedElementKey(
+                                            prefix = TimelineQuery.Home.toString(),
+                                        )
                                     )
                                 )
                             )
