@@ -161,8 +161,8 @@ private fun <Query : TimelineQuery> TiledList<Query, TimelineItem>.filterThreadD
     return filter { item ->
         when (item) {
             is TimelineItem.Pinned -> true
-            is TimelineItem.Thread -> !threadRootIds.contains(item.post.cid).also { contains ->
-                if (!contains) threadRootIds.add(item.post.cid)
+            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid).also { contains ->
+                if (!contains) threadRootIds.add(item.posts.first().cid)
             }
 
             is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
