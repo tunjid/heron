@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
@@ -68,12 +69,12 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            WHERE uri = :postUri
+	        WHERE uri IN (:postUris)
         """
     )
-    fun postByUri(
-        postUri: String,
-    ): Flow<PostEntity>
+    fun postsByUri(
+        postUris: Set<Uri>,
+    ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
     @Query(

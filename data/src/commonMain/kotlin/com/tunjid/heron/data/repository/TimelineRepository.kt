@@ -35,8 +35,10 @@ import com.tunjid.heron.data.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -158,7 +160,6 @@ class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         merge(
             flow {
-
                 runCatchingCoroutines {
                     val thread = networkService.api.getPostThread(
                         GetPostThreadQueryParams(
@@ -191,21 +192,23 @@ class OfflineTimelineRepository(
 
                 }
             },
-            postDao.postByUri(postUri = postUri.uri)
-                .distinctUntilChangedBy { it.cid.id }
-                .flatMapLatest { entity ->
+            postDao.postsByUri(postUris = setOf(postUri))
+                .mapNotNull { it.firstOrNull() }
+                .distinctUntilChangedBy { it.entity.cid.id }
+                .flatMapLatest { populatedEntity ->
                     combine(
-                        postDao.postParents(postId = entity.cid.id),
-                        postDao.postReplies(postId = entity.cid.id)
+                        postDao.postParents(postId = populatedEntity.entity.cid.id),
+                        postDao.postReplies(postId = populatedEntity.entity.cid.id)
                     ) { parents, replies ->
 
-                        val thread: MutableList<TimelineItem.Thread> =
-                            parents.fold(mutableListOf()) { list, parent ->
-                                loom(list, parent)
-                                list
-                            }
-
-                        replies.fold(thread) { list, reply ->
+                        parents.fold(mutableListOf<TimelineItem.Thread>()) { list, parent ->
+                            loom(list, parent)
+                            list
+                        } + TimelineItem.Single(
+                            id = "",
+                            post = populatedEntity.asExternalModel(quote = null),
+                            sourceId = "",
+                        ) + replies.fold(mutableListOf<TimelineItem.Thread>()) { list, reply ->
                             loom(list, reply)
                             list
                         }
