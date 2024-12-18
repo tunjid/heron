@@ -1,4 +1,4 @@
-package com.tunjid.heron.data
+package com.tunjid.heron.data.utilities
 
 import app.bsky.feed.PostView
 import app.bsky.feed.ThreadViewPost

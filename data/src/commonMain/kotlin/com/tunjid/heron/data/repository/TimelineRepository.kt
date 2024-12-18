@@ -7,8 +7,8 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import com.tunjid.heron.data.MultipleEntitySaver
-import com.tunjid.heron.data.add
+import com.tunjid.heron.data.utilities.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -31,7 +31,7 @@ import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.runCatchingCoroutines
+import com.tunjid.heron.data.utilities.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -214,28 +214,6 @@ class OfflineTimelineRepository(
                 },
         )
 
-    private fun spinThread(
-        list: List<TimelineItem.Thread>,
-        thread: ThreadedPopulatedPostEntity
-    ) = when {
-        list.isEmpty()
-                || list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
-            id = thread.postId.id,
-            anchorPostIndex = 0,
-            posts = listOf(
-                thread.entity.asExternalModel(
-                    quote = null
-                )
-            )
-        )
-
-        else -> list.drop(1) + list.last().let {
-            it.copy(
-                posts = it.posts + thread.entity.asExternalModel(quote = null)
-            )
-        }
-    }
-
     private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
         query: Query,
         currentNetworkCursor: NetworkCursor,
@@ -270,13 +248,6 @@ class OfflineTimelineRepository(
             }
         }
     }
-
-    private fun multipleEntitySaver() = MultipleEntitySaver(
-        postDao = postDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        transactionWriter = transactionWriter,
-    )
 
     private fun fetchFeed(
         query: TimelineQuery,
@@ -438,6 +409,35 @@ class OfflineTimelineRepository(
                     }
                 }
             }
+
+    private fun spinThread(
+        list: List<TimelineItem.Thread>,
+        thread: ThreadedPopulatedPostEntity
+    ) = when {
+        list.isEmpty()
+                || list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
+            id = thread.postId.id,
+            anchorPostIndex = 0,
+            posts = listOf(
+                thread.entity.asExternalModel(
+                    quote = null
+                )
+            )
+        )
+
+        else -> list.drop(1) + list.last().let {
+            it.copy(
+                posts = it.posts + thread.entity.asExternalModel(quote = null)
+            )
+        }
+    }
+
+    private fun multipleEntitySaver() = MultipleEntitySaver(
+        postDao = postDao,
+        embedDao = embedDao,
+        profileDao = profileDao,
+        transactionWriter = transactionWriter,
+    )
 }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
