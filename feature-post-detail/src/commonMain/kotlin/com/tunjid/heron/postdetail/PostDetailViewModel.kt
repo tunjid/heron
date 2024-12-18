@@ -57,7 +57,6 @@ class ActualPostDetailStateHolder(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), PostDetailStateHolder by scope.actionStateFlowMutator(
