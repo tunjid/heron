@@ -132,7 +132,7 @@ data class ThreadedPopulatedPostEntity(
     val entity: PopulatedPostEntity,
     val generation: Long,
     val postId: Id,
-    val parentPostId: Id,
+    val parentPostId: Id?,
     val rootPostId: Id?,
 )
 

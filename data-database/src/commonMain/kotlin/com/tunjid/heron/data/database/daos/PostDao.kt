@@ -138,7 +138,8 @@ interface PostDao {
             WITH RECURSIVE generation AS (
                 SELECT postId,
                     parentPostId,
-                    0 AS generation
+                    0 AS generation,
+                    postId AS rootPostId
                 FROM postThreads
                 WHERE postId = :postId
              
@@ -146,16 +147,18 @@ interface PostDao {
              
                 SELECT parent.postId,
                     parent.parentPostId,
-                    generation-1 AS generation
+                    generation-1 AS generation,
+                    rootPostId
                 FROM postThreads parent
                 JOIN generation g
                   ON g.parentPostId = parent.postId
             )
              
-            SELECT *
+            SELECT DISTINCT *
             FROM posts
             JOIN generation
             ON cid = generation.postId
+
             ORDER BY generation;
         """
     )
