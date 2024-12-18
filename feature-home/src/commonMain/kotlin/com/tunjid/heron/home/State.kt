@@ -20,15 +20,9 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.home.di.RoutePattern
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
-import com.tunjid.treenav.pop
-import com.tunjid.treenav.push
-import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -52,51 +46,25 @@ sealed class Action(val key: String) {
     }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
 
         data class ToProfile(
             val profileId: Id,
             val profileAvatar: Uri?,
             val avatarSharedElementKey: String?,
-        ) : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/profile/${profileId.id}",
-                        queryParams =
-                        if (currentRoute.id != RoutePattern) mapOf(
-                            "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                            "profileAvatar" to listOfNotNull(profileAvatar?.uri),
-                        )
-                        else mapOf(
-                            "referringRoute" to listOf(currentRoute.encodeToQueryParam()),
-                            "profileAvatar" to listOfNotNull(profileAvatar?.uri),
-                            "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                        )
-                    ).toRoute
-                )
-            }
-        }
+        ) : Navigate(), NavigationAction by NavigationAction.Common.ToProfile(
+            profileId = profileId,
+            profileAvatar = profileAvatar,
+            avatarSharedElementKey = avatarSharedElementKey,
+        )
 
         data class ToPost(
             val postUri: Uri,
             val postId: Id,
             val profileId: Id,
-        ) : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/profile/${profileId.id}/post/${postId.id}",
-                        queryParams = mapOf(
-                            "postUri" to listOf(postUri.uri),
-                        )
-                    ).toRoute
-                )
-            }
-        }
+        ) : Navigate(), NavigationAction by NavigationAction.Common.ToPost(
+            postUri = postUri,
+            postId = postId,
+            profileId = profileId
+        )
     }
 }

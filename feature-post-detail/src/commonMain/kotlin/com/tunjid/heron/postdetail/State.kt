@@ -18,6 +18,8 @@ package com.tunjid.heron.postdetail
 
 import com.tunjid.heron.data.core.models.PostThread
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -37,10 +39,26 @@ data class State(
 sealed class Action(val key: String) {
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
+
+        data class ToProfile(
+            val profileId: Id,
+            val profileAvatar: Uri?,
+            val avatarSharedElementKey: String?,
+        ) : Navigate(), NavigationAction by NavigationAction.Common.ToProfile(
+            profileId = profileId,
+            profileAvatar = profileAvatar,
+            avatarSharedElementKey = avatarSharedElementKey,
+        )
+
+        data class ToPost(
+            val postUri: Uri,
+            val postId: Id,
+            val profileId: Id,
+        ) : Navigate(), NavigationAction by NavigationAction.Common.ToPost(
+            postUri = postUri,
+            postId = postId,
+            profileId = profileId
+        )
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
+import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Clock
 
@@ -76,26 +77,26 @@ internal fun PostDetailScreen(
                         now = remember { Clock.System.now() },
                         item = item,
                         onPostClicked = { post ->
-//                            post.uri?.let {
-//                                actions(
-//                                    Action.Navigate.ToPost(
-//                                        profileId = post.author.did,
-//                                        postId = post.cid,
-//                                        postUri = it,
-//                                    )
-//                                )
-//                            }
+                            post.uri?.let {
+                                actions(
+                                    Action.Navigate.ToPost(
+                                        profileId = post.author.did,
+                                        postId = post.cid,
+                                        postUri = it,
+                                    )
+                                )
+                            }
                         },
                         onProfileClicked = { profile ->
-//                            actions(
-//                                Action.Navigate.ToProfile(
-//                                    profileId = profile.did,
-//                                    profileAvatar = profile.avatar,
-//                                    avatarSharedElementKey = this?.avatarSharedElementKey(
-//                                        item.sourceId,
-//                                    )
-//                                )
-//                            )
+                            actions(
+                                Action.Navigate.ToProfile(
+                                    profileId = profile.did,
+                                    profileAvatar = profile.avatar,
+                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                        item.sourceId,
+                                    )
+                                )
+                            )
                         },
                         onImageClicked = {},
                         onReplyToPost = {},

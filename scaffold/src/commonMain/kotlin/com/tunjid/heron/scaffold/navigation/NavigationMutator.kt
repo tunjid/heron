@@ -26,6 +26,8 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -36,8 +38,11 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
+import com.tunjid.treenav.pop
+import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.routeString
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.auth
 import heron.scaffold.generated.resources.home
@@ -69,6 +74,56 @@ typealias NavigationMutation = NavigationContext.() -> MultiStackNav
  */
 interface NavigationAction {
     val navigationMutation: NavigationMutation
+
+    sealed class Common : NavigationAction {
+        data object Pop : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.pop()
+            }
+        }
+
+        data class ToProfile(
+            val profileId: Id,
+
+            val profileAvatar: Uri?,
+            val avatarSharedElementKey: String?,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                routeString(
+                    path = "/profile/${profileId.id}",
+                    queryParams = mapOf(
+                        "profileAvatar" to listOfNotNull(profileAvatar?.uri),
+                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        "referringRoute" to currentRoute
+                            .routeParams
+                            .queryParams
+                            .getOrElse("referringRoute", ::emptyList)
+                    )
+                )
+                    .toRoute
+                    .takeIf { it.id != currentRoute.id }
+                    ?.let(navState::push)
+                    ?: navState
+            }
+        }
+
+        data class ToPost(
+            val postUri: Uri,
+            val postId: Id,
+            val profileId: Id,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/profile/${profileId.id}/post/${postId.id}",
+                        queryParams = mapOf(
+                            "postUri" to listOf(postUri.uri),
+                        )
+                    ).toRoute
+                )
+            }
+        }
+    }
 }
 
 @Inject
