@@ -23,6 +23,7 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.postUri
+import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -61,6 +62,7 @@ class ActualPostDetailStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), PostDetailStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        sharedElementPrefix = route.sharedElementPrefix,
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(

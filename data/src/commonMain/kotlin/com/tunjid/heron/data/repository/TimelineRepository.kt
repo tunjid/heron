@@ -207,7 +207,6 @@ class OfflineTimelineRepository(
                         } + TimelineItem.Single(
                             id = "",
                             post = populatedEntity.asExternalModel(quote = null),
-                            sourceId = "",
                         ) + replies.fold(mutableListOf<TimelineItem.Thread>()) { list, reply ->
                             loom(list, reply)
                             list
@@ -225,7 +224,6 @@ class OfflineTimelineRepository(
                     || list.last().posts.first().cid != thread.rootPostId -> list.add(
                 TimelineItem.Thread(
                     id = thread.postId.id,
-                    sourceId = "",
                     anchorPostIndex = 0,
                     posts = listOf(
                         thread.entity.asExternalModel(
@@ -397,7 +395,6 @@ class OfflineTimelineRepository(
                         when {
                             replyRoot != null && replyParent != null -> TimelineItem.Thread(
                                 id = entity.id,
-                                sourceId = query.sourceId,
                                 anchorPostIndex = 2,
                                 posts = listOf(
                                     replyRoot.asExternalModel(
@@ -420,7 +417,6 @@ class OfflineTimelineRepository(
 
                             repostedBy != null -> TimelineItem.Repost(
                                 id = entity.id,
-                                sourceId = query.sourceId,
                                 post = mainPost.asExternalModel(
                                     quote = idsToEmbeddedPosts[entity.postId]
                                         ?.entity
@@ -432,7 +428,6 @@ class OfflineTimelineRepository(
 
                             entity.isPinned -> TimelineItem.Pinned(
                                 id = entity.id,
-                                sourceId = query.sourceId,
                                 post = mainPost.asExternalModel(
                                     quote = idsToEmbeddedPosts[entity.postId]
                                         ?.entity
@@ -442,7 +437,6 @@ class OfflineTimelineRepository(
 
                             else -> TimelineItem.Single(
                                 id = entity.id,
-                                sourceId = query.sourceId,
                                 post = mainPost.asExternalModel(
                                     quote = idsToEmbeddedPosts[entity.postId]
                                         ?.entity

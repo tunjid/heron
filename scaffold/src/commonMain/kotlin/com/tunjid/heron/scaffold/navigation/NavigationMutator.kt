@@ -111,6 +111,7 @@ interface NavigationAction {
             val postUri: Uri,
             val postId: Id,
             val profileId: Id,
+            val sharedElementPrefix: String,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
@@ -118,6 +119,7 @@ interface NavigationAction {
                         path = "/profile/${profileId.id}/post/${postId.id}",
                         queryParams = mapOf(
                             "postUri" to listOf(postUri.uri),
+                            "sharedElementPrefix" to listOf(sharedElementPrefix),
                         )
                     ).toRoute
                 )

@@ -70,6 +70,9 @@ private fun createRoute(
 internal val Route.postUri
     get() = Uri(routeParams.queryParams.getValue("postUri").first())
 
+internal val Route.sharedElementPrefix
+    get() = routeParams.queryParams.getValue("sharedElementPrefix").first()
+
 @Component
 abstract class PostDetailNavigationComponent {
 

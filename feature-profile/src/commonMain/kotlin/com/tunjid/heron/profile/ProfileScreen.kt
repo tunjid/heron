@@ -72,12 +72,14 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.feed.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -128,7 +130,7 @@ internal fun ProfileScreen(
                 profileRelationship = state.profileRelationship,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onBackPressed = {
-                    actions(Action.Navigate.Pop)
+                    actions(Action.Navigate.DelegateTo(NavigationAction.Common.Pop))
                 }
             )
         },
@@ -159,25 +161,31 @@ internal fun ProfileScreen(
                                     .animateItem(),
                                 movableSharedElementScope = movableSharedElementScope,
                                 now = remember { Clock.System.now() },
+                                sharedElementPrefix = TimelineQuery.Profile.toString(),
                                 item = item,
                                 onPostClicked = { post ->
                                     post.uri?.let {
                                         actions(
-                                            Action.Navigate.ToPost(
-                                                profileId = post.author.did,
-                                                postId = post.cid,
-                                                postUri = it,
+                                            Action.Navigate.DelegateTo(
+                                                NavigationAction.Common.ToPost(
+                                                    sharedElementPrefix = TimelineQuery.Profile.toString(),
+                                                    profileId = post.author.did,
+                                                    postId = post.cid,
+                                                    postUri = it,
+                                                )
                                             )
                                         )
                                     }
                                 },
                                 onProfileClicked = { profile ->
                                     actions(
-                                        Action.Navigate.ToProfile(
-                                            profileId = profile.did,
-                                            profileAvatar = profile.avatar,
-                                            avatarSharedElementKey = this?.avatarSharedElementKey(
-                                                item.sourceId,
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToProfile(
+                                                profileId = profile.did,
+                                                profileAvatar = profile.avatar,
+                                                avatarSharedElementKey = this?.avatarSharedElementKey(
+                                                    prefix = TimelineQuery.Profile.toString(),
+                                                )
                                             )
                                         )
                                     )

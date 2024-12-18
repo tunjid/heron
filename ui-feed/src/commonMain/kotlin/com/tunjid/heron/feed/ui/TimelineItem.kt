@@ -45,6 +45,7 @@ fun TimelineItem(
     movableSharedElementScope: MovableSharedElementScope,
     now: Instant,
     item: TimelineItem,
+    sharedElementPrefix: String,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: Post?.(Profile) -> Unit,
     onImageClicked: (Uri) -> Unit,
@@ -77,6 +78,7 @@ fun TimelineItem(
                 movableSharedElementScope = movableSharedElementScope,
                 item = item,
                 now = now,
+                sharedElementPrefix = sharedElementPrefix,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
                 onImageClicked = onImageClicked,
@@ -88,7 +90,7 @@ fun TimelineItem(
                 avatarShape =
                 if (item is TimelineItem.Thread) ReplyThreadEndImageShape
                 else ImageShape.Circle,
-                avatarSharedElementKey = item.post.avatarSharedElementKey(item.sourceId),
+                avatarSharedElementKey = item.post.avatarSharedElementKey(sharedElementPrefix),
                 now = now,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -104,6 +106,7 @@ fun TimelineItem(
 private fun ThreadedPost(
     movableSharedElementScope: MovableSharedElementScope,
     item: TimelineItem.Thread,
+    sharedElementPrefix: String,
     now: Instant,
     onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
@@ -122,7 +125,7 @@ private fun ThreadedPost(
                         item.posts.lastIndex -> ReplyThreadEndImageShape
                         else -> ReplyThreadImageShape
                     },
-                    avatarSharedElementKey = post.avatarSharedElementKey(item.sourceId),
+                    avatarSharedElementKey = post.avatarSharedElementKey(sharedElementPrefix),
                     now = now,
                     createdAt = post.createdAt,
                     onProfileClicked = onProfileClicked,
@@ -277,5 +280,5 @@ private val ReplyThreadEndImageShape =
 
 
 fun Post.avatarSharedElementKey(
-    sourceId: String,
-): String = "$sourceId-${cid.id}-${author.did.id}"
+    prefix: String,
+): String = "$prefix-${cid.id}-${author.did.id}"

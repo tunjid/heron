@@ -6,7 +6,6 @@ sealed class TimelineItem {
 
     abstract val id: String
     abstract val post: Post
-    abstract val sourceId: String
 
     val indexedAt
         get() = when (this) {
@@ -20,20 +19,17 @@ sealed class TimelineItem {
     data class Pinned(
         override val id: String,
         override val post: Post,
-        override val sourceId: String,
     ) : TimelineItem()
 
     data class Repost(
         override val id: String,
         override val post: Post,
-        override val sourceId: String,
         val by: Profile,
         val at: Instant,
     ) : TimelineItem()
 
     data class Thread(
         override val id: String,
-        override val sourceId: String,
         val anchorPostIndex: Int,
         val posts: List<Post>,
     ) : TimelineItem() {
@@ -44,6 +40,5 @@ sealed class TimelineItem {
     data class Single(
         override val id: String,
         override val post: Post,
-        override val sourceId: String,
     ) : TimelineItem()
 }
