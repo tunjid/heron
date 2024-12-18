@@ -210,49 +210,84 @@ internal fun MultipleEntitySaver.add(
         viewingProfileId = viewingProfileId,
         postView = threadViewPost.post,
     )
-
-    generateSequence(
-        threadViewPost.parent as? ThreadViewPostParentUnion.ThreadViewPost
-    ) { parent ->
-        parent.value.parent as? ThreadViewPostParentUnion.ThreadViewPost
+    generateSequence(threadViewPost) {
+        when (val parent = it.parent) {
+            is ThreadViewPostParentUnion.ThreadViewPost -> parent.value
+            // TODO: Deal with deleted, blocked or removed posts
+            is ThreadViewPostParentUnion.BlockedPost,
+            is ThreadViewPostParentUnion.NotFoundPost,
+            is ThreadViewPostParentUnion.Unknown,
+            null -> null
+        }
     }
         .windowed(
             size = 2,
             step = 1,
         )
         .forEach { window ->
-            if (window.size > 1) add(
+            if (window.size == 1) addThreadParent(
                 viewingProfileId = viewingProfileId,
-                childThreadView = window[0].value,
-                parentThreadView = window[1].value,
+                childPost = null,
+                parentPost = window[0],
             )
-        }
-
-    threadViewPost.replies
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
-            add(
+            else addThreadParent(
                 viewingProfileId = viewingProfileId,
-                parentThreadView = threadViewPost,
-                childThreadView = it.value,
+                childPost = window[0],
+                parentPost = window[1],
             )
         }
 }
 
-
-private fun MultipleEntitySaver.add(
+private fun MultipleEntitySaver.addThreadParent(
     viewingProfileId: Id,
-    childThreadView: ThreadViewPost,
-    parentThreadView: ThreadViewPost,
+    parentPost: ThreadViewPost,
+    childPost: ThreadViewPost?,
 ) {
     add(
         viewingProfileId = viewingProfileId,
-        threadViewPost = parentThreadView,
+        postView = parentPost.post,
+    )
+    if (childPost is ThreadViewPost) add(
+        PostThreadEntity(
+            postId = childPost.post.cid.cid.let(::Id),
+            parentPostId = parentPost.post.cid.cid.let(::Id),
+        )
+    )
+    parentPost.replies
+        // TODO: Deal with deleted, blocked or removed posts
+        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        .forEach {
+            addThreadReply(
+                viewingProfileId = viewingProfileId,
+                parent = parentPost,
+                reply = it.value,
+            )
+        }
+}
+
+private fun MultipleEntitySaver.addThreadReply(
+    viewingProfileId: Id,
+    reply: ThreadViewPost,
+    parent: ThreadViewPost,
+) {
+    add(
+        viewingProfileId = viewingProfileId,
+        postView = reply.post,
     )
     add(
         PostThreadEntity(
-            postId = childThreadView.post.cid.cid.let(::Id),
-            parentPostId = parentThreadView.post.cid.cid.let(::Id),
+            postId = reply.post.cid.cid.let(::Id),
+            parentPostId = parent.post.cid.cid.let(::Id),
         )
     )
+    reply.replies
+        // TODO: Deal with deleted, blocked or removed posts
+        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        .forEach {
+            addThreadReply(
+                viewingProfileId = viewingProfileId,
+                parent = reply,
+                reply = it.value,
+            )
+        }
 }

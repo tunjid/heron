@@ -7,12 +7,13 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.PostThreadAndGenerationEntity
+import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -68,12 +69,12 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            WHERE uri = :postUri
+            WHERE uri IN (:postUris)
         """
     )
-    fun post(
-        postUri: String,
-    ): Flow<PostEntity?>
+    fun postsByUri(
+        postUris: Set<Uri>,
+    ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
     @Query(
@@ -98,40 +99,38 @@ interface PostDao {
         entities: List<PostThreadEntity>,
     )
 
-//    @Query(
-//        """
-//            WITH RECURSIVE generation AS (
-//                SELECT
-//                     parentPostId,
-//                     0 AS generation
-//                FROM postThreads
-//                WHERE parentPostId IS NULL
-//
-//            UNION ALL
-//
-//                SELECT postId,
-//                       parentPostId,
-//                     generation+1 AS generation
-//                FROM postThreads childPost
-//                JOIN generation g
-//                  ON g.id = childPost.parentPostId
-//
-//            )
-//
-//            SELECT
-//
-//                    g.generation,
-//                    parentPost.rootPostId,
-//                    parentPost.parentPostId,
-//                    parentPost.postId
-//            FROM generation g
-//            JOIN postThreads parentPost
-//            ON g.parentPostId = parentPost.postId
-//            ORDER BY generation;
-//        """
-//    )
-//    fun p(): Flow<Wrapped>
+    @Transaction
+    @Query(
+        """
+            WITH RECURSIVE generation AS (
+                SELECT postId,
+                    parentPostId,
+                    0 AS generation
+                FROM postThreads
+                WHERE parentPostId = :postId
+             
+            UNION ALL
+             
+                SELECT reply.postId,
+                    reply.parentPostId,
+                    generation+1 AS generation
+                FROM postThreads reply
+                JOIN generation g
+                  ON g.postId = reply.parentPostId
+            )
+             
+            SELECT postId,
+                 parentPostId,
+                 generation
+            FROM generation
+            ORDER BY generation;
+        """
+    )
+    fun postReplies(
+        postId: String,
+    ): Flow<List<PostThreadAndGenerationEntity>>
 
+    @Transaction
     @Query(
         """
             WITH RECURSIVE generation AS (
@@ -143,21 +142,23 @@ interface PostDao {
              
             UNION ALL
              
-                SELECT child.postId,
-                    child.parentPostId,
-                    generation+1 AS generation
-                FROM postThreads child
+                SELECT parent.postId,
+                    parent.parentPostId,
+                    generation-1 AS generation
+                FROM postThreads parent
                 JOIN generation g
-                  ON g.postId = child.parentPostId
+                  ON g.parentPostId = parent.postId
             )
              
             SELECT postId,
                  parentPostId,
                  generation
-            FROM generation;
+            FROM generation
+            ORDER BY generation;
         """
     )
-    fun postThreads(
+    fun postParents(
         postId: String,
-    ): Flow<List<PostThreadAndGenerationEntity>?>
+    ): Flow<List<PostThreadAndGenerationEntity>>
+
 }
