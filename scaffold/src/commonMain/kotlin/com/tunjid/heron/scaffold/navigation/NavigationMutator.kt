@@ -84,7 +84,6 @@ interface NavigationAction {
 
         data class ToProfile(
             val profileId: Id,
-
             val profileAvatar: Uri?,
             val avatarSharedElementKey: String?,
         ) : Common() {
