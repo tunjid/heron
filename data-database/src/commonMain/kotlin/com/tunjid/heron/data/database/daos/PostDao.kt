@@ -125,6 +125,7 @@ interface PostDao {
             FROM posts
             JOIN generation
             ON cid = generation.postId
+            WHERE cid != :postId
             ORDER BY rootPostId, generation;
         """
     )
@@ -158,6 +159,7 @@ interface PostDao {
             FROM posts
             JOIN generation
             ON cid = generation.postId
+            WHERE cid != :postId
 
             ORDER BY generation;
         """

@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -193,19 +194,20 @@ class OfflineTimelineRepository(
             },
             postDao.postsByUri(postUris = setOf(postUri))
                 .mapNotNull { it.firstOrNull() }
-                .distinctUntilChangedBy { it.entity.cid.id }
+                .take(1)
                 .flatMapLatest { populatedEntity ->
                     combine(
                         postDao.postParents(postId = populatedEntity.entity.cid.id),
+                        postDao.posts(setOf(populatedEntity.entity.cid)),
                         postDao.postReplies(postId = populatedEntity.entity.cid.id)
-                    ) { parents, replies ->
+                    ) { parents, post, replies ->
 
                         parents.fold(
                             initial = emptyList(),
                             operation = ::spinThread,
                         ) + TimelineItem.Single(
-                            id = "",
-                            post = populatedEntity.asExternalModel(quote = null),
+                            id = post.first().entity.cid.id,
+                            post = post.first().asExternalModel(quote = null),
                         ) + replies.fold(
                             initial = emptyList(),
                             operation = ::spinThread,
