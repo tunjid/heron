@@ -17,11 +17,14 @@
 package com.tunjid.heron.postdetail
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +49,9 @@ internal fun PostDetailScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
+    val gridState = rememberLazyStaggeredGridState(
+        initialFirstVisibleItemIndex = 1,
+    )
     val items by rememberUpdatedState(state.items)
 
     Surface(
@@ -105,6 +110,12 @@ internal fun PostDetailScreen(
                     )
                 }
             )
+            // Allow for scrolling to the post selected even if others came before.
+            item(
+                span = StaggeredGridItemSpan.FullLine
+            ) {
+                Spacer(Modifier.height(800.dp))
+            }
         }
     }
 }
