@@ -120,7 +120,9 @@ private fun ThreadedPost(
                     movableSharedElementScope = movableSharedElementScope,
                     post = post,
                     embed = post.embed,
-                    avatarShape = when (index) {
+                    avatarShape =
+                    if (item.posts.size == 1) ReplyThreadImageShape
+                    else when (index) {
                         0 -> ReplyThreadStartImageShape
                         item.posts.lastIndex -> ReplyThreadEndImageShape
                         else -> ReplyThreadImageShape
