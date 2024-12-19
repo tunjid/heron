@@ -68,7 +68,7 @@ class ActualPostDetailStateHolder(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         postThreadsMutations(
-            postUri = route.postUri.also { println("URI: $it") },
+            postUri = route.postUri,
             timelineRepository = timelineRepository,
         )
     ),
