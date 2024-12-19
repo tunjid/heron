@@ -33,7 +33,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -77,7 +76,7 @@ internal fun PostDetailScreen(
                             .animateItem(),
                         movableSharedElementScope = movableSharedElementScope,
                         now = remember { Clock.System.now() },
-                        sharedElementPrefix = TimelineQuery.Profile.toString(),
+                        sharedElementPrefix = state.sharedElementPrefix,
                         item = item,
                         onPostClicked = { post ->
                             actions(
