@@ -415,6 +415,7 @@ class OfflineTimelineRepository(
         thread: ThreadedPopulatedPostEntity
     ) = when {
         list.isEmpty()
+                || thread.generation <= 1L
                 || list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
             id = thread.postId.id,
             anchorPostIndex = 0,
@@ -425,7 +426,7 @@ class OfflineTimelineRepository(
             )
         )
 
-        else -> list.drop(1) + list.last().let {
+        else -> list.dropLast(1) + list.last().let {
             it.copy(
                 posts = it.posts + thread.entity.asExternalModel(quote = null)
             )
