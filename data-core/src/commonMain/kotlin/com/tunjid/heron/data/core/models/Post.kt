@@ -19,8 +19,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
-
+@Serializable
 data class Post(
     val cid: Id,
     val uri: Uri?,
@@ -37,13 +38,15 @@ data class Post(
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
-) {
+): ByteSerializable {
+    @Serializable
     data class Record(
         val text: String,
         val createdAt: Instant,
         val tags: List<String>,
     )
 
+    @Serializable
     data class ViewerStats(
         val liked: Boolean,
         val reposted: Boolean,
@@ -53,10 +56,6 @@ data class Post(
         val pinned: Boolean,
     )
 }
-
-data class PostThread(
-    val posts: List<Post>
-)
 
 //enum class LinkTarget {
 //    UserHandleMention,

@@ -164,25 +164,20 @@ internal fun ProfileScreen(
                                 sharedElementPrefix = TimelineQuery.Profile.toString(),
                                 item = item,
                                 onPostClicked = { post ->
-                                    post.uri?.let {
-                                        actions(
-                                            Action.Navigate.DelegateTo(
-                                                NavigationAction.Common.ToPost(
-                                                    sharedElementPrefix = TimelineQuery.Profile.toString(),
-                                                    profileId = post.author.did,
-                                                    postId = post.cid,
-                                                    postUri = it,
-                                                )
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToPost(
+                                                sharedElementPrefix = TimelineQuery.Profile.toString(),
+                                                post = post,
                                             )
                                         )
-                                    }
+                                    )
                                 },
                                 onProfileClicked = { profile ->
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToProfile(
-                                                profileId = profile.did,
-                                                profileAvatar = profile.avatar,
+                                                profile = profile,
                                                 avatarSharedElementKey = this?.avatarSharedElementKey(
                                                     prefix = TimelineQuery.Profile.toString(),
                                                 )

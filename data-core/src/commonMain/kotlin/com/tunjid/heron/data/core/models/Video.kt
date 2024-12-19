@@ -18,7 +18,9 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Video(
     val cid: Id,
     val playlist: Uri,

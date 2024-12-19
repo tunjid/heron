@@ -34,6 +34,7 @@ kotlin {
                 api(project(":di"))
 
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)
             }
         }

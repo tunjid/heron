@@ -26,8 +26,9 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -83,15 +84,14 @@ interface NavigationAction {
         }
 
         data class ToProfile(
-            val profileId: Id,
-            val profileAvatar: Uri?,
+            val profile: Profile,
             val avatarSharedElementKey: String?,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 routeString(
-                    path = "/profile/${profileId.id}",
+                    path = "/profile/${profile.did.id}",
                     queryParams = mapOf(
-                        "profileAvatar" to listOfNotNull(profileAvatar?.uri),
+                        "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
                         "referringRoute" to currentRoute
                             .routeParams
@@ -107,21 +107,23 @@ interface NavigationAction {
         }
 
         data class ToPost(
-            val postUri: Uri,
-            val postId: Id,
-            val profileId: Id,
+            val post: Post,
             val sharedElementPrefix: String,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/profile/${profileId.id}/post/${postId.id}",
-                        queryParams = mapOf(
-                            "postUri" to listOf(postUri.uri),
-                            "sharedElementPrefix" to listOf(sharedElementPrefix),
-                        )
-                    ).toRoute
-                )
+                when (val postUri = post.uri) {
+                    null -> navState
+                    else -> navState.push(
+                        routeString(
+                            path = "/post/${post.cid.id}",
+                            queryParams = mapOf(
+                                "post" to listOf(post.toUrlEncodedBase64()),
+                                "postUri" to listOf(postUri.uri),
+                                "sharedElementPrefix" to listOf(sharedElementPrefix),
+                            )
+                        ).toRoute
+                    )
+                }
             }
         }
     }
