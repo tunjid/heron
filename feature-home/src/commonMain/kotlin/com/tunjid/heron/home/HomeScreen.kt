@@ -84,7 +84,7 @@ internal fun HomeScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
-                                        sharedElementPrefix = TimelineQuery.Profile.toString(),
+                                        sharedElementPrefix = TimelineQuery.Home.toString(),
                                         post = post,
                                     )
                                 )
