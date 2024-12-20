@@ -134,6 +134,7 @@ data class ThreadedPopulatedPostEntity(
     val postId: Id,
     val parentPostId: Id?,
     val rootPostId: Id?,
+    val sort1: Long?,
 )
 
 fun PopulatedPostEntity.asExternalModel(

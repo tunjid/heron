@@ -72,9 +72,9 @@ interface PostDao {
 	        WHERE uri IN (:postUris)
         """
     )
-    fun postsByUri(
+    fun postEntitiesByUri(
         postUris: Set<Uri>,
-    ): Flow<List<PopulatedPostEntity>>
+    ): Flow<List<PostEntity>>
 
     @Transaction
     @Query(
@@ -102,81 +102,13 @@ interface PostDao {
     @Transaction
     @Query(
         """
-            WITH RECURSIVE generation AS (
-                SELECT postId,
-                    parentPostId,
-                    0 AS generation,
-                    postId AS rootPostId
-                FROM postThreads
-                WHERE parentPostId = :postId
-             
-            UNION ALL
-             
-                SELECT reply.postId,
-                    reply.parentPostId,
-                    generation+1 AS generation,
-                    rootPostId
-                FROM postThreads reply
-                JOIN generation g
-                  ON g.postId = reply.parentPostId
-            )
-             
-            SELECT *
-            FROM posts
-            JOIN generation
-            ON cid = generation.postId
-            WHERE cid != :postId
-            ORDER BY rootPostId, generation;
-        """
-    )
-    fun postReplies(
-        postId: String,
-    ): Flow<List<ThreadedPopulatedPostEntity>>
-
-    @Transaction
-    @Query(
-        """
-            WITH RECURSIVE generation AS (
-                SELECT postId,
-                    parentPostId,
-                    0 AS generation,
-                    postId AS rootPostId
-                FROM postThreads
-                WHERE postId = :postId
-             
-            UNION ALL
-             
-                SELECT parent.postId,
-                    parent.parentPostId,
-                    generation-1 AS generation,
-                    rootPostId
-                FROM postThreads parent
-                JOIN generation g
-                  ON g.parentPostId = parent.postId
-            )
-             
-            SELECT DISTINCT *
-            FROM posts
-            JOIN generation
-            ON cid = generation.postId
-            WHERE cid != :postId
-
-            ORDER BY generation;
-        """
-    )
-    fun postParents(
-        postId: String,
-    ): Flow<List<ThreadedPopulatedPostEntity>>
-
-    @Transaction
-    @Query(
-        """
             WITH RECURSIVE 
             parentGeneration AS (
                 SELECT postId,
                     parentPostId,
                     -1 AS generation,
-                    postId AS rootPostId
+                    postId AS rootPostId,
+                    -1 AS sort1
                 FROM postThreads
                 WHERE postId = :postId
             ),
@@ -186,7 +118,8 @@ interface PostDao {
                 SELECT parent.postId,
                     parent.parentPostId,
                     generation-1 AS generation,
-                    rootPostId
+                    rootPostId,
+                    sort1-1 AS sort1
                 FROM postThreads parent
                 JOIN parentGeneration g
                   ON parent.postId = g.parentPostId 
@@ -195,8 +128,11 @@ interface PostDao {
                 SELECT postId,
                     parentPostId,
                     1 AS generation,
-                    postId AS rootPostId
+                    postId AS rootPostId,
+                    posts.createdAt AS sort1
                 FROM postThreads
+                INNER JOIN posts
+                ON postId = posts.cid
                 WHERE parentPostId = :postId
             ),
             replies AS (
@@ -205,7 +141,8 @@ interface PostDao {
                 SELECT reply.postId,
                     reply.parentPostId,
                     generation+1 AS generation,
-                    rootPostId
+                    rootPostId,
+                    sort1 AS sort1
                 FROM postThreads reply
                 JOIN replyGeneration g
                   ON reply.parentPostId = g.postId
@@ -222,7 +159,12 @@ interface PostDao {
             UNION
             
             SELECT * FROM(
-                SELECT posts.*, posts.cid, postThreads.parentPostId, 0, NULL
+                SELECT posts.*,
+                posts.cid,
+                postThreads.parentPostId,
+                0,
+                NULL,
+                0 AS sort1
                 FROM posts
                 INNER JOIN postThreads
                 WHERE cid == :postId
@@ -239,7 +181,7 @@ interface PostDao {
                 WHERE cid != :postId
             )
             
-            ORDER BY generation
+            ORDER BY sort1, generation
         """
     )
     fun postThread(
