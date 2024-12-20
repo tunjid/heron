@@ -139,7 +139,7 @@ private fun ThreadedPost(
                     onImageClicked = onImageClicked,
                     onReplyToPost = onReplyToPost,
                     timeline = {
-                        if (index != item.posts.lastIndex) Timeline(
+                        if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                             Modifier
                                 .matchParentSize()
                                 .padding(top = 52.dp)
@@ -274,7 +274,7 @@ fun TimelineCard(
     onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit
 ) {
-    if (item is TimelineItem.Thread && item.generation == 0L) Surface(
+    if (item.isThreadedAncestorOrAnchor) Surface(
         modifier = modifier,
         onClick = { onPostClicked(item.post) },
         content = { content() },
@@ -314,3 +314,15 @@ private val ReplyThreadEndImageShape =
 fun Post.avatarSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-${author.did.id}"
+
+private val TimelineItem.isThreadedAncestor
+    get() = this is TimelineItem.Thread && when (val gen = generation) {
+        null -> false
+        else -> gen <= -1
+    }
+
+private val TimelineItem.isThreadedAnchor
+    get() = this is TimelineItem.Thread && generation == 0L
+
+private val TimelineItem.isThreadedAncestorOrAnchor
+    get() = isThreadedAncestor || isThreadedAnchor
