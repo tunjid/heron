@@ -94,6 +94,7 @@ fun TimelineItem(
                 else ImageShape.Circle,
                 avatarSharedElementKey = item.post.avatarSharedElementKey(sharedElementPrefix),
                 now = now,
+                isAnchoredInTimeline = false,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
@@ -130,6 +131,7 @@ private fun ThreadedPost(
                         else -> ReplyThreadImageShape
                     },
                     avatarSharedElementKey = post.avatarSharedElementKey(sharedElementPrefix),
+                    isAnchoredInTimeline = item.generation == 0L,
                     now = now,
                     createdAt = post.createdAt,
                     onProfileClicked = onProfileClicked,
@@ -160,6 +162,7 @@ private fun SinglePost(
     now: Instant,
     post: Post,
     embed: Embed?,
+    isAnchoredInTimeline: Boolean,
     avatarShape: ImageShape,
     avatarSharedElementKey: String,
     createdAt: Instant,
@@ -228,6 +231,12 @@ private fun SinglePost(
                     quote = post.quote,
                     onOpenImage = onImageClicked,
                     onOpenPost = onPostClicked
+                )
+                if (isAnchoredInTimeline) PostDate(
+                    modifier = Modifier.padding(
+                        vertical = 8.dp,
+                    ),
+                    time = post.createdAt,
                 )
                 PostActions(
                     replyCount = format(post.replyCount),

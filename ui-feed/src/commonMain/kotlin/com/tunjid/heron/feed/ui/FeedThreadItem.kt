@@ -66,9 +66,9 @@ fun FeedThreadItem(
                         onOpenImage = onOpenImage,
                         onOpenPost = onOpenPost,
                     )
-                    post.record?.let {
-                        PostDate(it.createdAt)
-                    }
+//                    post.record?.let {
+//                        PostDate(it.createdAt)
+//                    }
                 }
             }
         }
