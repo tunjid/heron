@@ -236,6 +236,17 @@ internal fun MultipleEntitySaver.add(
                 parentPost = window[1],
             )
         }
+
+    threadViewPost.replies
+        // TODO: Handle blocks and deletions
+        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        .forEach {
+            addThreadReply(
+                viewingProfileId = viewingProfileId,
+                parent = threadViewPost,
+                reply = it.value,
+            )
+        }
 }
 
 private fun MultipleEntitySaver.addThreadParent(
