@@ -30,6 +30,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
@@ -53,7 +55,7 @@ import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/profile/{profileId}/post/{postId}"
+private const val RoutePattern = "/post/{postId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -61,11 +63,8 @@ private fun createRoute(
     params = routeParams,
 )
 
-//internal val Route.profileId
-//    get() = Id(routeParams.pathArgs.getValue("profileId"))
-//
-//internal val Route.postId
-//    get() = Id(routeParams.pathArgs.getValue("postId"))
+internal val Route.post
+    get(): Post? = routeParams.queryParams["post"]?.firstOrNull()?.fromBase64EncodedUrl()
 
 internal val Route.postUri
     get() = Uri(routeParams.queryParams.getValue("postUri").first())

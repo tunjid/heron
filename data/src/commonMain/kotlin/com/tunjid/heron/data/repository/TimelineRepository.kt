@@ -7,8 +7,6 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import com.tunjid.heron.data.utilities.MultipleEntitySaver
-import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -31,14 +29,17 @@ import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.utilities.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.utilities.runCatchingCoroutines
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -191,26 +192,17 @@ class OfflineTimelineRepository(
 
                 }
             },
-            postDao.postsByUri(postUris = setOf(postUri))
+            postDao.postEntitiesByUri(postUris = setOf(postUri))
                 .mapNotNull { it.firstOrNull() }
-                .distinctUntilChangedBy { it.entity.cid.id }
-                .flatMapLatest { populatedEntity ->
-                    combine(
-                        postDao.postParents(postId = populatedEntity.entity.cid.id),
-                        postDao.postReplies(postId = populatedEntity.entity.cid.id)
-                    ) { parents, replies ->
-
-                        parents.fold(
-                            initial = emptyList(),
-                            operation = ::spinThread,
-                        ) + TimelineItem.Single(
-                            id = "",
-                            post = populatedEntity.asExternalModel(quote = null),
-                        ) + replies.fold(
-                            initial = emptyList(),
-                            operation = ::spinThread,
-                        )
-                    }
+                .take(1)
+                .flatMapLatest { postEntity ->
+                    postDao.postThread(postId = postEntity.cid.id)
+                        .map {
+                            it.fold(
+                                initial = emptyList(),
+                                operation = ::spinThread,
+                            )
+                        }
                 },
         )
 
@@ -357,6 +349,7 @@ class OfflineTimelineRepository(
                         when {
                             replyRoot != null && replyParent != null -> TimelineItem.Thread(
                                 id = entity.id,
+                                generation = null,
                                 anchorPostIndex = 2,
                                 posts = listOf(
                                     replyRoot.asExternalModel(
@@ -414,9 +407,9 @@ class OfflineTimelineRepository(
         list: List<TimelineItem.Thread>,
         thread: ThreadedPopulatedPostEntity
     ) = when {
-        list.isEmpty()
-                || list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
+        list.isEmpty() || thread.generation == 0L -> list + TimelineItem.Thread(
             id = thread.postId.id,
+            generation = thread.generation,
             anchorPostIndex = 0,
             posts = listOf(
                 thread.entity.asExternalModel(
@@ -425,7 +418,24 @@ class OfflineTimelineRepository(
             )
         )
 
-        else -> list.drop(1) + list.last().let {
+        thread.generation <= -1L -> list.dropLast(1) + list.last().let {
+            it.copy(
+                posts = it.posts + thread.entity.asExternalModel(quote = null)
+            )
+        }
+
+        list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
+            id = thread.postId.id,
+            generation = thread.generation,
+            anchorPostIndex = 0,
+            posts = listOf(
+                thread.entity.asExternalModel(
+                    quote = null
+                )
+            )
+        )
+
+        else -> list.dropLast(1) + list.last().let {
             it.copy(
                 posts = it.posts + thread.entity.asExternalModel(quote = null)
             )

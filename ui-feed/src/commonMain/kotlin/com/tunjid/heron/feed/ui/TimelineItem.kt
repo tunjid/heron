@@ -18,10 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -51,15 +53,18 @@ fun TimelineItem(
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
 ) {
-    ElevatedCard(
+    TimelineCard(
+        item = item,
         modifier = modifier,
-        onClick = { onPostClicked(item.post) }
+        onPostClicked = onPostClicked,
     ) {
         Column(
             modifier = Modifier
                 .padding(
-                    top = 16.dp,
-                    bottom = 8.dp,
+                    top = if (item.isThreadedAnchor) 0.dp
+                    else 16.dp,
+                    bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
+                    else 8.dp,
                     start = 16.dp,
                     end = 16.dp
                 ),
@@ -92,6 +97,7 @@ fun TimelineItem(
                 else ImageShape.Circle,
                 avatarSharedElementKey = item.post.avatarSharedElementKey(sharedElementPrefix),
                 now = now,
+                isAnchoredInTimeline = false,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
@@ -120,12 +126,22 @@ private fun ThreadedPost(
                     movableSharedElementScope = movableSharedElementScope,
                     post = post,
                     embed = post.embed,
-                    avatarShape = when (index) {
-                        0 -> ReplyThreadStartImageShape
-                        item.posts.lastIndex -> ReplyThreadEndImageShape
-                        else -> ReplyThreadImageShape
+                    avatarShape =
+                    when {
+                        item.isThreadedAnchor -> ImageShape.Circle
+                        item.isThreadedAncestor -> when {
+                            item.posts.size == 1 -> ReplyThreadStartImageShape
+                            else -> ReplyThreadImageShape
+                        }
+
+                        else -> when (index) {
+                            0 -> ReplyThreadStartImageShape
+                            item.posts.lastIndex -> ReplyThreadEndImageShape
+                            else -> ReplyThreadImageShape
+                        }
                     },
                     avatarSharedElementKey = post.avatarSharedElementKey(sharedElementPrefix),
+                    isAnchoredInTimeline = item.generation == 0L,
                     now = now,
                     createdAt = post.createdAt,
                     onProfileClicked = onProfileClicked,
@@ -133,7 +149,7 @@ private fun ThreadedPost(
                     onImageClicked = onImageClicked,
                     onReplyToPost = onReplyToPost,
                     timeline = {
-                        if (index != item.posts.lastIndex) Timeline(
+                        if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                             Modifier
                                 .matchParentSize()
                                 .padding(top = 52.dp)
@@ -143,7 +159,9 @@ private fun ThreadedPost(
                 if (index != item.posts.lastIndex) Timeline(
                     Modifier.height(if (index == 0) 16.dp else 12.dp)
                 )
-                if (index == item.posts.lastIndex - 1) Spacer(Modifier.height(4.dp))
+                if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
+                    Modifier.height(4.dp)
+                )
             }
         }
     }
@@ -156,6 +174,7 @@ private fun SinglePost(
     now: Instant,
     post: Post,
     embed: Embed?,
+    isAnchoredInTimeline: Boolean,
     avatarShape: ImageShape,
     avatarSharedElementKey: String,
     createdAt: Instant,
@@ -225,6 +244,12 @@ private fun SinglePost(
                     onOpenImage = onImageClicked,
                     onOpenPost = onPostClicked
                 )
+                if (isAnchoredInTimeline) PostDate(
+                    modifier = Modifier.padding(
+                        vertical = 8.dp,
+                    ),
+                    time = post.createdAt,
+                )
                 PostActions(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
@@ -252,6 +277,25 @@ private fun Timeline(
                 .width(2.dp)
         )
     }
+}
+
+@Composable
+fun TimelineCard(
+    item: TimelineItem,
+    modifier: Modifier = Modifier,
+    onPostClicked: (Post) -> Unit,
+    content: @Composable () -> Unit
+) {
+    if (item.isThreadedAncestorOrAnchor) Surface(
+        modifier = modifier,
+        onClick = { onPostClicked(item.post) },
+        content = { content() },
+    )
+    else ElevatedCard(
+        modifier = modifier,
+        onClick = { onPostClicked(item.post) },
+        content = { content() },
+    )
 }
 
 private val ReplyThreadStartImageShape =
@@ -282,3 +326,15 @@ private val ReplyThreadEndImageShape =
 fun Post.avatarSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-${author.did.id}"
+
+private val TimelineItem.isThreadedAncestor
+    get() = this is TimelineItem.Thread && when (val gen = generation) {
+        null -> false
+        else -> gen <= -1
+    }
+
+private val TimelineItem.isThreadedAnchor
+    get() = this is TimelineItem.Thread && generation == 0L
+
+private val TimelineItem.isThreadedAncestorOrAnchor
+    get() = isThreadedAncestor || isThreadedAnchor

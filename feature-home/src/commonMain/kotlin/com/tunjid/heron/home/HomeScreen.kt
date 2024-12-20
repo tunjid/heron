@@ -81,25 +81,20 @@ internal fun HomeScreen(
                         sharedElementPrefix = TimelineQuery.Home.toString(),
                         item = item,
                         onPostClicked = { post ->
-                            post.uri?.let {
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToPost(
-                                            sharedElementPrefix = TimelineQuery.Home.toString(),
-                                            profileId = post.author.did,
-                                            postId = post.cid,
-                                            postUri = it,
-                                        )
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToPost(
+                                        sharedElementPrefix = TimelineQuery.Home.toString(),
+                                        post = post,
                                     )
                                 )
-                            }
+                            )
                         },
                         onProfileClicked = { profile ->
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
-                                        profileId = profile.did,
-                                        profileAvatar = profile.avatar,
+                                        profile = profile,
                                         avatarSharedElementKey = this?.avatarSharedElementKey(
                                             prefix = TimelineQuery.Home.toString(),
                                         )

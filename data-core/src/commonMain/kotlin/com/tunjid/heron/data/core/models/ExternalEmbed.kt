@@ -17,7 +17,9 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ExternalEmbed(
     val uri: Uri,
     val title: String,

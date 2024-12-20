@@ -17,7 +17,9 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Image(
     val thumb: Uri,
     val fullsize: Uri,
@@ -30,6 +32,7 @@ val Image.aspectRatio get() =
     if(width != null && height != null) width.toFloat() / height
     else Float.NaN
 
+@Serializable
 data class ImageList(
     val images: List<Image>
 ):Embed

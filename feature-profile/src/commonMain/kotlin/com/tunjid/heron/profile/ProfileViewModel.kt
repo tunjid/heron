@@ -29,7 +29,7 @@ import com.tunjid.heron.domain.timeline.timelineLoadMutations
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
-import com.tunjid.heron.profile.di.profileAvatar
+import com.tunjid.heron.profile.di.profile
 import com.tunjid.heron.profile.di.profileId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -76,10 +76,10 @@ class ActualProfileStateHolder(
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
     initialState = State(
         avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-        profile = stubProfile(
+        profile = route.profile ?: stubProfile(
             did = route.profileId,
             handle = route.profileId,
-            avatar = route.profileAvatar,
+            avatar = null,
         ),
         currentQuery = TimelineQuery.Profile(
             profileId = route.profileId,

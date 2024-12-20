@@ -17,11 +17,14 @@
 package com.tunjid.heron.postdetail
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,7 +36,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -63,7 +65,7 @@ internal fun PostDetailScreen(
                 .fillMaxSize(),
             state = gridState,
             columns = StaggeredGridCells.Adaptive(340.dp),
-            verticalItemSpacing = 8.dp,
+            verticalItemSpacing = 4.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !movableSharedElementScope.isTransitionActive,
         ) {
@@ -77,28 +79,23 @@ internal fun PostDetailScreen(
                             .animateItem(),
                         movableSharedElementScope = movableSharedElementScope,
                         now = remember { Clock.System.now() },
-                        sharedElementPrefix = TimelineQuery.Profile.toString(),
+                        sharedElementPrefix = state.sharedElementPrefix,
                         item = item,
                         onPostClicked = { post ->
-                            post.uri?.let {
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToPost(
-                                            sharedElementPrefix = state.sharedElementPrefix,
-                                            profileId = post.author.did,
-                                            postId = post.cid,
-                                            postUri = it,
-                                        )
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToPost(
+                                        sharedElementPrefix = state.sharedElementPrefix,
+                                        post = post,
                                     )
                                 )
-                            }
+                            )
                         },
                         onProfileClicked = { profile ->
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
-                                        profileId = profile.did,
-                                        profileAvatar = profile.avatar,
+                                        profile = profile,
                                         avatarSharedElementKey = this?.avatarSharedElementKey(
                                             prefix = state.sharedElementPrefix,
                                         )
@@ -111,6 +108,12 @@ internal fun PostDetailScreen(
                     )
                 }
             )
+            // Allow for scrolling to the post selected even if others came before.
+            item(
+                span = StaggeredGridItemSpan.FullLine
+            ) {
+                Spacer(Modifier.height(800.dp))
+            }
         }
     }
 }

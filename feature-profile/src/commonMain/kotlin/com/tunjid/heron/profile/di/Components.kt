@@ -23,6 +23,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
@@ -64,8 +66,8 @@ internal val Route.profileId
 internal val Route.avatarSharedElementKey
     get() = routeParams.queryParams["avatarSharedElementKey"]?.firstOrNull()
 
-internal val Route.profileAvatar
-    get() = routeParams.queryParams["profileAvatar"]?.firstOrNull()?.let(::Uri)
+internal val Route.profile
+    get():Profile? = routeParams.queryParams["profile"]?.firstOrNull()?.fromBase64EncodedUrl()
 
 private val RouteParams.referringRoute
     get() = queryParams["referringRoute"]?.firstOrNull()

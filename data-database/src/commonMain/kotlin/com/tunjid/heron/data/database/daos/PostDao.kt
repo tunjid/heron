@@ -72,9 +72,9 @@ interface PostDao {
 	        WHERE uri IN (:postUris)
         """
     )
-    fun postsByUri(
+    fun postEntitiesByUri(
         postUris: Set<Uri>,
-    ): Flow<List<PopulatedPostEntity>>
+    ): Flow<List<PostEntity>>
 
     @Transaction
     @Query(
@@ -102,68 +102,89 @@ interface PostDao {
     @Transaction
     @Query(
         """
-            WITH RECURSIVE generation AS (
+            WITH RECURSIVE 
+            parentGeneration AS (
                 SELECT postId,
                     parentPostId,
-                    0 AS generation,
-                    postId AS rootPostId
-                FROM postThreads
-                WHERE parentPostId = :postId
-             
-            UNION ALL
-             
-                SELECT reply.postId,
-                    reply.parentPostId,
-                    generation+1 AS generation,
-                    rootPostId
-                FROM postThreads reply
-                JOIN generation g
-                  ON g.postId = reply.parentPostId
-            )
-             
-            SELECT *
-            FROM posts
-            JOIN generation
-            ON cid = generation.postId
-            ORDER BY rootPostId, generation;
-        """
-    )
-    fun postReplies(
-        postId: String,
-    ): Flow<List<ThreadedPopulatedPostEntity>>
-
-    @Transaction
-    @Query(
-        """
-            WITH RECURSIVE generation AS (
-                SELECT postId,
-                    parentPostId,
-                    0 AS generation,
-                    postId AS rootPostId
+                    -1 AS generation,
+                    postId AS rootPostId,
+                    -1 AS sort1
                 FROM postThreads
                 WHERE postId = :postId
-             
-            UNION ALL
-             
+            ),
+            parents AS (
+                SELECT * FROM parentGeneration
+                UNION ALL
                 SELECT parent.postId,
                     parent.parentPostId,
                     generation-1 AS generation,
-                    rootPostId
+                    rootPostId,
+                    sort1-1 AS sort1
                 FROM postThreads parent
-                JOIN generation g
-                  ON g.parentPostId = parent.postId
+                JOIN parentGeneration g
+                  ON parent.postId = g.parentPostId 
+            ),
+            replyGeneration AS (
+                SELECT postId,
+                    parentPostId,
+                    1 AS generation,
+                    postId AS rootPostId,
+                    posts.createdAt AS sort1
+                FROM postThreads
+                INNER JOIN posts
+                ON postId = posts.cid
+                WHERE parentPostId = :postId
+            ),
+            replies AS (
+                SELECT * FROM replyGeneration
+                UNION ALL
+                SELECT reply.postId,
+                    reply.parentPostId,
+                    generation+1 AS generation,
+                    rootPostId,
+                    sort1 AS sort1
+                FROM postThreads reply
+                JOIN replyGeneration g
+                  ON reply.parentPostId = g.postId
             )
-             
-            SELECT DISTINCT *
-            FROM posts
-            JOIN generation
-            ON cid = generation.postId
 
-            ORDER BY generation;
+            SELECT * FROM(
+                SELECT *
+                FROM posts
+                INNER JOIN parents
+                ON cid = parents.postId
+                WHERE cid != :postId
+            )
+            
+            UNION
+            
+            SELECT * FROM(
+                SELECT posts.*,
+                posts.cid,
+                postThreads.parentPostId,
+                0,
+                NULL,
+                0 AS sort1
+                FROM posts
+                INNER JOIN postThreads
+                WHERE cid == :postId
+                LIMIT 1
+            )
+            
+            UNION
+            
+            SELECT * FROM(
+                SELECT *
+                FROM posts
+                INNER JOIN replies
+                ON cid = replies.postId
+                WHERE cid != :postId
+            )
+            
+            ORDER BY sort1, generation
         """
     )
-    fun postParents(
+    fun postThread(
         postId: String,
     ): Flow<List<ThreadedPopulatedPostEntity>>
-
 }

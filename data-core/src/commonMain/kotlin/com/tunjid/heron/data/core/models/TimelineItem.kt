@@ -32,6 +32,7 @@ sealed class TimelineItem {
         override val id: String,
         val anchorPostIndex: Int,
         val posts: List<Post>,
+        val generation: Long?,
     ) : TimelineItem() {
         override val post: Post
             get() = posts[anchorPostIndex]
