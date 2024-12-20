@@ -49,9 +49,7 @@ internal fun PostDetailScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyStaggeredGridState(
-        initialFirstVisibleItemIndex = 1,
-    )
+    val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
 
     Surface(

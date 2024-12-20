@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -52,12 +52,10 @@ fun TimelineItem(
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
 ) {
-    ElevatedCard(
+    TimelineCard(
+        item = item,
         modifier = modifier,
-        shape = CardDefaults.elevatedShape,
-        colors = CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.elevatedCardElevation(),
-        onClick = { onPostClicked(item.post) }
+        onPostClicked = onPostClicked,
     ) {
         Column(
             modifier = Modifier
@@ -258,6 +256,25 @@ private fun Timeline(
                 .width(2.dp)
         )
     }
+}
+
+@Composable
+fun TimelineCard(
+    item: TimelineItem,
+    modifier: Modifier = Modifier,
+    onPostClicked: (Post) -> Unit,
+    content: @Composable () -> Unit
+) {
+    if (item is TimelineItem.Thread && item.generation == 0L) Surface(
+        modifier = modifier,
+        onClick = { onPostClicked(item.post) },
+        content = { content() },
+    )
+    else ElevatedCard(
+        modifier = modifier,
+        onClick = { onPostClicked(item.post) },
+        content = { content() },
+    )
 }
 
 private val ReplyThreadStartImageShape =
