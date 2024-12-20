@@ -8,6 +8,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.Base64.PaddingOption
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
@@ -27,11 +28,11 @@ inline fun <reified T : ByteSerializable> T.toBytes(): ByteArray =
 
 @OptIn(ExperimentalEncodingApi::class)
 inline fun <reified T : ByteSerializable> String.fromBase64EncodedUrl(): T =
-    ModelSerializerFormat.decodeFromByteArray(Base64.UrlSafe.decode(this))
+    ModelSerializerFormat.decodeFromByteArray(ModelUrlSafeBase64.decode(this))
 
 @OptIn(ExperimentalEncodingApi::class)
 inline fun <reified T : ByteSerializable> T.toUrlEncodedBase64(): String =
-    Base64.UrlSafe.encode(toBytes())
+    ModelUrlSafeBase64.encode(toBytes())
 
 
 val ModelSerializerFormat: BinaryFormat = Cbor {
@@ -48,3 +49,8 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
         }
     }
 }
+
+@OptIn(ExperimentalEncodingApi::class)
+val ModelUrlSafeBase64 = Base64.UrlSafe.withPadding(
+    option = PaddingOption.ABSENT,
+)
