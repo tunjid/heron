@@ -168,4 +168,81 @@ interface PostDao {
         postId: String,
     ): Flow<List<ThreadedPopulatedPostEntity>>
 
+    @Transaction
+    @Query(
+        """
+            WITH RECURSIVE 
+            parentGeneration AS (
+                SELECT postId,
+                    parentPostId,
+                    -1 AS generation,
+                    postId AS rootPostId
+                FROM postThreads
+                WHERE postId = :postId
+            ),
+            parents AS (
+                SELECT * FROM parentGeneration
+                UNION ALL
+                SELECT parent.postId,
+                    parent.parentPostId,
+                    generation-1 AS generation,
+                    rootPostId
+                FROM postThreads parent
+                JOIN parentGeneration g
+                  ON parent.postId = g.parentPostId 
+            ),
+            replyGeneration AS (
+                SELECT postId,
+                    parentPostId,
+                    1 AS generation,
+                    postId AS rootPostId
+                FROM postThreads
+                WHERE parentPostId = :postId
+            ),
+            replies AS (
+                SELECT * FROM replyGeneration
+                UNION ALL
+                SELECT reply.postId,
+                    reply.parentPostId,
+                    generation+1 AS generation,
+                    rootPostId
+                FROM postThreads reply
+                JOIN replyGeneration g
+                  ON reply.parentPostId = g.postId
+            )
+
+            SELECT * FROM(
+                SELECT *
+                FROM posts
+                INNER JOIN parents
+                ON cid = parents.postId
+                WHERE cid != :postId
+            )
+            
+            UNION
+            
+            SELECT * FROM(
+                SELECT posts.*, posts.cid, postThreads.parentPostId, 0, NULL
+                FROM posts
+                INNER JOIN postThreads
+                WHERE cid == :postId
+                LIMIT 1
+            )
+            
+            UNION
+            
+            SELECT * FROM(
+                SELECT *
+                FROM posts
+                INNER JOIN replies
+                ON cid = replies.postId
+                WHERE cid != :postId
+            )
+            
+            ORDER BY generation
+        """
+    )
+    fun postThread(
+        postId: String,
+    ): Flow<List<ThreadedPopulatedPostEntity>>
 }

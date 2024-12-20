@@ -36,8 +36,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -195,23 +197,34 @@ class OfflineTimelineRepository(
                 .mapNotNull { it.firstOrNull() }
                 .take(1)
                 .flatMapLatest { populatedEntity ->
-                    combine(
-                        postDao.postParents(postId = populatedEntity.entity.cid.id),
-                        postDao.posts(setOf(populatedEntity.entity.cid)),
-                        postDao.postReplies(postId = populatedEntity.entity.cid.id)
-                    ) { parents, post, replies ->
+                    postDao.postThread(postId = populatedEntity.entity.cid.id)
+                        .map {
+                            it.fold(
+                                initial = emptyList(),
+                                operation = ::spinThread,
+                            )
+                        }
+//                        .onEach {
+//                            println(it.map { "${it.generation}-${it.post?.record?.text}" })
+//                        }
 
-                        parents.fold(
-                            initial = emptyList(),
-                            operation = ::spinThread,
-                        ) + TimelineItem.Single(
-                            id = post.first().entity.cid.id,
-                            post = post.first().asExternalModel(quote = null),
-                        ) + replies.fold(
-                            initial = emptyList(),
-                            operation = ::spinThread,
-                        )
-                    }
+//                    combine(
+//                        postDao.postParents(postId = populatedEntity.entity.cid.id),
+//                        postDao.posts(setOf(populatedEntity.entity.cid)),
+//                        postDao.postReplies(postId = populatedEntity.entity.cid.id)
+//                    ) { parents, post, replies ->
+//
+//                        parents.fold(
+//                            initial = emptyList(),
+//                            operation = ::spinThread,
+//                        ) + TimelineItem.Single(
+//                            id = post.first().entity.cid.id,
+//                            post = post.first().asExternalModel(quote = null),
+//                        ) + replies.fold(
+//                            initial = emptyList(),
+//                            operation = ::spinThread,
+//                        )
+//                    }
                 },
         )
 
@@ -449,7 +462,7 @@ class OfflineTimelineRepository(
                 posts = it.posts + thread.entity.asExternalModel(quote = null)
             )
         }
-    }
+    }.also { println(it.map { "${thread.generation}-${thread.entity.entity?.record?.text?.split(" ")?.take(2)}" }.joinToString(separator = "\n")) }
 
     private fun multipleEntitySaver() = MultipleEntitySaver(
         postDao = postDao,
