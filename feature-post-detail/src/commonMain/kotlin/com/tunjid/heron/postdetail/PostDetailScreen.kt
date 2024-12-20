@@ -65,7 +65,7 @@ internal fun PostDetailScreen(
                 .fillMaxSize(),
             state = gridState,
             columns = StaggeredGridCells.Adaptive(340.dp),
-            verticalItemSpacing = 8.dp,
+            verticalItemSpacing = 4.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !movableSharedElementScope.isTransitionActive,
         ) {

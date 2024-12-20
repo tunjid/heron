@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -60,8 +61,10 @@ fun TimelineItem(
         Column(
             modifier = Modifier
                 .padding(
-                    top = 16.dp,
-                    bottom = 8.dp,
+                    top = if (item.isThreadedAnchor) 0.dp
+                    else 16.dp,
+                    bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
+                    else 8.dp,
                     start = 16.dp,
                     end = 16.dp
                 ),
@@ -124,11 +127,18 @@ private fun ThreadedPost(
                     post = post,
                     embed = post.embed,
                     avatarShape =
-                    if (item.posts.size == 1) ReplyThreadImageShape
-                    else when (index) {
-                        0 -> ReplyThreadStartImageShape
-                        item.posts.lastIndex -> ReplyThreadEndImageShape
-                        else -> ReplyThreadImageShape
+                    when {
+                        item.isThreadedAnchor -> ImageShape.Circle
+                        item.isThreadedAncestor -> when {
+                            item.posts.size == 1 -> ReplyThreadStartImageShape
+                            else -> ReplyThreadImageShape
+                        }
+
+                        else -> when (index) {
+                            0 -> ReplyThreadStartImageShape
+                            item.posts.lastIndex -> ReplyThreadEndImageShape
+                            else -> ReplyThreadImageShape
+                        }
                     },
                     avatarSharedElementKey = post.avatarSharedElementKey(sharedElementPrefix),
                     isAnchoredInTimeline = item.generation == 0L,
@@ -149,7 +159,9 @@ private fun ThreadedPost(
                 if (index != item.posts.lastIndex) Timeline(
                     Modifier.height(if (index == 0) 16.dp else 12.dp)
                 )
-                if (index == item.posts.lastIndex - 1) Spacer(Modifier.height(4.dp))
+                if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
+                    Modifier.height(4.dp)
+                )
             }
         }
     }
