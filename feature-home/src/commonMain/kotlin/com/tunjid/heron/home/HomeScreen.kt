@@ -37,13 +37,13 @@ import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Clock
 
 @Composable
 internal fun HomeScreen(
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +66,7 @@ internal fun HomeScreen(
             columns = StaggeredGridCells.Adaptive(340.dp),
             verticalItemSpacing = 8.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !movableSharedElementScope.isTransitionActive,
+            userScrollEnabled = !sharedElementScope.isTransitionActive,
         ) {
             items(
                 items = items,
@@ -76,7 +76,8 @@ internal fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem(),
-                        movableSharedElementScope = movableSharedElementScope,
+                        movableSharedElementScope = sharedElementScope,
+                        animatedVisibilityScope = sharedElementScope,
                         now = remember { Clock.System.now() },
                         sharedElementPrefix = TimelineQuery.Home.toString(),
                         item = item,

@@ -1,6 +1,8 @@
 package com.tunjid.heron.feed.ui
 
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -29,12 +31,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import heron.ui_feed.generated.resources.Res
 import heron.ui_feed.generated.resources.liked
 import heron.ui_feed.generated.resources.reply
 import heron.ui_feed.generated.resources.repost
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostActions(
     replyCount: String?,
@@ -43,15 +48,30 @@ internal fun PostActions(
     reposted: Boolean,
     liked: Boolean,
     iconSize: Dp,
+    postId: Id,
+    sharedElementPrefix: String,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    movableSharedElementScope: MovableSharedElementScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
-) {
+) = with(movableSharedElementScope) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = SpaceBetween,
     ) {
         PostAction(
+            modifier = Modifier
+                .sharedElement(
+                    state = rememberSharedContentState(
+                        postActionSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            icon = Icons.Rounded.ChatBubbleOutline,
+                        )
+                    ),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             icon = Icons.Rounded.ChatBubbleOutline,
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.reply),
@@ -59,6 +79,17 @@ internal fun PostActions(
             onClick = onReplyToPost,
         )
         PostAction(
+            modifier = Modifier
+                .sharedElement(
+                    state = rememberSharedContentState(
+                        postActionSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            icon = Icons.Rounded.Repeat,
+                        )
+                    ),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             icon = Icons.Rounded.Repeat,
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.repost),
@@ -71,6 +102,17 @@ internal fun PostActions(
             },
         )
         PostAction(
+            modifier = Modifier
+                .sharedElement(
+                    state = rememberSharedContentState(
+                        postActionSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            icon = Icons.Rounded.Favorite,
+                        )
+                    ),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             icon = if (liked) {
                 Icons.Rounded.Favorite
             } else {
@@ -95,12 +137,13 @@ private fun PostAction(
     icon: ImageVector,
     iconSize: Dp,
     contentDescription: String,
+    modifier: Modifier = Modifier,
     text: String?,
     onClick: () -> Unit,
     tint: Color = MaterialTheme.colorScheme.outline,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false),
@@ -126,3 +169,9 @@ private fun PostAction(
         }
     }
 }
+
+private fun postActionSharedElementKey(
+    prefix: String,
+    postId: Id,
+    icon: ImageVector,
+): String = "$prefix-${postId.id}-${icon.hashCode()}"

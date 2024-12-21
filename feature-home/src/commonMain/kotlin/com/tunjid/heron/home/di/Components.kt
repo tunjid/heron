@@ -43,6 +43,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -109,7 +110,7 @@ abstract class HomeComponent(
                 },
                 content = { paddingValues ->
                     HomeScreen(
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
+                        sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

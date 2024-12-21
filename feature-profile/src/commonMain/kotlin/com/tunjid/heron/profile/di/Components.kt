@@ -26,7 +26,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.ActualProfileStateHolder
 import com.tunjid.heron.profile.ProfileScreen
@@ -37,8 +36,8 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -121,7 +120,7 @@ abstract class ProfileComponent(
                 },
                 content = { paddingValues ->
                     ProfileScreen(
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
+                        sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

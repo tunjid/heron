@@ -43,7 +43,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
+import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -118,7 +118,7 @@ abstract class PostDetailComponent(
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
+                        sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

@@ -39,12 +39,12 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.feed.ui.TimelineItem
 import com.tunjid.heron.feed.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import kotlinx.datetime.Clock
 
 @Composable
 internal fun PostDetailScreen(
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -67,7 +67,7 @@ internal fun PostDetailScreen(
             columns = StaggeredGridCells.Adaptive(340.dp),
             verticalItemSpacing = 4.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !movableSharedElementScope.isTransitionActive,
+            userScrollEnabled = !sharedElementScope.isTransitionActive,
         ) {
             items(
                 items = items,
@@ -77,7 +77,8 @@ internal fun PostDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem(),
-                        movableSharedElementScope = movableSharedElementScope,
+                        movableSharedElementScope = sharedElementScope,
+                        animatedVisibilityScope = sharedElementScope,
                         now = remember { Clock.System.now() },
                         sharedElementPrefix = state.sharedElementPrefix,
                         item = item,

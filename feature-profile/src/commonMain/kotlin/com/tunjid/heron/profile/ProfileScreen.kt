@@ -80,6 +80,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -96,7 +97,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun ProfileScreen(
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -122,7 +123,7 @@ internal fun ProfileScreen(
         state = headerState,
         headerContent = {
             ProfileHeader(
-                movableSharedElementScope = movableSharedElementScope,
+                movableSharedElementScope = sharedElementScope,
                 headerState = headerState,
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -159,7 +160,8 @@ internal fun ProfileScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .animateItem(),
-                                movableSharedElementScope = movableSharedElementScope,
+                                movableSharedElementScope = sharedElementScope,
+                                animatedVisibilityScope = sharedElementScope,
                                 now = remember { Clock.System.now() },
                                 sharedElementPrefix = TimelineQuery.Profile.toString(),
                                 item = item,

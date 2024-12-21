@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.feed.utilities.createdAt
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
@@ -50,22 +49,22 @@ fun FeedThreadItem(
                 ),
             )
             Column(Modifier.weight(1f)) {
-                PostHeadline(now, post.createdAt, author)
+//                PostHeadline(now, post.createdAt, author)
 //                PostReasonLine(post.reason, onOpenUser)
                 Column(
                     modifier = Modifier.padding(bottom = 8.dp),
                     verticalArrangement = spacedBy(8.dp),
                 ) {
                     CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) {
-                        PostText(post, {}, onProfileClicked)
+//                        PostText(post, {}, onProfileClicked)
                     }
-                    PostEmbed(
-                        now = now,
-                        embed = post.embed,
-                        quote = post.quote,
-                        onOpenImage = onOpenImage,
-                        onOpenPost = onOpenPost,
-                    )
+//                    PostEmbed(
+//                        now = now,
+//                        embed = post.embed,
+//                        quote = post.quote,
+//                        onOpenImage = onOpenImage,
+//                        onPostClicked = onOpenPost,
+//                    )
 //                    post.record?.let {
 //                        PostDate(it.createdAt)
 //                    }
@@ -88,15 +87,15 @@ fun FeedThreadItem(
             HorizontalDivider(thickness = 1.dp)
 
             Box(modifier = Modifier.padding(start = 80.dp, top = 8.dp, bottom = 8.dp)) {
-                PostActions(
-                    replyCount = null,
-                    repostCount = null,
-                    likeCount = null,
-                    reposted = false,
-                    liked = false,
-                    iconSize = 24.dp,
-                    onReplyToPost = onReplyToPost,
-                )
+//                PostActions(
+//                    replyCount = null,
+//                    repostCount = null,
+//                    likeCount = null,
+//                    reposted = false,
+//                    liked = false,
+//                    iconSize = 24.dp,
+//                    onReplyToPost = onReplyToPost,
+//                )
             }
 
             HorizontalDivider(thickness = 1.dp)
