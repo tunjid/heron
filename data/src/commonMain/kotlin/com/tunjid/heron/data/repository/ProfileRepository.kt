@@ -10,7 +10,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.runCatchingCoroutines
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.Did
-import sh.christian.ozone.api.response.AtpResponse
 
 interface ProfileRepository {
 
@@ -73,38 +72,33 @@ class OfflineProfileRepository @Inject constructor(
         .distinctUntilChanged()
 
     private suspend fun fetchProfile(profileId: Id) {
-        runCatchingCoroutines {
-            val fetchedProfileResponse = networkService.api.getProfile(
+        runCatchingWithNetworkRetry {
+            networkService.api.getProfile(
                 GetProfileQueryParams(actor = Did(profileId.id))
             )
-            when (fetchedProfileResponse) {
-                is AtpResponse.Failure -> {
-                    // TODO Exponential backoff / network monitoring
-                }
-
-                is AtpResponse.Success -> {
-                    fetchedProfileResponse.response
-                    profileDao.upsertProfiles(
-                        listOf(
-                            ProfileEntity(
-                                did = Id(fetchedProfileResponse.response.did.did),
-                                handle = Id(fetchedProfileResponse.response.handle.handle),
-                                displayName = fetchedProfileResponse.response.displayName,
-                                description = fetchedProfileResponse.response.description,
-                                avatar = fetchedProfileResponse.response.avatar?.uri?.let(::Uri),
-                                banner = fetchedProfileResponse.response.banner?.uri?.let(::Uri),
-                                followersCount = fetchedProfileResponse.response.followersCount,
-                                followsCount = fetchedProfileResponse.response.followsCount,
-                                postsCount = fetchedProfileResponse.response.postsCount,
-                                joinedViaStarterPack = fetchedProfileResponse.response
-                                    .joinedViaStarterPack?.cid?.cid?.let(::Id),
-                                indexedAt = fetchedProfileResponse.response.indexedAt,
-                                createdAt = fetchedProfileResponse.response.createdAt,
-                            )
+        }
+            .getOrNull()
+            ?.let { response ->
+                profileDao.upsertProfiles(
+                    listOf(
+                        ProfileEntity(
+                            did = Id(response.did.did),
+                            handle = Id(response.handle.handle),
+                            displayName = response.displayName,
+                            description = response.description,
+                            avatar = response.avatar?.uri?.let(::Uri),
+                            banner = response.banner?.uri?.let(::Uri),
+                            followersCount = response.followersCount,
+                            followsCount = response.followsCount,
+                            postsCount = response.postsCount,
+                            joinedViaStarterPack = response
+                                .joinedViaStarterPack?.cid?.cid?.let(::Id),
+                            indexedAt = response.indexedAt,
+                            createdAt = response.createdAt,
                         )
                     )
-                }
+                )
             }
-        }
+
     }
 }
