@@ -25,12 +25,12 @@ import kotlinx.datetime.Instant
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostEmbed(
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
     now: Instant,
     embed: Embed?,
     quote: Post?,
     sharedElementPrefix: String,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    movableSharedElementScope: MovableSharedElementScope,
     onOpenImage: (Uri) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {

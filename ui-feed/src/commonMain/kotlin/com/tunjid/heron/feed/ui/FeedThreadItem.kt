@@ -56,7 +56,7 @@ fun FeedThreadItem(
                     verticalArrangement = spacedBy(8.dp),
                 ) {
                     CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) {
-                        PostText(post, {}, onProfileClicked)
+//                        PostText(post, {}, onProfileClicked)
                     }
 //                    PostEmbed(
 //                        now = now,
@@ -87,15 +87,15 @@ fun FeedThreadItem(
             HorizontalDivider(thickness = 1.dp)
 
             Box(modifier = Modifier.padding(start = 80.dp, top = 8.dp, bottom = 8.dp)) {
-                PostActions(
-                    replyCount = null,
-                    repostCount = null,
-                    likeCount = null,
-                    reposted = false,
-                    liked = false,
-                    iconSize = 24.dp,
-                    onReplyToPost = onReplyToPost,
-                )
+//                PostActions(
+//                    replyCount = null,
+//                    repostCount = null,
+//                    likeCount = null,
+//                    reposted = false,
+//                    liked = false,
+//                    iconSize = 24.dp,
+//                    onReplyToPost = onReplyToPost,
+//                )
             }
 
             HorizontalDivider(thickness = 1.dp)

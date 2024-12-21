@@ -1,5 +1,7 @@
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.ClickableText
@@ -16,14 +18,18 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostText(
     post: Post,
+    sharedElementPrefix: String,
+    movableSharedElementScope: MovableSharedElementScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     onProfileClicked: Post?.(Profile) -> Unit,
-) {
+) = with(movableSharedElementScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()
 
@@ -37,23 +43,33 @@ internal fun PostText(
 
         val uriHandler = LocalUriHandler.current
         ClickableText(
+            modifier = Modifier
+                .sharedElement(
+                    state = rememberSharedContentState(
+                        post.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            text = text,
+                        )
+                    ),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             text = postText,
             style = LocalTextStyle.current.copy(color = LocalContentColor.current),
             onClick = { index ->
                 var performedAction = false
                 postText.getStringAnnotations("hashtag", index, index)
                     .firstOrNull()?.item?.let { hashtag ->
-                    // TODO handle hashtag click
-                }
+                        // TODO handle hashtag click
+                    }
                 postText.getStringAnnotations("did", index, index).firstOrNull()?.item?.let { did ->
                     performedAction = true
 //                    onOpenUser(UserDid(Did(did)))
                 }
                 postText.getStringAnnotations("handle", index, index)
                     .firstOrNull()?.item?.let { handle ->
-                    performedAction = true
+                        performedAction = true
 //                    onOpenUser(UserHandle(Handle(handle)))
-                }
+                    }
                 postText.getUrlAnnotations(index, index).firstOrNull()?.item?.url?.let { url ->
                     performedAction = true
                     uriHandler.openUri(url)
@@ -71,7 +87,7 @@ fun rememberFormattedTextPost(
     text: String,
 //    textLinks: List<TimelinePostLink>,
 ): AnnotatedString {
-    return remember(text, ) {
+    return remember(text) {
         formatTextPost(
             text,
 //            textLinks,
@@ -120,3 +136,8 @@ fun formatTextPost(
 //        }
     }
 }
+
+private fun Post.textSharedElementKey(
+    prefix: String,
+    text: String,
+): String = "$prefix-${cid.id}-$text"

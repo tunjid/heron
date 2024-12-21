@@ -244,6 +244,9 @@ private fun SinglePost(
             ) {
                 PostText(
                     post = post,
+                    sharedElementPrefix = sharedElementPrefix,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    movableSharedElementScope = movableSharedElementScope,
                     onClick = { onPostClicked(post) },
                     onProfileClicked = onProfileClicked
                 )
@@ -269,6 +272,10 @@ private fun SinglePost(
                     likeCount = format(post.likeCount),
                     reposted = post.viewerStats?.reposted == true,
                     liked = post.viewerStats?.liked == true,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    movableSharedElementScope = movableSharedElementScope,
                     iconSize = 16.dp,
                     onReplyToPost = onReplyToPost,
                 )
