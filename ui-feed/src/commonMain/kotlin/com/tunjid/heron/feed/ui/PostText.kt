@@ -27,6 +27,7 @@ internal fun PostText(
     sharedElementPrefix: String,
     movableSharedElementScope: MovableSharedElementScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onProfileClicked: Post?.(Profile) -> Unit,
 ) = with(movableSharedElementScope) {
@@ -43,7 +44,7 @@ internal fun PostText(
 
         val uriHandler = LocalUriHandler.current
         ClickableText(
-            modifier = Modifier
+            modifier = modifier
                 .sharedElement(
                     state = rememberSharedContentState(
                         post.textSharedElementKey(
