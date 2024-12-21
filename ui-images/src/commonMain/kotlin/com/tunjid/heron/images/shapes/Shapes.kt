@@ -52,17 +52,19 @@ sealed class ImageShape : Shape {
     internal fun ensurePolygon(
         size: Size,
         density: Density,
-    ): RoundedPolygon = lastPolygon?.takeIf {
-        lastSize == size && lastDensity == density
-    } ?: createPolygon(size, density).also { polygon ->
-        lastPolygon = polygon
-        lastSize = size
-        lastDensity = density
-        lastBounds = polygon.calculateBounds(
-            bounds = bounds,
-            approximate = this !is Polygon,
-        ).let { Rect(it[0], it[1], it[2], it[3]) }
-    }
+    ): RoundedPolygon = lastPolygon
+        ?.takeIf {
+            size.hasSimilarAspectRatio(lastSize) && lastDensity == density
+        }
+        ?: createPolygon(size, density).also { polygon ->
+            lastPolygon = polygon
+            lastSize = size
+            lastDensity = density
+            lastBounds = polygon.calculateBounds(
+                bounds = bounds,
+                approximate = this !is Polygon,
+            ).let { Rect(it[0], it[1], it[2], it[3]) }
+        }
 
     override fun createOutline(
         size: Size,
@@ -164,7 +166,7 @@ sealed class ImageShape : Shape {
                 val maxDimension = max(size.width, size.height)
                 val absoluteCornerSize = with(density) { it.toPx() }
                 val radius = (absoluteCornerSize / maxDimension) * 2f
-                 CornerRounding(radius = radius)
+                CornerRounding(radius = radius)
             },
         )
     }
@@ -298,3 +300,6 @@ private fun pathFromCubics(
     }
     path.close()
 }
+
+private fun Size.hasSimilarAspectRatio(other: Size?) =
+    other != null && ((width / height) / (other.width / other.height)) in (0.9f..1.1f)
