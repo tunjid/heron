@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.splash
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -26,16 +25,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.AppLogo
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun SplashScreen(
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
-) = with(movableSharedElementScope){
+) = with(sharedElementScope) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -46,7 +44,7 @@ internal fun SplashScreen(
                 .align(Alignment.Center)
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(AppLogo),
-                    animatedVisibilityScope = animatedVisibilityScope,
+                    animatedVisibilityScope = sharedElementScope,
                 ),
             imageVector = AppLogo,
             contentDescription = null,

@@ -1,5 +1,7 @@
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalUriHandler
@@ -17,15 +19,20 @@ import com.tunjid.heron.feed.ui.feature.PostExternal
 import com.tunjid.heron.feed.ui.feature.PostImages
 import com.tunjid.heron.feed.ui.feature.UnknownPostPost
 import com.tunjid.heron.feed.ui.feature.VisiblePostPost
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Instant
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostEmbed(
+    movableSharedElementScope: MovableSharedElementScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     now: Instant,
     embed: Embed?,
     quote: Post?,
+    sharedElementPrefix: String,
     onOpenImage: (Uri) -> Unit,
-    onOpenPost: (Post) -> Unit,
+    onPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
     Column {
@@ -51,8 +58,11 @@ internal fun PostEmbed(
                     now = now,
                     post = quote,
                     author = quote.author,
+                    sharedElementPrefix = sharedElementPrefix,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    sharedTransitionScope = movableSharedElementScope,
                     onClick = {
-//                    onOpenPost(ThreadProps.FromReference(embedPost.reference))
+                        onPostClicked(quote)
                     }
                 )
             }

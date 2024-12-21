@@ -1,5 +1,8 @@
 package com.tunjid.heron.feed.ui.feature
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -19,14 +22,19 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun VisiblePostPost(
     now: Instant,
     post: Post,
     author: Profile,
+    sharedElementPrefix: String,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     onClick: () -> Unit,
 ) {
     FeatureContainer(onClick = onClick) {
@@ -46,6 +54,10 @@ fun VisiblePostPost(
                 now = now,
                 createdAt = post.record?.createdAt ?: remember { Clock.System.now() },
                 author = author,
+                postId = post.cid,
+                sharedElementPrefix = sharedElementPrefix,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = sharedTransitionScope,
             )
         }
         Text(

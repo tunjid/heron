@@ -27,15 +27,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.splash.ActualSplashStateHolder
-import com.tunjid.heron.splash.SplashScreen
-import com.tunjid.heron.splash.SplashStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
+import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.splash.ActualSplashStateHolder
+import com.tunjid.heron.splash.SplashScreen
+import com.tunjid.heron.splash.SplashStateHolderCreator
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -97,8 +97,7 @@ abstract class SplashComponent(
                 },
                 content = { paddingValues ->
                     SplashScreen(
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
-                        animatedVisibilityScope = this,
+                        sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
