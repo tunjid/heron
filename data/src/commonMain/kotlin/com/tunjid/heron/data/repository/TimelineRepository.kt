@@ -31,7 +31,7 @@ import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.add
-import com.tunjid.heron.data.utilities.runCatchingCoroutines
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -160,37 +160,35 @@ class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         merge(
             flow {
-                runCatchingCoroutines {
-                    val thread = networkService.api.getPostThread(
+                runCatchingWithNetworkRetry {
+                    networkService.api.getPostThread(
                         GetPostThreadQueryParams(
                             uri = AtUri(postUri.uri)
                         )
                     )
-                        .maybeResponse()
-                        ?.thread
-
-                    when (thread) {
-                        is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
-                        is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
-                        is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                            val authProfileId =
-                                savedStateRepository.savedState.value.auth?.authProfileId
-                            if (authProfileId != null)
-                                multipleEntitySaver().apply {
-                                    add(
-                                        viewingProfileId = authProfileId,
-                                        threadViewPost = thread.value,
-                                    )
-                                    saveInTransaction()
-                                }
-
-                        }
-
-                        is GetPostThreadResponseThreadUnion.Unknown -> Unit
-                        null -> Unit
-                    }
-
                 }
+                    .getOrNull()
+                    ?.thread
+                    ?.let { thread ->
+                        when (thread) {
+                            is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
+                            is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
+                            is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                                val authProfileId =
+                                    savedStateRepository.savedState.value.auth?.authProfileId
+                                if (authProfileId != null)
+                                    multipleEntitySaver().apply {
+                                        add(
+                                            viewingProfileId = authProfileId,
+                                            threadViewPost = thread.value,
+                                        )
+                                        saveInTransaction()
+                                    }
+                            }
+
+                            is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                        }
+                    }
             },
             postDao.postEntitiesByUri(postUris = setOf(postUri))
                 .mapNotNull { it.firstOrNull() }
@@ -219,26 +217,22 @@ class OfflineTimelineRepository(
         // Do nothing, can't tell what the next items are
         if (currentNetworkCursor == NetworkCursor.Pending) return@flow
 
-        kotlin.runCatching {
-            when (val networkPostsResponse = networkRequest(query)) {
-                is AtpResponse.Failure -> {
-                    // TODO Exponential backoff / network monitoring
-                }
-
-                is AtpResponse.Success -> {
-                    networkPostsResponse.response.nextNetworkCursor()
-                        ?.let(NetworkCursor::Next)
-                        ?.let { emit(it) }
-
-                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaver().persistTimeline(
-                        feedViews = networkPostsResponse.response.networkFeed(),
-                        query = query,
-                        viewingProfileId = authProfileId,
-                    )
-                }
-            }
+        runCatchingWithNetworkRetry {
+            networkRequest(query)
         }
+            .getOrNull()
+            ?.let { response ->
+                response.nextNetworkCursor()
+                    ?.let(NetworkCursor::Next)
+                    ?.let { emit(it) }
+
+                val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                if (authProfileId != null) multipleEntitySaver().persistTimeline(
+                    feedViews = response.networkFeed(),
+                    query = query,
+                    viewingProfileId = authProfileId,
+                )
+            }
     }
 
     private fun fetchFeed(

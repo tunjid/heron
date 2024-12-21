@@ -23,8 +23,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.signedInUserProfileEntity
-import com.tunjid.heron.data.utilities.runCatchingCoroutines
-import com.tunjid.heron.data.utilities.runCatchingWithIoMessage
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -53,7 +52,7 @@ class AuthTokenRepository(
 
     override suspend fun createSession(
         request: SessionRequest
-    ): Result<Unit> = runCatchingWithIoMessage {
+    ): Result<Unit> = runCatchingWithNetworkRetry(times = 2) {
         networkService.api.createSession(
             CreateSessionRequest(
                 identifier = request.username,
@@ -84,20 +83,20 @@ class AuthTokenRepository(
 
 
     override suspend fun updateSignedInUser() {
-        runCatchingCoroutines {
+        runCatchingWithNetworkRetry {
             networkService.api.getSession()
-                .maybeResponse()
-                ?.did
-                ?.let { updateSignedInUser(it) }
         }
+            .getOrNull()
+            ?.did
+            ?.let { updateSignedInUser(it) }
     }
 
     private suspend fun updateSignedInUser(did: Did) {
-        runCatchingCoroutines {
+        runCatchingWithNetworkRetry {
             networkService.api.getProfile(GetProfileQueryParams(actor = did))
-                .maybeResponse()
-                ?.signedInUserProfileEntity()
-                ?.let { profileDao.upsertProfiles(listOf(it)) }
         }
+            .getOrNull()
+            ?.signedInUserProfileEntity()
+            ?.let { profileDao.upsertProfiles(listOf(it)) }
     }
 }
