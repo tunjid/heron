@@ -30,7 +30,7 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":data"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
-                implementation(project(":ui-feed"))
+                implementation(project(":ui-timeline"))
                 implementation(project(":ui-images"))
 
                 api(libs.findLibrary("lifecycle-runtime").get())

@@ -73,9 +73,9 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.feed.ui.TimelineItem
-import com.tunjid.heron.feed.ui.avatarSharedElementKey
-import com.tunjid.heron.feed.utilities.format
+import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape

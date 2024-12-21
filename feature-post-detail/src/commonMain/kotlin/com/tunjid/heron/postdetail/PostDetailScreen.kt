@@ -36,8 +36,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.feed.ui.TimelineItem
-import com.tunjid.heron.feed.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import kotlinx.datetime.Clock
