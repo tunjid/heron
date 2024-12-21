@@ -3,7 +3,9 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -23,11 +25,14 @@ private class PanedSharedElementScope(
     AnimatedVisibilityScope by paneScope,
     MovableSharedElementScope by movableSharedElementScope
 
+@Composable
 fun PaneScope<
         ThreePane,
         Route
         >.requirePanedSharedElementScope(): SharedElementScope =
-    PanedSharedElementScope(
-        paneScope = this,
-        movableSharedElementScope = requireThreePaneMovableSharedElementScope()
-    )
+    remember {
+        PanedSharedElementScope(
+            paneScope = this,
+            movableSharedElementScope = requireThreePaneMovableSharedElementScope()
+        )
+    }
