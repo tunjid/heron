@@ -1,5 +1,8 @@
 package com.tunjid.heron.feed.ui.feature
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,18 +18,36 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.toImageShape
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostExternal(
     feature: ExternalEmbed,
+    postId: Id,
+    sharedElementPrefix: String,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     onClick: () -> Unit,
-) {
+) = with(sharedTransitionScope) {
     val uriHandler = LocalUriHandler.current
-    FeatureContainer(onClick = onClick) {
+    FeatureContainer(
+        modifier = Modifier.sharedElement(
+            state = rememberSharedContentState(
+                embedSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                    text = feature.uri.uri,
+                )
+            ),
+            animatedVisibilityScope = animatedVisibilityScope,
+        ),
+        onClick = onClick,
+    ) {
         Row(horizontalArrangement = spacedBy(16.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
                 AsyncImage(
@@ -34,6 +55,16 @@ fun PostExternal(
                         .requiredSizeIn(
                             maxWidth = 96.dp,
                             maxHeight = 96.dp,
+                        )
+                        .sharedElement(
+                            state = rememberSharedContentState(
+                                embedSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postId = postId,
+                                    text = feature.thumb?.uri,
+                                )
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope,
                         ),
                     args = ImageArgs(
                         url = feature.thumb?.uri,
@@ -46,7 +77,18 @@ fun PostExternal(
                 )
             }
             PostFeatureTextContent(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .sharedElement(
+                        state = rememberSharedContentState(
+                            embedSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = feature.title,
+                            )
+                        ),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    ),
                 title = feature.title,
                 description = feature.description,
                 uri = feature.uri,
@@ -90,3 +132,9 @@ fun PostFeatureTextContent(
         }
     }
 }
+
+private fun embedSharedElementKey(
+    prefix: String,
+    postId: Id,
+    text: String?,
+): String = "$prefix-${postId.id}-$text"

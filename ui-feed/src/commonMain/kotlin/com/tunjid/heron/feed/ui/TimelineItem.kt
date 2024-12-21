@@ -257,6 +257,7 @@ private fun SinglePost(
                     now = now,
                     embed = embed,
                     quote = post.quote,
+                    postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     animatedVisibilityScope = animatedVisibilityScope,
                     movableSharedElementScope = movableSharedElementScope,

@@ -12,6 +12,7 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.feed.ui.feature.BlockedPostPost
 import com.tunjid.heron.feed.ui.feature.InvisiblePostPost
@@ -28,6 +29,7 @@ internal fun PostEmbed(
     now: Instant,
     embed: Embed?,
     quote: Post?,
+    postId: Id,
     sharedElementPrefix: String,
     animatedVisibilityScope: AnimatedVisibilityScope,
     movableSharedElementScope: MovableSharedElementScope,
@@ -37,9 +39,16 @@ internal fun PostEmbed(
     val uriHandler = LocalUriHandler.current
     Column {
         when (embed) {
-            is ExternalEmbed -> PostExternal(embed, onClick = {
-                uriHandler.openUri(embed.uri.uri)
-            })
+            is ExternalEmbed -> PostExternal(
+                feature = embed,
+                postId = postId,
+                sharedElementPrefix = sharedElementPrefix,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = movableSharedElementScope,
+                onClick = {
+                    uriHandler.openUri(embed.uri.uri)
+                },
+            )
 
             is ImageList -> PostImages(embed)
             UnknownEmbed -> UnknownPostPost(onClick = {})
