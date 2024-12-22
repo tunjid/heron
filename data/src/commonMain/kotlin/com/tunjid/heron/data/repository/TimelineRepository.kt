@@ -3,6 +3,10 @@ package com.tunjid.heron.data.repository
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
+import app.bsky.feed.GetFeedQueryParams
+import app.bsky.feed.GetFeedResponse
+import app.bsky.feed.GetListFeedQueryParams
+import app.bsky.feed.GetListFeedResponse
 import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
@@ -79,13 +83,13 @@ sealed interface TimelineQuery {
 
     @Serializable
     data class List(
-        val listId: Id,
+        val listUri: Uri,
         override val data: Data,
     ) : TimelineQuery
 
     @Serializable
     data class Feed(
-        val feedId: Id,
+        val feedUri: Uri,
         override val data: Data,
     ) : TimelineQuery
 }
@@ -94,8 +98,8 @@ private val TimelineQuery.sourceId
     get() = when (this) {
         is TimelineQuery.Home -> source.uri
         is TimelineQuery.Profile -> profileId.id
-        is TimelineQuery.Feed -> feedId.id
-        is TimelineQuery.List -> listId.id
+        is TimelineQuery.Feed -> feedUri.uri
+        is TimelineQuery.List -> listUri.uri
     }
 
 interface TimelineRepository {
@@ -106,6 +110,16 @@ interface TimelineRepository {
 
     fun profileTimeline(
         query: TimelineQuery.Profile,
+        networkCursor: NetworkCursor,
+    ): Flow<CursorList<TimelineItem>>
+
+    fun feedTimeline(
+        query: TimelineQuery.Feed,
+        networkCursor: NetworkCursor,
+    ): Flow<CursorList<TimelineItem>>
+
+    fun listTimeline(
+        query: TimelineQuery.List,
         networkCursor: NetworkCursor,
     ): Flow<CursorList<TimelineItem>>
 
@@ -165,6 +179,50 @@ class OfflineTimelineRepository(
             },
             nextNetworkCursor = GetAuthorFeedResponse::cursor,
             networkFeed = GetAuthorFeedResponse::feed,
+        )
+    )
+
+    override fun feedTimeline(
+        query: TimelineQuery.Feed,
+        networkCursor: NetworkCursor
+    ): Flow<CursorList<TimelineItem>> = fetchFeed(
+        query = query,
+        networkCursorFlow = networkCursorFlow(
+            query = query,
+            currentNetworkCursor = networkCursor,
+            networkRequest = {
+                networkService.api.getFeed(
+                    GetFeedQueryParams(
+                        feed = AtUri(it.feedUri.uri),
+                        limit = it.data.limit,
+                        cursor = networkCursor.cursor,
+                    )
+                )
+            },
+            nextNetworkCursor = GetFeedResponse::cursor,
+            networkFeed = GetFeedResponse::feed,
+        )
+    )
+
+    override fun listTimeline(
+        query: TimelineQuery.List,
+        networkCursor: NetworkCursor
+    ): Flow<CursorList<TimelineItem>> = fetchFeed(
+        query = query,
+        networkCursorFlow = networkCursorFlow(
+            query = query,
+            currentNetworkCursor = networkCursor,
+            networkRequest = {
+                networkService.api.getListFeed(
+                    GetListFeedQueryParams(
+                        list = AtUri(it.listUri.uri),
+                        limit = it.data.limit,
+                        cursor = networkCursor.cursor,
+                    )
+                )
+            },
+            nextNetworkCursor = GetListFeedResponse::cursor,
+            networkFeed = GetListFeedResponse::feed,
         )
     )
 
