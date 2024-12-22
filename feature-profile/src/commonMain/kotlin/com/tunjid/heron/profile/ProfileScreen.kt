@@ -169,6 +169,7 @@ internal fun ProfileScreen(
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToPost(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 sharedElementPrefix = TimelineQuery.Profile.toString(),
                                                 post = post,
                                             )
@@ -179,6 +180,7 @@ internal fun ProfileScreen(
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToProfile(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                                 profile = profile,
                                                 avatarSharedElementKey = this?.avatarSharedElementKey(
                                                     prefix = TimelineQuery.Profile.toString(),

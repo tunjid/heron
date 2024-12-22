@@ -33,6 +33,7 @@ import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -42,6 +43,7 @@ import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
+import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeString
 import heron.scaffold.generated.resources.Res
@@ -86,6 +88,7 @@ interface NavigationAction {
         data class ToProfile(
             val profile: Profile,
             val avatarSharedElementKey: String?,
+            val referringRouteOption: ReferringRouteOption,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 routeString(
@@ -93,10 +96,7 @@ interface NavigationAction {
                     queryParams = mapOf(
                         "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                        "referringRoute" to currentRoute
-                            .routeParams
-                            .queryParams
-                            .getOrElse("referringRoute", ::emptyList)
+                        referringRouteQueryParams(referringRouteOption),
                     )
                 )
                     .toRoute
@@ -109,6 +109,7 @@ interface NavigationAction {
         data class ToPost(
             val post: Post,
             val sharedElementPrefix: String,
+            val referringRouteOption: ReferringRouteOption,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 when (val postUri = post.uri) {
@@ -120,11 +121,63 @@ interface NavigationAction {
                                 "post" to listOf(post.toUrlEncodedBase64()),
                                 "postUri" to listOf(postUri.uri),
                                 "sharedElementPrefix" to listOf(sharedElementPrefix),
+                                referringRouteQueryParams(referringRouteOption),
                             )
                         ).toRoute
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * Definition for describing what route referred a route to a destination
+     */
+    sealed class ReferringRouteOption {
+
+        /**
+         * The current route is the referrer.
+         */
+        data object Current : ReferringRouteOption()
+
+        /**
+         * The referrer is the route that referred the current route if it exists.
+         */
+        data object Parent : ReferringRouteOption()
+
+        /**
+         * The parent referrer is the referrer it it exists, otherwise
+         * the current route is the referrer.
+         */
+        data object ParentOrCurrent : ReferringRouteOption()
+
+        companion object {
+            private const val QueryParam = "referringRoute"
+
+            internal fun NavigationContext.referringRouteQueryParams(
+                option: ReferringRouteOption
+            ): Pair<String, List<String>> = QueryParam to when (option) {
+                Current -> listOf(
+                    currentRoute.encodeToQueryParam()
+                )
+
+                Parent -> currentRoute
+                    .routeParams
+                    .queryParams
+                    .getOrElse(
+                        key = QueryParam,
+                        defaultValue = ::emptyList,
+                    )
+
+                ParentOrCurrent -> referringRouteQueryParams(Parent).second.ifEmpty {
+                    referringRouteQueryParams(Current).second
+                }
+            }
+
+            fun RouteParams.decodeReferringRoute() =
+                queryParams[QueryParam]?.firstOrNull()
+                    ?.decodeRoutePathAndQueriesFromQueryParam()
+                    ?.let(::routeOf)
         }
     }
 }

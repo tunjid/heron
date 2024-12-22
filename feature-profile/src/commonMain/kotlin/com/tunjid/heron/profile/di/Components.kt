@@ -31,7 +31,7 @@ import com.tunjid.heron.profile.ActualProfileStateHolder
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.decodeRoutePathAndQueriesFromQueryParam
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -53,9 +53,7 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.referringRoute
-            ?.decodeRoutePathAndQueriesFromQueryParam()
-            ?.let(::routeOf)
+        routeParams.decodeReferringRoute()
     )
 )
 
@@ -67,9 +65,6 @@ internal val Route.avatarSharedElementKey
 
 internal val Route.profile
     get():Profile? = routeParams.queryParams["profile"]?.firstOrNull()?.fromBase64EncodedUrl()
-
-private val RouteParams.referringRoute
-    get() = queryParams["referringRoute"]?.firstOrNull()
 
 @Component
 abstract class ProfileNavigationComponent {
