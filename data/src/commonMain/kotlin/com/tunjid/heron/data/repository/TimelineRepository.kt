@@ -76,12 +76,26 @@ sealed interface TimelineQuery {
         val profileId: Id,
         override val data: Data,
     ) : TimelineQuery
+
+    @Serializable
+    data class List(
+        val listId: Id,
+        override val data: Data,
+    ) : TimelineQuery
+
+    @Serializable
+    data class Feed(
+        val feedId: Id,
+        override val data: Data,
+    ) : TimelineQuery
 }
 
 private val TimelineQuery.sourceId
     get() = when (this) {
         is TimelineQuery.Home -> source.uri
         is TimelineQuery.Profile -> profileId.id
+        is TimelineQuery.Feed -> feedId.id
+        is TimelineQuery.List -> listId.id
     }
 
 interface TimelineRepository {
@@ -271,6 +285,8 @@ class OfflineTimelineRepository(
                 it.parent.profileEntity()?.let(::add)
                 it.parent.postViewerStatisticsEntity()?.let(::add)
 
+                it.grandparentAuthor?.profileEntity()?.let(::add)
+
                 add(
                     PostThreadEntity(
                         postId = feedView.post.postEntity().cid,
@@ -287,7 +303,8 @@ class OfflineTimelineRepository(
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.sourceId,
-                            lastFetchedAt = query.data.firstRequestInstant
+                            lastFetchedAt = query.data.firstRequestInstant,
+                            filterDescription = null,
                         )
                     )
                 }

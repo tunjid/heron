@@ -16,40 +16,39 @@
 
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.ColumnInfo
-import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "timelineItems",
+    tableName = "lists",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["creatorId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [
         Index(value = ["indexedAt"]),
     ],
 )
-data class TimelineItemEntity(
-    val postId: Id,
-    val sourceId: String,
-    @Embedded
-    val reply: FeedReplyEntity?,
-    val reposter: Id?,
-    @ColumnInfo(
-        defaultValue = "false",
-    )
-    val hasMedia: Boolean,
-    val isPinned: Boolean,
-    val indexedAt: Instant,
-    // TODO: Figure out a better ID for this
+data class ListEntity(
     @PrimaryKey
-    val id: String = "$sourceId-${postId.id}-${reposter?.id}"
+    val cid: Id,
+    val uri: Uri,
+    val creatorId: Id,
+    val name: String,
+    val description: String?,
+    val avatar: Uri?,
+    val listItemCount: Long?,
+    val purpose: String,
+    val indexedAt: Instant,
 )
 
-data class FeedReplyEntity(
-    val rootPostId: Id,
-    val parentPostId: Id,
-    val grandParentPostAuthorId: Id?,
-)

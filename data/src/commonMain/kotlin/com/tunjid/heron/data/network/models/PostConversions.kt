@@ -56,20 +56,7 @@ internal fun PostView.postEntity() =
     )
 
 internal fun PostView.profileEntity(): ProfileEntity =
-    ProfileEntity(
-        did = Id(author.did.did),
-        handle = Id(author.handle.handle),
-        displayName = author.displayName,
-        description = null,
-        avatar = author.avatar?.uri?.let(::Uri),
-        banner = null,
-        followersCount = 0,
-        followsCount = 0,
-        postsCount = 0,
-        joinedViaStarterPack = null,
-        indexedAt = null,
-        createdAt = author.createdAt,
-    )
+    author.profileEntity()
 
 internal fun PostView.embedEntities(): List<PostEmbed> =
     when (val embed = embed) {
