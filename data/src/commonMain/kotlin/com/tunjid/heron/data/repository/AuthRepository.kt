@@ -46,6 +46,8 @@ interface AuthRepository {
 
     val signedInUser: Flow<Profile?>
 
+    fun isSignedInProfile(id: Id): Flow<Boolean>
+
     suspend fun createSession(request: SessionRequest): Result<Unit>
 
     suspend fun updateSignedInUser()
@@ -76,6 +78,11 @@ class AuthTokenRepository(
                         ?: flowOf(null)
                 )
             }
+
+    override fun isSignedInProfile(id: Id): Flow<Boolean> =
+        savedStateRepository.savedState
+            .distinctUntilChangedBy { it.auth?.authProfileId }
+            .map { id == it.auth?.authProfileId }
 
     override suspend fun createSession(
         request: SessionRequest

@@ -19,8 +19,6 @@ package com.tunjid.heron.profile
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.tiler.TiledList
@@ -34,6 +32,7 @@ data class State(
     val currentQuery: TimelineQuery.Profile,
     val numColumns: Int = 1,
     val profile: Profile,
+    val isSignedInProfile: Boolean = false,
     val profileRelationship: ProfileRelationship? = null,
     val avatarSharedElementKey: String,
     @Transient

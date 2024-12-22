@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -66,6 +67,7 @@ class ProfileStateHolderCreator(
 
 @Inject
 class ActualProfileStateHolder(
+    authTokenRepository: AuthTokenRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     navActions: (NavigationMutation) -> Unit,
@@ -94,6 +96,10 @@ class ActualProfileStateHolder(
         loadProfileMutations(
             profileId = route.profileId,
             profileRepository = profileRepository,
+        ),
+        loadIsSignedInProfileMutations(
+            profileId = route.profileId,
+            authTokenRepository = authTokenRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileId,
@@ -124,6 +130,14 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     profileRepository.profile(profileId).mapToMutation {
         copy(profile = it)
+    }
+
+private fun loadIsSignedInProfileMutations(
+    profileId: Id,
+    authTokenRepository: AuthTokenRepository,
+): Flow<Mutation<State>> =
+    authTokenRepository.isSignedInProfile(profileId).mapToMutation {
+        copy(isSignedInProfile = it)
     }
 
 private fun profileRelationshipMutations(
