@@ -16,28 +16,39 @@
 
 package com.tunjid.heron.home.di
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeStateHolder
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeStateHolderCreator
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
@@ -106,6 +117,18 @@ abstract class HomeComponent(
                     TopBar(
                         movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         animatedVisibilityScope = this,
+                        signedInProfile = state.signedInProfile,
+                        onSignedInProfileClicked = {
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        profile = it,
+                                        avatarSharedElementKey = SignedInUserAvatarSharedElementKey,
+                                    )
+                                )
+                            )
+                        },
                     )
                 },
                 content = { paddingValues ->
@@ -127,6 +150,8 @@ abstract class HomeComponent(
 private fun TopBar(
     movableSharedElementScope: MovableSharedElementScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    signedInProfile: Profile?,
+    onSignedInProfileClicked: (Profile) -> Unit,
 ) = with(movableSharedElementScope) {
     TopAppBar(
         navigationIcon = {
@@ -147,12 +172,34 @@ private fun TopBar(
         },
         title = {},
         actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
+            AnimatedVisibility(
+                visible = signedInProfile != null
+            ) {
+                signedInProfile?.let { profile ->
+                    AsyncImage(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .sharedElement(
+                                state = rememberSharedContentState(
+                                    SignedInUserAvatarSharedElementKey
+                                ),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                            )
+                            .clickable { onSignedInProfileClicked(profile) },
+                        args = remember(profile) {
+                            ImageArgs(
+                                url = profile.avatar?.uri,
+                                contentDescription = signedInProfile.displayName,
+                                contentScale = ContentScale.Crop,
+                                shape = ImageShape.Circle,
+                            )
+                        }
+                    )
                 }
-            )
+            }
+            Spacer(Modifier.width(16.dp))
         },
     )
 }
+
+private const val SignedInUserAvatarSharedElementKey = "self"
