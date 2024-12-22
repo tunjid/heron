@@ -43,6 +43,6 @@ include(
     ":feature-profile",
     ":feature-splash",
     ":feature-template",
-    ":ui-feed",
+    ":ui-timeline",
     ":ui-images",
 )
