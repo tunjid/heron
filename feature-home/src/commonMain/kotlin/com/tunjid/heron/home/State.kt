@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.home
 
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -29,6 +30,8 @@ import kotlinx.serialization.Transient
 data class State(
     val currentQuery: TimelineQuery.Home,
     val numColumns: Int = 1,
+    @Transient
+    val signedInProfile: Profile? = null,
     @Transient
     val feed: TiledList<TimelineQuery.Home, TimelineItem> = emptyTiledList(),
     @Transient

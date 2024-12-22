@@ -20,6 +20,9 @@ package com.tunjid.heron.home
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
@@ -61,6 +64,7 @@ class HomeStateHolderCreator(
 
 @Inject
 class ActualHomeStateHolder(
+    authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -80,6 +84,9 @@ class ActualHomeStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(
+            authTokenRepository
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -98,6 +105,13 @@ class ActualHomeStateHolder(
         }
     }
 )
+
+private fun loadProfileMutations(
+    authTokenRepository: AuthTokenRepository,
+): Flow<Mutation<State>> =
+    authTokenRepository.signedInUser.mapToMutation {
+        copy(signedInProfile = it)
+    }
 
 
 /**

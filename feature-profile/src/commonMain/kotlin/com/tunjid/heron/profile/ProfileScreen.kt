@@ -45,6 +45,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -86,6 +87,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScop
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
+import heron.feature_profile.generated.resources.edit
 import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
@@ -128,6 +130,7 @@ internal fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                isSignedInProfile = state.isSignedInProfile,
                 profileRelationship = state.profileRelationship,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onBackPressed = {
@@ -214,6 +217,7 @@ private fun ProfileHeader(
     headerState: CollapsingHeaderState,
     modifier: Modifier = Modifier,
     profile: Profile,
+    isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
     onBackPressed: () -> Unit,
@@ -242,6 +246,7 @@ private fun ProfileHeader(
             ProfileHeadline(
                 modifier = Modifier.fillMaxWidth(),
                 profile = profile,
+                isSignedInProfile = isSignedInProfile,
                 profileRelationship = profileRelationship,
             )
             ProfileStats(
@@ -349,6 +354,7 @@ private fun ProfilePhoto(
 private fun ProfileHeadline(
     modifier: Modifier = Modifier,
     profile: Profile,
+    isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
 ) {
     Row(
@@ -378,11 +384,12 @@ private fun ProfileHeadline(
             }
         }
         AnimatedVisibility(
-            visible = profileRelationship != null,
+            visible = profileRelationship != null || isSignedInProfile,
             content = {
                 val follows = profileRelationship?.follows == true
                 val followStatusText = stringResource(
-                    if (follows) Res.string.following
+                    if (isSignedInProfile) Res.string.edit
+                    else if (follows) Res.string.following
                     else Res.string.follow
                 )
                 FilterChip(
@@ -391,7 +398,10 @@ private fun ProfileHeadline(
                     shape = RoundedCornerShape(16.dp),
                     leadingIcon = {
                         Icon(
-                            imageVector = if (follows) Icons.Rounded.Check else Icons.Rounded.Add,
+                            imageVector =
+                            if (isSignedInProfile) Icons.Rounded.Edit
+                            else if (follows) Icons.Rounded.Check
+                            else Icons.Rounded.Add,
                             contentDescription = followStatusText,
                         )
                     },

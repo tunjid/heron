@@ -23,7 +23,6 @@ import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.database.entities.emptyProfileEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
@@ -251,9 +250,6 @@ class OfflineTimelineRepository(
         query: TimelineQuery,
     ) {
         val feedItemEntities = mutableListOf<TimelineItemEntity>()
-
-        // Add the signed in user
-        add(emptyProfileEntity(viewingProfileId))
 
         for (feedView in feedViews) {
             // Extract data from feed
