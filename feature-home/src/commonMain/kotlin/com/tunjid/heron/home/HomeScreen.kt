@@ -85,6 +85,7 @@ internal fun HomeScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         sharedElementPrefix = TimelineQuery.Home.toString(),
                                         post = post,
                                     )
@@ -95,6 +96,7 @@ internal fun HomeScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = this?.avatarSharedElementKey(
                                             prefix = TimelineQuery.Home.toString(),

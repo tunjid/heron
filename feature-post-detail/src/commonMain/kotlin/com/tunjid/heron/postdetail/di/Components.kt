@@ -39,11 +39,13 @@ import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -61,6 +63,9 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    )
 )
 
 internal val Route.post
@@ -96,6 +101,12 @@ abstract class PostDetailComponent(
     fun routeAdaptiveConfiguration(
         creator: PostDetailStateHolderCreator
     ) = RoutePattern to threePaneListDetailStrategy(
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualPostDetailStateHolder> {

@@ -86,6 +86,7 @@ internal fun PostDetailScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                         sharedElementPrefix = state.sharedElementPrefix,
                                         post = post,
                                     )
@@ -96,6 +97,7 @@ internal fun PostDetailScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                         profile = profile,
                                         avatarSharedElementKey = this?.avatarSharedElementKey(
                                             prefix = state.sharedElementPrefix,
