@@ -16,16 +16,29 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
+import app.bsky.actor.PreferencesUnion
+import app.bsky.actor.SavedFeed
+import app.bsky.actor.Type
+import app.bsky.feed.GetFeedGeneratorQueryParams
+import app.bsky.graph.GetListQueryParams
 import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.TransactionWriter
+import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.signedInUserProfileEntity
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -38,7 +51,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.supervisorScope
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
 interface AuthRepository {
@@ -55,7 +70,11 @@ interface AuthRepository {
 
 @Inject
 class AuthTokenRepository(
+    private val embedDao: EmbedDao,
+    private val postDao: PostDao,
     private val profileDao: ProfileDao,
+    private val timelineDao: TimelineDao,
+    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : AuthRepository {
@@ -85,7 +104,7 @@ class AuthTokenRepository(
             .map { id == it.auth?.authProfileId }
 
     override suspend fun createSession(
-        request: SessionRequest
+        request: SessionRequest,
     ): Result<Unit> = runCatchingWithNetworkRetry(times = 2) {
         networkService.api.createSession(
             CreateSessionRequest(
@@ -125,12 +144,110 @@ class AuthTokenRepository(
             ?.let { updateSignedInUser(it) }
     }
 
-    private suspend fun updateSignedInUser(did: Did) {
-        runCatchingWithNetworkRetry {
-            networkService.api.getProfile(GetProfileQueryParams(actor = did))
-        }
-            .getOrNull()
-            ?.signedInUserProfileEntity()
-            ?.let { profileDao.upsertProfiles(listOf(it)) }
+    private suspend fun updateSignedInUser(did: Did) = supervisorScope {
+        listOf(
+            async {
+                runCatchingWithNetworkRetry {
+                    networkService.api.getProfile(GetProfileQueryParams(actor = did))
+                }
+                    .getOrNull()
+                    ?.signedInUserProfileEntity()
+                    ?.let { profileDao.upsertProfiles(listOf(it)) }
+            },
+            async {
+                runCatchingWithNetworkRetry {
+                    networkService.api.getPreferences()
+                }
+                    .getOrNull()
+                    ?.let {
+                        savePreferences(it)
+                    }
+            },
+        ).awaitAll()
     }
+
+    private suspend fun savePreferences(
+        preferencesResponse: GetPreferencesResponse,
+    ) = preferencesResponse.preferences.map { preferencesUnion ->
+        when (preferencesUnion) {
+            is PreferencesUnion.AdultContentPref -> Unit
+            is PreferencesUnion.BskyAppStatePref -> Unit
+            is PreferencesUnion.ContentLabelPref -> Unit
+            is PreferencesUnion.FeedViewPref -> Unit
+            is PreferencesUnion.HiddenPostsPref -> Unit
+            is PreferencesUnion.InterestsPref -> Unit
+            is PreferencesUnion.LabelersPref -> Unit
+            is PreferencesUnion.MutedWordsPref -> Unit
+            is PreferencesUnion.PersonalDetailsPref -> Unit
+            is PreferencesUnion.SavedFeedsPref -> Unit
+            is PreferencesUnion.SavedFeedsPrefV2 ->
+                saveFeedPreferences(preferencesUnion)
+
+            is PreferencesUnion.ThreadViewPref -> Unit
+            is PreferencesUnion.Unknown -> Unit
+        }
+    }
+
+
+    private suspend fun saveFeedPreferences(
+        preferencesUnion: PreferencesUnion.SavedFeedsPrefV2,
+    ) = supervisorScope {
+        val saveTimelinePreferences = async {
+            savedStateRepository.updateState {
+                copy(
+                    preferences = preferences?.copy(
+                        timelinePreferences = preferencesUnion.value.items.map {
+                            TimelinePreference(
+                                id = it.id,
+                                type = it.type.value,
+                                value = it.value,
+                                pinned = it.pinned,
+                            )
+                        }
+                    )
+                )
+            }
+        }
+        val types = preferencesUnion.value.items.groupBy(
+            SavedFeed::type
+        )
+        val feeds = types[Type.Feed]?.map {
+            async {
+                runCatchingWithNetworkRetry(times = 2) {
+                    networkService.api.getFeedGenerator(
+                        GetFeedGeneratorQueryParams(
+                            feed = AtUri(it.value)
+                        )
+                    )
+                }
+            }
+        } ?: emptyList()
+        val lists = types[Type.List]?.map {
+            async {
+                runCatchingWithNetworkRetry(times = 2) {
+                    networkService.api.getList(
+                        GetListQueryParams(
+                            cursor = null,
+                            limit = 1,
+                            list = AtUri(it.value)
+                        )
+                    )
+                }
+            }
+        } ?: emptyList()
+
+        saveTimelinePreferences.await()
+        MultipleEntitySaver(
+            postDao = postDao,
+            embedDao = embedDao,
+            profileDao = profileDao,
+            timelineDao = timelineDao,
+            transactionWriter = transactionWriter,
+        ).apply {
+            feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
+            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
+            saveInTransaction()
+        }
+    }
+
 }

@@ -1,14 +1,12 @@
-package com.tunjid.heron.data.utilities
+package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import app.bsky.feed.PostView
-import app.bsky.feed.ThreadViewPost
-import app.bsky.feed.ThreadViewPostParentUnion
-import app.bsky.feed.ThreadViewPostReplieUnion
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -22,17 +20,10 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
-import com.tunjid.heron.data.network.models.embedEntities
-import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
-import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
-import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
-import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
-import com.tunjid.heron.data.network.models.quotedPostEntity
-import com.tunjid.heron.data.network.models.quotedPostProfileEntity
+
 
 /**
  * Utility class for persisting multiple entities in a transaction.
@@ -41,6 +32,7 @@ internal class MultipleEntitySaver(
     private val postDao: PostDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
+    private val timelineDao: TimelineDao,
     private val transactionWriter: TransactionWriter,
 ) {
     private val postEntities =
@@ -79,6 +71,12 @@ internal class MultipleEntitySaver(
     private val profileProfileRelationshipsEntities =
         mutableListOf<ProfileProfileRelationshipsEntity>()
 
+    private val listEntities =
+        mutableListOf<ListEntity>()
+
+    private val feedGeneratorEntities =
+        mutableListOf<FeedGeneratorEntity>()
+
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
@@ -109,6 +107,9 @@ internal class MultipleEntitySaver(
         profileDao.upsertProfileProfileRelationships(
             profileProfileRelationshipsEntities
         )
+
+        timelineDao.upsertLists(listEntities)
+        timelineDao.upsertFeedGenerators(feedGeneratorEntities)
 
         afterSave()
     }
@@ -148,6 +149,10 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileProfileRelationshipsEntity) =
         profileProfileRelationshipsEntities.add(entity)
 
+    fun add(entity: ListEntity) = listEntities.add(entity)
+
+    fun add(entity: FeedGeneratorEntity) = feedGeneratorEntities.add(entity)
+
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
     private fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
@@ -160,145 +165,4 @@ internal class MultipleEntitySaver(
 
     private fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
 
-}
-
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
-    postView: PostView
-) {
-    val postEntity = postView.postEntity().also(::add)
-
-    postView.profileEntity().let(::add)
-    postView.embedEntities().forEach { embedEntity ->
-        associatePostEmbeds(
-            postEntity = postEntity,
-            embedEntity = embedEntity,
-        )
-    }
-
-    postView.viewer?.postViewerStatisticsEntity(
-        postId = postEntity.cid,
-    )?.let(::add)
-
-    postView.author.profileProfileRelationshipsEntities(
-        viewingProfileId = viewingProfileId,
-    ).forEach(::add)
-
-    postView.quotedPostEntity()?.let { embeddedPostEntity ->
-        add(embeddedPostEntity)
-        add(
-            PostPostEntity(
-                postId = postEntity.cid,
-                embeddedPostId = embeddedPostEntity.cid,
-            )
-        )
-        postView.quotedPostEmbedEntities().forEach { embedEntity ->
-            associatePostEmbeds(
-                postEntity = embeddedPostEntity,
-                embedEntity = embedEntity,
-            )
-        }
-    }
-    postView.quotedPostProfileEntity()?.let(::add)
-}
-
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
-    threadViewPost: ThreadViewPost
-) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = threadViewPost.post,
-    )
-    generateSequence(threadViewPost) {
-        when (val parent = it.parent) {
-            is ThreadViewPostParentUnion.ThreadViewPost -> parent.value
-            // TODO: Deal with deleted, blocked or removed posts
-            is ThreadViewPostParentUnion.BlockedPost,
-            is ThreadViewPostParentUnion.NotFoundPost,
-            is ThreadViewPostParentUnion.Unknown,
-            null -> null
-        }
-    }
-        .windowed(
-            size = 2,
-            step = 1,
-        )
-        .forEach { window ->
-            if (window.size == 1) addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = null,
-                parentPost = window[0],
-            )
-            else addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = window[0],
-                parentPost = window[1],
-            )
-        }
-
-    threadViewPost.replies
-        // TODO: Handle blocks and deletions
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
-            addThreadReply(
-                viewingProfileId = viewingProfileId,
-                parent = threadViewPost,
-                reply = it.value,
-            )
-        }
-}
-
-private fun MultipleEntitySaver.addThreadParent(
-    viewingProfileId: Id,
-    parentPost: ThreadViewPost,
-    childPost: ThreadViewPost?,
-) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = parentPost.post,
-    )
-    if (childPost is ThreadViewPost) add(
-        PostThreadEntity(
-            postId = childPost.post.cid.cid.let(::Id),
-            parentPostId = parentPost.post.cid.cid.let(::Id),
-        )
-    )
-    parentPost.replies
-        // TODO: Deal with deleted, blocked or removed posts
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
-            addThreadReply(
-                viewingProfileId = viewingProfileId,
-                parent = parentPost,
-                reply = it.value,
-            )
-        }
-}
-
-private fun MultipleEntitySaver.addThreadReply(
-    viewingProfileId: Id,
-    reply: ThreadViewPost,
-    parent: ThreadViewPost,
-) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = reply.post,
-    )
-    add(
-        PostThreadEntity(
-            postId = reply.post.cid.cid.let(::Id),
-            parentPostId = parent.post.cid.cid.let(::Id),
-        )
-    )
-    reply.replies
-        // TODO: Deal with deleted, blocked or removed posts
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
-            addThreadReply(
-                viewingProfileId = viewingProfileId,
-                parent = reply,
-                reply = it.value,
-            )
-        }
 }

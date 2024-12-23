@@ -32,8 +32,8 @@ import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.utilities.MultipleEntitySaver
-import com.tunjid.heron.data.utilities.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -124,7 +124,7 @@ interface TimelineRepository {
     ): Flow<CursorList<TimelineItem>>
 
     fun postThread(
-        postUri: Uri
+        postUri: Uri,
     ): Flow<List<TimelineItem>>
 }
 
@@ -134,9 +134,9 @@ class OfflineTimelineRepository(
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
+    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
-    private val transactionWriter: TransactionWriter,
 ) : TimelineRepository {
 
     override fun timeline(
@@ -184,7 +184,7 @@ class OfflineTimelineRepository(
 
     override fun feedTimeline(
         query: TimelineQuery.Feed,
-        networkCursor: NetworkCursor
+        networkCursor: NetworkCursor,
     ): Flow<CursorList<TimelineItem>> = fetchFeed(
         query = query,
         networkCursorFlow = networkCursorFlow(
@@ -206,7 +206,7 @@ class OfflineTimelineRepository(
 
     override fun listTimeline(
         query: TimelineQuery.List,
-        networkCursor: NetworkCursor
+        networkCursor: NetworkCursor,
     ): Flow<CursorList<TimelineItem>> = fetchFeed(
         query = query,
         networkCursorFlow = networkCursorFlow(
@@ -227,7 +227,7 @@ class OfflineTimelineRepository(
     )
 
     override fun postThread(
-        postUri: Uri
+        postUri: Uri,
     ): Flow<List<TimelineItem>> =
         merge(
             flow {
@@ -374,7 +374,7 @@ class OfflineTimelineRepository(
     }
 
     private fun observeTimeline(
-        query: TimelineQuery
+        query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
             sourceId = query.sourceId,
@@ -470,7 +470,7 @@ class OfflineTimelineRepository(
 
     private fun spinThread(
         list: List<TimelineItem.Thread>,
-        thread: ThreadedPopulatedPostEntity
+        thread: ThreadedPopulatedPostEntity,
     ) = when {
         list.isEmpty() || thread.generation == 0L -> list + TimelineItem.Thread(
             id = thread.postId.id,
@@ -511,6 +511,7 @@ class OfflineTimelineRepository(
         postDao = postDao,
         embedDao = embedDao,
         profileDao = profileDao,
+        timelineDao = timelineDao,
         transactionWriter = transactionWriter,
     )
 }
