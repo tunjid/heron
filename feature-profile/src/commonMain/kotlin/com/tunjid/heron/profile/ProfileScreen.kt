@@ -117,7 +117,7 @@ internal fun ProfileScreen(
 ) {
     val density = LocalDensity.current
 
-    val collapsedHeight = with(density) { 52.dp.toPx() } +
+    val collapsedHeight = with(density) { 56.dp.toPx() } +
             WindowInsets.statusBars.getTop(density).toFloat() +
             WindowInsets.statusBars.getBottom(density).toFloat()
 
@@ -243,7 +243,7 @@ private fun ProfileHeader(
                 pagerState = pagerState,
                 titles = tabTitles,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
         }
         ProfilePhoto(
             movableSharedElementScope = movableSharedElementScope,
