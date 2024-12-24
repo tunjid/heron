@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
@@ -31,7 +32,9 @@ data class State(
     val profileRelationship: ProfileRelationship? = null,
     val avatarSharedElementKey: String,
     @Transient
-    val timelines: List<TimelineStateHolder> = emptyList(),
+    val timelines: List<Timeline.Profile> = emptyList(),
+    @Transient
+    val timelineStateHolders: List<TimelineStateHolder> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )

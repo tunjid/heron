@@ -75,20 +75,8 @@ class ActualProfileStateHolder(
             handle = route.profileId,
             avatar = null,
         ),
-        timelines = listOf(
-            Timeline.Profile.Posts(
-                name = "Posts",
-                profileId = route.profileId,
-            ),
-            Timeline.Profile.Replies(
-                name = "Replies",
-                profileId = route.profileId,
-            ),
-            Timeline.Profile.Media(
-                name = "Media",
-                profileId = route.profileId,
-            ),
-        ).map {
+        timelines = timelines(route),
+        timelineStateHolders = timelines(route).map {
             timelineStateHolder(
                 timeline = it,
                 startNumColumns = 1,
@@ -148,3 +136,18 @@ private fun profileRelationshipMutations(
     profileRepository.profileRelationship(profileId).mapToMutation {
         copy(profileRelationship = it)
     }
+
+private fun timelines(route: Route) = listOf(
+    Timeline.Profile.Posts(
+        name = "Posts",
+        profileId = route.profileId,
+    ),
+    Timeline.Profile.Replies(
+        name = "Replies",
+        profileId = route.profileId,
+    ),
+    Timeline.Profile.Media(
+        name = "Media",
+        profileId = route.profileId,
+    ),
+)

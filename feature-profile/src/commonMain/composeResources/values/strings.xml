@@ -7,4 +7,6 @@
     <string name="posts">Posts</string>
     <string name="edit">Edit</string>
     <string name="back">Back</string>
+    <string name="replies">Replies</string>
+    <string name="media">Media</string>
 </resources>
