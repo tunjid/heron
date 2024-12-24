@@ -17,34 +17,28 @@
 package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.TimelineQuery
+import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 
 @Serializable
 data class State(
-    val currentQuery: TimelineQuery.Home,
-    val numColumns: Int = 1,
+    @Transient
+    val timelines: List<Timeline.Home> = emptyList(),
+    @Transient
+    val timelineIdsToTimelineStates: Map<String, TimelineStateHolder> = emptyMap(),
     @Transient
     val signedInProfile: Profile? = null,
-    @Transient
-    val feed: TiledList<TimelineQuery.Home, TimelineItem> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
 
 sealed class Action(val key: String) {
-
-    sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: TimelineQuery.Home) : LoadFeed()
-        data class GridSize(val numColumns: Int) : LoadFeed()
-    }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

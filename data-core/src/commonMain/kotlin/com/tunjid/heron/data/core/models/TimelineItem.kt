@@ -1,6 +1,80 @@
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed class Timeline {
+
+    abstract val sourceId: String
+    abstract val name: String
+
+    @Serializable
+    sealed class Home(
+        val source: Uri,
+    ) : Timeline() {
+
+        abstract val position: Int
+
+        override val sourceId: String
+            get() = source.uri
+
+        @Serializable
+        data class Following(
+            override val name: String,
+            override val position: Int,
+        ) : Home(Constants.timelineFeed)
+
+        @Serializable
+        data class List(
+            override val name: String,
+            val listUri: Uri,
+            override val position: Int,
+        ) : Home(listUri)
+
+        @Serializable
+        data class Feed(
+            override val name: String,
+            val feedUri: Uri,
+            override val position: Int,
+        ) : Home(feedUri)
+
+    }
+
+    @Serializable
+    sealed class Profile : Timeline() {
+
+        abstract val profileId: Id
+
+        override val sourceId: String
+            get() = when (this) {
+                is Media -> "${profileId.id}-media"
+                is Posts -> "${profileId.id}-posts"
+                is Replies -> "${profileId.id}-posts-and-replies"
+            }
+
+        @Serializable
+        data class Posts(
+            override val name: String,
+            override val profileId: Id,
+        ) : Profile()
+
+        @Serializable
+        data class Replies(
+            override val name: String,
+            override val profileId: Id,
+        ) : Profile()
+
+        @Serializable
+        data class Media(
+            override val name: String,
+            override val profileId: Id,
+        ) : Profile()
+
+    }
+}
 
 sealed class TimelineItem {
 
@@ -11,7 +85,8 @@ sealed class TimelineItem {
         get() = when (this) {
             is Pinned,
             is Thread,
-            is Single -> post.indexedAt
+            is Single,
+                -> post.indexedAt
 
             is Repost -> at
         }

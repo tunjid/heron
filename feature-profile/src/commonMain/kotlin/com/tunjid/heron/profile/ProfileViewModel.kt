@@ -18,15 +18,13 @@ package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.domain.timeline.TimelineLoadAction
-import com.tunjid.heron.domain.timeline.timelineLoadMutations
+import com.tunjid.heron.domain.timeline.timelineStateHolder
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
@@ -36,20 +34,14 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.queries
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -57,11 +49,11 @@ typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ProfileStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualProfileStateHolder = creator.invoke(scope, route)
 }
 
@@ -83,13 +75,15 @@ class ActualProfileStateHolder(
             handle = route.profileId,
             avatar = null,
         ),
-        currentQuery = TimelineQuery.Profile(
-            profileId = route.profileId,
-            data = TimelineQuery.Data(
-                page = 0,
-                firstRequestInstant = Clock.System.now(),
+        timelines = timelines(route),
+        timelineStateHolders = timelines(route).map {
+            timelineStateHolder(
+                timeline = it,
+                startNumColumns = 1,
+                scope = scope,
+                cursorListLoader = timelineRepository::timelineItems,
             )
-        ),
+        },
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
@@ -111,11 +105,6 @@ class ActualProfileStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-                is Action.LoadFeed -> action.flow.timelineLoadMutations(
-                    stateHolder = this@transform,
-                    timelineRepository = timelineRepository,
-                )
-
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -148,34 +137,17 @@ private fun profileRelationshipMutations(
         copy(profileRelationship = it)
     }
 
-private suspend fun Flow<Action.LoadFeed>.timelineLoadMutations(
-    stateHolder: SuspendingStateHolder<State>,
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> = with(stateHolder) {
-    // Read the starting state at the time of subscription
-    val startingState = state()
-
-    return map {
-        when (it) {
-            is Action.LoadFeed.GridSize -> TimelineLoadAction.GridSize(it.numColumns)
-            is Action.LoadFeed.LoadAround -> TimelineLoadAction.LoadAround(it.query)
-        }
-    }
-        .timelineLoadMutations(
-            startQuery = startingState.currentQuery,
-            startNumColumns = startingState.numColumns,
-            cursorListLoader = timelineRepository::profileTimeline,
-            mutations = { queriesFlow, numColumnsFlow, tiledListFlow ->
-                merge(
-                    queriesFlow.mapToMutation { copy(currentQuery = it) },
-                    numColumnsFlow.mapToMutation { copy(numColumns = it) },
-                    tiledListFlow.mapToMutation { fetchedList ->
-                        if (!fetchedList.queries().contains(currentQuery)) this
-                        else copy(
-                            feed = fetchedList.distinctBy(TimelineItem::id)
-                        )
-                    }
-                )
-            }
-        )
-}
+private fun timelines(route: Route) = listOf(
+    Timeline.Profile.Posts(
+        name = "Posts",
+        profileId = route.profileId,
+    ),
+    Timeline.Profile.Replies(
+        name = "Replies",
+        profileId = route.profileId,
+    ),
+    Timeline.Profile.Media(
+        name = "Media",
+        profileId = route.profileId,
+    ),
+)

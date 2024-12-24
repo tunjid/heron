@@ -28,5 +28,6 @@ data class TimelineFetchKeyEntity(
     @PrimaryKey
     var sourceId: String,
     val lastFetchedAt: Instant,
+    val filterDescription: String?,
 )
 

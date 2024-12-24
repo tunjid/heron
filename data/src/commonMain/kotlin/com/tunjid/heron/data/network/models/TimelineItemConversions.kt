@@ -2,14 +2,15 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.FeedViewPostReasonUnion
+import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.emptyPostEntity
 import kotlinx.datetime.Instant
 
@@ -22,6 +23,7 @@ internal fun FeedViewPost.feedItemEntity(
         FeedReplyEntity(
             rootPostId = it.root.postEntity().cid,
             parentPostId = it.parent.postEntity().cid,
+            grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::Id),
         )
     },
     reposter = when (val reason = reason) {
@@ -29,6 +31,15 @@ internal fun FeedViewPost.feedItemEntity(
         else -> null
     },
     isPinned = reason is FeedViewPostReasonUnion.ReasonPin,
+    hasMedia = when (post.embed) {
+        is PostViewEmbedUnion.ExternalView -> false
+        is PostViewEmbedUnion.ImagesView -> true
+        is PostViewEmbedUnion.RecordView -> false
+        is PostViewEmbedUnion.RecordWithMediaView -> true
+        is PostViewEmbedUnion.Unknown -> false
+        is PostViewEmbedUnion.VideoView -> true
+        null -> false
+    },
     indexedAt = when (val reason = reason) {
         is FeedViewPostReasonUnion.ReasonPin -> Instant.DISTANT_PAST
         is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt

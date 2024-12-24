@@ -39,6 +39,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,14 +56,15 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -68,20 +72,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
+import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
+import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -91,7 +99,10 @@ import heron.feature_profile.generated.resources.edit
 import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
+import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
+import heron.feature_profile.generated.resources.replies
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.min
@@ -117,16 +128,23 @@ internal fun ProfileScreen(
             decayAnimationSpec = splineBasedDecay(density)
         )
     }
-
-    val gridState = rememberLazyStaggeredGridState()
-    val items by rememberUpdatedState(state.feed)
-
+    val pagerState = rememberPagerState {
+        3
+    }
     CollapsingHeaderLayout(
         state = headerState,
         headerContent = {
             ProfileHeader(
                 movableSharedElementScope = sharedElementScope,
                 headerState = headerState,
+                pagerState = pagerState,
+                tabTitles = state.timelines.map { timeline ->
+                    when (timeline) {
+                        is Timeline.Profile.Media -> stringResource(Res.string.media)
+                        is Timeline.Profile.Posts -> stringResource(Res.string.posts)
+                        is Timeline.Profile.Replies -> stringResource(Res.string.replies)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
@@ -139,74 +157,37 @@ internal fun ProfileScreen(
             )
         },
         body = {
-            Surface(
+            Box(
                 modifier = modifier
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                )
+                    .padding(horizontal = 8.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                        )
+                    ),
             ) {
-                LazyVerticalStaggeredGrid(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    state = gridState,
-                    columns = StaggeredGridCells.Adaptive(340.dp),
-                    verticalItemSpacing = 8.dp,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = items,
-                        key = TimelineItem::id,
-                        itemContent = { item ->
-                            TimelineItem(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                movableSharedElementScope = sharedElementScope,
-                                animatedVisibilityScope = sharedElementScope,
-                                now = remember { Clock.System.now() },
-                                sharedElementPrefix = TimelineQuery.Profile.toString(),
-                                item = item,
-                                onPostClicked = { post ->
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToPost(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                sharedElementPrefix = TimelineQuery.Profile.toString(),
-                                                post = post,
-                                            )
-                                        )
-                                    )
-                                },
-                                onProfileClicked = { profile ->
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToProfile(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                profile = profile,
-                                                avatarSharedElementKey = this?.avatarSharedElementKey(
-                                                    prefix = TimelineQuery.Profile.toString(),
-                                                )
-                                            )
-                                        )
-                                    )
-                                },
-                                onImageClicked = {},
-                                onReplyToPost = {},
+                HorizontalPager(
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 16.dp,
+                                topEnd = 16.dp,
                             )
-                        }
-                    )
-                }
+                        ),
+                    state = pagerState,
+                    key = { page -> page },
+                    pageContent = { page ->
+                        val timelineStateHolder = remember { state.timelineStateHolders[page] }
+                        ProfileTimeline(
+                            sharedElementScope = sharedElementScope,
+                            timelineStateHolder = timelineStateHolder,
+                            actions = actions,
+                        )
+                    }
+                )
             }
-        }
-    )
-
-
-    gridState.PivotedTilingEffect(
-        items = items,
-        onQueryChanged = { query ->
-            actions(Action.LoadFeed.LoadAround(query ?: state.currentQuery))
         }
     )
 }
@@ -215,6 +196,8 @@ internal fun ProfileScreen(
 private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
     headerState: CollapsingHeaderState,
+    pagerState: PagerState,
+    tabTitles: List<String>,
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
@@ -255,8 +238,12 @@ private fun ProfileHeader(
             )
             Text(text = profile.description ?: "")
             Spacer(Modifier.height(16.dp))
-            // TODO Tabs
-            Spacer(Modifier.height(48.dp))
+            ProfileTabs(
+                modifier = Modifier.fillMaxWidth(),
+                pagerState = pagerState,
+                titles = tabTitles,
+            )
+            Spacer(Modifier.height(8.dp))
         }
         ProfilePhoto(
             movableSharedElementScope = movableSharedElementScope,
@@ -475,7 +462,7 @@ fun Statistic(
 @Composable
 private fun BackButton(
     headerState: CollapsingHeaderState,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
 ) {
     FilledTonalIconButton(
         modifier = Modifier
@@ -493,4 +480,95 @@ private fun BackButton(
             contentDescription = stringResource(Res.string.back),
         )
     }
+}
+
+@Composable
+private fun ProfileTabs(
+    modifier: Modifier = Modifier,
+    pagerState: PagerState,
+    titles: List<String>,
+) {
+    val scope = rememberCoroutineScope()
+    TimelineTabs(
+        modifier = modifier,
+        titles = titles,
+        selectedTabIndex = pagerState.currentPage,
+        onTabSelected = {
+            scope.launch {
+                pagerState.animateScrollToPage(it)
+            }
+        }
+    )
+}
+
+@Composable
+private fun ProfileTimeline(
+    sharedElementScope: SharedElementScope,
+    timelineStateHolder: TimelineStateHolder,
+    actions: (Action) -> Unit,
+) {
+    val gridState = rememberLazyStaggeredGridState()
+    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
+    val items by rememberUpdatedState(timelineState.items)
+
+    LazyVerticalStaggeredGrid(
+        modifier = Modifier
+            .fillMaxSize(),
+        state = gridState,
+        columns = StaggeredGridCells.Adaptive(340.dp),
+        verticalItemSpacing = 8.dp,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = items,
+            key = TimelineItem::id,
+            itemContent = { item ->
+                TimelineItem(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
+                    movableSharedElementScope = sharedElementScope,
+                    animatedVisibilityScope = sharedElementScope,
+                    now = remember { Clock.System.now() },
+                    sharedElementPrefix = timelineState.timeline.sourceId,
+                    item = item,
+                    onPostClicked = { post ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToPost(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    sharedElementPrefix = timelineState.timeline.sourceId,
+                                    post = post,
+                                )
+                            )
+                        )
+                    },
+                    onProfileClicked = { profile ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToProfile(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                    profile = profile,
+                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                        prefix = timelineState.timeline.sourceId,
+                                    )
+                                )
+                            )
+                        )
+                    },
+                    onImageClicked = {},
+                    onReplyToPost = {},
+                )
+            }
+        )
+    }
+
+    gridState.PivotedTilingEffect(
+        items = items,
+        onQueryChanged = { query ->
+            timelineStateHolder.accept(
+                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+            )
+        }
+    )
 }

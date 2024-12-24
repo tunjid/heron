@@ -18,36 +18,29 @@ package com.tunjid.heron.profile
 
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
-import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.TimelineQuery
+import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 
 @Serializable
 data class State(
-    val currentQuery: TimelineQuery.Profile,
-    val numColumns: Int = 1,
     val profile: Profile,
     val isSignedInProfile: Boolean = false,
     val profileRelationship: ProfileRelationship? = null,
     val avatarSharedElementKey: String,
     @Transient
-    val feed: TiledList<TimelineQuery.Profile, TimelineItem> = emptyTiledList(),
+    val timelines: List<Timeline.Profile> = emptyList(),
+    @Transient
+    val timelineStateHolders: List<TimelineStateHolder> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
 
 sealed class Action(val key: String) {
-
-    sealed class LoadFeed : Action("List") {
-        data class LoadAround(val query: TimelineQuery.Profile) : LoadFeed()
-        data class GridSize(val numColumns: Int) : LoadFeed()
-    }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data class DelegateTo(

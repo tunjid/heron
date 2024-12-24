@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.Id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +26,7 @@ import okio.Path
 data class SavedState(
     val auth: AuthTokens?,
     val navigation: Navigation,
+    val preferences: Preferences?,
 ) {
 
     @Serializable
@@ -44,11 +46,13 @@ data class SavedState(
 val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
+    preferences = null,
 )
 
 val EmptySavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = 0),
+    preferences = null,
 )
 
 interface SavedStateRepository {
@@ -61,7 +65,7 @@ class DataStoreSavedStateRepository(
     path: Path,
     fileSystem: FileSystem,
     appScope: CoroutineScope,
-    protoBuf: ProtoBuf
+    protoBuf: ProtoBuf,
 ) : SavedStateRepository {
 
     private val dataStore: DataStore<SavedState> = DataStoreFactory.create(
@@ -85,7 +89,7 @@ class DataStoreSavedStateRepository(
 }
 
 private class SavedStateOkioSerializer(
-    private val protoBuf: ProtoBuf
+    private val protoBuf: ProtoBuf,
 ) : OkioSerializer<SavedState> {
     override val defaultValue: SavedState = EmptySavedState
 

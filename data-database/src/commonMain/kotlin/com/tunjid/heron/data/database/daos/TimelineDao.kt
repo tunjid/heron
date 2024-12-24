@@ -3,6 +3,8 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import kotlinx.coroutines.flow.Flow
@@ -58,5 +60,35 @@ interface TimelineDao {
     @Upsert
     suspend fun upsertFeedFetchKey(
         entity: TimelineFetchKeyEntity,
+    )
+
+    @Query(
+        """
+            SELECT * FROM lists
+            WHERE uri = :listUri
+        """
+    )
+    fun list(
+        listUri: String,
+    ): Flow<ListEntity?>
+
+    @Upsert
+    suspend fun upsertLists(
+        entities: List<ListEntity>,
+    )
+
+    @Query(
+        """
+            SELECT * FROM feedGenerators
+            WHERE uri = :feedUri
+        """
+    )
+    fun feedGenerator(
+        feedUri: String,
+    ): Flow<FeedGeneratorEntity?>
+
+    @Upsert
+    suspend fun upsertFeedGenerators(
+        entities: List<FeedGeneratorEntity>,
     )
 }

@@ -13,6 +13,8 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
@@ -31,7 +33,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import kotlinx.datetime.Instant
 
 @Database(
-    version = 2,
+    version = 3,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -46,14 +48,14 @@ import kotlinx.datetime.Instant
         PostViewerStatisticsEntity::class,
         ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
+        ListEntity::class,
+        FeedGeneratorEntity::class,
         TimelineItemEntity::class,
         TimelineFetchKeyEntity::class,
     ],
     autoMigrations = [
-        AutoMigration (
-            from = 1,
-            to = 2
-        ),
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
     ],
     exportSchema = true,
 )
