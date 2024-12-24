@@ -24,25 +24,17 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.TopAppBarState
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +57,6 @@ import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
-import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -116,14 +107,9 @@ abstract class HomeComponent(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
-            val topAppBarState = rememberTopAppBarState()
-            val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-                topAppBarState
-            )
 
             PaneScaffold(
                 modifier = Modifier
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -133,9 +119,6 @@ abstract class HomeComponent(
                     TopBar(
                         movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         animatedVisibilityScope = this,
-                        scrollBehavior = scrollBehavior,
-                        appBarState = topAppBarState,
-                        tabTitles = state.timelines.map { it.name },
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = {
                             viewModel.accept(
@@ -175,13 +158,10 @@ abstract class HomeComponent(
 private fun TopBar(
     movableSharedElementScope: MovableSharedElementScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    scrollBehavior: TopAppBarScrollBehavior,
-    appBarState: TopAppBarState,
-    tabTitles: List<String>,
     signedInProfile: Profile?,
     onSignedInProfileClicked: (Profile) -> Unit,
 ) = with(movableSharedElementScope) {
-    MediumTopAppBar(
+    TopAppBar(
         navigationIcon = {
             Image(
                 modifier = Modifier
@@ -199,14 +179,7 @@ private fun TopBar(
             )
         },
         title = {
-            TimelineTabs(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(1f - appBarState.collapsedFraction),
-                titles = tabTitles,
-                selectedTabIndex = 0,
-                onTabSelected = {}
-            )
+
         },
         actions = {
             AnimatedVisibility(
@@ -236,7 +209,6 @@ private fun TopBar(
             }
             Spacer(Modifier.width(16.dp))
         },
-        scrollBehavior = scrollBehavior,
     )
 }
 

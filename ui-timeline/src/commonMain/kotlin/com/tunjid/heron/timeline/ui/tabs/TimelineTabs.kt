@@ -13,7 +13,9 @@ import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -23,44 +25,24 @@ fun TimelineTabs(
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
 ) {
+    val tabShape = remember { RoundedCornerShape(16.dp) }
     ScrollableTabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = modifier,
         contentColor = MaterialTheme.colorScheme.onSurface,
         indicator = { tabPositions: List<TabPosition> ->
-       if(tabPositions.isNotEmpty())     Box(
+            if (tabPositions.isNotEmpty()) Box(
                 Modifier.tabIndicatorOffset(
                     tabPositions[selectedTabIndex]
                 )
                     .background(
                         color = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(16.dp)
+                        shape = tabShape,
                     )
-
                     .height(2.dp)
                     .offset(y = 46.dp)
-
                     .padding(horizontal = 4.dp)
-
-//                    .border(
-//                        border = BorderStroke(
-//                            width = 1.dp,
-//                            color = MaterialTheme.colorScheme.onSurface,
-//                        ),
-//                        shape = RoundedCornerShape(16.dp)
-//                    )
             )
-//            {
-//                Box(
-//                    modifier = Modifier
-//                        .align(Alignment.BottomStart)
-//                        .matchParentSize()
-//                        .height(2.dp)
-//                        .background(color = MaterialTheme.colorScheme.onSurface)
-//                        .clip(RoundedCornerShape(16.dp))
-//
-//                )
-//            }
         },
         divider = { }
     ) {
@@ -70,7 +52,8 @@ fun TimelineTabs(
                 .padding(vertical = 4.dp, horizontal = 8.dp)
             Tab(
                 modifier = Modifier
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 4.dp)
+                    .clip(tabShape),
                 selected = selected,
                 onClick = {
                     onTabSelected(index)
