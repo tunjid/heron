@@ -24,20 +24,24 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
@@ -48,9 +52,6 @@ internal fun HomeScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
-    val items by rememberUpdatedState(state.feed)
-
     Surface(
         modifier = modifier
             .padding(horizontal = 8.dp),
@@ -59,64 +60,90 @@ internal fun HomeScreen(
             topEnd = 16.dp,
         )
     ) {
-        LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .fillMaxSize(),
-            state = gridState,
-            columns = StaggeredGridCells.Adaptive(340.dp),
-            verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !sharedElementScope.isTransitionActive,
-        ) {
-            items(
-                items = items,
-                key = TimelineItem::id,
-                itemContent = { item ->
-                    TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
-                        movableSharedElementScope = sharedElementScope,
-                        animatedVisibilityScope = sharedElementScope,
-                        now = remember { Clock.System.now() },
-                        sharedElementPrefix = TimelineQuery.Home.toString(),
-                        item = item,
-                        onPostClicked = { post ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToPost(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        sharedElementPrefix = TimelineQuery.Home.toString(),
-                                        post = post,
-                                    )
-                                )
-                            )
-                        },
-                        onProfileClicked = { profile ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = this?.avatarSharedElementKey(
-                                            prefix = TimelineQuery.Home.toString(),
+        val updatedTimelineIdsToTimelineStates by rememberUpdatedState(
+            state.timelineIdsToTimelineStates
+        )
+        val updatedPages by remember {
+            derivedStateOf { updatedTimelineIdsToTimelineStates.entries.toList() }
+        }
+
+        val pagerState = rememberPagerState {
+            updatedPages.size
+        }
+        HorizontalPager(
+            state = pagerState,
+            key = { page -> updatedPages[page].key },
+            pageContent = { page ->
+
+                val timelineStateHolder = remember { updatedPages[page].value }
+                val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
+
+                val gridState = rememberLazyStaggeredGridState()
+                val items by rememberUpdatedState(timelineState.items)
+
+                LazyVerticalStaggeredGrid(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    state = gridState,
+                    columns = StaggeredGridCells.Adaptive(340.dp),
+                    verticalItemSpacing = 8.dp,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    userScrollEnabled = !sharedElementScope.isTransitionActive,
+                ) {
+                    items(
+                        items = items,
+                        key = TimelineItem::id,
+                        itemContent = { item ->
+                            TimelineItem(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                                movableSharedElementScope = sharedElementScope,
+                                animatedVisibilityScope = sharedElementScope,
+                                now = remember { Clock.System.now() },
+                                sharedElementPrefix = timelineState.timeline.sourceId,
+                                item = item,
+                                onPostClicked = { post ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToPost(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                sharedElementPrefix = timelineState.timeline.sourceId,
+                                                post = post,
+                                            )
                                         )
                                     )
-                                )
+                                },
+                                onProfileClicked = { profile ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToProfile(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                profile = profile,
+                                                avatarSharedElementKey = this?.avatarSharedElementKey(
+                                                    prefix = timelineState.timeline.sourceId,
+                                                )
+                                            )
+                                        )
+                                    )
+                                },
+                                onImageClicked = {},
+                                onReplyToPost = {},
                             )
-                        },
-                        onImageClicked = {},
-                        onReplyToPost = {},
+                        }
                     )
                 }
-            )
-        }
+
+                gridState.PivotedTilingEffect(
+                    items = items,
+                    onQueryChanged = { query ->
+                        timelineStateHolder.accept(
+                            TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                        )
+                    }
+                )
+            }
+        )
     }
-    gridState.PivotedTilingEffect(
-        items = items,
-        onQueryChanged = { query ->
-            actions(Action.LoadFeed.LoadAround(query ?: state.currentQuery))
-        }
-    )
 }
 

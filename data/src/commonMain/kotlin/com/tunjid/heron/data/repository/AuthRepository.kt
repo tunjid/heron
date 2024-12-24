@@ -24,6 +24,7 @@ import app.bsky.actor.Type
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.atproto.server.CreateSessionRequest
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.Id
@@ -194,16 +195,19 @@ class AuthTokenRepository(
     ) = supervisorScope {
         val saveTimelinePreferences = async {
             savedStateRepository.updateState {
+                val timelinePreferences = preferencesUnion.value.items.map {
+                    TimelinePreference(
+                        id = it.id,
+                        type = it.type.value,
+                        value = it.value,
+                        pinned = it.pinned,
+                    )
+                }
                 copy(
                     preferences = preferences?.copy(
-                        timelinePreferences = preferencesUnion.value.items.map {
-                            TimelinePreference(
-                                id = it.id,
-                                type = it.type.value,
-                                value = it.value,
-                                pinned = it.pinned,
-                            )
-                        }
+                        timelinePreferences = timelinePreferences
+                    ) ?: Preferences(
+                        timelinePreferences = timelinePreferences
                     )
                 )
             }

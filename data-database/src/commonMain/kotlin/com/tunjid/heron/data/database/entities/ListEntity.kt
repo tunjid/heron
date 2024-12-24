@@ -20,6 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -51,4 +52,17 @@ data class ListEntity(
     val purpose: String,
     val indexedAt: Instant,
 )
+
+fun ListEntity.asExternalModel() =
+    FeedList(
+        cid = cid,
+        uri = uri,
+        creatorId = creatorId,
+        name = name,
+        description = description,
+        avatar = avatar,
+        listItemCount = listItemCount,
+        purpose = purpose,
+        indexedAt = indexedAt,
+    )
 

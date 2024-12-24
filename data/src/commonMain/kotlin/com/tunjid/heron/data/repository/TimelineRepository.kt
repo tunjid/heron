@@ -1,6 +1,8 @@
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.Type
 import app.bsky.feed.FeedViewPost
+import app.bsky.feed.GetAuthorFeedFilter
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
 import app.bsky.feed.GetFeedQueryParams
@@ -13,6 +15,7 @@ import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.cursor
 import com.tunjid.heron.data.core.types.Id
@@ -37,11 +40,17 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -50,7 +59,10 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
-sealed interface TimelineQuery {
+data class TimelineQuery(
+    val data: Data,
+    val timeline: Timeline,
+) {
     @Serializable
     data class Data(
         val page: Int,
@@ -63,67 +75,17 @@ sealed interface TimelineQuery {
         val limit: Long = 50L,
     )
 
-    val data: Data
-
-    @Serializable
-    data class Home(
-        /**
-         * The backing source of the feed, be it a list or other feed generator output.
-         * It is null for a signed in user's timeline.
-         */
-        val source: Uri,
-        override val data: Data,
-    ) : TimelineQuery
-
-    @Serializable
-    data class Profile(
-        val profileId: Id,
-        override val data: Data,
-    ) : TimelineQuery
-
-    @Serializable
-    data class List(
-        val listUri: Uri,
-        override val data: Data,
-    ) : TimelineQuery
-
-    @Serializable
-    data class Feed(
-        val feedUri: Uri,
-        override val data: Data,
-    ) : TimelineQuery
 }
 
-private val TimelineQuery.sourceId
-    get() = when (this) {
-        is TimelineQuery.Home -> source.uri
-        is TimelineQuery.Profile -> profileId.id
-        is TimelineQuery.Feed -> feedUri.uri
-        is TimelineQuery.List -> listUri.uri
-    }
-
 interface TimelineRepository {
-    fun timeline(
-        query: TimelineQuery.Home,
+    fun homeTimelines(): Flow<List<Timeline.Home>>
+
+    fun timelineItems(
+        query: TimelineQuery,
         networkCursor: NetworkCursor,
     ): Flow<CursorList<TimelineItem>>
 
-    fun profileTimeline(
-        query: TimelineQuery.Profile,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>>
-
-    fun feedTimeline(
-        query: TimelineQuery.Feed,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>>
-
-    fun listTimeline(
-        query: TimelineQuery.List,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>>
-
-    fun postThread(
+    fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>>
 }
@@ -139,94 +101,128 @@ class OfflineTimelineRepository(
     private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
 
-    override fun timeline(
-        query: TimelineQuery.Home,
+    override fun timelineItems(
+        query: TimelineQuery,
         networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>> = fetchFeed(
-        query = query,
-        networkCursorFlow = networkCursorFlow(
+    ): Flow<CursorList<TimelineItem>> = when (val timeline = query.timeline) {
+        is Timeline.Home.Following -> fetchTimeline(
             query = query,
-            currentNetworkCursor = networkCursor,
-            networkRequest = {
-                networkService.api.getTimeline(
-                    GetTimelineQueryParams(
-                        limit = it.data.limit,
-                        cursor = networkCursor.cursor,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getTimeline(
+                        GetTimelineQueryParams(
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                        )
                     )
-                )
-            },
-            nextNetworkCursor = GetTimelineResponse::cursor,
-            networkFeed = GetTimelineResponse::feed,
+                },
+                nextNetworkCursor = GetTimelineResponse::cursor,
+                networkFeed = GetTimelineResponse::feed,
+            )
         )
-    )
 
-    override fun profileTimeline(
-        query: TimelineQuery.Profile,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>> = fetchFeed(
-        query = query,
-        networkCursorFlow = networkCursorFlow(
+        is Timeline.Home.Feed -> fetchTimeline(
             query = query,
-            currentNetworkCursor = networkCursor,
-            networkRequest = {
-                networkService.api.getAuthorFeed(
-                    GetAuthorFeedQueryParams(
-                        actor = Did(it.profileId.id),
-                        limit = it.data.limit,
-                        cursor = networkCursor.cursor,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getFeed(
+                        GetFeedQueryParams(
+                            feed = AtUri(timeline.feedUri.uri),
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                        )
                     )
-                )
-            },
-            nextNetworkCursor = GetAuthorFeedResponse::cursor,
-            networkFeed = GetAuthorFeedResponse::feed,
+                },
+                nextNetworkCursor = GetFeedResponse::cursor,
+                networkFeed = GetFeedResponse::feed,
+            )
         )
-    )
 
-    override fun feedTimeline(
-        query: TimelineQuery.Feed,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>> = fetchFeed(
-        query = query,
-        networkCursorFlow = networkCursorFlow(
+        is Timeline.Home.List -> fetchTimeline(
             query = query,
-            currentNetworkCursor = networkCursor,
-            networkRequest = {
-                networkService.api.getFeed(
-                    GetFeedQueryParams(
-                        feed = AtUri(it.feedUri.uri),
-                        limit = it.data.limit,
-                        cursor = networkCursor.cursor,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getListFeed(
+                        GetListFeedQueryParams(
+                            list = AtUri(timeline.listUri.uri),
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                        )
                     )
-                )
-            },
-            nextNetworkCursor = GetFeedResponse::cursor,
-            networkFeed = GetFeedResponse::feed,
+                },
+                nextNetworkCursor = GetListFeedResponse::cursor,
+                networkFeed = GetListFeedResponse::feed,
+            )
         )
-    )
 
-    override fun listTimeline(
-        query: TimelineQuery.List,
-        networkCursor: NetworkCursor,
-    ): Flow<CursorList<TimelineItem>> = fetchFeed(
-        query = query,
-        networkCursorFlow = networkCursorFlow(
+        is Timeline.Profile.Media -> fetchTimeline(
             query = query,
-            currentNetworkCursor = networkCursor,
-            networkRequest = {
-                networkService.api.getListFeed(
-                    GetListFeedQueryParams(
-                        list = AtUri(it.listUri.uri),
-                        limit = it.data.limit,
-                        cursor = networkCursor.cursor,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                            filter = GetAuthorFeedFilter.PostsWithMedia,
+                        )
                     )
-                )
-            },
-            nextNetworkCursor = GetListFeedResponse::cursor,
-            networkFeed = GetListFeedResponse::feed,
+                },
+                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                networkFeed = GetAuthorFeedResponse::feed,
+            )
         )
-    )
 
-    override fun postThread(
+        is Timeline.Profile.Posts -> fetchTimeline(
+            query = query,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                        )
+                    )
+                },
+                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                networkFeed = GetAuthorFeedResponse::feed,
+            )
+        )
+
+        is Timeline.Profile.Replies -> fetchTimeline(
+            query = query,
+            networkCursorFlow = networkCursorFlow(
+                query = query,
+                currentNetworkCursor = networkCursor,
+                networkRequest = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = it.data.limit,
+                            cursor = networkCursor.cursor,
+                            filter = GetAuthorFeedFilter.PostsWithReplies,
+                        )
+                    )
+                },
+                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                networkFeed = GetAuthorFeedResponse::feed,
+            )
+        )
+    }
+
+    override fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>> =
         merge(
@@ -275,10 +271,61 @@ class OfflineTimelineRepository(
                 },
         )
 
-    private fun <Query : TimelineQuery, NetworkResponse : Any> networkCursorFlow(
-        query: Query,
+    override fun homeTimelines(): Flow<List<Timeline.Home>> =
+        savedStateRepository.savedState
+            .mapNotNull { it.preferences?.timelinePreferences }
+            .distinctUntilChanged()
+            .flatMapLatest { timelinePreferences ->
+                timelinePreferences.map { preference ->
+                    when (Type.safeValueOf(preference.type)) {
+                        Type.Feed -> timelineDao.feedGenerator(preference.id)
+                            .filterNotNull()
+                            .map {
+                                Timeline.Home.Feed(
+                                    name = it.displayName,
+                                    feedUri = it.uri,
+                                )
+                            }
+
+                        Type.List -> timelineDao.list(preference.id)
+                            .filterNotNull()
+                            .map {
+                                Timeline.Home.List(
+                                    listUri = it.uri,
+                                    name = it.name,
+                                )
+                            }
+
+                        Type.Timeline -> flowOf(
+                            Timeline.Home.Following(
+                                name = preference.value,
+                            )
+                        )
+
+                        is Type.Unknown -> emptyFlow()
+                    }
+                }
+                    .merge()
+                    .scan(listOf<Timeline.Home>(Timeline.Home.Following(""))) { timelines, timeline ->
+                        (listOf(timeline) + timelines).distinctBy { it.sourceId }
+                    }
+                    .map { homeTimelines ->
+                        homeTimelines.sortedBy { timeline ->
+                            timelinePreferences.indexOfFirst { it.value == timeline.name }
+                        }
+                    }
+                    .distinctUntilChangedBy {
+                        it.joinToString(
+                            separator = "-",
+                            transform = Timeline.Home::name,
+                        )
+                    }
+            }
+
+    private fun <NetworkResponse : Any> networkCursorFlow(
+        query: TimelineQuery,
         currentNetworkCursor: NetworkCursor,
-        networkRequest: suspend (Query) -> AtpResponse<NetworkResponse>,
+        networkRequest: suspend (TimelineQuery) -> AtpResponse<NetworkResponse>,
         nextNetworkCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
     ): Flow<NetworkCursor> = flow {
@@ -306,7 +353,7 @@ class OfflineTimelineRepository(
             }
     }
 
-    private fun fetchFeed(
+    private fun fetchTimeline(
         query: TimelineQuery,
         networkCursorFlow: Flow<NetworkCursor>,
     ): Flow<CursorList<TimelineItem>> =
@@ -325,7 +372,7 @@ class OfflineTimelineRepository(
 
         for (feedView in feedViews) {
             // Extract data from feed
-            feedItemEntities.add(feedView.feedItemEntity(query.sourceId))
+            feedItemEntities.add(feedView.feedItemEntity(query.timeline.sourceId))
 
             // Extract data from post
             add(
@@ -357,10 +404,10 @@ class OfflineTimelineRepository(
         saveInTransaction(
             beforeSave = {
                 if (timelineDao.isFirstRequest(query)) {
-                    timelineDao.deleteAllFeedsFor(query.sourceId)
+                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
-                            sourceId = query.sourceId,
+                            sourceId = query.timeline.sourceId,
                             lastFetchedAt = query.data.firstRequestInstant,
                             filterDescription = null,
                         )
@@ -377,7 +424,7 @@ class OfflineTimelineRepository(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
-            sourceId = query.sourceId,
+            sourceId = query.timeline.sourceId,
             before = query.data.firstRequestInstant,
             offset = query.data.page * query.data.limit,
             limit = query.data.limit,
@@ -518,6 +565,6 @@ class OfflineTimelineRepository(
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
-    val lastFetchedAt = lastFetchKey(query.sourceId)?.lastFetchedAt
+    val lastFetchedAt = lastFetchKey(query.timeline.sourceId)?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
 }

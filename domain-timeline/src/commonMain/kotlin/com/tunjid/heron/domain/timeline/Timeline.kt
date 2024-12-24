@@ -2,81 +2,137 @@ package com.tunjid.heron.domain.timeline
 
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.coroutines.SuspendingStateHolder
+import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
+import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.ListTiler
 import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
 import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.datetime.Clock
 
-sealed interface TimelineLoadAction<out Query : TimelineQuery> {
-    data class GridSize<Query : TimelineQuery>(
+data class TimelineState(
+    val timeline: Timeline,
+    val currentQuery: TimelineQuery,
+    val numColumns: Int,
+    val items: TiledList<TimelineQuery, TimelineItem>,
+)
+
+typealias TimelineStateHolder = ActionStateMutator<TimelineLoadAction, StateFlow<TimelineState>>
+
+fun timelineStateHolder(
+    timeline: Timeline,
+    startNumColumns: Int,
+    scope: CoroutineScope,
+    cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+): TimelineStateHolder = scope.actionStateFlowMutator(
+    initialState = TimelineState(
+        timeline = timeline,
+        currentQuery = TimelineQuery(
+            timeline = timeline,
+            data = TimelineQuery.Data(
+                page = 0,
+                firstRequestInstant = Clock.System.now(),
+            ),
+        ),
+        numColumns = startNumColumns,
+        items = emptyTiledList(),
+    ),
+    actionTransform = transform@{ actions ->
+        actions.toMutationStream(keySelector = { "" }) {
+            type().flow.timelineMutations(
+                stateHolder = this@transform,
+                cursorListLoader = cursorListLoader,
+            )
+        }
+    }
+)
+
+sealed interface TimelineLoadAction {
+    data class GridSize(
         val numColumns: Int,
-    ) : TimelineLoadAction<Query>
+    ) : TimelineLoadAction
 
-    data class LoadAround<Query : TimelineQuery>(
-        val query: Query,
-    ) : TimelineLoadAction<Query>
+    data class LoadAround(
+        val query: TimelineQuery,
+    ) : TimelineLoadAction
 }
 
 /**
  * Feed mutations as a function of the user's scroll position
  */
-fun <Query : TimelineQuery, Action : TimelineLoadAction<Query>, State> Flow<Action>.timelineLoadMutations(
-    startQuery: Query,
-    startNumColumns: Int,
-    cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
-    mutations: (queries: Flow<Query>, numColumns: Flow<Int>, Flow<TiledList<Query, TimelineItem>>) -> Flow<Mutation<State>>
-): Flow<Mutation<State>> = scan(
-    initial = Pair(
-        MutableStateFlow(startQuery),
-        MutableStateFlow(startNumColumns),
-    )
-) { accumulator, action ->
-    val (queries, numColumns) = accumulator
-    // update backing states as a side effect
-    @Suppress("UNCHECKED_CAST")
-    when (action) {
-        is TimelineLoadAction.GridSize<*> -> numColumns.value = action.numColumns
-        is TimelineLoadAction.LoadAround<*> -> queries.value = action.query as Query
-    }
-    // Emit the same item with each action
-    accumulator
-}
-    // Only emit once
-    .distinctUntilChanged()
-    .flatMapLatest { (queries, numColumns) ->
-        val tiledList = timelineTileInputs(numColumns, queries)
-            .toTiledList(
-                timelineTiler(
-                    startingQuery = queries.value,
-                    cursorListLoader = cursorListLoader,
-                )
+suspend fun Flow<TimelineLoadAction>.timelineMutations(
+    stateHolder: SuspendingStateHolder<TimelineState>,
+    cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+) = with(stateHolder) {
+    with(this) {
+        // Read the starting state at the time of subscription
+        val startingState = state()
+        scan(
+            initial = Pair(
+                MutableStateFlow(startingState.currentQuery),
+                MutableStateFlow(startingState.numColumns),
             )
-            .map(TiledList<Query, TimelineItem>::filterThreadDuplicates)
-        mutations(queries, numColumns, tiledList)
+        ) { accumulator, action ->
+            val (queries, numColumns) = accumulator
+            // update backing states as a side effect
+            when (action) {
+                is TimelineLoadAction.GridSize -> numColumns.value = action.numColumns
+                is TimelineLoadAction.LoadAround -> queries.value = action.query
+            }
+            // Emit the same item with each action
+            accumulator
+        }
+            // Only emit once
+            .distinctUntilChanged()
+            .flatMapLatest { (queries, numColumns) ->
+                val tiledList = timelineTileInputs(numColumns, queries)
+                    .toTiledList(
+                        timelineTiler(
+                            startingQuery = queries.value,
+                            cursorListLoader = cursorListLoader,
+                        )
+                    )
+                    .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
+                    .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
+                        copy(items = it)
+                    }
+                merge(
+                    queries.mapToMutation { copy(currentQuery = it) },
+                    numColumns.mapToMutation { copy(numColumns = it) },
+                    tiledList,
+                )
+            }
     }
+}
 
-private inline fun <Query : TimelineQuery> timelineTileInputs(
+private inline fun timelineTileInputs(
     numColumns: Flow<Int>,
-    queries: Flow<Query>
-): Flow<Tile.Input<Query, TimelineItem>> = merge(
+    queries: Flow<TimelineQuery>,
+): Flow<Tile.Input<TimelineQuery, TimelineItem>> = merge(
     numColumns.map { columns ->
         Tile.Limiter(
             maxQueries = 3 * columns,
@@ -88,24 +144,24 @@ private inline fun <Query : TimelineQuery> timelineTileInputs(
     )
 )
 
-private inline fun <Query : TimelineQuery> timelinePivotRequest(numColumns: Int) =
-    PivotRequest<Query, TimelineItem>(
+private inline fun timelinePivotRequest(numColumns: Int) =
+    PivotRequest<TimelineQuery, TimelineItem>(
         onCount = numColumns * 3,
         offCount = numColumns * 2,
         comparator = timelineQueryComparator(),
         previousQuery = {
             if ((data.page - 1) < 0) null
-            else updateData { copy(page = page - 1) }
+            else updatePage { copy(page = page - 1) }
         },
         nextQuery = {
-            updateData { copy(page = page + 1) }
+            updatePage { copy(page = page + 1) }
         }
     )
 
-private inline fun <Query : TimelineQuery> timelineTiler(
-    startingQuery: Query,
-    crossinline cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
-): ListTiler<Query, TimelineItem> = listTiler(
+private inline fun timelineTiler(
+    startingQuery: TimelineQuery,
+    crossinline cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+): ListTiler<TimelineQuery, TimelineItem> = listTiler(
     order = Tile.Order.PivotSorted(
         query = startingQuery,
         comparator = timelineQueryComparator(),
@@ -116,54 +172,50 @@ private inline fun <Query : TimelineQuery> timelineTiler(
     )
 )
 
-private inline fun <Query : TimelineQuery> timelineQueryFetcher(
-    startingQuery: Query,
-    crossinline cursorListLoader: (Query, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
-): QueryFetcher<Query, TimelineItem> = neighboredQueryFetcher<Query, TimelineItem, NetworkCursor>(
-    // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
-    // in memory
-    maxTokens = 50,
-    // Make sure the first page has an entry for its cursor/token
-    seedQueryTokenMap = mapOf(
-        startingQuery to NetworkCursor.Initial
-    ),
-    fetcher = { query, cursor ->
-        cursorListLoader(query, cursor)
-            .map { networkCursorList ->
-                NeighboredFetchResult(
-                    // Set the cursor for the next page and any other page with data available.
-                    //
-                    mapOf(
-                        query.updateData { copy(page = page + 1) } to networkCursorList.nextCursor
-                    ),
-                    items = networkCursorList
-                )
-            }
-    }
-)
+private inline fun timelineQueryFetcher(
+    startingQuery: TimelineQuery,
+    crossinline cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+): QueryFetcher<TimelineQuery, TimelineItem> =
+    neighboredQueryFetcher<TimelineQuery, TimelineItem, NetworkCursor>(
+        // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
+        // in memory
+        maxTokens = 50,
+        // Make sure the first page has an entry for its cursor/token
+        seedQueryTokenMap = mapOf(
+            startingQuery to NetworkCursor.Initial
+        ),
+        fetcher = { query, cursor ->
+            cursorListLoader(query, cursor)
+                .map { networkCursorList ->
+                    NeighboredFetchResult(
+                        // Set the cursor for the next page and any other page with data available.
+                        //
+                        mapOf(
+                            query.updatePage { copy(page = page + 1) } to networkCursorList.nextCursor
+                        ),
+                        items = networkCursorList
+                    )
+                }
+        }
+    )
 
-@Suppress("UNCHECKED_CAST")
-private inline fun <Query : TimelineQuery> Query.updateData(
-    block: TimelineQuery.Data.() -> TimelineQuery.Data
-): Query =
-    when (this) {
-        is TimelineQuery.Home -> copy(data = data.block())
-        is TimelineQuery.Profile -> copy(data = data.block())
-        else -> throw IllegalArgumentException("Unknown query type")
-    } as Query
+private inline fun TimelineQuery.updatePage(
+    block: TimelineQuery.Data.() -> TimelineQuery.Data,
+): TimelineQuery = copy(data = data.block())
 
-private fun <Query : TimelineQuery> timelineQueryComparator() = compareBy { query: Query ->
+private fun timelineQueryComparator() = compareBy { query: TimelineQuery ->
     query.data.page
 }
 
-private fun <Query : TimelineQuery> TiledList<Query, TimelineItem>.filterThreadDuplicates(): TiledList<Query, TimelineItem> {
+private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
     val threadRootIds = mutableSetOf<Id>()
     return filter { item ->
         when (item) {
             is TimelineItem.Pinned -> true
-            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid).also { contains ->
-                if (!contains) threadRootIds.add(item.posts.first().cid)
-            }
+            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid)
+                .also { contains ->
+                    if (!contains) threadRootIds.add(item.posts.first().cid)
+                }
 
             is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
                 if (!contains) threadRootIds.add(item.post.cid)
