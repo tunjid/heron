@@ -239,7 +239,7 @@ private fun ProfileHeader(
             Text(text = profile.description ?: "")
             Spacer(Modifier.height(16.dp))
             ProfileTabs(
-                modifier = Modifier,
+                modifier = Modifier.fillMaxWidth(),
                 pagerState = pagerState,
                 titles = tabTitles,
             )
@@ -490,8 +490,7 @@ private fun ProfileTabs(
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier,
         titles = titles,
         selectedTabIndex = pagerState.currentPage,
         onTabSelected = {
