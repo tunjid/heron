@@ -17,6 +17,7 @@
 package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -26,6 +27,8 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    @Transient
+    val timelines: List<Timeline.Home> = emptyList(),
     @Transient
     val timelineIdsToTimelineStates: Map<String, TimelineStateHolder> = emptyMap(),
     @Transient

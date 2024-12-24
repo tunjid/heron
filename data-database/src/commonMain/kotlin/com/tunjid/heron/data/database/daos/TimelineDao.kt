@@ -3,7 +3,6 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
@@ -66,11 +65,11 @@ interface TimelineDao {
     @Query(
         """
             SELECT * FROM lists
-            WHERE cid = :listId
+            WHERE uri = :listUri
         """
     )
     fun list(
-        listId: String,
+        listUri: String,
     ): Flow<ListEntity?>
 
     @Upsert
@@ -81,11 +80,11 @@ interface TimelineDao {
     @Query(
         """
             SELECT * FROM feedGenerators
-            WHERE cid = :feedId
+            WHERE uri = :feedUri
         """
     )
     fun feedGenerator(
-        feedId: String,
+        feedUri: String,
     ): Flow<FeedGeneratorEntity?>
 
     @Upsert

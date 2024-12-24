@@ -59,7 +59,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
 
-data class TimelineQuery(
+class TimelineQuery(
     val data: Data,
     val timeline: Timeline,
 ) {
@@ -74,6 +74,24 @@ data class TimelineQuery(
          */
         val limit: Long = 50L,
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as TimelineQuery
+
+        if (data != other.data) return false
+        if (timeline.sourceId != other.timeline.sourceId) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = data.hashCode()
+        result = 31 * result + timeline.sourceId.hashCode()
+        return result
+    }
 
 }
 
@@ -276,29 +294,32 @@ class OfflineTimelineRepository(
             .mapNotNull { it.preferences?.timelinePreferences }
             .distinctUntilChanged()
             .flatMapLatest { timelinePreferences ->
-                timelinePreferences.map { preference ->
+                timelinePreferences.mapIndexed { index, preference ->
                     when (Type.safeValueOf(preference.type)) {
-                        Type.Feed -> timelineDao.feedGenerator(preference.id)
+                        Type.Feed -> timelineDao.feedGenerator(preference.value)
                             .filterNotNull()
                             .map {
                                 Timeline.Home.Feed(
                                     name = it.displayName,
                                     feedUri = it.uri,
+                                    position = index,
                                 )
                             }
 
-                        Type.List -> timelineDao.list(preference.id)
+                        Type.List -> timelineDao.list(preference.value)
                             .filterNotNull()
                             .map {
                                 Timeline.Home.List(
                                     listUri = it.uri,
                                     name = it.name,
+                                    position = index,
                                 )
                             }
 
                         Type.Timeline -> flowOf(
                             Timeline.Home.Following(
                                 name = preference.value,
+                                position = index,
                             )
                         )
 
@@ -306,13 +327,11 @@ class OfflineTimelineRepository(
                     }
                 }
                     .merge()
-                    .scan(listOf<Timeline.Home>(Timeline.Home.Following(""))) { timelines, timeline ->
+                    .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
                         (listOf(timeline) + timelines).distinctBy { it.sourceId }
                     }
                     .map { homeTimelines ->
-                        homeTimelines.sortedBy { timeline ->
-                            timelinePreferences.indexOfFirst { it.value == timeline.name }
-                        }
+                        homeTimelines.sortedBy(Timeline.Home::position)
                     }
                     .distinctUntilChangedBy {
                         it.joinToString(

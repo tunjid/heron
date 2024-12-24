@@ -17,17 +17,15 @@
 package com.tunjid.heron.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,98 +50,91 @@ internal fun HomeScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier
-            .padding(horizontal = 8.dp),
-        shape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-        )
-    ) {
-        val updatedTimelineIdsToTimelineStates by rememberUpdatedState(
-            state.timelineIdsToTimelineStates
-        )
-        val updatedPages by remember {
-            derivedStateOf { updatedTimelineIdsToTimelineStates.entries.toList() }
-        }
+    val updatedTimelineIdsToTimelineStates by rememberUpdatedState(
+        state.timelineIdsToTimelineStates
+    )
+    val updatedPages by remember {
+        derivedStateOf { updatedTimelineIdsToTimelineStates.entries.toList() }
+    }
 
-        val pagerState = rememberPagerState {
-            updatedPages.size
-        }
-        HorizontalPager(
-            state = pagerState,
-            key = { page -> updatedPages[page].key },
-            pageContent = { page ->
+    val pagerState = rememberPagerState {
+        updatedPages.size
+    }
+    HorizontalPager(
+        modifier = modifier,
+        state = pagerState,
+        key = { page -> updatedPages[page].key },
+        pageContent = { page ->
 
-                val timelineStateHolder = remember { updatedPages[page].value }
-                val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
+            val timelineStateHolder = remember { updatedPages[page].value }
+            val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
 
-                val gridState = rememberLazyStaggeredGridState()
-                val items by rememberUpdatedState(timelineState.items)
+            val gridState = rememberLazyStaggeredGridState()
+            val items by rememberUpdatedState(timelineState.items)
 
-                LazyVerticalStaggeredGrid(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    state = gridState,
-                    columns = StaggeredGridCells.Adaptive(340.dp),
-                    verticalItemSpacing = 8.dp,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    userScrollEnabled = !sharedElementScope.isTransitionActive,
-                ) {
-                    items(
-                        items = items,
-                        key = TimelineItem::id,
-                        itemContent = { item ->
-                            TimelineItem(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                movableSharedElementScope = sharedElementScope,
-                                animatedVisibilityScope = sharedElementScope,
-                                now = remember { Clock.System.now() },
-                                sharedElementPrefix = timelineState.timeline.sourceId,
-                                item = item,
-                                onPostClicked = { post ->
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToPost(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                sharedElementPrefix = timelineState.timeline.sourceId,
-                                                post = post,
-                                            )
-                                        )
-                                    )
-                                },
-                                onProfileClicked = { profile ->
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToProfile(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                profile = profile,
-                                                avatarSharedElementKey = this?.avatarSharedElementKey(
-                                                    prefix = timelineState.timeline.sourceId,
-                                                )
-                                            )
-                                        )
-                                    )
-                                },
-                                onImageClicked = {},
-                                onReplyToPost = {},
-                            )
-                        }
-                    )
-                }
-
-                gridState.PivotedTilingEffect(
+            LazyVerticalStaggeredGrid(
+                modifier = Modifier
+                    .fillMaxSize(),
+                state = gridState,
+                columns = StaggeredGridCells.Adaptive(340.dp),
+                verticalItemSpacing = 8.dp,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                userScrollEnabled = !sharedElementScope.isTransitionActive,
+            ) {
+                items(
                     items = items,
-                    onQueryChanged = { query ->
-                        timelineStateHolder.accept(
-                            TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                    key = TimelineItem::id,
+                    itemContent = { item ->
+                        TimelineItem(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                            movableSharedElementScope = sharedElementScope,
+                            animatedVisibilityScope = sharedElementScope,
+                            now = remember { Clock.System.now() },
+                            sharedElementPrefix = timelineState.timeline.sourceId,
+                            item = item,
+                            onPostClicked = { post ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            sharedElementPrefix = timelineState.timeline.sourceId,
+                                            post = post,
+                                        )
+                                    )
+                                )
+                            },
+                            onProfileClicked = { profile ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToProfile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = this?.avatarSharedElementKey(
+                                                prefix = timelineState.timeline.sourceId,
+                                            )
+                                        )
+                                    )
+                                )
+                            },
+                            onImageClicked = {},
+                            onReplyToPost = {},
                         )
                     }
                 )
             }
-        )
-    }
+
+            gridState.PivotedTilingEffect(
+                items = items,
+                onQueryChanged = { query ->
+                    timelineStateHolder.accept(
+                        TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                    )
+                }
+            )
+        }
+    )
 }
 

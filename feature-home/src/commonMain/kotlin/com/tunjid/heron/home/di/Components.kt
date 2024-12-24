@@ -24,15 +24,25 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.TopAppBarState
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,6 +65,7 @@ import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -94,7 +105,7 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: HomeStateHolderCreator
+        creator: HomeStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -105,9 +116,14 @@ abstract class HomeComponent(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val topAppBarState = rememberTopAppBarState()
+            val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
+                topAppBarState
+            )
 
             PaneScaffold(
                 modifier = Modifier
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -117,6 +133,9 @@ abstract class HomeComponent(
                     TopBar(
                         movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         animatedVisibilityScope = this,
+                        scrollBehavior = scrollBehavior,
+                        appBarState = topAppBarState,
+                        tabTitles = state.timelines.map { it.name },
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = {
                             viewModel.accept(
@@ -137,7 +156,13 @@ abstract class HomeComponent(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(paddingValues = paddingValues)
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = 16.dp,
+                                    topEnd = 16.dp,
+                                )
+                            ),
                     )
                 }
             )
@@ -150,10 +175,13 @@ abstract class HomeComponent(
 private fun TopBar(
     movableSharedElementScope: MovableSharedElementScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    scrollBehavior: TopAppBarScrollBehavior,
+    appBarState: TopAppBarState,
+    tabTitles: List<String>,
     signedInProfile: Profile?,
     onSignedInProfileClicked: (Profile) -> Unit,
 ) = with(movableSharedElementScope) {
-    TopAppBar(
+    MediumTopAppBar(
         navigationIcon = {
             Image(
                 modifier = Modifier
@@ -170,7 +198,16 @@ private fun TopBar(
                 contentDescription = null,
             )
         },
-        title = {},
+        title = {
+            TimelineTabs(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(1f - appBarState.collapsedFraction),
+                titles = tabTitles,
+                selectedTabIndex = 0,
+                onTabSelected = {}
+            )
+        },
         actions = {
             AnimatedVisibility(
                 visible = signedInProfile != null
@@ -199,6 +236,7 @@ private fun TopBar(
             }
             Spacer(Modifier.width(16.dp))
         },
+        scrollBehavior = scrollBehavior,
     )
 }
 

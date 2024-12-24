@@ -101,6 +101,7 @@ private fun timelineMutations(
 ): Flow<Mutation<State>> =
     timelineRepository.homeTimelines().mapToMutation {
         copy(
+            timelines = it,
             timelineIdsToTimelineStates = it.fold(emptyMap()) { newTimelines, timeline ->
                 newTimelines + Pair(
                     timeline.sourceId,

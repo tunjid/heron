@@ -201,7 +201,10 @@ private inline fun timelineQueryFetcher(
 
 private inline fun TimelineQuery.updatePage(
     block: TimelineQuery.Data.() -> TimelineQuery.Data,
-): TimelineQuery = copy(data = data.block())
+): TimelineQuery = TimelineQuery(
+    timeline = timeline,
+    data = data.block(),
+)
 
 private fun timelineQueryComparator() = compareBy { query: TimelineQuery ->
     query.data.page
