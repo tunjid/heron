@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.profile.di
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -88,7 +87,7 @@ abstract class ProfileComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: ProfileStateHolderCreator
+        creator: ProfileStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         paneMapping = { route ->
             mapOf(
@@ -113,13 +112,12 @@ abstract class ProfileComponent(
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
-                content = { paddingValues ->
+                content = {
                     ProfileScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                        modifier = Modifier,
                     )
                 }
             )
