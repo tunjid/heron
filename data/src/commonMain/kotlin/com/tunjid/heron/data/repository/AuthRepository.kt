@@ -46,6 +46,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -123,6 +124,8 @@ class AuthTokenRepository(
                     )
                 )
             }
+            // Suspend till auth token has been saved and is readable
+            savedStateRepository.savedState.first { it.auth != null }
             updateSignedInUser(result.did)
         }
 
