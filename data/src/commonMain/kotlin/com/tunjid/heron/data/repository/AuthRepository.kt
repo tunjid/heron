@@ -43,7 +43,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
@@ -115,24 +114,16 @@ class AuthTokenRepository(
         )
     }
         .mapCatching { result ->
-            coroutineScope {
-                awaitAll(
-                    async {
-                        updateSignedInUser(result.did)
-                    },
-                    async {
-                        savedStateRepository.updateState {
-                            copy(
-                                auth = SavedState.AuthTokens(
-                                    authProfileId = Id(result.did.did),
-                                    auth = result.accessJwt,
-                                    refresh = result.refreshJwt,
-                                )
-                            )
-                        }
-                    }
+            savedStateRepository.updateState {
+                copy(
+                    auth = SavedState.AuthTokens(
+                        authProfileId = Id(result.did.did),
+                        auth = result.accessJwt,
+                        refresh = result.refreshJwt,
+                    )
                 )
             }
+            updateSignedInUser(result.did)
         }
 
 
