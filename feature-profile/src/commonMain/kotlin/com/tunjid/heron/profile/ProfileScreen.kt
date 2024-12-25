@@ -132,6 +132,7 @@ internal fun ProfileScreen(
         3
     }
     CollapsingHeaderLayout(
+        modifier = modifier,
         state = headerState,
         headerContent = {
             ProfileHeader(
@@ -158,7 +159,7 @@ internal fun ProfileScreen(
         },
         body = {
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .clip(
                         RoundedCornerShape(
@@ -168,7 +169,7 @@ internal fun ProfileScreen(
                     ),
             ) {
                 HorizontalPager(
-                    modifier = modifier
+                    modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .clip(
                             RoundedCornerShape(
@@ -225,19 +226,25 @@ private fun ProfileHeader(
                     )
                 }
         ) {
-            Spacer(Modifier.height(24.dp))
-            ProfileHeadline(
-                modifier = Modifier.fillMaxWidth(),
-                profile = profile,
-                isSignedInProfile = isSignedInProfile,
-                profileRelationship = profileRelationship,
-            )
-            ProfileStats(
-                modifier = Modifier.fillMaxWidth(),
-                profile = profile,
-            )
-            Text(text = profile.description ?: "")
-            Spacer(Modifier.height(16.dp))
+            Column(
+                modifier = Modifier.graphicsLayer {
+                    alpha = 1f - headerState.progress
+                },
+            ) {
+                Spacer(Modifier.height(24.dp))
+                ProfileHeadline(
+                    modifier = Modifier.fillMaxWidth(),
+                    profile = profile,
+                    isSignedInProfile = isSignedInProfile,
+                    profileRelationship = profileRelationship,
+                )
+                ProfileStats(
+                    modifier = Modifier.fillMaxWidth(),
+                    profile = profile,
+                )
+                Text(text = profile.description ?: "")
+                Spacer(Modifier.height(16.dp))
+            }
             ProfileTabs(
                 modifier = Modifier.fillMaxWidth(),
                 pagerState = pagerState,
