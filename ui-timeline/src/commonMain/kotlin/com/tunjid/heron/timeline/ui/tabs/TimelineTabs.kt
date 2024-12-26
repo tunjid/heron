@@ -1,50 +1,146 @@
 package com.tunjid.heron.timeline.ui.tabs
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
+import kotlin.math.floor
+import kotlin.math.round
+import kotlin.math.roundToInt
 
 @Composable
 fun TimelineTabs(
     modifier: Modifier = Modifier,
     titles: List<String>,
-    selectedTabIndex: Int,
+    selectedTabIndex: Float,
     onTabSelected: (Int) -> Unit,
 ) {
-    Row(
-        modifier = modifier
-            .horizontalScroll(rememberScrollState()),
-    ) {
-        titles.forEachIndexed { index, title ->
-            val selected = index == selectedTabIndex
-            FilterChip(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp),
-                shape = TabShape,
-                border = if (selected) FilterChipDefaults.filterChipBorder(
-                    enabled = true,
-                    selected = true,
-                ) else null,
-                selected = selected,
-                onClick = {
-                    onTabSelected(index)
-                },
-                label = {
-                    Text(
-                        text = title,
+    Box(modifier = modifier) {
+        val lazyListState = rememberLazyListState()
+        LazyRow(
+            modifier = Modifier,
+            state = lazyListState,
+        ) {
+            itemsIndexed(
+                items = titles,
+                key = { _, title -> title },
+                itemContent = { index, title ->
+                    FilterChip(
+                        modifier = Modifier,
+                        shape = TabShape,
+                        border = null,
+                        selected = false,
+                        onClick = {
+                            onTabSelected(index)
+                        },
+                        label = {
+                            Text(title)
+                        },
                     )
-                },
+                }
             )
         }
+        Indicator(lazyListState, selectedTabIndex)
     }
+}
+
+@Composable
+private fun BoxScope.Indicator(
+    lazyListState: LazyListState,
+    selectedTabIndex: Float,
+) {
+    val updatedSelectedTabIndex by rememberUpdatedState(selectedTabIndex)
+    var interpolatedOffset by remember { mutableStateOf(IntOffset.Zero) }
+
+    // Keep selected tab on screen
+    LaunchedEffect(lazyListState) {
+        snapshotFlow {
+            val layoutInfo = lazyListState.layoutInfo
+            val roundedIndex = updatedSelectedTabIndex.roundToInt()
+
+            if (roundedIndex == layoutInfo.totalItemsCount - 1)
+                return@snapshotFlow layoutInfo.totalItemsCount - 1
+
+            val index = layoutInfo.visibleItemsInfo.binarySearch {
+                it.index - roundedIndex
+            }
+            if (index < 0) return@snapshotFlow roundedIndex
+            val item = layoutInfo.visibleItemsInfo[index]
+
+            if (item.offset + item.size > layoutInfo.viewportEndOffset)
+                 lazyListState.firstVisibleItemIndex + 1
+            else lazyListState.firstVisibleItemIndex
+        }
+            .collect { lazyListState.animateScrollToItem(it) }
+    }
+
+    // Interpolated highlighted tab position
+    LaunchedEffect(lazyListState) {
+        snapshotFlow {
+            val flooredIndex = floor(updatedSelectedTabIndex).roundToInt()
+            val roundedIndex = round(updatedSelectedTabIndex).roundToInt()
+            val fraction = updatedSelectedTabIndex - flooredIndex
+
+            val flooredPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
+                it.index - flooredIndex
+            }
+            if (flooredPosition < 0) return@snapshotFlow IntOffset.Zero
+
+            val roundedPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
+                it.index - roundedIndex
+            }
+            if (roundedPosition < 0) return@snapshotFlow IntOffset.Zero
+
+            val floored = lazyListState.layoutInfo.visibleItemsInfo[flooredPosition]
+            val rounded = lazyListState.layoutInfo.visibleItemsInfo[roundedPosition]
+
+            IntOffset(
+                lerp(floored.size, rounded.size, fraction),
+                lerp(floored.offset, rounded.offset, fraction),
+            )
+        }
+            .collect {
+                interpolatedOffset = it
+            }
+    }
+
+    val density = LocalDensity.current
+    Box(
+        Modifier
+            .align(Alignment.CenterStart)
+            .offset { IntOffset(x = interpolatedOffset.y, y = 0) }
+            .height(32.dp)
+            .matchParentSize()
+            .width(with(density) { interpolatedOffset.x.toDp() })
+            .background(
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                shape = TabShape,
+            )
+    )
 }
 
 val TabShape = RoundedCornerShape(16.dp)
