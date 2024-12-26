@@ -49,7 +49,6 @@ internal fun PostText(
                     state = rememberSharedContentState(
                         post.textSharedElementKey(
                             prefix = sharedElementPrefix,
-                            text = text,
                         )
                     ),
                     animatedVisibilityScope = animatedVisibilityScope,
@@ -140,5 +139,4 @@ fun formatTextPost(
 
 private fun Post.textSharedElementKey(
     prefix: String,
-    text: String,
-): String = "$prefix-${cid.id}-$text"
+): String = "$prefix-${cid.id}-text"
