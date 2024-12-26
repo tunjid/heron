@@ -1,6 +1,7 @@
 package com.tunjid.heron.timeline.ui.tabs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.height
@@ -44,6 +45,7 @@ fun TimelineTabs(
         LazyRow(
             modifier = Modifier,
             state = lazyListState,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             itemsIndexed(
                 items = titles,
