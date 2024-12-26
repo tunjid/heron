@@ -30,6 +30,7 @@ fun TimelineTabs(
     ScrollableTabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = modifier,
+        edgePadding = 28.dp,
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
         indicator = { tabPositions: List<TabPosition> ->
@@ -43,7 +44,6 @@ fun TimelineTabs(
                     )
                     .height(2.dp)
                     .offset(y = 46.dp)
-                    .padding(horizontal = 4.dp)
             )
         },
         divider = { }
@@ -51,7 +51,7 @@ fun TimelineTabs(
         titles.forEachIndexed { index, title ->
             val selected = index == selectedTabIndex
             val textModifier = Modifier
-                .padding(vertical = 4.dp, horizontal = 8.dp)
+                .padding(vertical = 4.dp)
             Tab(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
