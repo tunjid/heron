@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -123,6 +124,7 @@ private fun HomeTabs(
         TimelineTabs(
             modifier = modifier
                 .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 8.dp)
                 .fillMaxWidth(),
             titles = titles,
             selectedTabIndex = pagerState.currentPage,
