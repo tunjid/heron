@@ -50,7 +50,11 @@ internal fun PostEmbed(
                 },
             )
 
-            is ImageList -> PostImages(embed)
+            is ImageList -> PostImages(
+                feature = embed,
+                movableSharedElementScope = movableSharedElementScope,
+            )
+
             UnknownEmbed -> UnknownPostPost(onClick = {})
             is Video -> Unit
 

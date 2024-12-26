@@ -1,5 +1,6 @@
 package com.tunjid.heron.timeline.ui.feature
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
@@ -15,10 +16,14 @@ import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostImages(
     feature: ImageList,
+    movableSharedElementScope: MovableSharedElementScope,
 ) {
     LazyRow(
         horizontalArrangement = spacedBy(8.dp),
@@ -28,9 +33,8 @@ internal fun PostImages(
             key = { it.thumb.uri },
             itemContent = { image ->
                 val aspectRatio = if (!image.aspectRatio.isNaN()) image.aspectRatio else 1f
-                AsyncImage(
-                    modifier =
-                    when (feature.images.size) {
+                movableSharedElementScope.updatedMovableSharedElementOf(
+                    modifier = when (feature.images.size) {
                         1 -> Modifier
                             .fillParentMaxWidth()
                             .aspectRatio(aspectRatio)
@@ -39,12 +43,19 @@ internal fun PostImages(
                             .height(200.dp)
                             .aspectRatio(aspectRatio)
                     },
-                    args = ImageArgs(
+                    key = image.thumb.uri,
+                    state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
                         contentScale = ContentScale.Fit,
                         shape = RoundedCornerShape(16.dp).toImageShape()
-                    )
+                    ),
+                    sharedElement = { state, innerModifier ->
+                        AsyncImage(
+                            modifier = innerModifier,
+                            args = state,
+                        )
+                    }
                 )
             }
         )
