@@ -4,9 +4,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,48 +37,47 @@ internal fun PostText(
     if (text.isBlank()) {
         Spacer(Modifier.height(0.dp))
     } else {
-        val postText = rememberFormattedTextPost(
-            text = text,
-//            post.textLinks,
-        )
+//        val postText = rememberFormattedTextPost(
+//            text = text,
+////            post.textLinks,
+//        )
 
         val uriHandler = LocalUriHandler.current
-        ClickableText(
+        Text(
             modifier = modifier
                 .sharedElement(
                     state = rememberSharedContentState(
                         post.textSharedElementKey(
                             prefix = sharedElementPrefix,
-                            text = text,
                         )
                     ),
                     animatedVisibilityScope = animatedVisibilityScope,
                 ),
-            text = postText,
+            text = text,
             style = LocalTextStyle.current.copy(color = LocalContentColor.current),
-            onClick = { index ->
-                var performedAction = false
-                postText.getStringAnnotations("hashtag", index, index)
-                    .firstOrNull()?.item?.let { hashtag ->
-                        // TODO handle hashtag click
-                    }
-                postText.getStringAnnotations("did", index, index).firstOrNull()?.item?.let { did ->
-                    performedAction = true
-//                    onOpenUser(UserDid(Did(did)))
-                }
-                postText.getStringAnnotations("handle", index, index)
-                    .firstOrNull()?.item?.let { handle ->
-                        performedAction = true
-//                    onOpenUser(UserHandle(Handle(handle)))
-                    }
-                postText.getUrlAnnotations(index, index).firstOrNull()?.item?.url?.let { url ->
-                    performedAction = true
-                    uriHandler.openUri(url)
-                }
-                if (!performedAction) {
-                    onClick()
-                }
-            },
+//            onClick = { index ->
+//                var performedAction = false
+//                postText.getStringAnnotations("hashtag", index, index)
+//                    .firstOrNull()?.item?.let { hashtag ->
+//                        // TODO handle hashtag click
+//                    }
+//                postText.getStringAnnotations("did", index, index).firstOrNull()?.item?.let { did ->
+//                    performedAction = true
+////                    onOpenUser(UserDid(Did(did)))
+//                }
+//                postText.getStringAnnotations("handle", index, index)
+//                    .firstOrNull()?.item?.let { handle ->
+//                        performedAction = true
+////                    onOpenUser(UserHandle(Handle(handle)))
+//                    }
+//                postText.getUrlAnnotations(index, index).firstOrNull()?.item?.url?.let { url ->
+//                    performedAction = true
+//                    uriHandler.openUri(url)
+//                }
+//                if (!performedAction) {
+//                    onClick()
+//                }
+//            },
         )
     }
 }
@@ -140,5 +139,4 @@ fun formatTextPost(
 
 private fun Post.textSharedElementKey(
     prefix: String,
-    text: String,
-): String = "$prefix-${cid.id}-$text"
+): String = "$prefix-${cid.id}-text"

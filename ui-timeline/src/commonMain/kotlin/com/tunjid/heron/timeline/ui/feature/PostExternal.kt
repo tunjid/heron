@@ -5,15 +5,14 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.requiredSizeIn
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,7 +33,6 @@ fun PostExternal(
     sharedTransitionScope: SharedTransitionScope,
     onClick: () -> Unit,
 ) = with(sharedTransitionScope) {
-    val uriHandler = LocalUriHandler.current
     FeatureContainer(
         modifier = Modifier.sharedElement(
             state = rememberSharedContentState(
@@ -48,14 +46,12 @@ fun PostExternal(
         ),
         onClick = onClick,
     ) {
-        Row(horizontalArrangement = spacedBy(16.dp)) {
+        Column(verticalArrangement = spacedBy(16.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
                 AsyncImage(
                     modifier = Modifier
-                        .requiredSizeIn(
-                            maxWidth = 96.dp,
-                            maxHeight = 96.dp,
-                        )
+                        .fillMaxWidth()
+                        .aspectRatio(2f / 1)
                         .sharedElement(
                             state = rememberSharedContentState(
                                 embedSharedElementKey(
@@ -72,13 +68,11 @@ fun PostExternal(
                         contentScale = ContentScale.Crop,
                         shape = RoundedCornerShape(16.dp).toImageShape()
                     ),
-//          onClick = { uriHandler.openUri(feature.uri.uri) },
-//          fallbackColor = MaterialTheme.colorScheme.outline,
                 )
             }
             PostFeatureTextContent(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .sharedElement(
                         state = rememberSharedContentState(
                             embedSharedElementKey(

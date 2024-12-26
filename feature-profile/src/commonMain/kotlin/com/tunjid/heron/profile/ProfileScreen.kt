@@ -499,7 +499,7 @@ private fun ProfileTabs(
     TimelineTabs(
         modifier = modifier,
         titles = titles,
-        selectedTabIndex = pagerState.currentPage,
+        selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
             scope.launch {
                 pagerState.animateScrollToPage(it)
