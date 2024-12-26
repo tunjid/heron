@@ -1,7 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
+import java.util.Properties
+import java.io.FileInputStream
 plugins {
     id("android-application-convention")
     alias(libs.plugins.kotlinMultiplatform)
@@ -88,9 +89,36 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        getByName("debug") {
+            if (file("debugKeystore.properties").exists()) {
+                val props = Properties()
+                props.load(FileInputStream(file("debugKeystore.properties")))
+                storeFile = file(props["keystore"] as String)
+                storePassword = props["keystore.password"] as String
+                keyAlias = props["keyAlias"] as String
+                keyPassword = props["keyPassword"] as String
+            }
+        }
+        create("release") {
+            if (file("debugKeystore.properties").exists()) {
+                val props = Properties()
+                props.load(FileInputStream(file("debugKeystore.properties")))
+                storeFile = file(props["keystore"] as String)
+                storePassword = props["keystore.password"] as String
+                keyAlias = props["keyAlias"] as String
+                keyPassword = props["keyPassword"] as String
+            }
+        }
+    }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
