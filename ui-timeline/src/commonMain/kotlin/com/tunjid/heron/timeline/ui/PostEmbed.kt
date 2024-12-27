@@ -52,6 +52,7 @@ internal fun PostEmbed(
 
             is ImageList -> PostImages(
                 feature = embed,
+                sharedElementPrefix = sharedElementPrefix,
                 movableSharedElementScope = movableSharedElementScope,
             )
 
