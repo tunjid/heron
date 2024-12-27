@@ -76,9 +76,9 @@ private class PanedSharedElementScope(
                         clipInOverlayDuringTransition = clipInOverlayDuringTransition,
                     )
                     // Share the element
-                    else -> sharedElement(
-                        state = rememberSharedContentState(key),
-                        animatedVisibilityScope = paneScope,
+                    else -> sharedElementWithCallerManagedVisibility(
+                        sharedContentState = rememberSharedContentState(key),
+                        visible = paneScope.isActive,
                         boundsTransform = boundsTransform,
                         placeHolderSize = placeHolderSize,
                         renderInOverlayDuringTransition = renderInOverlayDuringTransition,
@@ -88,9 +88,9 @@ private class PanedSharedElementScope(
                 }
             }
             // Share the element when in the transient pane
-            ThreePane.TransientPrimary -> sharedElement(
-                state = rememberSharedContentState(key),
-                animatedVisibilityScope = paneScope,
+            ThreePane.TransientPrimary -> sharedElementWithCallerManagedVisibility(
+                sharedContentState = rememberSharedContentState(key),
+                visible = paneScope.isActive,
                 boundsTransform = boundsTransform,
                 placeHolderSize = placeHolderSize,
                 renderInOverlayDuringTransition = renderInOverlayDuringTransition,
