@@ -68,7 +68,7 @@ private class PanedSharedElementScope(
                 when {
                     paneScope.isPreviewingBack -> sharedElementWithCallerManagedVisibility(
                         sharedContentState = state,
-                        visible = !state.isMatchFound,
+                        visible = false,
                         boundsTransform = boundsTransform,
                         placeHolderSize = placeHolderSize,
                         renderInOverlayDuringTransition = renderInOverlayDuringTransition,
@@ -76,9 +76,9 @@ private class PanedSharedElementScope(
                         clipInOverlayDuringTransition = clipInOverlayDuringTransition,
                     )
                     // Share the element
-                    else -> sharedElementWithCallerManagedVisibility(
-                        sharedContentState = rememberSharedContentState(key),
-                        visible = true,
+                    else -> sharedElement(
+                        state = rememberSharedContentState(key),
+                        animatedVisibilityScope = paneScope,
                         boundsTransform = boundsTransform,
                         placeHolderSize = placeHolderSize,
                         renderInOverlayDuringTransition = renderInOverlayDuringTransition,
