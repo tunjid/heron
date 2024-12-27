@@ -2,6 +2,8 @@ package com.tunjid.heron.timeline.ui
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.LocalContentColor
@@ -45,6 +47,10 @@ internal fun PostText(
         val uriHandler = LocalUriHandler.current
         Text(
             modifier = modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onClick() }
                 .sharedElement(
                     state = rememberSharedContentState(
                         post.textSharedElementKey(
