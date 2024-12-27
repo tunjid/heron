@@ -3,6 +3,7 @@ package com.tunjid.heron.scaffold.ui
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -11,10 +12,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlin.math.min
 
+@Stable
 class AccumulatedOffsetNestedScrollConnection(
     private val invert: Boolean = false,
     private val maxOffset: Offset,
@@ -43,27 +46,39 @@ class AccumulatedOffsetNestedScrollConnection(
             ),
         )
 
-
         return Offset.Zero
     }
 }
 
 @Composable
 fun bottomAppBarAccumulatedOffsetNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
-    val density = LocalDensity.current
     val navigationBarInsets = WindowInsets.navigationBars
-    return remember(density, navigationBarInsets) {
-        AccumulatedOffsetNestedScrollConnection(
-            invert = true,
-            maxOffset = Offset(
+    return rememberAccumulatedOffsetNestedScrollConnection(
+        invert = true,
+        maxOffset = maxOffset@{
+            Offset(
                 x = 0f,
-                y = with(density) {
-                    navigationBarInsets.run {
-                        getTop(density) + getBottom(density)
-                    } + 80.dp.toPx()
-                }
-            ),
-            minOffset = Offset.Zero,
+                y = navigationBarInsets.run {
+                    getTop(this@maxOffset) + getBottom(this@maxOffset)
+                } + 80.dp.toPx()
+            )
+        },
+        minOffset = { Offset.Zero },
+    )
+}
+
+@Composable
+fun rememberAccumulatedOffsetNestedScrollConnection(
+    invert: Boolean = false,
+    maxOffset: Density.() -> Offset,
+    minOffset: Density.() -> Offset,
+): AccumulatedOffsetNestedScrollConnection {
+    val density = LocalDensity.current
+    return remember {
+        AccumulatedOffsetNestedScrollConnection(
+            invert = invert,
+            maxOffset = density.maxOffset(),
+            minOffset = density.minOffset(),
         )
     }
 }
