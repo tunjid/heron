@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.AndroidViewModel
+import com.tunjid.heron.scaffold.navigation.PredictiveBackEffects
 import com.tunjid.heron.scaffold.scaffold.App
 
 class MainActivity : ComponentActivity() {
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
                 appState = appState,
                 modifier = Modifier.fillMaxSize(),
             )
+            PredictiveBackEffects(appState)
         }
     }
 }
