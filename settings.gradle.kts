@@ -51,4 +51,5 @@ include(
     ":feature-template",
     ":ui-timeline",
     ":ui-images",
+    ":ui-core",
 )

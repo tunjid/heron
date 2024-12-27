@@ -51,7 +51,7 @@ import com.tunjid.heron.home.di.StatusBarHeight
 import com.tunjid.heron.home.di.TabsHeight
 import com.tunjid.heron.home.di.ToolbarHeight
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
