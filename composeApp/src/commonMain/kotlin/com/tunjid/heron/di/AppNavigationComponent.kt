@@ -16,9 +16,15 @@
 
 package com.tunjid.heron.di
 
+import com.tunjid.heron.compose.di.ComposeNavigationComponent
+import com.tunjid.heron.feed.di.FeedNavigationComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
+import com.tunjid.heron.messages.di.MessagesNavigationComponent
+import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
+import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
+import com.tunjid.heron.search.di.SearchNavigationComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
@@ -28,9 +34,15 @@ import me.tatarka.inject.annotations.Component
 @Component
 abstract class AppNavigationComponent(
     @Component val signInNavigationComponent: SignInNavigationComponent,
+    @Component val composeNavigationComponent: ComposeNavigationComponent,
+    @Component val feedNavigationComponent: FeedNavigationComponent,
     @Component val homeNavigationComponent: HomeNavigationComponent,
+    @Component val messagesNavigationComponent: MessagesNavigationComponent,
+    @Component val notificationsNavigationComponent: NotificationsNavigationComponent,
     @Component val postDetailNavigationComponent: PostDetailNavigationComponent,
     @Component val profileNavigationComponent: ProfileNavigationComponent,
+    @Component val profilesNavigationComponent: ProfilesNavigationComponent,
+    @Component val searchNavigationComponent: SearchNavigationComponent,
     @Component val splashNavigationComponent: SplashNavigationComponent,
 ) {
     internal abstract val routeMatcherMap: Map<String, RouteMatcher>
