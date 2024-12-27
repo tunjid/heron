@@ -16,12 +16,16 @@
 
 package com.tunjid.heron.search.di
 
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -30,9 +34,13 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.search.ActualSearchStateHolder
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
@@ -85,15 +93,30 @@ abstract class SearchComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
+
+            val bottomNavAccumulatedOffsetNestedScrollConnection =
+                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
                     TopBar()
+                },
+                bottomBar = {
+                    BottomBar(
+                        sharedElementScope = sharedElementScope,
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            }
+                    )
                 },
                 content = { paddingValues ->
                     SearchScreen(
@@ -119,5 +142,16 @@ private fun TopBar() {
                 }
             )
         },
+    )
+}
+
+@Composable
+private fun BottomBar(
+    modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
+) {
+    BottomAppBar(
+        modifier = modifier,
+        sharedElementScope = sharedElementScope,
     )
 }

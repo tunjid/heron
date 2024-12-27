@@ -16,12 +16,15 @@
 
 package com.tunjid.heron.notifications.di
 
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -36,6 +39,9 @@ import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.heron.notifications.ActualNotificationsStateHolder
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.NotificationsStateHolderCreator
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -85,15 +91,30 @@ abstract class NotificationsComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
+
+            val bottomNavAccumulatedOffsetNestedScrollConnection =
+                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
                     TopBar()
+                },
+                bottomBar = {
+                    BottomBar(
+                        sharedElementScope = sharedElementScope,
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            }
+                    )
                 },
                 content = { paddingValues ->
                     NotificationsScreen(
@@ -119,5 +140,16 @@ private fun TopBar() {
                 }
             )
         },
+    )
+}
+
+@Composable
+private fun BottomBar(
+    modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
+) {
+    BottomAppBar(
+        modifier = modifier,
+        sharedElementScope = sharedElementScope,
     )
 }
