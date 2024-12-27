@@ -23,7 +23,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.offset
@@ -36,8 +35,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -63,7 +65,9 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.scaffold.ui.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -116,12 +120,20 @@ abstract class HomeComponent(
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             val sharedElementScope = requirePanedSharedElementScope()
+
+            val statusBarHeight = StatusBarHeight
+            val topAppBarOffsetNestedScrollConnection =
+                rememberAccumulatedOffsetNestedScrollConnection(
+                    maxOffset = { Offset.Zero },
+                    minOffset = { Offset(x = 0f, y = -(statusBarHeight + ToolbarHeight).toPx()) },
+                )
             val bottomNavAccumulatedOffsetNestedScrollConnection =
                 bottomAppBarAccumulatedOffsetNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(topAppBarOffsetNestedScrollConnection)
                     .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -130,6 +142,9 @@ abstract class HomeComponent(
                 },
                 topBar = {
                     TopBar(
+                        modifier = Modifier.offset {
+                            topAppBarOffsetNestedScrollConnection.offset.round()
+                        },
                         movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
                         animatedVisibilityScope = this,
                         signedInProfile = state.signedInProfile,
@@ -155,17 +170,12 @@ abstract class HomeComponent(
                             }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     HomeScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(
-                                paddingValues = PaddingValues(
-                                    top = paddingValues.calculateTopPadding()
-                                )
-                            ),
+                        modifier = Modifier,
                     )
                 }
             )
@@ -176,12 +186,14 @@ abstract class HomeComponent(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TopBar(
+    modifier: Modifier = Modifier,
     movableSharedElementScope: MovableSharedElementScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     signedInProfile: Profile?,
     onSignedInProfileClicked: (Profile) -> Unit,
 ) = with(movableSharedElementScope) {
     TopAppBar(
+        modifier = modifier,
         navigationIcon = {
             Image(
                 modifier = Modifier
@@ -245,3 +257,19 @@ private fun BottomBar(
 
 
 private const val SignedInUserAvatarSharedElementKey = "self"
+
+
+internal val ToolbarHeight = 56.dp
+
+internal val TabsHeight = 48.dp
+
+internal val StatusBarHeight: Dp
+    @Composable get() {
+        val density = LocalDensity.current
+        val statusBarInsets = WindowInsets.statusBars
+        return with(density) {
+            statusBarInsets.run {
+                getTop(density) + getBottom(density)
+            }.toDp()
+        }
+    }

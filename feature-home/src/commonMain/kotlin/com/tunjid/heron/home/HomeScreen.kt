@@ -16,17 +16,13 @@
 
 package com.tunjid.heron.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -37,23 +33,26 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.home.di.StatusBarHeight
+import com.tunjid.heron.home.di.TabsHeight
+import com.tunjid.heron.home.di.ToolbarHeight
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
@@ -81,26 +80,29 @@ internal fun HomeScreen(
     Box(
         modifier = modifier
     ) {
-        var tabsVisible by remember { mutableStateOf(true) }
-
+        val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
+            maxOffset = { Offset.Zero },
+            minOffset = { Offset(x = 0f, y = (-TabsHeight).toPx()) },
+        )
         HorizontalPager(
-            modifier = Modifier,
+            modifier = Modifier
+                .nestedScroll(tabsOffsetNestedScrollConnection),
             state = pagerState,
             key = { page -> updatedPages[page].key },
             pageContent = { page ->
                 val timelineStateHolder = remember { updatedPages[page].value }
                 HomeTimeline(
                     sharedElementScope = sharedElementScope,
-                    actions = actions,
                     timelineStateHolder = timelineStateHolder,
-                    onScrolledForward = { tabsVisible = false },
-                    onScrolledBackward = { tabsVisible = true },
+                    actions = actions,
                 )
             }
         )
         HomeTabs(
+            modifier = Modifier.offset {
+                tabsOffsetNestedScrollConnection.offset.round()
+            },
             pagerState = pagerState,
-            visible = tabsVisible,
             titles = remember(state.timelines) {
                 state.timelines.map { it.name }
             }
@@ -113,28 +115,25 @@ private fun HomeTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     titles: List<String>,
-    visible: Boolean,
 ) {
     val scope = rememberCoroutineScope()
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + slideInVertically(),
-        exit = fadeOut() + slideOutVertically(),
-    ) {
-        TimelineTabs(
-            modifier = modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 8.dp)
-                .fillMaxWidth(),
-            titles = titles,
-            selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-            onTabSelected = {
-                scope.launch {
-                    pagerState.animateScrollToPage(it)
-                }
+    TimelineTabs(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(
+                top = StatusBarHeight + ToolbarHeight,
+                start = 8.dp,
+                end = 8.dp,
+            )
+            .fillMaxWidth(),
+        titles = titles,
+        selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+        onTabSelected = {
+            scope.launch {
+                pagerState.animateScrollToPage(it)
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
@@ -142,8 +141,6 @@ private fun HomeTimeline(
     sharedElementScope: SharedElementScope,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    onScrolledForward: () -> Unit,
-    onScrolledBackward: () -> Unit,
 ) {
 
     val gridState = rememberLazyStaggeredGridState()
@@ -157,7 +154,7 @@ private fun HomeTimeline(
         columns = StaggeredGridCells.Adaptive(340.dp),
         verticalItemSpacing = 8.dp,
         contentPadding = PaddingValues(
-            top = 48.dp,
+            top = StatusBarHeight + ToolbarHeight + TabsHeight,
             start = 8.dp,
             end = 8.dp,
         ),
@@ -216,15 +213,4 @@ private fun HomeTimeline(
             )
         }
     )
-
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.lastScrolledForward }
-            .collect { if (it) onScrolledForward() }
-    }
-
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.lastScrolledBackward }
-            .collect { if (it) onScrolledBackward() }
-
-    }
 }
