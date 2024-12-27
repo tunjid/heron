@@ -1,18 +1,12 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
@@ -21,7 +15,6 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
 import com.tunjid.heron.scaffold.navigation.NavItem
 import org.jetbrains.compose.resources.stringResource
 
@@ -34,78 +27,56 @@ internal fun NavScaffold(
     onNavItemSelected: (NavItem) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Column(
+    Row(
         modifier = modifier,
     ) {
-        Row(
-            modifier = Modifier.weight(1f)
-        ) {
-            AnimatedVisibility(
-                modifier = Modifier
-                    .wrapContentWidth(),
-                visible = isVisible && useRail,
-                enter = expandHorizontally(),
-                exit = shrinkHorizontally(),
-            ) {
-                NavigationRail(
-                    navItems = navItems,
-                    onNavItemSelected = onNavItemSelected
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .animateContentSize()
-            ) {
-                content()
-            }
-        }
         AnimatedVisibility(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            visible = isVisible && !useRail,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+            modifier = Modifier,
+            visible = isVisible && useRail,
+            enter = expandHorizontally(),
+            exit = shrinkHorizontally(),
         ) {
-            BottomAppBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
+            NavigationRail(
                 navItems = navItems,
                 onNavItemSelected = onNavItemSelected
             )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            content()
         }
     }
 }
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun BottomAppBar(
+fun BottomAppBar(
     modifier: Modifier = Modifier,
-    navItems: List<NavItem>,
-    onNavItemSelected: (NavItem) -> Unit
-) {
+    sharedElementScope: SharedElementScope,
+) = with(sharedElementScope) {
+    val appState = LocalAppState.current
     BottomAppBar(
-        modifier = modifier,
+        modifier = modifier
+            .sharedElement(
+                state = rememberSharedContentState("0"),
+                animatedVisibilityScope = sharedElementScope,
+                zIndexInOverlay = 2f,
+            ),
     ) {
-        navItems.forEach { item ->
+        appState.navItems.forEach { item ->
             NavigationBarItem(
                 icon = {
                     Icon(
                         imageVector = item.stack.icon,
-                        contentDescription = null,
-                    )
-                },
-                label = {
-                    Text(
-                        text = stringResource(item.stack.titleRes),
-                        fontSize = 11.sp,
+                        contentDescription = stringResource(item.stack.titleRes),
                     )
                 },
                 selected = item.selected,
                 onClick = {
-                    onNavItemSelected(item)
+                    appState.onNavItemSelected(item)
                 }
             )
         }
@@ -116,7 +87,7 @@ private fun BottomAppBar(
 private fun NavigationRail(
     modifier: Modifier = Modifier,
     navItems: List<NavItem>,
-    onNavItemSelected: (NavItem) -> Unit
+    onNavItemSelected: (NavItem) -> Unit,
 ) {
     NavigationRail(
         modifier = modifier,

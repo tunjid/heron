@@ -28,18 +28,18 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import kotlinx.datetime.Clock
 
 @Composable
@@ -52,71 +52,69 @@ internal fun PostDetailScreen(
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
 
-    Surface(
+    LazyVerticalStaggeredGrid(
         modifier = modifier
-            .padding(horizontal = 8.dp),
-        shape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-        )
+            .padding(horizontal = 8.dp)
+            .fillMaxSize()
+            .clip(
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                )
+            ),
+        state = gridState,
+        columns = StaggeredGridCells.Adaptive(340.dp),
+        verticalItemSpacing = 4.dp,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        userScrollEnabled = !sharedElementScope.isTransitionActive,
     ) {
-        LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .fillMaxSize(),
-            state = gridState,
-            columns = StaggeredGridCells.Adaptive(340.dp),
-            verticalItemSpacing = 4.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !sharedElementScope.isTransitionActive,
-        ) {
-            items(
-                items = items,
-                key = TimelineItem::id,
-                itemContent = { item ->
-                    TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
-                        movableSharedElementScope = sharedElementScope,
-                        animatedVisibilityScope = sharedElementScope,
-                        now = remember { Clock.System.now() },
-                        sharedElementPrefix = state.sharedElementPrefix,
-                        item = item,
-                        onPostClicked = { post ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToPost(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                        sharedElementPrefix = state.sharedElementPrefix,
-                                        post = post,
+        items(
+            items = items,
+            key = TimelineItem::id,
+            itemContent = { item ->
+                TimelineItem(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
+                    movableSharedElementScope = sharedElementScope,
+                    animatedVisibilityScope = sharedElementScope,
+                    now = remember { Clock.System.now() },
+                    sharedElementPrefix = state.sharedElementPrefix,
+                    item = item,
+                    onPostClicked = { post ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToPost(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    post = post,
+                                )
+                            )
+                        )
+                    },
+                    onProfileClicked = { profile ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToProfile(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                    profile = profile,
+                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                        prefix = state.sharedElementPrefix,
                                     )
                                 )
                             )
-                        },
-                        onProfileClicked = { profile ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                        profile = profile,
-                                        avatarSharedElementKey = this?.avatarSharedElementKey(
-                                            prefix = state.sharedElementPrefix,
-                                        )
-                                    )
-                                )
-                            )
-                        },
-                        onImageClicked = {},
-                        onReplyToPost = {},
-                    )
-                }
-            )
-            // Allow for scrolling to the post selected even if others came before.
-            item(
-                span = StaggeredGridItemSpan.FullLine
-            ) {
-                Spacer(Modifier.height(800.dp))
+                        )
+                    },
+                    onImageClicked = {},
+                    onReplyToPost = {},
+                )
             }
+        )
+        // Allow for scrolling to the post selected even if others came before.
+        item(
+            span = StaggeredGridItemSpan.FullLine
+        ) {
+            Spacer(Modifier.height(800.dp))
         }
     }
 }

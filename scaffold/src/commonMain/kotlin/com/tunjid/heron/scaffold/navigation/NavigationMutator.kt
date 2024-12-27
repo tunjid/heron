@@ -348,10 +348,6 @@ private val SignedInNavigationState = MultiStackNav(
             name = AppStack.Notifications.stackName,
             children = listOf(routeOf("/notifications"))
         ),
-        StackNav(
-            name = AppStack.Profile.stackName,
-            children = listOf(routeOf("/me"))
-        ),
     )
 )
 

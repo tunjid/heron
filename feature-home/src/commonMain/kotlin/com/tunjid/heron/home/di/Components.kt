@@ -23,8 +23,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -34,8 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -54,9 +58,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -108,9 +115,14 @@ abstract class HomeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
+            val bottomNavAccumulatedOffsetNestedScrollConnection =
+                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 contentWindowInsets = WindowInsets.statusBars,
@@ -134,13 +146,26 @@ abstract class HomeComponent(
                         },
                     )
                 },
+                bottomBar = {
+                    BottomBar(
+                        sharedElementScope = sharedElementScope,
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            }
+                    )
+                },
                 content = { paddingValues ->
                     HomeScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(
+                                paddingValues = PaddingValues(
+                                    top = paddingValues.calculateTopPadding()
+                                )
+                            ),
                     )
                 }
             )
@@ -206,5 +231,17 @@ private fun TopBar(
         },
     )
 }
+
+@Composable
+private fun BottomBar(
+    modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
+) {
+    BottomAppBar(
+        modifier = modifier,
+        sharedElementScope = sharedElementScope,
+    )
+}
+
 
 private const val SignedInUserAvatarSharedElementKey = "self"

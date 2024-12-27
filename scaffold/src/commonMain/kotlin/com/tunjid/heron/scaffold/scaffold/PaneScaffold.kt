@@ -25,6 +25,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit,
     topBar: @Composable () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit
@@ -34,6 +35,9 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     Scaffold(
         modifier = modifier,
         topBar = topBar,
+        bottomBar = {
+            if (paneState.pane == ThreePane.Primary) bottomBar()
+        },
         floatingActionButton = {
             if (paneState.pane == ThreePane.Primary) floatingActionButton()
         },
