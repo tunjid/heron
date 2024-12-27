@@ -60,6 +60,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
@@ -114,6 +115,7 @@ abstract class HomeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
             val bottomNavAccumulatedOffsetNestedScrollConnection =
                 bottomAppBarAccumulatedOffsetNestedScrollConnection()
 
@@ -146,9 +148,11 @@ abstract class HomeComponent(
                 },
                 bottomBar = {
                     BottomBar(
-                        modifier = Modifier.offset {
-                            bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
-                        }
+                        sharedElementScope = sharedElementScope,
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            }
                     )
                 },
                 content = { paddingValues ->
@@ -231,9 +235,11 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
 ) {
     BottomAppBar(
         modifier = modifier,
+        sharedElementScope = sharedElementScope,
     )
 }
 

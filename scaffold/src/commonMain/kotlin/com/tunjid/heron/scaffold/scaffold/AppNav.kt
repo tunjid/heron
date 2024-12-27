@@ -1,13 +1,12 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
@@ -52,13 +51,20 @@ internal fun NavScaffold(
 }
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BottomAppBar(
     modifier: Modifier = Modifier,
-) {
+    sharedElementScope: SharedElementScope,
+) = with(sharedElementScope) {
     val appState = LocalAppState.current
     BottomAppBar(
-        modifier = modifier,
+        modifier = modifier
+            .sharedElement(
+                state = rememberSharedContentState("0"),
+                animatedVisibilityScope = sharedElementScope,
+                zIndexInOverlay = 2f,
+            ),
     ) {
         appState.navItems.forEach { item ->
             NavigationBarItem(

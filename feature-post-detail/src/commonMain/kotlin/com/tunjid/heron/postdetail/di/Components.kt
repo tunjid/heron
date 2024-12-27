@@ -48,6 +48,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
@@ -123,6 +124,7 @@ abstract class PostDetailComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
             val bottomNavAccumulatedOffsetNestedScrollConnection =
                 bottomAppBarAccumulatedOffsetNestedScrollConnection()
 
@@ -139,6 +141,7 @@ abstract class PostDetailComponent(
                 },
                 bottomBar = {
                     BottomBar(
+                        sharedElementScope = sharedElementScope,
                         modifier = Modifier.offset {
                             bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
                         }
@@ -146,7 +149,7 @@ abstract class PostDetailComponent(
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        sharedElementScope = sharedElementScope,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
@@ -193,9 +196,10 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
 ) {
     BottomAppBar(
-        modifier = modifier
+        modifier = modifier,
+        sharedElementScope = sharedElementScope,
     )
 }
-

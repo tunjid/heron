@@ -17,8 +17,8 @@ import kotlin.math.min
 
 class AccumulatedOffsetNestedScrollConnection(
     private val invert: Boolean = false,
-    private val maxY: Float,
-    private val minY: Float,
+    private val maxOffset: Offset,
+    private val minOffset: Offset,
 ) : NestedScrollConnection {
 
     var offset by mutableStateOf(Offset.Zero)
@@ -33,10 +33,14 @@ class AccumulatedOffsetNestedScrollConnection(
             else offset + available
 
         offset = adjusted.copy(
+            x = max(
+                min(adjusted.x, maxOffset.x),
+                minOffset.x,
+            ),
             y = max(
-                min(adjusted.y, maxY),
-                minY,
-            )
+                min(adjusted.y, maxOffset.y),
+                minOffset.y,
+            ),
         )
 
 
@@ -50,12 +54,15 @@ fun bottomAppBarAccumulatedOffsetNestedScrollConnection(): AccumulatedOffsetNest
     return remember(density) {
         AccumulatedOffsetNestedScrollConnection(
             invert = true,
-            maxY = with(density) {
-                WindowInsets.navigationBars.run {
-                    getTop(density) + getBottom(density)
-                } + 64.dp.toPx()
-            },
-            minY = 0f,
+            maxOffset = Offset(
+                x = 0f,
+                y = with(density) {
+                    WindowInsets.navigationBars.run {
+                        getTop(density) + getBottom(density)
+                    } + 80.dp.toPx()
+                }
+            ),
+            minOffset = Offset.Zero,
         )
     }
 }
