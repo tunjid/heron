@@ -58,10 +58,14 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
+import com.tunjid.composables.collapsingheader.CollapsingHeaderStatus
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.Timeline
@@ -117,6 +122,8 @@ internal fun ProfileScreen(
 ) {
     val density = LocalDensity.current
 
+    var wasCollapsed by rememberSaveable { mutableStateOf(false) }
+
     val collapsedHeight = with(density) { 56.dp.toPx() } +
             WindowInsets.statusBars.getTop(density).toFloat() +
             WindowInsets.statusBars.getBottom(density).toFloat()
@@ -125,8 +132,15 @@ internal fun ProfileScreen(
         CollapsingHeaderState(
             collapsedHeight = collapsedHeight,
             initialExpandedHeight = with(density) { 800.dp.toPx() },
-            decayAnimationSpec = splineBasedDecay(density)
+            decayAnimationSpec = splineBasedDecay(density),
+            initialStatus =
+            if (wasCollapsed) CollapsingHeaderStatus.Collapsed
+            else CollapsingHeaderStatus.Expanded,
         )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { wasCollapsed = headerState.progress > 0.5f }
     }
     val pagerState = rememberPagerState {
         3
