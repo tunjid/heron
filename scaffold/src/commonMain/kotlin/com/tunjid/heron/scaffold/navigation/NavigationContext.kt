@@ -16,10 +16,12 @@
 
 package com.tunjid.heron.scaffold.navigation
 
+import com.tunjid.heron.data.core.models.ModelUrlSafeBase64
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.current
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParser
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * provides a context for navigation actions, most commonly parsing a string route to a fully
@@ -33,22 +35,23 @@ interface NavigationContext {
 
 internal class ImmutableNavigationContext(
     private val state: MultiStackNav,
-    private val routeParser: RouteParser
+    private val routeParser: RouteParser,
 ) : NavigationContext {
     override val navState: MultiStackNav get() = state
 
     override val String.toRoute: Route
         get() = routeParser.parse(this) ?: unknownRoute()
 
+    @OptIn(ExperimentalEncodingApi::class)
     override fun Route.encodeToQueryParam(): String =
-        routeParams.pathAndQueries.encodeUrl()
+        ModelUrlSafeBase64.encode(routeParams.pathAndQueries.encodeToByteArray())
 }
 
 fun unknownRoute(path: String = "/404") = routeOf(path = path)
 
-fun String.decodeRoutePathAndQueriesFromQueryParam() = decodeUrl()
+@OptIn(ExperimentalEncodingApi::class)
+fun String.decodeRoutePathAndQueriesFromQueryParam(): String =
+    ModelUrlSafeBase64.decode(this).decodeToString()
+
 
 val NavigationContext.currentRoute get() = navState.current as Route
-
-internal expect fun String.encodeUrl(): String
-internal expect fun String.decodeUrl(): String

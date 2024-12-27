@@ -23,6 +23,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 @Composable
 internal fun PostImages(
     feature: ImageList,
+    sharedElementPrefix: String,
     movableSharedElementScope: MovableSharedElementScope,
 ) {
     LazyRow(
@@ -43,7 +44,7 @@ internal fun PostImages(
                             .height(200.dp)
                             .aspectRatio(aspectRatio)
                     },
-                    key = image.thumb.uri,
+                    key = "$sharedElementPrefix-${image.thumb.uri}",
                     state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,

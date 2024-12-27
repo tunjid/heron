@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.Message
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
@@ -373,7 +374,7 @@ internal enum class AppStack(
     Messages(
         stackName = "messages-stack",
         titleRes = Res.string.messages,
-        icon = Icons.AutoMirrored.Rounded.Message,
+        icon = Icons.Rounded.Mail,
     ),
     Notifications(
         stackName = "notifications-stack",
