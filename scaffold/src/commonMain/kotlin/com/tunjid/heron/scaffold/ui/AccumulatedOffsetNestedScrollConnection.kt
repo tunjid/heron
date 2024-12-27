@@ -51,13 +51,14 @@ class AccumulatedOffsetNestedScrollConnection(
 @Composable
 fun bottomAppBarAccumulatedOffsetNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
     val density = LocalDensity.current
-    return remember(density) {
+    val navigationBarInsets = WindowInsets.navigationBars
+    return remember(density, navigationBarInsets) {
         AccumulatedOffsetNestedScrollConnection(
             invert = true,
             maxOffset = Offset(
                 x = 0f,
                 y = with(density) {
-                    WindowInsets.navigationBars.run {
+                    navigationBarInsets.run {
                         getTop(density) + getBottom(density)
                     } + 80.dp.toPx()
                 }
