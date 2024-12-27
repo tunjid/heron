@@ -3,10 +3,13 @@ package com.tunjid.heron.scaffold.ui
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -14,6 +17,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.packFloats
+import androidx.compose.ui.util.unpackFloat1
+import androidx.compose.ui.util.unpackFloat2
 import kotlin.math.max
 import kotlin.math.min
 
@@ -22,9 +28,10 @@ class AccumulatedOffsetNestedScrollConnection(
     private val invert: Boolean = false,
     private val maxOffset: Offset,
     private val minOffset: Offset,
+    initialOffset: Offset = Offset.Zero,
 ) : NestedScrollConnection {
 
-    var offset by mutableStateOf(Offset.Zero)
+    var offset by mutableStateOf(initialOffset)
         private set
 
     override fun onPreScroll(
@@ -73,12 +80,28 @@ fun rememberAccumulatedOffsetNestedScrollConnection(
     maxOffset: Density.() -> Offset,
     minOffset: Density.() -> Offset,
 ): AccumulatedOffsetNestedScrollConnection {
+    var savedOffset by rememberSaveable {
+        mutableLongStateOf(0L)
+    }
     val density = LocalDensity.current
-    return remember {
+    val connection = remember {
         AccumulatedOffsetNestedScrollConnection(
             invert = invert,
             maxOffset = density.maxOffset(),
             minOffset = density.minOffset(),
+            initialOffset = Offset(
+                x = unpackFloat1(savedOffset),
+                y = unpackFloat2(savedOffset)
+            )
         )
     }
+    DisposableEffect(Unit) {
+        onDispose {
+            savedOffset = packFloats(
+                val1 = connection.offset.x,
+                val2 = connection.offset.y,
+            )
+        }
+    }
+    return connection
 }
