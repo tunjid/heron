@@ -17,6 +17,8 @@
 package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -26,6 +28,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -46,6 +50,7 @@ import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -118,9 +123,13 @@ abstract class PostDetailComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val bottomNavAccumulatedOffsetNestedScrollConnection =
+                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -129,7 +138,11 @@ abstract class PostDetailComponent(
                     TopBar { viewModel.accept(Action.Navigate.Pop) }
                 },
                 bottomBar = {
-                    BottomBar()
+                    BottomBar(
+                        modifier = Modifier.offset {
+                            bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                        }
+                    )
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
@@ -137,7 +150,11 @@ abstract class PostDetailComponent(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(
+                                paddingValues = PaddingValues(
+                                    top = paddingValues.calculateTopPadding()
+                                )
+                            ),
                     )
                 }
             )
@@ -174,9 +191,11 @@ private fun TopBar(
 }
 
 @Composable
-private fun BottomBar() {
+private fun BottomBar(
+    modifier: Modifier = Modifier,
+) {
     BottomAppBar(
-        modifier = Modifier
+        modifier = modifier
     )
 }
 

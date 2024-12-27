@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.profile.di
 
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -38,6 +41,7 @@ import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -107,12 +111,20 @@ abstract class ProfileComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val bottomNavAccumulatedOffsetNestedScrollConnection =
+                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 bottomBar = {
-                    BottomBar()
+                    BottomBar(
+                        modifier = Modifier.offset {
+                            bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                        }
+                    )
                 },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -131,9 +143,11 @@ abstract class ProfileComponent(
 }
 
 @Composable
-private fun BottomBar() {
+private fun BottomBar(
+    modifier: Modifier = Modifier,
+) {
     BottomAppBar(
-        modifier = Modifier
+        modifier = modifier,
     )
 }
 
