@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile.di
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -33,6 +34,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
@@ -109,6 +111,9 @@ abstract class ProfileComponent(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
+                bottomBar = {
+                    BottomBar()
+                },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
@@ -124,3 +129,11 @@ abstract class ProfileComponent(
         }
     )
 }
+
+@Composable
+private fun BottomBar() {
+    BottomAppBar(
+        modifier = Modifier
+    )
+}
+

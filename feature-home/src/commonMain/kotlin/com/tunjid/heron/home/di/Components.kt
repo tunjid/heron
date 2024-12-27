@@ -23,6 +23,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -54,6 +55,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
@@ -134,13 +136,20 @@ abstract class HomeComponent(
                         },
                     )
                 },
+                bottomBar = {
+                    BottomBar()
+                },
                 content = { paddingValues ->
                     HomeScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(
+                                paddingValues = PaddingValues(
+                                    top = paddingValues.calculateTopPadding()
+                                )
+                            ),
                     )
                 }
             )
@@ -204,6 +213,13 @@ private fun TopBar(
             }
             Spacer(Modifier.width(16.dp))
         },
+    )
+}
+
+@Composable
+private fun BottomBar() {
+    BottomAppBar(
+        modifier = Modifier
     )
 }
 

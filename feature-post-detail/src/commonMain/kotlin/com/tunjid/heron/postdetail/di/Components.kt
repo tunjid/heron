@@ -42,6 +42,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
@@ -99,7 +100,7 @@ abstract class PostDetailComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: PostDetailStateHolderCreator
+        creator: PostDetailStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         paneMapping = { route ->
             mapOf(
@@ -127,6 +128,9 @@ abstract class PostDetailComponent(
                 topBar = {
                     TopBar { viewModel.accept(Action.Navigate.Pop) }
                 },
+                bottomBar = {
+                    BottomBar()
+                },
                 content = { paddingValues ->
                     PostDetailScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
@@ -143,7 +147,7 @@ abstract class PostDetailComponent(
 
 @Composable
 private fun TopBar(
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
 ) {
     TopAppBar(
         navigationIcon = {
@@ -168,3 +172,11 @@ private fun TopBar(
         },
     )
 }
+
+@Composable
+private fun BottomBar() {
+    BottomAppBar(
+        modifier = Modifier
+    )
+}
+

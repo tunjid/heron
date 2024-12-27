@@ -9,7 +9,7 @@ import com.tunjid.treenav.switch
 internal data class NavItem(
     val stack: AppStack,
     val index: Int,
-    val selected: Boolean
+    val selected: Boolean,
 )
 
 val MultiStackNav.canGoUp get() = stacks.getOrNull(currentIndex)?.canPop == true
@@ -17,9 +17,12 @@ val MultiStackNav.canGoUp get() = stacks.getOrNull(currentIndex)?.canPop == true
 internal val MultiStackNav.navItems
     get() = stacks
         .map(StackNav::name)
-        .mapIndexed { index, name ->
+        .mapIndexedNotNull { index, name ->
+            val stack = AppStack.entries.firstOrNull {
+                it.stackName == name
+            } ?: return@mapIndexedNotNull null
             NavItem(
-                stack = AppStack.entries.first { it.stackName == name },
+                stack = stack,
                 index = index,
                 selected = currentIndex == index,
             )
