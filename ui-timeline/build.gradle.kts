@@ -32,6 +32,7 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data-core"))
+                implementation(project(":ui-core"))
                 implementation(project(":ui-images"))
 
                 implementation(libs.compose.components.resources)

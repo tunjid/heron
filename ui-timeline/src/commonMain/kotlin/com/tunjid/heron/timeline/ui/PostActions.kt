@@ -1,7 +1,6 @@
 package com.tunjid.heron.timeline.ui
 
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,7 +31,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.liked
 import heron.ui_timeline.generated.resources.reply
@@ -50,11 +49,10 @@ internal fun PostActions(
     iconSize: Dp,
     postId: Id,
     sharedElementPrefix: String,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
-) = with(movableSharedElementScope) {
+) = with(sharedElementScope) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -63,14 +61,11 @@ internal fun PostActions(
         PostAction(
             modifier = Modifier
                 .sharedElement(
-                    state = rememberSharedContentState(
-                        postActionSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            icon = Icons.Rounded.ChatBubbleOutline,
-                        )
+                    key = postActionSharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                        icon = Icons.Rounded.ChatBubbleOutline,
                     ),
-                    animatedVisibilityScope = animatedVisibilityScope,
                 ),
             icon = Icons.Rounded.ChatBubbleOutline,
             iconSize = iconSize,
@@ -81,14 +76,13 @@ internal fun PostActions(
         PostAction(
             modifier = Modifier
                 .sharedElement(
-                    state = rememberSharedContentState(
+                    key = rememberSharedContentState(
                         postActionSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
                             icon = Icons.Rounded.Repeat,
                         )
                     ),
-                    animatedVisibilityScope = animatedVisibilityScope,
                 ),
             icon = Icons.Rounded.Repeat,
             iconSize = iconSize,
@@ -104,14 +98,13 @@ internal fun PostActions(
         PostAction(
             modifier = Modifier
                 .sharedElement(
-                    state = rememberSharedContentState(
+                    key = rememberSharedContentState(
                         postActionSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
                             icon = Icons.Rounded.Favorite,
                         )
                     ),
-                    animatedVisibilityScope = animatedVisibilityScope,
                 ),
             icon = if (liked) {
                 Icons.Rounded.Favorite

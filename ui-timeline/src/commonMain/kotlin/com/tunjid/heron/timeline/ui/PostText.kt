@@ -1,6 +1,5 @@
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,19 +19,18 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 
-@OptIn(ExperimentalTextApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostText(
     post: Post,
     sharedElementPrefix: String,
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onProfileClicked: Post?.(Profile) -> Unit,
-) = with(movableSharedElementScope) {
+) = with(sharedElementScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()
 
@@ -52,12 +50,9 @@ internal fun PostText(
                     indication = null,
                 ) { onClick() }
                 .sharedElement(
-                    state = rememberSharedContentState(
-                        post.textSharedElementKey(
-                            prefix = sharedElementPrefix,
-                        )
+                    key = post.textSharedElementKey(
+                        prefix = sharedElementPrefix,
                     ),
-                    animatedVisibilityScope = animatedVisibilityScope,
                 ),
             text = text,
             style = LocalTextStyle.current.copy(color = LocalContentColor.current),

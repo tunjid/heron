@@ -1,7 +1,5 @@
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalUriHandler
@@ -20,10 +18,9 @@ import com.tunjid.heron.timeline.ui.feature.PostExternal
 import com.tunjid.heron.timeline.ui.feature.PostImages
 import com.tunjid.heron.timeline.ui.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.feature.VisiblePostPost
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import kotlinx.datetime.Instant
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostEmbed(
     now: Instant,
@@ -31,8 +28,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: Id,
     sharedElementPrefix: String,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
     onOpenImage: (Uri) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {
@@ -43,8 +39,7 @@ internal fun PostEmbed(
                 feature = embed,
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
-                animatedVisibilityScope = animatedVisibilityScope,
-                sharedTransitionScope = movableSharedElementScope,
+                sharedElementScope = sharedElementScope,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
                 },
@@ -53,7 +48,7 @@ internal fun PostEmbed(
             is ImageList -> PostImages(
                 feature = embed,
                 sharedElementPrefix = sharedElementPrefix,
-                movableSharedElementScope = movableSharedElementScope,
+                sharedElementScope = sharedElementScope,
             )
 
             UnknownEmbed -> UnknownPostPost(onClick = {})
@@ -73,8 +68,7 @@ internal fun PostEmbed(
                     post = quote,
                     author = quote.author,
                     sharedElementPrefix = sharedElementPrefix,
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    sharedTransitionScope = movableSharedElementScope,
+                    sharedTransitionScope = sharedElementScope,
                     onClick = {
                         onPostClicked(quote)
                     }

@@ -16,7 +16,7 @@ import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.toImageShape
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -24,7 +24,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 internal fun PostImages(
     feature: ImageList,
     sharedElementPrefix: String,
-    movableSharedElementScope: MovableSharedElementScope,
+    sharedElementScope: SharedElementScope,
 ) {
     LazyRow(
         horizontalArrangement = spacedBy(8.dp),
@@ -34,7 +34,7 @@ internal fun PostImages(
             key = { it.thumb.uri },
             itemContent = { image ->
                 val aspectRatio = if (!image.aspectRatio.isNaN()) image.aspectRatio else 1f
-                movableSharedElementScope.updatedMovableSharedElementOf(
+                sharedElementScope.updatedMovableSharedElementOf(
                     modifier = when (feature.images.size) {
                         1 -> Modifier
                             .fillParentMaxWidth()

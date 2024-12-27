@@ -1,6 +1,5 @@
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,15 +37,14 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.images.shapes.toImageShape
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
 fun TimelineItem(
     modifier: Modifier = Modifier,
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
@@ -82,26 +80,24 @@ fun TimelineItem(
                 )
             }
             if (item is TimelineItem.Thread) ThreadedPost(
-                movableSharedElementScope = movableSharedElementScope,
-                animatedVisibilityScope = animatedVisibilityScope,
+                sharedElementScope = sharedElementScope,
                 item = item,
-                now = now,
                 sharedElementPrefix = sharedElementPrefix,
+                now = now,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
                 onImageClicked = onImageClicked,
                 onReplyToPost = onReplyToPost
             ) else SinglePost(
-                movableSharedElementScope = movableSharedElementScope,
-                animatedVisibilityScope = animatedVisibilityScope,
+                sharedElementScope = sharedElementScope,
+                now = now,
                 post = item.post,
                 embed = item.post.embed,
+                isAnchoredInTimeline = false,
                 avatarShape =
                 if (item is TimelineItem.Thread) ReplyThreadEndImageShape
                 else ImageShape.Circle,
                 sharedElementPrefix = sharedElementPrefix,
-                now = now,
-                isAnchoredInTimeline = false,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
@@ -114,8 +110,7 @@ fun TimelineItem(
 
 @Composable
 private fun ThreadedPost(
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
@@ -128,10 +123,11 @@ private fun ThreadedPost(
         item.posts.forEachIndexed { index, post ->
             if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
                 SinglePost(
-                    movableSharedElementScope = movableSharedElementScope,
-                    animatedVisibilityScope = animatedVisibilityScope,
+                    sharedElementScope = sharedElementScope,
+                    now = now,
                     post = post,
                     embed = post.embed,
+                    isAnchoredInTimeline = item.generation == 0L,
                     avatarShape =
                     when {
                         item.isThreadedAnchor -> ImageShape.Circle
@@ -147,8 +143,6 @@ private fun ThreadedPost(
                         }
                     },
                     sharedElementPrefix = sharedElementPrefix,
-                    isAnchoredInTimeline = item.generation == 0L,
-                    now = now,
                     createdAt = post.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
@@ -176,8 +170,7 @@ private fun ThreadedPost(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SinglePost(
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     now: Instant,
     post: Post,
     embed: Embed?,
@@ -189,8 +182,8 @@ private fun SinglePost(
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
-    timeline: @Composable BoxScope.() -> Unit = {},
-) = with(movableSharedElementScope) {
+    timeline: @Composable() (BoxScope.() -> Unit) = {},
+) = with(sharedElementScope) {
     Box {
         timeline()
         Column(
@@ -226,8 +219,7 @@ private fun SinglePost(
                         author = post.author,
                         postId = post.cid,
                         sharedElementPrefix = sharedElementPrefix,
-                        sharedTransitionScope = movableSharedElementScope,
-                        animatedVisibilityScope = animatedVisibilityScope,
+                        sharedElementScope = sharedElementScope,
                     )
 
 //                if (item is TimelineItem.Reply) {
@@ -244,12 +236,11 @@ private fun SinglePost(
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
-                    modifier = Modifier
-                        .fillMaxWidth(),
                     post = post,
                     sharedElementPrefix = sharedElementPrefix,
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    movableSharedElementScope = movableSharedElementScope,
+                    sharedElementScope = sharedElementScope,
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     onClick = { onPostClicked(post) },
                     onProfileClicked = onProfileClicked
                 )
@@ -259,8 +250,7 @@ private fun SinglePost(
                     quote = post.quote,
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    movableSharedElementScope = movableSharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     onOpenImage = onImageClicked,
                     onPostClicked = onPostClicked,
                 )
@@ -276,11 +266,10 @@ private fun SinglePost(
                     likeCount = format(post.likeCount),
                     reposted = post.viewerStats?.reposted == true,
                     liked = post.viewerStats?.liked == true,
+                    iconSize = 16.dp,
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    movableSharedElementScope = movableSharedElementScope,
-                    iconSize = 16.dp,
+                    sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
                 )
             }

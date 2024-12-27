@@ -548,11 +548,10 @@ private fun ProfileTimeline(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableSharedElementScope = sharedElementScope,
-                    animatedVisibilityScope = sharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
-                    sharedElementPrefix = timelineState.timeline.sourceId,
                     item = item,
+                    sharedElementPrefix = timelineState.timeline.sourceId,
                     onPostClicked = { post ->
                         actions(
                             Action.Navigate.DelegateTo(

@@ -30,7 +30,7 @@ import com.tunjid.treenav.strings.Route
 @Stable
 interface SharedElementScope :
     SharedTransitionScope, AnimatedVisibilityScope, MovableSharedElementScope {
-    fun Modifier.previewBackSharedElement(
+    fun Modifier.sharedElement(
         key: Any,
         boundsTransform: BoundsTransform = DefaultBoundsTransform,
         placeHolderSize: PlaceHolderSize = contentSize,
@@ -49,7 +49,7 @@ private class PanedSharedElementScope(
     MovableSharedElementScope by movableSharedElementScope {
 
     @OptIn(ExperimentalSharedTransitionApi::class)
-    override fun Modifier.previewBackSharedElement(
+    override fun Modifier.sharedElement(
         key: Any,
         boundsTransform: BoundsTransform,
         placeHolderSize: PlaceHolderSize,

@@ -76,11 +76,10 @@ internal fun PostDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableSharedElementScope = sharedElementScope,
-                    animatedVisibilityScope = sharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
-                    sharedElementPrefix = state.sharedElementPrefix,
                     item = item,
+                    sharedElementPrefix = state.sharedElementPrefix,
                     onPostClicked = { post ->
                         actions(
                             Action.Navigate.DelegateTo(
