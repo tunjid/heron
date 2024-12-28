@@ -14,10 +14,10 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.cursor
+import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
@@ -102,7 +102,7 @@ interface TimelineRepository {
 
     fun timelineItems(
         query: TimelineQuery,
-        networkCursor: NetworkCursor,
+        cursor: Cursor,
     ): Flow<CursorList<TimelineItem>>
 
     fun postThreadedItems(
@@ -123,18 +123,18 @@ class OfflineTimelineRepository(
 
     override fun timelineItems(
         query: TimelineQuery,
-        networkCursor: NetworkCursor,
+        cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> = when (val timeline = query.timeline) {
         is Timeline.Home.Following -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getTimeline(
                         GetTimelineQueryParams(
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                         )
                     )
                 },
@@ -145,15 +145,15 @@ class OfflineTimelineRepository(
 
         is Timeline.Home.Feed -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getFeed(
                         GetFeedQueryParams(
                             feed = AtUri(timeline.feedUri.uri),
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                         )
                     )
                 },
@@ -164,15 +164,15 @@ class OfflineTimelineRepository(
 
         is Timeline.Home.List -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getListFeed(
                         GetListFeedQueryParams(
                             list = AtUri(timeline.listUri.uri),
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                         )
                     )
                 },
@@ -183,15 +183,15 @@ class OfflineTimelineRepository(
 
         is Timeline.Profile.Media -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsWithMedia,
                         )
                     )
@@ -203,15 +203,15 @@ class OfflineTimelineRepository(
 
         is Timeline.Profile.Posts -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsNoReplies,
                         )
                     )
@@ -223,15 +223,15 @@ class OfflineTimelineRepository(
 
         is Timeline.Profile.Replies -> fetchTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            cursorFlow = networkCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
+                currentCursor = cursor,
                 networkRequest = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsWithReplies,
                         )
                     )
@@ -349,16 +349,16 @@ class OfflineTimelineRepository(
 
     private fun <NetworkResponse : Any> networkCursorFlow(
         query: TimelineQuery,
-        currentNetworkCursor: NetworkCursor,
+        currentCursor: Cursor,
         networkRequest: suspend (TimelineQuery) -> AtpResponse<NetworkResponse>,
         nextNetworkCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<NetworkCursor> = flow {
+    ): Flow<Cursor> = flow {
         // Emit pending downstream
-        emit(NetworkCursor.Pending)
+        emit(Cursor.Pending)
 
         // Do nothing, can't tell what the next items are
-        if (currentNetworkCursor == NetworkCursor.Pending) return@flow
+        if (currentCursor == Cursor.Pending) return@flow
 
         runCatchingWithNetworkRetry {
             networkRequest(query)
@@ -366,7 +366,7 @@ class OfflineTimelineRepository(
             .getOrNull()
             ?.let { response ->
                 response.nextNetworkCursor()
-                    ?.let(NetworkCursor::Next)
+                    ?.let(Cursor::Next)
                     ?.let { emit(it) }
 
                 val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
@@ -380,11 +380,11 @@ class OfflineTimelineRepository(
 
     private fun fetchTimeline(
         query: TimelineQuery,
-        networkCursorFlow: Flow<NetworkCursor>,
+        cursorFlow: Flow<Cursor>,
     ): Flow<CursorList<TimelineItem>> =
         combine(
             observeTimeline(query),
-            networkCursorFlow,
+            cursorFlow,
             ::CursorList,
         )
 

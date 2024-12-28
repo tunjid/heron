@@ -2,27 +2,30 @@ package com.tunjid.heron.data.core.models
 
 import kotlinx.serialization.Serializable
 
+/**
+ * A sublist [List] containing a cursor to fetch the consecutive list in its backing sequence.
+ */
 data class CursorList<T>(
     val items: List<T>,
-    val nextCursor: NetworkCursor,
+    val nextCursor: Cursor,
 ) : List<T> by items
 
 @Serializable
-sealed class NetworkCursor {
+sealed class Cursor {
     @Serializable
-    data object Initial: NetworkCursor()
+    data object Initial: Cursor()
     @Serializable
-    data object Pending: NetworkCursor()
+    data object Pending: Cursor()
     @Serializable
     data class Next(
-        val remote: String,
-    ): NetworkCursor()
+        val cursor: String,
+    ): Cursor()
 }
 
-val NetworkCursor.cursor get() = when(this) {
-    NetworkCursor.Initial -> null
-    NetworkCursor.Pending -> throw IllegalArgumentException(
+val Cursor.value get() = when(this) {
+    Cursor.Initial -> null
+    Cursor.Pending -> throw IllegalArgumentException(
         "Pending cursors cannot be used to fetch data"
     )
-    is NetworkCursor.Next -> remote
+    is Cursor.Next -> cursor
 }
