@@ -88,8 +88,8 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.scaffold.scaffold.statusBarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
@@ -330,6 +330,7 @@ private fun ProfilePhoto(
     avatarSharedElementKey: String,
 ) {
     val progress = headerState.progress
+    val statusBarHeight = StatusBarHeight
     Card(
         modifier = modifier
             .padding(top = ProfilePhotoTopPadding)

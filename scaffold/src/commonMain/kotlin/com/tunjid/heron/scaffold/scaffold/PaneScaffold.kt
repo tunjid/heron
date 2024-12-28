@@ -9,7 +9,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -85,10 +84,9 @@ val StatusBarHeight: Dp
     }
 
 val Density.statusBarHeight: Dp
-    get() {
+    @Composable get() {
         val statusBarInsets = WindowInsets.statusBars
         return statusBarInsets.run {
             getTop(this@statusBarHeight) + getBottom(this@statusBarHeight)
         }.toDp()
-
     }
