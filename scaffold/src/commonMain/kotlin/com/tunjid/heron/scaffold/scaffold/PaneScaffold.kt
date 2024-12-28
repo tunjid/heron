@@ -2,16 +2,22 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -28,7 +34,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     bottomBar: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -68,3 +74,21 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
         }
     }
 }
+
+val ToolbarHeight = 60.dp
+
+val TabsHeight = 48.dp
+
+val StatusBarHeight: Dp
+    @Composable get() = with(LocalDensity.current) {
+        statusBarHeight
+    }
+
+val Density.statusBarHeight: Dp
+    get() {
+        val statusBarInsets = WindowInsets.statusBars
+        return statusBarInsets.run {
+            getTop(this@statusBarHeight) + getBottom(this@statusBarHeight)
+        }.toDp()
+
+    }

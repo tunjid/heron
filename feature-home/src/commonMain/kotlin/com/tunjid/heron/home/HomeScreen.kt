@@ -47,10 +47,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
-import com.tunjid.heron.home.di.StatusBarHeight
-import com.tunjid.heron.home.di.TabsHeight
-import com.tunjid.heron.home.di.ToolbarHeight
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.TabsHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem

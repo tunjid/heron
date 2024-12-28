@@ -66,6 +66,8 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
@@ -259,19 +261,3 @@ private fun BottomBar(
 
 
 private const val SignedInUserAvatarSharedElementKey = "self"
-
-
-internal val ToolbarHeight = 56.dp
-
-internal val TabsHeight = 48.dp
-
-internal val StatusBarHeight: Dp
-    @Composable get() {
-        val density = LocalDensity.current
-        val statusBarInsets = WindowInsets.statusBars
-        return with(density) {
-            statusBarInsets.run {
-                getTop(density) + getBottom(density)
-            }.toDp()
-        }
-    }
