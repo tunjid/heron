@@ -51,7 +51,7 @@ import com.tunjid.heron.home.di.StatusBarHeight
 import com.tunjid.heron.home.di.TabsHeight
 import com.tunjid.heron.home.di.ToolbarHeight
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -169,11 +169,10 @@ private fun HomeTimeline(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableSharedElementScope = sharedElementScope,
-                    animatedVisibilityScope = sharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
-                    sharedElementPrefix = timelineState.timeline.sourceId,
                     item = item,
+                    sharedElementPrefix = timelineState.timeline.sourceId,
                     onPostClicked = { post ->
                         actions(
                             Action.Navigate.DelegateTo(

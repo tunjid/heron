@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.scaffold.navigation.NavItem
+import com.tunjid.heron.ui.SharedElementScope
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -66,12 +67,18 @@ fun BottomAppBar(
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         content = {
+            val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
             BottomAppBar(
                 modifier = Modifier
                     .sharedElement(
-                        state = rememberSharedContentState(BottomNavSharedElementKey),
+                        state = sharedContentState,
                         animatedVisibilityScope = sharedElementScope,
                         zIndexInOverlay = 2f,
+                    )
+                    .renderInSharedTransitionScopeOverlay(
+                        renderInOverlay = {
+                            sharedElementScope.isTransitionActive && !sharedContentState.isMatchFound
+                        }
                     ),
             ) {
                 appState.navItems.forEach { item ->

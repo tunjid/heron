@@ -62,26 +62,6 @@ fun App(
                             modifier = Modifier.fillMaxSize(),
                             state = appState.rememberPanedNavHostState {
                                 this
-                                    .paneModifierConfiguration {
-                                        Modifier
-                                            .fillMaxSize()
-                                            .constrainedSizePlacement(
-                                                orientation = Orientation.Horizontal,
-                                                minSize = 180.dp,
-                                                atStart = paneState.pane == ThreePane.Secondary,
-                                            )
-                                            .padding(
-                                                horizontal =
-                                                if (appState.splitLayoutState.visibleCount > 1) 16.dp
-                                                else 0.dp
-                                            )
-                                            .run {
-                                                if (paneState.pane == ThreePane.TransientPrimary) backPreview(
-                                                    appState.backPreviewState
-                                                )
-                                                else this
-                                            }
-                                    }
                                     .threePanedNavHostConfiguration(
                                         secondaryPaneBreakPoint = mutableStateOf(
                                             SecondaryPaneMinWidthBreakpointDp
@@ -116,6 +96,26 @@ fun App(
                                             }
                                         }
                                     )
+                                    .paneModifierConfiguration {
+                                        Modifier
+                                            .fillMaxSize()
+                                            .constrainedSizePlacement(
+                                                orientation = Orientation.Horizontal,
+                                                minSize = 180.dp,
+                                                atStart = paneState.pane == ThreePane.Secondary,
+                                            )
+                                            .padding(
+                                                horizontal =
+                                                if (appState.splitLayoutState.visibleCount > 1) 16.dp
+                                                else 0.dp
+                                            )
+                                            .run {
+                                                if (paneState.pane == ThreePane.TransientPrimary) backPreview(
+                                                    appState.backPreviewState
+                                                )
+                                                else this
+                                            }
+                                    }
                             },
                         ) {
                             NavScaffold(

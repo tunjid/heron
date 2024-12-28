@@ -90,7 +90,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
@@ -548,11 +548,10 @@ private fun ProfileTimeline(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableSharedElementScope = sharedElementScope,
-                    animatedVisibilityScope = sharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
-                    sharedElementPrefix = timelineState.timeline.sourceId,
                     item = item,
+                    sharedElementPrefix = timelineState.timeline.sourceId,
                     onPostClicked = { post ->
                         actions(
                             Action.Navigate.DelegateTo(

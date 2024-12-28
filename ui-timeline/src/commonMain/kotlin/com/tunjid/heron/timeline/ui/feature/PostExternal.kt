@@ -1,8 +1,6 @@
 package com.tunjid.heron.timeline.ui.feature
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -22,6 +20,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -29,20 +28,16 @@ fun PostExternal(
     feature: ExternalEmbed,
     postId: Id,
     sharedElementPrefix: String,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedElementScope: SharedElementScope,
     onClick: () -> Unit,
-) = with(sharedTransitionScope) {
+) = with(sharedElementScope) {
     FeatureContainer(
         modifier = Modifier.sharedElement(
-            state = rememberSharedContentState(
-                embedSharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postId = postId,
-                    text = feature.uri.uri,
-                )
+            key = embedSharedElementKey(
+                prefix = sharedElementPrefix,
+                postId = postId,
+                text = feature.uri.uri,
             ),
-            animatedVisibilityScope = animatedVisibilityScope,
         ),
         onClick = onClick,
     ) {
@@ -53,14 +48,11 @@ fun PostExternal(
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
                         .sharedElement(
-                            state = rememberSharedContentState(
-                                embedSharedElementKey(
-                                    prefix = sharedElementPrefix,
-                                    postId = postId,
-                                    text = feature.thumb?.uri,
-                                )
+                            key = embedSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = feature.thumb?.uri,
                             ),
-                            animatedVisibilityScope = animatedVisibilityScope,
                         ),
                     args = ImageArgs(
                         url = feature.thumb?.uri,
@@ -74,14 +66,11 @@ fun PostExternal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .sharedElement(
-                        state = rememberSharedContentState(
-                            embedSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = feature.title,
-                            )
+                        key = embedSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = feature.title,
                         ),
-                        animatedVisibilityScope = animatedVisibilityScope,
                     ),
                 title = feature.title,
                 description = feature.description,

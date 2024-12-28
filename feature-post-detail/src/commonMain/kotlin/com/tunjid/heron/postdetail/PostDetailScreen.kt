@@ -37,7 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import kotlinx.datetime.Clock
@@ -76,11 +76,10 @@ internal fun PostDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableSharedElementScope = sharedElementScope,
-                    animatedVisibilityScope = sharedElementScope,
+                    sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
-                    sharedElementPrefix = state.sharedElementPrefix,
                     item = item,
+                    sharedElementPrefix = state.sharedElementPrefix,
                     onPostClicked = { post ->
                         actions(
                             Action.Navigate.DelegateTo(

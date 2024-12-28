@@ -48,9 +48,9 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.SharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.scaffold.requirePanedSharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy

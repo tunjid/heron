@@ -1,8 +1,6 @@
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.ui.SharedElementScope
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -28,9 +27,8 @@ internal fun PostHeadline(
     author: Profile,
     postId: Id,
     sharedElementPrefix: String,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
-) = with(sharedTransitionScope) {
+    sharedElementScope: SharedElementScope,
+) = with(sharedElementScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id
         val secondaryText = author.handle.id.takeUnless { it == primaryText }
@@ -40,14 +38,11 @@ internal fun PostHeadline(
                 modifier = Modifier
                     .weight(1f)
                     .sharedElement(
-                        state = rememberSharedContentState(
-                            author.textSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = primaryText
-                            )
+                        key = author.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = primaryText
                         ),
-                        animatedVisibilityScope = animatedVisibilityScope,
                     ),
                 text = primaryText,
                 maxLines = 1,
@@ -64,14 +59,11 @@ internal fun PostHeadline(
             Text(
                 modifier = Modifier
                     .sharedElement(
-                        state = rememberSharedContentState(
-                            author.textSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = secondaryText
-                            )
+                        key = author.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = secondaryText
                         ),
-                        animatedVisibilityScope = animatedVisibilityScope,
                     ),
                 text = author.handle.id,
                 overflow = TextOverflow.Ellipsis,
