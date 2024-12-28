@@ -19,6 +19,7 @@ package com.tunjid.heron.profile
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -223,7 +225,7 @@ private fun ProfileHeader(
         )
         Column(
             modifier = modifier
-                .padding(start = 24.dp, end = 24.dp, top = 160.dp)
+                .padding(top = 160.dp)
                 .offset {
                     IntOffset(
                         x = 0,
@@ -232,9 +234,20 @@ private fun ProfileHeader(
                 }
         ) {
             Column(
-                modifier = Modifier.graphicsLayer {
-                    alpha = 1f - headerState.progress
-                },
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = remember {
+                            RoundedCornerShape(
+                                topStart = 16.dp,
+                                topEnd = 16.dp,
+                            )
+                        }
+                    )
+                    .padding(start = 24.dp, end = 24.dp)
+                    .graphicsLayer {
+                        alpha = 1f - headerState.progress
+                    },
             ) {
                 Spacer(Modifier.height(24.dp))
                 ProfileHeadline(
@@ -251,7 +264,9 @@ private fun ProfileHeader(
                 Spacer(Modifier.height(16.dp))
             }
             ProfileTabs(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth(),
                 headerState = headerState,
                 pagerState = pagerState,
                 titles = tabTitles,
@@ -278,7 +293,7 @@ private fun ProfileBanner(
     AsyncImage(
         modifier = modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(180.dp)
             .graphicsLayer {
                 alpha = 1f - min(0.9f, (headerState.progress * 1.6f))
             },
