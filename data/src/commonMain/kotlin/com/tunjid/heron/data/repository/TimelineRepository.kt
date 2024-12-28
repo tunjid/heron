@@ -130,7 +130,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getTimeline(
                         GetTimelineQueryParams(
                             limit = query.data.limit,
@@ -138,7 +138,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetTimelineResponse::cursor,
+                nextCursor = GetTimelineResponse::cursor,
                 networkFeed = GetTimelineResponse::feed,
             )
         )
@@ -148,7 +148,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getFeed(
                         GetFeedQueryParams(
                             feed = AtUri(timeline.feedUri.uri),
@@ -157,7 +157,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetFeedResponse::cursor,
+                nextCursor = GetFeedResponse::cursor,
                 networkFeed = GetFeedResponse::feed,
             )
         )
@@ -167,7 +167,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getListFeed(
                         GetListFeedQueryParams(
                             list = AtUri(timeline.listUri.uri),
@@ -176,7 +176,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetListFeedResponse::cursor,
+                nextCursor = GetListFeedResponse::cursor,
                 networkFeed = GetListFeedResponse::feed,
             )
         )
@@ -186,7 +186,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
@@ -196,7 +196,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
@@ -206,7 +206,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
@@ -216,7 +216,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
@@ -226,7 +226,7 @@ class OfflineTimelineRepository(
             nextCursorFlow = nextCursorFlow(
                 query = query,
                 currentCursor = cursor,
-                networkRequest = {
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
@@ -236,7 +236,7 @@ class OfflineTimelineRepository(
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
@@ -350,8 +350,8 @@ class OfflineTimelineRepository(
     private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
         currentCursor: Cursor,
-        networkRequest: suspend () -> AtpResponse<NetworkResponse>,
-        nextNetworkCursor: NetworkResponse.() -> String?,
+        currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
+        nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
     ): Flow<Cursor> = flow {
         // Emit pending downstream
@@ -361,11 +361,11 @@ class OfflineTimelineRepository(
         if (currentCursor == Cursor.Pending) return@flow
 
         runCatchingWithNetworkRetry {
-            networkRequest()
+            currentRequestWithNextCursor()
         }
             .getOrNull()
             ?.let { response ->
-                response.nextNetworkCursor()
+                response.nextCursor()
                     ?.let(Cursor::Next)
                     ?.let { emit(it) }
 
