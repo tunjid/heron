@@ -67,12 +67,18 @@ fun BottomAppBar(
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         content = {
+            val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
             BottomAppBar(
                 modifier = Modifier
                     .sharedElement(
-                        state = rememberSharedContentState(BottomNavSharedElementKey),
+                        state = sharedContentState,
                         animatedVisibilityScope = sharedElementScope,
                         zIndexInOverlay = 2f,
+                    )
+                    .renderInSharedTransitionScopeOverlay(
+                        renderInOverlay = {
+                            sharedElementScope.isTransitionActive && !sharedContentState.isMatchFound
+                        }
                     ),
             ) {
                 appState.navItems.forEach { item ->
