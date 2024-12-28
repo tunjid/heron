@@ -488,6 +488,7 @@ class OfflineTimelineRepository(
                                 id = entity.id,
                                 generation = null,
                                 anchorPostIndex = 2,
+                                hasBreak = entity.reply?.grandParentPostAuthorId != null,
                                 posts = listOf(
                                     replyRoot.asExternalModel(
                                         quote = idsToEmbeddedPosts[replyRoot.entity.cid]
@@ -548,6 +549,7 @@ class OfflineTimelineRepository(
             id = thread.postId.id,
             generation = thread.generation,
             anchorPostIndex = 0,
+            hasBreak = false,
             posts = listOf(
                 thread.entity.asExternalModel(
                     quote = null
@@ -565,6 +567,7 @@ class OfflineTimelineRepository(
             id = thread.postId.id,
             generation = thread.generation,
             anchorPostIndex = 0,
+            hasBreak = false,
             posts = listOf(
                 thread.entity.asExternalModel(
                     quote = null

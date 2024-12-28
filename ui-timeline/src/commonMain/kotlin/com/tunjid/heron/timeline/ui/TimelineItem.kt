@@ -17,13 +17,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ContentCut
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -31,15 +37,18 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import heron.ui_timeline.generated.resources.Res
+import heron.ui_timeline.generated.resources.see_more_posts
 import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TimelineItem(
@@ -117,7 +126,7 @@ private fun ThreadedPost(
     onProfileClicked: Post?.(Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
-    onReplyToPost: () -> Unit
+    onReplyToPost: () -> Unit,
 ) {
     Column {
         item.posts.forEachIndexed { index, post ->
@@ -150,14 +159,21 @@ private fun ThreadedPost(
                     onReplyToPost = onReplyToPost,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
-                            Modifier
+                            modifier = Modifier
                                 .matchParentSize()
                                 .padding(top = 52.dp)
                         )
                     }
                 )
                 if (index != item.posts.lastIndex) Timeline(
-                    Modifier.height(if (index == 0) 16.dp else 12.dp)
+                    isBroken = index == 0 && item.hasBreak,
+                    modifier = Modifier.height(
+                        when {
+                            index == 0 && item.hasBreak -> 48.dp
+                            index == 0 -> 16.dp
+                            else -> 12.dp
+                        }
+                    )
                 )
                 if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
                     Modifier.height(4.dp)
@@ -279,7 +295,8 @@ private fun SinglePost(
 
 @Composable
 private fun Timeline(
-    modifier: Modifier = Modifier
+    isBroken: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     Box(modifier) {
         Spacer(
@@ -289,6 +306,27 @@ private fun Timeline(
                 .fillMaxHeight()
                 .width(2.dp)
         )
+        if (isBroken) Row(
+            modifier = Modifier
+                .align(Alignment.CenterStart),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                modifier = Modifier
+                    .offset(x = -(7).dp)
+                    .scale(0.6f),
+                imageVector = Icons.Rounded.ContentCut,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+            )
+            Text(
+                modifier = Modifier.padding(horizontal = 0.dp),
+                text = stringResource(Res.string.see_more_posts),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.outline
+                ),
+            )
+        }
     }
 }
 
@@ -297,7 +335,7 @@ fun TimelineCard(
     item: TimelineItem,
     modifier: Modifier = Modifier,
     onPostClicked: (Post) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     if (item.isThreadedAncestorOrAnchor) Surface(
         modifier = modifier,
