@@ -19,7 +19,6 @@ package com.tunjid.heron.profile
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.splineBasedDecay
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -45,13 +43,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -99,7 +95,6 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.edit
 import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
@@ -124,7 +119,7 @@ internal fun ProfileScreen(
 
     var wasCollapsed by rememberSaveable { mutableStateOf(false) }
 
-    val collapsedHeight = with(density) { 56.dp.toPx() } +
+    val collapsedHeight = with(density) { 64.dp.toPx() } +
             WindowInsets.statusBars.getTop(density).toFloat() +
             WindowInsets.statusBars.getBottom(density).toFloat()
 
@@ -165,10 +160,7 @@ internal fun ProfileScreen(
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
                 profileRelationship = state.profileRelationship,
-                avatarSharedElementKey = state.avatarSharedElementKey,
-                onBackPressed = {
-                    actions(Action.Navigate.DelegateTo(NavigationAction.Common.Pop))
-                }
+                avatarSharedElementKey = state.avatarSharedElementKey
             )
         },
         body = {
@@ -218,7 +210,6 @@ private fun ProfileHeader(
     isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
-    onBackPressed: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -261,6 +252,7 @@ private fun ProfileHeader(
             }
             ProfileTabs(
                 modifier = Modifier.fillMaxWidth(),
+                headerState = headerState,
                 pagerState = pagerState,
                 titles = tabTitles,
             )
@@ -273,10 +265,6 @@ private fun ProfileHeader(
             headerState = headerState,
             profile = profile,
             avatarSharedElementKey = avatarSharedElementKey,
-        )
-        BackButton(
-            headerState = headerState,
-            onBackPressed = onBackPressed,
         )
     }
 }
@@ -481,37 +469,21 @@ fun Statistic(
 }
 
 @Composable
-private fun BackButton(
-    headerState: CollapsingHeaderState,
-    onBackPressed: () -> Unit,
-) {
-    FilledTonalIconButton(
-        modifier = Modifier
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .offset {
-                IntOffset(
-                    x = 8.dp.roundToPx(),
-                    y = 4.dp.roundToPx() - headerState.translation.roundToInt(),
-                )
-            },
-        onClick = onBackPressed,
-    ) {
-        Image(
-            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-            contentDescription = stringResource(Res.string.back),
-        )
-    }
-}
-
-@Composable
 private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
+    headerState: CollapsingHeaderState,
     titles: List<String>,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
-        modifier = modifier,
+        modifier = modifier
+            .offset {
+                IntOffset(
+                    x = (headerState.progress * 48.dp.toPx()).roundToInt(),
+                    y = 0,
+                )
+            },
         titles = titles,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
