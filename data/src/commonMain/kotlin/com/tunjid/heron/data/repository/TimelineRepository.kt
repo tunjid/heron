@@ -40,9 +40,11 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -328,7 +330,8 @@ class OfflineTimelineRepository(
                 }
                     .merge()
                     .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
-                        (listOf(timeline) + timelines).distinctBy { it.sourceId }
+                        // Add newest item first
+                        (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
                     }
                     .map { homeTimelines ->
                         homeTimelines.sortedBy(Timeline.Home::position)
@@ -339,6 +342,9 @@ class OfflineTimelineRepository(
                             transform = Timeline.Home::name,
                         )
                     }
+                    .filter(List<Timeline.Home>::isNotEmpty)
+                    // Debounce for about 2 frames on a 60 hz display
+                    .debounce(32)
             }
 
     private fun <NetworkResponse : Any> networkCursorFlow(
