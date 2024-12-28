@@ -75,7 +75,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     }
 }
 
-val ToolbarHeight = 60.dp
+val ToolbarHeight = 64.dp
 
 val TabsHeight = 48.dp
 
