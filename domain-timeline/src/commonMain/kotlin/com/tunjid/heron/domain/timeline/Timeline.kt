@@ -16,9 +16,11 @@ import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
 import com.tunjid.tiler.listTiler
+import com.tunjid.tiler.queries
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
@@ -118,7 +120,10 @@ suspend fun Flow<TimelineLoadAction>.timelineMutations(
                     )
                     .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
                     .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
-                        copy(items = it)
+                        if (!it.queries().contains(currentQuery)) this
+                        else copy(
+                            items = it.distinctBy(TimelineItem::id)
+                        )
                     }
                 merge(
                     queries.mapToMutation { copy(currentQuery = it) },
