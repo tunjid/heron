@@ -18,7 +18,6 @@ package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
@@ -27,6 +26,8 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    @Transient
+    val pageWithUpdates: Int = -1,
     @Transient
     val timelines: List<Timeline.Home> = emptyList(),
     @Transient
@@ -39,6 +40,10 @@ data class State(
 
 
 sealed class Action(val key: String) {
+
+    data class UpdatePageWithUpdates(
+        val sourceIdWithUpdates: String?,
+    ) : Action(key = "UpdatePageWithUpdates")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

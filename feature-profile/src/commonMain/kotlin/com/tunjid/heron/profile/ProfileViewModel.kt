@@ -105,6 +105,7 @@ class ActualProfileStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
+                is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -135,6 +136,15 @@ private fun profileRelationshipMutations(
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationship(profileId).mapToMutation {
         copy(profileRelationship = it)
+    }
+
+private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(
+            pageWithUpdates = timelines
+                .map(Timeline.Profile::sourceId)
+                .indexOf(it.sourceIdWithUpdates)
+        )
     }
 
 private fun timelines(route: Route) = listOf(

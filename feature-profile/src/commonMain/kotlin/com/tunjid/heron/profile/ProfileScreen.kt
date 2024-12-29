@@ -92,6 +92,7 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.tabs.TimelineTab
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
@@ -152,12 +153,15 @@ internal fun ProfileScreen(
                 movableSharedElementScope = sharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
-                tabTitles = state.timelines.map { timeline ->
-                    when (timeline) {
-                        is Timeline.Profile.Media -> stringResource(Res.string.media)
-                        is Timeline.Profile.Posts -> stringResource(Res.string.posts)
-                        is Timeline.Profile.Replies -> stringResource(Res.string.replies)
-                    }
+                timelineTabs = state.timelines.mapIndexed { index, timeline ->
+                    TimelineTab(
+                        title = when (timeline) {
+                            is Timeline.Profile.Media -> stringResource(Res.string.media)
+                            is Timeline.Profile.Posts -> stringResource(Res.string.posts)
+                            is Timeline.Profile.Replies -> stringResource(Res.string.replies)
+                        },
+                        hasUpdate = index == state.pageWithUpdates,
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -208,7 +212,7 @@ private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
     headerState: CollapsingHeaderState,
     pagerState: PagerState,
-    tabTitles: List<String>,
+    timelineTabs: List<TimelineTab>,
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
@@ -271,7 +275,7 @@ private fun ProfileHeader(
                     .fillMaxWidth(),
                 headerState = headerState,
                 pagerState = pagerState,
-                titles = tabTitles,
+                tabs = timelineTabs,
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -498,7 +502,7 @@ private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     headerState: CollapsingHeaderState,
-    titles: List<String>,
+    tabs: List<TimelineTab>,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
@@ -509,7 +513,7 @@ private fun ProfileTabs(
                     y = 0,
                 )
             },
-        titles = titles,
+        tabs = tabs,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
             scope.launch {

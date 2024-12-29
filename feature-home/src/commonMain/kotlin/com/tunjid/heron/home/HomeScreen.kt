@@ -33,11 +33,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -51,11 +53,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.tabs.TimelineTab
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -103,8 +106,13 @@ internal fun HomeScreen(
                 tabsOffsetNestedScrollConnection.offset.round()
             },
             pagerState = pagerState,
-            titles = remember(state.timelines) {
-                state.timelines.map { it.name }
+            tabs = remember(state.pageWithUpdates, state.timelines) {
+                state.timelines.mapIndexed { index, timeline ->
+                    TimelineTab(
+                        title = timeline.name,
+                        hasUpdate = index == state.pageWithUpdates,
+                    )
+                }
             }
         )
     }
@@ -114,7 +122,7 @@ internal fun HomeScreen(
 private fun HomeTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    titles: List<String>,
+    tabs: List<TimelineTab>,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
@@ -126,7 +134,7 @@ private fun HomeTabs(
                 end = 8.dp,
             )
             .fillMaxWidth(),
-        titles = titles,
+        tabs = tabs,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
             scope.launch {
@@ -212,4 +220,13 @@ private fun HomeTimeline(
             )
         }
     )
+
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            timelineState.timeline.sourceId.takeIf { timelineState.hasUpdates }
+        }
+            .collect {
+                actions(Action.UpdatePageWithUpdates(it))
+            }
+    }
 }

@@ -32,6 +32,8 @@ data class State(
     val profileRelationship: ProfileRelationship? = null,
     val avatarSharedElementKey: String,
     @Transient
+    val pageWithUpdates: Int = -1,
+    @Transient
     val timelines: List<Timeline.Profile> = emptyList(),
     @Transient
     val timelineStateHolders: List<TimelineStateHolder> = emptyList(),
@@ -41,6 +43,10 @@ data class State(
 
 
 sealed class Action(val key: String) {
+
+    data class UpdatePageWithUpdates(
+        val sourceIdWithUpdates: String?,
+    ) : Action(key = "UpdatePageWithUpdates")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data class DelegateTo(

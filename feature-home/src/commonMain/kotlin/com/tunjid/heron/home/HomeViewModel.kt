@@ -78,7 +78,7 @@ class ActualHomeStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
+                is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -115,4 +115,9 @@ private fun timelineMutations(
                 )
             }
         )
+    }
+
+private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(pageWithUpdates = timelineIdsToTimelineStates.keys.indexOf(it.sourceIdWithUpdates))
     }
