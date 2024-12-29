@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -512,10 +511,9 @@ class OfflineTimelineRepository(
                 .map { latestSavedEntities ->
                     latestSavedEntities
                         .firstOrNull()
-                        ?.sourceId != latestEntity.sourceId
+                        ?.id != latestEntity.id
                 }
         }
-        .onStart { emit(false) }
 
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,
