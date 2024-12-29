@@ -14,10 +14,10 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.cursor
+import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
@@ -40,9 +40,11 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -100,7 +102,7 @@ interface TimelineRepository {
 
     fun timelineItems(
         query: TimelineQuery,
-        networkCursor: NetworkCursor,
+        cursor: Cursor,
     ): Flow<CursorList<TimelineItem>>
 
     fun postThreadedItems(
@@ -121,120 +123,120 @@ class OfflineTimelineRepository(
 
     override fun timelineItems(
         query: TimelineQuery,
-        networkCursor: NetworkCursor,
+        cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> = when (val timeline = query.timeline) {
-        is Timeline.Home.Following -> fetchTimeline(
+        is Timeline.Home.Following -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getTimeline(
                         GetTimelineQueryParams(
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                         )
                     )
                 },
-                nextNetworkCursor = GetTimelineResponse::cursor,
+                nextCursor = GetTimelineResponse::cursor,
                 networkFeed = GetTimelineResponse::feed,
             )
         )
 
-        is Timeline.Home.Feed -> fetchTimeline(
+        is Timeline.Home.Feed -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getFeed(
                         GetFeedQueryParams(
                             feed = AtUri(timeline.feedUri.uri),
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                         )
                     )
                 },
-                nextNetworkCursor = GetFeedResponse::cursor,
+                nextCursor = GetFeedResponse::cursor,
                 networkFeed = GetFeedResponse::feed,
             )
         )
 
-        is Timeline.Home.List -> fetchTimeline(
+        is Timeline.Home.List -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getListFeed(
                         GetListFeedQueryParams(
                             list = AtUri(timeline.listUri.uri),
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                         )
                     )
                 },
-                nextNetworkCursor = GetListFeedResponse::cursor,
+                nextCursor = GetListFeedResponse::cursor,
                 networkFeed = GetListFeedResponse::feed,
             )
         )
 
-        is Timeline.Profile.Media -> fetchTimeline(
+        is Timeline.Profile.Media -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsWithMedia,
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
 
-        is Timeline.Profile.Posts -> fetchTimeline(
+        is Timeline.Profile.Posts -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsNoReplies,
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
 
-        is Timeline.Profile.Replies -> fetchTimeline(
+        is Timeline.Profile.Replies -> observeAndRefreshTimeline(
             query = query,
-            networkCursorFlow = networkCursorFlow(
+            nextCursorFlow = nextCursorFlow(
                 query = query,
-                currentNetworkCursor = networkCursor,
-                networkRequest = {
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
                     networkService.api.getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = it.data.limit,
-                            cursor = networkCursor.cursor,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
                             filter = GetAuthorFeedFilter.PostsWithReplies,
                         )
                     )
                 },
-                nextNetworkCursor = GetAuthorFeedResponse::cursor,
+                nextCursor = GetAuthorFeedResponse::cursor,
                 networkFeed = GetAuthorFeedResponse::feed,
             )
         )
@@ -328,7 +330,8 @@ class OfflineTimelineRepository(
                 }
                     .merge()
                     .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
-                        (listOf(timeline) + timelines).distinctBy { it.sourceId }
+                        // Add newest item first
+                        (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
                     }
                     .map { homeTimelines ->
                         homeTimelines.sortedBy(Timeline.Home::position)
@@ -339,28 +342,31 @@ class OfflineTimelineRepository(
                             transform = Timeline.Home::name,
                         )
                     }
+                    .filter(List<Timeline.Home>::isNotEmpty)
+                    // Debounce for about 2 frames on a 60 hz display
+                    .debounce(32)
             }
 
-    private fun <NetworkResponse : Any> networkCursorFlow(
+    private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
-        currentNetworkCursor: NetworkCursor,
-        networkRequest: suspend (TimelineQuery) -> AtpResponse<NetworkResponse>,
-        nextNetworkCursor: NetworkResponse.() -> String?,
+        currentCursor: Cursor,
+        currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
+        nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<NetworkCursor> = flow {
+    ): Flow<Cursor> = flow {
         // Emit pending downstream
-        emit(NetworkCursor.Pending)
+        emit(Cursor.Pending)
 
         // Do nothing, can't tell what the next items are
-        if (currentNetworkCursor == NetworkCursor.Pending) return@flow
+        if (currentCursor == Cursor.Pending) return@flow
 
         runCatchingWithNetworkRetry {
-            networkRequest(query)
+            currentRequestWithNextCursor()
         }
             .getOrNull()
             ?.let { response ->
-                response.nextNetworkCursor()
-                    ?.let(NetworkCursor::Next)
+                response.nextCursor()
+                    ?.let(Cursor::Next)
                     ?.let { emit(it) }
 
                 val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
@@ -372,13 +378,13 @@ class OfflineTimelineRepository(
             }
     }
 
-    private fun fetchTimeline(
+    private fun observeAndRefreshTimeline(
         query: TimelineQuery,
-        networkCursorFlow: Flow<NetworkCursor>,
+        nextCursorFlow: Flow<Cursor>,
     ): Flow<CursorList<TimelineItem>> =
         combine(
             observeTimeline(query),
-            networkCursorFlow,
+            nextCursorFlow,
             ::CursorList,
         )
 
@@ -482,6 +488,7 @@ class OfflineTimelineRepository(
                                 id = entity.id,
                                 generation = null,
                                 anchorPostIndex = 2,
+                                hasBreak = entity.reply?.grandParentPostAuthorId != null,
                                 posts = listOf(
                                     replyRoot.asExternalModel(
                                         quote = idsToEmbeddedPosts[replyRoot.entity.cid]
@@ -542,6 +549,7 @@ class OfflineTimelineRepository(
             id = thread.postId.id,
             generation = thread.generation,
             anchorPostIndex = 0,
+            hasBreak = false,
             posts = listOf(
                 thread.entity.asExternalModel(
                     quote = null
@@ -559,6 +567,7 @@ class OfflineTimelineRepository(
             id = thread.postId.id,
             generation = thread.generation,
             anchorPostIndex = 0,
+            hasBreak = false,
             posts = listOf(
                 thread.entity.asExternalModel(
                     quote = null

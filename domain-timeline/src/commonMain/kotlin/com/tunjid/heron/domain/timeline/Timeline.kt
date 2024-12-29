@@ -1,7 +1,7 @@
 package com.tunjid.heron.domain.timeline
 
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.NetworkCursor
+import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
@@ -16,9 +16,11 @@ import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
 import com.tunjid.tiler.listTiler
+import com.tunjid.tiler.queries
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
@@ -47,7 +49,7 @@ fun timelineStateHolder(
     timeline: Timeline,
     startNumColumns: Int,
     scope: CoroutineScope,
-    cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+    cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ): TimelineStateHolder = scope.actionStateFlowMutator(
     initialState = TimelineState(
         timeline = timeline,
@@ -86,7 +88,7 @@ sealed interface TimelineLoadAction {
  */
 suspend fun Flow<TimelineLoadAction>.timelineMutations(
     stateHolder: SuspendingStateHolder<TimelineState>,
-    cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+    cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ) = with(stateHolder) {
     with(this) {
         // Read the starting state at the time of subscription
@@ -118,7 +120,10 @@ suspend fun Flow<TimelineLoadAction>.timelineMutations(
                     )
                     .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
                     .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
-                        copy(items = it)
+                        if (!it.queries().contains(currentQuery)) this
+                        else copy(
+                            items = it.distinctBy(TimelineItem::id)
+                        )
                     }
                 merge(
                     queries.mapToMutation { copy(currentQuery = it) },
@@ -160,7 +165,7 @@ private inline fun timelinePivotRequest(numColumns: Int) =
 
 private inline fun timelineTiler(
     startingQuery: TimelineQuery,
-    crossinline cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+    crossinline cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ): ListTiler<TimelineQuery, TimelineItem> = listTiler(
     order = Tile.Order.PivotSorted(
         query = startingQuery,
@@ -174,15 +179,15 @@ private inline fun timelineTiler(
 
 private inline fun timelineQueryFetcher(
     startingQuery: TimelineQuery,
-    crossinline cursorListLoader: (TimelineQuery, NetworkCursor) -> Flow<CursorList<TimelineItem>>,
+    crossinline cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ): QueryFetcher<TimelineQuery, TimelineItem> =
-    neighboredQueryFetcher<TimelineQuery, TimelineItem, NetworkCursor>(
+    neighboredQueryFetcher<TimelineQuery, TimelineItem, Cursor>(
         // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
         // in memory
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
         seedQueryTokenMap = mapOf(
-            startingQuery to NetworkCursor.Initial
+            startingQuery to Cursor.Initial
         ),
         fetcher = { query, cursor ->
             cursorListLoader(query, cursor)

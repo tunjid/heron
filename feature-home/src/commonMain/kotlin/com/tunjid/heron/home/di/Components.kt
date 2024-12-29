@@ -17,19 +17,23 @@
 package com.tunjid.heron.home.di
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,13 +66,13 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
-import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
+import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -144,8 +148,7 @@ abstract class HomeComponent(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
-                        movableSharedElementScope = requireThreePaneMovableSharedElementScope(),
-                        animatedVisibilityScope = this,
+                        sharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = {
                             viewModel.accept(
@@ -158,6 +161,12 @@ abstract class HomeComponent(
                                 )
                             )
                         },
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surface)
+                            .height(statusBarHeight)
+                            .fillMaxWidth()
                     )
                 },
                 bottomBar = {
@@ -186,11 +195,10 @@ abstract class HomeComponent(
 @Composable
 private fun TopBar(
     modifier: Modifier = Modifier,
-    movableSharedElementScope: MovableSharedElementScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementScope: SharedElementScope,
     signedInProfile: Profile?,
     onSignedInProfileClicked: (Profile) -> Unit,
-) = with(movableSharedElementScope) {
+) = with(sharedElementScope) {
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
@@ -200,7 +208,7 @@ private fun TopBar(
                     .size(36.dp)
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(AppLogo),
-                        animatedVisibilityScope = animatedVisibilityScope,
+                        animatedVisibilityScope = sharedElementScope,
                         boundsTransform = { _, _ ->
                             spring(stiffness = Spring.StiffnessLow)
                         }
@@ -221,10 +229,7 @@ private fun TopBar(
                         modifier = Modifier
                             .size(24.dp)
                             .sharedElement(
-                                state = rememberSharedContentState(
-                                    SignedInUserAvatarSharedElementKey
-                                ),
-                                animatedVisibilityScope = animatedVisibilityScope,
+                                key = SignedInUserAvatarSharedElementKey,
                             )
                             .clickable { onSignedInProfileClicked(profile) },
                         args = remember(profile) {
@@ -256,19 +261,3 @@ private fun BottomBar(
 
 
 private const val SignedInUserAvatarSharedElementKey = "self"
-
-
-internal val ToolbarHeight = 56.dp
-
-internal val TabsHeight = 48.dp
-
-internal val StatusBarHeight: Dp
-    @Composable get() {
-        val density = LocalDensity.current
-        val statusBarInsets = WindowInsets.statusBars
-        return with(density) {
-            statusBarInsets.run {
-                getTop(density) + getBottom(density)
-            }.toDp()
-        }
-    }

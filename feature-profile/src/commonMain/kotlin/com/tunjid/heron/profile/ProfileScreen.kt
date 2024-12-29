@@ -19,7 +19,7 @@ package com.tunjid.heron.profile
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.splineBasedDecay
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -45,13 +44,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -80,6 +77,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.CollapsingHeaderStatus
+import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.Timeline
@@ -90,16 +88,17 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.edit
 import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
@@ -124,7 +123,7 @@ internal fun ProfileScreen(
 
     var wasCollapsed by rememberSaveable { mutableStateOf(false) }
 
-    val collapsedHeight = with(density) { 56.dp.toPx() } +
+    val collapsedHeight = with(density) { 64.dp.toPx() } +
             WindowInsets.statusBars.getTop(density).toFloat() +
             WindowInsets.statusBars.getBottom(density).toFloat()
 
@@ -165,10 +164,7 @@ internal fun ProfileScreen(
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
                 profileRelationship = state.profileRelationship,
-                avatarSharedElementKey = state.avatarSharedElementKey,
-                onBackPressed = {
-                    actions(Action.Navigate.DelegateTo(NavigationAction.Common.Pop))
-                }
+                avatarSharedElementKey = state.avatarSharedElementKey
             )
         },
         body = {
@@ -218,7 +214,6 @@ private fun ProfileHeader(
     isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
-    onBackPressed: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -232,7 +227,7 @@ private fun ProfileHeader(
         )
         Column(
             modifier = modifier
-                .padding(start = 24.dp, end = 24.dp, top = 160.dp)
+                .padding(top = TopToBioDelta)
                 .offset {
                     IntOffset(
                         x = 0,
@@ -241,11 +236,22 @@ private fun ProfileHeader(
                 }
         ) {
             Column(
-                modifier = Modifier.graphicsLayer {
-                    alpha = 1f - headerState.progress
-                },
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = remember {
+                            RoundedCornerShape(
+                                topStart = 16.dp,
+                                topEnd = 16.dp,
+                            )
+                        }
+                    )
+                    .padding(start = SizeToken, end = SizeToken)
+                    .graphicsLayer {
+                        alpha = 1f - headerState.progress
+                    },
             ) {
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(SizeToken))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
@@ -260,7 +266,10 @@ private fun ProfileHeader(
                 Spacer(Modifier.height(16.dp))
             }
             ProfileTabs(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .padding(horizontal = SizeToken)
+                    .fillMaxWidth(),
+                headerState = headerState,
                 pagerState = pagerState,
                 titles = tabTitles,
             )
@@ -269,14 +278,16 @@ private fun ProfileHeader(
         ProfilePhoto(
             movableSharedElementScope = movableSharedElementScope,
             modifier = Modifier
-                .align(Alignment.TopCenter),
+                .align(
+                    lerp(
+                        start = Alignment.TopCenter,
+                        stop = Alignment.TopEnd,
+                        fraction = headerState.progress,
+                    )
+                ),
             headerState = headerState,
             profile = profile,
             avatarSharedElementKey = avatarSharedElementKey,
-        )
-        BackButton(
-            headerState = headerState,
-            onBackPressed = onBackPressed,
         )
     }
 }
@@ -290,7 +301,7 @@ private fun ProfileBanner(
     AsyncImage(
         modifier = modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(ProfileBannerSize)
             .graphicsLayer {
                 alpha = 1f - min(0.9f, (headerState.progress * 1.6f))
             },
@@ -318,14 +329,16 @@ private fun ProfilePhoto(
     profile: Profile,
     avatarSharedElementKey: String,
 ) {
+    val progress = headerState.progress
+    val statusBarHeight = StatusBarHeight
     Card(
         modifier = modifier
-            .padding(top = 124.dp)
-            .size(68.dp)
+            .padding(top = ProfilePhotoTopPadding)
+            .size(ExpandedProfilePhotoSize - (ExpandedToCollapsedProfilePhotoDelta * progress))
             .offset {
                 IntOffset(
-                    x = 0,
-                    y = -headerState.translation.roundToInt()
+                    x = -(16.dp * headerState.progress).roundToPx(),
+                    y = -((TopToAnchoredCollapsedPhotoDelta - statusBarHeight) * progress).roundToPx()
                 )
             },
         shape = CircleShape,
@@ -337,7 +350,7 @@ private fun ProfilePhoto(
             key = avatarSharedElementKey,
             modifier = modifier
                 .fillMaxSize()
-                .padding(4.dp),
+                .padding(4.dp * (1f - progress)),
             state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName,
@@ -481,37 +494,21 @@ fun Statistic(
 }
 
 @Composable
-private fun BackButton(
-    headerState: CollapsingHeaderState,
-    onBackPressed: () -> Unit,
-) {
-    FilledTonalIconButton(
-        modifier = Modifier
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .offset {
-                IntOffset(
-                    x = 8.dp.roundToPx(),
-                    y = 4.dp.roundToPx() - headerState.translation.roundToInt(),
-                )
-            },
-        onClick = onBackPressed,
-    ) {
-        Image(
-            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-            contentDescription = stringResource(Res.string.back),
-        )
-    }
-}
-
-@Composable
 private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
+    headerState: CollapsingHeaderState,
     titles: List<String>,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
-        modifier = modifier,
+        modifier = modifier
+            .offset {
+                IntOffset(
+                    x = (headerState.progress * 48.dp.toPx()).roundToInt(),
+                    y = 0,
+                )
+            },
         titles = titles,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
@@ -592,3 +589,21 @@ private fun ProfileTimeline(
         }
     )
 }
+
+private val SizeToken = 24.dp
+
+private val ExpandedProfilePhotoSize = 68.dp
+private val CollapsedProfilePhotoSize = 24.dp
+
+private val TopToBioDelta = 160.dp
+private val ProfileBannerSize = TopToBioDelta + SizeToken
+
+private val TopToPhotoTopDelta = TopToBioDelta - (ExpandedProfilePhotoSize / 2)
+private val TopToCollapsedPhotoAppBarCenterDelta = (ToolbarHeight - CollapsedProfilePhotoSize) / 2
+private val TopToAnchoredCollapsedPhotoDelta =
+    TopToPhotoTopDelta - TopToCollapsedPhotoAppBarCenterDelta
+
+private val ProfilePhotoTopPadding = TopToBioDelta - (ExpandedProfilePhotoSize / 2)
+
+private val ExpandedToCollapsedProfilePhotoDelta =
+    ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
