@@ -81,7 +81,7 @@ class ActualProfileStateHolder(
                 timeline = it,
                 startNumColumns = 1,
                 scope = scope,
-                cursorListLoader = timelineRepository::timelineItems,
+                timelineRepository = timelineRepository,
             )
         },
     ),

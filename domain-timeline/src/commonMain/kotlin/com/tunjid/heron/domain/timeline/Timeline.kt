@@ -6,7 +6,9 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
@@ -40,6 +42,7 @@ data class TimelineState(
     val timeline: Timeline,
     val currentQuery: TimelineQuery,
     val numColumns: Int,
+    val hasUpdates: Boolean,
     val items: TiledList<TimelineQuery, TimelineItem>,
 )
 
@@ -49,7 +52,7 @@ fun timelineStateHolder(
     timeline: Timeline,
     startNumColumns: Int,
     scope: CoroutineScope,
-    cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
+    timelineRepository: TimelineRepository,
 ): TimelineStateHolder = scope.actionStateFlowMutator(
     initialState = TimelineState(
         timeline = timeline,
@@ -61,13 +64,20 @@ fun timelineStateHolder(
             ),
         ),
         numColumns = startNumColumns,
+        hasUpdates = false,
         items = emptyTiledList(),
+    ),
+    inputs = listOf(
+        hasUpdatesMutations(
+            timeline = timeline,
+            timelineRepository = timelineRepository,
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(keySelector = { "" }) {
             type().flow.timelineMutations(
                 stateHolder = this@transform,
-                cursorListLoader = cursorListLoader,
+                cursorListLoader = timelineRepository::timelineItems,
             )
         }
     }
@@ -83,10 +93,17 @@ sealed interface TimelineLoadAction {
     ) : TimelineLoadAction
 }
 
+private fun hasUpdatesMutations(
+    timeline: Timeline,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<TimelineState>> =
+    timelineRepository.hasUpdates(timeline)
+        .mapToMutation { copy(hasUpdates = it) }
+
 /**
  * Feed mutations as a function of the user's scroll position
  */
-suspend fun Flow<TimelineLoadAction>.timelineMutations(
+private suspend fun Flow<TimelineLoadAction>.timelineMutations(
     stateHolder: SuspendingStateHolder<TimelineState>,
     cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ) = with(stateHolder) {

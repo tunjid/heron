@@ -110,7 +110,7 @@ private fun timelineMutations(
                             timeline = timeline,
                             startNumColumns = startNumColumns,
                             scope = scope,
-                            cursorListLoader = timelineRepository::timelineItems
+                            timelineRepository = timelineRepository,
                         )
                 )
             }

@@ -13,8 +13,8 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
@@ -38,6 +38,7 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -46,6 +47,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -54,12 +56,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class TimelineQuery(
     val data: Data,
@@ -99,6 +104,10 @@ class TimelineQuery(
 
 interface TimelineRepository {
     fun homeTimelines(): Flow<List<Timeline.Home>>
+
+    fun hasUpdates(
+        timeline: Timeline,
+    ): Flow<Boolean>
 
     fun timelineItems(
         query: TimelineQuery,
@@ -242,6 +251,102 @@ class OfflineTimelineRepository(
         )
     }
 
+    override fun hasUpdates(
+        timeline: Timeline
+    ): Flow<Boolean> = when (timeline) {
+        is Timeline.Home.Feed -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            block = {
+                networkService.api.getFeed(
+                    GetFeedQueryParams(
+                        feed = AtUri(timeline.feedUri.uri),
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            map = GetFeedResponse::feed,
+        )
+
+        is Timeline.Home.Following -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            block = {
+                networkService.api.getTimeline(
+                    GetTimelineQueryParams(
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            map = GetTimelineResponse::feed,
+        )
+
+        is Timeline.Home.List -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            block = {
+                networkService.api.getListFeed(
+                    GetListFeedQueryParams(
+                        list = AtUri(timeline.listUri.uri),
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            map = GetListFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Media -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            block = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            map = GetAuthorFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Posts -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            block = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            map = GetAuthorFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Replies -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            block = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            map = GetAuthorFeedResponse::feed,
+        )
+    }
+
     override fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>> =
@@ -376,6 +481,37 @@ class OfflineTimelineRepository(
                     viewingProfileId = authProfileId,
                 )
             }
+    }
+
+    private fun <T : Any> pollForTimelineUpdates(
+        timeline: Timeline,
+        pollInterval: Duration,
+        block: suspend () -> AtpResponse<T>,
+        map: (T) -> List<FeedViewPost>,
+    ) = flow {
+        emit(false)
+        while (true) {
+            val now = Clock.System.now()
+            val latestEntity = runCatchingWithNetworkRetry { block() }
+                .getOrNull()
+                ?.let(map)
+                ?.firstOrNull()
+                ?.feedItemEntity(timeline.sourceId)
+                ?: continue
+
+            val latestSavedEntity = timelineDao.feedItems(
+                sourceId = timeline.sourceId,
+                before = now,
+                limit = 1,
+                offset = 0,
+            )
+                .first()
+                .firstOrNull()
+                ?: continue
+
+            emit(latestEntity.id == latestSavedEntity.id)
+            delay(pollInterval.inWholeMilliseconds)
+        }
     }
 
     private fun observeAndRefreshTimeline(
