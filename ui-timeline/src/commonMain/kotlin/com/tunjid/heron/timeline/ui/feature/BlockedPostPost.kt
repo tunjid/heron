@@ -3,7 +3,7 @@ package com.tunjid.heron.timeline.ui.feature
 import androidx.compose.runtime.Composable
 
 @Composable
-fun BlockedPostPost(onClick: (() -> Unit)?) {
+internal fun BlockedPostPost(onClick: (() -> Unit)?) {
     FeatureContainer(onClick = onClick) {
         PostFeatureTextContent(
             title = "Post is blocked",

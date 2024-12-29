@@ -3,7 +3,7 @@ package com.tunjid.heron.timeline.ui.feature
 import androidx.compose.runtime.Composable
 
 @Composable
-fun UnknownPostPost(onClick: (() -> Unit)?) {
+internal fun UnknownPostPost(onClick: (() -> Unit)?) {
     FeatureContainer(onClick = onClick) {
         PostFeatureTextContent(
             title = "Unknown post",

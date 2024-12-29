@@ -3,7 +3,7 @@ package com.tunjid.heron.timeline.ui.feature
 import androidx.compose.runtime.Composable
 
 @Composable
-fun InvisiblePostPost(onClick: (() -> Unit)?) {
+internal fun InvisiblePostPost(onClick: (() -> Unit)?) {
   FeatureContainer(onClick = onClick) {
     PostFeatureTextContent(
       title = "Post not found",
