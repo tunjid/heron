@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ContentCut
+import androidx.compose.material.icons.rounded.Commit
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -165,16 +165,16 @@ private fun ThreadedPost(
                         )
                     }
                 )
-                if (index != item.posts.lastIndex) Timeline(
-                    isBroken = index == 0 && item.hasBreak,
-                    modifier = Modifier.height(
-                        when {
-                            index == 0 && item.hasBreak -> 48.dp
-                            index == 0 -> 16.dp
-                            else -> 12.dp
-                        }
+                if (index != item.posts.lastIndex)
+                    if (index == 0 && item.hasBreak) BrokenTimeline {
+                        onPostClicked(post)
+                    }
+                    else Timeline(
+                        modifier = Modifier.height(
+                            if (index == 0) 16.dp
+                            else 12.dp
+                        )
                     )
-                )
                 if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
                     Modifier.height(4.dp)
                 )
@@ -198,7 +198,7 @@ private fun SinglePost(
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
-    timeline: @Composable() (BoxScope.() -> Unit) = {},
+    timeline: @Composable (BoxScope.() -> Unit) = {},
 ) = with(sharedElementScope) {
     Box {
         timeline()
@@ -295,7 +295,6 @@ private fun SinglePost(
 
 @Composable
 private fun Timeline(
-    isBroken: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier) {
@@ -306,25 +305,56 @@ private fun Timeline(
                 .fillMaxHeight()
                 .width(2.dp)
         )
-        if (isBroken) Row(
-            modifier = Modifier
-                .align(Alignment.CenterStart),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                modifier = Modifier
-                    .offset(x = -(7).dp)
-                    .scale(0.6f),
-                imageVector = Icons.Rounded.ContentCut,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-            )
-            Text(
-                modifier = Modifier.padding(horizontal = 0.dp),
-                text = stringResource(Res.string.see_more_posts),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.outline
-                ),
+    }
+}
+
+@Composable
+private fun BrokenTimeline(
+    onClick: () -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+    ) {
+        Spacer(
+            Modifier
+                .offset(x = 4.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .height(8.dp)
+                .width(2.dp)
+        )
+        Box {
+            Row(
+                modifier = Modifier.offset(y = -(3.dp)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .offset(x = -(7).dp)
+                        .rotate(90f),
+                    imageVector = Icons.Rounded.Commit,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.surfaceContainerHighest,
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onClick() }
+                        .padding(horizontal = 16.dp),
+                    text = stringResource(Res.string.see_more_posts),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.outline
+                    ),
+                )
+            }
+            Spacer(
+                Modifier
+                    .padding(top = 12.dp)
+                    .offset(x = 4.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .height(20.dp)
+                    .width(2.dp)
             )
         }
     }
