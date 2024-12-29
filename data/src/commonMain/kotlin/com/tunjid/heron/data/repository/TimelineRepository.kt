@@ -512,7 +512,7 @@ class OfflineTimelineRepository(
                 .map { latestSavedEntities ->
                     latestSavedEntities
                         .firstOrNull()
-                        ?.sourceId == latestEntity.sourceId
+                        ?.sourceId != latestEntity.sourceId
                 }
         }
         .onStart { emit(false) }
