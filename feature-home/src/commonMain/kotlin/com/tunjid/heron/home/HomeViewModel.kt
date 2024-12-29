@@ -118,6 +118,6 @@ private fun timelineMutations(
     }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(pageWithUpdates = timelineIdsToTimelineStates.keys.indexOf(it.sourceIdWithUpdates))
+    mapToMutation { (sourceId, hasUpdates) ->
+        copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }

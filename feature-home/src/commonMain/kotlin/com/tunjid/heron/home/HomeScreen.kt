@@ -106,11 +106,11 @@ internal fun HomeScreen(
                 tabsOffsetNestedScrollConnection.offset.round()
             },
             pagerState = pagerState,
-            tabs = remember(state.pageWithUpdates, state.timelines) {
-                state.timelines.mapIndexed { index, timeline ->
+            tabs = remember(state.sourceIdsToHasUpdates, state.timelines) {
+                state.timelines.map { timeline ->
                     TimelineTab(
                         title = timeline.name,
-                        hasUpdate = index == state.pageWithUpdates,
+                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
                 }
             }
@@ -223,10 +223,11 @@ private fun HomeTimeline(
 
     LaunchedEffect(Unit) {
         snapshotFlow {
-            timelineState.timeline.sourceId.takeIf { timelineState.hasUpdates }
+            Action.UpdatePageWithUpdates(
+                sourceId = timelineState.timeline.sourceId,
+                hasUpdates = timelineState.hasUpdates,
+            )
         }
-            .collect {
-                actions(Action.UpdatePageWithUpdates(it))
-            }
+            .collect(actions)
     }
 }

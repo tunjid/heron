@@ -27,7 +27,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     @Transient
-    val pageWithUpdates: Int = -1,
+    val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
     val timelines: List<Timeline.Home> = emptyList(),
     @Transient
@@ -42,7 +42,8 @@ data class State(
 sealed class Action(val key: String) {
 
     data class UpdatePageWithUpdates(
-        val sourceIdWithUpdates: String?,
+        val sourceId: String,
+        val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {

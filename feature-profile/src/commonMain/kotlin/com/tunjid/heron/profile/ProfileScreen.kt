@@ -153,14 +153,14 @@ internal fun ProfileScreen(
                 movableSharedElementScope = sharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = state.timelines.mapIndexed { index, timeline ->
+                timelineTabs = state.timelines.map { timeline ->
                     TimelineTab(
                         title = when (timeline) {
                             is Timeline.Profile.Media -> stringResource(Res.string.media)
                             is Timeline.Profile.Posts -> stringResource(Res.string.posts)
                             is Timeline.Profile.Replies -> stringResource(Res.string.replies)
                         },
-                        hasUpdate = index == state.pageWithUpdates,
+                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
                 },
                 modifier = Modifier

@@ -139,12 +139,8 @@ private fun profileRelationshipMutations(
     }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(
-            pageWithUpdates = timelines
-                .map(Timeline.Profile::sourceId)
-                .indexOf(it.sourceIdWithUpdates)
-        )
+    mapToMutation { (sourceId, hasUpdates) ->
+        copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }
 
 private fun timelines(route: Route) = listOf(
