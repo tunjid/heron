@@ -47,13 +47,13 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -252,7 +252,7 @@ class OfflineTimelineRepository(
     }
 
     override fun hasUpdates(
-        timeline: Timeline
+        timeline: Timeline,
     ): Flow<Boolean> = when (timeline) {
         is Timeline.Home.Feed -> pollForTimelineUpdates(
             timeline = timeline,
@@ -489,7 +489,6 @@ class OfflineTimelineRepository(
         block: suspend () -> AtpResponse<T>,
         map: (T) -> List<FeedViewPost>,
     ) = flow {
-        emit(false)
         while (true) {
             val now = Clock.System.now()
             val latestEntity = runCatchingWithNetworkRetry { block() }
@@ -499,20 +498,24 @@ class OfflineTimelineRepository(
                 ?.feedItemEntity(timeline.sourceId)
                 ?: continue
 
-            val latestSavedEntity = timelineDao.feedItems(
-                sourceId = timeline.sourceId,
-                before = now,
-                limit = 1,
-                offset = 0,
-            )
-                .first()
-                .firstOrNull()
-                ?: continue
-
-            emit(latestEntity.id == latestSavedEntity.id)
+            emit(now to latestEntity)
             delay(pollInterval.inWholeMilliseconds)
         }
     }
+        .flatMapLatest { (instant, latestEntity) ->
+            timelineDao.feedItems(
+                sourceId = timeline.sourceId,
+                before = instant,
+                limit = 1,
+                offset = 0,
+            )
+                .map { latestSavedEntities ->
+                    latestSavedEntities
+                        .firstOrNull()
+                        ?.sourceId == latestEntity.sourceId
+                }
+        }
+        .onStart { emit(false) }
 
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,
