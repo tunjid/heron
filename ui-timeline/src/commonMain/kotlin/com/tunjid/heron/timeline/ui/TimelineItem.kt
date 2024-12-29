@@ -3,6 +3,7 @@ package com.tunjid.heron.timeline.ui
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -315,6 +316,11 @@ private fun BrokenTimeline(
     Column(
         Modifier
             .fillMaxWidth()
+            .clickable(
+                interactionSource = NoOpInteractionSource,
+                indication = null,
+                onClick = onClick,
+            )
     ) {
         Spacer(
             Modifier
@@ -340,7 +346,7 @@ private fun BrokenTimeline(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .clickable { onClick() }
+                        .clickable(onClick = onClick)
                         .padding(horizontal = 16.dp),
                     text = stringResource(Res.string.see_more_posts),
                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -419,3 +425,5 @@ private val TimelineItem.isThreadedAnchor
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
+
+private val NoOpInteractionSource = MutableInteractionSource()
