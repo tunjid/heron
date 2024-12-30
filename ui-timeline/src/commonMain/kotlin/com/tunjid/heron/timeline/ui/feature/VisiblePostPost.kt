@@ -22,7 +22,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Composable
-fun VisiblePostPost(
+internal fun VisiblePostPost(
     now: Instant,
     post: Post,
     author: Profile,

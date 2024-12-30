@@ -13,8 +13,8 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
@@ -25,19 +25,15 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
-import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.feedItemEntity
-import com.tunjid.heron.data.network.models.postEntity
-import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
-import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -54,12 +50,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class TimelineQuery(
     val data: Data,
@@ -99,6 +98,10 @@ class TimelineQuery(
 
 interface TimelineRepository {
     fun homeTimelines(): Flow<List<Timeline.Home>>
+
+    fun hasUpdates(
+        timeline: Timeline,
+    ): Flow<Boolean>
 
     fun timelineItems(
         query: TimelineQuery,
@@ -242,6 +245,102 @@ class OfflineTimelineRepository(
         )
     }
 
+    override fun hasUpdates(
+        timeline: Timeline,
+    ): Flow<Boolean> = when (timeline) {
+        is Timeline.Home.Feed -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            networkRequestBlock = {
+                networkService.api.getFeed(
+                    GetFeedQueryParams(
+                        feed = AtUri(timeline.feedUri.uri),
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetFeedResponse::feed,
+        )
+
+        is Timeline.Home.Following -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            networkRequestBlock = {
+                networkService.api.getTimeline(
+                    GetTimelineQueryParams(
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetTimelineResponse::feed,
+        )
+
+        is Timeline.Home.List -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 10.seconds,
+            networkRequestBlock = {
+                networkService.api.getListFeed(
+                    GetListFeedQueryParams(
+                        list = AtUri(timeline.listUri.uri),
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetListFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Media -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            networkRequestBlock = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Posts -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            networkRequestBlock = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Replies -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            networkRequestBlock = {
+                networkService.api.getAuthorFeed(
+                    GetAuthorFeedQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                        filter = GetAuthorFeedFilter.PostsNoReplies,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+        )
+    }
+
     override fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>> =
@@ -378,6 +477,47 @@ class OfflineTimelineRepository(
             }
     }
 
+    private fun <T : Any> pollForTimelineUpdates(
+        timeline: Timeline,
+        pollInterval: Duration,
+        networkRequestBlock: suspend () -> AtpResponse<T>,
+        networkResponseToFeedViews: (T) -> List<FeedViewPost>,
+    ) = flow {
+        while (true) {
+            val now = Clock.System.now()
+            val latestEntity = runCatchingWithNetworkRetry { networkRequestBlock() }
+                .getOrNull()
+                ?.let(networkResponseToFeedViews)
+                ?.also {
+                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    if (authProfileId != null) multipleEntitySaver().add(
+                        viewingProfileId = authProfileId,
+                        timeline = timeline,
+                        feedViewPosts = it,
+                    )
+                }
+                ?.firstOrNull()
+                ?.feedItemEntity(timeline.sourceId)
+                ?: continue
+
+            emit(now to latestEntity)
+            delay(pollInterval.inWholeMilliseconds)
+        }
+    }
+        .flatMapLatest { (instant, latestEntity) ->
+            timelineDao.feedItems(
+                sourceId = timeline.sourceId,
+                before = timelineDao.lastFetchKey(timeline.sourceId)?.lastFetchedAt ?: instant,
+                limit = 1,
+                offset = 0,
+            )
+                .map { latestSavedEntities ->
+                    latestSavedEntities
+                        .firstOrNull()
+                        ?.id != latestEntity.id
+                }
+        }
+
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,
         nextCursorFlow: Flow<Cursor>,
@@ -393,43 +533,15 @@ class OfflineTimelineRepository(
         feedViews: List<FeedViewPost>,
         query: TimelineQuery,
     ) {
-        val feedItemEntities = mutableListOf<TimelineItemEntity>()
-
-        for (feedView in feedViews) {
-            // Extract data from feed
-            feedItemEntities.add(feedView.feedItemEntity(query.timeline.sourceId))
-
-            // Extract data from post
-            add(
-                viewingProfileId = viewingProfileId,
-                postView = feedView.post,
-            )
-            feedView.reason?.profileEntity()?.let(::add)
-
-            feedView.reply?.let {
-                it.root.postEntity().let(::add)
-                it.root.profileEntity()?.let(::add)
-                it.root.postViewerStatisticsEntity()?.let(::add)
-
-                val parentPostEntity = it.parent.postEntity().also(::add)
-                it.parent.profileEntity()?.let(::add)
-                it.parent.postViewerStatisticsEntity()?.let(::add)
-
-                it.grandparentAuthor?.profileEntity()?.let(::add)
-
-                add(
-                    PostThreadEntity(
-                        postId = feedView.post.postEntity().cid,
-                        parentPostId = parentPostEntity.cid,
-                    )
-                )
-            }
-        }
-
+        add(
+            viewingProfileId = viewingProfileId,
+            timeline = query.timeline,
+            feedViewPosts = feedViews,
+        )
         saveInTransaction(
             beforeSave = {
                 if (timelineDao.isFirstRequest(query)) {
-                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
@@ -438,9 +550,6 @@ class OfflineTimelineRepository(
                         )
                     )
                 }
-            },
-            afterSave = {
-                timelineDao.upsertTimelineItems(feedItemEntities)
             }
         )
     }

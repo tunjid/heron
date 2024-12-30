@@ -33,11 +33,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -47,16 +49,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.tabs.TimelineTab
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -103,8 +111,19 @@ internal fun HomeScreen(
                 tabsOffsetNestedScrollConnection.offset.round()
             },
             pagerState = pagerState,
-            titles = remember(state.timelines) {
-                state.timelines.map { it.name }
+            tabs = remember(state.sourceIdsToHasUpdates, state.timelines) {
+                state.timelines.map { timeline ->
+                    TimelineTab(
+                        title = timeline.name,
+                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
+                    )
+                }
+            },
+            onRefreshTabClicked = {
+                updatedPages.getOrNull(it)
+                    ?.value
+                    ?.accept
+                    ?.invoke(TimelineLoadAction.Refresh)
             }
         )
     }
@@ -114,7 +133,8 @@ internal fun HomeScreen(
 private fun HomeTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    titles: List<String>,
+    tabs: List<TimelineTab>,
+    onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
@@ -126,13 +146,14 @@ private fun HomeTabs(
                 end = 8.dp,
             )
             .fillMaxWidth(),
-        titles = titles,
+        tabs = tabs,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
             scope.launch {
                 pagerState.animateScrollToPage(it)
             }
-        }
+        },
+        onTabReselected = onRefreshTabClicked,
     )
 }
 
@@ -212,4 +233,28 @@ private fun HomeTimeline(
             )
         }
     )
+
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            Action.UpdatePageWithUpdates(
+                sourceId = timelineState.timeline.sourceId,
+                hasUpdates = timelineState.hasUpdates,
+            )
+        }
+            .collect(actions)
+    }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { timelineState.status }
+            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
+                pair.copy(first = pair.second, second = current)
+            }
+            .filter { (first, second) ->
+                first != null && first != second && second is TimelineStatus.Refreshing
+            }
+            .collect {
+                delay(100)
+                gridState.animateScrollToItem(index = 0)
+            }
+    }
 }

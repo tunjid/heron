@@ -9,7 +9,7 @@ import com.tunjid.heron.timeline.utilities.formatTime
 import kotlinx.datetime.Instant
 
 @Composable
-fun PostDate(
+internal fun PostDate(
     modifier: Modifier = Modifier,
     time: Instant,
 ) {

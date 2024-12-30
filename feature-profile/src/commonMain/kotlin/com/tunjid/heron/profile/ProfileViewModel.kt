@@ -81,7 +81,7 @@ class ActualProfileStateHolder(
                 timeline = it,
                 startNumColumns = 1,
                 scope = scope,
-                cursorListLoader = timelineRepository::timelineItems,
+                timelineRepository = timelineRepository,
             )
         },
     ),
@@ -105,6 +105,7 @@ class ActualProfileStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
+                is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -135,6 +136,11 @@ private fun profileRelationshipMutations(
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationship(profileId).mapToMutation {
         copy(profileRelationship = it)
+    }
+
+private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
+    mapToMutation { (sourceId, hasUpdates) ->
+        copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }
 
 private fun timelines(route: Route) = listOf(

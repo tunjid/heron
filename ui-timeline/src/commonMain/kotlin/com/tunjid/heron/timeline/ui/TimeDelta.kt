@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import kotlin.time.Duration
 
 @Composable
-fun TimeDelta(
+internal fun TimeDelta(
     delta: Duration,
     modifier: Modifier = Modifier,
 ) {

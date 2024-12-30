@@ -24,7 +24,7 @@ import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PostExternal(
+internal fun PostExternal(
     feature: ExternalEmbed,
     postId: Id,
     sharedElementPrefix: String,

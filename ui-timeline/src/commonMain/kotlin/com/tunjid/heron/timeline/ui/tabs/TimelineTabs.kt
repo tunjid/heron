@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,12 +35,18 @@ import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
 
+data class TimelineTab(
+    val title: String,
+    val hasUpdate: Boolean,
+)
+
 @Composable
 fun TimelineTabs(
     modifier: Modifier = Modifier,
-    titles: List<String>,
+    tabs: List<TimelineTab>,
     selectedTabIndex: Float,
     onTabSelected: (Int) -> Unit,
+    onTabReselected: (Int) -> Unit,
 ) {
     Box(modifier = modifier) {
         val lazyListState = rememberLazyListState()
@@ -48,20 +56,28 @@ fun TimelineTabs(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             itemsIndexed(
-                items = titles,
-                key = { _, title -> title },
-                itemContent = { index, title ->
-                    FilterChip(
-                        modifier = Modifier,
-                        shape = TabShape,
-                        border = null,
-                        selected = false,
-                        onClick = {
-                            onTabSelected(index)
+                items = tabs,
+                key = { _, tab -> tab.title },
+                itemContent = { index, tab ->
+                    BadgedBox(
+                        badge = {
+                            if (tab.hasUpdate) Badge()
                         },
-                        label = {
-                            Text(title)
-                        },
+                        content = {
+                            FilterChip(
+                                modifier = Modifier,
+                                shape = TabShape,
+                                border = null,
+                                selected = false,
+                                onClick = {
+                                    if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+                                    else onTabReselected(index)
+                                },
+                                label = {
+                                    Text(tab.title)
+                                },
+                            )
+                        }
                     )
                 }
             )
@@ -94,7 +110,7 @@ private fun BoxScope.Indicator(
             val item = layoutInfo.visibleItemsInfo[index]
 
             if (item.offset + item.size > layoutInfo.viewportEndOffset)
-                 lazyListState.firstVisibleItemIndex + 1
+                lazyListState.firstVisibleItemIndex + 1
             else lazyListState.firstVisibleItemIndex
         }
             .collect { lazyListState.animateScrollToItem(it) }

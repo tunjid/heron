@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.timeline.utilities.format
 
 @Composable
-fun Statistic(
+internal fun Statistic(
   value: Long,
   description: String,
   onClick: () -> Unit,

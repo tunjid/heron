@@ -56,6 +56,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +86,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
@@ -92,6 +95,7 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.tabs.TimelineTab
 import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
@@ -106,6 +110,9 @@ import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -152,19 +159,25 @@ internal fun ProfileScreen(
                 movableSharedElementScope = sharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
-                tabTitles = state.timelines.map { timeline ->
-                    when (timeline) {
-                        is Timeline.Profile.Media -> stringResource(Res.string.media)
-                        is Timeline.Profile.Posts -> stringResource(Res.string.posts)
-                        is Timeline.Profile.Replies -> stringResource(Res.string.replies)
-                    }
+                timelineTabs = state.timelines.map { timeline ->
+                    TimelineTab(
+                        title = when (timeline) {
+                            is Timeline.Profile.Media -> stringResource(Res.string.media)
+                            is Timeline.Profile.Posts -> stringResource(Res.string.posts)
+                            is Timeline.Profile.Replies -> stringResource(Res.string.replies)
+                        },
+                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
                 profileRelationship = state.profileRelationship,
-                avatarSharedElementKey = state.avatarSharedElementKey
+                avatarSharedElementKey = state.avatarSharedElementKey,
+                onRefreshTabClicked = { index ->
+                    state.timelineStateHolders[index].accept(TimelineLoadAction.Refresh)
+                },
             )
         },
         body = {
@@ -208,12 +221,13 @@ private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
     headerState: CollapsingHeaderState,
     pagerState: PagerState,
-    tabTitles: List<String>,
+    timelineTabs: List<TimelineTab>,
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
+    onRefreshTabClicked: (Int) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -271,7 +285,8 @@ private fun ProfileHeader(
                     .fillMaxWidth(),
                 headerState = headerState,
                 pagerState = pagerState,
-                titles = tabTitles,
+                tabs = timelineTabs,
+                onRefreshTabClicked = onRefreshTabClicked,
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -498,7 +513,8 @@ private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     headerState: CollapsingHeaderState,
-    titles: List<String>,
+    tabs: List<TimelineTab>,
+    onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
@@ -509,13 +525,14 @@ private fun ProfileTabs(
                     y = 0,
                 )
             },
-        titles = titles,
+        tabs = tabs,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
             scope.launch {
                 pagerState.animateScrollToPage(it)
             }
-        }
+        },
+        onTabReselected = onRefreshTabClicked,
     )
 }
 
@@ -588,6 +605,20 @@ private fun ProfileTimeline(
             )
         }
     )
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { timelineState.status }
+            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
+                pair.copy(first = pair.second, second = current)
+            }
+            .filter { (first, second) ->
+                first != null && first != second && second is TimelineStatus.Refreshing
+            }
+            .collect {
+                delay(100)
+                gridState.animateScrollToItem(index = 0)
+            }
+    }
 }
 
 private val SizeToken = 24.dp
