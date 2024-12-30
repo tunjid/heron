@@ -251,7 +251,7 @@ class OfflineTimelineRepository(
         is Timeline.Home.Feed -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getFeed(
                     GetFeedQueryParams(
                         feed = AtUri(timeline.feedUri.uri),
@@ -260,13 +260,13 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetFeedResponse::feed,
+            networkResponseToFeedViews = GetFeedResponse::feed,
         )
 
         is Timeline.Home.Following -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getTimeline(
                     GetTimelineQueryParams(
                         limit = 1,
@@ -274,13 +274,13 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetTimelineResponse::feed,
+            networkResponseToFeedViews = GetTimelineResponse::feed,
         )
 
         is Timeline.Home.List -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getListFeed(
                     GetListFeedQueryParams(
                         list = AtUri(timeline.listUri.uri),
@@ -289,13 +289,13 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetListFeedResponse::feed,
+            networkResponseToFeedViews = GetListFeedResponse::feed,
         )
 
         is Timeline.Profile.Media -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 15.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getAuthorFeed(
                     GetAuthorFeedQueryParams(
                         actor = Did(timeline.profileId.id),
@@ -305,13 +305,13 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetAuthorFeedResponse::feed,
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
         )
 
         is Timeline.Profile.Posts -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 15.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getAuthorFeed(
                     GetAuthorFeedQueryParams(
                         actor = Did(timeline.profileId.id),
@@ -321,13 +321,13 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetAuthorFeedResponse::feed,
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
         )
 
         is Timeline.Profile.Replies -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 15.seconds,
-            block = {
+            networkRequestBlock = {
                 networkService.api.getAuthorFeed(
                     GetAuthorFeedQueryParams(
                         actor = Did(timeline.profileId.id),
@@ -337,7 +337,7 @@ class OfflineTimelineRepository(
                     )
                 )
             },
-            map = GetAuthorFeedResponse::feed,
+            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
         )
     }
 
@@ -480,14 +480,22 @@ class OfflineTimelineRepository(
     private fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
         pollInterval: Duration,
-        block: suspend () -> AtpResponse<T>,
-        map: (T) -> List<FeedViewPost>,
+        networkRequestBlock: suspend () -> AtpResponse<T>,
+        networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = flow {
         while (true) {
             val now = Clock.System.now()
-            val latestEntity = runCatchingWithNetworkRetry { block() }
+            val latestEntity = runCatchingWithNetworkRetry { networkRequestBlock() }
                 .getOrNull()
-                ?.let(map)
+                ?.let(networkResponseToFeedViews)
+                ?.also {
+                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    if (authProfileId != null) multipleEntitySaver().add(
+                        viewingProfileId = authProfileId,
+                        timeline = timeline,
+                        feedViewPosts = it,
+                    )
+                }
                 ?.firstOrNull()
                 ?.feedItemEntity(timeline.sourceId)
                 ?: continue
@@ -499,7 +507,7 @@ class OfflineTimelineRepository(
         .flatMapLatest { (instant, latestEntity) ->
             timelineDao.feedItems(
                 sourceId = timeline.sourceId,
-                before = instant,
+                before = timelineDao.lastFetchKey(timeline.sourceId)?.lastFetchedAt ?: instant,
                 limit = 1,
                 offset = 0,
             )
@@ -533,7 +541,7 @@ class OfflineTimelineRepository(
         saveInTransaction(
             beforeSave = {
                 if (timelineDao.isFirstRequest(query)) {
-                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
