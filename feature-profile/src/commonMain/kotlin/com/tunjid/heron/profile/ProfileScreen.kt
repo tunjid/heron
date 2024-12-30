@@ -56,6 +56,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +86,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
@@ -107,6 +110,10 @@ import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -168,7 +175,10 @@ internal fun ProfileScreen(
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
                 profileRelationship = state.profileRelationship,
-                avatarSharedElementKey = state.avatarSharedElementKey
+                avatarSharedElementKey = state.avatarSharedElementKey,
+                onRefreshTabClicked = { index ->
+                    state.timelineStateHolders[index].accept(TimelineLoadAction.Refresh)
+                },
             )
         },
         body = {
@@ -218,6 +228,7 @@ private fun ProfileHeader(
     isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
+    onRefreshTabClicked: (Int) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -276,6 +287,7 @@ private fun ProfileHeader(
                 headerState = headerState,
                 pagerState = pagerState,
                 tabs = timelineTabs,
+                onRefreshTabClicked = onRefreshTabClicked,
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -503,6 +515,7 @@ private fun ProfileTabs(
     pagerState: PagerState,
     headerState: CollapsingHeaderState,
     tabs: List<TimelineTab>,
+    onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
@@ -519,7 +532,8 @@ private fun ProfileTabs(
             scope.launch {
                 pagerState.animateScrollToPage(it)
             }
-        }
+        },
+        onTabReselected = onRefreshTabClicked,
     )
 }
 
@@ -592,6 +606,21 @@ private fun ProfileTimeline(
             )
         }
     )
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { timelineState.status }
+            .filterIsInstance<TimelineStatus.Refreshing>()
+            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
+                pair.copy(first = pair.second, second = current)
+            }
+            .filter { (first, second) ->
+                first != null && second != null && first != second
+            }
+            .collect {
+                delay(100)
+                gridState.animateScrollToItem(index = 0)
+            }
+    }
 }
 
 private val SizeToken = 24.dp

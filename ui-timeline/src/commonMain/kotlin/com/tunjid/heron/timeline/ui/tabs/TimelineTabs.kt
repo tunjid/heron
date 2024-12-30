@@ -46,6 +46,7 @@ fun TimelineTabs(
     tabs: List<TimelineTab>,
     selectedTabIndex: Float,
     onTabSelected: (Int) -> Unit,
+    onTabReselected: (Int) -> Unit,
 ) {
     Box(modifier = modifier) {
         val lazyListState = rememberLazyListState()
@@ -69,7 +70,8 @@ fun TimelineTabs(
                                 border = null,
                                 selected = false,
                                 onClick = {
-                                    onTabSelected(index)
+                                    if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+                                    else onTabReselected(index)
                                 },
                                 label = {
                                     Text(tab.title)

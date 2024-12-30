@@ -1,7 +1,7 @@
 package com.tunjid.heron.domain.timeline
 
-import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
@@ -38,11 +38,20 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Clock
 
+sealed class TimelineStatus {
+    data class Refreshing(
+        val query: TimelineQuery,
+    ) : TimelineStatus()
+
+    data object Refreshed : TimelineStatus()
+}
+
 data class TimelineState(
     val timeline: Timeline,
     val currentQuery: TimelineQuery,
     val numColumns: Int,
     val hasUpdates: Boolean,
+    val status: TimelineStatus,
     val items: TiledList<TimelineQuery, TimelineItem>,
 )
 
@@ -65,6 +74,7 @@ fun timelineStateHolder(
         ),
         numColumns = startNumColumns,
         hasUpdates = false,
+        status = TimelineStatus.Refreshed,
         items = emptyTiledList(),
     ),
     inputs = listOf(
@@ -74,7 +84,7 @@ fun timelineStateHolder(
         )
     ),
     actionTransform = transform@{ actions ->
-        actions.toMutationStream(keySelector = { "" }) {
+        actions.toMutationStream(keySelector = TimelineLoadAction::key) {
             type().flow.timelineMutations(
                 stateHolder = this@transform,
                 cursorListLoader = timelineRepository::timelineItems,
@@ -84,6 +94,10 @@ fun timelineStateHolder(
 )
 
 sealed interface TimelineLoadAction {
+
+    // Every action uses the same key, so they're processed sequentially
+    val key get() = "TimelineLoadAction"
+
     data class GridSize(
         val numColumns: Int,
     ) : TimelineLoadAction
@@ -91,6 +105,8 @@ sealed interface TimelineLoadAction {
     data class LoadAround(
         val query: TimelineQuery,
     ) : TimelineLoadAction
+
+    data object Refresh : TimelineLoadAction
 }
 
 private fun hasUpdatesMutations(
@@ -119,8 +135,24 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
             val (queries, numColumns) = accumulator
             // update backing states as a side effect
             when (action) {
-                is TimelineLoadAction.GridSize -> numColumns.value = action.numColumns
-                is TimelineLoadAction.LoadAround -> queries.value = action.query
+                is TimelineLoadAction.GridSize -> {
+                    numColumns.value = action.numColumns
+                }
+
+                is TimelineLoadAction.LoadAround -> {
+                    if (!queries.value.hasDifferentRequestInstant(action.query))
+                        queries.value = action.query
+                }
+
+                is TimelineLoadAction.Refresh -> {
+                    queries.value = TimelineQuery(
+                        timeline = queries.value.timeline,
+                        data = queries.value.data.copy(
+                            page = 0,
+                            firstRequestInstant = Clock.System.now(),
+                        ),
+                    )
+                }
             }
             // Emit the same item with each action
             accumulator
@@ -128,28 +160,69 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
             // Only emit once
             .distinctUntilChanged()
             .flatMapLatest { (queries, numColumns) ->
-                val tiledList = timelineTileInputs(numColumns, queries)
-                    .toTiledList(
-                        timelineTiler(
-                            startingQuery = queries.value,
-                            cursorListLoader = cursorListLoader,
-                        )
-                    )
-                    .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
-                    .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
-                        if (!it.queries().contains(currentQuery)) this
-                        else copy(
-                            items = it.distinctBy(TimelineItem::id)
-                        )
-                    }
                 merge(
-                    queries.mapToMutation { copy(currentQuery = it) },
-                    numColumns.mapToMutation { copy(numColumns = it) },
-                    tiledList,
+                    queryMutations(queries),
+                    numColumnMutations(numColumns),
+                    itemMutations(
+                        startingQuery = queries.value,
+                        queries = queries,
+                        numColumns = numColumns,
+                        cursorListLoader = cursorListLoader
+                    ),
                 )
             }
     }
 }
+
+private fun queryMutations(queries: MutableStateFlow<TimelineQuery>) =
+    queries.mapToMutation<TimelineQuery, TimelineState> { newQuery ->
+        copy(
+            currentQuery = newQuery,
+            status =
+            if (currentQuery.hasDifferentRequestInstant(newQuery)) TimelineStatus.Refreshing(
+                newQuery
+            )
+            else TimelineStatus.Refreshed
+        )
+    }
+
+private fun numColumnMutations(numColumns: Flow<Int>): Flow<Mutation<TimelineState>> =
+    numColumns.mapToMutation { copy(numColumns = it) }
+
+private fun itemMutations(
+    startingQuery: TimelineQuery,
+    queries: Flow<TimelineQuery>,
+    numColumns: Flow<Int>,
+    cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
+): Flow<Mutation<TimelineState>> {
+    // Refreshes need tear down the tiling pipeline all over
+    val refreshes = queries
+        .map { it.data.firstRequestInstant }
+        .distinctUntilChanged()
+
+    val tiledListMutations = refreshes.flatMapLatest {
+        timelineTileInputs(numColumns, queries)
+            .toTiledList(
+                timelineTiler(
+                    startingQuery = startingQuery,
+                    cursorListLoader = cursorListLoader,
+                )
+            )
+    }
+        .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
+        .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
+            // Ignore results from stale queries
+            if (!it.queries().contains(currentQuery)) this
+            else copy(
+                status = TimelineStatus.Refreshed,
+                items = it.distinctBy(TimelineItem::id)
+            )
+        }
+    return tiledListMutations
+}
+
+private fun TimelineQuery.hasDifferentRequestInstant(newQuery: TimelineQuery) =
+    data.firstRequestInstant != newQuery.data.firstRequestInstant
 
 private inline fun timelineTileInputs(
     numColumns: Flow<Int>,
