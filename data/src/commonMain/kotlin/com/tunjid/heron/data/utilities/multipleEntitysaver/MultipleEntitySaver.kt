@@ -10,6 +10,7 @@ import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
@@ -35,6 +36,8 @@ internal class MultipleEntitySaver(
     private val timelineDao: TimelineDao,
     private val transactionWriter: TransactionWriter,
 ) {
+    private val timelineItemEntities = mutableListOf<TimelineItemEntity>()
+
     private val postEntities =
         mutableListOf<PostEntity>()
 
@@ -111,6 +114,8 @@ internal class MultipleEntitySaver(
         timelineDao.upsertLists(listEntities)
         timelineDao.upsertFeedGenerators(feedGeneratorEntities)
 
+        timelineDao.upsertTimelineItems(timelineItemEntities)
+
         afterSave()
     }
 
@@ -135,6 +140,8 @@ internal class MultipleEntitySaver(
             }
         }
     }
+
+    fun add(entity: TimelineItemEntity) = timelineItemEntities.add(entity)
 
     fun add(entity: PostEntity) = postEntities.add(entity)
 

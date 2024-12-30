@@ -25,16 +25,11 @@ import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
-import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.feedItemEntity
-import com.tunjid.heron.data.network.models.postEntity
-import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
-import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -530,39 +525,11 @@ class OfflineTimelineRepository(
         feedViews: List<FeedViewPost>,
         query: TimelineQuery,
     ) {
-        val feedItemEntities = mutableListOf<TimelineItemEntity>()
-
-        for (feedView in feedViews) {
-            // Extract data from feed
-            feedItemEntities.add(feedView.feedItemEntity(query.timeline.sourceId))
-
-            // Extract data from post
-            add(
-                viewingProfileId = viewingProfileId,
-                postView = feedView.post,
-            )
-            feedView.reason?.profileEntity()?.let(::add)
-
-            feedView.reply?.let {
-                it.root.postEntity().let(::add)
-                it.root.profileEntity()?.let(::add)
-                it.root.postViewerStatisticsEntity()?.let(::add)
-
-                val parentPostEntity = it.parent.postEntity().also(::add)
-                it.parent.profileEntity()?.let(::add)
-                it.parent.postViewerStatisticsEntity()?.let(::add)
-
-                it.grandparentAuthor?.profileEntity()?.let(::add)
-
-                add(
-                    PostThreadEntity(
-                        postId = feedView.post.postEntity().cid,
-                        parentPostId = parentPostEntity.cid,
-                    )
-                )
-            }
-        }
-
+        add(
+            viewingProfileId = viewingProfileId,
+            timeline = query.timeline,
+            feedViewPosts = feedViews,
+        )
         saveInTransaction(
             beforeSave = {
                 if (timelineDao.isFirstRequest(query)) {
@@ -575,9 +542,6 @@ class OfflineTimelineRepository(
                         )
                     )
                 }
-            },
-            afterSave = {
-                timelineDao.upsertTimelineItems(feedItemEntities)
             }
         )
     }
