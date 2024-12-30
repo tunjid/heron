@@ -246,12 +246,11 @@ private fun HomeTimeline(
 
     LaunchedEffect(gridState) {
         snapshotFlow { timelineState.status }
-            .filterIsInstance<TimelineStatus.Refreshing>()
             .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
                 pair.copy(first = pair.second, second = current)
             }
             .filter { (first, second) ->
-                first != null && second != null && first != second
+                first != null && first != second && second is TimelineStatus.Refreshing
             }
             .collect {
                 delay(100)

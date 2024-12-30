@@ -112,7 +112,6 @@ import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -609,12 +608,11 @@ private fun ProfileTimeline(
 
     LaunchedEffect(gridState) {
         snapshotFlow { timelineState.status }
-            .filterIsInstance<TimelineStatus.Refreshing>()
             .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
                 pair.copy(first = pair.second, second = current)
             }
             .filter { (first, second) ->
-                first != null && second != null && first != second
+                first != null && first != second && second is TimelineStatus.Refreshing
             }
             .collect {
                 delay(100)
