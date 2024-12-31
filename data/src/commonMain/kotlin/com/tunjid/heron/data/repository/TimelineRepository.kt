@@ -20,8 +20,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.TransactionWriter
-import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -30,6 +28,7 @@ import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.delay
@@ -115,11 +114,10 @@ interface TimelineRepository {
 
 @Inject
 class OfflineTimelineRepository(
-    private val embedDao: EmbedDao,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
-    private val transactionWriter: TransactionWriter,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
@@ -363,7 +361,7 @@ class OfflineTimelineRepository(
                                 val authProfileId =
                                     savedStateRepository.savedState.value.auth?.authProfileId
                                 if (authProfileId != null)
-                                    multipleEntitySaver().apply {
+                                    multipleEntitySaverProvider.multipleEntitySaver().apply {
                                         add(
                                             viewingProfileId = authProfileId,
                                             threadViewPost = thread.value,
@@ -469,11 +467,12 @@ class OfflineTimelineRepository(
                     ?.let { emit(it) }
 
                 val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                if (authProfileId != null) multipleEntitySaver().persistTimeline(
-                    feedViews = response.networkFeed(),
-                    query = query,
-                    viewingProfileId = authProfileId,
-                )
+                if (authProfileId != null) multipleEntitySaverProvider.multipleEntitySaver()
+                    .persistTimeline(
+                        feedViews = response.networkFeed(),
+                        query = query,
+                        viewingProfileId = authProfileId,
+                    )
             }
     }
 
@@ -490,11 +489,12 @@ class OfflineTimelineRepository(
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaver().add(
-                        viewingProfileId = authProfileId,
-                        timeline = timeline,
-                        feedViewPosts = fetchedFeedViewPosts,
-                    )
+                    if (authProfileId != null) multipleEntitySaverProvider.multipleEntitySaver()
+                        .add(
+                            viewingProfileId = authProfileId,
+                            timeline = timeline,
+                            feedViewPosts = fetchedFeedViewPosts,
+                        )
                 }
                 ?: continue
 
@@ -700,14 +700,6 @@ class OfflineTimelineRepository(
             )
         }
     }
-
-    private fun multipleEntitySaver() = MultipleEntitySaver(
-        postDao = postDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        timelineDao = timelineDao,
-        transactionWriter = transactionWriter,
-    )
 }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {

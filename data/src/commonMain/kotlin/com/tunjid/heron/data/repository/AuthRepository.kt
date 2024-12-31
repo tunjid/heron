@@ -28,17 +28,13 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.database.TransactionWriter
-import com.tunjid.heron.data.database.daos.EmbedDao
-import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.signedInUserProfileEntity
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.async
@@ -71,11 +67,8 @@ interface AuthRepository {
 
 @Inject
 class AuthTokenRepository(
-    private val embedDao: EmbedDao,
-    private val postDao: PostDao,
     private val profileDao: ProfileDao,
-    private val timelineDao: TimelineDao,
-    private val transactionWriter: TransactionWriter,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : AuthRepository {
@@ -235,13 +228,7 @@ class AuthTokenRepository(
         } ?: emptyList()
 
         saveTimelinePreferences.await()
-        MultipleEntitySaver(
-            postDao = postDao,
-            embedDao = embedDao,
-            profileDao = profileDao,
-            timelineDao = timelineDao,
-            transactionWriter = transactionWriter,
-        ).apply {
+        multipleEntitySaverProvider.multipleEntitySaver().apply {
             feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
             lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
             saveInTransaction()

@@ -24,7 +24,23 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import me.tatarka.inject.annotations.Inject
 
+class MultipleEntitySaverProvider @Inject constructor(
+    private val postDao: PostDao,
+    private val embedDao: EmbedDao,
+    private val profileDao: ProfileDao,
+    private val timelineDao: TimelineDao,
+    private val transactionWriter: TransactionWriter,
+) {
+    internal fun multipleEntitySaver() = MultipleEntitySaver(
+        postDao = postDao,
+        embedDao = embedDao,
+        profileDao = profileDao,
+        timelineDao = timelineDao,
+        transactionWriter = transactionWriter,
+    )
+}
 
 /**
  * Utility class for persisting multiple entities in a transaction.
