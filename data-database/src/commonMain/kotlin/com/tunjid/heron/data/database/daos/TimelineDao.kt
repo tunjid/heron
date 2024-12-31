@@ -53,9 +53,9 @@ interface TimelineDao {
             LIMIT 1
         """
     )
-    suspend fun lastFetchKey(
+    fun lastFetchKey(
         sourceId: String,
-    ): TimelineFetchKeyEntity?
+    ): Flow<TimelineFetchKeyEntity?>
 
     @Upsert
     suspend fun upsertFeedFetchKey(

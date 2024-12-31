@@ -29,7 +29,6 @@ import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -42,6 +41,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -484,38 +484,48 @@ class OfflineTimelineRepository(
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = flow {
         while (true) {
-            val now = Clock.System.now()
-            val latestEntity = runCatchingWithNetworkRetry { networkRequestBlock() }
+            val pollInstant = Clock.System.now()
+            runCatchingWithNetworkRetry { networkRequestBlock() }
                 .getOrNull()
                 ?.let(networkResponseToFeedViews)
-                ?.also {
+                ?.let { fetchedFeedViewPosts ->
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
                     if (authProfileId != null) multipleEntitySaver().add(
                         viewingProfileId = authProfileId,
                         timeline = timeline,
-                        feedViewPosts = it,
+                        feedViewPosts = fetchedFeedViewPosts,
                     )
                 }
-                ?.firstOrNull()
-                ?.feedItemEntity(timeline.sourceId)
                 ?: continue
 
-            emit(now to latestEntity)
+            emit(pollInstant)
             delay(pollInterval.inWholeMilliseconds)
         }
     }
-        .flatMapLatest { (instant, latestEntity) ->
-            timelineDao.feedItems(
-                sourceId = timeline.sourceId,
-                before = timelineDao.lastFetchKey(timeline.sourceId)?.lastFetchedAt ?: instant,
-                limit = 1,
-                offset = 0,
-            )
-                .map { latestSavedEntities ->
-                    latestSavedEntities
-                        .firstOrNull()
-                        ?.id != latestEntity.id
-                }
+        .flatMapLatest { pollInstant ->
+            combine(
+                timelineDao.lastFetchKey(timeline.sourceId)
+                    .map { it?.lastFetchedAt ?: pollInstant }
+                    .distinctUntilChangedBy(Instant::toEpochMilliseconds)
+                    .flatMapLatest {
+                        timelineDao.feedItems(
+                            sourceId = timeline.sourceId,
+                            before = it,
+                            limit = 1,
+                            offset = 0,
+                        )
+                    },
+                timelineDao.feedItems(
+                    sourceId = timeline.sourceId,
+                    before = pollInstant,
+                    limit = 1,
+                    offset = 0,
+                )
+            ) { latestSeen, latestSaved ->
+                latestSaved
+                    .firstOrNull()
+                    ?.id != latestSeen.firstOrNull()?.id
+            }
         }
 
     private fun observeAndRefreshTimeline(
@@ -702,6 +712,6 @@ class OfflineTimelineRepository(
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
-    val lastFetchedAt = lastFetchKey(query.timeline.sourceId)?.lastFetchedAt
+    val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
 }
