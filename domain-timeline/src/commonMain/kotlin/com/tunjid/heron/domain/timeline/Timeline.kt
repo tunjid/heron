@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -164,7 +165,6 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
                     queryMutations(queries),
                     numColumnMutations(numColumns),
                     itemMutations(
-                        startingQuery = queries.value,
                         queries = queries,
                         numColumns = numColumns,
                         cursorListLoader = cursorListLoader
@@ -190,21 +190,19 @@ private fun numColumnMutations(numColumns: Flow<Int>): Flow<Mutation<TimelineSta
     numColumns.mapToMutation { copy(numColumns = it) }
 
 private fun itemMutations(
-    startingQuery: TimelineQuery,
     queries: Flow<TimelineQuery>,
     numColumns: Flow<Int>,
     cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ): Flow<Mutation<TimelineState>> {
     // Refreshes need tear down the tiling pipeline all over
-    val refreshes = queries
-        .map { it.data.firstRequestInstant }
-        .distinctUntilChanged()
-
+    val refreshes = queries.distinctUntilChangedBy {
+        it.data.firstRequestInstant
+    }
     val tiledListMutations = refreshes.flatMapLatest {
         timelineTileInputs(numColumns, queries)
             .toTiledList(
                 timelineTiler(
-                    startingQuery = startingQuery,
+                    startingQuery = it,
                     cursorListLoader = cursorListLoader,
                 )
             )
