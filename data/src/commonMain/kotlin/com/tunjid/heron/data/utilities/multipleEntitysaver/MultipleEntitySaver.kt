@@ -33,13 +33,17 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val timelineDao: TimelineDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    internal fun multipleEntitySaver() = MultipleEntitySaver(
+    internal suspend fun withMultipleEntitySaver(
+        block: suspend MultipleEntitySaver.() -> Unit
+    ) = MultipleEntitySaver(
         postDao = postDao,
         embedDao = embedDao,
         profileDao = profileDao,
         timelineDao = timelineDao,
         transactionWriter = transactionWriter,
-    )
+    ).apply {
+        block()
+    }
 }
 
 /**

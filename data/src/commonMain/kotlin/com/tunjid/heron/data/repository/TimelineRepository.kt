@@ -18,7 +18,6 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -27,7 +26,6 @@ import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -360,8 +358,8 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
                                 val authProfileId =
                                     savedStateRepository.savedState.value.auth?.authProfileId
-                                if (authProfileId != null)
-                                    multipleEntitySaverProvider.multipleEntitySaver().apply {
+                                if (authProfileId != null) multipleEntitySaverProvider
+                                    .withMultipleEntitySaver {
                                         add(
                                             viewingProfileId = authProfileId,
                                             threadViewPost = thread.value,
@@ -467,12 +465,27 @@ class OfflineTimelineRepository(
                     ?.let { emit(it) }
 
                 val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                if (authProfileId != null) multipleEntitySaverProvider.multipleEntitySaver()
-                    .persistTimeline(
-                        feedViews = response.networkFeed(),
-                        query = query,
+                if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                    add(
                         viewingProfileId = authProfileId,
+                        timeline = query.timeline,
+                        feedViewPosts = response.networkFeed(),
                     )
+                    saveInTransaction(
+                        beforeSave = {
+                            if (timelineDao.isFirstRequest(query)) {
+//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                                timelineDao.upsertFeedFetchKey(
+                                    TimelineFetchKeyEntity(
+                                        sourceId = query.timeline.sourceId,
+                                        lastFetchedAt = query.data.firstRequestInstant,
+                                        filterDescription = null,
+                                    )
+                                )
+                            }
+                        }
+                    )
+                }
             }
     }
 
@@ -489,12 +502,14 @@ class OfflineTimelineRepository(
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaverProvider.multipleEntitySaver()
-                        .add(
+                    if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                        add(
                             viewingProfileId = authProfileId,
                             timeline = timeline,
                             feedViewPosts = fetchedFeedViewPosts,
                         )
+                        saveInTransaction()
+                    }
                 }
                 ?: continue
 
@@ -537,32 +552,6 @@ class OfflineTimelineRepository(
             nextCursorFlow,
             ::CursorList,
         )
-
-    private suspend fun MultipleEntitySaver.persistTimeline(
-        viewingProfileId: Id,
-        feedViews: List<FeedViewPost>,
-        query: TimelineQuery,
-    ) {
-        add(
-            viewingProfileId = viewingProfileId,
-            timeline = query.timeline,
-            feedViewPosts = feedViews,
-        )
-        saveInTransaction(
-            beforeSave = {
-                if (timelineDao.isFirstRequest(query)) {
-//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                    timelineDao.upsertFeedFetchKey(
-                        TimelineFetchKeyEntity(
-                            sourceId = query.timeline.sourceId,
-                            lastFetchedAt = query.data.firstRequestInstant,
-                            filterDescription = null,
-                        )
-                    )
-                }
-            }
-        )
-    }
 
     private fun observeTimeline(
         query: TimelineQuery,
