@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import kotlin.time.Duration
 
 @Composable
-internal fun TimeDelta(
+fun TimeDelta(
     delta: Duration,
     modifier: Modifier = Modifier,
 ) {

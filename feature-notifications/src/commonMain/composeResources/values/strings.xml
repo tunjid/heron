@@ -1,3 +1,14 @@
 <resources>
-    <string name="heron">Heron</string>
+    <string name="followed_you_description">Followed you</string>
+    <string name="followed_you">%1$s followed you</string>
+    <string name="multiple_followed">%1$s and %2$d others followed you</string>
+    <string name="liked_your_post_description">Liked your post</string>
+    <string name="liked_your_post">%1$s liked your post</string>
+    <string name="multiple_liked_your_post">%1$s and %2$d others liked your post</string>
+    <string name="reposted_your_post_description">Reposted your post</string>
+    <string name="reposted_your_post">%1$s reposted your post</string>
+    <string name="multiple_reposted_your_post">%1$s and %2$d others reposted your post</string>
+    <string name="joined_from_your_started_pack_description">Liked your post</string>
+    <string name="joined_from_your_starter_pack">%1$s joined from your starter pack</string>
+    <string name="multiple_joined_from_your_starter_pack">%1$s and %2$d others joined from your starter pack</string>
 </resources>
