@@ -68,39 +68,88 @@ data class PopulatedNotificationEntity(
 
 fun PopulatedNotificationEntity.asExternalModel(
     associatedPost: Post?,
-) = Notification(
+) = if (associatedPost != null) when (entity.reason) {
+    Notification.Reason.Unknown -> Notification.Unknown(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )
+
+    Notification.Reason.Like -> Notification.Liked(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+        associatedPost = associatedPost
+    )
+
+    Notification.Reason.Repost -> Notification.Reposted(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+        associatedPost = associatedPost
+    )
+
+    Notification.Reason.Follow -> Notification.Followed(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )
+
+    Notification.Reason.Mention -> Notification.Mentioned(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+        associatedPost = associatedPost
+    )
+
+    Notification.Reason.Reply -> Notification.RepliedTo(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+        associatedPost = associatedPost
+    )
+
+    Notification.Reason.Quote -> Notification.Quoted(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+        associatedPost = associatedPost
+    )
+
+    Notification.Reason.JoinedStarterPack -> Notification.JoinedStarterPack(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )
+} else Notification.Unknown(
     cid = entity.cid,
     uri = entity.uri,
     indexedAt = entity.indexedAt,
     author = author.asExternalModel(),
-    reason = entity.reason,
     reasonSubject = entity.uri,
-    content = associatedPost?.let {
-        when (entity.reason) {
-            Notification.Reason.Unknown -> null
-            Notification.Reason.Like -> Notification.Content.Liked(
-                post = it
-            )
-
-            Notification.Reason.Repost -> Notification.Content.Reposted(
-                post = it
-            )
-
-            Notification.Reason.Follow -> Notification.Content.Followed
-            Notification.Reason.Mention -> Notification.Content.Mentioned(
-                post = it
-            )
-
-            Notification.Reason.Reply -> Notification.Content.RepliedTo(
-                post = it
-            )
-
-            Notification.Reason.Quote -> Notification.Content.Quoted(
-                post = it
-            )
-
-            Notification.Reason.JoinedStarterPack -> Notification.Content.JoinedStarterPack
-        }
-    },
     isRead = entity.isRead,
 )

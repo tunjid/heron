@@ -7,41 +7,92 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-data class Notification(
-    val uri: Uri,
-    val cid: Id,
-    val author: Profile,
-    val reason: Reason,
-    val reasonSubject: Uri?,
-    val content: Content?,
-    val isRead: Boolean,
-    val indexedAt: Instant,
-) {
-    sealed interface Content {
+sealed class Notification {
+
+   abstract val uri: Uri
+   abstract val cid: Id
+   abstract val author: Profile
+   abstract val reasonSubject: Uri?
+   abstract val isRead: Boolean
+   abstract val indexedAt: Instant
+
         data class Liked(
-            val post: Post,
-        ) : Content
+           override val uri: Uri,
+           override val cid: Id,
+           override val author: Profile,
+           override val reasonSubject: Uri?,
+           override val isRead: Boolean,
+           override val indexedAt: Instant,
+            val associatedPost: Post,
+        ) : Notification()
 
         data class Reposted(
-            val post: Post,
-        ) : Content
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            val associatedPost: Post,
+        ) : Notification()
 
-        data object Followed : Content
+        data class Followed(
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+        ): Notification()
 
         data class Mentioned(
-            val post: Post,
-        ) : Content
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            val associatedPost: Post,
+        ) : Notification()
 
         data class RepliedTo(
-            val post: Post,
-        ) : Content
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            val associatedPost: Post,
+        ) : Notification()
 
         data class Quoted(
-            val post: Post,
-        ) : Content
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            val associatedPost: Post,
+        ) : Notification()
 
-        data object JoinedStarterPack : Content
-    }
+        data class JoinedStarterPack(
+            override val uri: Uri,
+            override val cid: Id,
+            override val author: Profile,
+            override val reasonSubject: Uri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+        ): Notification()
+
+    data class Unknown(
+        override val uri: Uri,
+        override val cid: Id,
+        override val author: Profile,
+        override val reasonSubject: Uri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+    ): Notification()
+
 
     enum class Reason {
         Unknown,
