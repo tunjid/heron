@@ -448,46 +448,35 @@ class OfflineTimelineRepository(
         currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<Cursor> = flow {
-        // Emit pending downstream
-        emit(Cursor.Pending)
-
-        // Do nothing, can't tell what the next items are
-        if (currentCursor == Cursor.Pending) return@flow
-
-        runCatchingWithNetworkRetry {
-            currentRequestWithNextCursor()
-        }
-            .getOrNull()
-            ?.let { response ->
-                response.nextCursor()
-                    ?.let(Cursor::Next)
-                    ?.let { emit(it) }
-
-                val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
-                    add(
-                        viewingProfileId = authProfileId,
-                        timeline = query.timeline,
-                        feedViewPosts = response.networkFeed(),
-                    )
-                    saveInTransaction(
-                        beforeSave = {
-                            if (timelineDao.isFirstRequest(query)) {
+    ): Flow<Cursor> = com.tunjid.heron.data.utilities.nextCursorFlow(
+        currentCursor = currentCursor,
+        currentRequestWithNextCursor = currentRequestWithNextCursor,
+        nextCursor = nextCursor,
+        onResponse = {
+            val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+            if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                add(
+                    viewingProfileId = authProfileId,
+                    timeline = query.timeline,
+                    feedViewPosts = networkFeed(),
+                )
+                saveInTransaction(
+                    beforeSave = {
+                        if (timelineDao.isFirstRequest(query)) {
 //                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                                timelineDao.upsertFeedFetchKey(
-                                    TimelineFetchKeyEntity(
-                                        sourceId = query.timeline.sourceId,
-                                        lastFetchedAt = query.data.firstRequestInstant,
-                                        filterDescription = null,
-                                    )
+                            timelineDao.upsertFeedFetchKey(
+                                TimelineFetchKeyEntity(
+                                    sourceId = query.timeline.sourceId,
+                                    lastFetchedAt = query.data.firstRequestInstant,
+                                    filterDescription = null,
                                 )
-                            }
+                            )
                         }
-                    )
-                }
+                    }
+                )
             }
-    }
+        }
+    )
 
     private fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
