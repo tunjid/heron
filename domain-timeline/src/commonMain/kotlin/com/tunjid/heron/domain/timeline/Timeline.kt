@@ -7,26 +7,21 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.cursorListTiler
+import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.ListTiler
-import com.tunjid.tiler.PivotRequest
-import com.tunjid.tiler.QueryFetcher
-import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
-import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.queries
-import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
-import com.tunjid.tiler.utilities.NeighboredFetchResult
-import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +63,7 @@ fun timelineStateHolder(
         timeline = timeline,
         currentQuery = TimelineQuery(
             timeline = timeline,
-            data = TimelineQuery.Data(
+            data = CursorQuery.Data(
                 page = 0,
                 firstRequestInstant = Clock.System.now(),
             ),
@@ -198,12 +193,23 @@ private fun itemMutations(
     val refreshes = queries.distinctUntilChangedBy {
         it.data.firstRequestInstant
     }
-    val tiledListMutations = refreshes.flatMapLatest {
-        timelineTileInputs(numColumns, queries)
+    val updatePage: TimelineQuery.(CursorQuery.Data) -> TimelineQuery = {
+        TimelineQuery(
+            timeline = timeline,
+            data = it
+        )
+    }
+    val tiledListMutations = refreshes.flatMapLatest { refreshedQuery ->
+        cursorTileInputs<TimelineQuery, TimelineItem>(
+            numColumns = numColumns,
+            queries = queries,
+            updatePage = updatePage,
+        )
             .toTiledList(
-                timelineTiler(
-                    startingQuery = it,
+                cursorListTiler(
+                    startingQuery = refreshedQuery,
                     cursorListLoader = cursorListLoader,
+                    updatePage = updatePage,
                 )
             )
     }
@@ -222,86 +228,6 @@ private fun itemMutations(
 private fun TimelineQuery.hasDifferentRequestInstant(newQuery: TimelineQuery) =
     data.firstRequestInstant != newQuery.data.firstRequestInstant
 
-private inline fun timelineTileInputs(
-    numColumns: Flow<Int>,
-    queries: Flow<TimelineQuery>,
-): Flow<Tile.Input<TimelineQuery, TimelineItem>> = merge(
-    numColumns.map { columns ->
-        Tile.Limiter(
-            maxQueries = 3 * columns,
-            itemSizeHint = null,
-        )
-    },
-    queries.toPivotedTileInputs(
-        numColumns.map(::timelinePivotRequest)
-    )
-)
-
-private inline fun timelinePivotRequest(numColumns: Int) =
-    PivotRequest<TimelineQuery, TimelineItem>(
-        onCount = numColumns * 3,
-        offCount = numColumns * 2,
-        comparator = timelineQueryComparator(),
-        previousQuery = {
-            if ((data.page - 1) < 0) null
-            else updatePage { copy(page = page - 1) }
-        },
-        nextQuery = {
-            updatePage { copy(page = page + 1) }
-        }
-    )
-
-private inline fun timelineTiler(
-    startingQuery: TimelineQuery,
-    crossinline cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
-): ListTiler<TimelineQuery, TimelineItem> = listTiler(
-    order = Tile.Order.PivotSorted(
-        query = startingQuery,
-        comparator = timelineQueryComparator(),
-    ),
-    fetcher = timelineQueryFetcher(
-        startingQuery = startingQuery,
-        cursorListLoader = cursorListLoader,
-    )
-)
-
-private inline fun timelineQueryFetcher(
-    startingQuery: TimelineQuery,
-    crossinline cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
-): QueryFetcher<TimelineQuery, TimelineItem> =
-    neighboredQueryFetcher<TimelineQuery, TimelineItem, Cursor>(
-        // Since the API doesn't allow for paging backwards, hold the tokens for a 50 pages
-        // in memory
-        maxTokens = 50,
-        // Make sure the first page has an entry for its cursor/token
-        seedQueryTokenMap = mapOf(
-            startingQuery to Cursor.Initial
-        ),
-        fetcher = { query, cursor ->
-            cursorListLoader(query, cursor)
-                .map { networkCursorList ->
-                    NeighboredFetchResult(
-                        // Set the cursor for the next page and any other page with data available.
-                        //
-                        mapOf(
-                            query.updatePage { copy(page = page + 1) } to networkCursorList.nextCursor
-                        ),
-                        items = networkCursorList
-                    )
-                }
-        }
-    )
-
-private inline fun TimelineQuery.updatePage(
-    block: TimelineQuery.Data.() -> TimelineQuery.Data,
-): TimelineQuery = TimelineQuery(
-    timeline = timeline,
-    data = data.block(),
-)
-
-private fun timelineQueryComparator() = compareBy { query: TimelineQuery ->
-    query.data.page
-}
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
     val threadRootIds = mutableSetOf<Id>()

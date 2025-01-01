@@ -12,6 +12,7 @@ import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
@@ -20,27 +21,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
 
 data class NotificationsQuery(
-    val data: Data,
+    override val data: CursorQuery.Data,
     val timeline: Timeline,
-) {
-    @Serializable
-    data class Data(
-        val page: Int,
-
-        val firstRequestInstant: Instant,
-
-        /**
-         * How many items to fetch for a query.
-         */
-        val limit: Long = 50L,
-    )
-}
+) : CursorQuery
 
 interface NotificationsRepository {
     fun notifications(

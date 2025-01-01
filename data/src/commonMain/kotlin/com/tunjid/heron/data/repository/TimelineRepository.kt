@@ -26,6 +26,7 @@ import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -49,7 +50,6 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -58,20 +58,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class TimelineQuery(
-    val data: Data,
+    override val data: CursorQuery.Data,
     val timeline: Timeline,
-) {
-    @Serializable
-    data class Data(
-        val page: Int,
-
-        val firstRequestInstant: Instant,
-
-        /**
-         * How many items to fetch for a query.
-         */
-        val limit: Long = 50L,
-    )
+): CursorQuery {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
