@@ -70,7 +70,9 @@ internal fun NotificationPostScaffold(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
-                    onProfileClicked = { onProfileClicked(notification, it) }
+                    onProfileClicked = { _, profile ->
+                        onProfileClicked(notification, profile)
+                    }
                 )
 //                PostEmbed(
 //                    now = now,

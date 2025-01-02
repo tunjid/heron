@@ -577,13 +577,13 @@ private fun ProfileTimeline(
                             )
                         )
                     },
-                    onProfileClicked = { profile ->
+                    onProfileClicked = { post, profile ->
                         actions(
                             Action.Navigate.DelegateTo(
                                 NavigationAction.Common.ToProfile(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                     profile = profile,
-                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                    avatarSharedElementKey = post.avatarSharedElementKey(
                                         prefix = timelineState.timeline.sourceId,
                                     )
                                 )

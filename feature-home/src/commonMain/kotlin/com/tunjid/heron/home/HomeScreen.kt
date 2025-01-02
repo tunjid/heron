@@ -63,7 +63,6 @@ import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -205,13 +204,13 @@ private fun HomeTimeline(
                             )
                         )
                     },
-                    onProfileClicked = { profile ->
+                    onProfileClicked = { post, profile ->
                         actions(
                             Action.Navigate.DelegateTo(
                                 NavigationAction.Common.ToProfile(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                     profile = profile,
-                                    avatarSharedElementKey = this?.avatarSharedElementKey(
+                                    avatarSharedElementKey = post.avatarSharedElementKey(
                                         prefix = timelineState.timeline.sourceId,
                                     )
                                 )
