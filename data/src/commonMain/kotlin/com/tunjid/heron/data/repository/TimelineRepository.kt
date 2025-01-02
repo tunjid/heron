@@ -18,10 +18,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.TransactionWriter
-import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -29,8 +26,8 @@ import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.feedItemEntity
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaver
+import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.delay
@@ -42,6 +39,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -52,7 +50,6 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -61,20 +58,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class TimelineQuery(
-    val data: Data,
+    override val data: CursorQuery.Data,
     val timeline: Timeline,
-) {
-    @Serializable
-    data class Data(
-        val page: Int,
-
-        val firstRequestInstant: Instant,
-
-        /**
-         * How many items to fetch for a query.
-         */
-        val limit: Long = 50L,
-    )
+): CursorQuery {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -115,11 +101,10 @@ interface TimelineRepository {
 
 @Inject
 class OfflineTimelineRepository(
-    private val embedDao: EmbedDao,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
-    private val transactionWriter: TransactionWriter,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
@@ -362,8 +347,8 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
                                 val authProfileId =
                                     savedStateRepository.savedState.value.auth?.authProfileId
-                                if (authProfileId != null)
-                                    multipleEntitySaver().apply {
+                                if (authProfileId != null) multipleEntitySaverProvider
+                                    .withMultipleEntitySaver {
                                         add(
                                             viewingProfileId = authProfileId,
                                             threadViewPost = thread.value,
@@ -452,30 +437,35 @@ class OfflineTimelineRepository(
         currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<Cursor> = flow {
-        // Emit pending downstream
-        emit(Cursor.Pending)
-
-        // Do nothing, can't tell what the next items are
-        if (currentCursor == Cursor.Pending) return@flow
-
-        runCatchingWithNetworkRetry {
-            currentRequestWithNextCursor()
-        }
-            .getOrNull()
-            ?.let { response ->
-                response.nextCursor()
-                    ?.let(Cursor::Next)
-                    ?.let { emit(it) }
-
-                val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                if (authProfileId != null) multipleEntitySaver().persistTimeline(
-                    feedViews = response.networkFeed(),
-                    query = query,
+    ): Flow<Cursor> = com.tunjid.heron.data.utilities.nextCursorFlow(
+        currentCursor = currentCursor,
+        currentRequestWithNextCursor = currentRequestWithNextCursor,
+        nextCursor = nextCursor,
+        onResponse = {
+            val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+            if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                add(
                     viewingProfileId = authProfileId,
+                    timeline = query.timeline,
+                    feedViewPosts = networkFeed(),
+                )
+                saveInTransaction(
+                    beforeSave = {
+                        if (timelineDao.isFirstRequest(query)) {
+//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                            timelineDao.upsertFeedFetchKey(
+                                TimelineFetchKeyEntity(
+                                    sourceId = query.timeline.sourceId,
+                                    lastFetchedAt = query.data.firstRequestInstant,
+                                    filterDescription = null,
+                                )
+                            )
+                        }
+                    }
                 )
             }
-    }
+        }
+    )
 
     private fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
@@ -484,38 +474,51 @@ class OfflineTimelineRepository(
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = flow {
         while (true) {
-            val now = Clock.System.now()
-            val latestEntity = runCatchingWithNetworkRetry { networkRequestBlock() }
+            val pollInstant = Clock.System.now()
+            runCatchingWithNetworkRetry { networkRequestBlock() }
                 .getOrNull()
                 ?.let(networkResponseToFeedViews)
-                ?.also {
+                ?.let { fetchedFeedViewPosts ->
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaver().add(
-                        viewingProfileId = authProfileId,
-                        timeline = timeline,
-                        feedViewPosts = it,
-                    )
+                    if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                        add(
+                            viewingProfileId = authProfileId,
+                            timeline = timeline,
+                            feedViewPosts = fetchedFeedViewPosts,
+                        )
+                        saveInTransaction()
+                    }
                 }
-                ?.firstOrNull()
-                ?.feedItemEntity(timeline.sourceId)
                 ?: continue
 
-            emit(now to latestEntity)
+            emit(pollInstant)
             delay(pollInterval.inWholeMilliseconds)
         }
     }
-        .flatMapLatest { (instant, latestEntity) ->
-            timelineDao.feedItems(
-                sourceId = timeline.sourceId,
-                before = timelineDao.lastFetchKey(timeline.sourceId)?.lastFetchedAt ?: instant,
-                limit = 1,
-                offset = 0,
-            )
-                .map { latestSavedEntities ->
-                    latestSavedEntities
-                        .firstOrNull()
-                        ?.id != latestEntity.id
-                }
+        .flatMapLatest { pollInstant ->
+            combine(
+                timelineDao.lastFetchKey(timeline.sourceId)
+                    .map { it?.lastFetchedAt ?: pollInstant }
+                    .distinctUntilChangedBy(Instant::toEpochMilliseconds)
+                    .flatMapLatest {
+                        timelineDao.feedItems(
+                            sourceId = timeline.sourceId,
+                            before = it,
+                            limit = 1,
+                            offset = 0,
+                        )
+                    },
+                timelineDao.feedItems(
+                    sourceId = timeline.sourceId,
+                    before = pollInstant,
+                    limit = 1,
+                    offset = 0,
+                )
+            ) { latestSeen, latestSaved ->
+                latestSaved
+                    .firstOrNull()
+                    ?.id != latestSeen.firstOrNull()?.id
+            }
         }
 
     private fun observeAndRefreshTimeline(
@@ -527,32 +530,6 @@ class OfflineTimelineRepository(
             nextCursorFlow,
             ::CursorList,
         )
-
-    private suspend fun MultipleEntitySaver.persistTimeline(
-        viewingProfileId: Id,
-        feedViews: List<FeedViewPost>,
-        query: TimelineQuery,
-    ) {
-        add(
-            viewingProfileId = viewingProfileId,
-            timeline = query.timeline,
-            feedViewPosts = feedViews,
-        )
-        saveInTransaction(
-            beforeSave = {
-                if (timelineDao.isFirstRequest(query)) {
-//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                    timelineDao.upsertFeedFetchKey(
-                        TimelineFetchKeyEntity(
-                            sourceId = query.timeline.sourceId,
-                            lastFetchedAt = query.data.firstRequestInstant,
-                            filterDescription = null,
-                        )
-                    )
-                }
-            }
-        )
-    }
 
     private fun observeTimeline(
         query: TimelineQuery,
@@ -690,18 +667,10 @@ class OfflineTimelineRepository(
             )
         }
     }
-
-    private fun multipleEntitySaver() = MultipleEntitySaver(
-        postDao = postDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        timelineDao = timelineDao,
-        transactionWriter = transactionWriter,
-    )
 }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
-    val lastFetchedAt = lastFetchKey(query.timeline.sourceId)?.lastFetchedAt
+    val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
 }

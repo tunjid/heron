@@ -7,14 +7,17 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
+import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
@@ -33,7 +36,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import kotlinx.datetime.Instant
 
 @Database(
-    version = 3,
+    version = 4,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -50,12 +53,14 @@ import kotlinx.datetime.Instant
         ProfileEntity::class,
         ListEntity::class,
         FeedGeneratorEntity::class,
+        NotificationEntity::class,
         TimelineItemEntity::class,
         TimelineFetchKeyEntity::class,
     ],
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
     ],
     exportSchema = true,
 )
@@ -70,6 +75,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
     abstract fun feedDao(): TimelineDao
+    abstract fun notificationsDao(): NotificationsDao
 }
 
 // The Room compiler generates the `actual` implementations.
@@ -112,4 +118,15 @@ internal class IdConverters {
     @TypeConverter
     fun toUriString(id: Id?): String? =
         id?.id
+}
+
+internal class NotificationReasonConverters {
+    @TypeConverter
+    fun fromOrdinal(ordinal: Int?): Notification.Reason =
+        ordinal?.let(Notification.Reason.entries::getOrNull)
+            ?: Notification.Reason.Unknown
+
+    @TypeConverter
+    fun toOrdinal(reason: Notification.Reason): Int =
+        reason.ordinal
 }

@@ -45,6 +45,9 @@ import com.tunjid.heron.images.shapes.toImageShape
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.posts.PostActions
+import com.tunjid.heron.ui.posts.PostHeadline
+import com.tunjid.heron.ui.posts.PostText
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.see_more_posts
@@ -184,7 +187,6 @@ private fun ThreadedPost(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SinglePost(
     sharedElementScope: SharedElementScope,
@@ -200,50 +202,21 @@ private fun SinglePost(
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
     timeline: @Composable (BoxScope.() -> Unit) = {},
-) = with(sharedElementScope) {
+) {
     Box {
         timeline()
         Column(
             modifier = Modifier,
         ) {
-            Row(
-                horizontalArrangement = spacedBy(8.dp),
-            ) {
-                updatedMovableSharedElementOf(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(avatarShape)
-                        .clickable { onProfileClicked(post, post.author) },
-                    key = post.avatarSharedElementKey(sharedElementPrefix),
-                    state = remember(post.author.avatar) {
-                        ImageArgs(
-                            url = post.author.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = post.author.displayName ?: post.author.handle.id,
-                            shape = avatarShape,
-                        )
-                    },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
-                    }
-                )
-                //      onClick = { onOpenUser(UserDid(author.did)) },
-                //      fallbackColor = author.handle.color(),
-                Column(Modifier.weight(1f)) {
-                    PostHeadline(
-                        now = now,
-                        createdAt = createdAt,
-                        author = post.author,
-                        postId = post.cid,
-                        sharedElementPrefix = sharedElementPrefix,
-                        sharedElementScope = sharedElementScope,
-                    )
-
-//                if (item is TimelineItem.Reply) {
-//                    PostReplyLine(item.parentPost.author, onProfileClicked)
-//                }
-                }
-            }
+            PostAttribution(
+                sharedElementScope = sharedElementScope,
+                avatarShape = avatarShape,
+                onProfileClicked = onProfileClicked,
+                post = post,
+                sharedElementPrefix = sharedElementPrefix,
+                now = now,
+                createdAt = createdAt,
+            )
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
@@ -290,6 +263,57 @@ private fun SinglePost(
                     onReplyToPost = onReplyToPost,
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun PostAttribution(
+    sharedElementScope: SharedElementScope,
+    avatarShape: ImageShape,
+    onProfileClicked: Post?.(Profile) -> Unit,
+    post: Post,
+    sharedElementPrefix: String,
+    now: Instant,
+    createdAt: Instant,
+) = with(sharedElementScope) {
+    Row(
+        horizontalArrangement = spacedBy(8.dp),
+    ) {
+        updatedMovableSharedElementOf(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(avatarShape)
+                .clickable { onProfileClicked(post, post.author) },
+            key = post.avatarSharedElementKey(sharedElementPrefix),
+            state = remember(post.author.avatar) {
+                ImageArgs(
+                    url = post.author.avatar?.uri,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = post.author.displayName ?: post.author.handle.id,
+                    shape = avatarShape,
+                )
+            },
+            sharedElement = { state, modifier ->
+                AsyncImage(state, modifier)
+            }
+        )
+        //      onClick = { onOpenUser(UserDid(author.did)) },
+        //      fallbackColor = author.handle.color(),
+        Column(Modifier.weight(1f)) {
+            PostHeadline(
+                now = now,
+                createdAt = createdAt,
+                author = post.author,
+                postId = post.cid,
+                sharedElementPrefix = sharedElementPrefix,
+                sharedElementScope = sharedElementScope,
+            )
+
+//                if (item is TimelineItem.Reply) {
+//                    PostReplyLine(item.parentPost.author, onProfileClicked)
+//                }
         }
     }
 }

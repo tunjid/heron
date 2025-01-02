@@ -27,11 +27,13 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
-import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.OfflineTimelineRepository
+import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
+import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.TimelineRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -57,7 +59,7 @@ class DataModule(
 @DataScope
 @Component
 abstract class DataComponent(
-    private val module: DataModule
+    private val module: DataModule,
 ) {
 
     @DataScope
@@ -107,6 +109,12 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
+    fun provideNotificationsDao(
+        database: AppDatabase,
+    ) = database.notificationsDao()
+
+    @DataScope
+    @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
@@ -145,6 +153,10 @@ abstract class DataComponent(
         @Provides get() = this
 
     val OfflineProfileRepository.bind: ProfileRepository
+        @DataScope
+        @Provides get() = this
+
+    val OfflineNotificationsRepository.bind: NotificationsRepository
         @DataScope
         @Provides get() = this
 }

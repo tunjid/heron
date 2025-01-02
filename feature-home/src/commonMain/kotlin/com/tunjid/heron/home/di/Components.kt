@@ -16,56 +16,36 @@
 
 package com.tunjid.heron.home.di
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeStateHolder
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeStateHolderCreator
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
@@ -144,19 +124,19 @@ abstract class HomeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar(
+                    RootDestinationTopAppBar(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
                         sharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
-                        onSignedInProfileClicked = {
+                        onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = it,
-                                        avatarSharedElementKey = SignedInUserAvatarSharedElementKey,
+                                        profile = profile,
+                                        avatarSharedElementKey = sharedElementKey,
                                     )
                                 )
                             )
@@ -191,63 +171,6 @@ abstract class HomeComponent(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun TopBar(
-    modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
-    signedInProfile: Profile?,
-    onSignedInProfileClicked: (Profile) -> Unit,
-) = with(sharedElementScope) {
-    TopAppBar(
-        modifier = modifier,
-        navigationIcon = {
-            Image(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(36.dp)
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(AppLogo),
-                        animatedVisibilityScope = sharedElementScope,
-                        boundsTransform = { _, _ ->
-                            spring(stiffness = Spring.StiffnessLow)
-                        }
-                    ),
-                imageVector = AppLogo,
-                contentDescription = null,
-            )
-        },
-        title = {
-
-        },
-        actions = {
-            AnimatedVisibility(
-                visible = signedInProfile != null
-            ) {
-                signedInProfile?.let { profile ->
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .sharedElement(
-                                key = SignedInUserAvatarSharedElementKey,
-                            )
-                            .clickable { onSignedInProfileClicked(profile) },
-                        args = remember(profile) {
-                            ImageArgs(
-                                url = profile.avatar?.uri,
-                                contentDescription = signedInProfile.displayName,
-                                contentScale = ContentScale.Crop,
-                                shape = ImageShape.Circle,
-                            )
-                        }
-                    )
-                }
-            }
-            Spacer(Modifier.width(16.dp))
-        },
-    )
-}
-
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
@@ -258,6 +181,3 @@ private fun BottomBar(
         sharedElementScope = sharedElementScope,
     )
 }
-
-
-private const val SignedInUserAvatarSharedElementKey = "self"

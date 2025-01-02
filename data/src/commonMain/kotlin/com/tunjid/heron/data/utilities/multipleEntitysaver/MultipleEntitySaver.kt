@@ -2,11 +2,13 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
+import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -24,7 +26,29 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import me.tatarka.inject.annotations.Inject
 
+class MultipleEntitySaverProvider @Inject constructor(
+    private val postDao: PostDao,
+    private val embedDao: EmbedDao,
+    private val profileDao: ProfileDao,
+    private val timelineDao: TimelineDao,
+    private val notificationsDao: NotificationsDao,
+    private val transactionWriter: TransactionWriter,
+) {
+    internal suspend fun withMultipleEntitySaver(
+        block: suspend MultipleEntitySaver.() -> Unit
+    ) = MultipleEntitySaver(
+        postDao = postDao,
+        embedDao = embedDao,
+        profileDao = profileDao,
+        timelineDao = timelineDao,
+        notificationsDao = notificationsDao,
+        transactionWriter = transactionWriter,
+    ).apply {
+        block()
+    }
+}
 
 /**
  * Utility class for persisting multiple entities in a transaction.
@@ -34,6 +58,7 @@ internal class MultipleEntitySaver(
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
+    private val notificationsDao: NotificationsDao,
     private val transactionWriter: TransactionWriter,
 ) {
     private val timelineItemEntities = mutableListOf<TimelineItemEntity>()
@@ -80,6 +105,9 @@ internal class MultipleEntitySaver(
     private val feedGeneratorEntities =
         mutableListOf<FeedGeneratorEntity>()
 
+    private val notificationEntities =
+        mutableListOf<NotificationEntity>()
+
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
@@ -110,6 +138,8 @@ internal class MultipleEntitySaver(
         profileDao.upsertProfileProfileRelationships(
             profileProfileRelationshipsEntities
         )
+
+        notificationsDao.upsertNotifications(notificationEntities)
 
         timelineDao.upsertLists(listEntities)
         timelineDao.upsertFeedGenerators(feedGeneratorEntities)
@@ -159,6 +189,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ListEntity) = listEntities.add(entity)
 
     fun add(entity: FeedGeneratorEntity) = feedGeneratorEntities.add(entity)
+
+    fun add(entity: NotificationEntity) = notificationEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
