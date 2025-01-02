@@ -18,17 +18,31 @@ package com.tunjid.heron.notifications
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.repository.NotificationsQuery
+import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.cursorListTiler
+import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.queries
+import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -36,17 +50,18 @@ typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>
 
 @Inject
 class NotificationsStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualNotificationsStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualNotificationsStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualNotificationsStateHolder = creator.invoke(scope, route)
 }
 
 @Inject
 class ActualNotificationsStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    notificationsRepository: NotificationsRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -63,7 +78,10 @@ class ActualNotificationsStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
+                is Action.LoadAround -> action.flow.notificationsMutations(
+                    stateHolder = this@transform,
+                    notificationsRepository = notificationsRepository,
+                )
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -72,3 +90,29 @@ class ActualNotificationsStateHolder(
         }
     }
 )
+
+suspend fun Flow<Action.LoadAround>.notificationsMutations(
+    stateHolder: SuspendingStateHolder<State>,
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> {
+    val startingQuery = stateHolder.state().currentQuery
+    val updatePage: NotificationsQuery.(CursorQuery.Data) -> NotificationsQuery = {
+        copy(data = it)
+    }
+    return cursorTileInputs<NotificationsQuery, Notification>(
+        numColumns = flowOf(1),
+        queries = map { it.query },
+        updatePage = updatePage,
+    )
+        .toTiledList(
+            cursorListTiler(
+                startingQuery = startingQuery,
+                cursorListLoader = notificationsRepository::notifications,
+                updatePage = updatePage,
+            )
+        )
+        .mapToMutation {
+            if (it.queries().contains(currentQuery)) copy(notifications = it)
+            else this
+        }
+}

@@ -17,38 +17,63 @@
 package com.tunjid.heron.notifications
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.ui.SharedElementScope
-import com.tunjid.heron.scaffold.scaffold.AppLogo
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun NotificationsScreen(
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
-) = with(sharedElementScope) {
-    Box(
+    state: State,
+    actions: (Action) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    val items by rememberUpdatedState(state.notifications)
+
+    LazyColumn(
         modifier = modifier
+            .padding(horizontal = 8.dp)
             .fillMaxSize()
+            .clip(
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                )
+            ),
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        userScrollEnabled = !sharedElementScope.isTransitionActive,
     ) {
-        Image(
-            modifier = Modifier
-                .size(100.dp)
-                .align(Alignment.Center)
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(AppLogo),
-                    animatedVisibilityScope = sharedElementScope,
-                ),
-            imageVector = AppLogo,
-            contentDescription = null,
+        items(
+            items = items,
+            key = Notification::id,
+            itemContent = { item ->
+                when (item) {
+                    is Notification.Followed -> Unit
+                    is Notification.JoinedStarterPack -> Unit
+                    is Notification.Liked -> Unit
+                    is Notification.Mentioned -> Unit
+                    is Notification.Quoted -> Unit
+                    is Notification.RepliedTo -> Unit
+                    is Notification.Reposted -> Unit
+                    is Notification.Unknown -> Unit
+                }
+            }
         )
     }
 }
-

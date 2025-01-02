@@ -21,12 +21,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
 
+@Serializable
 data class NotificationsQuery(
     override val data: CursorQuery.Data,
-    val timeline: Timeline,
 ) : CursorQuery
 
 interface NotificationsRepository {
