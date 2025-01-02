@@ -33,13 +33,14 @@ fun RepostRow(
     notification: Notification.Reposted,
     aggregatedProfiles: List<Profile>,
     onPostClicked: (Post) -> Unit,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: (Notification, Profile) -> Unit,
 ) {
-    NotificationRowScaffold(
+    NotificationAggregateScaffold(
         modifier = Modifier.clickable {
 
         },
         onProfileClicked = onProfileClicked,
+        notification = notification,
         profiles = aggregatedProfiles,
         icon = {
             Icon(

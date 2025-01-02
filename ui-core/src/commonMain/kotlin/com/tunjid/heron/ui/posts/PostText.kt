@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.ui.posts
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
@@ -23,7 +23,7 @@ import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun PostText(
+ fun PostText(
     post: Post,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,

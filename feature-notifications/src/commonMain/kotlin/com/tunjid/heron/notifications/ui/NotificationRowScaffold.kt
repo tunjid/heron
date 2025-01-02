@@ -23,10 +23,11 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun NotificationRowScaffold(
+fun NotificationAggregateScaffold(
     modifier: Modifier = Modifier,
+    notification: Notification,
     profiles: List<Profile>,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: (Notification, Profile) -> Unit,
     icon: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -47,7 +48,7 @@ fun NotificationRowScaffold(
                     AsyncImage(
                         modifier = Modifier
                             .size(32.dp)
-                            .clickable { onProfileClicked(profile) },
+                            .clickable { onProfileClicked(notification, profile) },
                         args = remember {
                             ImageArgs(
                                 url = profile.avatar?.uri,

@@ -27,11 +27,15 @@ fun FollowRow(
     now: Instant,
     notification: Notification.Followed,
     aggregatedProfiles: List<Profile>,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: (Notification, Profile) -> Unit,
 ) {
-    NotificationRowScaffold(
-        modifier = Modifier.clickable { onProfileClicked(notification.author) },
+    NotificationAggregateScaffold(
+        modifier = Modifier
+            .clickable {
+                onProfileClicked(notification, notification.author)
+            },
         onProfileClicked = onProfileClicked,
+        notification = notification,
         profiles = aggregatedProfiles,
         icon = {
             Icon(

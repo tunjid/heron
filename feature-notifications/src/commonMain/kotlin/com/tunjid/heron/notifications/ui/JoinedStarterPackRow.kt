@@ -28,10 +28,14 @@ fun JoinedStarterPackRow(
     now: Instant,
     notification: Notification.JoinedStarterPack,
     aggregatedProfiles: List<Profile>,
-    onProfileClicked: (Profile) -> Unit,
+    onProfileClicked: (Notification, Profile) -> Unit,
 ) {
-    NotificationRowScaffold(
-        modifier = Modifier.clickable { onProfileClicked(notification.author) },
+    NotificationAggregateScaffold(
+        modifier = Modifier
+            .clickable {
+                onProfileClicked(notification, notification.author)
+            },
+        notification = notification,
         onProfileClicked = onProfileClicked,
         profiles = aggregatedProfiles,
         icon = {

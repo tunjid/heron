@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.ui.posts
 
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -32,15 +32,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.ui.SharedElementScope
-import heron.ui_timeline.generated.resources.Res
-import heron.ui_timeline.generated.resources.liked
-import heron.ui_timeline.generated.resources.reply
-import heron.ui_timeline.generated.resources.repost
+import heron.ui_core.generated.resources.Res
+import heron.ui_core.generated.resources.liked
+import heron.ui_core.generated.resources.reply
+import heron.ui_core.generated.resources.repost
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun PostActions(
+fun PostActions(
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,

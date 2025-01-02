@@ -9,6 +9,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class Notification {
 
+    sealed class PostAssociated : Notification() {
+        abstract val associatedPost: Post
+    }
+
     abstract val uri: Uri
     abstract val cid: Id
     abstract val author: Profile
@@ -23,8 +27,8 @@ sealed class Notification {
         override val reasonSubject: Uri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
-        val associatedPost: Post,
-    ) : Notification()
+        override val associatedPost: Post,
+    ) : PostAssociated()
 
     data class Reposted(
         override val uri: Uri,
@@ -33,8 +37,8 @@ sealed class Notification {
         override val reasonSubject: Uri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
-        val associatedPost: Post,
-    ) : Notification()
+        override val associatedPost: Post,
+    ) : PostAssociated()
 
     data class Followed(
         override val uri: Uri,
@@ -52,8 +56,8 @@ sealed class Notification {
         override val reasonSubject: Uri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
-        val associatedPost: Post,
-    ) : Notification()
+        override val associatedPost: Post,
+    ) : PostAssociated()
 
     data class RepliedTo(
         override val uri: Uri,
@@ -62,8 +66,8 @@ sealed class Notification {
         override val reasonSubject: Uri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
-        val associatedPost: Post,
-    ) : Notification()
+        override val associatedPost: Post,
+    ) : PostAssociated()
 
     data class Quoted(
         override val uri: Uri,
@@ -72,8 +76,8 @@ sealed class Notification {
         override val reasonSubject: Uri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
-        val associatedPost: Post,
-    ) : Notification()
+        override val associatedPost: Post,
+    ) : PostAssociated()
 
     data class JoinedStarterPack(
         override val uri: Uri,
@@ -106,13 +110,14 @@ sealed class Notification {
     }
 }
 
-val Notification.associatedPostUri get() = when(this) {
-    is Notification.Followed -> null
-    is Notification.JoinedStarterPack -> null
-    is Notification.Liked -> associatedPost.uri
-    is Notification.Mentioned -> null
-    is Notification.Quoted -> null
-    is Notification.RepliedTo -> null
-    is Notification.Reposted -> associatedPost.uri
-    is Notification.Unknown -> null
-}
+val Notification.associatedPostUri
+    get() = when (this) {
+        is Notification.Followed -> null
+        is Notification.JoinedStarterPack -> null
+        is Notification.Liked -> associatedPost.uri
+        is Notification.Mentioned -> null
+        is Notification.Quoted -> null
+        is Notification.RepliedTo -> null
+        is Notification.Reposted -> associatedPost.uri
+        is Notification.Unknown -> null
+    }

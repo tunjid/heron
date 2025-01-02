@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.ui.posts
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -22,7 +22,7 @@ import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun PostHeadline(
+fun PostHeadline(
     now: Instant,
     createdAt: Instant,
     author: Profile,

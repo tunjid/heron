@@ -44,7 +44,6 @@ import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun NotificationsScreen(
     sharedElementScope: SharedElementScope,
@@ -55,7 +54,7 @@ internal fun NotificationsScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
-    val onProfileClicked: (Profile) -> Unit = remember { {} }
+    val onProfileClicked: (Notification, Profile) -> Unit = remember { { _, _ -> } }
 
     LazyColumn(
         modifier = modifier
@@ -99,18 +98,21 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Mentioned -> MentionRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                     )
 
                     is Notification.Quoted -> QuoteRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                     )
 
                     is Notification.RepliedTo -> ReplyRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,

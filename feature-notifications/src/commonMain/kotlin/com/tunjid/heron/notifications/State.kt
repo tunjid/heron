@@ -63,7 +63,7 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
                 query = notifications.queryAt(index),
                 item = AggregatedNotification(
                     notification = notification,
-                    aggregatedProfiles = emptyList(),
+                    aggregatedProfiles = listOf(notification.author),
                 )
             )
         }

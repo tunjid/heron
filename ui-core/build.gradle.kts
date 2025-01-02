@@ -17,6 +17,7 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
+    id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
 android {
@@ -27,14 +28,19 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
+
+                implementation(libs.compose.components.resources)
                 implementation(libs.compose.animation)
                 implementation(libs.compose.foundation.layout)
                 implementation(libs.compose.foundation.foundation)
+                implementation(libs.compose.material.icons.extended)
                 implementation(libs.compose.material3)
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui.ui)
 
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.datetime)
 
                 implementation(libs.tunjid.composables)
 
