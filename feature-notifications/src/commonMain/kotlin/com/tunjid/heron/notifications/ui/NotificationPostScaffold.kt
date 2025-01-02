@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
@@ -38,12 +37,11 @@ internal fun NotificationPostScaffold(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.PostAssociated,
-    sharedElementPrefix: String,
-    onProfileClicked: (Notification, Profile) -> Unit,
-    onPostClicked: (Post) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
+    onPostClicked: (Notification.PostAssociated) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
-) = with(sharedElementScope) {
+) {
     Box {
         Column(
             modifier = Modifier,
@@ -53,26 +51,28 @@ internal fun NotificationPostScaffold(
                 avatarShape = ImageShape.Circle,
                 onProfileClicked = onProfileClicked,
                 notification = notification,
-                sharedElementPrefix = sharedElementPrefix,
+                sharedElementPrefix = notification.sharedElementPrefix(),
                 now = now,
                 createdAt = notification.indexedAt
             )
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
-                    start = 24.dp,
+                    start = 64.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
                     post = notification.associatedPost,
-                    sharedElementPrefix = sharedElementPrefix,
+                    sharedElementPrefix = notification.sharedElementPrefix(),
                     sharedElementScope = sharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { onPostClicked(notification.associatedPost) },
-                    onProfileClicked = { onProfileClicked(notification, it) }
+                    onClick = { onPostClicked(notification) },
+                    onProfileClicked = { _, profile ->
+                        onProfileClicked(notification, profile)
+                    }
                 )
 //                PostEmbed(
 //                    now = now,
@@ -93,7 +93,7 @@ internal fun NotificationPostScaffold(
                     liked = notification.associatedPost.viewerStats?.liked == true,
                     iconSize = 16.dp,
                     postId = notification.associatedPost.cid,
-                    sharedElementPrefix = sharedElementPrefix,
+                    sharedElementPrefix = notification.sharedElementPrefix(),
                     sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
                 )
@@ -107,7 +107,7 @@ internal fun NotificationPostScaffold(
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
     avatarShape: ImageShape,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,
     now: Instant,
@@ -115,7 +115,7 @@ private fun PostAttribution(
 ) = with(sharedElementScope) {
     val post = notification.associatedPost
     Row(
-        horizontalArrangement = spacedBy(8.dp),
+        horizontalArrangement = spacedBy(16.dp),
     ) {
         updatedMovableSharedElementOf(
             modifier = Modifier
@@ -153,3 +153,6 @@ private fun PostAttribution(
         }
     }
 }
+
+fun Notification.PostAssociated.sharedElementPrefix(
+): String = "notification-${cid.id}"

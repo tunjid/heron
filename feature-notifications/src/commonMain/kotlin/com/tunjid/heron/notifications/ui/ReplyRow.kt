@@ -11,15 +11,15 @@ fun ReplyRow(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.RepliedTo,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
+    onPostClicked: (Notification.PostAssociated) -> Unit,
 ) {
     NotificationPostScaffold(
         sharedElementScope = sharedElementScope,
         now = now,
         notification = notification,
-        sharedElementPrefix = "",
         onProfileClicked = onProfileClicked,
-        onPostClicked = {},
+        onPostClicked = onPostClicked,
         onImageClicked = {},
         onReplyToPost = {}
     )

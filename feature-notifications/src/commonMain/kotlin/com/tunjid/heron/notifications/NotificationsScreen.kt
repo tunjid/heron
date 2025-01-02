@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,9 +40,12 @@ import com.tunjid.heron.notifications.ui.MentionRow
 import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
+import com.tunjid.heron.notifications.ui.avatarSharedElementKey
+import com.tunjid.heron.notifications.ui.sharedElementPrefix
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
@@ -58,7 +60,47 @@ internal fun NotificationsScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
-    val onProfileClicked: (Notification, Profile) -> Unit = remember { { _, _ -> } }
+    val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
+        { notification, profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = notification.avatarSharedElementKey(profile)
+                    )
+                )
+            )
+        }
+    }
+    val onProfileClicked: (Notification.PostAssociated, Profile) -> Unit = remember {
+        { notification, profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
+                            notification.sharedElementPrefix()
+                        )
+                    )
+                )
+            )
+        }
+    }
+    val onPostClicked = remember {
+        { notification: Notification.PostAssociated ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToPost(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = notification.sharedElementPrefix(),
+                        post = notification.associatedPost,
+                    )
+                )
+            )
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -72,11 +114,11 @@ internal fun NotificationsScreen(
             ),
         state = listState,
         contentPadding = PaddingValues(
-            top = StatusBarHeight + TabsHeight,
+            top = StatusBarHeight + ToolbarHeight,
             start = 8.dp,
             end = 8.dp,
         ),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = !sharedElementScope.isTransitionActive,
     ) {
         items(
@@ -85,25 +127,28 @@ internal fun NotificationsScreen(
             itemContent = { item ->
                 when (val notification = item.notification) {
                     is Notification.Followed -> FollowRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                     )
 
                     is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                     )
 
                     is Notification.Liked -> LikeRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
-                        onPostClicked = {},
+                        onProfileClicked = onAggregatedProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Mentioned -> MentionRow(
@@ -111,6 +156,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Quoted -> QuoteRow(
@@ -118,6 +164,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.RepliedTo -> ReplyRow(
@@ -125,14 +172,16 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Reposted -> RepostRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
-                        onPostClicked = {},
+                        onProfileClicked = onAggregatedProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Unknown -> Unit

@@ -23,13 +23,13 @@ import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
- fun PostText(
+fun PostText(
     post: Post,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    onProfileClicked: Post?.(Profile) -> Unit,
+    onProfileClicked: (Post, Profile) -> Unit,
 ) = with(sharedElementScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()

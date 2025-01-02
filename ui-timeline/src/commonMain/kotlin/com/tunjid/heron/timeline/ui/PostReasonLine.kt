@@ -27,7 +27,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostReasonLine(
     modifier: Modifier = Modifier,
     item: TimelineItem,
-    onProfileClicked: Post?.(Profile) -> Unit,
+    onProfileClicked: (Post, Profile) -> Unit,
 ) {
     when (item) {
         is TimelineItem.Pinned -> PostPinnedReasonLine(
