@@ -37,7 +37,7 @@ internal fun NotificationPostScaffold(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.PostAssociated,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
@@ -105,7 +105,7 @@ internal fun NotificationPostScaffold(
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
     avatarShape: ImageShape,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,
     now: Instant,

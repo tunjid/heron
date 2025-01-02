@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
@@ -46,6 +45,7 @@ import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
@@ -60,7 +60,7 @@ internal fun NotificationsScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
-    val onProfileClicked: (Notification, Profile) -> Unit = remember {
+    val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
         { notification, profile ->
             actions(
                 Action.Navigate.DelegateTo(
@@ -68,6 +68,21 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile)
+                    )
+                )
+            )
+        }
+    }
+    val onProfileClicked: (Notification.PostAssociated, Profile) -> Unit = remember {
+        { notification, profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
+                            notification.sharedElementPrefix()
+                        )
                     )
                 )
             )
@@ -116,7 +131,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                     )
 
                     is Notification.JoinedStarterPack -> JoinedStarterPackRow(
@@ -124,7 +139,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                     )
 
                     is Notification.Liked -> LikeRow(
@@ -132,7 +147,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                         onPostClicked = onPostClicked,
                     )
 
@@ -165,7 +180,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onProfileClicked,
+                        onProfileClicked = onAggregatedProfileClicked,
                         onPostClicked = onPostClicked,
                     )
 

@@ -11,7 +11,7 @@ fun MentionRow(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.Mentioned,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
 ) {
     NotificationPostScaffold(

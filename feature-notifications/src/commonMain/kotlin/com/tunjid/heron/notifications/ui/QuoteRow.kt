@@ -11,7 +11,7 @@ fun QuoteRow(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.Quoted,
-    onProfileClicked: (Notification, Profile) -> Unit,
+    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     ) {
     NotificationPostScaffold(
