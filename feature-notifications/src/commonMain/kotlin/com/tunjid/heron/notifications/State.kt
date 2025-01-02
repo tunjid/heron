@@ -47,36 +47,28 @@ data class State(
 )
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
-        notifications.forEachIndexed { index, notification ->
-            when {
-                isEmpty() -> add(
+    notifications.forEachIndexed { index, notification ->
+        when {
+            isNotEmpty() && last().canAggregate(notification) -> {
+                val last = remove(lastIndex)
+                add(
                     query = notifications.queryAt(index),
-                    item = AggregatedNotification(
-                        notification = notification,
-                        aggregatedProfiles = emptyList(),
-                    )
-                )
-
-                first().notification::class == notification::class
-                        && first().notification.associatedPostUri == notification.associatedPostUri -> {
-                    val last = remove(lastIndex)
-                    add(
-                        query = notifications.queryAt(index),
-                        item = last.copy(
-                            aggregatedProfiles = last.aggregatedProfiles + notification.author
-                        )
-                    )
-                }
-                else -> add(
-                    query = notifications.queryAt(index),
-                    item = AggregatedNotification(
-                        notification = notification,
-                        aggregatedProfiles = emptyList(),
+                    item = last.copy(
+                        aggregatedProfiles = last.aggregatedProfiles + notification.author
                     )
                 )
             }
+
+            else -> add(
+                query = notifications.queryAt(index),
+                item = AggregatedNotification(
+                    notification = notification,
+                    aggregatedProfiles = emptyList(),
+                )
+            )
         }
     }
+}
 
 sealed class Action(val key: String) {
 
@@ -91,6 +83,14 @@ sealed class Action(val key: String) {
             }
         }
     }
+}
+
+private fun AggregatedNotification.canAggregate(
+    other: Notification,
+): Boolean = when {
+    notification::class != other::class -> false
+    notification.associatedPostUri == null && other.associatedPostUri == null -> true
+    else -> notification.associatedPostUri == other.associatedPostUri
 }
 
 val AggregatedNotification.id get() = notification.cid.id

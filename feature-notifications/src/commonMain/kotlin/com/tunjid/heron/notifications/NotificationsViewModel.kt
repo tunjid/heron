@@ -113,8 +113,6 @@ suspend fun Flow<Action.LoadAround>.notificationsMutations(
             )
         )
         .mapToMutation {
-
-            println("SET: ${it.map { it::class.simpleName }.toSet()}")
             if (it.queries().contains(currentQuery)) copy(notifications = it)
             else this
         }
