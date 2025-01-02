@@ -1,5 +1,6 @@
 package com.tunjid.heron.notifications.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +20,11 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NotificationAggregateScaffold(
     sharedElementScope: SharedElementScope,
@@ -51,17 +54,21 @@ fun NotificationAggregateScaffold(
                     in 0..6 -> profiles
                     else -> profiles.take(6)
                 }.forEach { profile ->
-                    AsyncImage(
+                    sharedElementScope.updatedMovableSharedElementOf(
+                        key = notification.avatarSharedElementKey(profile),
                         modifier = Modifier
                             .size(32.dp)
                             .clickable { onProfileClicked(notification, profile) },
-                        args = remember {
+                        state = remember {
                             ImageArgs(
                                 url = profile.avatar?.uri,
                                 contentScale = ContentScale.Crop,
                                 contentDescription = profile.displayName ?: profile.handle.id,
                                 shape = ImageShape.Circle,
                             )
+                        },
+                        sharedElement = { state, innerModifier ->
+                            AsyncImage(state, innerModifier)
                         }
                     )
                 }
@@ -87,4 +94,5 @@ internal fun notificationText(
 }
 
 fun Notification.avatarSharedElementKey(
-): String = "${cid.id}-${author.did.id}"
+    profile: Profile
+): String = "${cid.id}-${profile.did.id}"

@@ -44,7 +44,6 @@ import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
@@ -66,7 +65,7 @@ internal fun NotificationsScreen(
                     NavigationAction.Common.ToProfile(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
-                        avatarSharedElementKey = notification.avatarSharedElementKey()
+                        avatarSharedElementKey = notification.avatarSharedElementKey(profile)
                     )
                 )
             )
