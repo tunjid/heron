@@ -60,7 +60,7 @@ internal fun NotificationPostScaffold(
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
-                    start = 24.dp,
+                    start = 64.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
@@ -115,7 +115,7 @@ private fun PostAttribution(
 ) = with(sharedElementScope) {
     val post = notification.associatedPost
     Row(
-        horizontalArrangement = spacedBy(8.dp),
+        horizontalArrangement = spacedBy(16.dp),
     ) {
         updatedMovableSharedElementOf(
             modifier = Modifier

@@ -1,11 +1,10 @@
 package com.tunjid.heron.notifications.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -32,19 +31,24 @@ fun NotificationAggregateScaffold(
     content: @Composable () -> Unit,
 ) {
     Row(
-        modifier = modifier.padding(16.dp),
-        horizontalArrangement = spacedBy(16.dp),
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
             modifier = Modifier.width(48.dp),
-            contentAlignment = Alignment.TopEnd,
+            contentAlignment = Alignment.TopCenter,
         ) {
             icon()
         }
 
-        Column(verticalArrangement = spacedBy(8.dp)) {
-            Row {
-                profiles.forEach { profile ->
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                when (profiles.size) {
+                    in 0..6 -> profiles
+                    else -> profiles.take(6)
+                }.forEach { profile ->
                     AsyncImage(
                         modifier = Modifier
                             .size(32.dp)
