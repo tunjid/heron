@@ -68,35 +68,32 @@ data class PopulatedNotificationEntity(
 
 fun PopulatedNotificationEntity.asExternalModel(
     associatedPost: Post?,
-) = if (associatedPost != null) when (entity.reason) {
-    Notification.Reason.Unknown -> Notification.Unknown(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-    )
+) = when (entity.reason) {
+    Notification.Reason.Unknown -> unknown()
 
-    Notification.Reason.Like -> Notification.Liked(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-        associatedPost = associatedPost
-    )
+    Notification.Reason.Like ->
+        if (associatedPost == null) unknown()
+        else Notification.Liked(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost
+        )
 
-    Notification.Reason.Repost -> Notification.Reposted(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-        associatedPost = associatedPost
-    )
+    Notification.Reason.Repost ->
+        if (associatedPost == null) unknown()
+        else Notification.Reposted(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost
+        )
 
     Notification.Reason.Follow -> Notification.Followed(
         cid = entity.cid,
@@ -107,35 +104,41 @@ fun PopulatedNotificationEntity.asExternalModel(
         isRead = entity.isRead,
     )
 
-    Notification.Reason.Mention -> Notification.Mentioned(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-        associatedPost = associatedPost
-    )
+    Notification.Reason.Mention ->
+        if (associatedPost == null) unknown()
+        else Notification.Mentioned(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost
+        )
 
-    Notification.Reason.Reply -> Notification.RepliedTo(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-        associatedPost = associatedPost
-    )
+    Notification.Reason.Reply ->
+        if (associatedPost == null) unknown()
+        else Notification.RepliedTo(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost
+        )
 
-    Notification.Reason.Quote -> Notification.Quoted(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.uri,
-        isRead = entity.isRead,
-        associatedPost = associatedPost
-    )
+    Notification.Reason.Quote ->
+        if (associatedPost == null) unknown()
+        else Notification.Quoted(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost
+        )
 
     Notification.Reason.JoinedStarterPack -> Notification.JoinedStarterPack(
         cid = entity.cid,
@@ -145,11 +148,14 @@ fun PopulatedNotificationEntity.asExternalModel(
         reasonSubject = entity.uri,
         isRead = entity.isRead,
     )
-} else Notification.Unknown(
-    cid = entity.cid,
-    uri = entity.uri,
-    indexedAt = entity.indexedAt,
-    author = author.asExternalModel(),
-    reasonSubject = entity.uri,
-    isRead = entity.isRead,
-)
+}
+
+private fun PopulatedNotificationEntity.unknown() =
+    Notification.Unknown(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )

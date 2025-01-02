@@ -34,6 +34,7 @@ import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.map
 import com.tunjid.tiler.queries
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
@@ -112,6 +113,8 @@ suspend fun Flow<Action.LoadAround>.notificationsMutations(
             )
         )
         .mapToMutation {
+
+            println("SET: ${it.map { it::class.simpleName }.toSet()}")
             if (it.queries().contains(currentQuery)) copy(notifications = it)
             else this
         }
