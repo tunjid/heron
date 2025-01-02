@@ -17,6 +17,8 @@
 package com.tunjid.heron.notifications
 
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -44,6 +46,40 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
+fun State.aggregateNotifications() {
+    buildTiledList<NotificationsQuery, AggregatedNotification> {
+        notifications.forEachIndexed { index, notification ->
+            when {
+                isEmpty() -> add(
+                    query = notifications.queryAt(index),
+                    item = AggregatedNotification(
+                        notification = notification,
+                        aggregatedProfiles = emptyList(),
+                    )
+                )
+
+                first().notification::class == notification::class
+                        && first().notification.associatedPostUri == notification.associatedPostUri -> {
+                    val last = remove(lastIndex)
+                    add(
+                        query = notifications.queryAt(index),
+                        item = last.copy(
+                            aggregatedProfiles = last.aggregatedProfiles + notification.author
+                        )
+                    )
+                }
+                else -> add(
+                    query = notifications.queryAt(index),
+                    item = AggregatedNotification(
+                        notification = notification,
+                        aggregatedProfiles = emptyList(),
+                    )
+                )
+            }
+        }
+    }
+}
+
 sealed class Action(val key: String) {
 
     data class LoadAround(
@@ -60,3 +96,8 @@ sealed class Action(val key: String) {
 }
 
 val Notification.id get() = cid.id
+
+data class AggregatedNotification(
+    val notification: Notification,
+    val aggregatedProfiles: List<Profile>,
+)

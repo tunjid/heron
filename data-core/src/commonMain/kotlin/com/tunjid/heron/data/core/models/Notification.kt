@@ -105,3 +105,14 @@ sealed class Notification {
         JoinedStarterPack,
     }
 }
+
+val Notification.associatedPostUri get() = when(this) {
+    is Notification.Followed -> null
+    is Notification.JoinedStarterPack -> null
+    is Notification.Liked -> associatedPost.uri
+    is Notification.Mentioned -> null
+    is Notification.Quoted -> null
+    is Notification.RepliedTo -> null
+    is Notification.Reposted -> associatedPost.uri
+    is Notification.Unknown -> null
+}
