@@ -40,8 +40,11 @@ import com.tunjid.heron.notifications.ui.MentionRow
 import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
+import com.tunjid.heron.notifications.ui.avatarSharedElementKey
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
@@ -56,7 +59,19 @@ internal fun NotificationsScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
-    val onProfileClicked: (Notification, Profile) -> Unit = remember { { _, _ -> } }
+    val onProfileClicked: (Notification, Profile) -> Unit = remember {
+        { notification, profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = notification.avatarSharedElementKey()
+                    )
+                )
+            )
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -83,6 +98,7 @@ internal fun NotificationsScreen(
             itemContent = { item ->
                 when (val notification = item.notification) {
                     is Notification.Followed -> FollowRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -90,6 +106,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -97,6 +114,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Liked -> LikeRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -126,6 +144,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Reposted -> RepostRow(
+                        sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.multiple_reposted_your_post
@@ -29,6 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RepostRow(
+    sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.Reposted,
     aggregatedProfiles: List<Profile>,
@@ -36,6 +38,7 @@ fun RepostRow(
     onProfileClicked: (Notification, Profile) -> Unit,
 ) {
     NotificationAggregateScaffold(
+        sharedElementScope = sharedElementScope,
         modifier = Modifier.clickable {
 
         },

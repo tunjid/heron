@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.joined_from_your_started_pack_description
@@ -25,12 +26,14 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun JoinedStarterPackRow(
+    sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.JoinedStarterPack,
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
 ) {
     NotificationAggregateScaffold(
+        sharedElementScope = sharedElementScope,
         modifier = Modifier
             .clickable {
                 onProfileClicked(notification, notification.author)

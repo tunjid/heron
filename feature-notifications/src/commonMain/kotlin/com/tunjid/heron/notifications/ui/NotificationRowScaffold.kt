@@ -18,11 +18,13 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.SharedElementScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NotificationAggregateScaffold(
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     notification: Notification,
     profiles: List<Profile>,
@@ -83,3 +85,6 @@ internal fun notificationText(
     return if (aggregatedSize == 0) stringResource(singularResource, profileText)
     else stringResource(pluralResource, profileText, aggregatedSize)
 }
+
+fun Notification.avatarSharedElementKey(
+): String = "${cid.id}-${author.did.id}"
