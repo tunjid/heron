@@ -19,6 +19,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import org.jetbrains.compose.resources.StringResource
@@ -93,6 +94,6 @@ internal fun notificationText(
     else stringResource(pluralResource, profileText, aggregatedSize)
 }
 
-fun Notification.avatarSharedElementKey(
-    profile: Profile
-): String = "${cid.id}-${profile.did.id}"
+internal fun Notification.avatarSharedElementKey(
+    profile: Profile,
+): String = "notification-${cid.id}-${profile.did.id}"

@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
@@ -41,6 +42,7 @@ import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
+import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
@@ -66,6 +68,19 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile)
+                    )
+                )
+            )
+        }
+    }
+    val onPostClicked = remember {
+        { notification: Notification.PostAssociated ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToPost(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = notification.sharedElementPrefix(),
+                        post = notification.associatedPost,
                     )
                 )
             )
@@ -118,7 +133,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
                         onProfileClicked = onProfileClicked,
-                        onPostClicked = {},
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Mentioned -> MentionRow(
@@ -126,6 +141,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Quoted -> QuoteRow(
@@ -133,6 +149,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.RepliedTo -> ReplyRow(
@@ -140,6 +157,7 @@ internal fun NotificationsScreen(
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Reposted -> RepostRow(
@@ -148,7 +166,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
                         onProfileClicked = onProfileClicked,
-                        onPostClicked = {},
+                        onPostClicked = onPostClicked,
                     )
 
                     is Notification.Unknown -> Unit

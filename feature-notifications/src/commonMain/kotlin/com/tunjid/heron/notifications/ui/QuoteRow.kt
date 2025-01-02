@@ -12,14 +12,14 @@ fun QuoteRow(
     now: Instant,
     notification: Notification.Quoted,
     onProfileClicked: (Notification, Profile) -> Unit,
-) {
+    onPostClicked: (Notification.PostAssociated) -> Unit,
+    ) {
     NotificationPostScaffold(
         sharedElementScope = sharedElementScope,
         now = now,
         notification = notification,
-        sharedElementPrefix = "",
         onProfileClicked = onProfileClicked,
-        onPostClicked = {},
+        onPostClicked = onPostClicked,
         onImageClicked = {},
         onReplyToPost = {}
     )

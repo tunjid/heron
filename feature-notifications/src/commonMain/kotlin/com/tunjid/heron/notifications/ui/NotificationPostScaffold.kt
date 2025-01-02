@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
@@ -38,12 +37,11 @@ internal fun NotificationPostScaffold(
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.PostAssociated,
-    sharedElementPrefix: String,
     onProfileClicked: (Notification, Profile) -> Unit,
-    onPostClicked: (Post) -> Unit,
+    onPostClicked: (Notification.PostAssociated) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
-) = with(sharedElementScope) {
+) {
     Box {
         Column(
             modifier = Modifier,
@@ -53,7 +51,7 @@ internal fun NotificationPostScaffold(
                 avatarShape = ImageShape.Circle,
                 onProfileClicked = onProfileClicked,
                 notification = notification,
-                sharedElementPrefix = sharedElementPrefix,
+                sharedElementPrefix = notification.sharedElementPrefix(),
                 now = now,
                 createdAt = notification.indexedAt
             )
@@ -67,11 +65,11 @@ internal fun NotificationPostScaffold(
             ) {
                 PostText(
                     post = notification.associatedPost,
-                    sharedElementPrefix = sharedElementPrefix,
+                    sharedElementPrefix = notification.sharedElementPrefix(),
                     sharedElementScope = sharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { onPostClicked(notification.associatedPost) },
+                    onClick = { onPostClicked(notification) },
                     onProfileClicked = { onProfileClicked(notification, it) }
                 )
 //                PostEmbed(
@@ -93,7 +91,7 @@ internal fun NotificationPostScaffold(
                     liked = notification.associatedPost.viewerStats?.liked == true,
                     iconSize = 16.dp,
                     postId = notification.associatedPost.cid,
-                    sharedElementPrefix = sharedElementPrefix,
+                    sharedElementPrefix = notification.sharedElementPrefix(),
                     sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
                 )
@@ -153,3 +151,6 @@ private fun PostAttribution(
         }
     }
 }
+
+fun Notification.PostAssociated.sharedElementPrefix(
+): String = "notification-${cid.id}"
