@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
-import heron.feature_notifications.generated.resources.followed_you_description
 import heron.feature_notifications.generated.resources.multiple_reposted_your_post
 import heron.feature_notifications.generated.resources.reposted_your_post
 import heron.feature_notifications.generated.resources.reposted_your_post_description
@@ -31,17 +30,17 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun RepostRow(
     now: Instant,
-    notifications: List<Notification.Reposted>,
+    notification: Notification.Reposted,
+    aggregatedProfiles: List<Profile>,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    val firstProfile = notifications.first().author
     NotificationRowScaffold(
         modifier = Modifier.clickable {
 
         },
         onProfileClicked = onProfileClicked,
-        profiles = notifications.map { it.author },
+        profiles = aggregatedProfiles,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Repeat),
@@ -55,19 +54,20 @@ fun RepostRow(
                     Text(
                         modifier = Modifier.alignByBaseline(),
                         text = notificationText(
-                            notifications,
-                            Res.string.reposted_your_post,
-                            Res.string.multiple_reposted_your_post,
+                            notification = notification,
+                            aggregatedSize = aggregatedProfiles.size,
+                            singularResource = Res.string.reposted_your_post,
+                            pluralResource = Res.string.multiple_reposted_your_post,
                         ),
                     )
 
                     TimeDelta(
                         modifier = Modifier.alignByBaseline(),
-                        delta = now - notifications.first().indexedAt,
+                        delta = now - notification.indexedAt,
                     )
                 }
                 Text(
-                    text = notifications.first().associatedPost.record?.text ?: "",
+                    text = notification.associatedPost.record?.text ?: "",
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),

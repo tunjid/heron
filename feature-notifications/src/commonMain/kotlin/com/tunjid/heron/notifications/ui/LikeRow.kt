@@ -30,18 +30,17 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LikeRow(
     now: Instant,
-    notifications: List<Notification.Liked>,
+    notification: Notification.Liked,
+    aggregatedProfiles: List<Profile>,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Profile) -> Unit,
-
-    ) {
-    val firstProfile = notifications.first().author
+) {
     NotificationRowScaffold(
         modifier = Modifier.clickable {
 
         },
         onProfileClicked = onProfileClicked,
-        profiles = notifications.map { it.author },
+        profiles = aggregatedProfiles,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
@@ -55,19 +54,20 @@ fun LikeRow(
                     Text(
                         modifier = Modifier.alignByBaseline(),
                         text = notificationText(
-                            notifications,
-                            Res.string.liked_your_post,
-                            Res.string.multiple_liked_your_post,
+                            notification = notification,
+                            aggregatedSize = aggregatedProfiles.size,
+                            singularResource = Res.string.liked_your_post,
+                            pluralResource = Res.string.multiple_liked_your_post,
                         ),
                     )
 
                     TimeDelta(
                         modifier = Modifier.alignByBaseline(),
-                        delta = now - notifications.first().indexedAt,
+                        delta = now - notification.indexedAt,
                     )
                 }
                 Text(
-                    text = notifications.first().associatedPost.record?.text ?: "",
+                    text = notification.associatedPost.record?.text ?: "",
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),

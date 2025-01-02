@@ -6,7 +6,6 @@ import app.bsky.notification.ListNotificationsQueryParams
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -49,7 +48,7 @@ class OfflineNotificationsRepository @Inject constructor(
         query: NotificationsQuery,
         cursor: Cursor,
     ): Flow<CursorList<Notification>> =
-        observeAndRefreshTimeline(
+        observeAndRefreshNotifications(
             query = query,
             nextCursorFlow = nextCursorFlow(
                 currentCursor = cursor,
@@ -90,7 +89,6 @@ class OfflineNotificationsRepository @Inject constructor(
                                 .map {
                                     notificationsAtpResponse.requireResponse() to it.posts
                                 }
-
                         }
                     }
 
@@ -107,12 +105,13 @@ class OfflineNotificationsRepository @Inject constructor(
                             listNotificationsNotification = first.notifications,
                             associatedPosts = second,
                         )
+                        saveInTransaction()
                     }
                 },
             )
         )
 
-    private fun observeAndRefreshTimeline(
+    private fun observeAndRefreshNotifications(
         query: NotificationsQuery,
         nextCursorFlow: Flow<Cursor>,
     ): Flow<CursorList<Notification>> =

@@ -19,9 +19,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.shapes.ImageShape
-import heron.feature_notifications.generated.resources.Res
-import heron.feature_notifications.generated.resources.followed_you
-import heron.feature_notifications.generated.resources.multiple_followed
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -71,12 +68,13 @@ fun NotificationRowScaffold(
 
 @Composable
 internal fun notificationText(
-    notifications: List<Notification>,
+    notification: Notification,
+    aggregatedSize: Int,
     singularResource: StringResource,
     pluralResource: StringResource,
 ): String {
-    val firstProfile = notifications.first().author
-    val profileText = firstProfile.displayName ?: "@${firstProfile.handle}"
-    return if (notifications.size > 1) stringResource(singularResource, profileText)
-    else stringResource(pluralResource, profileText, notifications.size)
+    val author = notification.author
+    val profileText = author.displayName ?: "@${author.handle}"
+    return if (aggregatedSize == 0) stringResource(singularResource, profileText)
+    else stringResource(pluralResource, profileText, aggregatedSize)
 }

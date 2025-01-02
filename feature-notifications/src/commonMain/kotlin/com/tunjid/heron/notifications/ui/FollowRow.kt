@@ -25,14 +25,14 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun FollowRow(
     now: Instant,
-    notifications: List<Notification.Followed>,
+    notification: Notification.Followed,
+    aggregatedProfiles: List<Profile>,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    val firstProfile = notifications.first().author
     NotificationRowScaffold(
-        modifier = Modifier.clickable { onProfileClicked(firstProfile) },
+        modifier = Modifier.clickable { onProfileClicked(notification.author) },
         onProfileClicked = onProfileClicked,
-        profiles = notifications.map { it.author },
+        profiles = aggregatedProfiles,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Default.Person),
@@ -45,14 +45,15 @@ fun FollowRow(
                 Text(
                     modifier = Modifier.alignByBaseline(),
                     text = notificationText(
-                        notifications,
-                        Res.string.followed_you,
-                        Res.string.multiple_followed,
+                        notification = notification,
+                        aggregatedSize = aggregatedProfiles.size,
+                        singularResource = Res.string.followed_you,
+                        pluralResource = Res.string.multiple_followed,
                     ),
                 )
                 TimeDelta(
                     modifier = Modifier.alignByBaseline(),
-                    delta = now - notifications.first().indexedAt,
+                    delta = now - notification.indexedAt,
                 )
             }
         },

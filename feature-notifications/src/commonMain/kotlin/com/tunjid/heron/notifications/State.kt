@@ -46,8 +46,7 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
-fun State.aggregateNotifications() {
-    buildTiledList<NotificationsQuery, AggregatedNotification> {
+fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
         notifications.forEachIndexed { index, notification ->
             when {
                 isEmpty() -> add(
@@ -78,7 +77,6 @@ fun State.aggregateNotifications() {
             }
         }
     }
-}
 
 sealed class Action(val key: String) {
 
@@ -95,7 +93,7 @@ sealed class Action(val key: String) {
     }
 }
 
-val Notification.id get() = cid.id
+val AggregatedNotification.id get() = notification.cid.id
 
 data class AggregatedNotification(
     val notification: Notification,

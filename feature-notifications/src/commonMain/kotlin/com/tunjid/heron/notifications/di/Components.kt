@@ -119,6 +119,8 @@ abstract class NotificationsComponent(
                 content = { paddingValues ->
                     NotificationsScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
+                        state = state,
+                        actions = viewModel.accept,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )

@@ -23,16 +23,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.notifications.ui.FollowRow
+import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
+import com.tunjid.heron.notifications.ui.LikeRow
+import com.tunjid.heron.notifications.ui.MentionRow
+import com.tunjid.heron.notifications.ui.QuoteRow
+import com.tunjid.heron.notifications.ui.ReplyRow
+import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -43,7 +53,9 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val items by rememberUpdatedState(state.notifications)
+    val items by rememberUpdatedState(state.aggregateNotifications())
+    val now = remember { Clock.System.now() }
+    val onProfileClicked: (Profile) -> Unit = remember { {} }
 
     LazyColumn(
         modifier = modifier
@@ -61,19 +73,69 @@ internal fun NotificationsScreen(
     ) {
         items(
             items = items,
-            key = Notification::id,
+            key = AggregatedNotification::id,
             itemContent = { item ->
-                when (item) {
-                    is Notification.Followed -> Unit
-                    is Notification.JoinedStarterPack -> Unit
-                    is Notification.Liked -> Unit
-                    is Notification.Mentioned -> Unit
-                    is Notification.Quoted -> Unit
-                    is Notification.RepliedTo -> Unit
-                    is Notification.Reposted -> Unit
+                when (val notification = item.notification) {
+                    is Notification.Followed -> FollowRow(
+                        now = now,
+                        notification = notification,
+                        aggregatedProfiles = item.aggregatedProfiles,
+                        onProfileClicked = onProfileClicked,
+                    )
+
+                    is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                        now = now,
+                        notification = notification,
+                        aggregatedProfiles = item.aggregatedProfiles,
+                        onProfileClicked = onProfileClicked,
+                    )
+
+                    is Notification.Liked -> LikeRow(
+                        now = now,
+                        notification = notification,
+                        aggregatedProfiles = item.aggregatedProfiles,
+                        onProfileClicked = onProfileClicked,
+                        onPostClicked = {},
+                    )
+
+                    is Notification.Mentioned -> MentionRow(
+                        now = now,
+                        notification = notification,
+                        onProfileClicked = onProfileClicked,
+                    )
+
+                    is Notification.Quoted -> QuoteRow(
+                        now = now,
+                        notification = notification,
+                        onProfileClicked = onProfileClicked,
+                    )
+
+                    is Notification.RepliedTo -> ReplyRow(
+                        now = now,
+                        notification = notification,
+                        onProfileClicked = onProfileClicked,
+                    )
+
+                    is Notification.Reposted -> RepostRow(
+                        now = now,
+                        notification = notification,
+                        aggregatedProfiles = item.aggregatedProfiles,
+                        onProfileClicked = onProfileClicked,
+                        onPostClicked = {},
+                    )
+
                     is Notification.Unknown -> Unit
                 }
             }
         )
     }
+
+    listState.PivotedTilingEffect(
+        items = items,
+        onQueryChanged = { query ->
+            actions(
+                Action.LoadAround(query ?: state.currentQuery)
+            )
+        }
+    )
 }
