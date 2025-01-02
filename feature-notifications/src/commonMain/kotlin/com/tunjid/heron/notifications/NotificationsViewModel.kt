@@ -19,6 +19,7 @@ package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -62,6 +63,7 @@ class NotificationsStateHolderCreator(
 @Inject
 class ActualNotificationsStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    authTokenRepository: AuthTokenRepository,
     notificationsRepository: NotificationsRepository,
     @Assisted
     scope: CoroutineScope,
@@ -73,6 +75,9 @@ class ActualNotificationsStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(
+            authTokenRepository
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -91,6 +96,13 @@ class ActualNotificationsStateHolder(
         }
     }
 )
+
+private fun loadProfileMutations(
+    authTokenRepository: AuthTokenRepository,
+): Flow<Mutation<State>> =
+    authTokenRepository.signedInUser.mapToMutation {
+        copy(signedInProfile = it)
+    }
 
 suspend fun Flow<Action.LoadAround>.notificationsMutations(
     stateHolder: SuspendingStateHolder<State>,

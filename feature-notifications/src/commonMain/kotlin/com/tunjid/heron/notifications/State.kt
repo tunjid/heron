@@ -41,6 +41,8 @@ data class State(
         )
     ),
     @Transient
+    val signedInProfile: Profile? = null,
+    @Transient
     val notifications: TiledList<NotificationsQuery, Notification> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
@@ -77,6 +79,11 @@ sealed class Action(val key: String) {
     ) : Action("LoadAround")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+
+        data class DelegateTo(
+            val delegate: NavigationAction.Common,
+        ) : Navigate(), NavigationAction by delegate
+
         data object Pop : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.pop()

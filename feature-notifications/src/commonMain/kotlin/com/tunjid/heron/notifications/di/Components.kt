@@ -29,7 +29,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
@@ -39,7 +41,9 @@ import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.notifications.ActualNotificationsStateHolder
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.NotificationsStateHolderCreator
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -105,7 +109,22 @@ abstract class NotificationsComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar()
+                    RootDestinationTopAppBar(
+                        modifier = Modifier,
+                        sharedElementScope = sharedElementScope,
+                        signedInProfile = state.signedInProfile,
+                        onSignedInProfileClicked = { profile, sharedElementKey ->
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        profile = profile,
+                                        avatarSharedElementKey = sharedElementKey,
+                                    )
+                                )
+                            )
+                        },
+                    )
                 },
                 bottomBar = {
                     BottomBar(
@@ -116,13 +135,12 @@ abstract class NotificationsComponent(
                             }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     NotificationsScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                        modifier = Modifier,
                     )
                 }
             )
@@ -130,20 +148,6 @@ abstract class NotificationsComponent(
     )
 }
 
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
-    )
-}
 
 @Composable
 private fun BottomBar(

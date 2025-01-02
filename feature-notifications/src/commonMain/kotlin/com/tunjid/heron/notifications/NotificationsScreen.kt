@@ -18,6 +18,7 @@ package com.tunjid.heron.notifications
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +41,9 @@ import com.tunjid.heron.notifications.ui.MentionRow
 import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.TabsHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
@@ -67,6 +71,11 @@ internal fun NotificationsScreen(
                 )
             ),
         state = listState,
+        contentPadding = PaddingValues(
+            top = StatusBarHeight + TabsHeight,
+            start = 8.dp,
+            end = 8.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         userScrollEnabled = !sharedElementScope.isTransitionActive,
     ) {
