@@ -228,11 +228,9 @@ class AuthTokenRepository(
         } ?: emptyList()
 
         saveTimelinePreferences.await()
-        multipleEntitySaverProvider.withMultipleEntitySaver {
+        multipleEntitySaverProvider.saveInTransaction {
             feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
-            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
-            saveInTransaction()
-        }
+            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) } }
     }
 
 }

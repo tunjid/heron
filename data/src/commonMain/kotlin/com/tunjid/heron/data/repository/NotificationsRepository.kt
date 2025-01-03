@@ -99,13 +99,12 @@ class OfflineNotificationsRepository @Inject constructor(
                 onResponse = {
                     val authProfileId =
                         savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                    if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         add(
                             viewingProfileId = authProfileId,
                             listNotificationsNotification = first.notifications,
                             associatedPosts = second,
                         )
-                        saveInTransaction()
                     }
                 },
             )

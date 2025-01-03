@@ -60,7 +60,7 @@ import kotlin.time.Duration.Companion.seconds
 class TimelineQuery(
     override val data: CursorQuery.Data,
     val timeline: Timeline,
-): CursorQuery {
+) : CursorQuery {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -348,12 +348,11 @@ class OfflineTimelineRepository(
                                 val authProfileId =
                                     savedStateRepository.savedState.value.auth?.authProfileId
                                 if (authProfileId != null) multipleEntitySaverProvider
-                                    .withMultipleEntitySaver {
+                                    .saveInTransaction {
                                         add(
                                             viewingProfileId = authProfileId,
                                             threadViewPost = thread.value,
                                         )
-                                        saveInTransaction()
                                     }
                             }
 
@@ -443,25 +442,21 @@ class OfflineTimelineRepository(
         nextCursor = nextCursor,
         onResponse = {
             val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-            if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+            if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
+                if (timelineDao.isFirstRequest(query)) {
+//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                    timelineDao.upsertFeedFetchKey(
+                        TimelineFetchKeyEntity(
+                            sourceId = query.timeline.sourceId,
+                            lastFetchedAt = query.data.firstRequestInstant,
+                            filterDescription = null,
+                        )
+                    )
+                }
                 add(
                     viewingProfileId = authProfileId,
                     timeline = query.timeline,
                     feedViewPosts = networkFeed(),
-                )
-                saveInTransaction(
-                    beforeSave = {
-                        if (timelineDao.isFirstRequest(query)) {
-//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                            timelineDao.upsertFeedFetchKey(
-                                TimelineFetchKeyEntity(
-                                    sourceId = query.timeline.sourceId,
-                                    lastFetchedAt = query.data.firstRequestInstant,
-                                    filterDescription = null,
-                                )
-                            )
-                        }
-                    }
                 )
             }
         }
@@ -480,13 +475,12 @@ class OfflineTimelineRepository(
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaverProvider.withMultipleEntitySaver {
+                    if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         add(
                             viewingProfileId = authProfileId,
                             timeline = timeline,
                             feedViewPosts = fetchedFeedViewPosts,
                         )
-                        saveInTransaction()
                     }
                 }
                 ?: continue
