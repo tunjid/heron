@@ -253,7 +253,7 @@ private fun ProfileHeader(
             Column(
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.surface,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = headerState.bioAlpha),
                         shape = remember {
                             RoundedCornerShape(
                                 topStart = 16.dp,
@@ -622,8 +622,6 @@ private class HeaderState(
 ) {
     var width by mutableStateOf(160.dp * 3)
 
-    private val progress get() = headerState.progress
-
     val isCollapsed get() = headerState.progress > 0.5f
 
     val bioTopPadding get() = profileBannerHeight - sizeToken
@@ -662,6 +660,8 @@ private class HeaderState(
     }
 
     val sizeToken = 24.dp
+
+    private val progress get() = headerState.progress
 
     private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
     private val screenTopToCollapsedAvatarAppBarCenter get() = (ToolbarHeight - CollapsedProfilePhotoSize) / 2
