@@ -26,14 +26,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -57,6 +55,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,9 +70,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -130,30 +133,31 @@ internal fun ProfileScreen(
 
     var wasCollapsed by rememberSaveable { mutableStateOf(false) }
 
-    val collapsedHeight = with(density) { 64.dp.toPx() } +
-            WindowInsets.statusBars.getTop(density).toFloat() +
-            WindowInsets.statusBars.getBottom(density).toFloat()
+    val collapsedHeight = with(density) { (ToolbarHeight + StatusBarHeight).toPx() }
 
     val headerState = remember {
-        CollapsingHeaderState(
-            collapsedHeight = collapsedHeight,
-            initialExpandedHeight = with(density) { 800.dp.toPx() },
-            decayAnimationSpec = splineBasedDecay(density),
-            initialStatus =
-            if (wasCollapsed) CollapsingHeaderStatus.Collapsed
-            else CollapsingHeaderStatus.Expanded,
+        HeaderState(
+            CollapsingHeaderState(
+                collapsedHeight = collapsedHeight,
+                initialExpandedHeight = with(density) { 800.dp.toPx() },
+                decayAnimationSpec = splineBasedDecay(density),
+                initialStatus =
+                if (wasCollapsed) CollapsingHeaderStatus.Collapsed
+                else CollapsingHeaderStatus.Expanded,
+            )
         )
     }
 
     DisposableEffect(Unit) {
-        onDispose { wasCollapsed = headerState.progress > 0.5f }
+        onDispose { wasCollapsed = headerState.isCollapsed }
     }
     val pagerState = rememberPagerState {
         3
     }
     CollapsingHeaderLayout(
-        modifier = modifier,
-        state = headerState,
+        modifier = modifier
+            .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
+        state = headerState.headerState,
         headerContent = {
             ProfileHeader(
                 movableSharedElementScope = sharedElementScope,
@@ -219,7 +223,7 @@ internal fun ProfileScreen(
 @Composable
 private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
-    headerState: CollapsingHeaderState,
+    headerState: HeaderState,
     pagerState: PagerState,
     timelineTabs: List<TimelineTab>,
     modifier: Modifier = Modifier,
@@ -241,12 +245,9 @@ private fun ProfileHeader(
         )
         Column(
             modifier = modifier
-                .padding(top = TopToBioDelta)
+                .padding(top = headerState.bioTopPadding)
                 .offset {
-                    IntOffset(
-                        x = 0,
-                        y = -headerState.translation.roundToInt()
-                    )
+                    headerState.bioOffset()
                 }
         ) {
             Column(
@@ -260,12 +261,12 @@ private fun ProfileHeader(
                             )
                         }
                     )
-                    .padding(start = SizeToken, end = SizeToken)
+                    .padding(start = headerState.sizeToken, end = headerState.sizeToken)
                     .graphicsLayer {
-                        alpha = 1f - headerState.progress
+                        alpha = headerState.bioAlpha
                     },
             ) {
-                Spacer(Modifier.height(SizeToken))
+                Spacer(Modifier.height(headerState.sizeToken))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
@@ -281,7 +282,7 @@ private fun ProfileHeader(
             }
             ProfileTabs(
                 modifier = Modifier
-                    .padding(horizontal = SizeToken)
+                    .padding(horizontal = headerState.sizeToken)
                     .fillMaxWidth(),
                 headerState = headerState,
                 pagerState = pagerState,
@@ -290,14 +291,14 @@ private fun ProfileHeader(
             )
             Spacer(Modifier.height(8.dp))
         }
-        ProfilePhoto(
+        ProfileAvatar(
             movableSharedElementScope = movableSharedElementScope,
             modifier = Modifier
                 .align(
                     lerp(
                         start = Alignment.TopCenter,
                         stop = Alignment.TopEnd,
-                        fraction = headerState.progress,
+                        fraction = headerState.avatarAlignmentLerp,
                     )
                 ),
             headerState = headerState,
@@ -310,15 +311,15 @@ private fun ProfileHeader(
 @Composable
 private fun ProfileBanner(
     modifier: Modifier = Modifier,
-    headerState: CollapsingHeaderState,
+    headerState: HeaderState,
     profile: Profile,
 ) {
     AsyncImage(
         modifier = modifier
             .fillMaxWidth()
-            .height(ProfileBannerSize)
+            .height(headerState.profileBannerHeight)
             .graphicsLayer {
-                alpha = 1f - min(0.9f, (headerState.progress * 1.6f))
+                alpha = headerState.bannerAlpha
             },
         args = remember(
             key1 = profile.banner?.uri,
@@ -337,23 +338,22 @@ private fun ProfileBanner(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun ProfilePhoto(
+private fun ProfileAvatar(
     modifier: Modifier = Modifier,
     movableSharedElementScope: MovableSharedElementScope,
-    headerState: CollapsingHeaderState,
+    headerState: HeaderState,
     profile: Profile,
     avatarSharedElementKey: String,
 ) {
-    val progress = headerState.progress
     val statusBarHeight = StatusBarHeight
     Card(
         modifier = modifier
-            .padding(top = ProfilePhotoTopPadding)
-            .size(ExpandedProfilePhotoSize - (ExpandedToCollapsedProfilePhotoDelta * progress))
+            .padding(top = headerState.avatarTopPadding)
+            .size(headerState.avatarSize)
             .offset {
-                IntOffset(
-                    x = -(16.dp * headerState.progress).roundToPx(),
-                    y = -((TopToAnchoredCollapsedPhotoDelta - statusBarHeight) * progress).roundToPx()
+                headerState.avatarOffset(
+                    density = this,
+                    statusBarHeight = statusBarHeight
                 )
             },
         shape = CircleShape,
@@ -365,7 +365,7 @@ private fun ProfilePhoto(
             key = avatarSharedElementKey,
             modifier = modifier
                 .fillMaxSize()
-                .padding(4.dp * (1f - progress)),
+                .padding(headerState.avatarPadding),
             state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName,
@@ -512,19 +512,14 @@ fun Statistic(
 private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    headerState: CollapsingHeaderState,
+    headerState: HeaderState,
     tabs: List<TimelineTab>,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     TimelineTabs(
         modifier = modifier
-            .offset {
-                IntOffset(
-                    x = (headerState.progress * 48.dp.toPx()).roundToInt(),
-                    y = 0,
-                )
-            },
+            .offset { headerState.tabsOffset(density = this) },
         tabs = tabs,
         selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
         onTabSelected = {
@@ -621,20 +616,62 @@ private fun ProfileTimeline(
     }
 }
 
-private val SizeToken = 24.dp
+@Stable
+private class HeaderState(
+    val headerState: CollapsingHeaderState,
+) {
+    var width by mutableStateOf(160.dp * 3)
+
+    private val progress get() = headerState.progress
+
+    val isCollapsed get() = headerState.progress > 0.5f
+
+    val bioTopPadding get() = profileBannerHeight - sizeToken
+    val bioAlpha get() = 1f - headerState.progress
+
+    val profileBannerHeight by derivedStateOf { width * (9 / 16f) }
+    val bannerAlpha get() = 1f - min(0.9f, (headerState.progress * 1.6f))
+
+    val avatarTopPadding get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
+    val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
+    val avatarPadding get() = 4.dp * (1f - progress)
+    val avatarAlignmentLerp get() = progress
+
+    fun bioOffset() = IntOffset(
+        x = 0,
+        y = -headerState.translation.roundToInt()
+    )
+
+    fun avatarOffset(
+        density: Density,
+        statusBarHeight: Dp,
+    ) = with(density) {
+        IntOffset(
+            x = -(16.dp * progress).roundToPx(),
+            y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx()
+        )
+    }
+
+    fun tabsOffset(
+        density: Density,
+    ) = with(density) {
+        IntOffset(
+            x = (headerState.progress * 48.dp.toPx()).roundToInt(),
+            y = 0,
+        )
+    }
+
+    val sizeToken = 24.dp
+
+    private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
+    private val screenTopToCollapsedAvatarAppBarCenter get() = (ToolbarHeight - CollapsedProfilePhotoSize) / 2
+
+    private val topToAnchoredCollapsedAvatar
+        get() = screenTopToAvatarTop - screenTopToCollapsedAvatarAppBarCenter
+
+    private val expandedToCollapsedAvatar
+        get() = ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
+}
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 24.dp
-
-private val TopToBioDelta = 160.dp
-private val ProfileBannerSize = TopToBioDelta + SizeToken
-
-private val TopToPhotoTopDelta = TopToBioDelta - (ExpandedProfilePhotoSize / 2)
-private val TopToCollapsedPhotoAppBarCenterDelta = (ToolbarHeight - CollapsedProfilePhotoSize) / 2
-private val TopToAnchoredCollapsedPhotoDelta =
-    TopToPhotoTopDelta - TopToCollapsedPhotoAppBarCenterDelta
-
-private val ProfilePhotoTopPadding = TopToBioDelta - (ExpandedProfilePhotoSize / 2)
-
-private val ExpandedToCollapsedProfilePhotoDelta =
-    ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
