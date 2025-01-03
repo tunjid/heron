@@ -1,8 +1,12 @@
 package com.tunjid.heron.timeline.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -57,6 +61,7 @@ internal fun PostEmbed(
 
             null -> Unit
         }
+        if (quote != null) Spacer(Modifier.height(16.dp))
         when (quote?.cid) {
             null -> Unit
             Constants.notFoundPostId -> InvisiblePostPost(onClick = {})

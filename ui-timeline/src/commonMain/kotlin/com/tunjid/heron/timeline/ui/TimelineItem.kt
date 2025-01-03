@@ -144,13 +144,15 @@ private fun ThreadedPost(
                     avatarShape =
                     when {
                         item.isThreadedAnchor -> ImageShape.Circle
-                        item.isThreadedAncestor -> when {
-                            item.posts.size == 1 -> ReplyThreadStartImageShape
-                            else -> ReplyThreadImageShape
-                        }
+                        item.isThreadedAncestor ->
+                            if (item.posts.size == 1) ReplyThreadStartImageShape
+                            else ReplyThreadImageShape
 
                         else -> when (index) {
-                            0 -> ReplyThreadStartImageShape
+                            0 ->
+                                if (item.posts.size == 1) ImageShape.Circle
+                                else ReplyThreadStartImageShape
+
                             item.posts.lastIndex -> ReplyThreadEndImageShape
                             else -> ReplyThreadImageShape
                         }
