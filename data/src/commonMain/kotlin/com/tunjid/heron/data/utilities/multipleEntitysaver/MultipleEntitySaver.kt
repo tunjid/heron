@@ -36,8 +36,8 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val notificationsDao: NotificationsDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    internal suspend fun withMultipleEntitySaver(
-        block: suspend MultipleEntitySaver.() -> Unit
+    internal suspend fun saveInTransaction(
+        block: suspend MultipleEntitySaver.() -> Unit,
     ) = MultipleEntitySaver(
         postDao = postDao,
         embedDao = embedDao,
@@ -47,6 +47,7 @@ class MultipleEntitySaverProvider @Inject constructor(
         transactionWriter = transactionWriter,
     ).apply {
         block()
+        saveInTransaction()
     }
 }
 
@@ -112,12 +113,7 @@ internal class MultipleEntitySaver(
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
      */
-    suspend fun saveInTransaction(
-        beforeSave: suspend () -> Unit = {},
-        afterSave: suspend () -> Unit = {},
-    ) = transactionWriter.inTransaction {
-        beforeSave()
-
+    suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
         profileDao.insertOrPartiallyUpdateProfiles(profileEntities)
 
@@ -145,8 +141,6 @@ internal class MultipleEntitySaver(
         timelineDao.upsertFeedGenerators(feedGeneratorEntities)
 
         timelineDao.upsertTimelineItems(timelineItemEntities)
-
-        afterSave()
     }
 
     fun MultipleEntitySaver.associatePostEmbeds(
