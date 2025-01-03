@@ -3,7 +3,6 @@ package com.tunjid.heron.data.network.models
 import app.bsky.actor.GetProfileResponse
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
-import app.bsky.feed.PostView
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity

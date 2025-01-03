@@ -5,6 +5,10 @@ import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
+import app.bsky.richtext.Facet
+import app.bsky.richtext.FacetFeatureUnion
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -22,21 +26,21 @@ import app.bsky.feed.Post as BskyPost
 
 
 internal fun PostEntity.postVideoEntity(
-    embedEntity: VideoEntity
+    embedEntity: VideoEntity,
 ) = PostVideoEntity(
     postId = cid,
     videoId = embedEntity.cid,
 )
 
 internal fun PostEntity.postImageEntity(
-    embedEntity: ImageEntity
+    embedEntity: ImageEntity,
 ) = PostImageEntity(
     postId = cid,
     imageUri = embedEntity.fullSize,
 )
 
 internal fun PostEntity.postExternalEmbedEntity(
-    embedEntity: ExternalEmbedEntity
+    embedEntity: ExternalEmbedEntity,
 ) = PostExternalEmbedEntity(
     postId = cid,
     externalEmbedUri = embedEntity.uri,
@@ -116,7 +120,8 @@ internal fun ReplyRefRootUnion.postViewerStatisticsEntity() = when (this) {
 
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
-    is ReplyRefRootUnion.Unknown -> null
+    is ReplyRefRootUnion.Unknown,
+        -> null
 }
 
 internal fun ReplyRefParentUnion.postViewerStatisticsEntity() = when (this) {
@@ -126,7 +131,8 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity() = when (this) {
 
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
-    is ReplyRefParentUnion.Unknown -> null
+    is ReplyRefParentUnion.Unknown,
+        -> null
 }
 
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
@@ -135,8 +141,34 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
         val bskyPost = decodeAs<BskyPost>()
         PostEntity.RecordData(
             text = bskyPost.text,
+            base64EncodedRecord = bskyPost.toPostRecord().toUrlEncodedBase64(),
             createdAt = bskyPost.createdAt,
         )
     } catch (e: Exception) {
         null
     }
+
+private fun BskyPost.toPostRecord() =
+    Post.Record(
+        text = text,
+        createdAt = createdAt,
+        links = facets.mapNotNull(Facet::toLinkOrNull),
+    )
+
+private fun Facet.toLinkOrNull(): Post.Link? {
+    return if (features.isEmpty()) null else Post.Link(
+        start = index.byteStart.toInt(),
+        end = index.byteEnd.toInt(),
+        target = when (val feature = features.first()) {
+            is FacetFeatureUnion.Link -> Post.LinkTarget.ExternalLink(feature.value.uri.uri.let(::Uri))
+            is FacetFeatureUnion.Mention -> Post.LinkTarget.UserDidMention(
+                feature.value.did.did.let(
+                    ::Id
+                )
+            )
+
+            is FacetFeatureUnion.Tag -> Post.LinkTarget.Hashtag(feature.value.tag)
+            is FacetFeatureUnion.Unknown -> return null
+        },
+    )
+}

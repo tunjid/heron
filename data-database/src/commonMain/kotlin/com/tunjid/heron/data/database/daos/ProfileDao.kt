@@ -21,6 +21,7 @@ interface ProfileDao {
         """
             SELECT * FROM profiles
             WHERE did IN (:ids)
+            OR handle IN (:ids)
         """
     )
     fun profiles(
@@ -30,7 +31,10 @@ interface ProfileDao {
     @Query(
         """
             SELECT * FROM profileProfileRelationships
+            INNER JOIN profiles
+            ON profileId = did
             WHERE profileId = :profileId
+            OR handle = :profileId
             AND otherProfileId = :otherProfileId
         """
     )

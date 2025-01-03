@@ -24,6 +24,7 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
@@ -57,12 +58,13 @@ data class PostEntity(
 ) {
     data class RecordData(
         val text: String,
+        val base64EncodedRecord: String?,
         val createdAt: Instant,
     )
 }
 
 fun emptyPostEntity(
-    id: Id
+    id: Id,
 ) = PostEntity(
     cid = id,
     uri = null,
@@ -138,7 +140,7 @@ data class ThreadedPopulatedPostEntity(
 )
 
 fun PopulatedPostEntity.asExternalModel(
-    quote: Post?
+    quote: Post?,
 ) = Post(
     cid = entity.cid,
     uri = entity.uri,
@@ -162,7 +164,10 @@ fun PopulatedPostEntity.asExternalModel(
         Post.Record(
             text = it.text,
             createdAt = it.createdAt,
-            tags = emptyList(),
+            links = it.base64EncodedRecord
+                ?.fromBase64EncodedUrl<Post.Record>()
+                ?.links
+                ?: emptyList(),
         )
     },
     viewerStats = viewerStats?.let {

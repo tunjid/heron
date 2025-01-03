@@ -36,6 +36,7 @@ inline fun <reified T : ByteSerializable> T.toUrlEncodedBase64(): String =
 
 
 val ModelSerializerFormat: BinaryFormat = Cbor {
+    ignoreUnknownKeys = true
     serializersModule = SerializersModule {
         polymorphic(ByteSerializable::class) {
             subclass(Profile::class)
@@ -46,6 +47,12 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(Video::class)
             subclass(ImageList::class)
             subclass(UnknownEmbed::class)
+        }
+        polymorphic(Post.LinkTarget::class) {
+            subclass(Post.LinkTarget.UserHandleMention::class)
+            subclass(Post.LinkTarget.UserDidMention::class)
+            subclass(Post.LinkTarget.ExternalLink::class)
+            subclass(Post.LinkTarget.Hashtag::class)
         }
     }
 }

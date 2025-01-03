@@ -38,13 +38,13 @@ data class Post(
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
-): ByteSerializable {
+) : ByteSerializable {
     @Serializable
     data class Record(
         val text: String,
         val createdAt: Instant,
-        val tags: List<String>,
-    )
+        val links: List<Link> = emptyList(),
+    ): ByteSerializable
 
     @Serializable
     data class ViewerStats(
@@ -55,11 +55,35 @@ data class Post(
         val embeddingDisabled: Boolean,
         val pinned: Boolean,
     )
+
+    @Serializable
+    data class Link(
+        val start: Int,
+        val end: Int,
+        val target: LinkTarget,
+    )
+
+    @Serializable
+    sealed interface LinkTarget {
+        @Serializable
+        data class UserHandleMention(
+            val handle: Id,
+        ) : LinkTarget
+
+        @Serializable
+        data class UserDidMention(
+            val did: Id,
+        ) : LinkTarget
+
+        @Serializable
+        data class ExternalLink(
+            val uri: Uri,
+        ) : LinkTarget
+
+        @Serializable
+        data class Hashtag(
+            val tag: String,
+        ) : LinkTarget
+    }
 }
 
-//enum class LinkTarget {
-//    UserHandleMention,
-//    UserDidMention,
-//    ExternalLink,
-//    Hashtag;
-//}

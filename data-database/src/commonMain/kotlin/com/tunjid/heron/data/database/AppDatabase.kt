@@ -36,7 +36,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import kotlinx.datetime.Instant
 
 @Database(
-    version = 4,
+    version = 5,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -58,9 +58,14 @@ import kotlinx.datetime.Instant
         TimelineFetchKeyEntity::class,
     ],
     autoMigrations = [
+        // firstMigration
         AutoMigration(from = 1, to = 2),
+        // listsAndFeedGeneratorsMigration
         AutoMigration(from = 2, to = 3),
+        // notificationMigration
         AutoMigration(from = 3, to = 4),
+        // serializedPostRecordMigration
+        AutoMigration(from = 4, to = 5),
     ],
     exportSchema = true,
 )

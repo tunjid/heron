@@ -212,7 +212,7 @@ private fun HomeTimeline(
                                     profile = profile,
                                     avatarSharedElementKey = post.avatarSharedElementKey(
                                         prefix = timelineState.timeline.sourceId,
-                                    )
+                                    ).takeIf { post.author.did == profile.did }
                                 )
                             )
                         )

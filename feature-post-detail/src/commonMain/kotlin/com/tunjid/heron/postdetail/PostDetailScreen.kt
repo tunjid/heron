@@ -99,7 +99,7 @@ internal fun PostDetailScreen(
                                     profile = profile,
                                     avatarSharedElementKey = post.avatarSharedElementKey(
                                         prefix = state.sharedElementPrefix,
-                                    )
+                                    ).takeIf { post.author.did == profile.did }
                                 )
                             )
                         )

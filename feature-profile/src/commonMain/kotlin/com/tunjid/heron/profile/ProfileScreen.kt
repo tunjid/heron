@@ -580,7 +580,7 @@ private fun ProfileTimeline(
                                     profile = profile,
                                     avatarSharedElementKey = post.avatarSharedElementKey(
                                         prefix = timelineState.timeline.sourceId,
-                                    )
+                                    ).takeIf { post.author.did == profile.did }
                                 )
                             )
                         )
