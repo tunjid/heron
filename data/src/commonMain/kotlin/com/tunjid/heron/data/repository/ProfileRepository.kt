@@ -11,14 +11,13 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.Did
 
@@ -45,15 +44,13 @@ class OfflineProfileRepository @Inject constructor(
             .mapNotNull { it.firstOrNull()?.asExternalModel() }
 
     override fun profile(
-        profileId: Id
-    ): Flow<Profile> = merge(
-        flow {
-            fetchProfile(profileId)
-        },
+        profileId: Id,
+    ): Flow<Profile> =
         profileDao.profiles(listOf(profileId))
             .map { it.firstOrNull()?.asExternalModel() }
             .filterNotNull()
-    )
+            .withRefresh { fetchProfile(profileId) }
+
 
     override fun profileRelationship(
         profileId: Id,

@@ -30,6 +30,7 @@ import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -329,8 +330,19 @@ class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>> =
-        merge(
-            flow {
+        postDao.postEntitiesByUri(postUris = setOf(postUri))
+            .mapNotNull { it.firstOrNull() }
+            .take(1)
+            .flatMapLatest { postEntity ->
+                postDao.postThread(postId = postEntity.cid.id)
+                    .map {
+                        it.fold(
+                            initial = emptyList(),
+                            operation = ::spinThread,
+                        )
+                    }
+            }
+            .withRefresh {
                 runCatchingWithNetworkRetry {
                     networkService.api.getPostThread(
                         GetPostThreadQueryParams(
@@ -359,20 +371,8 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.Unknown -> Unit
                         }
                     }
-            },
-            postDao.postEntitiesByUri(postUris = setOf(postUri))
-                .mapNotNull { it.firstOrNull() }
-                .take(1)
-                .flatMapLatest { postEntity ->
-                    postDao.postThread(postId = postEntity.cid.id)
-                        .map {
-                            it.fold(
-                                initial = emptyList(),
-                                operation = ::spinThread,
-                            )
-                        }
-                },
-        )
+            }
+
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateRepository.savedState
