@@ -3,6 +3,7 @@ package com.tunjid.heron.data.network.models
 import app.bsky.actor.GetProfileResponse
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
+import app.bsky.actor.ProfileViewDetailed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -62,7 +63,63 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
         createdAt = createdAt,
     )
 
+internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
+    ProfileEntity(
+        did = Id(did.did),
+        handle = Id(handle.handle),
+        displayName = displayName,
+        description = null,
+        avatar = avatar?.uri?.let(::Uri),
+        banner = banner?.uri?.let(::Uri),
+        followersCount = followersCount,
+        followsCount = followsCount,
+        postsCount = postsCount,
+        joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::Id),
+        indexedAt = null,
+        createdAt = createdAt,
+    )
+
 internal fun ProfileViewBasic.profileProfileRelationshipsEntities(
+    viewingProfileId: Id,
+): List<ProfileProfileRelationshipsEntity> =
+    listOf(
+        ProfileProfileRelationshipsEntity(
+            profileId = viewingProfileId,
+            otherProfileId = Id(did.did),
+            follows = viewer?.following != null,
+            muted = viewer?.muted == true,
+            blocking = viewer?.blocking != null,
+        ),
+        ProfileProfileRelationshipsEntity(
+            profileId = Id(did.did),
+            otherProfileId = viewingProfileId,
+            follows = viewer?.followedBy != null,
+            muted = viewer?.mutedByList != null,
+            blocking = viewer?.blockedBy == true,
+        ),
+    )
+
+internal fun ProfileView.profileProfileRelationshipsEntities(
+    viewingProfileId: Id,
+): List<ProfileProfileRelationshipsEntity> =
+    listOf(
+        ProfileProfileRelationshipsEntity(
+            profileId = viewingProfileId,
+            otherProfileId = Id(did.did),
+            follows = viewer?.following != null,
+            muted = viewer?.muted == true,
+            blocking = viewer?.blocking != null,
+        ),
+        ProfileProfileRelationshipsEntity(
+            profileId = Id(did.did),
+            otherProfileId = viewingProfileId,
+            follows = viewer?.followedBy != null,
+            muted = viewer?.mutedByList != null,
+            blocking = viewer?.blockedBy == true,
+        ),
+    )
+
+internal fun ProfileViewDetailed.profileProfileRelationshipsEntities(
     viewingProfileId: Id,
 ): List<ProfileProfileRelationshipsEntity> =
     listOf(
