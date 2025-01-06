@@ -18,7 +18,16 @@ package com.tunjid.heron.search
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.cursorListTiler
+import com.tunjid.heron.data.utilities.cursorTileInputs
+import com.tunjid.heron.data.utilities.ensureValidAnchors
+import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -26,14 +35,23 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
+import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -60,6 +78,10 @@ class ActualSearchStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), SearchStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        searchStateHolders = searchStateHolders(
+            coroutineScope = scope,
+            searchRepository = searchRepository,
+        )
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
@@ -69,7 +91,7 @@ class ActualSearchStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-                is Action.OnSearchQueryChanged -> action.flow.searchQueryMutations()
+                is Action.Search -> action.flow.searchQueryMutations()
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -79,7 +101,127 @@ class ActualSearchStateHolder(
     }
 )
 
-private fun Flow<Action.OnSearchQueryChanged>.searchQueryMutations(): Flow<Mutation<State>> =
-    mapLatestToManyMutations {
-        emit { copy(currentQuery = it.query) }
+private fun Flow<Action.Search>.searchQueryMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        when (action) {
+            is Action.Search.OnSearchQueryChanged -> copy(
+                currentQuery = action.query,
+                layout = ScreenLayout.AutoCompleteProfiles,
+            )
+
+            is Action.Search.OnSearchQueryConfirmed -> {
+                copy(
+                    currentQuery = action.query,
+                    layout = ScreenLayout.GeneralSearchResults,
+                )
+            }
+        }
     }
+
+
+private fun searchStateHolders(
+    coroutineScope: CoroutineScope,
+    searchRepository: SearchRepository,
+): List<SearchResultStateHolder> = listOf(
+    SearchState.Post(
+        currentQuery = SearchQuery.Post.Top(
+            query = "",
+            isLocalOnly = false,
+            data = defaultSearchQueryData(),
+        ),
+        results = emptyTiledList(),
+    ),
+    SearchState.Post(
+        currentQuery = SearchQuery.Post.Latest(
+            query = "",
+            isLocalOnly = false,
+            data = defaultSearchQueryData(),
+        ),
+        results = emptyTiledList(),
+    ),
+    SearchState.Profile(
+        currentQuery = SearchQuery.Profile(
+            query = "",
+            isLocalOnly = false,
+            data = defaultSearchQueryData(),
+        ),
+        results = emptyTiledList(),
+    ),
+).map { searchState ->
+    coroutineScope.actionStateFlowMutator(
+        initialState = searchState,
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream {
+                when (state()) {
+                    is SearchState.Post -> type().flow.searchMutations(
+                        coroutineScope = coroutineScope,
+                        updatePage = {
+                            when (this) {
+                                is SearchQuery.Post.Latest -> copy(data = it)
+                                is SearchQuery.Post.Top -> copy(data = it)
+                            }
+                        },
+                        cursorListLoader = searchRepository::postSearch,
+                    )
+                        .mapToMutation {
+                            check(this is SearchState.Post)
+                            if (it.isValidFor(currentQuery)) copy(results = it)
+                            else this
+                        }
+
+                    is SearchState.Profile -> type().flow.searchMutations(
+                        coroutineScope = coroutineScope,
+                        updatePage = {
+                            copy(data = it)
+                        },
+                        cursorListLoader = searchRepository::profileSearch,
+                    )
+                        .mapToMutation {
+                            check(this is SearchState.Profile)
+                            if (it.isValidFor(currentQuery)) copy(results = it)
+                            else this
+                        }
+                }
+            }
+        }
+    )
+}
+
+
+private inline fun <reified Query : SearchQuery, reified Item : SearchResult> Flow<SearchState.LoadAround>.searchMutations(
+    coroutineScope: CoroutineScope,
+    noinline updatePage: Query.(CursorQuery.Data) -> Query,
+    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
+): Flow<TiledList<Query, Item>> {
+    val shared = map { it.query }
+        .filterIsInstance<Query>()
+        .shareIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            replay = 1,
+        )
+    val refreshes = shared.distinctUntilChangedBy {
+        // Refreshes are caused by different queries or different anchors
+        it.query to it.data.cursorAnchor
+    }
+    return refreshes.flatMapLatest { refreshedQuery ->
+        cursorTileInputs<Query, Item>(
+            numColumns = flowOf(1),
+            queries = shared.ensureValidAnchors(),
+            updatePage = updatePage
+        )
+            .toTiledList(
+                cursorListTiler(
+                    startingQuery = refreshedQuery,
+                    updatePage = updatePage,
+                    cursorListLoader = cursorListLoader,
+                )
+            )
+    }
+}
+
+private fun defaultSearchQueryData() = CursorQuery.Data(
+    page = 0,
+    cursorAnchor = Clock.System.now(),
+    limit = 15
+)

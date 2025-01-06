@@ -114,7 +114,11 @@ abstract class SearchComponent(
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
-                                onQueryChanged = {viewModel.accept(Action.OnSearchQueryChanged(it))}
+                                onQueryChanged = {viewModel.accept(
+                                    Action.Search.OnSearchQueryChanged(
+                                        it
+                                    )
+                                )}
                             )
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->

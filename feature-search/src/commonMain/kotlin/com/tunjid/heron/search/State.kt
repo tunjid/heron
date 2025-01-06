@@ -18,13 +18,13 @@ package com.tunjid.heron.search
 
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.pop
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -34,73 +34,45 @@ enum class ScreenLayout {
     GeneralSearchResults
 }
 
-@Serializable
-sealed class SearchState {
+typealias SearchResultStateHolder = ActionStateMutator<SearchState.LoadAround, StateFlow<SearchState>>
 
-    @Serializable
+sealed class SearchState {
     data class Post(
         val currentQuery: SearchQuery.Post,
-        @Transient
         val results: TiledList<SearchQuery.Post, SearchResult.Post> = emptyTiledList(),
     ) : SearchState()
 
-    @Serializable
     data class Profile(
         val currentQuery: SearchQuery.Profile,
-        @Transient
         val results: TiledList<SearchQuery.Profile, SearchResult.Profile> = emptyTiledList(),
     ) : SearchState()
+
+    data class LoadAround(
+        val query: SearchQuery,
+    )
 }
 
 @Serializable
 data class State(
     val currentQuery: String = "",
-    val topPostsState: SearchState.Post = SearchState.Post(
-        currentQuery = SearchQuery.Post.Top(
-            query = "",
-            isLocalOnly = false,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15
-            ),
-        ),
-        results = emptyTiledList(),
-    ),
-    val latestPostsState: SearchState.Post = SearchState.Post(
-        currentQuery = SearchQuery.Post.Latest(
-            query = "",
-            isLocalOnly = false,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15
-            ),
-        ),
-        results = emptyTiledList(),
-    ),
-    val profilesState: SearchState.Profile = SearchState.Profile(
-        currentQuery = SearchQuery.Profile(
-            query = "",
-            isLocalOnly = false,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15
-            ),
-        ),
-        results = emptyTiledList(),
-    ),
+    val layout: ScreenLayout = ScreenLayout.Trends,
+    @Transient
+    val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
-
 sealed class Action(val key: String) {
 
-    data class OnSearchQueryChanged(
-        val query: String,
-    ): Action("OnSearchQueryChanged")
+    sealed class Search : Action(key = "Search") {
+        data class OnSearchQueryChanged(
+            val query: String,
+        ) : Search()
+
+        data class OnSearchQueryConfirmed(
+            val query: String,
+        ) : Search()
+    }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

@@ -2,7 +2,6 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.tiler.ListTiler
 import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
@@ -75,6 +74,7 @@ fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     }
     return seenQuery
 }
+
 fun <Query : CursorQuery, Item> cursorTileInputs(
     numColumns: Flow<Int>,
     queries: Flow<Query>,
