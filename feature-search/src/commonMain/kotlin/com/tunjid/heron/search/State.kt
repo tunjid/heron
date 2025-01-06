@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -58,6 +59,8 @@ data class State(
     val layout: ScreenLayout = ScreenLayout.Trends,
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
+    @Transient
+    val autoCompletedProfiles: List<SearchResult.Profile> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )

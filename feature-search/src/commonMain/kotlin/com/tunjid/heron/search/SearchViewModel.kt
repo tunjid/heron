@@ -45,15 +45,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -91,7 +94,10 @@ class ActualSearchStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-                is Action.Search -> action.flow.searchQueryMutations()
+                is Action.Search -> action.flow.searchQueryMutations(
+                    coroutineScope = scope,
+                    searchRepository = searchRepository,
+                )
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -101,22 +107,50 @@ class ActualSearchStateHolder(
     }
 )
 
-private fun Flow<Action.Search>.searchQueryMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        when (action) {
-            is Action.Search.OnSearchQueryChanged -> copy(
-                currentQuery = action.query,
-                layout = ScreenLayout.AutoCompleteProfiles,
-            )
+private fun Flow<Action.Search>.searchQueryMutations(
+    coroutineScope: CoroutineScope,
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> {
+    val shared = shareIn(
+        scope = coroutineScope,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        replay = 1,
+    )
+    return merge(
+        shared
+            .mapToMutation { action ->
+                when (action) {
+                    is Action.Search.OnSearchQueryChanged -> copy(
+                        currentQuery = action.query,
+                        layout = ScreenLayout.AutoCompleteProfiles,
+                    )
 
-            is Action.Search.OnSearchQueryConfirmed -> {
-                copy(
-                    currentQuery = action.query,
-                    layout = ScreenLayout.GeneralSearchResults,
+                    is Action.Search.OnSearchQueryConfirmed -> {
+                        copy(
+                            currentQuery = action.query,
+                            layout = ScreenLayout.GeneralSearchResults,
+                        )
+                    }
+                }
+            },
+        shared
+            .filterIsInstance<Action.Search.OnSearchQueryChanged>()
+            .debounce(300.milliseconds.inWholeMilliseconds)
+            .flatMapLatest {
+                searchRepository.autoCompleteProfileSearch(
+                    query = SearchQuery.Profile(
+                        query = it.query,
+                        isLocalOnly = false,
+                        data = defaultSearchQueryData(),
+                    ),
+                    cursor = Cursor.Pending
                 )
             }
-        }
-    }
+            .mapToMutation {
+                copy(autoCompletedProfiles = it)
+            }
+    )
+}
 
 
 private fun searchStateHolders(
