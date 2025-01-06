@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -53,6 +54,7 @@ import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
@@ -245,12 +247,14 @@ private fun SearchResults(
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
     when (val state = searchState.value) {
         is SearchState.Post -> {
             val now = remember { Clock.System.now() }
             val results by rememberUpdatedState(state.results)
             LazyColumn(
                 modifier = modifier,
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
@@ -270,12 +274,21 @@ private fun SearchResults(
                     }
                 )
             }
+            listState.PivotedTilingEffect(
+                items = results,
+                onQueryChanged = { query ->
+                    searchResultStateHolder.accept(
+                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                    )
+                }
+            )
         }
 
         is SearchState.Profile -> {
             val results by rememberUpdatedState(state.results)
             LazyColumn(
                 modifier = modifier,
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
@@ -293,6 +306,14 @@ private fun SearchResults(
                     }
                 )
             }
+            listState.PivotedTilingEffect(
+                items = results,
+                onQueryChanged = { query ->
+                    searchResultStateHolder.accept(
+                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                    )
+                }
+            )
         }
     }
 }
