@@ -18,6 +18,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.TimeDelta
+import com.tunjid.heron.ui.profile.ProfileHandle
+import com.tunjid.heron.ui.profile.ProfileName
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -35,7 +37,7 @@ fun PostHeadline(
         val secondaryText = author.handle.id.takeUnless { it == primaryText }
 
         Row(horizontalArrangement = spacedBy(4.dp)) {
-            Text(
+            ProfileName(
                 modifier = Modifier
                     .weight(1f)
                     .sharedElement(
@@ -45,9 +47,7 @@ fun PostHeadline(
                             text = primaryText
                         ),
                     ),
-                text = primaryText,
-                maxLines = 1,
-                style = LocalTextStyle.current.copy(fontWeight = Bold),
+                profile = author,
             )
 
             TimeDelta(
@@ -57,7 +57,7 @@ fun PostHeadline(
         }
         if (secondaryText != null) {
             Spacer(Modifier.height(4.dp))
-            Text(
+            ProfileHandle(
                 modifier = Modifier
                     .sharedElement(
                         key = author.textSharedElementKey(
@@ -66,10 +66,7 @@ fun PostHeadline(
                             text = secondaryText
                         ),
                     ),
-                text = author.handle.id,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1,
-                style = MaterialTheme.typography.bodySmall,
+                profile = author,
             )
 
         }

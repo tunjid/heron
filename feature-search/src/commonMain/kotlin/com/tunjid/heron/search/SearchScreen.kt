@@ -16,13 +16,13 @@
 
 package com.tunjid.heron.search
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -33,17 +33,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.SearchResult
-import com.tunjid.heron.data.core.models.contentDescription
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.search.ui.ProfileSearchResult
+import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
@@ -58,18 +57,35 @@ internal fun SearchScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
     ) {
+        Spacer(Modifier.height(ToolbarHeight + StatusBarHeight))
         val pagerState = rememberPagerState {
             3
         }
-        when(state.layout) {
+        val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
+            { profileSearchResult ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            profile = profileSearchResult.profile,
+                            avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
+                        )
+                    )
+                )
+            }
+        }
+        when (state.layout) {
             ScreenLayout.Trends -> Unit
             ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
                 modifier = Modifier.fillMaxSize(),
+                sharedElementScope = sharedElementScope,
                 results = state.autoCompletedProfiles,
+                onProfileClicked = onProfileSearchResultClicked,
             )
+
             ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
                 modifier = Modifier.fillMaxSize(),
                 pagerState = pagerState,
@@ -82,32 +98,26 @@ internal fun SearchScreen(
 
 @Composable
 private fun AutoCompleteProfileSearchResults(
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     results: List<SearchResult.Profile>,
+    onProfileClicked: (SearchResult.Profile) -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+        )
     ) {
         items(
             items = results,
             key = { it.profile.did.id },
             itemContent = { result ->
-                AttributionLayout(
-                    avatar = {
-                        AsyncImage(
-                            modifier = Modifier
-                                .size(48.dp),
-                            args = remember {
-                                ImageArgs(
-                                    url = result.profile.avatar?.uri,
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = result.profile.contentDescription,
-                                    shape = RoundedPolygonShape.Circle,
-                                )
-                            },
-                        )
-                    },
-                    label = {},
+                ProfileSearchResult(
+                    sharedElementScope = sharedElementScope,
+                    result = result,
+                    onProfileClicked = onProfileClicked
                 )
             }
         )
