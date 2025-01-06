@@ -32,10 +32,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
@@ -98,6 +101,7 @@ internal fun SearchScreen(
                     pagerState = pagerState,
                     state = state,
                     sharedElementScope = sharedElementScope,
+                    onProfileClicked = onProfileSearchResultClicked,
                 )
             }
         }
@@ -138,6 +142,7 @@ private fun TabbedSearchResults(
     pagerState: PagerState,
     state: State,
     sharedElementScope: SharedElementScope,
+    onProfileClicked: (SearchResult.Profile) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -178,6 +183,7 @@ private fun TabbedSearchResults(
                 SearchResults(
                     sharedElementScope = sharedElementScope,
                     searchResultStateHolder = searchResultStateHolder,
+                    onProfileClicked = onProfileClicked,
                 )
             }
         )
@@ -186,8 +192,53 @@ private fun TabbedSearchResults(
 
 @Composable
 private fun SearchResults(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     searchResultStateHolder: SearchResultStateHolder,
+    onProfileClicked: (SearchResult.Profile) -> Unit,
 ) {
+    val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
+    when (val state = searchState.value) {
+        is SearchState.Post -> {
+            val results by rememberUpdatedState(state.results)
+            LazyColumn(
+                modifier = modifier,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(
+                    horizontal = 16.dp,
+                )
+            ) {
+                items(
+                    items = results,
+                    key = { it.post.cid.id },
+                    itemContent = { result ->
 
+                    }
+                )
+            }
+        }
+
+        is SearchState.Profile -> {
+            val results by rememberUpdatedState(state.results)
+            LazyColumn(
+                modifier = modifier,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(
+                    horizontal = 16.dp,
+                )
+            ) {
+                items(
+                    items = results,
+                    key = { it.profile.did.id },
+                    itemContent = { result ->
+                        ProfileSearchResult(
+                            sharedElementScope = sharedElementScope,
+                            result = result,
+                            onProfileClicked = onProfileClicked
+                        )
+                    }
+                )
+            }
+        }
+    }
 }
