@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -161,4 +162,6 @@ private fun BoxScope.Indicator(
     )
 }
 
-val TabShape = RoundedCornerShape(16.dp)
+private val TabShape = RoundedCornerShape(16.dp)
+
+val PagerState.tabIndex get() = currentPage + currentPageOffsetFraction

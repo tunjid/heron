@@ -60,6 +60,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
@@ -146,7 +147,7 @@ private fun HomeTabs(
             )
             .fillMaxWidth(),
         tabs = tabs,
-        selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+        selectedTabIndex = pagerState.tabIndex,
         onTabSelected = {
             scope.launch {
                 pagerState.animateScrollToPage(it)

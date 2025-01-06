@@ -102,6 +102,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -521,7 +522,7 @@ private fun ProfileTabs(
         modifier = modifier
             .offset { headerState.tabsOffset(density = this) },
         tabs = tabs,
-        selectedTabIndex = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+        selectedTabIndex = pagerState.tabIndex,
         onTabSelected = {
             scope.launch {
                 pagerState.animateScrollToPage(it)
