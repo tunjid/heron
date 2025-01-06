@@ -11,6 +11,7 @@ import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.hasDifferentAnchor
+import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -21,7 +22,6 @@ import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
-import com.tunjid.tiler.queries
 import com.tunjid.tiler.toTiledList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -217,11 +217,11 @@ private fun itemMutations(
         .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
         .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
             // Ignore results from stale queries
-            if (!it.queries().contains(currentQuery)) this
-            else copy(
+            if (it.isValidFor(currentQuery)) copy(
                 status = TimelineStatus.Refreshed,
                 items = it.distinctBy(TimelineItem::id)
             )
+            else this
         }
     return tiledListMutations
 }

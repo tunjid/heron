@@ -25,6 +25,7 @@ import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
+import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -35,8 +36,6 @@ import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.map
-import com.tunjid.tiler.queries
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
@@ -125,7 +124,7 @@ suspend fun Flow<Action.LoadAround>.notificationsMutations(
             )
         )
         .mapToMutation {
-            if (it.queries().contains(currentQuery)) copy(notifications = it)
+            if (it.isValidFor(currentQuery)) copy(notifications = it)
             else this
         }
 }
