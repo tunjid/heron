@@ -37,7 +37,7 @@ data class State(
     val currentQuery: NotificationsQuery = NotificationsQuery(
         data = CursorQuery.Data(
             page = 0,
-            firstRequestInstant = Clock.System.now(),
+            cursorAnchor = Clock.System.now(),
         )
     ),
     @Transient

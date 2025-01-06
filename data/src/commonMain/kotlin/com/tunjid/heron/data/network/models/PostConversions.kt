@@ -7,12 +7,14 @@ import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
+import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
@@ -20,6 +22,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntit
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
+import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import sh.christian.ozone.api.model.JsonContent
 import app.bsky.feed.Post as BskyPost
@@ -44,6 +47,56 @@ internal fun PostEntity.postExternalEmbedEntity(
 ) = PostExternalEmbedEntity(
     postId = cid,
     externalEmbedUri = embedEntity.uri,
+)
+
+internal fun PostView.post(): Post {
+    val postEntity = postEntity()
+    val quotedPostEntity = quotedPostEntity()
+    val quotedPostProfileEntity = quotedPostProfileEntity()
+    return post(
+        postEntity = postEntity,
+        profileEntity = profileEntity(),
+        embeds = embedEntities(),
+        viewerStatisticsEntity = viewer
+            ?.postViewerStatisticsEntity(postEntity.cid),
+        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
+            postEntity = quotedPostEntity,
+            profileEntity = quotedPostProfileEntity,
+            embeds = quotedPostEmbedEntities(),
+            viewerStatisticsEntity = null,
+            quote = null,
+        ) else null
+    )
+}
+
+private fun post(
+    postEntity: PostEntity,
+    profileEntity: ProfileEntity,
+    embeds: List<PostEmbed>,
+    viewerStatisticsEntity: PostViewerStatisticsEntity?,
+    quote: Post?,
+) = Post(
+    cid = postEntity.cid,
+    uri = postEntity.uri,
+    author = profileEntity.asExternalModel(),
+    replyCount = postEntity.replyCount.orZero(),
+    repostCount = postEntity.repostCount.orZero(),
+    likeCount = postEntity.likeCount.orZero(),
+    quoteCount = postEntity.quoteCount.orZero(),
+    indexedAt = postEntity.indexedAt,
+    record = postEntity.record?.asExternalModel(),
+    embed = when (val embedEntity = embeds.firstOrNull()) {
+        is ExternalEmbedEntity -> embedEntity.asExternalModel()
+        is ImageEntity -> ImageList(
+            images = embeds.filterIsInstance<ImageEntity>()
+                .map(ImageEntity::asExternalModel)
+        )
+
+        is VideoEntity -> embedEntity.asExternalModel()
+        null -> null
+    },
+    quote = quote,
+    viewerStats = viewerStatisticsEntity?.asExternalModel()
 )
 
 internal fun PostView.postEntity() =
@@ -172,3 +225,5 @@ private fun Facet.toLinkOrNull(): Post.Link? {
         },
     )
 }
+
+private fun Long?.orZero() = this ?: 0L

@@ -55,6 +55,12 @@ val EmptySavedState = SavedState(
     preferences = null,
 )
 
+val SavedStateRepository.signedInProfileId
+    get() = savedState
+        .value
+        .auth
+        ?.authProfileId
+
 interface SavedStateRepository {
     val savedState: StateFlow<SavedState>
     suspend fun updateState(update: SavedState.() -> SavedState)

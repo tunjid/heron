@@ -7,7 +7,6 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.NotificationEntity
-import com.tunjid.heron.data.network.models.profileEntity
 import sh.christian.ozone.api.AtUri
 
 
@@ -28,7 +27,8 @@ internal fun MultipleEntitySaver.add(
 
     listNotificationsNotification.forEach { notification ->
         add(
-            notification.author.profileEntity()
+            viewingProfileId = viewingProfileId,
+            profileView = notification.author
         )
         add(
             NotificationEntity(

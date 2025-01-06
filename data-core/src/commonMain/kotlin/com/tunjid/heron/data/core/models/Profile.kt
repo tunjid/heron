@@ -22,6 +22,8 @@ data class Profile(
     val createdAt: Instant?,
 ): ByteSerializable
 
+val Profile.contentDescription get() = displayName ?: handle.id
+
 fun stubProfile(
     did: Id,
     handle: Id,

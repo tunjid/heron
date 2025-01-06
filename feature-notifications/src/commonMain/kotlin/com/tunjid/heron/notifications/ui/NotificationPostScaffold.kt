@@ -22,9 +22,10 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.posts.PostActions
 import com.tunjid.heron.ui.posts.PostHeadline
@@ -48,7 +49,7 @@ internal fun NotificationPostScaffold(
         ) {
             PostAttribution(
                 sharedElementScope = sharedElementScope,
-                avatarShape = ImageShape.Circle,
+                avatarShape = RoundedPolygonShape.Circle,
                 onProfileClicked = onProfileClicked,
                 notification = notification,
                 sharedElementPrefix = notification.sharedElementPrefix(),
@@ -106,7 +107,7 @@ internal fun NotificationPostScaffold(
 @Composable
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,
@@ -114,30 +115,28 @@ private fun PostAttribution(
     createdAt: Instant,
 ) = with(sharedElementScope) {
     val post = notification.associatedPost
-    Row(
-        horizontalArrangement = spacedBy(16.dp),
-    ) {
-        updatedMovableSharedElementOf(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(avatarShape)
-                .clickable { onProfileClicked(notification, post.author) },
-            key = post.avatarSharedElementKey(sharedElementPrefix),
-            state = remember(post.author.avatar) {
-                ImageArgs(
-                    url = post.author.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = post.author.displayName ?: post.author.handle.id,
-                    shape = avatarShape,
-                )
-            },
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            }
-        )
-        //      onClick = { onOpenUser(UserDid(author.did)) },
-        //      fallbackColor = author.handle.color(),
-        Column(Modifier.weight(1f)) {
+    AttributionLayout(
+        avatar = {
+            updatedMovableSharedElementOf(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(avatarShape)
+                    .clickable { onProfileClicked(notification, post.author) },
+                key = post.avatarSharedElementKey(sharedElementPrefix),
+                state = remember(post.author.avatar) {
+                    ImageArgs(
+                        url = post.author.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = post.author.displayName ?: post.author.handle.id,
+                        shape = avatarShape,
+                    )
+                },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                }
+            )
+        },
+        label = {
             PostHeadline(
                 now = now,
                 createdAt = createdAt,
@@ -146,12 +145,11 @@ private fun PostAttribution(
                 sharedElementPrefix = sharedElementPrefix,
                 sharedElementScope = sharedElementScope,
             )
-
-//                if (item is TimelineItem.Reply) {
+        }
+    )
+//    if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
-        }
-    }
 }
 
 fun Notification.PostAssociated.sharedElementPrefix(

@@ -16,14 +16,22 @@
 
 package com.tunjid.heron.search.di
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,23 +39,29 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchStateHolder
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
+import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import heron.feature_search.generated.resources.Res
+import heron.feature_search.generated.resources.search
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
 
@@ -79,7 +93,7 @@ abstract class SearchComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SearchStateHolderCreator
+        creator: SearchStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -105,7 +119,32 @@ abstract class SearchComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar()
+                    RootDestinationTopAppBar(
+                        modifier = Modifier,
+                        sharedElementScope = sharedElementScope,
+                        signedInProfile = state.signedInProfile,
+                        title = {
+                            SearchBar(
+                                searchQuery = state.currentQuery,
+                                onQueryChanged = { query ->
+                                    viewModel.accept(
+                                        Action.Search.OnSearchQueryChanged(query)
+                                    )
+                                }
+                            )
+                        },
+                        onSignedInProfileClicked = { profile, sharedElementKey ->
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        profile = profile,
+                                        avatarSharedElementKey = sharedElementKey,
+                                    )
+                                )
+                            )
+                        },
+                    )
                 },
                 bottomBar = {
                     BottomBar(
@@ -116,11 +155,12 @@ abstract class SearchComponent(
                             }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     SearchScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                        modifier = Modifier,
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )
@@ -129,18 +169,40 @@ abstract class SearchComponent(
 }
 
 @Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
+private fun SearchBar(
+    searchQuery: String,
+    onQueryChanged: (String) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .fillMaxWidth()
+            .height(48.dp),
+    ) {
+        OutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            value = searchQuery,
+            onValueChange = {
+                onQueryChanged(it)
+            },
+            textStyle = MaterialTheme.typography.labelLarge,
+            singleLine = true,
+            shape = RoundedCornerShape(36.dp),
+        )
+        AnimatedVisibility(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .align(Alignment.CenterStart),
+            visible = searchQuery.isBlank(),
+        ) {
+            Text(
+                text = stringResource(Res.string.search),
+                style = MaterialTheme.typography.labelLarge
             )
-        },
-    )
+        }
+    }
 }
 
 @Composable

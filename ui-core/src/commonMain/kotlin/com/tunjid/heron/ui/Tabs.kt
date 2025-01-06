@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.tabs
+package com.tunjid.heron.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -35,15 +36,15 @@ import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
 
-data class TimelineTab(
+data class Tab(
     val title: String,
     val hasUpdate: Boolean,
 )
 
 @Composable
-fun TimelineTabs(
+fun Tabs(
     modifier: Modifier = Modifier,
-    tabs: List<TimelineTab>,
+    tabs: List<Tab>,
     selectedTabIndex: Float,
     onTabSelected: (Int) -> Unit,
     onTabReselected: (Int) -> Unit,
@@ -161,4 +162,6 @@ private fun BoxScope.Indicator(
     )
 }
 
-val TabShape = RoundedCornerShape(16.dp)
+private val TabShape = RoundedCornerShape(16.dp)
+
+val PagerState.tabIndex get() = currentPage + currentPageOffsetFraction

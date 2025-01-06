@@ -30,9 +30,11 @@ import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
+import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -157,6 +159,10 @@ abstract class DataComponent(
         @Provides get() = this
 
     val OfflineNotificationsRepository.bind: NotificationsRepository
+        @DataScope
+        @Provides get() = this
+
+    val OfflineSearchRepository.bind: SearchRepository
         @DataScope
         @Provides get() = this
 }

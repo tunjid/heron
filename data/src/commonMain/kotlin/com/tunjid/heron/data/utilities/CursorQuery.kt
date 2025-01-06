@@ -6,17 +6,22 @@ import com.tunjid.tiler.ListTiler
 import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
+import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
-
+/**
+ * Basic pagination query type, used for tiled requests.
+ */
 interface CursorQuery {
     val data: Data
 
@@ -24,13 +29,52 @@ interface CursorQuery {
     data class Data(
         val page: Int,
 
-        val firstRequestInstant: Instant,
+        /**
+         * The anchor point for the tiling pipeline.
+         * Consecutive queries in a tiling pipeline mush have the same anchor unless
+         * its being refreshed.
+         */
+        val cursorAnchor: Instant,
 
         /**
          * How many items to fetch for a query.
          */
         val limit: Long = 50L,
     )
+}
+
+fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
+    data.cursorAnchor != newQuery.data.cursorAnchor
+
+inline fun <Query : CursorQuery> Flow<Query>.ensureValidAnchors(
+): Flow<Query> = scan<Query, Query?>(
+    initial = null,
+    operation = { lastQuery, currentQuery ->
+        if (lastQuery == null) return@scan currentQuery
+
+        // Everything is okay, proceed.
+        if (!currentQuery.hasDifferentAnchor(lastQuery)) return@scan currentQuery
+
+        // Favor the query that was requested with a more current anchor.
+        // The query with the older anchor was most likely triggered by a scroll
+        // at a boundary.
+        if (currentQuery.data.cursorAnchor > lastQuery.data.cursorAnchor) currentQuery
+        else lastQuery
+    }
+)
+    .filterNotNull()
+
+fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
+    currentQuery: Query,
+): Boolean { // Ignore results from stale queries
+    var seenQuery = false
+    val lastTileIndex = tileCount - 1
+    for (index in 0..<tileCount) {
+        if (!seenQuery) seenQuery = queryAt(index) == currentQuery
+        if (index == lastTileIndex) continue
+        if (queryAt(index).data.page + 1 != queryAt(index).data.page) return false
+    }
+    return seenQuery
 }
 
 fun <Query : CursorQuery, Item> cursorTileInputs(

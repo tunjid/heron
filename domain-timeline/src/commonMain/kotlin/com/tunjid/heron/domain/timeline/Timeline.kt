@@ -10,6 +10,8 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
+import com.tunjid.heron.data.utilities.hasDifferentAnchor
+import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -20,7 +22,6 @@ import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
-import com.tunjid.tiler.queries
 import com.tunjid.tiler.toTiledList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +66,7 @@ fun timelineStateHolder(
             timeline = timeline,
             data = CursorQuery.Data(
                 page = 0,
-                firstRequestInstant = Clock.System.now(),
+                cursorAnchor = Clock.System.now(),
             ),
         ),
         numColumns = startNumColumns,
@@ -136,7 +137,7 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
                 }
 
                 is TimelineLoadAction.LoadAround -> {
-                    if (!queries.value.hasDifferentRequestInstant(action.query))
+                    if (!queries.value.hasDifferentAnchor(action.query))
                         queries.value = action.query
                 }
 
@@ -145,7 +146,7 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
                         timeline = queries.value.timeline,
                         data = queries.value.data.copy(
                             page = 0,
-                            firstRequestInstant = Clock.System.now(),
+                            cursorAnchor = Clock.System.now(),
                         ),
                     )
                 }
@@ -174,7 +175,7 @@ private fun queryMutations(queries: MutableStateFlow<TimelineQuery>) =
         copy(
             currentQuery = newQuery,
             status =
-            if (currentQuery.hasDifferentRequestInstant(newQuery)) TimelineStatus.Refreshing(
+            if (currentQuery.hasDifferentAnchor(newQuery)) TimelineStatus.Refreshing(
                 newQuery
             )
             else TimelineStatus.Refreshed
@@ -191,7 +192,7 @@ private fun itemMutations(
 ): Flow<Mutation<TimelineState>> {
     // Refreshes need tear down the tiling pipeline all over
     val refreshes = queries.distinctUntilChangedBy {
-        it.data.firstRequestInstant
+        it.data.cursorAnchor
     }
     val updatePage: TimelineQuery.(CursorQuery.Data) -> TimelineQuery = {
         TimelineQuery(
@@ -216,18 +217,14 @@ private fun itemMutations(
         .map(TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates)
         .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
             // Ignore results from stale queries
-            if (!it.queries().contains(currentQuery)) this
-            else copy(
+            if (it.isValidFor(currentQuery)) copy(
                 status = TimelineStatus.Refreshed,
                 items = it.distinctBy(TimelineItem::id)
             )
+            else this
         }
     return tiledListMutations
 }
-
-private fun TimelineQuery.hasDifferentRequestInstant(newQuery: TimelineQuery) =
-    data.firstRequestInstant != newQuery.data.firstRequestInstant
-
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
     val threadRootIds = mutableSetOf<Id>()

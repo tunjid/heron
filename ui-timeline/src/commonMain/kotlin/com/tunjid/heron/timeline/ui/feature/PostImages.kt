@@ -15,7 +15,7 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
@@ -49,7 +49,7 @@ internal fun PostImages(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
                         contentScale = ContentScale.Fit,
-                        shape = RoundedCornerShape(16.dp).toImageShape()
+                        shape = RoundedCornerShape(16.dp).toRoundedPolygonShape()
                     ),
                     sharedElement = { state, innerModifier ->
                         AsyncImage(

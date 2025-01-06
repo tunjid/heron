@@ -18,7 +18,10 @@ internal fun MultipleEntitySaver.add(
 ) {
     val postEntity = postView.postEntity().also(::add)
 
-    postView.profileEntity().let(::add)
+    add(
+        viewingProfileId = viewingProfileId,
+        profileView = postView.author,
+    )
     postView.embedEntities().forEach { embedEntity ->
         associatePostEmbeds(
             postEntity = postEntity,
@@ -29,10 +32,6 @@ internal fun MultipleEntitySaver.add(
     postView.viewer?.postViewerStatisticsEntity(
         postId = postEntity.cid,
     )?.let(::add)
-
-    postView.author.profileProfileRelationshipsEntities(
-        viewingProfileId = viewingProfileId,
-    ).forEach(::add)
 
     postView.quotedPostEntity()?.let { embeddedPostEntity ->
         add(embeddedPostEntity)

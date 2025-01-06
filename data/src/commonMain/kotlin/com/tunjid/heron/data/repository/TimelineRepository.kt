@@ -30,6 +30,7 @@ import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -329,8 +330,19 @@ class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>> =
-        merge(
-            flow {
+        postDao.postEntitiesByUri(postUris = setOf(postUri))
+            .mapNotNull { it.firstOrNull() }
+            .take(1)
+            .flatMapLatest { postEntity ->
+                postDao.postThread(postId = postEntity.cid.id)
+                    .map {
+                        it.fold(
+                            initial = emptyList(),
+                            operation = ::spinThread,
+                        )
+                    }
+            }
+            .withRefresh {
                 runCatchingWithNetworkRetry {
                     networkService.api.getPostThread(
                         GetPostThreadQueryParams(
@@ -345,8 +357,7 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
                             is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
                             is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                                val authProfileId =
-                                    savedStateRepository.savedState.value.auth?.authProfileId
+                                val authProfileId = savedStateRepository.signedInProfileId
                                 if (authProfileId != null) multipleEntitySaverProvider
                                     .saveInTransaction {
                                         add(
@@ -359,20 +370,8 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.Unknown -> Unit
                         }
                     }
-            },
-            postDao.postEntitiesByUri(postUris = setOf(postUri))
-                .mapNotNull { it.firstOrNull() }
-                .take(1)
-                .flatMapLatest { postEntity ->
-                    postDao.postThread(postId = postEntity.cid.id)
-                        .map {
-                            it.fold(
-                                initial = emptyList(),
-                                operation = ::spinThread,
-                            )
-                        }
-                },
-        )
+            }
+
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateRepository.savedState
@@ -441,14 +440,14 @@ class OfflineTimelineRepository(
         currentRequestWithNextCursor = currentRequestWithNextCursor,
         nextCursor = nextCursor,
         onResponse = {
-            val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+            val authProfileId = savedStateRepository.signedInProfileId
             if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                 if (timelineDao.isFirstRequest(query)) {
 //                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
-                            lastFetchedAt = query.data.firstRequestInstant,
+                            lastFetchedAt = query.data.cursorAnchor,
                             filterDescription = null,
                         )
                     )
@@ -474,7 +473,7 @@ class OfflineTimelineRepository(
                 .getOrNull()
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
-                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    val authProfileId = savedStateRepository.signedInProfileId
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         add(
                             viewingProfileId = authProfileId,
@@ -530,7 +529,7 @@ class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
             sourceId = query.timeline.sourceId,
-            before = query.data.firstRequestInstant,
+            before = query.data.cursorAnchor,
             offset = query.data.page * query.data.limit,
             limit = query.data.limit,
         )
@@ -666,5 +665,5 @@ class OfflineTimelineRepository(
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
     val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
-    return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
+    return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }

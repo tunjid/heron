@@ -27,6 +27,8 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":ui-core"))
+
                 implementation(libs.compose.animation)
                 implementation(libs.compose.foundation.layout)
                 implementation(libs.compose.foundation.foundation)
@@ -35,10 +37,6 @@ kotlin {
 
                 implementation(libs.coil.compose)
                 implementation(libs.coil.ktor)
-
-                implementation(libs.androidx.graphics.core)
-                implementation(libs.androidx.graphics.path)
-                implementation(libs.androidx.graphics.shapes)
 
                 implementation(libs.kotlinx.coroutines.core)
 

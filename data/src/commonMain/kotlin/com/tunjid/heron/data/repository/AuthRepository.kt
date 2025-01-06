@@ -37,6 +37,7 @@ import com.tunjid.heron.data.network.models.signedInUserProfileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
@@ -44,10 +45,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.supervisorScope
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
@@ -80,16 +79,16 @@ class AuthTokenRepository(
         savedStateRepository.savedState
             .distinctUntilChangedBy { it.auth?.authProfileId }
             .flatMapLatest { savedState ->
-                merge(
-                    flow { updateSignedInUser() },
-                    savedState.auth
-                        ?.authProfileId
-                        ?.let(::listOf)
-                        ?.let(profileDao::profiles)
-                        ?.filter(List<ProfileEntity>::isNotEmpty)
-                        ?.map { it.first().asExternalModel() }
-                        ?: flowOf(null)
-                )
+                val signeInUserFlow = savedState.auth
+                    ?.authProfileId
+                    ?.let(::listOf)
+                    ?.let(profileDao::profiles)
+                    ?.filter(List<ProfileEntity>::isNotEmpty)
+                    ?.map { it.first().asExternalModel() }
+                    ?: flowOf(null)
+                signeInUserFlow.withRefresh {
+                    updateSignedInUser()
+                }
             }
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
@@ -230,7 +229,8 @@ class AuthTokenRepository(
         saveTimelinePreferences.await()
         multipleEntitySaverProvider.saveInTransaction {
             feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
-            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) } }
+            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
+        }
     }
 
 }

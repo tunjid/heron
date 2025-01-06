@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -28,6 +28,7 @@ fun RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     signedInProfile: Profile?,
+    title: @Composable () -> Unit = {},
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) = with(sharedElementScope) {
     TopAppBar(
@@ -48,9 +49,7 @@ fun RootDestinationTopAppBar(
                 contentDescription = null,
             )
         },
-        title = {
-
-        },
+        title = title,
         actions = {
             AnimatedVisibility(
                 visible = signedInProfile != null
@@ -58,7 +57,7 @@ fun RootDestinationTopAppBar(
                 signedInProfile?.let { profile ->
                     AsyncImage(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(32.dp)
                             .sharedElement(
                                 key = SignedInUserAvatarSharedElementKey,
                             )
@@ -73,7 +72,7 @@ fun RootDestinationTopAppBar(
                                 url = profile.avatar?.uri,
                                 contentDescription = signedInProfile.displayName,
                                 contentScale = ContentScale.Crop,
-                                shape = ImageShape.Circle,
+                                shape = RoundedPolygonShape.Circle,
                             )
                         }
                     )

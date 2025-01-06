@@ -1,4 +1,4 @@
-package com.tunjid.heron.images.shapes
+package com.tunjid.heron.ui.shapes
 
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
@@ -33,7 +33,7 @@ import androidx.graphics.shapes.rectangle
 import kotlin.math.max
 
 @Stable
-sealed class ImageShape : Shape {
+sealed class RoundedPolygonShape : Shape {
 
     private var path = Path()
     private var matrix: Matrix = Matrix()
@@ -92,7 +92,7 @@ sealed class ImageShape : Shape {
     }
 
     @Stable
-    data object Circle : ImageShape() {
+    data object Circle : RoundedPolygonShape() {
         private val polygon = RoundedPolygon.circle(numVertices = 8)
         override fun createPolygon(
             size: Size,
@@ -101,7 +101,7 @@ sealed class ImageShape : Shape {
     }
 
     @Stable
-    data object Rectangle : ImageShape() {
+    data object Rectangle : RoundedPolygonShape() {
         private val polygon = RoundedPolygon.rectangle()
         override fun createPolygon(
             size: Size,
@@ -112,7 +112,7 @@ sealed class ImageShape : Shape {
     @Stable
     data class RoundedRectangle(
         val roundedCornerShape: RoundedCornerShape,
-    ) : ImageShape() {
+    ) : RoundedPolygonShape() {
         override fun createPolygon(
             size: Size,
             density: Density
@@ -155,7 +155,7 @@ sealed class ImageShape : Shape {
     @Stable
     data class Polygon(
         val cornerSizeAtIndex: List<Dp>,
-    ) : ImageShape() {
+    ) : RoundedPolygonShape() {
 
         override fun createPolygon(
             size: Size,
@@ -172,10 +172,12 @@ sealed class ImageShape : Shape {
     }
 }
 
-fun RoundedCornerShape.toImageShape() = ImageShape.RoundedRectangle(this)
+fun RoundedCornerShape.toRoundedPolygonShape() = RoundedPolygonShape.RoundedRectangle(
+    roundedCornerShape = this
+)
 
 @Composable
-fun ImageShape.animate(
+fun RoundedPolygonShape.animate(
     animationSpec: FiniteAnimationSpec<Float> = spring(),
 ): Shape {
     val updatedAnimationSpec by rememberUpdatedState(animationSpec)

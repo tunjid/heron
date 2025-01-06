@@ -40,10 +40,11 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
-import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.posts.PostActions
 import com.tunjid.heron.ui.posts.PostHeadline
@@ -109,7 +110,7 @@ fun TimelineItem(
                 isAnchoredInTimeline = false,
                 avatarShape =
                 if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                else ImageShape.Circle,
+                else RoundedPolygonShape.Circle,
                 sharedElementPrefix = sharedElementPrefix,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -143,14 +144,14 @@ private fun ThreadedPost(
                     isAnchoredInTimeline = item.generation == 0L,
                     avatarShape =
                     when {
-                        item.isThreadedAnchor -> ImageShape.Circle
+                        item.isThreadedAnchor -> RoundedPolygonShape.Circle
                         item.isThreadedAncestor ->
                             if (item.posts.size == 1) ReplyThreadStartImageShape
                             else ReplyThreadImageShape
 
                         else -> when (index) {
                             0 ->
-                                if (item.posts.size == 1) ImageShape.Circle
+                                if (item.posts.size == 1) RoundedPolygonShape.Circle
                                 else ReplyThreadStartImageShape
 
                             item.posts.lastIndex -> ReplyThreadEndImageShape
@@ -196,7 +197,7 @@ private fun SinglePost(
     post: Post,
     embed: Embed?,
     isAnchoredInTimeline: Boolean,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
@@ -273,37 +274,35 @@ private fun SinglePost(
 @Composable
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     onProfileClicked: (Post, Profile) -> Unit,
     post: Post,
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
 ) = with(sharedElementScope) {
-    Row(
-        horizontalArrangement = spacedBy(8.dp),
-    ) {
-        updatedMovableSharedElementOf(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(avatarShape)
-                .clickable { onProfileClicked(post, post.author) },
-            key = post.avatarSharedElementKey(sharedElementPrefix),
-            state = remember(post.author.avatar) {
-                ImageArgs(
-                    url = post.author.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = post.author.displayName ?: post.author.handle.id,
-                    shape = avatarShape,
-                )
-            },
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            }
-        )
-        //      onClick = { onOpenUser(UserDid(author.did)) },
-        //      fallbackColor = author.handle.color(),
-        Column(Modifier.weight(1f)) {
+    AttributionLayout(
+        avatar = {
+            updatedMovableSharedElementOf(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(avatarShape)
+                    .clickable { onProfileClicked(post, post.author) },
+                key = post.avatarSharedElementKey(sharedElementPrefix),
+                state = remember(post.author.avatar) {
+                    ImageArgs(
+                        url = post.author.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = post.author.displayName ?: post.author.handle.id,
+                        shape = avatarShape,
+                    )
+                },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                }
+            )
+        },
+        label = {
             PostHeadline(
                 now = now,
                 createdAt = createdAt,
@@ -312,12 +311,11 @@ private fun PostAttribution(
                 sharedElementPrefix = sharedElementPrefix,
                 sharedElementScope = sharedElementScope,
             )
-
-//                if (item is TimelineItem.Reply) {
+        }
+    )
+    //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
-        }
-    }
 }
 
 @Composable
@@ -417,10 +415,10 @@ private val ReplyThreadStartImageShape =
         topEndPercent = 100,
         bottomStartPercent = 30,
         bottomEndPercent = 100,
-    ).toImageShape()
+    ).toRoundedPolygonShape()
 
 private val ReplyThreadImageShape =
-    ImageShape.Polygon(
+    RoundedPolygonShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
             if (index == 2 || index == 3) 32.dp
             else 48.dp
@@ -433,7 +431,7 @@ private val ReplyThreadEndImageShape =
         topEndPercent = 100,
         bottomStartPercent = 100,
         bottomEndPercent = 100,
-    ).toImageShape()
+    ).toRoundedPolygonShape()
 
 
 fun Post.avatarSharedElementKey(
