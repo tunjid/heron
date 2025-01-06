@@ -14,13 +14,14 @@ import com.tunjid.heron.data.core.models.Profile
 fun ProfileName(
     modifier: Modifier = Modifier,
     profile: Profile,
+    ellipsize: Boolean = true,
 ) {
     Text(
         modifier = modifier,
         text = remember(profile.displayName) {
             profile.displayName ?: ""
         },
-        maxLines = 1,
+        maxLines = if (ellipsize) 1 else Int.MAX_VALUE,
         style = LocalTextStyle.current.copy(fontWeight = Bold),
     )
 }

@@ -73,7 +73,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -92,16 +91,19 @@ import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.profile.ProfileHandle
+import com.tunjid.heron.ui.profile.ProfileName
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
@@ -267,7 +269,7 @@ private fun ProfileHeader(
                         alpha = headerState.bioAlpha
                     },
             ) {
-                Spacer(Modifier.height(headerState.sizeToken))
+                Spacer(Modifier.height(32.dp))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
@@ -394,61 +396,54 @@ private fun ProfileHeadline(
     isSignedInProfile: Boolean,
     profileRelationship: ProfileRelationship?,
 ) {
-    Row(
+    AttributionLayout(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column {
-            val primaryText = profile.displayName ?: profile.handle.id
-            val secondaryText = profile.handle.id.takeUnless { it == primaryText }
-
-            Text(
-                modifier = Modifier,
-                text = primaryText,
-                maxLines = 1,
-                style = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold),
-            )
-            if (secondaryText != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(
+        avatar = {},
+        label = {
+            Column {
+                ProfileName(
                     modifier = Modifier,
-                    text = profile.handle.id,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
+                    profile = profile,
+                    ellipsize = false,
+                )
+                Spacer(Modifier.height(4.dp))
+                ProfileHandle(
+                    modifier = Modifier,
+                    profile = profile,
                 )
             }
-        }
-        AnimatedVisibility(
-            visible = profileRelationship != null || isSignedInProfile,
-            content = {
-                val follows = profileRelationship?.follows == true
-                val followStatusText = stringResource(
-                    if (isSignedInProfile) Res.string.edit
-                    else if (follows) Res.string.following
-                    else Res.string.follow
-                )
-                FilterChip(
-                    selected = follows,
-                    onClick = {},
-                    shape = RoundedCornerShape(16.dp),
-                    leadingIcon = {
-                        Icon(
-                            imageVector =
-                            if (isSignedInProfile) Icons.Rounded.Edit
-                            else if (follows) Icons.Rounded.Check
-                            else Icons.Rounded.Add,
-                            contentDescription = followStatusText,
-                        )
-                    },
-                    label = {
-                        Text(followStatusText)
-                    },
-                )
-            },
-        )
-    }
+        },
+        action = {
+            AnimatedVisibility(
+                visible = profileRelationship != null || isSignedInProfile,
+                content = {
+                    val follows = profileRelationship?.follows == true
+                    val followStatusText = stringResource(
+                        if (isSignedInProfile) Res.string.edit
+                        else if (follows) Res.string.following
+                        else Res.string.follow
+                    )
+                    FilterChip(
+                        selected = follows,
+                        onClick = {},
+                        shape = RoundedCornerShape(16.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector =
+                                if (isSignedInProfile) Icons.Rounded.Edit
+                                else if (follows) Icons.Rounded.Check
+                                else Icons.Rounded.Add,
+                                contentDescription = followStatusText,
+                            )
+                        },
+                        label = {
+                            Text(followStatusText)
+                        },
+                    )
+                },
+            )
+        },
+    )
 }
 
 @Composable
@@ -675,4 +670,4 @@ private class HeaderState(
 }
 
 private val ExpandedProfilePhotoSize = 68.dp
-private val CollapsedProfilePhotoSize = 24.dp
+private val CollapsedProfilePhotoSize = 32.dp
