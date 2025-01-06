@@ -124,7 +124,7 @@ class OfflineNotificationsRepository @Inject constructor(
         query: NotificationsQuery,
     ): Flow<List<Notification>> =
         notificationsDao.notifications(
-            before = query.data.firstRequestInstant,
+            before = query.data.cursorAnchor,
             offset = query.data.page * query.data.limit,
             limit = query.data.limit,
         )

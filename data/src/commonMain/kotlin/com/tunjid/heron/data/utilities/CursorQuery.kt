@@ -2,6 +2,7 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.tiler.ListTiler
 import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
@@ -24,7 +25,12 @@ interface CursorQuery {
     data class Data(
         val page: Int,
 
-        val firstRequestInstant: Instant,
+        /**
+         * The anchor point for the tiling pipeline.
+         * Consecutive queries in a tiling pipeline mush have the same anchor unless
+         * its being refreshed.
+         */
+        val cursorAnchor: Instant,
 
         /**
          * How many items to fetch for a query.
@@ -32,6 +38,9 @@ interface CursorQuery {
         val limit: Long = 50L,
     )
 }
+
+fun CursorQuery.hasDifferentAnchor(newQuery: TimelineQuery) =
+    data.cursorAnchor != newQuery.data.cursorAnchor
 
 fun <Query : CursorQuery, Item> cursorTileInputs(
     numColumns: Flow<Int>,

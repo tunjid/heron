@@ -447,7 +447,7 @@ class OfflineTimelineRepository(
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
-                            lastFetchedAt = query.data.firstRequestInstant,
+                            lastFetchedAt = query.data.cursorAnchor,
                             filterDescription = null,
                         )
                     )
@@ -529,7 +529,7 @@ class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
             sourceId = query.timeline.sourceId,
-            before = query.data.firstRequestInstant,
+            before = query.data.cursorAnchor,
             offset = query.data.page * query.data.limit,
             limit = query.data.limit,
         )
@@ -665,5 +665,5 @@ class OfflineTimelineRepository(
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
     val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
-    return lastFetchedAt?.toEpochMilliseconds() != query.data.firstRequestInstant.toEpochMilliseconds()
+    return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }

@@ -61,7 +61,7 @@ data class State(
             isLocalOnly = false,
             data = CursorQuery.Data(
                 page = 0,
-                firstRequestInstant = Clock.System.now(),
+                cursorAnchor = Clock.System.now(),
                 limit = 15
             ),
         ),
@@ -73,7 +73,7 @@ data class State(
             isLocalOnly = false,
             data = CursorQuery.Data(
                 page = 0,
-                firstRequestInstant = Clock.System.now(),
+                cursorAnchor = Clock.System.now(),
                 limit = 15
             ),
         ),
@@ -85,7 +85,7 @@ data class State(
             isLocalOnly = false,
             data = CursorQuery.Data(
                 page = 0,
-                firstRequestInstant = Clock.System.now(),
+                cursorAnchor = Clock.System.now(),
                 limit = 15
             ),
         ),
