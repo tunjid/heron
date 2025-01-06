@@ -1,5 +1,5 @@
 <resources>
     <string name="top">Top</string>
-    <string name="Latest">Latest</string>
-    <string name="People">People</string>
+    <string name="latest">Latest</string>
+    <string name="people">People</string>
 </resources>
