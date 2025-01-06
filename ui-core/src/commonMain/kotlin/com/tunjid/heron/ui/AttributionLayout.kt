@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AttributionLayout(
     modifier: Modifier = Modifier,
-    avatar: @Composable () -> Unit,
+    avatar: @Composable (() -> Unit)?,
     label: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
 ) {
@@ -18,7 +18,7 @@ fun AttributionLayout(
         modifier = modifier,
         horizontalArrangement = spacedBy(16.dp),
     ) {
-        avatar()
+        avatar?.invoke()
         Column(Modifier.weight(1f)) {
             label()
         }

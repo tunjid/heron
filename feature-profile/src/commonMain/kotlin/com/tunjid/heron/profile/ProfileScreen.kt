@@ -398,7 +398,7 @@ private fun ProfileHeadline(
 ) {
     AttributionLayout(
         modifier = modifier,
-        avatar = {},
+        avatar = null,
         label = {
             Column {
                 ProfileName(
