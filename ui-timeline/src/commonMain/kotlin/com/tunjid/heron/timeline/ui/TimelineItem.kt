@@ -40,8 +40,8 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
-import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
@@ -109,7 +109,7 @@ fun TimelineItem(
                 isAnchoredInTimeline = false,
                 avatarShape =
                 if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                else ImageShape.Circle,
+                else RoundedPolygonShape.Circle,
                 sharedElementPrefix = sharedElementPrefix,
                 createdAt = item.post.createdAt,
                 onProfileClicked = onProfileClicked,
@@ -143,14 +143,14 @@ private fun ThreadedPost(
                     isAnchoredInTimeline = item.generation == 0L,
                     avatarShape =
                     when {
-                        item.isThreadedAnchor -> ImageShape.Circle
+                        item.isThreadedAnchor -> RoundedPolygonShape.Circle
                         item.isThreadedAncestor ->
                             if (item.posts.size == 1) ReplyThreadStartImageShape
                             else ReplyThreadImageShape
 
                         else -> when (index) {
                             0 ->
-                                if (item.posts.size == 1) ImageShape.Circle
+                                if (item.posts.size == 1) RoundedPolygonShape.Circle
                                 else ReplyThreadStartImageShape
 
                             item.posts.lastIndex -> ReplyThreadEndImageShape
@@ -196,7 +196,7 @@ private fun SinglePost(
     post: Post,
     embed: Embed?,
     isAnchoredInTimeline: Boolean,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
@@ -273,7 +273,7 @@ private fun SinglePost(
 @Composable
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     onProfileClicked: (Post, Profile) -> Unit,
     post: Post,
     sharedElementPrefix: String,
@@ -417,10 +417,10 @@ private val ReplyThreadStartImageShape =
         topEndPercent = 100,
         bottomStartPercent = 30,
         bottomEndPercent = 100,
-    ).toImageShape()
+    ).toRoundedPolygonShape()
 
 private val ReplyThreadImageShape =
-    ImageShape.Polygon(
+    RoundedPolygonShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
             if (index == 2 || index == 3) 32.dp
             else 48.dp
@@ -433,7 +433,7 @@ private val ReplyThreadEndImageShape =
         topEndPercent = 100,
         bottomStartPercent = 100,
         bottomEndPercent = 100,
-    ).toImageShape()
+    ).toRoundedPolygonShape()
 
 
 fun Post.avatarSharedElementKey(

@@ -92,7 +92,7 @@ import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
@@ -331,7 +331,7 @@ private fun ProfileBanner(
                 url = profile.banner?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = profile.displayName ?: profile.handle.id,
-                shape = ImageShape.Rectangle,
+                shape = RoundedPolygonShape.Rectangle,
             )
         },
     )
@@ -376,7 +376,7 @@ private fun ProfileAvatar(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = ImageShape.Circle,
+                    shape = RoundedPolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->

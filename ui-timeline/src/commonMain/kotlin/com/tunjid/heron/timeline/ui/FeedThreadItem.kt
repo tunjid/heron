@@ -19,7 +19,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Instant
 
 @Composable
@@ -45,7 +45,7 @@ fun FeedThreadItem(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
-                    shape = ImageShape.Circle,
+                    shape = RoundedPolygonShape.Circle,
                 ),
             )
             Column(Modifier.weight(1f)) {

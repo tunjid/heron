@@ -19,7 +19,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.toImageShape
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -58,7 +58,7 @@ internal fun PostExternal(
                         url = feature.thumb?.uri,
                         contentDescription = feature.title,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedCornerShape(16.dp).toImageShape()
+                        shape = RoundedCornerShape(16.dp).toRoundedPolygonShape()
                     ),
                 )
             }

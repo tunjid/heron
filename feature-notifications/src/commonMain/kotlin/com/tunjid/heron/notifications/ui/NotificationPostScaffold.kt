@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
@@ -48,7 +48,7 @@ internal fun NotificationPostScaffold(
         ) {
             PostAttribution(
                 sharedElementScope = sharedElementScope,
-                avatarShape = ImageShape.Circle,
+                avatarShape = RoundedPolygonShape.Circle,
                 onProfileClicked = onProfileClicked,
                 notification = notification,
                 sharedElementPrefix = notification.sharedElementPrefix(),
@@ -106,7 +106,7 @@ internal fun NotificationPostScaffold(
 @Composable
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
-    avatarShape: ImageShape,
+    avatarShape: RoundedPolygonShape,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,

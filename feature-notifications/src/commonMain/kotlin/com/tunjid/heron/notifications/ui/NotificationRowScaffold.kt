@@ -18,8 +18,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.shapes.ImageShape
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import org.jetbrains.compose.resources.StringResource
@@ -65,7 +64,7 @@ fun NotificationAggregateScaffold(
                                 url = profile.avatar?.uri,
                                 contentScale = ContentScale.Crop,
                                 contentDescription = profile.displayName ?: profile.handle.id,
-                                shape = ImageShape.Circle,
+                                shape = RoundedPolygonShape.Circle,
                             )
                         },
                         sharedElement = { state, innerModifier ->
