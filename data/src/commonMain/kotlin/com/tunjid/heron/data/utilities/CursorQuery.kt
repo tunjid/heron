@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
-
+/**
+ * Basic pagination query type, used for tiled requests.
+ */
 interface CursorQuery {
     val data: Data
 

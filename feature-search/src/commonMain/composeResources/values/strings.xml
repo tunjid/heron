@@ -1,3 +1,5 @@
 <resources>
-    <string name="heron">Heron</string>
+    <string name="top">Top</string>
+    <string name="Latest">Latest</string>
+    <string name="People">People</string>
 </resources>
