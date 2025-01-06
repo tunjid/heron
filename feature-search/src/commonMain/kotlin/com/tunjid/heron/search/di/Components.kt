@@ -81,7 +81,7 @@ abstract class SearchComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SearchStateHolderCreator
+        creator: SearchStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -114,11 +114,11 @@ abstract class SearchComponent(
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
-                                onQueryChanged = {viewModel.accept(
-                                    Action.Search.OnSearchQueryChanged(
-                                        it
+                                onQueryChanged = { query ->
+                                    viewModel.accept(
+                                        Action.Search.OnSearchQueryChanged(query)
                                     )
-                                )}
+                                }
                             )
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
@@ -146,7 +146,9 @@ abstract class SearchComponent(
                 content = {
                     SearchScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
-                        modifier = Modifier
+                        modifier = Modifier,
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )
