@@ -57,8 +57,8 @@ import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.tabs.TimelineTab
-import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
+import com.tunjid.heron.ui.Tab
+import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.delay
@@ -112,7 +112,7 @@ internal fun HomeScreen(
             pagerState = pagerState,
             tabs = remember(state.sourceIdsToHasUpdates, state.timelines) {
                 state.timelines.map { timeline ->
-                    TimelineTab(
+                    Tab(
                         title = timeline.name,
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
@@ -132,11 +132,11 @@ internal fun HomeScreen(
 private fun HomeTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    tabs: List<TimelineTab>,
+    tabs: List<Tab>,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    TimelineTabs(
+    Tabs(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
             .padding(

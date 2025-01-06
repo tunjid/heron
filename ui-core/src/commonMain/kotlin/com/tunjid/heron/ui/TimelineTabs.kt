@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.tabs
+package com.tunjid.heron.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,15 +35,15 @@ import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
 
-data class TimelineTab(
+data class Tab(
     val title: String,
     val hasUpdate: Boolean,
 )
 
 @Composable
-fun TimelineTabs(
+fun Tabs(
     modifier: Modifier = Modifier,
-    tabs: List<TimelineTab>,
+    tabs: List<Tab>,
     selectedTabIndex: Float,
     onTabSelected: (Int) -> Unit,
     onTabReselected: (Int) -> Unit,

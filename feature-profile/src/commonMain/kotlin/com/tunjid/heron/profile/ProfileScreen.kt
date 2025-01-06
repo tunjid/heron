@@ -98,8 +98,8 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.tabs.TimelineTab
-import com.tunjid.heron.timeline.ui.tabs.TimelineTabs
+import com.tunjid.heron.ui.Tab
+import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -164,7 +164,7 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 timelineTabs = state.timelines.map { timeline ->
-                    TimelineTab(
+                    Tab(
                         title = when (timeline) {
                             is Timeline.Profile.Media -> stringResource(Res.string.media)
                             is Timeline.Profile.Posts -> stringResource(Res.string.posts)
@@ -225,7 +225,7 @@ private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
     headerState: HeaderState,
     pagerState: PagerState,
-    timelineTabs: List<TimelineTab>,
+    timelineTabs: List<Tab>,
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
@@ -513,11 +513,11 @@ private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     headerState: HeaderState,
-    tabs: List<TimelineTab>,
+    tabs: List<Tab>,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    TimelineTabs(
+    Tabs(
         modifier = modifier
             .offset { headerState.tabsOffset(density = this) },
         tabs = tabs,
