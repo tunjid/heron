@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -73,6 +74,7 @@ class SearchStateHolderCreator(
 @Inject
 class ActualSearchStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    authTokenRepository: AuthTokenRepository,
     searchRepository: SearchRepository,
     @Assisted
     scope: CoroutineScope,
@@ -88,6 +90,7 @@ class ActualSearchStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(authTokenRepository)
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -106,6 +109,13 @@ class ActualSearchStateHolder(
         }
     }
 )
+
+private fun loadProfileMutations(
+    authTokenRepository: AuthTokenRepository,
+): Flow<Mutation<State>> =
+    authTokenRepository.signedInUser.mapToMutation {
+        copy(signedInProfile = it)
+    }
 
 private fun Flow<Action.Search>.searchQueryMutations(
     coroutineScope: CoroutineScope,

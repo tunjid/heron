@@ -57,7 +57,7 @@ fun RootDestinationTopAppBar(
                 signedInProfile?.let { profile ->
                     AsyncImage(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(32.dp)
                             .sharedElement(
                                 key = SignedInUserAvatarSharedElementKey,
                             )

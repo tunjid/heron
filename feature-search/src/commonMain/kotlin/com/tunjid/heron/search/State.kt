@@ -57,6 +57,7 @@ sealed class SearchState {
 data class State(
     val currentQuery: String = "",
     val layout: ScreenLayout = ScreenLayout.Trends,
+    val signedInProfile: Profile? = null,
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
