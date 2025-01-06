@@ -23,10 +23,13 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
@@ -36,11 +39,11 @@ typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SearchStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSearchStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSearchStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualSearchStateHolder = creator.invoke(scope, route)
 }
 
@@ -63,7 +66,7 @@ class ActualSearchStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
+                is Action.OnSearchQueryChanged -> action.flow.searchQueryMutations()
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -72,3 +75,8 @@ class ActualSearchStateHolder(
         }
     }
 )
+
+private fun Flow<Action.OnSearchQueryChanged>.searchQueryMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(currentQuery = it.query)
+    }

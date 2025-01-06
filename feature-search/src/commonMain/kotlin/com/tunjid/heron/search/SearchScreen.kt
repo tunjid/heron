@@ -17,38 +17,32 @@
 package com.tunjid.heron.search
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.SharedElementScope
-import com.tunjid.heron.scaffold.scaffold.AppLogo
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun SearchScreen(
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
-) = with(sharedElementScope) {
-    Box(
+) {
+    Column(
         modifier = modifier
-            .fillMaxSize()
     ) {
-        Image(
-            modifier = Modifier
-                .size(100.dp)
-                .align(Alignment.Center)
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(AppLogo),
-                    animatedVisibilityScope = sharedElementScope,
-                ),
-            imageVector = AppLogo,
-            contentDescription = null,
-        )
+        Row { }
     }
 }
 
+
+@Composable
+private fun AutoCompleteProfileSearchResults() {
+
+}
+
+@Composable
+private fun TabbedSearchResults() {
+
+}

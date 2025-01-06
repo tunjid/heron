@@ -18,8 +18,10 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 
+@Serializable
 sealed class SearchQuery : CursorQuery {
 
     abstract val query: String
@@ -32,6 +34,7 @@ sealed class SearchQuery : CursorQuery {
             is Profile -> "profiles"
         }
 
+    @Serializable
     sealed class Post : SearchQuery() {
         data class Top(
             override val query: String,
@@ -46,6 +49,7 @@ sealed class SearchQuery : CursorQuery {
         ) : Post()
     }
 
+    @Serializable
     data class Profile(
         override val query: String,
         override val isLocalOnly: Boolean,

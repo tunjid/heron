@@ -18,6 +18,10 @@ package com.tunjid.heron.search.di
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -39,6 +43,7 @@ import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchStateHolder
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
@@ -48,6 +53,7 @@ import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
 
@@ -105,7 +111,10 @@ abstract class SearchComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar()
+                    TopBar(
+                        searchQuery = state.currentQuery,
+                        onQueryChanged = {viewModel.accept(Action.OnSearchQueryChanged(it))}
+                    )
                 },
                 bottomBar = {
                     BottomBar(
@@ -116,11 +125,10 @@ abstract class SearchComponent(
                             }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     SearchScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
                     )
                 }
             )
@@ -129,9 +137,21 @@ abstract class SearchComponent(
 }
 
 @Composable
-private fun TopBar() {
+private fun TopBar(
+    searchQuery: String,
+    onQueryChanged: (String) -> Unit,
+) {
     TopAppBar(
-        title = {},
+        title = {
+            OutlinedTextField(
+                modifier = Modifier,
+                value = searchQuery,
+                onValueChange = {
+                    onQueryChanged(it)
+                },
+                shape = MaterialTheme.shapes.large,
+            )
+        },
         actions = {
             TextButton(
                 onClick = {},
