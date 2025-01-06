@@ -44,6 +44,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.posts.PostActions
 import com.tunjid.heron.ui.posts.PostHeadline
@@ -280,30 +281,28 @@ private fun PostAttribution(
     now: Instant,
     createdAt: Instant,
 ) = with(sharedElementScope) {
-    Row(
-        horizontalArrangement = spacedBy(8.dp),
-    ) {
-        updatedMovableSharedElementOf(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(avatarShape)
-                .clickable { onProfileClicked(post, post.author) },
-            key = post.avatarSharedElementKey(sharedElementPrefix),
-            state = remember(post.author.avatar) {
-                ImageArgs(
-                    url = post.author.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = post.author.displayName ?: post.author.handle.id,
-                    shape = avatarShape,
-                )
-            },
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            }
-        )
-        //      onClick = { onOpenUser(UserDid(author.did)) },
-        //      fallbackColor = author.handle.color(),
-        Column(Modifier.weight(1f)) {
+    AttributionLayout(
+        avatar = {
+            updatedMovableSharedElementOf(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(avatarShape)
+                    .clickable { onProfileClicked(post, post.author) },
+                key = post.avatarSharedElementKey(sharedElementPrefix),
+                state = remember(post.author.avatar) {
+                    ImageArgs(
+                        url = post.author.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = post.author.displayName ?: post.author.handle.id,
+                        shape = avatarShape,
+                    )
+                },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                }
+            )
+        },
+        label = {
             PostHeadline(
                 now = now,
                 createdAt = createdAt,
@@ -312,12 +311,11 @@ private fun PostAttribution(
                 sharedElementPrefix = sharedElementPrefix,
                 sharedElementScope = sharedElementScope,
             )
-
-//                if (item is TimelineItem.Reply) {
+        }
+    )
+    //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
-        }
-    }
 }
 
 @Composable
