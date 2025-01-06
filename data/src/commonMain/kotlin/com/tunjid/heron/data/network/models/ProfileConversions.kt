@@ -3,6 +3,7 @@ package com.tunjid.heron.data.network.models
 import app.bsky.actor.GetProfileResponse
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
+import com.tunjid.heron.data.core.models.Profile
 import app.bsky.actor.ProfileViewDetailed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -138,6 +139,37 @@ internal fun ProfileViewDetailed.profileProfileRelationshipsEntities(
             blocking = viewer?.blockedBy == true,
         ),
     )
+
+
+internal fun ProfileViewBasic.profile() = Profile(
+    did = did.did.let(::Id),
+    handle = handle.handle.let(::Id),
+    displayName = displayName,
+    description = null,
+    avatar = avatar?.uri?.let(::Uri),
+    banner = null,
+    followersCount = 0,
+    followsCount = 0,
+    postsCount = 0,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = createdAt,
+)
+
+internal fun ProfileView.profile() = Profile(
+    did = did.did.let(::Id),
+    handle = handle.handle.let(::Id),
+    displayName = displayName,
+    description = description,
+    avatar = avatar?.uri?.let(::Uri),
+    banner = null,
+    followersCount = 0,
+    followsCount = 0,
+    postsCount = 0,
+    joinedViaStarterPack = null,
+    indexedAt = indexedAt,
+    createdAt = createdAt
+)
 
 //internal fun PostViewerState.postAuthorKnownProfileRelationshipsEntities(
 //    viewingProfileId: Id,

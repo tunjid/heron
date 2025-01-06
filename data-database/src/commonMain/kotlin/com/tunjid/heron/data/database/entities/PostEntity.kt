@@ -160,27 +160,29 @@ fun PopulatedPostEntity.asExternalModel(
         else -> null
     },
     quote = quote,
-    record = entity.record?.let {
-        Post.Record(
-            text = it.text,
-            createdAt = it.createdAt,
-            links = it.base64EncodedRecord
-                ?.fromBase64EncodedUrl<Post.Record>()
-                ?.links
-                ?: emptyList(),
-        )
-    },
-    viewerStats = viewerStats?.let {
-        Post.ViewerStats(
-            liked = it.liked,
-            reposted = it.reposted,
-            threadMuted = it.threadMuted,
-            replyDisabled = it.replyDisabled,
-            embeddingDisabled = it.embeddingDisabled,
-            pinned = it.pinned,
-        )
-    },
+    record = entity.record?.asExternalModel(),
+    viewerStats = viewerStats?.asExternalModel(),
 )
+
+ fun PostViewerStatisticsEntity.asExternalModel() =
+    Post.ViewerStats(
+        liked = liked,
+        reposted = reposted,
+        threadMuted = threadMuted,
+        replyDisabled = replyDisabled,
+        embeddingDisabled = embeddingDisabled,
+        pinned = pinned,
+    )
+
+fun PostEntity.RecordData.asExternalModel() =
+    Post.Record(
+        text = text,
+        createdAt = createdAt,
+        links = base64EncodedRecord
+            ?.fromBase64EncodedUrl<Post.Record>()
+            ?.links
+            ?: emptyList(),
+    )
 
 private fun emptyProfile() = Profile(
     did = Id(""),
