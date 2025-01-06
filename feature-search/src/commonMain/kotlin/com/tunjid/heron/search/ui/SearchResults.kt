@@ -14,12 +14,15 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import kotlinx.datetime.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -66,5 +69,36 @@ fun ProfileSearchResult(
     )
 }
 
-fun SearchResult.Profile.avatarSharedElementKey(): String =
-    "search-result-${profile.did.id}"
+@Composable
+fun PostSearchResult(
+    sharedElementScope: SharedElementScope,
+    now: Instant,
+    result: SearchResult.Post,
+    onProfileClicked: (SearchResult.Post) -> Unit,
+    onPostClicked: (SearchResult.Post) -> Unit,
+) {
+    Post(
+        sharedElementScope = sharedElementScope,
+        now = now,
+        post = result.post,
+        embed = result.post.embed,
+        isAnchoredInTimeline = false,
+        avatarShape = RoundedPolygonShape.Circle,
+        sharedElementPrefix = result.sharedElementPrefix(),
+        createdAt = result.post.createdAt,
+        onProfileClicked = { _, _ ->
+            onProfileClicked(result)
+        },
+        onPostClicked = {
+            onPostClicked(result)
+        },
+        onImageClicked = {},
+        onReplyToPost = {},
+    )
+}
+
+internal fun SearchResult.Profile.avatarSharedElementKey(): String =
+    "${sharedElementPrefix()}-${profile.did.id}"
+
+@Suppress("UnusedReceiverParameter")
+internal fun SearchResult.sharedElementPrefix() = "search-result"

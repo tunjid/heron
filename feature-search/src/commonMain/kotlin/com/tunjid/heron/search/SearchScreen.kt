@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,8 +44,11 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
+import com.tunjid.heron.search.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -53,6 +57,8 @@ import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
 import heron.feature_search.generated.resources.top
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -82,6 +88,34 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onPostSearchResultProfileClicked = remember {
+            { result: SearchResult.Post ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            profile = result.post.author,
+                            avatarSharedElementKey = result.post.avatarSharedElementKey(
+                                result.sharedElementPrefix()
+                            )
+                        )
+                    )
+                )
+            }
+        }
+        val onPostSearchResultClicked = remember {
+            { result: SearchResult.Post ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToPost(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            sharedElementPrefix = result.sharedElementPrefix(),
+                            post = result.post,
+                        )
+                    )
+                )
+            }
+        }
         AnimatedContent(
             targetState = state.layout
         ) { targetLayout ->
@@ -102,6 +136,8 @@ internal fun SearchScreen(
                     state = state,
                     sharedElementScope = sharedElementScope,
                     onProfileClicked = onProfileSearchResultClicked,
+                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                    onPostSearchResultClicked = onPostSearchResultClicked,
                 )
             }
         }
@@ -143,10 +179,13 @@ private fun TabbedSearchResults(
     state: State,
     sharedElementScope: SharedElementScope,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
+    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
     Column(
         modifier = modifier
     ) {
+        val scope = rememberCoroutineScope()
         Tabs(
             tabs = listOf(
                 Tab(
@@ -164,7 +203,11 @@ private fun TabbedSearchResults(
             ),
             modifier = Modifier.fillMaxWidth(),
             selectedTabIndex = pagerState.tabIndex,
-            onTabSelected = { },
+            onTabSelected = {
+                scope.launch {
+                    pagerState.animateScrollToPage(it)
+                }
+            },
             onTabReselected = { },
         )
         HorizontalPager(
@@ -184,6 +227,8 @@ private fun TabbedSearchResults(
                     sharedElementScope = sharedElementScope,
                     searchResultStateHolder = searchResultStateHolder,
                     onProfileClicked = onProfileClicked,
+                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                    onPostSearchResultClicked = onPostSearchResultClicked,
                 )
             }
         )
@@ -196,10 +241,13 @@ private fun SearchResults(
     sharedElementScope: SharedElementScope,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
+    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
     when (val state = searchState.value) {
         is SearchState.Post -> {
+            val now = remember { Clock.System.now() }
             val results by rememberUpdatedState(state.results)
             LazyColumn(
                 modifier = modifier,
@@ -212,7 +260,13 @@ private fun SearchResults(
                     items = results,
                     key = { it.post.cid.id },
                     itemContent = { result ->
-
+                        PostSearchResult(
+                            sharedElementScope = sharedElementScope,
+                            now = now,
+                            result = result,
+                            onProfileClicked = onPostSearchResultProfileClicked,
+                            onPostClicked = onPostSearchResultClicked,
+                        )
                     }
                 )
             }
