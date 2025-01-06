@@ -16,11 +16,13 @@
 
 package com.tunjid.heron.search
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,21 +79,27 @@ internal fun SearchScreen(
                 )
             }
         }
-        when (state.layout) {
-            ScreenLayout.Trends -> Unit
-            ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
-                modifier = Modifier.fillMaxSize(),
-                sharedElementScope = sharedElementScope,
-                results = state.autoCompletedProfiles,
-                onProfileClicked = onProfileSearchResultClicked,
-            )
+        AnimatedContent(
+            targetState = state.layout
+        ) { targetLayout ->
+            when (targetLayout) {
+                ScreenLayout.Trends -> Unit
+                ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
+                    modifier = Modifier.fillMaxSize(),
+                    sharedElementScope = sharedElementScope,
+                    results = state.autoCompletedProfiles,
+                    onProfileClicked = onProfileSearchResultClicked,
+                )
 
-            ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
-                modifier = Modifier.fillMaxSize(),
-                pagerState = pagerState,
-                state = state,
-                sharedElementScope = sharedElementScope,
-            )
+                ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    pagerState = pagerState,
+                    state = state,
+                    sharedElementScope = sharedElementScope,
+                )
+            }
         }
     }
 }
@@ -131,7 +139,9 @@ private fun TabbedSearchResults(
     state: State,
     sharedElementScope: SharedElementScope,
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         Tabs(
             tabs = listOf(
                 Tab(
@@ -147,7 +157,7 @@ private fun TabbedSearchResults(
                     hasUpdate = false
                 ),
             ),
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth(),
             selectedTabIndex = pagerState.tabIndex,
             onTabSelected = { },
             onTabReselected = { },

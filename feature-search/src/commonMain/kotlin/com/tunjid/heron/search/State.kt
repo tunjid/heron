@@ -74,7 +74,7 @@ sealed class Action(val key: String) {
         ) : Search()
 
         data class OnSearchQueryConfirmed(
-            val query: String,
+            val isLocalOnly: Boolean,
         ) : Search()
     }
 

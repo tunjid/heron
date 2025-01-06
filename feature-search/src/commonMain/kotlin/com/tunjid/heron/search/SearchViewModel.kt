@@ -136,8 +136,31 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     )
 
                     is Action.Search.OnSearchQueryConfirmed -> {
+                        searchStateHolders.forEach {
+                            val confirmedQuery = when (val searchState = it.state.value) {
+                                is SearchState.Post -> when (searchState.currentQuery) {
+                                    is SearchQuery.Post.Latest -> SearchQuery.Post.Top(
+                                        query = currentQuery,
+                                        isLocalOnly = action.isLocalOnly,
+                                        data = defaultSearchQueryData()
+                                    )
+
+                                    is SearchQuery.Post.Top -> SearchQuery.Post.Top(
+                                        query = currentQuery,
+                                        isLocalOnly = action.isLocalOnly,
+                                        data = defaultSearchQueryData()
+                                    )
+                                }
+
+                                is SearchState.Profile -> SearchQuery.Profile(
+                                    query = currentQuery,
+                                    isLocalOnly = action.isLocalOnly,
+                                    data = defaultSearchQueryData()
+                                )
+                            }
+                            it.accept(SearchState.LoadAround(confirmedQuery))
+                        }
                         copy(
-                            currentQuery = action.query,
                             layout = ScreenLayout.GeneralSearchResults,
                         )
                     }
