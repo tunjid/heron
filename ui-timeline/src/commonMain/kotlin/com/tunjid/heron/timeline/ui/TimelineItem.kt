@@ -46,9 +46,12 @@ import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
-import com.tunjid.heron.ui.posts.PostActions
-import com.tunjid.heron.ui.posts.PostHeadline
-import com.tunjid.heron.ui.posts.PostText
+import com.tunjid.heron.timeline.ui.post.PostActions
+import com.tunjid.heron.timeline.ui.post.PostDate
+import com.tunjid.heron.timeline.ui.post.PostEmbed
+import com.tunjid.heron.timeline.ui.post.PostHeadline
+import com.tunjid.heron.timeline.ui.post.PostReasonLine
+import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.see_more_posts

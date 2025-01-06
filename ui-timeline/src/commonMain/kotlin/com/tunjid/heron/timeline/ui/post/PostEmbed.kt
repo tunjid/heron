@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,12 +16,10 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.timeline.ui.feature.BlockedPostPost
-import com.tunjid.heron.timeline.ui.feature.InvisiblePostPost
-import com.tunjid.heron.timeline.ui.feature.PostExternal
-import com.tunjid.heron.timeline.ui.feature.PostImages
-import com.tunjid.heron.timeline.ui.feature.UnknownPostPost
-import com.tunjid.heron.timeline.ui.feature.VisiblePostPost
+import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
+import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
+import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
+import com.tunjid.heron.timeline.ui.post.feature.VisiblePostPost
 import com.tunjid.heron.ui.SharedElementScope
 import kotlinx.datetime.Instant
 

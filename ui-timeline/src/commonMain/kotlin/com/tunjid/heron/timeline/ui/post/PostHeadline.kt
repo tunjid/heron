@@ -1,4 +1,4 @@
-package com.tunjid.heron.ui.posts
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -6,20 +6,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.TimeDelta
-import com.tunjid.heron.ui.profile.ProfileHandle
-import com.tunjid.heron.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
+import com.tunjid.heron.timeline.ui.profile.ProfileName
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)

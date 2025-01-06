@@ -101,8 +101,8 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.ui.profile.ProfileHandle
-import com.tunjid.heron.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
+import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect

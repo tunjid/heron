@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.feature
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -19,6 +19,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
 

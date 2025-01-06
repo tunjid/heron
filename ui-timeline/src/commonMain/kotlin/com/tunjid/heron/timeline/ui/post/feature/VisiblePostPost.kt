@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.feature
+package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
@@ -16,7 +16,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.posts.PostHeadline
+import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.ui.SharedElementScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
