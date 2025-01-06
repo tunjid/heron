@@ -18,6 +18,7 @@ package com.tunjid.heron.search
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -25,6 +26,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -50,6 +52,7 @@ class SearchStateHolderCreator(
 @Inject
 class ActualSearchStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    searchRepository: SearchRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -77,6 +80,6 @@ class ActualSearchStateHolder(
 )
 
 private fun Flow<Action.OnSearchQueryChanged>.searchQueryMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(currentQuery = it.query)
+    mapLatestToManyMutations {
+        emit { copy(currentQuery = it.query) }
     }

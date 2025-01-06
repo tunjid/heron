@@ -28,6 +28,7 @@ fun RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     signedInProfile: Profile?,
+    title: @Composable () -> Unit = {},
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) = with(sharedElementScope) {
     TopAppBar(
@@ -48,9 +49,7 @@ fun RootDestinationTopAppBar(
                 contentDescription = null,
             )
         },
-        title = {
-
-        },
+        title = title,
         actions = {
             AnimatedVisibility(
                 visible = signedInProfile != null
