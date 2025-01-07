@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
@@ -102,6 +103,12 @@ internal fun NotificationsScreen(
         }
     }
 
+    val onPostInteraction = remember {
+        { interaction: Post.Interaction ->
+
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .padding(horizontal = 8.dp)
@@ -157,6 +164,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                         onPostClicked = onPostClicked,
+                        onPostInteraction = onPostInteraction,
                     )
 
                     is Notification.Quoted -> QuoteRow(
@@ -165,6 +173,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                         onPostClicked = onPostClicked,
+                        onPostInteraction = onPostInteraction,
                     )
 
                     is Notification.RepliedTo -> ReplyRow(
@@ -173,6 +182,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                         onPostClicked = onPostClicked,
+                        onPostInteraction = onPostInteraction,
                     )
 
                     is Notification.Reposted -> RepostRow(

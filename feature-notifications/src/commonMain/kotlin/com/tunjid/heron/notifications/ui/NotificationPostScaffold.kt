@@ -17,9 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.liked
-import com.tunjid.heron.data.core.models.reposted
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -43,6 +42,7 @@ internal fun NotificationPostScaffold(
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     Box {
         Column(
@@ -91,13 +91,15 @@ internal fun NotificationPostScaffold(
                     replyCount = format(notification.associatedPost.replyCount),
                     repostCount = format(notification.associatedPost.repostCount),
                     likeCount = format(notification.associatedPost.likeCount),
-                    reposted = notification.associatedPost.viewerStats.reposted,
-                    liked = notification.associatedPost.viewerStats.liked,
+                    repostUri = notification.associatedPost.viewerStats?.repostUri,
+                    likeUri = notification.associatedPost.viewerStats?.likeUri,
                     iconSize = 16.dp,
                     postId = notification.associatedPost.cid,
+                    postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
+                    onPostInteraction = onPostInteraction,
                 )
             }
         }

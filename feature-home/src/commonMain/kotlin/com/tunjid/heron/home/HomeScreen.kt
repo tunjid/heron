@@ -220,6 +220,7 @@ private fun HomeTimeline(
                     },
                     onImageClicked = {},
                     onReplyToPost = {},
+                    onPostInteraction = {},
                 )
             }
         )

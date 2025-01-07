@@ -30,7 +30,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.ui.SharedElementScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.liked
@@ -44,14 +46,16 @@ fun PostActions(
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,
-    reposted: Boolean,
-    liked: Boolean,
+    repostUri: Uri?,
+    likeUri: Uri?,
     iconSize: Dp,
     postId: Id,
+    postUri: Uri,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(sharedElementScope) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -88,8 +92,21 @@ fun PostActions(
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.repost),
             text = repostCount,
-            onClick = {},
-            tint = if (reposted) {
+            onClick = {
+                onPostInteraction(
+                    when (repostUri) {
+                        null -> Post.Interaction.Create.Repost(
+                            postId = postId,
+                            postUri = postUri,
+                        )
+
+                        else -> Post.Interaction.Delete.RemoveRepost(
+                            repostUri = repostUri,
+                        )
+                    }
+                )
+            },
+            tint = if (repostUri != null) {
                 Color.Green
             } else {
                 MaterialTheme.colorScheme.outline
@@ -106,7 +123,7 @@ fun PostActions(
                         )
                     ),
                 ),
-            icon = if (liked) {
+            icon = if (likeUri != null) {
                 Icons.Rounded.Favorite
             } else {
                 Icons.Rounded.FavoriteBorder
@@ -114,8 +131,21 @@ fun PostActions(
             iconSize = iconSize,
             contentDescription = stringResource(Res.string.liked),
             text = likeCount,
-            onClick = {},
-            tint = if (liked) {
+            onClick = {
+                onPostInteraction(
+                    when (likeUri) {
+                        null -> Post.Interaction.Create.Like(
+                            postId = postId,
+                            postUri = postUri,
+                        )
+
+                        else -> Post.Interaction.Delete.Unlike(
+                            likeUri = likeUri,
+                        )
+                    }
+                )
+            },
+            tint = if (likeUri != null) {
                 Color.Red
             } else {
                 MaterialTheme.colorScheme.outline

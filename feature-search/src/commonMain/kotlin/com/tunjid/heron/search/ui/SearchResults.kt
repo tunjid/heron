@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
@@ -86,6 +87,7 @@ internal fun PostSearchResult(
     result: SearchResult.Post,
     onProfileClicked: (SearchResult.Post) -> Unit,
     onPostClicked: (SearchResult.Post) -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier,
@@ -117,6 +119,7 @@ internal fun PostSearchResult(
                 },
                 onImageClicked = {},
                 onReplyToPost = {},
+                onPostInteraction = onPostInteraction,
             )
         },
     )
@@ -125,7 +128,7 @@ internal fun PostSearchResult(
 internal fun SearchResult.Profile.avatarSharedElementKey(): String =
     "${sharedElementPrefix()}-${profile.did.id}"
 
-internal fun SearchResult.sharedElementPrefix() = when(this) {
+internal fun SearchResult.sharedElementPrefix() = when (this) {
     is SearchResult.Post.Top -> "top-post-search-result"
     is SearchResult.Post.Latest -> "latest-post-search-result"
     is SearchResult.Profile -> "profile-search-result"

@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
@@ -118,6 +119,10 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onPostInteraction = remember {
+            { interaction: Post.Interaction ->
+            }
+        }
         AnimatedContent(
             targetState = state.layout
         ) { targetLayout ->
@@ -140,6 +145,7 @@ internal fun SearchScreen(
                     onProfileClicked = onProfileSearchResultClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
+                    onPostInteraction = onPostInteraction,
                 )
             }
         }
@@ -183,6 +189,7 @@ private fun TabbedSearchResults(
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -230,6 +237,7 @@ private fun TabbedSearchResults(
                     onProfileClicked = onProfileClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
+                    onPostInteraction = onPostInteraction,
                 )
             }
         )
@@ -244,6 +252,7 @@ private fun SearchResults(
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
@@ -266,6 +275,7 @@ private fun SearchResults(
                             result = result,
                             onProfileClicked = onPostSearchResultProfileClicked,
                             onPostClicked = onPostSearchResultClicked,
+                            onPostInteraction = onPostInteraction,
                         )
                     }
                 )

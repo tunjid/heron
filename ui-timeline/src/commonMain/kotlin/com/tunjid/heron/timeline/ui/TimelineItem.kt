@@ -53,6 +53,7 @@ fun TimelineItem(
     onProfileClicked: (Post, Profile) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     TimelineCard(
         item = item,
@@ -88,7 +89,8 @@ fun TimelineItem(
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
                 onImageClicked = onImageClicked,
-                onReplyToPost = onReplyToPost
+                onReplyToPost = onReplyToPost,
+                onPostInteraction = onPostInteraction,
             ) else
                 Post(
                     sharedElementScope = sharedElementScope,
@@ -105,6 +107,7 @@ fun TimelineItem(
                     onPostClicked = onPostClicked,
                     onImageClicked = onImageClicked,
                     onReplyToPost = onReplyToPost,
+                    onPostInteraction = onPostInteraction,
                 )
         }
     }
@@ -120,6 +123,7 @@ private fun ThreadedPost(
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     Column {
         item.posts.forEachIndexed { index, post ->
@@ -153,6 +157,7 @@ private fun ThreadedPost(
                     onPostClicked = onPostClicked,
                     onImageClicked = onImageClicked,
                     onReplyToPost = onReplyToPost,
+                    onPostInteraction = onPostInteraction,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                             modifier = Modifier

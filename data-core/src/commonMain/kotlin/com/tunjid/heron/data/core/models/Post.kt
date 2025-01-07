@@ -135,6 +135,3 @@ data class Post(
         }
     }
 }
-
-val ViewerStats?.liked: Boolean get() = this?.likeUri != null
-val ViewerStats?.reposted: Boolean get() = this?.repostUri != null
