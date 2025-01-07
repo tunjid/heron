@@ -165,7 +165,7 @@ abstract class PostDetailComponent(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Reply(
-                                            to = anchorPost
+                                            parent = anchorPost
                                         )
                                     )
                                 )

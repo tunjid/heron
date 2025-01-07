@@ -91,7 +91,7 @@ data class Post(
 
         @Serializable
         data class Reply(
-            val to: Post
+            val parent: Post
         ): Create()
 
         @Serializable
