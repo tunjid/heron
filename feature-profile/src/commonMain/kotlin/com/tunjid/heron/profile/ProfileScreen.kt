@@ -41,14 +41,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -96,21 +90,20 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
+import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.timeline.ui.profile.ProfileHandle
-import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.edit
-import heron.feature_profile.generated.resources.follow
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.media
@@ -417,28 +410,10 @@ private fun ProfileHeadline(
             AnimatedVisibility(
                 visible = profileRelationship != null || isSignedInProfile,
                 content = {
-                    val follows = profileRelationship?.follows == true
-                    val followStatusText = stringResource(
-                        if (isSignedInProfile) Res.string.edit
-                        else if (follows) Res.string.following
-                        else Res.string.follow
-                    )
-                    FilterChip(
-                        selected = follows,
-                        onClick = {},
-                        shape = RoundedCornerShape(16.dp),
-                        leadingIcon = {
-                            Icon(
-                                imageVector =
-                                if (isSignedInProfile) Icons.Rounded.Edit
-                                else if (follows) Icons.Rounded.Check
-                                else Icons.Rounded.Add,
-                                contentDescription = followStatusText,
-                            )
-                        },
-                        label = {
-                            Text(followStatusText)
-                        },
+                    ProfileRelationship(
+                        relationship = profileRelationship,
+                        isSignedInProfile = isSignedInProfile,
+                        onClick = {}
                     )
                 },
             )

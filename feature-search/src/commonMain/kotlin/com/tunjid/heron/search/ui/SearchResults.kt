@@ -19,6 +19,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
@@ -68,6 +69,13 @@ fun ProfileSearchResult(
                 )
             }
         },
+        action = {
+            ProfileRelationship(
+                relationship = result.relationship,
+                isSignedInProfile = false,
+                onClick = {}
+            )
+        }
     )
 }
 
@@ -117,5 +125,8 @@ internal fun PostSearchResult(
 internal fun SearchResult.Profile.avatarSharedElementKey(): String =
     "${sharedElementPrefix()}-${profile.did.id}"
 
-@Suppress("UnusedReceiverParameter")
-internal fun SearchResult.sharedElementPrefix() = "search-result"
+internal fun SearchResult.sharedElementPrefix() = when(this) {
+    is SearchResult.Post.Top -> "top-post-search-result"
+    is SearchResult.Post.Latest -> "latest-post-search-result"
+    is SearchResult.Profile -> "profile-search-result"
+}
