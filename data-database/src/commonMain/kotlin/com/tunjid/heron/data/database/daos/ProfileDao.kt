@@ -43,6 +43,21 @@ interface ProfileDao {
         otherProfileId: String,
     ): Flow<ProfileProfileRelationshipsEntity?>
 
+    @Query(
+        """
+            SELECT * FROM profileProfileRelationships
+            INNER JOIN profiles
+            ON profileId = did
+            WHERE profileId = :profileId
+            OR handle = :profileId
+            AND otherProfileId IN (:otherProfileIds)
+        """
+    )
+    fun relationships(
+        profileId: String,
+        otherProfileIds: Set<Id>,
+    ): Flow<List<ProfileProfileRelationshipsEntity>>
+
     @Upsert
     suspend fun upsertProfiles(
         entities: List<ProfileEntity>,

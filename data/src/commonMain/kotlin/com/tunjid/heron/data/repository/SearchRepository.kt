@@ -7,6 +7,9 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
@@ -17,6 +20,8 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -76,6 +81,7 @@ interface SearchRepository {
 }
 
 class OfflineSearchRepository @Inject constructor(
+    private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
@@ -99,31 +105,33 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?: return@flow
 
-        response?.posts?.let {
-            multipleEntitySaverProvider.saveInTransaction {
-                val authProfileId = savedStateRepository.signedInProfileId
-                val posts = it.map { postView ->
-                    if (authProfileId != null) add(
-                        viewingProfileId = authProfileId,
-                        postView = postView
-                    )
-                    when(query) {
-                        is SearchQuery.Post.Latest -> SearchResult.Post.Top(
-                            post = postView.post(),
-                        )
-                        is SearchQuery.Post.Top -> SearchResult.Post.Latest(
-                            post = postView.post(),
-                        )
-                    }
-                }
-                emit(
-                    CursorList(
-                        items = posts,
-                        nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-                    )
+        val authProfileId = savedStateRepository.signedInProfileId
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            val posts = response.posts.map { postView ->
+                add(
+                    viewingProfileId = authProfileId,
+                    postView = postView
                 )
+                when (query) {
+                    is SearchQuery.Post.Latest -> SearchResult.Post.Top(
+                        post = postView.post(),
+                    )
+
+                    is SearchQuery.Post.Top -> SearchResult.Post.Latest(
+                        post = postView.post(),
+                    )
+                }
             }
+            emit(
+                CursorList(
+                    items = posts,
+                    nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+                )
+            )
         }
     }
 
@@ -145,34 +153,55 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?: return@flow
+
+        val authProfileId = savedStateRepository.signedInProfileId
+            ?: return@flow
+
+        val profileIds = mutableListOf<Id>()
 
         multipleEntitySaverProvider.saveInTransaction {
-            val authProfileId = savedStateRepository.signedInProfileId
-            response?.actors
-                ?.mapNotNull { profileView ->
-                    if (authProfileId != null) add(
-                        viewingProfileId = authProfileId,
-                        profileView = profileView,
-                    )
-                    savedStateRepository.signedInProfileId?.let {
-                        SearchResult.Profile(
-                            profile = profileView.profile(),
-                            relationship = profileView.profileProfileRelationshipsEntities(
-                                viewingProfileId = it
-                            ).first().asExternalModel()
-                        )
-                    }
-                }
-                ?.let { profiles ->
-                    emit(
-                        CursorList(
-                            items = profiles,
-                            nextCursor = response.cursor?.let(Cursor::Next)
-                                ?: Cursor.Pending
-                        )
-                    )
-                }
+            response.actors.forEach { profileView ->
+                profileIds.add(profileView.did.did.let(::Id))
+                add(
+                    viewingProfileId = authProfileId,
+                    profileView = profileView,
+                )
+            }
         }
+        emitAll(
+            combine(
+                flow = profileDao.profiles(profileIds),
+                flow2 = profileDao.relationships(
+                    profileId = authProfileId.id,
+                    otherProfileIds = profileIds.toSet()
+                ),
+                transform = { profiles, relationships ->
+                    val otherProfileIdsToRelationships = relationships
+                        .associateBy { it.otherProfileId }
+                    profiles
+                        .sortedBy { profile ->
+                            response.actors.indexOfFirst { profile.did.id == it.did.did }
+                        }
+                        .mapNotNull { profile ->
+                            SearchResult.Profile(
+                                profile = profile.asExternalModel(),
+                                relationship = otherProfileIdsToRelationships[profile.did]
+                                    ?.asExternalModel()
+                                    ?: return@mapNotNull null
+                            )
+                        }
+                        .let { results ->
+                            CursorList(
+                                items = results,
+                                nextCursor = response.cursor
+                                    ?.let(Cursor::Next)
+                                    ?: Cursor.Pending
+                            )
+                        }
+                }
+            )
+        )
     }
 
     override fun autoCompleteProfileSearch(
@@ -188,25 +217,26 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?: return@flow
+
+        val authProfileId = savedStateRepository.signedInProfileId
+            ?: return@flow
 
         multipleEntitySaverProvider.saveInTransaction {
-            val authProfileId = savedStateRepository.signedInProfileId
-            response?.actors
-                ?.mapNotNull { profileView ->
-                    if (authProfileId != null) add(
+            response.actors
+                .map { profileView ->
+                    add(
                         viewingProfileId = authProfileId,
                         profileView = profileView,
                     )
-                    savedStateRepository.signedInProfileId?.let {
-                        SearchResult.Profile(
-                            profile = profileView.profile(),
-                            relationship = profileView.profileProfileRelationshipsEntities(
-                                viewingProfileId = it
-                            ).first().asExternalModel()
-                        )
-                    }
+                    SearchResult.Profile(
+                        profile = profileView.profile(),
+                        relationship = profileView.profileProfileRelationshipsEntities(
+                            viewingProfileId = authProfileId
+                        ).first().asExternalModel()
+                    )
                 }
-                ?.let { profiles ->
+                .let { profiles ->
                     emit(
                         profiles
                     )
