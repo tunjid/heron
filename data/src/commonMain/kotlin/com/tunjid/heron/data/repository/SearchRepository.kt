@@ -3,6 +3,7 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.feed.SearchPostsSort
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.SearchResult
@@ -22,6 +23,7 @@ import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -90,158 +92,167 @@ class OfflineSearchRepository @Inject constructor(
     override fun postSearch(
         query: SearchQuery.Post,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Post>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.searchPosts(
-                params = SearchPostsQueryParams(
-                    q = query.query,
-                    limit = query.data.limit,
-                    cursor = when (cursor) {
-                        Cursor.Initial -> cursor.value
-                        is Cursor.Next -> cursor.value
-                        Cursor.Pending -> null
-                    },
-                )
-            )
-        }
-            .getOrNull()
-            ?: return@flow
-
-        val authProfileId = savedStateRepository.signedInProfileId
-            ?: return@flow
-
-        multipleEntitySaverProvider.saveInTransaction {
-            val posts = response.posts.map { postView ->
-                add(
-                    viewingProfileId = authProfileId,
-                    postView = postView
-                )
-                when (query) {
-                    is SearchQuery.Post.Latest -> SearchResult.Post.Top(
-                        post = postView.post(),
+    ): Flow<CursorList<SearchResult.Post>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.searchPosts(
+                    params = SearchPostsQueryParams(
+                        q = query.query,
+                        sort = when (query) {
+                            is SearchQuery.Post.Latest -> SearchPostsSort.Latest
+                            is SearchQuery.Post.Top -> SearchPostsSort.Top
+                        },
+                        limit = query.data.limit,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
                     )
-
-                    is SearchQuery.Post.Top -> SearchResult.Post.Latest(
-                        post = postView.post(),
-                    )
-                }
+                )
             }
-            emit(
-                CursorList(
-                    items = posts,
-                    nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+                .getOrNull()
+                ?: return@flow
+
+            val authProfileId = savedStateRepository.signedInProfileId
+                ?: return@flow
+
+            multipleEntitySaverProvider.saveInTransaction {
+                val posts = response.posts.map { postView ->
+                    add(
+                        viewingProfileId = authProfileId,
+                        postView = postView
+                    )
+                    when (query) {
+                        is SearchQuery.Post.Latest -> SearchResult.Post.Top(
+                            post = postView.post(),
+                        )
+
+                        is SearchQuery.Post.Top -> SearchResult.Post.Latest(
+                            post = postView.post(),
+                        )
+                    }
+                }
+                emit(
+                    CursorList(
+                        items = posts,
+                        nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+                    )
                 )
-            )
+            }
         }
-    }
 
     override fun profileSearch(
         query: SearchQuery.Profile,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Profile>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.searchActors(
-                params = SearchActorsQueryParams(
-                    q = query.query,
-                    limit = query.data.limit,
-                    cursor = when (cursor) {
-                        Cursor.Initial -> cursor.value
-                        is Cursor.Next -> cursor.value
-                        Cursor.Pending -> null
-                    },
-                )
-            )
-        }
-            .getOrNull()
-            ?: return@flow
-
-        val authProfileId = savedStateRepository.signedInProfileId
-            ?: return@flow
-
-        val profileIds = mutableListOf<Id>()
-
-        multipleEntitySaverProvider.saveInTransaction {
-            response.actors.forEach { profileView ->
-                profileIds.add(profileView.did.did.let(::Id))
-                add(
-                    viewingProfileId = authProfileId,
-                    profileView = profileView,
+    ): Flow<CursorList<SearchResult.Profile>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.searchActors(
+                    params = SearchActorsQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
+                    )
                 )
             }
-        }
-        emitAll(
-            combine(
-                flow = profileDao.profiles(profileIds),
-                flow2 = profileDao.relationships(
-                    profileId = authProfileId.id,
-                    otherProfileIds = profileIds.toSet()
-                ),
-                transform = { profiles, relationships ->
-                    val otherProfileIdsToRelationships = relationships
-                        .associateBy { it.otherProfileId }
-                    profiles
-                        .sortedBy { profile ->
-                            response.actors.indexOfFirst { profile.did.id == it.did.did }
-                        }
-                        .mapNotNull { profile ->
-                            SearchResult.Profile(
-                                profile = profile.asExternalModel(),
-                                relationship = otherProfileIdsToRelationships[profile.did]
-                                    ?.asExternalModel()
-                                    ?: return@mapNotNull null
-                            )
-                        }
-                        .let { results ->
-                            CursorList(
-                                items = results,
-                                nextCursor = response.cursor
-                                    ?.let(Cursor::Next)
-                                    ?: Cursor.Pending
-                            )
-                        }
-                }
-            )
-        )
-    }
+                .getOrNull()
+                ?: return@flow
 
-    override fun autoCompleteProfileSearch(
-        query: SearchQuery.Profile,
-        cursor: Cursor,
-    ): Flow<List<SearchResult.Profile>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.searchActorsTypeahead(
-                params = SearchActorsTypeaheadQueryParams(
-                    q = query.query,
-                    limit = query.data.limit,
-                )
-            )
-        }
-            .getOrNull()
-            ?: return@flow
+            val authProfileId = savedStateRepository.signedInProfileId
+                ?: return@flow
 
-        val authProfileId = savedStateRepository.signedInProfileId
-            ?: return@flow
+            val profileIds = mutableListOf<Id>()
 
-        multipleEntitySaverProvider.saveInTransaction {
-            response.actors
-                .map { profileView ->
+            multipleEntitySaverProvider.saveInTransaction {
+                response.actors.forEach { profileView ->
+                    profileIds.add(profileView.did.did.let(::Id))
                     add(
                         viewingProfileId = authProfileId,
                         profileView = profileView,
                     )
-                    SearchResult.Profile(
-                        profile = profileView.profile(),
-                        relationship = profileView.profileProfileRelationshipsEntities(
-                            viewingProfileId = authProfileId
-                        ).first().asExternalModel()
-                    )
                 }
-                .let { profiles ->
-                    emit(
+            }
+            emitAll(
+                combine(
+                    flow = profileDao.profiles(profileIds),
+                    flow2 = profileDao.relationships(
+                        profileId = authProfileId.id,
+                        otherProfileIds = profileIds.toSet()
+                    ),
+                    transform = { profiles, relationships ->
+                        val otherProfileIdsToRelationships = relationships
+                            .associateBy { it.otherProfileId }
                         profiles
-                    )
-                }
+                            .sortedBy { profile ->
+                                response.actors.indexOfFirst { profile.did.id == it.did.did }
+                            }
+                            .mapNotNull { profile ->
+                                SearchResult.Profile(
+                                    profile = profile.asExternalModel(),
+                                    relationship = otherProfileIdsToRelationships[profile.did]
+                                        ?.asExternalModel()
+                                        ?: return@mapNotNull null
+                                )
+                            }
+                            .let { results ->
+                                CursorList(
+                                    items = results,
+                                    nextCursor = response.cursor
+                                        ?.let(Cursor::Next)
+                                        ?: Cursor.Pending
+                                )
+                            }
+                    }
+                )
+            )
         }
-    }
 
+    override fun autoCompleteProfileSearch(
+        query: SearchQuery.Profile,
+        cursor: Cursor,
+    ): Flow<List<SearchResult.Profile>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.searchActorsTypeahead(
+                    params = SearchActorsTypeaheadQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                    )
+                )
+            }
+                .getOrNull()
+                ?: return@flow
+
+            val authProfileId = savedStateRepository.signedInProfileId
+                ?: return@flow
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.actors
+                    .map { profileView ->
+                        add(
+                            viewingProfileId = authProfileId,
+                            profileView = profileView,
+                        )
+                        SearchResult.Profile(
+                            profile = profileView.profile(),
+                            relationship = profileView.profileProfileRelationshipsEntities(
+                                viewingProfileId = authProfileId
+                            ).first().asExternalModel()
+                        )
+                    }
+                    .let { profiles ->
+                        emit(
+                            profiles
+                        )
+                    }
+            }
+        }
 }
