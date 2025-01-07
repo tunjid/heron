@@ -167,6 +167,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
 
                     Action.Search.Close -> copy(
                         currentQuery = "",
+                        autoCompletedProfiles = emptyList(),
                         layout = ScreenLayout.AutoCompleteProfiles,
                     )
                 }
