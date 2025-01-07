@@ -110,6 +110,30 @@ data class Post(
             val links: List<Link>,
         )
     }
+
+    sealed class Interaction {
+        sealed class Create: Interaction(){
+            data class Like(
+                val postId: Id,
+                val postUri: Uri,
+            ) : Create()
+
+            data class Repost(
+                val postId: Id,
+                val postUri: Uri,
+            ) : Create()
+        }
+
+        sealed class Delete: Interaction(){
+            data class Unlike(
+                val likeUri: Uri,
+            ) : Delete()
+
+            data class RemoveRepost(
+                val repostUri: Uri,
+            ) : Delete()
+        }
+    }
 }
 
 val ViewerStats?.liked: Boolean get() = this?.likeUri != null

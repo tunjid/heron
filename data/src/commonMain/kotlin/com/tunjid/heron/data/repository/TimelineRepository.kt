@@ -23,6 +23,7 @@ import app.bsky.richtext.FacetLink
 import app.bsky.richtext.FacetMention
 import app.bsky.richtext.FacetTag
 import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -66,16 +67,20 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.KSerializer
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.model.JsonContent
 import sh.christian.ozone.api.response.AtpResponse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
+import app.bsky.feed.Repost as BskyRepost
 import sh.christian.ozone.api.Uri as BskyUri
 
 class TimelineQuery(
@@ -118,6 +123,10 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>>
+
+    suspend fun sendInteraction(
+        interaction: Post.Interaction,
+    )
 
     suspend fun createPost(
         request: Post.Create.Request,
@@ -524,15 +533,68 @@ class OfflineTimelineRepository(
                 },
                 createdAt = Clock.System.now(),
             )
-                .let {
-                    BlueskyJson.encodeToString(BskyPost.serializer(), it)
-                }
-                .let {
-                    BlueskyJson.decodeFromString(it)
-                },
+                .asJsonContent(BskyPost.serializer()),
         )
 
         networkService.api.createRecord(createRecordRequest)
+    }
+
+    override suspend fun sendInteraction(
+        interaction: Post.Interaction,
+    ) {
+        val authorId = savedStateRepository.signedInProfileId ?: return
+        when (interaction) {
+            is Post.Interaction.Create -> runCatchingWithNetworkRetry {
+                networkService.api.createRecord(
+                    CreateRecordRequest(
+                        repo = authorId.id.let(::Did),
+                        collection = Nsid(
+                            when (interaction) {
+                                is Post.Interaction.Create.Like -> LikeCollection
+                                is Post.Interaction.Create.Repost -> RepostCollection
+                            }
+                        ),
+                        record = when (interaction) {
+                            is Post.Interaction.Create.Like -> BskyLike(
+                                subject = StrongRef(
+                                    cid = interaction.postId.id.let(::Cid),
+                                    uri = interaction.postUri.uri.let(::AtUri),
+                                ),
+                                createdAt = Clock.System.now(),
+                            ).asJsonContent(BskyLike.serializer())
+
+                            is Post.Interaction.Create.Repost -> BskyRepost(
+                                subject = StrongRef(
+                                    cid = interaction.postId.id.let(::Cid),
+                                    uri = interaction.postUri.uri.let(::AtUri),
+                                ),
+                                createdAt = Clock.System.now(),
+                            ).asJsonContent(BskyRepost.serializer())
+                        },
+                    )
+                )
+            }
+
+            is Post.Interaction.Delete -> runCatchingWithNetworkRetry {
+                networkService.api.deleteRecord(
+                    DeleteRecordRequest(
+                        repo = authorId.id.let(::Did),
+                        collection = Nsid(
+                            when (interaction) {
+                                is Post.Interaction.Delete.RemoveRepost -> LikeCollection
+                                is Post.Interaction.Delete.Unlike -> RepostCollection
+                            }
+                        ),
+                        rkey = when (interaction) {
+                            is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri.uri
+                            is Post.Interaction.Delete.Unlike -> interaction.likeUri.uri
+                        }
+                    )
+                )
+
+            }
+        }
+
     }
 
     private fun <NetworkResponse : Any> nextCursorFlow(
@@ -773,3 +835,13 @@ private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
+
+private fun <T> T.asJsonContent(
+    serializer: KSerializer<T>,
+): JsonContent = BlueskyJson.decodeFromString(
+    BlueskyJson.encodeToString(serializer, this)
+)
+
+private const val RepostCollection = "app.bsky.feed.repost"
+
+private const val LikeCollection = "app.bsky.feed.like"
