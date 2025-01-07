@@ -50,6 +50,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.ComposeFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
@@ -141,6 +142,17 @@ abstract class PostDetailComponent(
                 },
                 topBar = {
                     TopBar { viewModel.accept(Action.Navigate.Pop) }
+                },
+                floatingActionButton = {
+                    ComposeFab(
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            },
+                        sharedElementScope = sharedElementScope,
+                        expanded = true,
+                        onClick = {}
+                    )
                 },
                 bottomBar = {
                     BottomBar(

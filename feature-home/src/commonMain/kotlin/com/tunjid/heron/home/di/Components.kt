@@ -44,6 +44,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.ComposeFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
@@ -147,6 +148,17 @@ abstract class HomeComponent(
                             .background(MaterialTheme.colorScheme.surface)
                             .height(statusBarHeight)
                             .fillMaxWidth()
+                    )
+                },
+                floatingActionButton = {
+                    ComposeFab(
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            },
+                        sharedElementScope = sharedElementScope,
+                        expanded = true,
+                        onClick = {}
                     )
                 },
                 bottomBar = {
