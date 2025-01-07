@@ -1,4 +1,4 @@
-package com.tunjid.heron.ui.profile
+package com.tunjid.heron.timeline.ui.profile
 
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme

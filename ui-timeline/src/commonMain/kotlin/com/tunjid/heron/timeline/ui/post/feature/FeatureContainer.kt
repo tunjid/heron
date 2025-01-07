@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.feature
+package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

@@ -1,6 +1,7 @@
-package com.tunjid.heron.timeline.ui.feature
+package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.runtime.Composable
+import com.tunjid.heron.timeline.ui.post.PostFeatureTextContent
 
 @Composable
 internal fun BlockedPostPost(onClick: (() -> Unit)?) {

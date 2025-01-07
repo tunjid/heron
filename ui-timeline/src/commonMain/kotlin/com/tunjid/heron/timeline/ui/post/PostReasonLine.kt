@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy

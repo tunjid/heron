@@ -1,9 +1,10 @@
-package com.tunjid.heron.notifications.ui
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,84 +17,94 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.SharedElementScope
-import com.tunjid.heron.timeline.ui.post.PostActions
-import com.tunjid.heron.timeline.ui.post.PostHeadline
-import com.tunjid.heron.timeline.ui.post.PostText
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
-internal fun NotificationPostScaffold(
+fun Post(
     sharedElementScope: SharedElementScope,
+    modifier: Modifier = Modifier,
     now: Instant,
-    notification: Notification.PostAssociated,
-    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
-    onPostClicked: (Notification.PostAssociated) -> Unit,
+    post: Post,
+    embed: Embed?,
+    isAnchoredInTimeline: Boolean,
+    avatarShape: RoundedPolygonShape,
+    sharedElementPrefix: String,
+    createdAt: Instant,
+    onProfileClicked: (Post, Profile) -> Unit,
+    onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
+    timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    Box {
+    Box(modifier = modifier) {
+        timeline()
         Column(
             modifier = Modifier,
         ) {
             PostAttribution(
                 sharedElementScope = sharedElementScope,
-                avatarShape = RoundedPolygonShape.Circle,
+                avatarShape = avatarShape,
                 onProfileClicked = onProfileClicked,
-                notification = notification,
-                sharedElementPrefix = notification.sharedElementPrefix(),
+                post = post,
+                sharedElementPrefix = sharedElementPrefix,
                 now = now,
-                createdAt = notification.indexedAt
+                createdAt = createdAt,
             )
             Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.padding(
-                    start = 64.dp,
+                    start = 24.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
-                    post = notification.associatedPost,
-                    sharedElementPrefix = notification.sharedElementPrefix(),
+                    post = post,
+                    sharedElementPrefix = sharedElementPrefix,
                     sharedElementScope = sharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { onPostClicked(notification) },
-                    onProfileClicked = { _, profile ->
-                        onProfileClicked(notification, profile)
-                    }
+                    onClick = { onPostClicked(post) },
+                    onProfileClicked = onProfileClicked
                 )
-//                PostEmbed(
-//                    now = now,
-//                    embed = embed,
-//                    quote = post.quote,
-//                    postId = post.cid,
-//                    sharedElementPrefix = sharedElementPrefix,
-//                    sharedElementScope = sharedElementScope,
-//                    onOpenImage = onImageClicked,
-//                    onPostClicked = onPostClicked,
-//                )
-
+                PostEmbed(
+                    now = now,
+                    embed = embed,
+                    quote = post.quote,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    sharedElementScope = sharedElementScope,
+                    onOpenImage = onImageClicked,
+                    onPostClicked = onPostClicked,
+                )
+                if (isAnchoredInTimeline) PostDate(
+                    modifier = Modifier.padding(
+                        vertical = 8.dp,
+                    ),
+                    time = post.createdAt,
+                )
                 PostActions(
-                    replyCount = format(notification.associatedPost.replyCount),
-                    repostCount = format(notification.associatedPost.repostCount),
-                    likeCount = format(notification.associatedPost.likeCount),
-                    reposted = notification.associatedPost.viewerStats?.reposted == true,
-                    liked = notification.associatedPost.viewerStats?.liked == true,
+                    replyCount = format(post.replyCount),
+                    repostCount = format(post.repostCount),
+                    likeCount = format(post.likeCount),
+                    reposted = post.viewerStats?.reposted == true,
+                    liked = post.viewerStats?.liked == true,
                     iconSize = 16.dp,
-                    postId = notification.associatedPost.cid,
-                    sharedElementPrefix = notification.sharedElementPrefix(),
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
                     sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
                 )
@@ -102,25 +113,25 @@ internal fun NotificationPostScaffold(
     }
 }
 
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PostAttribution(
     sharedElementScope: SharedElementScope,
     avatarShape: RoundedPolygonShape,
-    onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
-    notification: Notification.PostAssociated,
+    onProfileClicked: (Post, Profile) -> Unit,
+    post: Post,
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
 ) = with(sharedElementScope) {
-    val post = notification.associatedPost
     AttributionLayout(
         avatar = {
             updatedMovableSharedElementOf(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(avatarShape)
-                    .clickable { onProfileClicked(notification, post.author) },
+                    .clickable { onProfileClicked(post, post.author) },
                 key = post.avatarSharedElementKey(sharedElementPrefix),
                 state = remember(post.author.avatar) {
                     ImageArgs(
@@ -146,10 +157,7 @@ private fun PostAttribution(
             )
         }
     )
-//    if (item is TimelineItem.Reply) {
+    //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
 }
-
-fun Notification.PostAssociated.sharedElementPrefix(
-): String = "notification-${cid.id}"

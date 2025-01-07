@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

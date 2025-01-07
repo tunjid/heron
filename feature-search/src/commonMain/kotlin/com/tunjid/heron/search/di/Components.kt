@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -130,6 +133,11 @@ abstract class SearchComponent(
                                     viewModel.accept(
                                         Action.Search.OnSearchQueryChanged(query)
                                     )
+                                },
+                                onQueryConfirmed = {
+                                    viewModel.accept(
+                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false)
+                                    )
                                 }
                             )
                         },
@@ -172,6 +180,7 @@ abstract class SearchComponent(
 private fun SearchBar(
     searchQuery: String,
     onQueryChanged: (String) -> Unit,
+    onQueryConfirmed: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -190,6 +199,12 @@ private fun SearchBar(
             textStyle = MaterialTheme.typography.labelLarge,
             singleLine = true,
             shape = RoundedCornerShape(36.dp),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search,
+            ),
+            keyboardActions = KeyboardActions {
+                onQueryConfirmed()
+            },
         )
         AnimatedVisibility(
             modifier = Modifier

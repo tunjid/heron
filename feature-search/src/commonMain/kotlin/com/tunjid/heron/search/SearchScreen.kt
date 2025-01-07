@@ -16,38 +16,51 @@
 
 package com.tunjid.heron.search
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
+import com.tunjid.heron.search.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
 import heron.feature_search.generated.resources.top
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -77,21 +90,58 @@ internal fun SearchScreen(
                 )
             }
         }
-        when (state.layout) {
-            ScreenLayout.Trends -> Unit
-            ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
-                modifier = Modifier.fillMaxSize(),
-                sharedElementScope = sharedElementScope,
-                results = state.autoCompletedProfiles,
-                onProfileClicked = onProfileSearchResultClicked,
-            )
+        val onPostSearchResultProfileClicked = remember {
+            { result: SearchResult.Post ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            profile = result.post.author,
+                            avatarSharedElementKey = result.post.avatarSharedElementKey(
+                                result.sharedElementPrefix()
+                            )
+                        )
+                    )
+                )
+            }
+        }
+        val onPostSearchResultClicked = remember {
+            { result: SearchResult.Post ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToPost(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            sharedElementPrefix = result.sharedElementPrefix(),
+                            post = result.post,
+                        )
+                    )
+                )
+            }
+        }
+        AnimatedContent(
+            targetState = state.layout
+        ) { targetLayout ->
+            when (targetLayout) {
+                ScreenLayout.Trends -> Unit
+                ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
+                    modifier = Modifier.fillMaxSize(),
+                    sharedElementScope = sharedElementScope,
+                    results = state.autoCompletedProfiles,
+                    onProfileClicked = onProfileSearchResultClicked,
+                )
 
-            ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
-                modifier = Modifier.fillMaxSize(),
-                pagerState = pagerState,
-                state = state,
-                sharedElementScope = sharedElementScope,
-            )
+                ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    pagerState = pagerState,
+                    state = state,
+                    sharedElementScope = sharedElementScope,
+                    onProfileClicked = onProfileSearchResultClicked,
+                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                    onPostSearchResultClicked = onPostSearchResultClicked,
+                )
+            }
         }
     }
 }
@@ -130,8 +180,14 @@ private fun TabbedSearchResults(
     pagerState: PagerState,
     state: State,
     sharedElementScope: SharedElementScope,
+    onProfileClicked: (SearchResult.Profile) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
+    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
+        val scope = rememberCoroutineScope()
         Tabs(
             tabs = listOf(
                 Tab(
@@ -147,14 +203,17 @@ private fun TabbedSearchResults(
                     hasUpdate = false
                 ),
             ),
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth(),
             selectedTabIndex = pagerState.tabIndex,
-            onTabSelected = { },
+            onTabSelected = {
+                scope.launch {
+                    pagerState.animateScrollToPage(it)
+                }
+            },
             onTabReselected = { },
         )
         HorizontalPager(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
                 .clip(
                     RoundedCornerShape(
                         topStart = 16.dp,
@@ -168,6 +227,9 @@ private fun TabbedSearchResults(
                 SearchResults(
                     sharedElementScope = sharedElementScope,
                     searchResultStateHolder = searchResultStateHolder,
+                    onProfileClicked = onProfileClicked,
+                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                    onPostSearchResultClicked = onPostSearchResultClicked,
                 )
             }
         )
@@ -176,8 +238,75 @@ private fun TabbedSearchResults(
 
 @Composable
 private fun SearchResults(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     searchResultStateHolder: SearchResultStateHolder,
+    onProfileClicked: (SearchResult.Profile) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
+    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
+    val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    when (val state = searchState.value) {
+        is SearchState.Post -> {
+            val now = remember { Clock.System.now() }
+            val results by rememberUpdatedState(state.results)
+            LazyColumn(
+                modifier = modifier,
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(
+                    items = results,
+                    key = { it.post.cid.id },
+                    itemContent = { result ->
+                        PostSearchResult(
+                            sharedElementScope = sharedElementScope,
+                            now = now,
+                            result = result,
+                            onProfileClicked = onPostSearchResultProfileClicked,
+                            onPostClicked = onPostSearchResultClicked,
+                        )
+                    }
+                )
+            }
+            listState.PivotedTilingEffect(
+                items = results,
+                onQueryChanged = { query ->
+                    searchResultStateHolder.accept(
+                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                    )
+                }
+            )
+        }
 
+        is SearchState.Profile -> {
+            val results by rememberUpdatedState(state.results)
+            LazyColumn(
+                modifier = modifier,
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(
+                    items = results,
+                    key = { it.profile.did.id },
+                    itemContent = { result ->
+                        ProfileSearchResult(
+                            sharedElementScope = sharedElementScope,
+                            result = result,
+                            onProfileClicked = onProfileClicked
+                        )
+                    }
+                )
+            }
+            listState.PivotedTilingEffect(
+                items = results,
+                onQueryChanged = { query ->
+                    searchResultStateHolder.accept(
+                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                    )
+                }
+            )
+        }
+    }
 }

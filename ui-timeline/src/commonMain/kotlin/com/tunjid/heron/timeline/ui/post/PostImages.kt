@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.feature
+package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy

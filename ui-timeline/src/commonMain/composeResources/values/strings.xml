@@ -6,4 +6,14 @@
     <string name="pinned">Pinned</string>
     <string name="liked">Liked</string>
     <string name="see_more_posts">See more posts</string>
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="follow">Follow</string>
+    <string name="block">Block</string>
+    <string name="blocked">Blocked</string>
+    <string name="posts">Posts</string>
+    <string name="edit">Edit</string>
+    <string name="back">Back</string>
+    <string name="replies">Replies</string>
+    <string name="media">Media</string>
 </resources>
