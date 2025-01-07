@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -25,6 +28,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val signedInProfile: Profile? = null,
     @Transient
     val messages: List<String> = emptyList(),
 )

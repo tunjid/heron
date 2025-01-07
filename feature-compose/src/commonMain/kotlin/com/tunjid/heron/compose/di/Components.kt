@@ -26,6 +26,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.compose.ActualComposeStateHolder
+import com.tunjid.heron.compose.ComposeScreen
+import com.tunjid.heron.compose.ComposeStateHolderCreator
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
@@ -33,9 +36,6 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
-import com.tunjid.heron.compose.ActualComposeStateHolder
-import com.tunjid.heron.compose.ComposeScreen
-import com.tunjid.heron.compose.ComposeStateHolderCreator
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -73,7 +73,7 @@ abstract class ComposeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: ComposeStateHolderCreator
+        creator: ComposeStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -100,6 +100,8 @@ abstract class ComposeComponent(
                         sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )

@@ -32,6 +32,7 @@ kotlin {
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
 
+                implementation(libs.codepoints.deluxe)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)

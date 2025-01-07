@@ -18,15 +18,19 @@ package com.tunjid.heron.compose
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
@@ -36,17 +40,18 @@ typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ComposeStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualComposeStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualComposeStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualComposeStateHolder = creator.invoke(scope, route)
 }
 
 @Inject
 class ActualComposeStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    authTokenRepository: AuthTokenRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -57,13 +62,15 @@ class ActualComposeStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadSignedInProfileMutations(
+            authTokenRepository = authTokenRepository,
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -72,3 +79,10 @@ class ActualComposeStateHolder(
         }
     }
 )
+
+private fun loadSignedInProfileMutations(
+    authTokenRepository: AuthTokenRepository,
+): Flow<Mutation<State>> =
+    authTokenRepository.signedInUser.mapToMutation {
+        copy(signedInProfile = it)
+    }
