@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.models.Post.ViewerStats
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -44,12 +45,12 @@ data class Post(
         val text: String,
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
-    ): ByteSerializable
+    ) : ByteSerializable
 
     @Serializable
     data class ViewerStats(
-        val liked: Boolean,
-        val reposted: Boolean,
+        val likeUri: Uri?,
+        val repostUri: Uri?,
         val threadMuted: Boolean,
         val replyDisabled: Boolean,
         val embeddingDisabled: Boolean,
@@ -87,21 +88,21 @@ data class Post(
     }
 
     @Serializable
-    sealed class Create: ByteSerializable {
+    sealed class Create : ByteSerializable {
 
         @Serializable
         data class Reply(
             val parent: Post,
-            val root: Post
-        ): Create()
+            val root: Post,
+        ) : Create()
 
         @Serializable
         data class Mention(
-            val profile: Profile
-        ): Create()
+            val profile: Profile,
+        ) : Create()
 
         @Serializable
-        data object Timeline: Create()
+        data object Timeline : Create()
 
         data class Request(
             val authorId: Id,
@@ -110,3 +111,6 @@ data class Post(
         )
     }
 }
+
+val ViewerStats?.liked: Boolean get() = this?.likeUri != null
+val ViewerStats?.reposted: Boolean get() = this?.repostUri != null

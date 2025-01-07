@@ -158,8 +158,8 @@ internal fun ViewerState.postViewerStatisticsEntity(
     postId: Id,
 ) = PostViewerStatisticsEntity(
     postId = postId,
-    liked = like != null,
-    reposted = repost != null,
+    likeUri = like?.atUri?.let(::Uri),
+    repostUri = repost?.atUri?.let(::Uri),
     threadMuted = threadMuted == true,
     replyDisabled = replyDisabled == true,
     embeddingDisabled = embeddingDisabled == true,

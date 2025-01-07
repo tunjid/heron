@@ -168,8 +168,8 @@ fun PopulatedPostEntity.asExternalModel(
 
 fun PostViewerStatisticsEntity.asExternalModel() =
     Post.ViewerStats(
-        liked = liked,
-        reposted = reposted,
+        likeUri = likeUri,
+        repostUri = repostUri,
         threadMuted = threadMuted,
         replyDisabled = replyDisabled,
         embeddingDisabled = embeddingDisabled,

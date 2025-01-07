@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.liked
+import com.tunjid.heron.data.core.models.reposted
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -100,8 +102,8 @@ fun Post(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
                     likeCount = format(post.likeCount),
-                    reposted = post.viewerStats?.reposted == true,
-                    liked = post.viewerStats?.liked == true,
+                    reposted = post.viewerStats.reposted,
+                    liked = post.viewerStats.liked,
                     iconSize = 16.dp,
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,

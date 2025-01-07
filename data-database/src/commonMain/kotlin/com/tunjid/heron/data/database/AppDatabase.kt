@@ -3,10 +3,12 @@ package com.tunjid.heron.data.database
 import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
@@ -40,7 +42,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshi
 import kotlinx.datetime.Instant
 
 @Database(
-    version = 6,
+    version = 7,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -70,6 +72,11 @@ import kotlinx.datetime.Instant
         AutoMigration(from = 3, to = 4),
         // serializedPostRecordMigration
         AutoMigration(from = 4, to = 5),
+        AutoMigration (
+            from = 6,
+            to = 7,
+            spec = PostViewerStatisticsAutoMigration::class
+        )
     ],
     exportSchema = true,
 )
@@ -207,3 +214,7 @@ object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
     }
 }
+
+@DeleteColumn(tableName = "postViewerStatistics", columnName = "liked")
+@DeleteColumn(tableName = "postViewerStatistics", columnName = "reposted")
+class PostViewerStatisticsAutoMigration : AutoMigrationSpec

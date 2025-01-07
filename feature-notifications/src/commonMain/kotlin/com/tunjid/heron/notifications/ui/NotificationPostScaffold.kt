@@ -18,17 +18,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.liked
+import com.tunjid.heron.data.core.models.reposted
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.timeline.ui.post.PostActions
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostText
+import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
@@ -89,8 +91,8 @@ internal fun NotificationPostScaffold(
                     replyCount = format(notification.associatedPost.replyCount),
                     repostCount = format(notification.associatedPost.repostCount),
                     likeCount = format(notification.associatedPost.likeCount),
-                    reposted = notification.associatedPost.viewerStats?.reposted == true,
-                    liked = notification.associatedPost.viewerStats?.liked == true,
+                    reposted = notification.associatedPost.viewerStats.reposted,
+                    liked = notification.associatedPost.viewerStats.liked,
                     iconSize = 16.dp,
                     postId = notification.associatedPost.cid,
                     sharedElementPrefix = notification.sharedElementPrefix(),
