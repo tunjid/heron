@@ -3,4 +3,5 @@
     <string name="latest">Latest</string>
     <string name="people">People</string>
     <string name="search">Search</string>
+    <string name="close_search">Close search</string>
 </resources>

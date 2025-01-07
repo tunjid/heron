@@ -17,14 +17,21 @@
 package com.tunjid.heron.search.di
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -52,14 +59,17 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchStateHolder
+import com.tunjid.heron.search.ScreenLayout
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
+import com.tunjid.heron.search.ui.SearchBar
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_search.generated.resources.Res
+import heron.feature_search.generated.resources.close_search
 import heron.feature_search.generated.resources.search
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
@@ -129,16 +139,8 @@ abstract class SearchComponent(
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
-                                onQueryChanged = { query ->
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryChanged(query)
-                                    )
-                                },
-                                onQueryConfirmed = {
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false)
-                                    )
-                                }
+                                layout = state.layout,
+                                onSearchAction = viewModel.accept,
                             )
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
@@ -174,50 +176,6 @@ abstract class SearchComponent(
             )
         }
     )
-}
-
-@Composable
-private fun SearchBar(
-    searchQuery: String,
-    onQueryChanged: (String) -> Unit,
-    onQueryConfirmed: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth()
-            .height(48.dp),
-    ) {
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            value = searchQuery,
-            onValueChange = {
-                onQueryChanged(it)
-            },
-            textStyle = MaterialTheme.typography.labelLarge,
-            singleLine = true,
-            shape = RoundedCornerShape(36.dp),
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search,
-            ),
-            keyboardActions = KeyboardActions {
-                onQueryConfirmed()
-            },
-        )
-        AnimatedVisibility(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .align(Alignment.CenterStart),
-            visible = searchQuery.isBlank(),
-        ) {
-            Text(
-                text = stringResource(Res.string.search),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    }
 }
 
 @Composable

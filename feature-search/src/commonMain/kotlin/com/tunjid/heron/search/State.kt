@@ -76,15 +76,11 @@ sealed class Action(val key: String) {
         data class OnSearchQueryConfirmed(
             val isLocalOnly: Boolean,
         ) : Search()
+
+        data object Close : Search()
     }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
-
         data class DelegateTo(
             val delegate: NavigationAction.Common,
         ) : Navigate(), NavigationAction by delegate

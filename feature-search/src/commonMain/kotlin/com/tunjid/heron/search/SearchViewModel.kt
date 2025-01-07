@@ -164,6 +164,11 @@ private fun Flow<Action.Search>.searchQueryMutations(
                             layout = ScreenLayout.GeneralSearchResults,
                         )
                     }
+
+                    Action.Search.Close -> copy(
+                        currentQuery = "",
+                        layout = ScreenLayout.AutoCompleteProfiles,
+                    )
                 }
             },
         shared
