@@ -44,7 +44,8 @@ internal fun FeedViewPost.feedItemEntity(
         is FeedViewPostReasonUnion.ReasonPin -> Instant.DISTANT_PAST
         is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
         is FeedViewPostReasonUnion.Unknown,
-        null -> post.indexedAt
+        null,
+            -> post.indexedAt
     },
 )
 
@@ -52,45 +53,59 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
     is ReplyRefRootUnion.PostView -> value.profileEntity()
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
-    is ReplyRefRootUnion.Unknown -> null
+    is ReplyRefRootUnion.Unknown,
+        -> null
 }
 
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.PostView -> value.profileEntity()
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
-    is ReplyRefParentUnion.Unknown -> null
+    is ReplyRefParentUnion.Unknown,
+        -> null
 }
 
-internal fun ReplyRefRootUnion.postEntity() = when (this) {
+internal fun ReplyRefRootUnion.postEntity() = when (val ref = this) {
     is ReplyRefRootUnion.BlockedPost -> emptyPostEntity(
         id = Constants.blockedPostId,
+        uri = ref.value.uri.atUri.let(::Uri),
+        authorId = ref.value.author.did.did.let(::Id),
     )
 
     is ReplyRefRootUnion.NotFoundPost -> emptyPostEntity(
         id = Constants.notFoundPostId,
+        uri = ref.value.uri.atUri.let(::Uri),
+        authorId = Constants.unknownAuthorId,
     )
 
-    is ReplyRefRootUnion.PostView -> value.postEntity()
+    is ReplyRefRootUnion.PostView -> ref.value.postEntity()
 
     is ReplyRefRootUnion.Unknown -> emptyPostEntity(
         id = Constants.unknownPostId,
+        uri = Constants.unknownPostUri,
+        authorId = Constants.unknownAuthorId,
     )
 }
 
-internal fun ReplyRefParentUnion.postEntity() = when (this) {
+internal fun ReplyRefParentUnion.postEntity() = when (val ref = this) {
     is ReplyRefParentUnion.BlockedPost -> emptyPostEntity(
         id = Constants.blockedPostId,
+        uri = ref.value.uri.atUri.let(::Uri),
+        authorId = ref.value.author.did.did.let(::Id),
     )
 
     is ReplyRefParentUnion.NotFoundPost -> emptyPostEntity(
         id = Constants.notFoundPostId,
+        uri = ref.value.uri.atUri.let(::Uri),
+        authorId = Constants.unknownAuthorId,
     )
 
-    is ReplyRefParentUnion.PostView -> value.postEntity()
+    is ReplyRefParentUnion.PostView -> ref.value.postEntity()
 
     is ReplyRefParentUnion.Unknown -> emptyPostEntity(
         id = Constants.unknownPostId,
+        uri = Constants.unknownPostUri,
+        authorId = Constants.unknownAuthorId,
     )
 }
 

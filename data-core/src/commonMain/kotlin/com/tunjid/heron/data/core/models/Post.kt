@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Post(
     val cid: Id,
-    val uri: Uri?,
+    val uri: Uri,
     val author: Profile,
     val replyCount: Long,
     val repostCount: Long,
@@ -102,5 +102,11 @@ data class Post(
 
         @Serializable
         data object Timeline: Create()
+
+        data class Request(
+            val authorId: Id,
+            val text: String,
+            val links: List<Link>,
+        )
     }
 }

@@ -21,6 +21,7 @@ import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.AppDatabase
+import com.tunjid.heron.data.database.NonNullPostUriAndAuthorMigration
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
@@ -79,8 +80,10 @@ abstract class DataComponent(
     @DataScope
     @Provides
     fun provideRoomDatabase(): AppDatabase = module.databaseBuilder
-//        .addMigrations(MIGRATIONS)
         .fallbackToDestructiveMigrationOnDowngrade(true)
+        .addMigrations(
+            NonNullPostUriAndAuthorMigration,
+        )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

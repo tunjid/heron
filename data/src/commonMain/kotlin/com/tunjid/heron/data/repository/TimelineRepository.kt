@@ -13,8 +13,20 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.feed.PostReplyRef
+import app.bsky.richtext.Facet
+import app.bsky.richtext.FacetByteSlice
+import app.bsky.richtext.FacetFeatureUnion.Link
+import app.bsky.richtext.FacetFeatureUnion.Mention
+import app.bsky.richtext.FacetFeatureUnion.Tag
+import app.bsky.richtext.FacetLink
+import app.bsky.richtext.FacetMention
+import app.bsky.richtext.FacetTag
+import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
@@ -31,6 +43,9 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -52,11 +67,16 @@ import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import app.bsky.feed.Post as BskyPost
+import sh.christian.ozone.api.Uri as BskyUri
 
 class TimelineQuery(
     override val data: CursorQuery.Data,
@@ -98,6 +118,11 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>>
+
+    suspend fun createPost(
+        request: Post.Create.Request,
+        replyTo: Post.Create.Reply?,
+    )
 }
 
 @Inject
@@ -428,6 +453,87 @@ class OfflineTimelineRepository(
                     // Debounce for about 2 frames on a 60 hz display
                     .debounce(32)
             }
+
+    override suspend fun createPost(
+        request: Post.Create.Request,
+        replyTo: Post.Create.Reply?,
+    ) {
+        val resolvedLinks: List<Post.Link> = coroutineScope {
+            request.links.map { link ->
+                async {
+                    when (val target = link.target) {
+                        is Post.LinkTarget.ExternalLink -> link
+                        is Post.LinkTarget.UserDidMention -> link
+                        is Post.LinkTarget.Hashtag -> link
+                        is Post.LinkTarget.UserHandleMention -> {
+                            profileDao.profiles(ids = listOf(target.handle))
+                                .first()
+                                .firstOrNull()
+                                ?.let { profile ->
+                                    link.copy(
+                                        target = Post.LinkTarget.UserDidMention(profile.did)
+                                    )
+                                }
+                        }
+                    }
+                }
+            }.awaitAll()
+        }.filterNotNull()
+
+        val replyRef = replyTo?.let { original ->
+            PostReplyRef(
+                root = StrongRef(
+                    uri = original.root.uri.uri.let(::AtUri),
+                    cid = original.root.cid.id.let(::Cid),
+                ),
+                parent = StrongRef(
+                    uri = original.parent.uri.uri.let(::AtUri),
+                    cid = original.parent.cid.id.let(::Cid),
+                ),
+            )
+        }
+
+        val createRecordRequest = CreateRecordRequest(
+            repo = request.authorId.id.let(::Did),
+            collection = Nsid("app.bsky.feed.post"),
+            record = BskyPost(
+                text = request.text,
+                reply = replyRef,
+                facets = resolvedLinks.map { link ->
+                    Facet(
+                        index = FacetByteSlice(
+                            byteStart = link.start.toLong(),
+                            byteEnd = link.end.toLong(),
+                        ),
+                        features = when (val target = link.target) {
+                            is Post.LinkTarget.ExternalLink -> listOf(
+                                Link(FacetLink(target.uri.uri.let(::BskyUri)))
+                            )
+
+                            is Post.LinkTarget.UserDidMention -> listOf(
+                                Mention(FacetMention(target.did.id.let(::Did)))
+                            )
+
+                            is Post.LinkTarget.Hashtag -> listOf(
+                                Tag(FacetTag(target.tag))
+                            )
+
+                            is Post.LinkTarget.UserHandleMention -> emptyList()
+                        },
+                    )
+                },
+                createdAt = Clock.System.now(),
+            )
+                .let {
+                    BlueskyJson.encodeToString(BskyPost.serializer(), it)
+                }
+                .let {
+                    BlueskyJson.decodeFromString(it)
+                },
+        )
+
+        networkService.api.createRecord(createRecordRequest)
+    }
 
     private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
