@@ -156,9 +156,7 @@ private fun AutoCompleteProfileSearchResults(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(
-            horizontal = 16.dp,
-        )
+        contentPadding = PaddingValues(16.dp)
     ) {
         items(
             items = results,
