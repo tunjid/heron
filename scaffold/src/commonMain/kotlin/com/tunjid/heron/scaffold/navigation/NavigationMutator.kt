@@ -129,6 +129,21 @@ interface NavigationAction {
                 }
             }
         }
+
+        data class ComposePost(
+            val type: Post.Create,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/compose",
+                        queryParams = mapOf(
+                            "type" to listOf(type.toUrlEncodedBase64()),
+                        )
+                    ).toRoute
+                )
+            }
+        }
     }
 
     /**

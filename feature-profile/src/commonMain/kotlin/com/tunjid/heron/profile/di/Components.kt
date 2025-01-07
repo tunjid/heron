@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AlternateEmail
+import androidx.compose.material.icons.rounded.AttachEmail
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
@@ -51,12 +55,13 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
-import com.tunjid.heron.scaffold.scaffold.ComposeFab
+import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -64,6 +69,8 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
+import heron.feature_profile.generated.resources.mention
+import heron.feature_profile.generated.resources.post
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -146,14 +153,33 @@ abstract class ProfileComponent(
                     }
                 },
                 floatingActionButton = {
-                    ComposeFab(
+                    Fab(
                         modifier = Modifier
                             .offset {
                                 bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
-                        expanded = true,
-                        onClick = {}
+                        expanded = isFabExpanded(
+                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                        ),
+                        text = stringResource(
+                            if (state.isSignedInProfile) Res.string.post
+                            else Res.string.mention
+                        ),
+                        icon =
+                        if (state.isSignedInProfile) Icons.Rounded.Edit
+                        else Icons.Rounded.AlternateEmail,
+                        onClick = {
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ComposePost(
+                                        type =
+                                        if (state.isSignedInProfile) Post.Create.Timeline
+                                        else Post.Create.Mention(state.profile)
+                                    )
+                                )
+                            )
+                        }
                     )
                 },
                 bottomBar = {

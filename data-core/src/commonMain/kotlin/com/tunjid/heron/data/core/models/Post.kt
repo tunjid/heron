@@ -85,5 +85,21 @@ data class Post(
             val tag: String,
         ) : LinkTarget
     }
-}
 
+    @Serializable
+    sealed class Create: ByteSerializable {
+
+        @Serializable
+        data class Reply(
+            val to: Post
+        ): Create()
+
+        @Serializable
+        data class Mention(
+            val profile: Profile
+        ): Create()
+
+        @Serializable
+        data object Timeline: Create()
+    }
+}
