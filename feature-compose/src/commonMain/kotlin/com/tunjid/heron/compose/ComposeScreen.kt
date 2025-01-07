@@ -18,14 +18,17 @@ package com.tunjid.heron.compose
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.layout.Arrangement.spacedBy
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,13 +57,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.byteOffsets
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import de.cketti.codepoints.codePointCount
@@ -68,61 +71,63 @@ import kotlin.math.min
 
 @Composable
 internal fun ComposeScreen(
-    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
     ) {
+        var postText by remember {
+            mutableStateOf(TextFieldValue(AnnotatedString("")))
+        }
         Row(
             modifier = Modifier
                 .padding(16.dp),
             horizontalArrangement = spacedBy(16.dp),
         ) {
-            AsyncImage(
-                modifier = Modifier.size(48.dp),
-                args = remember(state.signedInProfile?.avatar) {
-                    ImageArgs(
-                        url = state.signedInProfile?.avatar?.uri,
-                        contentDescription = state.signedInProfile?.contentDescription,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
+            PostAuthor(
+                author = state.signedInProfile
             )
-
-            var postText by remember {
-                mutableStateOf(TextFieldValue(AnnotatedString("")))
-            }
-
-            Column {
-                PostComposition(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    postText = postText,
-                    onPostTextChanged = { postText = it },
-                    onCreatePost = {
-                        val authorId = state.signedInProfile?.did ?: return@PostComposition
-                        actions(
-                            Action.CreatePost(
-                                authorId = authorId,
-                                text = postText.text,
-                                links = postText.annotatedString.links(),
-                            )
+            PostComposition(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                postText = postText,
+                onPostTextChanged = { postText = it },
+                onCreatePost = onCreatePost@{
+                    val authorId = state.signedInProfile?.did ?: return@onCreatePost
+                    actions(
+                        Action.CreatePost(
+                            authorId = authorId,
+                            text = postText.text,
+                            links = postText.annotatedString.links(),
                         )
-                    }
-                )
-                ComposeBottomBar(
-                    postText = postText,
-                    postTextLimit = PostTextLimit,
-                )
-            }
+                    )
+                }
+            )
         }
+        Spacer(Modifier.weight(1f))
+        ComposeBottomBar(
+            postText = postText,
+            postTextLimit = PostTextLimit,
+        )
     }
+}
+
+@Composable
+private fun PostAuthor(author: Profile?) {
+    AsyncImage(
+        modifier = Modifier.size(48.dp),
+        args = remember(author?.avatar) {
+            ImageArgs(
+                url = author?.avatar?.uri,
+                contentDescription = author?.contentDescription,
+                contentScale = ContentScale.Crop,
+                shape = RoundedPolygonShape.Circle,
+            )
+        },
+    )
 }
 
 @Composable
@@ -178,7 +183,8 @@ private fun ComposeBottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(16.dp)
+            .windowInsetsPadding(WindowInsets.ime),
         horizontalArrangement = spacedBy(16.dp, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
