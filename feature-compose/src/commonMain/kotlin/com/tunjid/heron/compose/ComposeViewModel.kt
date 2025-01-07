@@ -26,6 +26,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -71,7 +72,7 @@ class ActualComposeStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
+                is Action.CreatePost -> action.flow.createPostMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -85,4 +86,11 @@ private fun loadSignedInProfileMutations(
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun Flow<Action.CreatePost>.createPostMutations(
+
+): Flow<Mutation<State>> =
+    mapToManyMutations {
+
     }

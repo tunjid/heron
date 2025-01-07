@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.compose
 
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -35,6 +35,12 @@ data class State(
 
 
 sealed class Action(val key: String) {
+
+    data class CreatePost(
+        val authorId: Id,
+        val text: String,
+        val links: List<Post.Link>,
+    ): Action("CreatePost")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

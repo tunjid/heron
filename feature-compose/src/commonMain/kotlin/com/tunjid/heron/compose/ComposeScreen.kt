@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.compose
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
@@ -67,7 +66,6 @@ import com.tunjid.heron.ui.text.formatTextPost
 import de.cketti.codepoints.codePointCount
 import kotlin.math.min
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun ComposeScreen(
     sharedElementScope: SharedElementScope,
@@ -84,7 +82,6 @@ internal fun ComposeScreen(
                 .padding(16.dp),
             horizontalArrangement = spacedBy(16.dp),
         ) {
-
             AsyncImage(
                 modifier = Modifier.size(48.dp),
                 args = remember(state.signedInProfile?.avatar) {
@@ -107,7 +104,17 @@ internal fun ComposeScreen(
                         .fillMaxSize()
                         .weight(1f),
                     postText = postText,
-                    onPostTextChanged = { postText = it }
+                    onPostTextChanged = { postText = it },
+                    onCreatePost = {
+                        val authorId = state.signedInProfile?.did ?: return@PostComposition
+                        actions(
+                            Action.CreatePost(
+                                authorId = authorId,
+                                text = postText.text,
+                                links = postText.annotatedString.links(),
+                            )
+                        )
+                    }
                 )
                 ComposeBottomBar(
                     postText = postText,
@@ -123,6 +130,7 @@ private fun PostComposition(
     modifier: Modifier,
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
+    onCreatePost: () -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
 
@@ -152,7 +160,7 @@ private fun PostComposition(
         ),
         keyboardActions = KeyboardActions {
             if (postText.annotatedString.isNotEmpty()) {
-//                onPost(postPayload)
+                onCreatePost()
             }
         },
     )
