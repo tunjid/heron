@@ -4,7 +4,9 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -15,11 +17,11 @@ import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
@@ -70,30 +72,45 @@ fun ProfileSearchResult(
 }
 
 @Composable
-fun PostSearchResult(
+internal fun PostSearchResult(
     sharedElementScope: SharedElementScope,
     now: Instant,
     result: SearchResult.Post,
     onProfileClicked: (SearchResult.Post) -> Unit,
     onPostClicked: (SearchResult.Post) -> Unit,
 ) {
-    Post(
-        sharedElementScope = sharedElementScope,
-        now = now,
-        post = result.post,
-        embed = result.post.embed,
-        isAnchoredInTimeline = false,
-        avatarShape = RoundedPolygonShape.Circle,
-        sharedElementPrefix = result.sharedElementPrefix(),
-        createdAt = result.post.createdAt,
-        onProfileClicked = { _, _ ->
-            onProfileClicked(result)
-        },
-        onPostClicked = {
+    ElevatedCard(
+        modifier = Modifier,
+        onClick = {
             onPostClicked(result)
         },
-        onImageClicked = {},
-        onReplyToPost = {},
+        content = {
+            Post(
+                modifier = Modifier
+                    .padding(
+                        top = 16.dp,
+                        bottom = 8.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    ),
+                sharedElementScope = sharedElementScope,
+                now = now,
+                post = result.post,
+                embed = result.post.embed,
+                isAnchoredInTimeline = false,
+                avatarShape = RoundedPolygonShape.Circle,
+                sharedElementPrefix = result.sharedElementPrefix(),
+                createdAt = result.post.createdAt,
+                onProfileClicked = { _, _ ->
+                    onProfileClicked(result)
+                },
+                onPostClicked = {
+                    onPostClicked(result)
+                },
+                onImageClicked = {},
+                onReplyToPost = {},
+            )
+        },
     )
 }
 

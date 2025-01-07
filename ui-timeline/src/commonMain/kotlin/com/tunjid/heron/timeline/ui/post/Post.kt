@@ -35,6 +35,7 @@ import kotlinx.datetime.Instant
 @Composable
 fun Post(
     sharedElementScope: SharedElementScope,
+    modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
     embed: Embed?,
@@ -48,7 +49,7 @@ fun Post(
     onReplyToPost: () -> Unit,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    Box {
+    Box(modifier = modifier) {
         timeline()
         Column(
             modifier = Modifier,

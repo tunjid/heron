@@ -133,7 +133,7 @@ internal fun SearchScreen(
                 ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 8.dp),
                     pagerState = pagerState,
                     state = state,
                     sharedElementScope = sharedElementScope,
@@ -214,7 +214,6 @@ private fun TabbedSearchResults(
         )
         HorizontalPager(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
                 .clip(
                     RoundedCornerShape(
                         topStart = 16.dp,
@@ -256,9 +255,6 @@ private fun SearchResults(
                 modifier = modifier,
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(
-                    horizontal = 16.dp,
-                )
             ) {
                 items(
                     items = results,
@@ -290,9 +286,6 @@ private fun SearchResults(
                 modifier = modifier,
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(
-                    horizontal = 16.dp,
-                )
             ) {
                 items(
                     items = results,
