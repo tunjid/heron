@@ -229,12 +229,12 @@ private fun searchStateHolders(
                             }
                         },
                         cursorListLoader = searchRepository::postSearch,
-                    )
-                        .mapToMutation {
+                        searchStateResultsMutation = {
                             check(this is SearchState.Post)
                             if (it.isValidFor(currentQuery)) copy(results = it)
                             else this
                         }
+                    )
 
                     is SearchState.Profile -> type().flow.searchMutations(
                         coroutineScope = coroutineScope,
@@ -242,12 +242,12 @@ private fun searchStateHolders(
                             copy(data = it)
                         },
                         cursorListLoader = searchRepository::profileSearch,
-                    )
-                        .mapToMutation {
+                        searchStateResultsMutation = {
                             check(this is SearchState.Profile)
                             if (it.isValidFor(currentQuery)) copy(results = it)
                             else this
                         }
+                    )
                 }
             }
         }
@@ -255,26 +255,48 @@ private fun searchStateHolders(
 }
 
 
-private inline fun <reified Query : SearchQuery, reified Item : SearchResult> Flow<SearchState.LoadAround>.searchMutations(
+private inline fun <
+        reified Query : SearchQuery,
+        reified Item : SearchResult,
+        > Flow<SearchState.LoadAround>.searchMutations(
     coroutineScope: CoroutineScope,
     noinline updatePage: Query.(CursorQuery.Data) -> Query,
     noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
-): Flow<TiledList<Query, Item>> {
-    val shared = map { it.query }
+    noinline searchStateResultsMutation: SearchState.(TiledList<Query, Item>) -> SearchState,
+): Flow<Mutation<SearchState>> {
+    val sharedQueries = map {
+        it.query.takeIf { searchQuery -> searchQuery.query.isNotBlank() }
+    }
         .filterIsInstance<Query>()
+        .ensureValidAnchors()
         .shareIn(
             scope = coroutineScope,
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             replay = 1,
         )
-    val refreshes = shared.distinctUntilChangedBy {
+    val queryMutations = sharedQueries.mapToMutation<Query, SearchState> { query ->
+        when (query) {
+            is SearchQuery.Post -> {
+                check(this is SearchState.Post)
+                copy(currentQuery = query)
+            }
+
+            is SearchQuery.Profile -> {
+                check(this is SearchState.Profile)
+                copy(currentQuery = query)
+            }
+
+            else -> throw IllegalArgumentException()
+        }
+    }
+    val refreshes = sharedQueries.distinctUntilChangedBy {
         // Refreshes are caused by different queries or different anchors
         it.query to it.data.cursorAnchor
     }
-    return refreshes.flatMapLatest { refreshedQuery ->
+    val itemMutations = refreshes.flatMapLatest { refreshedQuery ->
         cursorTileInputs<Query, Item>(
             numColumns = flowOf(1),
-            queries = shared.ensureValidAnchors(),
+            queries = sharedQueries,
             updatePage = updatePage
         )
             .toTiledList(
@@ -285,6 +307,12 @@ private inline fun <reified Query : SearchQuery, reified Item : SearchResult> Fl
                 )
             )
     }
+        .mapToMutation(searchStateResultsMutation)
+
+    return merge(
+        queryMutations,
+        itemMutations,
+    )
 }
 
 private fun defaultSearchQueryData() = CursorQuery.Data(
