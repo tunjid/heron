@@ -220,7 +220,11 @@ private fun HomeTimeline(
                     },
                     onImageClicked = {},
                     onReplyToPost = {},
-                    onPostInteraction = {},
+                    onPostInteraction = {
+                        actions(
+                            Action.SendPostInteraction(it)
+                        )
+                    },
                 )
             }
         )

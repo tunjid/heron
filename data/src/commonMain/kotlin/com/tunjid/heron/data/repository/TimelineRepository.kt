@@ -23,6 +23,7 @@ import app.bsky.richtext.FacetLink
 import app.bsky.richtext.FacetMention
 import app.bsky.richtext.FacetTag
 import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
@@ -32,12 +33,15 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.daos.upsert
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -140,6 +144,7 @@ class OfflineTimelineRepository(
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
@@ -574,6 +579,39 @@ class OfflineTimelineRepository(
                     )
                 )
             }
+                .getOrNull()
+                ?.let {
+                    if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
+                    val partial = when (interaction) {
+                        is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
+                            likeUri = it.uri.atUri.let(::Uri),
+                            postId = interaction.postId,
+                        )
+
+                        is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
+                            repostUri = it.uri.atUri.let(::Uri),
+                            postId = interaction.postId,
+                        )
+                    }
+                    transactionWriter.inTransaction {
+                        upsert(
+                            items = listOf(partial.asFull()),
+                            entityMapper = { listOf(partial) },
+                            insertMany = postDao::insertOrIgnorePostStatistics,
+                            updateMany = {
+                                when (partial) {
+                                    is PostViewerStatisticsEntity.Partial.Like -> postDao.updatePostStatisticsLikes(
+                                        listOf(partial)
+                                    )
+
+                                    is PostViewerStatisticsEntity.Partial.Repost -> postDao.updatePostStatisticsReposts(
+                                        listOf(partial)
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
 
             is Post.Interaction.Delete -> runCatchingWithNetworkRetry {
                 networkService.api.deleteRecord(
@@ -591,8 +629,21 @@ class OfflineTimelineRepository(
                         }
                     )
                 )
-
             }
+                .getOrNull()
+                ?.let {
+                    transactionWriter.inTransaction {
+                        when (interaction) {
+                            is Post.Interaction.Delete.Unlike -> postDao.removeLike(
+                                interaction.likeUri.uri
+                            )
+
+                            is Post.Interaction.Delete.RemoveRepost -> postDao.removeRepost(
+                                interaction.repostUri.uri
+                            )
+                        }
+                    }
+                }
         }
 
     }

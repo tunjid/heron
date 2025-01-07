@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.home
 
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
@@ -45,6 +47,10 @@ sealed class Action(val key: String) {
         val sourceId: String,
         val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

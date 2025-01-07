@@ -30,4 +30,34 @@ data class PostViewerStatisticsEntity(
     val replyDisabled: Boolean,
     val embeddingDisabled: Boolean,
     val pinned: Boolean,
-)
+) {
+    sealed class Partial {
+        abstract val postId: Id
+
+        data class Like(
+            override val postId: Id,
+            val likeUri: Uri?,
+        ) : Partial()
+
+        data class Repost(
+            override val postId: Id,
+            val repostUri: Uri?,
+        ) : Partial()
+
+        fun asFull() = PostViewerStatisticsEntity(
+            postId = postId,
+            likeUri = when (this) {
+                is Like -> likeUri
+                is Repost -> null
+            },
+            repostUri = when (this) {
+                is Like -> null
+                is Repost -> repostUri
+            },
+            threadMuted = false,
+            replyDisabled = false,
+            embeddingDisabled = false,
+            pinned = false,
+        )
+    }
+}

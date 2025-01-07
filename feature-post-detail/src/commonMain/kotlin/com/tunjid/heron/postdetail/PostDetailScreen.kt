@@ -106,7 +106,11 @@ internal fun PostDetailScreen(
                     },
                     onImageClicked = {},
                     onReplyToPost = {},
-                    onPostInteraction = {},
+                    onPostInteraction = {
+                        actions(
+                            Action.SendPostInteraction(it)
+                        )
+                    },
                 )
             }
         )

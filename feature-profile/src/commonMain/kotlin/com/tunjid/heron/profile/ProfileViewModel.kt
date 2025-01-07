@@ -35,6 +35,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -106,6 +107,9 @@ class ActualProfileStateHolder(
         ) {
             when (val action = type()) {
                 is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    timelineRepository = timelineRepository,
+                )
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -141,6 +145,13 @@ private fun profileRelationshipMutations(
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
         copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
+    }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        timelineRepository.sendInteraction(action.interaction)
     }
 
 private fun timelines(route: Route) = listOf(
