@@ -20,11 +20,9 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
-import com.tunjid.treenav.pop
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -77,7 +75,9 @@ sealed class Action(val key: String) {
             val isLocalOnly: Boolean,
         ) : Search()
 
-        data object Close : Search()
+        data class CloseGeneralResults(
+            val reset: Boolean,
+        ) : Search()
     }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
