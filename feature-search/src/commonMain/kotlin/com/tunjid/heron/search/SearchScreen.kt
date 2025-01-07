@@ -17,6 +17,7 @@
 package com.tunjid.heron.search
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,12 +34,19 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.SearchResult
@@ -59,6 +67,7 @@ import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
 import heron.feature_search.generated.resources.top
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -182,8 +191,15 @@ private fun TabbedSearchResults(
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
 ) {
+    val focusRequester = remember { FocusRequester() }
+    var hasFocus by remember { mutableStateOf(false) }
     Column(
         modifier = modifier
+            .focusable(enabled = true)
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                hasFocus = focusState.isFocused && focusState.hasFocus
+            }
     ) {
         val scope = rememberCoroutineScope()
         Tabs(
@@ -231,6 +247,18 @@ private fun TabbedSearchResults(
                 )
             }
         )
+    }
+    // The search bar keeps stealing focus. Keep requesting focus until it is acquired.
+    LaunchedEffect(focusRequester) {
+        snapshotFlow { hasFocus }
+            .collect { isFocused ->
+                if (isFocused) return@collect
+                focusRequester.requestFocus()
+                while (true) {
+                    delay(1000)
+                    focusRequester.requestFocus()
+                }
+            }
     }
 }
 

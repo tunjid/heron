@@ -39,11 +39,6 @@ fun SearchBar(
         modifier = Modifier
             .padding(horizontal = 8.dp)
             .fillMaxWidth(),
-        readOnly = when (layout) {
-            ScreenLayout.Trends -> false
-            ScreenLayout.AutoCompleteProfiles -> false
-            ScreenLayout.GeneralSearchResults -> true
-        },
         value = searchQuery,
         onValueChange = { query ->
             onSearchAction(Action.Search.OnSearchQueryChanged(query))
