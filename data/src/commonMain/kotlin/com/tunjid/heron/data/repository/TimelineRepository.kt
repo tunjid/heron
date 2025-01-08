@@ -37,7 +37,7 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.daos.upsert
+import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -869,11 +869,11 @@ class OfflineTimelineRepository(
     private suspend fun upsertInteraction(
         partial: PostViewerStatisticsEntity.Partial,
     ) = transactionWriter.inTransaction {
-        upsert(
+        partialUpsert(
             items = listOf(partial.asFull()),
-            entityMapper = { listOf(partial) },
-            insertMany = postDao::insertOrIgnorePostStatistics,
-            updateMany = {
+            partialMapper = { listOf(partial) },
+            insertEntities = postDao::insertOrIgnorePostStatistics,
+            updatePartials = {
                 when (partial) {
                     is PostViewerStatisticsEntity.Partial.Like ->
                         postDao.updatePostStatisticsLikes(listOf(partial))

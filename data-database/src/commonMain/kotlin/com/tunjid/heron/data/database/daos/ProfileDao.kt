@@ -51,11 +51,11 @@ interface ProfileDao {
     @Transaction
     suspend fun insertOrPartiallyUpdateProfiles(
         entities: List<ProfileEntity>
-    ) = upsert(
+    ) = partialUpsert(
         items = entities,
-        entityMapper = ProfileEntity::partial,
-        insertMany = ::insertOrIgnoreProfiles,
-        updateMany = ::updatePartialProfiles
+        partialMapper = ProfileEntity::partial,
+        insertEntities = ::insertOrIgnoreProfiles,
+        updatePartials = ::updatePartialProfiles
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -76,11 +76,11 @@ interface ProfileDao {
     @Transaction
     suspend fun insertOrPartiallyUpdateProfileProfileRelationships(
         entities: List<ProfileProfileRelationshipsEntity>
-    ) = upsert(
+    ) = partialUpsert(
         items = entities,
-        entityMapper = ProfileProfileRelationshipsEntity::partial,
-        insertMany = ::insertOrIgnoreProfileProfileRelationships,
-        updateMany = ::updatePartialProfileProfileRelationships
+        partialMapper = ProfileProfileRelationshipsEntity::partial,
+        insertEntities = ::insertOrIgnoreProfileProfileRelationships,
+        updatePartials = ::updatePartialProfileProfileRelationships
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
