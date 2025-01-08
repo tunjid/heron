@@ -509,7 +509,7 @@ class OfflineTimelineRepository(
 
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
-            collection = Nsid("app.bsky.feed.post"),
+            collection = Nsid(PostCollection),
             record = BskyPost(
                 text = request.text,
                 reply = replyRef,
@@ -582,35 +582,19 @@ class OfflineTimelineRepository(
                 .getOrNull()
                 ?.let {
                     if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
-                    val partial = when (interaction) {
-                        is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
-                            likeUri = it.uri.atUri.let(::Uri),
-                            postId = interaction.postId,
-                        )
+                    upsertInteraction(
+                        partial = when (interaction) {
+                            is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
+                                likeUri = it.uri.atUri.let(::Uri),
+                                postId = interaction.postId,
+                            )
 
-                        is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
-                            repostUri = it.uri.atUri.let(::Uri),
-                            postId = interaction.postId,
-                        )
-                    }
-                    transactionWriter.inTransaction {
-                        upsert(
-                            items = listOf(partial.asFull()),
-                            entityMapper = { listOf(partial) },
-                            insertMany = postDao::insertOrIgnorePostStatistics,
-                            updateMany = {
-                                when (partial) {
-                                    is PostViewerStatisticsEntity.Partial.Like -> postDao.updatePostStatisticsLikes(
-                                        listOf(partial)
-                                    )
-
-                                    is PostViewerStatisticsEntity.Partial.Repost -> postDao.updatePostStatisticsReposts(
-                                        listOf(partial)
-                                    )
-                                }
-                            }
-                        )
-                    }
+                            is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
+                                repostUri = it.uri.atUri.let(::Uri),
+                                postId = interaction.postId,
+                            )
+                        }
+                    )
                 }
 
             is Post.Interaction.Delete -> runCatchingWithNetworkRetry {
@@ -632,17 +616,19 @@ class OfflineTimelineRepository(
             }
                 .getOrNull()
                 ?.let {
-                    transactionWriter.inTransaction {
-                        when (interaction) {
-                            is Post.Interaction.Delete.Unlike -> postDao.removeLike(
-                                interaction.likeUri.uri
+                    upsertInteraction(
+                        partial = when (interaction) {
+                            is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
+                                likeUri = null,
+                                postId = interaction.postId,
                             )
 
-                            is Post.Interaction.Delete.RemoveRepost -> postDao.removeRepost(
-                                interaction.repostUri.uri
+                            is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
+                                repostUri = null,
+                                postId = interaction.postId,
                             )
                         }
-                    }
+                    )
                 }
         }
 
@@ -879,6 +865,25 @@ class OfflineTimelineRepository(
             )
         }
     }
+
+    private suspend fun upsertInteraction(
+        partial: PostViewerStatisticsEntity.Partial,
+    ) = transactionWriter.inTransaction {
+        upsert(
+            items = listOf(partial.asFull()),
+            entityMapper = { listOf(partial) },
+            insertMany = postDao::insertOrIgnorePostStatistics,
+            updateMany = {
+                when (partial) {
+                    is PostViewerStatisticsEntity.Partial.Like ->
+                        postDao.updatePostStatisticsLikes(listOf(partial))
+
+                    is PostViewerStatisticsEntity.Partial.Repost ->
+                        postDao.updatePostStatisticsReposts(listOf(partial))
+                }
+            }
+        )
+    }
 }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
@@ -892,6 +897,8 @@ private fun <T> T.asJsonContent(
 ): JsonContent = BlueskyJson.decodeFromString(
     BlueskyJson.encodeToString(serializer, this)
 )
+
+private const val PostCollection = "app.bsky.feed.post"
 
 private const val RepostCollection = "app.bsky.feed.repost"
 

@@ -101,6 +101,7 @@ fun PostActions(
                         )
 
                         else -> Post.Interaction.Delete.RemoveRepost(
+                            postId = postId,
                             repostUri = repostUri,
                         )
                     }
@@ -140,6 +141,7 @@ fun PostActions(
                         )
 
                         else -> Post.Interaction.Delete.Unlike(
+                            postId = postId,
                             likeUri = likeUri,
                         )
                     }

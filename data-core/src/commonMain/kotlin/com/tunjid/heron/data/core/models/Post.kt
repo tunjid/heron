@@ -126,10 +126,12 @@ data class Post(
 
         sealed class Delete: Interaction(){
             data class Unlike(
+                val postId: Id,
                 val likeUri: Uri,
             ) : Delete()
 
             data class RemoveRepost(
+                val postId: Id,
                 val repostUri: Uri,
             ) : Delete()
         }

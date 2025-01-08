@@ -111,30 +111,6 @@ interface PostDao {
         entities: List<PostViewerStatisticsEntity.Partial.Repost>,
     )
 
-    @Transaction
-    @Query(
-        """
-        UPDATE postViewerStatistics
-        SET repostUri = NULL
-        WHERE repostUri = :repostUri
-    """
-    )
-    suspend fun removeRepost(
-        repostUri: String,
-    )
-
-    @Transaction
-    @Query(
-        """
-        UPDATE postViewerStatistics
-        SET likeUri = NULL
-        WHERE likeUri = :likeUri
-    """
-    )
-    suspend fun removeLike(
-        likeUri: String?,
-    )
-
     @Upsert
     suspend fun upsertPostThreads(
         entities: List<PostThreadEntity>,
