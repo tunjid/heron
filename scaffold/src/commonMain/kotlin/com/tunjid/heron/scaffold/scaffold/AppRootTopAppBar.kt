@@ -2,9 +2,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -19,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -34,19 +31,10 @@ fun RootDestinationTopAppBar(
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
-            Image(
+            sharedElementScope.AppLogo(
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(36.dp)
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(AppLogo),
-                        animatedVisibilityScope = sharedElementScope,
-                        boundsTransform = { _, _ ->
-                            spring(stiffness = Spring.StiffnessLow)
-                        }
-                    ),
-                imageVector = AppLogo,
-                contentDescription = null,
             )
         },
         title = title,

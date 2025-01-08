@@ -16,11 +16,6 @@
 
 package com.tunjid.heron.splash.di
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,12 +25,10 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.splash.ActualSplashStateHolder
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashStateHolderCreator
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -73,7 +66,7 @@ abstract class SplashComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SplashStateHolderCreator
+        creator: SplashStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -83,41 +76,12 @@ abstract class SplashComponent(
                     route = route,
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            viewModel.state.collectAsStateWithLifecycle()
 
-            PaneScaffold(
-                modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                },
-                topBar = {
-                    TopBar()
-                },
-                content = { paddingValues ->
-                    SplashScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
-                    )
-                }
+            SplashScreen(
+                sharedElementScope = requirePanedSharedElementScope(),
+                modifier = Modifier,
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
     )
 }
