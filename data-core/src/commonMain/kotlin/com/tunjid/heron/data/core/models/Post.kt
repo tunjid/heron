@@ -112,26 +112,29 @@ data class Post(
     }
 
     sealed class Interaction {
-        sealed class Create: Interaction(){
+
+        abstract val postId: Id
+
+        sealed class Create : Interaction() {
             data class Like(
-                val postId: Id,
+                override val postId: Id,
                 val postUri: Uri,
             ) : Create()
 
             data class Repost(
-                val postId: Id,
+                override val postId: Id,
                 val postUri: Uri,
             ) : Create()
         }
 
-        sealed class Delete: Interaction(){
+        sealed class Delete : Interaction() {
             data class Unlike(
-                val postId: Id,
+                override val postId: Id,
                 val likeUri: Uri,
             ) : Delete()
 
             data class RemoveRepost(
-                val postId: Id,
+                override val postId: Id,
                 val repostUri: Uri,
             ) : Delete()
         }
