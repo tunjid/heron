@@ -23,28 +23,38 @@ import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 
+class PaneScaffoldState internal constructor(
+    private val appState: AppState,
+) {
+    val usesNavRail get() = appState.usesNavRail
+}
+
 @Composable
 fun PaneScope<ThreePane, Route>.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit,
-    topBar: @Composable () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {},
-    floatingActionButton: @Composable () -> Unit = {},
+    topBar: @Composable PaneScaffoldState.() -> Unit = {},
+    bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
+    floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val paneScaffoldState = remember(appState) { PaneScaffoldState(appState) }
 
     Scaffold(
         modifier = modifier,
-        topBar = topBar,
+        topBar = {
+            topBar(paneScaffoldState)
+        },
         bottomBar = {
-            if (paneState.pane == ThreePane.Primary) bottomBar()
+            if (paneState.pane == ThreePane.Primary) bottomBar(paneScaffoldState)
         },
         floatingActionButton = {
-            if (paneState.pane == ThreePane.Primary) floatingActionButton()
+            if (paneState.pane == ThreePane.Primary) floatingActionButton(paneScaffoldState)
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
@@ -67,7 +77,6 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     }
 
     if (paneState.pane == ThreePane.Primary) {
-        val appState = LocalAppState.current
         LaunchedEffect(showNavigation) {
             appState.showNavigation = showNavigation
         }
@@ -82,6 +91,8 @@ val StatusBarHeight: Dp
     @Composable get() = with(LocalDensity.current) {
         statusBarHeight
     }
+
+val BottomNavHeight: Dp = 80.dp
 
 val Density.statusBarHeight: Dp
     @Composable get() {

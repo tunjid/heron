@@ -75,6 +75,8 @@ class AppState @Inject constructor(
         get() = !backPreviewState.progress.isNaN()
                 || dragToPopState.isDraggingToPop
 
+    internal val usesNavRail get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
+
     internal fun filteredPaneOrder(
         panedNavHostScope: PanedNavHostScope<ThreePane, Route>,
     ): List<ThreePane> {

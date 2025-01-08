@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
+import com.tunjid.heron.scaffold.scaffold.BottomNavHeight
 import kotlin.math.max
 import kotlin.math.min
 
@@ -67,7 +68,7 @@ fun bottomAppBarAccumulatedOffsetNestedScrollConnection(): AccumulatedOffsetNest
                 x = 0f,
                 y = navigationBarInsets.run {
                     getTop(this@maxOffset) + getBottom(this@maxOffset)
-                } + 80.dp.toPx()
+                } + BottomNavHeight.toPx()
             )
         },
         minOffset = { Offset.Zero },
