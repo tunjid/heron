@@ -4,13 +4,13 @@ import app.bsky.actor.GetProfileQueryParams
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +36,7 @@ interface ProfileRepository {
 
 class OfflineProfileRepository @Inject constructor(
     private val profileDao: ProfileDao,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : ProfileRepository {
@@ -79,26 +80,13 @@ class OfflineProfileRepository @Inject constructor(
         }
             .getOrNull()
             ?.let { response ->
-                profileDao.upsertProfiles(
-                    listOf(
-                        ProfileEntity(
-                            did = Id(response.did.did),
-                            handle = Id(response.handle.handle),
-                            displayName = response.displayName,
-                            description = response.description,
-                            avatar = response.avatar?.uri?.let(::Uri),
-                            banner = response.banner?.uri?.let(::Uri),
-                            followersCount = response.followersCount,
-                            followsCount = response.followsCount,
-                            postsCount = response.postsCount,
-                            joinedViaStarterPack = response
-                                .joinedViaStarterPack?.cid?.cid?.let(::Id),
-                            indexedAt = response.indexedAt,
-                            createdAt = response.createdAt,
-                        )
+                val authProfileId = savedStateRepository.signedInProfileId ?: return@let
+                multipleEntitySaverProvider.saveInTransaction {
+                    add(
+                        viewingProfileId = authProfileId,
+                        profileView = response,
                     )
-                )
+                }
             }
-
     }
 }
