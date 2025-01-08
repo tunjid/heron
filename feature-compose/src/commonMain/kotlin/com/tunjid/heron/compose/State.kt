@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.compose
 
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -25,12 +28,19 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val signedInProfile: Profile? = null,
     @Transient
     val messages: List<String> = emptyList(),
 )
 
 
 sealed class Action(val key: String) {
+
+    data class CreatePost(
+        val authorId: Id,
+        val text: String,
+        val links: List<Post.Link>,
+    ): Action("CreatePost")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

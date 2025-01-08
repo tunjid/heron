@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile
 
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.Timeline
@@ -43,6 +44,10 @@ data class State(
 
 
 sealed class Action(val key: String) {
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     data class UpdatePageWithUpdates(
         val sourceId: String,

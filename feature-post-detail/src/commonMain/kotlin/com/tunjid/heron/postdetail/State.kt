@@ -43,6 +43,10 @@ data class State(
 
 sealed class Action(val key: String) {
 
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
+
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
 

@@ -47,6 +47,7 @@ fun Post(
     onPostClicked: (Post) -> Unit,
     onImageClicked: (Uri) -> Unit,
     onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
@@ -100,13 +101,15 @@ fun Post(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
                     likeCount = format(post.likeCount),
-                    reposted = post.viewerStats?.reposted == true,
-                    liked = post.viewerStats?.liked == true,
+                    repostUri = post.viewerStats?.repostUri,
+                    likeUri = post.viewerStats?.likeUri,
                     iconSize = 16.dp,
                     postId = post.cid,
+                    postUri = post.uri,
                     sharedElementPrefix = sharedElementPrefix,
                     sharedElementScope = sharedElementScope,
                     onReplyToPost = onReplyToPost,
+                    onPostInteraction = onPostInteraction,
                 )
             }
         }

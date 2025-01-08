@@ -30,6 +30,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -44,11 +45,11 @@ typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class PostDetailStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualPostDetailStateHolder = creator.invoke(scope, route)
 }
 
@@ -77,6 +78,10 @@ class ActualPostDetailStateHolder(
             keySelector = Action::key
         ) {
             when (val action = type()) {
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    timelineRepository = timelineRepository,
+                )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -94,3 +99,10 @@ fun postThreadsMutations(
             if (it.isEmpty()) this
             else copy(items = it)
         }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        timelineRepository.sendInteraction(action.interaction)
+    }

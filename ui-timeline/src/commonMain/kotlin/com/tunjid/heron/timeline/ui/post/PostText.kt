@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.text.rememberFormattedTextPost
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -57,133 +58,6 @@ fun PostText(
     )
 }
 
-@Composable
-fun rememberFormattedTextPost(
-    text: String,
-    textLinks: List<Post.Link>,
-    onProfileClicked: (Profile) -> Unit,
-): AnnotatedString = remember(text) {
-    formatTextPost(
-        text = text,
-        textLinks = textLinks,
-        onProfileClicked = onProfileClicked,
-    )
-}
-
-fun formatTextPost(
-    text: String,
-    textLinks: List<Post.Link>,
-    onProfileClicked: (Profile) -> Unit,
-): AnnotatedString {
-    return buildAnnotatedString {
-        append(text)
-
-        val byteOffsets = text.byteOffsets()
-        textLinks.forEach { link ->
-            if (link.start < byteOffsets.size && link.end < byteOffsets.size) {
-                val start = byteOffsets[link.start]
-                val end = byteOffsets[link.end]
-
-                addStyle(
-                    style = SpanStyle(color = Color(0xFF3B62FF)),
-                    start = start,
-                    end = end,
-                )
-
-                when (val target = link.target) {
-                    is Post.LinkTarget.ExternalLink -> {
-                        addLink(
-                            url = LinkAnnotation.Url(target.uri.uri),
-                            start = start,
-                            end = end,
-                        )
-                    }
-
-                    is Post.LinkTarget.Hashtag -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.tag) {
-
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
-
-                    is Post.LinkTarget.UserDidMention -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.did.id) {
-                                onProfileClicked(
-                                    stubProfile(
-                                        did = target.did,
-                                        handle = target.did,
-                                    )
-                                )
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
-
-                    is Post.LinkTarget.UserHandleMention -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.handle.id) {
-                                onProfileClicked(
-                                    stubProfile(
-                                        did = target.handle,
-                                        handle = target.handle,
-                                    )
-                                )
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 private fun Post.textSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-text"
-
-private fun String.byteOffsets(): List<Int> = buildList {
-    var i = 0
-    var lastWas4Bytes = false
-
-    while (i < length) {
-        lastWas4Bytes = false
-        val c = this@byteOffsets[i].code
-
-        if (c < 0x80) {
-            // A 7-bit character with 1 byte.
-            repeat(1) { add(i) }
-            i++
-        } else if (c < 0x800) {
-            // An 11-bit character with 2 bytes.
-            repeat(2) { add(i) }
-            i++
-        } else if (c < 0xD800 || c > 0xDFFF) {
-            // A 16-bit character with 3 bytes.
-            repeat(3) { add(i) }
-            i++
-        } else {
-            val low = if (i + 1 < length) this@byteOffsets[i + 1].code else 0
-
-            if (c > 0xDBFF || low < 0xDC00 || low > 0xDFFF) {
-                // A malformed surrogate, which yields '?'.
-                repeat(1) { add(i) }
-                i++
-            } else {
-                // A 21-bit character with 4 bytes.
-                repeat(4) { add(i) }
-                i += 2
-                lastWas4Bytes = true
-            }
-        }
-    }
-    if (isNotEmpty()) {
-        if (lastWas4Bytes) add(i - 1) else add(i)
-    }
-}

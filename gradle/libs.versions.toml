@@ -74,6 +74,7 @@ compose-ui-testManifest = { group = "org.jetbrains.compose.ui", name = "ui-test-
 compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
 compose-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 compose-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
+codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.9.0" }
 lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }

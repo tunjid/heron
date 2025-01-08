@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -46,15 +47,18 @@ import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -62,6 +66,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_post_detail.generated.resources.Res
 import heron.feature_post_detail.generated.resources.back
+import heron.feature_post_detail.generated.resources.reply
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -141,6 +146,34 @@ abstract class PostDetailComponent(
                 },
                 topBar = {
                     TopBar { viewModel.accept(Action.Navigate.Pop) }
+                },
+                floatingActionButton = {
+                    Fab(
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            },
+                        sharedElementScope = sharedElementScope,
+                        expanded = isFabExpanded(
+                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                        ),
+                        text = stringResource(Res.string.reply),
+                        icon = Icons.AutoMirrored.Rounded.Reply,
+                        onClick = onClick@{
+                            val anchorPost = state.anchorPost ?: return@onClick
+                            val rootPost = state.items.firstOrNull()?.post ?: return@onClick
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ComposePost(
+                                        type = Post.Create.Reply(
+                                            parent = anchorPost,
+                                            root = rootPost,
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    )
                 },
                 bottomBar = {
                     BottomBar(

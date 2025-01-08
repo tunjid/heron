@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsStateHolder
@@ -36,8 +37,10 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.ComposeFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
@@ -120,6 +123,27 @@ abstract class NotificationsComponent(
                                 )
                             )
                         },
+                    )
+                },
+                floatingActionButton = {
+                    ComposeFab(
+                        modifier = Modifier
+                            .offset {
+                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            },
+                        sharedElementScope = sharedElementScope,
+                        expanded = isFabExpanded(
+                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                        ),
+                        onClick = {
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ComposePost(
+                                        type = Post.Create.Timeline
+                                    )
+                                )
+                            )
+                        }
                     )
                 },
                 bottomBar = {

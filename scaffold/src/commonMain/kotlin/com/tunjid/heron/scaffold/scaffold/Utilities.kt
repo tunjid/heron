@@ -13,3 +13,6 @@ internal inline fun <T> rememberUpdatedStateIf(
 ): State<T> = remember {
     mutableStateOf(value)
 }.also { if (predicate(value)) it.value = value }
+
+internal val BottomNavSharedElementZIndex = 2f
+internal val FabSharedElementZIndex = 4f

@@ -44,8 +44,8 @@ import kotlinx.datetime.Instant
 data class PostEntity(
     @PrimaryKey
     val cid: Id,
-    val uri: Uri?,
-    val authorId: Id?,
+    val uri: Uri,
+    val authorId: Id,
     val replyCount: Long?,
     val repostCount: Long?,
     val likeCount: Long?,
@@ -65,10 +65,12 @@ data class PostEntity(
 
 fun emptyPostEntity(
     id: Id,
+    uri: Uri,
+    authorId: Id,
 ) = PostEntity(
     cid = id,
-    uri = null,
-    authorId = null,
+    uri = uri,
+    authorId = authorId,
     replyCount = null,
     repostCount = null,
     likeCount = null,
@@ -164,10 +166,10 @@ fun PopulatedPostEntity.asExternalModel(
     viewerStats = viewerStats?.asExternalModel(),
 )
 
- fun PostViewerStatisticsEntity.asExternalModel() =
+fun PostViewerStatisticsEntity.asExternalModel() =
     Post.ViewerStats(
-        liked = liked,
-        reposted = reposted,
+        likeUri = likeUri,
+        repostUri = repostUri,
         threadMuted = threadMuted,
         replyDisabled = replyDisabled,
         embeddingDisabled = embeddingDisabled,

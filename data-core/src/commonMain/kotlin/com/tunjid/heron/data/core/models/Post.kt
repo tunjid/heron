@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.models.Post.ViewerStats
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -24,7 +25,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Post(
     val cid: Id,
-    val uri: Uri?,
+    val uri: Uri,
     val author: Profile,
     val replyCount: Long,
     val repostCount: Long,
@@ -44,12 +45,12 @@ data class Post(
         val text: String,
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
-    ): ByteSerializable
+    ) : ByteSerializable
 
     @Serializable
     data class ViewerStats(
-        val liked: Boolean,
-        val reposted: Boolean,
+        val likeUri: Uri?,
+        val repostUri: Uri?,
         val threadMuted: Boolean,
         val replyDisabled: Boolean,
         val embeddingDisabled: Boolean,
@@ -85,5 +86,54 @@ data class Post(
             val tag: String,
         ) : LinkTarget
     }
-}
 
+    @Serializable
+    sealed class Create : ByteSerializable {
+
+        @Serializable
+        data class Reply(
+            val parent: Post,
+            val root: Post,
+        ) : Create()
+
+        @Serializable
+        data class Mention(
+            val profile: Profile,
+        ) : Create()
+
+        @Serializable
+        data object Timeline : Create()
+
+        data class Request(
+            val authorId: Id,
+            val text: String,
+            val links: List<Link>,
+        )
+    }
+
+    sealed class Interaction {
+        sealed class Create: Interaction(){
+            data class Like(
+                val postId: Id,
+                val postUri: Uri,
+            ) : Create()
+
+            data class Repost(
+                val postId: Id,
+                val postUri: Uri,
+            ) : Create()
+        }
+
+        sealed class Delete: Interaction(){
+            data class Unlike(
+                val postId: Id,
+                val likeUri: Uri,
+            ) : Delete()
+
+            data class RemoveRepost(
+                val postId: Id,
+                val repostUri: Uri,
+            ) : Delete()
+        }
+    }
+}

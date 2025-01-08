@@ -73,7 +73,7 @@ fun BottomAppBar(
                     .sharedElement(
                         state = sharedContentState,
                         animatedVisibilityScope = sharedElementScope,
-                        zIndexInOverlay = 2f,
+                        zIndexInOverlay = BottomNavSharedElementZIndex,
                     )
                     .renderInSharedTransitionScopeOverlay(
                         renderInOverlay = {

@@ -54,6 +54,11 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(Post.LinkTarget.ExternalLink::class)
             subclass(Post.LinkTarget.Hashtag::class)
         }
+        polymorphic(Post.Create::class) {
+            subclass(Post.Create.Reply::class)
+            subclass(Post.Create.Mention::class)
+            subclass(Post.Create.Timeline::class)
+        }
     }
 }
 

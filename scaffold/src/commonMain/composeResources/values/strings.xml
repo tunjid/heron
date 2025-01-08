@@ -6,4 +6,5 @@
     <string name="profile">Profile</string>
     <string name="auth">Auth</string>
     <string name="splash">Splash</string>
+    <string name="post">Post</string>
 </resources>

@@ -16,32 +16,42 @@
 
 package com.tunjid.heron.compose.di
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.compose.Action
+import com.tunjid.heron.compose.ActualComposeStateHolder
+import com.tunjid.heron.compose.ComposeScreen
+import com.tunjid.heron.compose.ComposeStateHolderCreator
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
-import com.tunjid.heron.compose.ActualComposeStateHolder
-import com.tunjid.heron.compose.ComposeScreen
-import com.tunjid.heron.compose.ComposeStateHolderCreator
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import heron.feature_compose.generated.resources.Res
+import heron.feature_compose.generated.resources.back
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/compose"
 
@@ -73,7 +83,7 @@ abstract class ComposeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: ComposeStateHolderCreator
+        creator: ComposeStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -93,13 +103,14 @@ abstract class ComposeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar()
+                    TopBar { viewModel.accept(Action.Navigate.Pop) }
                 },
                 content = { paddingValues ->
                     ComposeScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )
@@ -108,16 +119,29 @@ abstract class ComposeComponent(
 }
 
 @Composable
-private fun TopBar() {
+private fun TopBar(
+    onBackPressed: () -> Unit,
+) {
     TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+        ),
+        navigationIcon = {
+            FilledTonalIconButton(
+                modifier = Modifier,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
+                        alpha = 0.9f
+                    )
+                ),
+                onClick = onBackPressed,
+            ) {
+                Image(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(Res.string.back),
+                )
+            }
         },
+        title = {},
     )
 }

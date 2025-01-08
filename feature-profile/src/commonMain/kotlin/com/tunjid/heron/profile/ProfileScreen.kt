@@ -558,6 +558,11 @@ private fun ProfileTimeline(
                     },
                     onImageClicked = {},
                     onReplyToPost = {},
+                    onPostInteraction = {
+                        actions(
+                            Action.SendPostInteraction(it)
+                        )
+                    },
                 )
             }
         )

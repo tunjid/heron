@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -20,6 +21,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import kotlinx.coroutines.flow.Flow
+
 
 @Dao
 interface PostDao {
@@ -92,6 +94,21 @@ interface PostDao {
     @Upsert
     suspend fun upsertPostStatistics(
         entities: List<PostViewerStatisticsEntity>,
+    )
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnorePostStatistics(
+        entities: List<PostViewerStatisticsEntity>,
+    ): List<Long>
+
+    @Update(entity = PostViewerStatisticsEntity::class)
+    suspend fun updatePostStatisticsLikes(
+        entities: List<PostViewerStatisticsEntity.Partial.Like>,
+    )
+
+    @Update(entity = PostViewerStatisticsEntity::class)
+    suspend fun updatePostStatisticsReposts(
+        entities: List<PostViewerStatisticsEntity.Partial.Repost>,
     )
 
     @Upsert
