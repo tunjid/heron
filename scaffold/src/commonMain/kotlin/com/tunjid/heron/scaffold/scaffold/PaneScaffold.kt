@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -36,9 +35,8 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit,
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
-    bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
-    contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
+    bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val appState = LocalAppState.current
@@ -50,16 +48,15 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
         topBar = {
             topBar(paneScaffoldState)
         },
-        bottomBar = {
-            if (paneState.pane == ThreePane.Primary) bottomBar(paneScaffoldState)
-        },
         floatingActionButton = {
             if (paneState.pane == ThreePane.Primary) floatingActionButton(paneScaffoldState)
+        },
+        bottomBar = {
+            if (paneState.pane == ThreePane.Primary) bottomBar(paneScaffoldState)
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
-        contentWindowInsets = contentWindowInsets,
         content = content,
     )
 

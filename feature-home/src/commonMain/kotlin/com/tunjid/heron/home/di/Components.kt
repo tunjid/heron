@@ -124,7 +124,6 @@ abstract class HomeComponent(
                     .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
-                contentWindowInsets = WindowInsets.statusBars,
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
