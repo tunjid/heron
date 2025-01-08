@@ -104,6 +104,7 @@ data class Post(
         @Serializable
         data object Timeline : Create()
 
+        @Serializable
         data class Request(
             val authorId: Id,
             val text: String,
@@ -111,28 +112,36 @@ data class Post(
         )
     }
 
+    @Serializable
     sealed class Interaction {
 
         abstract val postId: Id
 
+        @Serializable
         sealed class Create : Interaction() {
+            @Serializable
             data class Like(
                 override val postId: Id,
                 val postUri: Uri,
             ) : Create()
 
+            @Serializable
             data class Repost(
                 override val postId: Id,
                 val postUri: Uri,
             ) : Create()
         }
 
+        @Serializable
         sealed class Delete : Interaction() {
+
+            @Serializable
             data class Unlike(
                 override val postId: Id,
                 val likeUri: Uri,
             ) : Delete()
 
+            @Serializable
             data class RemoveRepost(
                 override val postId: Id,
                 val repostUri: Uri,
