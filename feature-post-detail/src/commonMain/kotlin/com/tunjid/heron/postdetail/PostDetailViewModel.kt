@@ -20,6 +20,8 @@ package com.tunjid.heron.postdetail
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.post
@@ -56,6 +58,7 @@ class PostDetailStateHolderCreator(
 @Inject
 class ActualPostDetailStateHolder(
     timelineRepository: TimelineRepository,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -79,7 +82,7 @@ class ActualPostDetailStateHolder(
         ) {
             when (val action = type()) {
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    timelineRepository = timelineRepository,
+                    writeQueue = writeQueue,
                 )
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
@@ -101,8 +104,8 @@ fun postThreadsMutations(
         }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
-    timelineRepository: TimelineRepository,
+    writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        timelineRepository.sendInteraction(action.interaction)
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
     }

@@ -26,6 +26,8 @@ import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.isValidFor
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -34,6 +36,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.toTiledList
@@ -62,6 +65,7 @@ class NotificationsStateHolderCreator(
 @Inject
 class ActualNotificationsStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    writeQueue: WriteQueue,
     authTokenRepository: AuthTokenRepository,
     notificationsRepository: NotificationsRepository,
     @Assisted
@@ -87,7 +91,9 @@ class ActualNotificationsStateHolder(
                     stateHolder = this@transform,
                     notificationsRepository = notificationsRepository,
                 )
-
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -101,6 +107,13 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
 suspend fun Flow<Action.LoadAround>.notificationsMutations(
