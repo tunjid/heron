@@ -10,9 +10,11 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -50,7 +52,7 @@ class OfflineProfileRepository @Inject constructor(
             .map { it.firstOrNull()?.asExternalModel() }
             .filterNotNull()
             .withRefresh { fetchProfile(profileId) }
-
+            .debounce(InvalidationTrackerDebounceMillis)
 
     override fun profileRelationship(
         profileId: Id,
@@ -63,6 +65,7 @@ class OfflineProfileRepository @Inject constructor(
                 )
             }
             .mapNotNull { it?.asExternalModel() }
+            .debounce(InvalidationTrackerDebounceMillis)
 
     private fun signedInProfileId() = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }
