@@ -37,3 +37,6 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
     return Result.failure(Exception("There was an error")) // last attempt
 }
 
+// Heuristically defined method for debouncing flows produced by
+// Room's invalidation tracker
+internal const val InvalidationTrackerDebounceMillis = 120L

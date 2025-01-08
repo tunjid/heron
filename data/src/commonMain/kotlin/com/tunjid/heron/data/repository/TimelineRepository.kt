@@ -44,6 +44,7 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -269,6 +270,7 @@ class OfflineTimelineRepository(
             )
         )
     }
+        .debounce(InvalidationTrackerDebounceMillis)
 
     override fun hasUpdates(
         timeline: Timeline,
@@ -410,7 +412,7 @@ class OfflineTimelineRepository(
                         }
                     }
             }
-
+            .debounce(InvalidationTrackerDebounceMillis)
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateRepository.savedState
@@ -464,9 +466,8 @@ class OfflineTimelineRepository(
                         )
                     }
                     .filter(List<Timeline.Home>::isNotEmpty)
-                    // Debounce for about 2 frames on a 60 hz display
-                    .debounce(32)
             }
+            .debounce(InvalidationTrackerDebounceMillis)
 
     override suspend fun createPost(
         request: Post.Create.Request,
