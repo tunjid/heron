@@ -33,7 +33,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.signedInUserProfileEntity
+import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -138,7 +138,7 @@ class AuthTokenRepository(
                     networkService.api.getProfile(GetProfileQueryParams(actor = did))
                 }
                     .getOrNull()
-                    ?.signedInUserProfileEntity()
+                    ?.profileEntity()
                     ?.let { profileDao.upsertProfiles(listOf(it)) }
             },
             async {
