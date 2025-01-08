@@ -24,6 +24,8 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.domain.timeline.timelineStateHolder
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -63,6 +65,7 @@ class ActualProfileStateHolder(
     authTokenRepository: AuthTokenRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -108,7 +111,7 @@ class ActualProfileStateHolder(
             when (val action = type()) {
                 is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    timelineRepository = timelineRepository,
+                    writeQueue = writeQueue,
                 )
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -148,10 +151,10 @@ private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<M
     }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
-    timelineRepository: TimelineRepository,
+    writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        timelineRepository.sendInteraction(action.interaction)
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
 private fun timelines(route: Route) = listOf(

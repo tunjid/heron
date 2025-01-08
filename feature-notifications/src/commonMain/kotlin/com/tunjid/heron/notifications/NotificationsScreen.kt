@@ -105,7 +105,7 @@ internal fun NotificationsScreen(
 
     val onPostInteraction = remember {
         { interaction: Post.Interaction ->
-
+            actions(Action.SendPostInteraction(interaction))
         }
     }
 

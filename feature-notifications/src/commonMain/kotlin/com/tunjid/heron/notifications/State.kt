@@ -17,6 +17,7 @@
 package com.tunjid.heron.notifications
 
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
@@ -77,6 +78,10 @@ sealed class Action(val key: String) {
     data class LoadAround(
         val query: NotificationsQuery,
     ) : Action("LoadAround")
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

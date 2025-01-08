@@ -3,6 +3,7 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -14,7 +15,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
-import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.navItemSelected
@@ -43,6 +44,7 @@ import me.tatarka.inject.annotations.Inject
 class AppState @Inject constructor(
     private val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>,
     private val navigationStateHolder: NavigationStateHolder,
+    private val writeQueue: WriteQueue,
 ) {
 
     private var density = Density(1f)
@@ -74,7 +76,7 @@ class AppState @Inject constructor(
                 || dragToPopState.isDraggingToPop
 
     internal fun filteredPaneOrder(
-        panedNavHostScope: PanedNavHostScope<ThreePane, Route>
+        panedNavHostScope: PanedNavHostScope<ThreePane, Route>,
     ): List<ThreePane> {
         val order = paneRenderOrder.filter { panedNavHostScope.nodeFor(it) != null }
         return order
@@ -104,7 +106,7 @@ class AppState @Inject constructor(
                 ThreePane,
                 MultiStackNav,
                 Route
-                >.() -> PanedNavHostConfiguration<ThreePane, MultiStackNav, Route>
+                >.() -> PanedNavHostConfiguration<ThreePane, MultiStackNav, Route>,
     ): SavedStatePanedNavHostState<ThreePane, Route> {
         LocalDensity.current.also { density = it }
         val adaptiveNavHostState = remember {
@@ -120,6 +122,11 @@ class AppState @Inject constructor(
                 }
             }
             onDispose { job.cancel() }
+        }
+
+        // TODO: Figure out a way to do this in the background with KMP
+        LaunchedEffect(Unit) {
+            writeQueue.drain()
         }
 
         return adaptiveNavHostState

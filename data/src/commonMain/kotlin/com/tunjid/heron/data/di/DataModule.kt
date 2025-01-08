@@ -37,6 +37,8 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -142,6 +144,10 @@ abstract class DataComponent(
     }
 
     val KtorNetworkService.bind: NetworkService
+        @DataScope
+        @Provides get() = this
+
+    val SnapshotWriteQueue.bind: WriteQueue
         @DataScope
         @Provides get() = this
 
