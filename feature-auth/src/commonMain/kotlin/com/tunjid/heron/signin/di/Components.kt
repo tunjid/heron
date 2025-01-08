@@ -16,13 +16,9 @@
 
 package com.tunjid.heron.signin.di
 
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -30,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -39,6 +34,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.Action
@@ -47,13 +43,13 @@ import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolderCreator
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_auth.generated.resources.Res
 import heron.feature_auth.generated.resources.create_an_account
 import heron.feature_auth.generated.resources.sign_in
-import heron.feature_auth.generated.resources.submit
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -89,7 +85,7 @@ abstract class SignInComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SignInStateHolderCreator
+        creator: SignInStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
@@ -115,7 +111,11 @@ abstract class SignInComponent(
                 floatingActionButton = {
                     Fab(
                         modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
-                        onSubmit = {
+                        sharedElementScope = requirePanedSharedElementScope(),
+                        expanded = true,
+                        text = stringResource(Res.string.sign_in),
+                        icon = Icons.Rounded.Check,
+                        onClick = {
                             if (state.submitButtonEnabled) viewModel.accept(Action.Submit(state.sessionRequest))
                         }
                     )
@@ -148,24 +148,5 @@ private fun TopBar() {
                 }
             )
         },
-    )
-}
-
-@Composable
-private fun Fab(
-    modifier: Modifier = Modifier,
-    onSubmit: () -> Unit
-) {
-    ExtendedFloatingActionButton(
-        modifier = modifier,
-        onClick = onSubmit,
-        content = {
-            Text(stringResource(Res.string.sign_in))
-            Spacer(Modifier.size(8.dp))
-            Icon(
-                imageVector = Icons.Rounded.Check,
-                contentDescription = stringResource(Res.string.submit)
-            )
-        }
     )
 }

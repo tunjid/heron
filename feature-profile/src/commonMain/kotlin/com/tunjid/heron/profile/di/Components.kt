@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -156,7 +157,8 @@ abstract class ProfileComponent(
                     Fab(
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                if (usesNavRail) IntOffset.Zero
+                                else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(

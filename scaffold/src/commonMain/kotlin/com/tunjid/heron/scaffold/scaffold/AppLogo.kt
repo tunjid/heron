@@ -1,5 +1,12 @@
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
@@ -8,6 +15,27 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.SharedElementScope
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SharedElementScope.AppLogo(
+    modifier: Modifier,
+) {
+    Icon(
+        modifier = modifier
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(AppLogo),
+                animatedVisibilityScope = this,
+                boundsTransform = { _, _ ->
+                    spring(stiffness = Spring.StiffnessLow)
+                }
+            ),
+        imageVector = AppLogo,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurface,
+    )
+}
 
 val AppLogo: ImageVector
     get() {

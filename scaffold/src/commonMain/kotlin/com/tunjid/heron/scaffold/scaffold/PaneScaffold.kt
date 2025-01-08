@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -23,33 +22,41 @@ import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 
+class PaneScaffoldState internal constructor(
+    private val appState: AppState,
+) {
+    val usesNavRail get() = appState.usesNavRail
+}
+
 @Composable
 fun PaneScope<ThreePane, Route>.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit,
-    topBar: @Composable () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {},
-    floatingActionButton: @Composable () -> Unit = {},
-    contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
+    topBar: @Composable PaneScaffoldState.() -> Unit = {},
+    floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
+    bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val paneScaffoldState = remember(appState) { PaneScaffoldState(appState) }
 
     Scaffold(
         modifier = modifier,
-        topBar = topBar,
-        bottomBar = {
-            if (paneState.pane == ThreePane.Primary) bottomBar()
+        topBar = {
+            topBar(paneScaffoldState)
         },
         floatingActionButton = {
-            if (paneState.pane == ThreePane.Primary) floatingActionButton()
+            if (paneState.pane == ThreePane.Primary) floatingActionButton(paneScaffoldState)
+        },
+        bottomBar = {
+            if (paneState.pane == ThreePane.Primary) bottomBar(paneScaffoldState)
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
-        contentWindowInsets = contentWindowInsets,
         content = content,
     )
 
@@ -67,7 +74,6 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     }
 
     if (paneState.pane == ThreePane.Primary) {
-        val appState = LocalAppState.current
         LaunchedEffect(showNavigation) {
             appState.showNavigation = showNavigation
         }
@@ -82,6 +88,8 @@ val StatusBarHeight: Dp
     @Composable get() = with(LocalDensity.current) {
         statusBarHeight
     }
+
+val BottomNavHeight: Dp = 80.dp
 
 val Density.statusBarHeight: Dp
     @Composable get() {
