@@ -34,8 +34,9 @@ interface ProfileDao {
             INNER JOIN profiles
             ON profileId = did
             WHERE profileId = :profileId
+                AND otherProfileId = :otherProfileId
             OR handle = :profileId
-            AND otherProfileId = :otherProfileId
+                AND otherProfileId = :otherProfileId
         """
     )
     fun relationships(
