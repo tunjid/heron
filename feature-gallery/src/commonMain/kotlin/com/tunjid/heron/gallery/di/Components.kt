@@ -29,6 +29,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.gallery.ActualGalleryStateHolder
 import com.tunjid.heron.gallery.GalleryScreen
@@ -43,19 +47,29 @@ import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollCon
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/gallery"
+private const val RoutePattern = "/post/{postId}/gallery"
 
 private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
 )
+
+internal val Route.post
+    get(): Post? = routeParams.queryParams["post"]?.firstOrNull()?.fromBase64EncodedUrl()
+
+internal val Route.mediaEmbed
+    get(): Embed.Media? = routeParams.queryParams["media"]?.firstOrNull()?.fromBase64EncodedUrl()
+
+internal val Route.postUri
+    get() = Uri(routeParams.queryParams.getValue("postUri").first())
 
 @Component
 abstract class GalleryNavigationComponent {

@@ -48,6 +48,10 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(ImageList::class)
             subclass(UnknownEmbed::class)
         }
+        polymorphic(Embed.Media::class) {
+            subclass(Video::class)
+            subclass(ImageList::class)
+        }
         polymorphic(Post.LinkTarget::class) {
             subclass(Post.LinkTarget.UserHandleMention::class)
             subclass(Post.LinkTarget.UserDidMention::class)
