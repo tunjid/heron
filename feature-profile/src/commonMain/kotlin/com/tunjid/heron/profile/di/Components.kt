@@ -57,6 +57,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
@@ -119,7 +120,7 @@ abstract class ProfileComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: ProfileStateHolderCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneListDetailStrategy<Route>(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
@@ -156,7 +157,7 @@ abstract class ProfileComponent(
                     Fab(
                         modifier = Modifier
                             .offset {
-                                if (usesNavRail) IntOffset.Zero
+                                if (isExpanded) IntOffset.Zero
                                 else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
@@ -200,6 +201,11 @@ abstract class ProfileComponent(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
+                    )
+                    SecondaryPaneCloseBackHandler(
+                        enabled = paneState.pane == ThreePane.Primary
+                                && route.children.isNotEmpty()
+                                && isExpanded
                     )
                 }
             )

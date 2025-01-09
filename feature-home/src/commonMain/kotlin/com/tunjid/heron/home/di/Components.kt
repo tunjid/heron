@@ -154,7 +154,7 @@ abstract class HomeComponent(
                     ComposeFab(
                         modifier = Modifier
                             .offset {
-                                if (usesNavRail) IntOffset.Zero
+                                if (isExpanded) IntOffset.Zero
                                 else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,

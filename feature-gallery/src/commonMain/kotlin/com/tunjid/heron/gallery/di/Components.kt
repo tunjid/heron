@@ -105,7 +105,7 @@ abstract class GalleryComponent(
             PaneScaffold(
                 modifier = Modifier
                     .dragToPop(),
-                showNavigation = true,
+                showNavigation = false,
                 containerColor = Color.Transparent,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
