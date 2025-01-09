@@ -556,7 +556,7 @@ private fun ProfileTimeline(
                             )
                         )
                     },
-                    onPostMediaClicked = { _, _ -> },
+                    onPostMediaClicked = { _, _, _ -> },
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(

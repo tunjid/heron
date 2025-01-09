@@ -25,7 +25,7 @@ fun ReplyRow(
         notification = notification,
         onProfileClicked = onProfileClicked,
         onPostClicked = onPostClicked,
-        onPostMediaClicked = { _, _ -> },
+        onPostMediaClicked = { _, _, _ -> },
         onReplyToPost = {},
         onPostInteraction = onPostInteraction,
     )

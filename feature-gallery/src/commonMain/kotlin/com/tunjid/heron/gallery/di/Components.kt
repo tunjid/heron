@@ -65,11 +65,14 @@ private fun createRoute(
 internal val Route.post
     get(): Post? = routeParams.queryParams["post"]?.firstOrNull()?.fromBase64EncodedUrl()
 
-internal val Route.mediaEmbed
+internal val Route.media
     get(): Embed.Media? = routeParams.queryParams["media"]?.firstOrNull()?.fromBase64EncodedUrl()
 
-internal val Route.postUri
-    get() = Uri(routeParams.queryParams.getValue("postUri").first())
+internal val Route.postId
+    get() = Uri(routeParams.pathArgs.getValue("postId"))
+
+internal val Route.startIndex
+    get() = routeParams.queryParams["startIndex"]?.firstOrNull()?.toIntOrNull() ?: 0
 
 @Component
 abstract class GalleryNavigationComponent {

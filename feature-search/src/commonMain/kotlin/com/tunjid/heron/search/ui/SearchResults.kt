@@ -117,7 +117,7 @@ internal fun PostSearchResult(
                 onPostClicked = {
                     onPostClicked(result)
                 },
-                onPostMediaClicked = { _, _ -> },
+                onPostMediaClicked = { _, _, _ -> },
                 onReplyToPost = {},
                 onPostInteraction = onPostInteraction,
             )

@@ -218,7 +218,7 @@ private fun HomeTimeline(
                             )
                         )
                     },
-                    onPostMediaClicked = { _, _ -> },
+                    onPostMediaClicked = { _, _, _ -> },
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(
