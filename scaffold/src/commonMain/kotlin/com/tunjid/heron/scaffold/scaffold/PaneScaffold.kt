@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.filterNotNull
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
 ) {
-    val usesNavRail get() = appState.usesNavRail
+    val isExpanded get() = appState.isExpanded
 }
 
 @Composable
@@ -40,7 +40,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit,
+    content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -50,18 +50,20 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
         modifier = modifier,
         containerColor = containerColor,
         topBar = {
-            topBar(paneScaffoldState)
+            paneScaffoldState.topBar()
         },
         floatingActionButton = {
-            if (paneState.pane == ThreePane.Primary) floatingActionButton(paneScaffoldState)
+            if (paneState.pane == ThreePane.Primary) paneScaffoldState.floatingActionButton()
         },
         bottomBar = {
-            if (paneState.pane == ThreePane.Primary) bottomBar(paneScaffoldState)
+            if (paneState.pane == ThreePane.Primary) paneScaffoldState.bottomBar()
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
-        content = content,
+        content = {
+            paneScaffoldState.content(it)
+        },
     )
 
     val updatedMessages = rememberUpdatedState(snackBarMessages.firstOrNull())

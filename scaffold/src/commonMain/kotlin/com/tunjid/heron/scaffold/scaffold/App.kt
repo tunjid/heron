@@ -122,7 +122,7 @@ fun App(
                         ) {
                             NavScaffold(
                                 isVisible = appState.showNavigation,
-                                useRail = appState.usesNavRail,
+                                useRail = appState.isExpanded,
                                 modifier = Modifier.fillMaxSize(),
                                 navItems = appState.navItems,
                                 onNavItemSelected = appState::onNavItemSelected
