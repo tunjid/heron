@@ -36,14 +36,14 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
         did = Id(did.did),
         handle = Id(handle.handle),
         displayName = displayName,
-        description = null,
+        description = description,
         avatar = avatar?.uri?.let(::Uri),
         banner = null,
         followersCount = 0,
         followsCount = 0,
         postsCount = 0,
         joinedViaStarterPack = null,
-        indexedAt = null,
+        indexedAt = indexedAt,
         createdAt = createdAt,
     )
 
@@ -68,14 +68,14 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
         did = Id(did.did),
         handle = Id(handle.handle),
         displayName = displayName,
-        description = null,
+        description = description,
         avatar = avatar?.uri?.let(::Uri),
         banner = banner?.uri?.let(::Uri),
         followersCount = followersCount,
         followsCount = followsCount,
         postsCount = postsCount,
         joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::Id),
-        indexedAt = null,
+        indexedAt = indexedAt,
         createdAt = createdAt,
     )
 
