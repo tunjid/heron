@@ -46,6 +46,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
@@ -168,6 +171,49 @@ private fun HomeTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
+    val onPostClicked = remember {
+        { post: Post ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToPost(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        post = post,
+                    )
+                )
+            )
+        }
+    }
+    val onProfileClicked = remember {
+        { post: Post, profile: Profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = post.avatarSharedElementKey(
+                            prefix = timelineState.timeline.sourceId,
+                        ).takeIf { post.author.did == profile.did }
+                    )
+                )
+            )
+        }
+    }
+    val onPostMediaClicked = remember {
+        { post: Post, media: Embed.Media, index: Int ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToMedia(
+                        post = post,
+                        media = media,
+                        startIndex = index,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                    )
+                )
+            )
+        }
+    }
+
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize(),
@@ -194,31 +240,9 @@ private fun HomeTimeline(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sourceId,
-                    onPostClicked = { post ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToPost(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                    sharedElementPrefix = timelineState.timeline.sourceId,
-                                    post = post,
-                                )
-                            )
-                        )
-                    },
-                    onProfileClicked = { post, profile ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                    profile = profile,
-                                    avatarSharedElementKey = post.avatarSharedElementKey(
-                                        prefix = timelineState.timeline.sourceId,
-                                    ).takeIf { post.author.did == profile.did }
-                                )
-                            )
-                        )
-                    },
-                    onPostMediaClicked = { _, _, _ -> },
+                    onPostClicked = onPostClicked,
+                    onProfileClicked = onProfileClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(

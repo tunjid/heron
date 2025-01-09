@@ -149,6 +149,7 @@ interface NavigationAction {
             val post: Post,
             val media: Embed.Media,
             val startIndex: Int,
+            val sharedElementPrefix: String,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
@@ -158,6 +159,7 @@ interface NavigationAction {
                             "post" to listOf(post.toUrlEncodedBase64()),
                             "media" to listOf(media.toUrlEncodedBase64()),
                             "startIndex" to listOf(startIndex.toString()),
+                            "sharedElementPrefix" to listOf(sharedElementPrefix),
                         )
                     ).toRoute
                 )
