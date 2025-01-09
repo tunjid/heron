@@ -72,7 +72,7 @@ import kotlinx.datetime.Instant
         AutoMigration(from = 3, to = 4),
         // serializedPostRecordMigration
         AutoMigration(from = 4, to = 5),
-        AutoMigration (
+        AutoMigration(
             from = 6,
             to = 7,
             spec = PostViewerStatisticsAutoMigration::class

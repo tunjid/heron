@@ -1,8 +1,9 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("android-application-convention")
     alias(libs.plugins.kotlinMultiplatform)
@@ -21,7 +22,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -32,12 +33,12 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -150,5 +151,8 @@ compose.desktop {
 }
 
 configurations {
-    getByName("desktopMainApi").exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-android")
+    getByName("desktopMainApi").exclude(
+        group = "org.jetbrains.kotlinx",
+        module = "kotlinx-coroutines-android"
+    )
 }

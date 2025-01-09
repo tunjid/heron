@@ -51,7 +51,7 @@ interface ProfileDao {
 
     @Transaction
     suspend fun insertOrPartiallyUpdateProfiles(
-        entities: List<ProfileEntity>
+        entities: List<ProfileEntity>,
     ) = partialUpsert(
         items = entities,
         partialMapper = ProfileEntity::partial,
@@ -76,7 +76,7 @@ interface ProfileDao {
 
     @Transaction
     suspend fun insertOrPartiallyUpdateProfileProfileRelationships(
-        entities: List<ProfileProfileRelationshipsEntity>
+        entities: List<ProfileProfileRelationshipsEntity>,
     ) = partialUpsert(
         items = entities,
         partialMapper = ProfileProfileRelationshipsEntity::partial,

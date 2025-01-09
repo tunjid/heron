@@ -36,11 +36,11 @@ typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class FeedStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualFeedStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualFeedStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualFeedStateHolder = creator.invoke(scope, route)
 }
 

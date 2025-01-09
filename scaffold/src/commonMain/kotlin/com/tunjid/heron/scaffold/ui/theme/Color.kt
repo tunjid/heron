@@ -1,4 +1,5 @@
 package com.tunjid.heron.scaffold.ui.theme
+
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF36618E)

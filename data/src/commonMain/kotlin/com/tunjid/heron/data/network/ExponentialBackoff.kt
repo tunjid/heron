@@ -24,7 +24,7 @@ suspend fun <T> exponentialBackoff(
     maxDelay: Long = 1_000 * 60 * 60,
     factor: Double = 2.0,
     default: T,
-    block: suspend () -> T
+    block: suspend () -> T,
 ): T {
     var currentDelay = initialDelay
     repeat(times) {

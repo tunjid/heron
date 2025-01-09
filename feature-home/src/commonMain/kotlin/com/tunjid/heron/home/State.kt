@@ -19,7 +19,6 @@ package com.tunjid.heron.home
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable

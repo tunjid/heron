@@ -113,6 +113,7 @@ class ActualProfileStateHolder(
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                     writeQueue = writeQueue,
                 )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )

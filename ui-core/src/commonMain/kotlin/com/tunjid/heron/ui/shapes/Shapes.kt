@@ -69,7 +69,7 @@ sealed class RoundedPolygonShape : Shape {
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
-        density: Density
+        density: Density,
     ): Outline {
         val polygon = ensurePolygon(size, density)
 
@@ -96,7 +96,7 @@ sealed class RoundedPolygonShape : Shape {
         private val polygon = RoundedPolygon.circle(numVertices = 8)
         override fun createPolygon(
             size: Size,
-            density: Density
+            density: Density,
         ): RoundedPolygon = polygon
     }
 
@@ -105,7 +105,7 @@ sealed class RoundedPolygonShape : Shape {
         private val polygon = RoundedPolygon.rectangle()
         override fun createPolygon(
             size: Size,
-            density: Density
+            density: Density,
         ): RoundedPolygon = polygon
     }
 
@@ -115,7 +115,7 @@ sealed class RoundedPolygonShape : Shape {
     ) : RoundedPolygonShape() {
         override fun createPolygon(
             size: Size,
-            density: Density
+            density: Density,
         ): RoundedPolygon = RoundedPolygon.rectangle(
             perVertexRounding = listOf(
                 roundedCornerShape.bottomEnd.normalize(
@@ -139,7 +139,7 @@ sealed class RoundedPolygonShape : Shape {
 
         private fun CornerSize.normalize(
             size: Size,
-            density: Density
+            density: Density,
         ): CornerRounding {
             val maxDimension = max(size.width, size.height)
             val absoluteCornerSize = toPx(
@@ -159,7 +159,7 @@ sealed class RoundedPolygonShape : Shape {
 
         override fun createPolygon(
             size: Size,
-            density: Density
+            density: Density,
         ): RoundedPolygon = RoundedPolygon(
             numVertices = cornerSizeAtIndex.size,
             perVertexRounding = cornerSizeAtIndex.map {
@@ -225,7 +225,7 @@ fun RoundedPolygonShape.animate(
             override fun createOutline(
                 size: Size,
                 layoutDirection: LayoutDirection,
-                density: Density
+                density: Density,
             ): Outline {
                 if (size == Size.Zero) return RectangleShape.createOutline(
                     size = size,

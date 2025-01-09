@@ -38,7 +38,7 @@ data class VideoEntity(
     val alt: String?,
     val width: Long?,
     val height: Long?,
-): PostEmbed
+) : PostEmbed
 
 /**
  * Cross reference for many to many relationship between [Post] and [VideoEntity]

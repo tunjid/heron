@@ -29,6 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RepostRow(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.Reposted,
@@ -38,7 +39,7 @@ fun RepostRow(
 ) {
     NotificationAggregateScaffold(
         sharedElementScope = sharedElementScope,
-        modifier = Modifier.clickable {
+        modifier = modifier.clickable {
             onPostClicked(notification)
         },
         onProfileClicked = onProfileClicked,

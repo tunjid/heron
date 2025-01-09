@@ -15,9 +15,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 

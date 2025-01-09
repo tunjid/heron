@@ -25,4 +25,4 @@ data class ExternalEmbed(
     val title: String,
     val description: String,
     val thumb: Uri?,
-): Embed
+) : Embed

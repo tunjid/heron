@@ -43,7 +43,8 @@ internal fun PostReasonLine(
         )
 
         is TimelineItem.Thread,
-        is TimelineItem.Single -> Unit
+        is TimelineItem.Single,
+            -> Unit
     }
 }
 

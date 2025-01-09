@@ -7,7 +7,7 @@ import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
 internal fun MultipleEntitySaver.add(
-    listView: ListView
+    listView: ListView,
 ) {
     listView.creator.profileEntity().let(::add)
     add(

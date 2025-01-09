@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FollowRow(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.Followed,
@@ -33,7 +34,7 @@ fun FollowRow(
 ) {
     NotificationAggregateScaffold(
         sharedElementScope = sharedElementScope,
-        modifier = Modifier
+        modifier = modifier
             .clickable {
                 onProfileClicked(notification, notification.author)
             },

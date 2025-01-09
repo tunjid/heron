@@ -35,7 +35,7 @@ internal fun MultipleEntitySaver.add(
                 uri = notification.uri.atUri.let(::Uri),
                 cid = notification.cid.cid.let(::Id),
                 authorId = notification.author.did.did.let(::Id),
-                reason = when(notification.reason) {
+                reason = when (notification.reason) {
                     ListNotificationsReason.Follow -> Notification.Reason.Follow
                     ListNotificationsReason.Like -> Notification.Reason.Like
                     ListNotificationsReason.Mention -> Notification.Reason.Mention

@@ -26,6 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun JoinedStarterPackRow(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.JoinedStarterPack,
@@ -34,7 +35,7 @@ fun JoinedStarterPackRow(
 ) {
     NotificationAggregateScaffold(
         sharedElementScope = sharedElementScope,
-        modifier = Modifier
+        modifier = modifier
             .clickable {
                 onProfileClicked(notification, notification.author)
             },

@@ -13,19 +13,23 @@ data class CursorList<T>(
 @Serializable
 sealed class Cursor {
     @Serializable
-    data object Initial: Cursor()
+    data object Initial : Cursor()
+
     @Serializable
-    data object Pending: Cursor()
+    data object Pending : Cursor()
+
     @Serializable
     data class Next(
         val cursor: String,
-    ): Cursor()
+    ) : Cursor()
 }
 
-val Cursor.value get() = when(this) {
-    Cursor.Initial -> null
-    Cursor.Pending -> throw IllegalArgumentException(
-        "Pending cursors cannot be used to fetch data"
-    )
-    is Cursor.Next -> cursor
-}
+val Cursor.value
+    get() = when (this) {
+        Cursor.Initial -> null
+        Cursor.Pending -> throw IllegalArgumentException(
+            "Pending cursors cannot be used to fetch data"
+        )
+
+        is Cursor.Next -> cursor
+    }

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Preferences(
-    val timelinePreferences: List<TimelinePreference>
+    val timelinePreferences: List<TimelinePreference>,
 ) : ByteSerializable
 
 @Serializable

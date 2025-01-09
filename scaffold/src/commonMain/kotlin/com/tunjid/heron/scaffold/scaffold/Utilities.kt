@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 @Composable
 internal inline fun <T> rememberUpdatedStateIf(
     value: T,
-    predicate: (T) -> Boolean
+    predicate: (T) -> Boolean,
 ): State<T> = remember {
     mutableStateOf(value)
 }.also { if (predicate(value)) it.value = value }

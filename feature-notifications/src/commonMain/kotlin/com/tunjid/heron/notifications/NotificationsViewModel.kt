@@ -91,9 +91,11 @@ class ActualNotificationsStateHolder(
                     stateHolder = this@transform,
                     notificationsRepository = notificationsRepository,
                 )
+
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                     writeQueue = writeQueue,
                 )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )

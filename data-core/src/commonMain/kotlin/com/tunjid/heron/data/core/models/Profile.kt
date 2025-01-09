@@ -20,7 +20,7 @@ data class Profile(
     val joinedViaStarterPack: Id?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
-): ByteSerializable
+) : ByteSerializable
 
 val Profile.contentDescription get() = displayName ?: handle.id
 

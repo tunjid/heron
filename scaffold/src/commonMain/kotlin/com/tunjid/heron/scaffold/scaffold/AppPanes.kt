@@ -57,7 +57,7 @@ private val PaneSpring = spring(
 )
 
 enum class PaneAnchor(
-    val fraction: Float
+    val fraction: Float,
 ) {
     Zero(fraction = 0f),
     OneThirds(fraction = 1 / 3f),
@@ -68,7 +68,7 @@ enum class PaneAnchor(
 
 @Stable
 internal class PaneAnchorState(
-    private val density: Density
+    private val density: Density,
 ) {
     var maxWidth by mutableIntStateOf(1000)
         internal set
@@ -186,7 +186,8 @@ internal class PaneAnchorState(
                     PaneAnchor.OneThirds,
                     PaneAnchor.Half,
                     PaneAnchor.TwoThirds,
-                    PaneAnchor.Full -> 2.dp
+                    PaneAnchor.Full,
+                        -> 2.dp
                 }
             )
             Box(

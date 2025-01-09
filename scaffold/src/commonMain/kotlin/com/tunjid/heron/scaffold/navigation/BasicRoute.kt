@@ -63,7 +63,7 @@ fun routeOf(
 
 fun <T : Route> routeAndMatcher(
     routePattern: String,
-    routeMapper: (RouteParams) -> T
+    routeMapper: (RouteParams) -> T,
 ) = routePattern to urlRouteMatcher(
     routePattern = routePattern,
     routeMapper = routeMapper

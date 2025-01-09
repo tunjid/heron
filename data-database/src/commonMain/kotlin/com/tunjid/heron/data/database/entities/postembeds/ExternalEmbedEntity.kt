@@ -36,7 +36,7 @@ data class ExternalEmbedEntity(
     val title: String,
     val description: String,
     val thumb: Uri?,
-): PostEmbed
+) : PostEmbed
 
 /**
  * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]

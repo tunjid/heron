@@ -21,7 +21,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 
 @Composable
 fun Modifier.predictiveBackBackgroundModifier(
-    paneScope: PaneScope<ThreePane, *>
+    paneScope: PaneScope<ThreePane, *>,
 ): Modifier {
     if (paneScope.paneState.pane != ThreePane.TransientPrimary)
         return this
