@@ -1,16 +1,18 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.images.AsyncImage
@@ -25,14 +27,15 @@ internal fun PostImages(
     feature: ImageList,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
+    onImageClicked: (Int) -> Unit,
 ) {
     LazyRow(
         horizontalArrangement = spacedBy(8.dp),
     ) {
-        items(
+        itemsIndexed(
             items = feature.images,
-            key = { it.thumb.uri },
-            itemContent = { image ->
+            key = { _, item -> item.thumb.uri },
+            itemContent = { index, image ->
                 val aspectRatio = if (!image.aspectRatio.isNaN()) image.aspectRatio else 1f
                 sharedElementScope.updatedMovableSharedElementOf(
                     modifier = when (feature.images.size) {
@@ -43,8 +46,11 @@ internal fun PostImages(
                         else -> Modifier
                             .height(200.dp)
                             .aspectRatio(aspectRatio)
-                    },
-                    key = "$sharedElementPrefix-${image.thumb.uri}",
+                    }
+                        .clickable { onImageClicked(index) },
+                    key = image.sharedElementKey(
+                        prefix = sharedElementPrefix
+                    ),
                     state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
@@ -62,3 +68,7 @@ internal fun PostImages(
         )
     }
 }
+
+fun Image.sharedElementKey(
+    prefix: String,
+) = "$prefix-${thumb.uri}"

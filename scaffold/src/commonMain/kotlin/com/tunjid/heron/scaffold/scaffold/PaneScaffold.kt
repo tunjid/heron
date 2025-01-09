@@ -3,6 +3,7 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -12,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -32,6 +34,7 @@ class PaneScaffoldState internal constructor(
 fun PaneScope<ThreePane, Route>.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit,
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
@@ -45,6 +48,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
 
     Scaffold(
         modifier = modifier,
+        containerColor = containerColor,
         topBar = {
             topBar(paneScaffoldState)
         },

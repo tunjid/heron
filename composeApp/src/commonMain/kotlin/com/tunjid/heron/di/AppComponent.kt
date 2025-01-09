@@ -21,6 +21,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedComponent
+import com.tunjid.heron.gallery.di.GalleryComponent
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.messages.di.MessagesComponent
 import com.tunjid.heron.notifications.di.NotificationsComponent
@@ -46,6 +47,7 @@ abstract class AppComponent(
     @Component val signInComponent: SignInComponent,
     @Component val composeComponent: ComposeComponent,
     @Component val feedComponent: FeedComponent,
+    @Component val galleryComponent: GalleryComponent,
     @Component val homeComponent: HomeComponent,
     @Component val messagesComponent: MessagesComponent,
     @Component val notificationsComponent: NotificationsComponent,

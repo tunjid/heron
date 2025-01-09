@@ -76,6 +76,8 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.CollapsingHeaderStatus
 import com.tunjid.composables.ui.lerp
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.Timeline
@@ -512,6 +514,49 @@ private fun ProfileTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
+    val onPostClicked = remember {
+        { post: Post ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToPost(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        post = post,
+                    )
+                )
+            )
+        }
+    }
+    val onProfileClicked = remember {
+        { post: Post, profile: Profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                        profile = profile,
+                        avatarSharedElementKey = post.avatarSharedElementKey(
+                            prefix = timelineState.timeline.sourceId,
+                        ).takeIf { post.author.did == profile.did }
+                    )
+                )
+            )
+        }
+    }
+    val onPostMediaClicked = remember {
+        { post: Post, media: Embed.Media, index: Int ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToMedia(
+                        post = post,
+                        media = media,
+                        startIndex = index,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                    )
+                )
+            )
+        }
+    }
+
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize(),
@@ -532,31 +577,9 @@ private fun ProfileTimeline(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sourceId,
-                    onPostClicked = { post ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToPost(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    sharedElementPrefix = timelineState.timeline.sourceId,
-                                    post = post,
-                                )
-                            )
-                        )
-                    },
-                    onProfileClicked = { post, profile ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                    profile = profile,
-                                    avatarSharedElementKey = post.avatarSharedElementKey(
-                                        prefix = timelineState.timeline.sourceId,
-                                    ).takeIf { post.author.did == profile.did }
-                                )
-                            )
-                        )
-                    },
-                    onImageClicked = {},
+                    onPostClicked = onPostClicked,
+                    onProfileClicked = onProfileClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(

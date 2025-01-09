@@ -16,6 +16,9 @@ import com.tunjid.heron.di.create
 import com.tunjid.heron.feed.di.FeedComponent
 import com.tunjid.heron.feed.di.FeedNavigationComponent
 import com.tunjid.heron.feed.di.create
+import com.tunjid.heron.gallery.di.GalleryComponent
+import com.tunjid.heron.gallery.di.GalleryNavigationComponent
+import com.tunjid.heron.gallery.di.create
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.home.di.create
@@ -67,6 +70,7 @@ fun createAppState(context: Context): AppState {
         signInNavigationComponent = SignInNavigationComponent::class.create(),
         composeNavigationComponent = ComposeNavigationComponent::class.create(),
         feedNavigationComponent = FeedNavigationComponent::class.create(),
+        galleryNavigationComponent = GalleryNavigationComponent::class.create(),
         homeNavigationComponent = HomeNavigationComponent::class.create(),
         messagesNavigationComponent = MessagesNavigationComponent::class.create(),
         notificationsNavigationComponent = NotificationsNavigationComponent::class.create(),
@@ -105,6 +109,10 @@ fun createAppState(context: Context): AppState {
             dataComponent = dataComponent,
         ),
         feedComponent = FeedComponent::class.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        galleryComponent = GalleryComponent::class.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

@@ -35,6 +35,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -51,6 +54,49 @@ internal fun PostDetailScreen(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
+
+    val onPostClicked = remember {
+        { post: Post ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToPost(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                        sharedElementPrefix = state.sharedElementPrefix,
+                        post = post,
+                    )
+                )
+            )
+        }
+    }
+    val onProfileClicked = remember {
+        { post: Post, profile: Profile ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToProfile(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                        profile = profile,
+                        avatarSharedElementKey = post.avatarSharedElementKey(
+                            prefix = state.sharedElementPrefix,
+                        ).takeIf { post.author.did == profile.did }
+                    )
+                )
+            )
+        }
+    }
+    val onPostMediaClicked = remember {
+        { post: Post, media: Embed.Media, index: Int ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ToMedia(
+                        post = post,
+                        media = media,
+                        startIndex = index,
+                        sharedElementPrefix = state.sharedElementPrefix,
+                    )
+                )
+            )
+        }
+    }
 
     LazyVerticalStaggeredGrid(
         modifier = modifier
@@ -80,31 +126,9 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
-                    onPostClicked = { post ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToPost(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                    sharedElementPrefix = state.sharedElementPrefix,
-                                    post = post,
-                                )
-                            )
-                        )
-                    },
-                    onProfileClicked = { post, profile ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                    profile = profile,
-                                    avatarSharedElementKey = post.avatarSharedElementKey(
-                                        prefix = state.sharedElementPrefix,
-                                    ).takeIf { post.author.did == profile.did }
-                                )
-                            )
-                        )
-                    },
-                    onImageClicked = {},
+                    onPostClicked = onPostClicked,
+                    onProfileClicked = onProfileClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(

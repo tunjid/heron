@@ -18,6 +18,7 @@ package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeNavigationComponent
 import com.tunjid.heron.feed.di.FeedNavigationComponent
+import com.tunjid.heron.gallery.di.GalleryNavigationComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.messages.di.MessagesNavigationComponent
 import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
@@ -36,6 +37,7 @@ abstract class AppNavigationComponent(
     @Component val signInNavigationComponent: SignInNavigationComponent,
     @Component val composeNavigationComponent: ComposeNavigationComponent,
     @Component val feedNavigationComponent: FeedNavigationComponent,
+    @Component val galleryNavigationComponent: GalleryNavigationComponent,
     @Component val homeNavigationComponent: HomeNavigationComponent,
     @Component val messagesNavigationComponent: MessagesNavigationComponent,
     @Component val notificationsNavigationComponent: NotificationsNavigationComponent,

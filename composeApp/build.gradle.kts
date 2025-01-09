@@ -49,6 +49,7 @@ kotlin {
             implementation(project(":feature-auth"))
             implementation(project(":feature-compose"))
             implementation(project(":feature-feed"))
+            implementation(project(":feature-gallery"))
             implementation(project(":feature-home"))
             implementation(project(":feature-messages"))
             implementation(project(":feature-notifications"))

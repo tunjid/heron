@@ -15,7 +15,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
@@ -31,7 +30,7 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
-    onOpenImage: (Uri) -> Unit,
+    onPostMediaClicked: (Embed.Media, Int) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -51,6 +50,9 @@ internal fun PostEmbed(
                 feature = embed,
                 sharedElementPrefix = sharedElementPrefix,
                 sharedElementScope = sharedElementScope,
+                onImageClicked = { index ->
+                    onPostMediaClicked(embed, index)
+                }
             )
 
             UnknownEmbed -> UnknownPostPost(onClick = {})

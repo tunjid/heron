@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -138,6 +139,27 @@ interface NavigationAction {
                         path = "/compose",
                         queryParams = mapOf(
                             "type" to listOf(type.toUrlEncodedBase64()),
+                        )
+                    ).toRoute
+                )
+            }
+        }
+
+        data class ToMedia(
+            val post: Post,
+            val media: Embed.Media,
+            val startIndex: Int,
+            val sharedElementPrefix: String,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/post/${post.cid.id}/gallery",
+                        queryParams = mapOf(
+                            "post" to listOf(post.toUrlEncodedBase64()),
+                            "media" to listOf(media.toUrlEncodedBase64()),
+                            "startIndex" to listOf(startIndex.toString()),
+                            "sharedElementPrefix" to listOf(sharedElementPrefix),
                         )
                     ).toRoute
                 )

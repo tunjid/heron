@@ -16,10 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -41,7 +41,7 @@ internal fun NotificationPostScaffold(
     notification: Notification.PostAssociated,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
-    onImageClicked: (Uri) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
@@ -84,7 +84,7 @@ internal fun NotificationPostScaffold(
 //                    postId = post.cid,
 //                    sharedElementPrefix = sharedElementPrefix,
 //                    sharedElementScope = sharedElementScope,
-//                    onOpenImage = onImageClicked,
+//                    onPostMediaClicked = onPostMediaClicked,
 //                    onPostClicked = onPostClicked,
 //                )
 

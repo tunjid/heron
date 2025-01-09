@@ -36,4 +36,4 @@ val Image.aspectRatio
 @Serializable
 data class ImageList(
     val images: List<Image>,
-) : Embed
+) : Embed.Media
