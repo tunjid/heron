@@ -16,23 +16,25 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import heron.feature_auth.generated.resources.Res
 import heron.feature_auth.generated.resources.password
+import heron.feature_auth.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -47,17 +49,42 @@ internal fun SignInScreen(
             .fillMaxSize()
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val focusManager = LocalFocusManager.current
         state.fields.forEach { field ->
             OutlinedTextField(
                 modifier = Modifier,
                 value = field.value,
+                maxLines = field.maxLines,
                 onValueChange = {
                     actions(Action.FieldChanged(field = field.copy(value = it)))
                 },
                 shape = MaterialTheme.shapes.large,
                 visualTransformation = field.transformation,
-                label = { Text(text = field.id) },
+                keyboardOptions = field.keyboardOptions,
+                keyboardActions = KeyboardActions {
+                    when (field.id) {
+                        Username -> focusManager.moveFocus(
+                            focusDirection = FocusDirection.Next,
+                        )
+
+                        Password -> if (state.submitButtonEnabled) actions(
+                            Action.Submit(state.sessionRequest)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        text = stringResource(
+                            when (field.id) {
+                                Username -> Res.string.username
+                                Password -> Res.string.password
+                                else -> throw IllegalArgumentException()
+                            }
+                        )
+                    )
+                },
                 leadingIcon = {
                     if (field.leadingIcon != null) {
                         Icon(

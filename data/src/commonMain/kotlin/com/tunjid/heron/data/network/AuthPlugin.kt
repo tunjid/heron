@@ -32,6 +32,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.util.AttributeKey
+import kotlinx.coroutines.CancellationException
+import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpErrorDescription
 
 class ErrorInterceptorConfig {
@@ -84,27 +86,31 @@ internal class AuthPlugin(
                 }
 
                 if (response.getOrNull()?.error == "ExpiredToken") {
-                    val refreshResponse = scope.post("/xrpc/com.atproto.server.refreshSession") {
-                        plugin.readAuth?.invoke()?.refresh?.let { bearerAuth(it) }
-                    }
-                    runCatching { refreshResponse.body<RefreshSessionResponse>() }.getOrNull()
-                        ?.let { refreshed ->
-                            val newAccessToken = refreshed.accessJwt
-                            val newRefreshToken = refreshed.refreshJwt
+                    try {
+                        scope.post("/xrpc/com.atproto.server.refreshSession") {
+                            plugin.readAuth?.invoke()?.refresh?.let { bearerAuth(it) }
+                        }.body<RefreshSessionResponse>()
+                            .let { refreshed ->
+                                val newAccessToken = refreshed.accessJwt
+                                val newRefreshToken = refreshed.refreshJwt
 
-                            plugin.saveAuth?.invoke(
-                                SavedState.AuthTokens(
-                                    authProfileId = Id(refreshed.did.did),
-                                    auth = newAccessToken,
-                                    refresh = newRefreshToken,
+                                plugin.saveAuth?.invoke(
+                                    SavedState.AuthTokens(
+                                        authProfileId = Id(refreshed.did.did),
+                                        auth = newAccessToken,
+                                        refresh = newRefreshToken,
+                                    )
                                 )
-                            )
-                            context.headers.remove(Authorization)
-                            context.bearerAuth(newAccessToken)
-                            result = execute(context)
-                        }
+                                context.headers.remove(Authorization)
+                                context.bearerAuth(newAccessToken)
+                                result = execute(context)
+                            }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Throwable) {
                         // Delete existing token and force a log out
-                        ?: plugin.saveAuth?.invoke(null)
+                        plugin.saveAuth?.invoke(null)
+                    }
                 }
                 result
             }

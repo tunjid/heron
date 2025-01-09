@@ -18,7 +18,6 @@
 package com.tunjid.heron.scaffold.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Message
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Lock
@@ -171,7 +170,7 @@ interface NavigationAction {
             private const val QueryParam = "referringRoute"
 
             internal fun NavigationContext.referringRouteQueryParams(
-                option: ReferringRouteOption
+                option: ReferringRouteOption,
             ): Pair<String, List<String>> = QueryParam to when (option) {
                 Current -> listOf(
                     currentRoute.encodeToQueryParam()
@@ -217,9 +216,11 @@ class PersistedNavigationStateHolder(
                     // Wait for a non empty saved state to be read
                     .first { it != InitialSavedState }
 
-                val multiStackNav =
-                    if (savedState == EmptySavedState) SignedOutNavigationState
-                    else routeParser.parseMultiStackNav(savedState)
+                val multiStackNav = when {
+                    savedState == EmptySavedState -> SignedOutNavigationState
+                    savedState.auth == null -> SignedOutNavigationState
+                    else -> routeParser.parseMultiStackNav(savedState)
+                }
 
                 emit { multiStackNav }
 
@@ -254,7 +255,7 @@ fun NavigationContext.resetAuthNavigation(): MultiStackNav =
  * A helper function for generic state producers to consume navigation actions
  */
 fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
-    navigationMutationConsumer: (NavigationMutation) -> Unit
+    navigationMutationConsumer: (NavigationMutation) -> Unit,
 ) = flatMapLatest { action ->
     navigationMutationConsumer(action.navigationMutation)
     emptyFlow<Mutation<State>>()
