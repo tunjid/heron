@@ -51,7 +51,7 @@ fun TimelineItem(
     sharedElementPrefix: String,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
@@ -121,7 +121,7 @@ private fun ThreadedPost(
     now: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {

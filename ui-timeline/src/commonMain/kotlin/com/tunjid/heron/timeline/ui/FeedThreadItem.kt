@@ -29,7 +29,7 @@ fun FeedThreadItem(
     now: Instant,
     post: Post,
     onProfileClicked: Post?.(Profile) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onOpenPost: (Post) -> Unit,
     onReplyToPost: () -> Unit,
 ) {

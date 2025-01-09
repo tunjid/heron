@@ -44,7 +44,7 @@ fun Post(
     createdAt: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     timeline: @Composable (BoxScope.() -> Unit) = {},

@@ -30,7 +30,7 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
-    onPostMediaClicked: (Post, Embed.Media) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
