@@ -87,7 +87,9 @@ fun Post(
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     sharedElementScope = sharedElementScope,
-                    onPostMediaClicked = onPostMediaClicked,
+                    onPostMediaClicked = { media, index ->
+                        onPostMediaClicked(post, media, index)
+                    },
                     onPostClicked = onPostClicked,
                 )
                 if (isAnchoredInTimeline) PostDate(

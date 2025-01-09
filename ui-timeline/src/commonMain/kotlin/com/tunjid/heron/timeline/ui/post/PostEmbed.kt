@@ -30,7 +30,7 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     sharedElementScope: SharedElementScope,
-    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
+    onPostMediaClicked: (Embed.Media, Int) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -50,6 +50,9 @@ internal fun PostEmbed(
                 feature = embed,
                 sharedElementPrefix = sharedElementPrefix,
                 sharedElementScope = sharedElementScope,
+                onImageClicked = { index ->
+                    onPostMediaClicked(embed, index)
+                }
             )
 
             UnknownEmbed -> UnknownPostPost(onClick = {})
