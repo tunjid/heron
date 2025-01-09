@@ -16,11 +16,9 @@
 
 package com.tunjid.heron.gallery.di
 
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -38,7 +36,6 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -107,16 +104,12 @@ abstract class GalleryComponent(
 
             PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this)
                     .dragToPop(),
                 showNavigation = true,
+                containerColor = Color.Transparent,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
-                topBar = {
-                    TopBar()
-                },
-
                 content = {
                     GalleryScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
@@ -129,17 +122,3 @@ abstract class GalleryComponent(
     )
 }
 
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
-    )
-}
