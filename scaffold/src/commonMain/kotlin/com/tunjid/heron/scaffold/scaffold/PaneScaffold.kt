@@ -53,16 +53,16 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
             paneScaffoldState.topBar()
         },
         floatingActionButton = {
-            if (paneState.pane == ThreePane.Primary) paneScaffoldState.floatingActionButton()
+            paneScaffoldState.floatingActionButton()
         },
         bottomBar = {
-            if (paneState.pane == ThreePane.Primary) paneScaffoldState.bottomBar()
+            paneScaffoldState.bottomBar()
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
-        content = {
-            paneScaffoldState.content(it)
+        content = { paddingValues ->
+            paneScaffoldState.content(paddingValues)
         },
     )
 
