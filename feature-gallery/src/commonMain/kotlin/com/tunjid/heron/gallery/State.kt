@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -25,10 +26,22 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val sharedElementPrefix: String,
+    @Transient
+    val items: List<GalleryItem> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
+sealed class GalleryItem {
+    data class Photo(
+        val image: Image,
+    ): GalleryItem()
+}
+
+val GalleryItem.key get() = when(this) {
+    is GalleryItem.Photo -> image.thumb.uri
+}
 
 sealed class Action(val key: String) {
 

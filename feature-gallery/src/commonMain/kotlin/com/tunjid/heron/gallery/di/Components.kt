@@ -16,15 +16,11 @@
 
 package com.tunjid.heron.gallery.di
 
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -40,11 +36,9 @@ import com.tunjid.heron.gallery.GalleryStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -73,6 +67,9 @@ internal val Route.postId
 
 internal val Route.startIndex
     get() = routeParams.queryParams["startIndex"]?.firstOrNull()?.toIntOrNull() ?: 0
+
+internal val Route.sharedElementPrefix
+    get() = routeParams.queryParams["sharedElementPrefix"]?.firstOrNull() ?: ""
 
 @Component
 abstract class GalleryNavigationComponent {
@@ -108,15 +105,10 @@ abstract class GalleryComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
-
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .dragToPop(),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -124,20 +116,12 @@ abstract class GalleryComponent(
                 topBar = {
                     TopBar()
                 },
-                bottomBar = {
-                    BottomBar(
-                        sharedElementScope = sharedElementScope,
-                        modifier = Modifier
-                            .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
-                            }
-                    )
-                },
-                content = { paddingValues ->
+
+                content = {
                     GalleryScreen(
                         sharedElementScope = requirePanedSharedElementScope(),
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                        modifier = Modifier,
+                        state = state,
                     )
                 }
             )
@@ -157,16 +141,5 @@ private fun TopBar() {
                 }
             )
         },
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
-) {
-    BottomAppBar(
-        modifier = modifier,
-        sharedElementScope = sharedElementScope,
     )
 }

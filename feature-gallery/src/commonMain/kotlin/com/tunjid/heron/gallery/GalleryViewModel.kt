@@ -18,8 +18,12 @@ package com.tunjid.heron.gallery
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.gallery.di.media
+import com.tunjid.heron.gallery.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -49,11 +53,16 @@ class ActualGalleryStateHolder(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), GalleryStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        sharedElementPrefix = route.sharedElementPrefix,
+        items = when (val media = route.media) {
+            is ImageList -> media.images.map(GalleryItem::Photo)
+            is Video -> emptyList()
+            null -> emptyList()
+        }
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(

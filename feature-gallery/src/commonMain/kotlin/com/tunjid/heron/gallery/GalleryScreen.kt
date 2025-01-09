@@ -16,30 +16,84 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.tunjid.heron.scaffold.scaffold.AppLogo
+import androidx.compose.ui.layout.ContentScale
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @Composable
 internal fun GalleryScreen(
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
+    state: State,
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
     ) {
-        sharedElementScope.AppLogo(
-            modifier = Modifier
-                .size(100.dp)
-                .align(Alignment.Center)
+        val updatedItems by rememberUpdatedState(state.items)
+        val pagerState = rememberPagerState {
+            updatedItems.size
+        }
+
+        HorizontalPager(
+            modifier = Modifier,
+            state = pagerState,
+            key = { page -> updatedItems[page].key },
+            pageContent = { page ->
+                when (val item = updatedItems[page]) {
+                    is GalleryItem.Photo -> {
+                        GalleryImage(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            sharedElementScope = sharedElementScope,
+                            item = item,
+                            state = state
+                        )
+                    }
+                }
+            }
         )
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun GalleryImage(
+    modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
+    item: GalleryItem.Photo,
+    state: State,
+) {
+    sharedElementScope.updatedMovableSharedElementOf(
+        modifier = modifier,
+        key = item.image.sharedElementKey(
+            prefix = state.sharedElementPrefix
+        ),
+        state = ImageArgs(
+            url = item.image.thumb.uri,
+            contentDescription = item.image.alt,
+            contentScale = ContentScale.Fit,
+            shape = RoundedPolygonShape.Rectangle,
+        ),
+        sharedElement = { args, innerModifier ->
+            AsyncImage(
+                modifier = innerModifier,
+                args = args,
+            )
+        }
+    )
 }
 
