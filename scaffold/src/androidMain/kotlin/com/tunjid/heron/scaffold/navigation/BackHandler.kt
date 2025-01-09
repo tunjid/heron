@@ -19,7 +19,7 @@ actual fun BackHandler(
     onStarted: () -> Unit,
     onProgressed: (progress: Float) -> Unit,
     onCancelled: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     PredictiveBackHandler(enabled) { progress: Flow<BackEventCompat> ->
         try {

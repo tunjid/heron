@@ -17,15 +17,12 @@
 import ext.configureKotlinJvm
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import java.util.Locale
 
 fun Project.configureKotlinMultiplatform(
-    kotlinMultiplatformExtension: KotlinMultiplatformExtension
+    kotlinMultiplatformExtension: KotlinMultiplatformExtension,
 ) {
-    kotlinMultiplatformExtension.apply{
+    kotlinMultiplatformExtension.apply {
         androidTarget()
         jvm("desktop")
         listOf(

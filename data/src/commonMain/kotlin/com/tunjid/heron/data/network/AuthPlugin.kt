@@ -33,7 +33,6 @@ import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.util.AttributeKey
 import kotlinx.coroutines.CancellationException
-import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpErrorDescription
 
 class ErrorInterceptorConfig {

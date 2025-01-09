@@ -17,7 +17,6 @@
 import com.android.build.api.dsl.CommonExtension
 import ext.configureKotlinJvm
 import org.gradle.api.JavaVersion
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.dependencies
 
@@ -25,7 +24,7 @@ import org.gradle.kotlin.dsl.dependencies
  * Sets common values for Android Applications and Libraries
  */
 fun org.gradle.api.Project.commonConfiguration(
-    extension: CommonExtension<*, *, *, *, *, *>
+    extension: CommonExtension<*, *, *, *, *, *>,
 ) = extension.apply {
     compileSdk = 35
 

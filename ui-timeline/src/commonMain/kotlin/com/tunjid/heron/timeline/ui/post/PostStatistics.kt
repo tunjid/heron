@@ -10,35 +10,35 @@ import com.tunjid.heron.timeline.ui.Statistic
 
 @Composable
 internal fun PostStatistics(
-  post: Post,
-  onReplyToPost: () -> Unit,
+    post: Post,
+    onReplyToPost: () -> Unit,
 ) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
-    val replies = post.replyCount
-    val reposts = post.repostCount
-    val likes = post.likeCount
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        val replies = post.replyCount
+        val reposts = post.repostCount
+        val likes = post.likeCount
 
-    val noOpHandler = { /* TODO */ }
+        val noOpHandler = { /* TODO */ }
 
-    when (replies) {
-      0L -> Unit
-      1L -> Statistic(replies, "reply", onReplyToPost)
-      else -> Statistic(replies, "replies", onReplyToPost)
+        when (replies) {
+            0L -> Unit
+            1L -> Statistic(replies, "reply", onReplyToPost)
+            else -> Statistic(replies, "replies", onReplyToPost)
+        }
+
+        when (reposts) {
+            0L -> Unit
+            1L -> Statistic(reposts, "repost", noOpHandler)
+            else -> Statistic(reposts, "reposts", noOpHandler)
+        }
+
+        when (likes) {
+            0L -> Unit
+            1L -> Statistic(likes, "like", noOpHandler)
+            else -> Statistic(likes, "likes", noOpHandler)
+        }
     }
-
-    when (reposts) {
-      0L -> Unit
-      1L -> Statistic(reposts, "repost", noOpHandler)
-      else -> Statistic(reposts, "reposts", noOpHandler)
-    }
-
-    when (likes) {
-      0L -> Unit
-      1L -> Statistic(likes, "like", noOpHandler)
-      else -> Statistic(likes, "likes", noOpHandler)
-    }
-  }
 }

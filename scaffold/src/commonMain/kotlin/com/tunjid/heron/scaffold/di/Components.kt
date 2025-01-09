@@ -47,7 +47,7 @@ abstract class ScaffoldComponent(
 
     @Provides
     fun navStateStream(
-        navStateHolder: NavigationStateHolder
+        navStateHolder: NavigationStateHolder,
     ): StateFlow<MultiStackNav> = navStateHolder.state
 
     @Provides

@@ -49,11 +49,11 @@ typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SignInStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualSignInStateHolder = creator.invoke(scope, route)
 }
 
@@ -107,7 +107,7 @@ private fun Flow<Action.MessageConsumed>.messageConsumptionMutations(): Flow<Mut
 
 private fun Flow<Action.Submit>.submissionMutations(
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit
+    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     debounce(200)
         .mapLatestToManyMutations { (request) ->

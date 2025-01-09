@@ -88,11 +88,13 @@ fun App(
                                             when (paneState.pane) {
                                                 ThreePane.Primary,
                                                 ThreePane.Secondary,
-                                                ThreePane.Tertiary -> !appState.paneAnchorState.hasInteractions
+                                                ThreePane.Tertiary,
+                                                    -> !appState.paneAnchorState.hasInteractions
 
                                                 ThreePane.TransientPrimary -> true
                                                 ThreePane.Overlay,
-                                                null -> false
+                                                null,
+                                                    -> false
                                             }
                                         }
                                     )

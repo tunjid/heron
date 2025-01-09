@@ -8,7 +8,7 @@ import com.tunjid.heron.data.database.entities.PostThreadEntity
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: Id,
-    threadViewPost: ThreadViewPost
+    threadViewPost: ThreadViewPost,
 ) {
     add(
         viewingProfileId = viewingProfileId,
@@ -21,7 +21,8 @@ internal fun MultipleEntitySaver.add(
             is ThreadViewPostParentUnion.BlockedPost,
             is ThreadViewPostParentUnion.NotFoundPost,
             is ThreadViewPostParentUnion.Unknown,
-            null -> null
+            null,
+                -> null
         }
     }
         .windowed(

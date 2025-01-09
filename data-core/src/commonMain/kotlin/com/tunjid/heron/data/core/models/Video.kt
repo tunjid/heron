@@ -28,4 +28,4 @@ data class Video(
     val alt: String? = null,
     val width: Long?,
     val height: Long?,
-): Embed
+) : Embed

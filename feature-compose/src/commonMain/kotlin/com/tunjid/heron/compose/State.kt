@@ -40,7 +40,7 @@ sealed class Action(val key: String) {
         val authorId: Id,
         val text: String,
         val links: List<Post.Link>,
-    ): Action("CreatePost")
+    ) : Action("CreatePost")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

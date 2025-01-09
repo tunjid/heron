@@ -19,7 +19,7 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun org.gradle.api.Project.configureUiModule(
-    extension: KotlinMultiplatformExtension
+    extension: KotlinMultiplatformExtension,
 ) = extension.apply {
     sourceSets.apply {
         val catalogs = extensions.getByType(VersionCatalogsExtension::class.java)

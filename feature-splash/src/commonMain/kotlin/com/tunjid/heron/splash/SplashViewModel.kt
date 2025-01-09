@@ -36,11 +36,11 @@ typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SplashStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSplashStateHolder
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSplashStateHolder,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route: Route
+        route: Route,
     ): ActualSplashStateHolder = creator.invoke(scope, route)
 }
 

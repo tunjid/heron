@@ -9,7 +9,7 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
     initialDelay: Long = 100, // 0.1 second
     maxDelay: Long = 5000,    // 1 second
     factor: Double = 2.0,
-    block: () -> AtpResponse<T>
+    block: () -> AtpResponse<T>,
 ): Result<T> {
     var currentDelay = initialDelay
     repeat(times) { retry ->

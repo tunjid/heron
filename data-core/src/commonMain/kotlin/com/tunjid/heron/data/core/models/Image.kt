@@ -28,11 +28,12 @@ data class Image(
     val height: Long?,
 )
 
-val Image.aspectRatio get() =
-    if(width != null && height != null) width.toFloat() / height
-    else Float.NaN
+val Image.aspectRatio
+    get() =
+        if (width != null && height != null) width.toFloat() / height
+        else Float.NaN
 
 @Serializable
 data class ImageList(
-    val images: List<Image>
-):Embed
+    val images: List<Image>,
+) : Embed

@@ -11,16 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 

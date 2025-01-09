@@ -8,5 +8,5 @@ actual fun BackHandler(
     onStarted: () -> Unit,
     onProgressed: (Float) -> Unit,
     onCancelled: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) = Unit

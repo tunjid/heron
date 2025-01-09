@@ -19,6 +19,7 @@ package com.tunjid.heron.data.network
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readBytes
+import io.ktor.client.statement.readRawBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -58,7 +59,7 @@ actual class NetworkMonitor(scope: CoroutineScope) {
             ) {
                 HttpClient()
                     .use {
-                        ByteArrayInputStream(it.get("https://www.google.com").readBytes())
+                        ByteArrayInputStream(it.get("https://www.google.com").readRawBytes())
                     }
                     .buffered()
                     .use {

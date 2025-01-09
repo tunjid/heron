@@ -132,8 +132,12 @@ internal fun NotificationsScreen(
             items = items,
             key = AggregatedNotification::id,
             itemContent = { item ->
+                val itemModifier = Modifier
+                    .animateItem()
+
                 when (val notification = item.notification) {
                     is Notification.Followed -> FollowRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -142,6 +146,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -150,6 +155,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Liked -> LikeRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -159,6 +165,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Mentioned -> MentionRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -168,6 +175,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Quoted -> QuoteRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -177,6 +185,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.RepliedTo -> ReplyRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,
@@ -186,6 +195,7 @@ internal fun NotificationsScreen(
                     )
 
                     is Notification.Reposted -> RepostRow(
+                        modifier = itemModifier,
                         sharedElementScope = sharedElementScope,
                         now = now,
                         notification = notification,

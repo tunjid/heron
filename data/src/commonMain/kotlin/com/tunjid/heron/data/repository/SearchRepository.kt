@@ -108,10 +108,11 @@ class OfflineSearchRepository @Inject constructor(
                         viewingProfileId = authProfileId,
                         postView = postView
                     )
-                    when(query) {
+                    when (query) {
                         is SearchQuery.Post.Latest -> SearchResult.Post.Top(
                             post = postView.post(),
                         )
+
                         is SearchQuery.Post.Top -> SearchResult.Post.Latest(
                             post = postView.post(),
                         )

@@ -15,8 +15,8 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)

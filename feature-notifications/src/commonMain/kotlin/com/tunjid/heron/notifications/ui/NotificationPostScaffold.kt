@@ -35,6 +35,7 @@ import kotlinx.datetime.Instant
 
 @Composable
 internal fun NotificationPostScaffold(
+    modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     now: Instant,
     notification: Notification.PostAssociated,
@@ -46,7 +47,7 @@ internal fun NotificationPostScaffold(
 ) {
     Box {
         Column(
-            modifier = Modifier,
+            modifier = modifier,
         ) {
             PostAttribution(
                 sharedElementScope = sharedElementScope,

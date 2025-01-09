@@ -29,7 +29,8 @@ internal fun PostView.quotedPostEntity(): PostEntity? =
             is RecordViewRecordUnion.Unknown,
             is RecordViewRecordUnion.ViewDetached,
             is RecordViewRecordUnion.ViewBlocked,
-            is RecordViewRecordUnion.ViewNotFound -> null
+            is RecordViewRecordUnion.ViewNotFound,
+                -> null
 
             is RecordViewRecordUnion.ViewRecord ->
                 PostEntity(
@@ -61,7 +62,8 @@ internal fun PostView.quotedPostProfileEntity(): ProfileEntity? =
             is RecordViewRecordUnion.Unknown,
             is RecordViewRecordUnion.ViewBlocked,
             is RecordViewRecordUnion.ViewDetached,
-            is RecordViewRecordUnion.ViewNotFound -> null
+            is RecordViewRecordUnion.ViewNotFound,
+                -> null
 
             is RecordViewRecordUnion.ViewRecord ->
                 innerEmbed.profileEntity()
@@ -77,7 +79,8 @@ internal fun PostView.quotedPostProfileEntity(): ProfileEntity? =
             is RecordViewRecordUnion.Unknown,
             is RecordViewRecordUnion.ViewDetached,
             is RecordViewRecordUnion.ViewBlocked,
-            is RecordViewRecordUnion.ViewNotFound -> null
+            is RecordViewRecordUnion.ViewNotFound,
+                -> null
 
             is RecordViewRecordUnion.ViewRecord ->
                 innerEmbed.profileEntity()
@@ -157,7 +160,8 @@ internal fun PostViewEmbedUnion.RecordView.embedEntities() =
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewBlocked,
-        is RecordViewRecordUnion.ViewNotFound -> emptyList()
+        is RecordViewRecordUnion.ViewNotFound,
+            -> emptyList()
 
         is RecordViewRecordUnion.ViewRecord ->
             innerEmbed.value.embeds.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->

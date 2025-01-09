@@ -36,7 +36,7 @@ data class ImageEntity(
     val alt: String,
     val width: Long?,
     val height: Long?,
-): PostEmbed
+) : PostEmbed
 
 
 /**

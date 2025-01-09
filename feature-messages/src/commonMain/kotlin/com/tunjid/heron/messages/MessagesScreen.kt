@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.messages
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size

@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 sealed interface Embed
 
 @Serializable
-data object UnknownEmbed: Embed
+data object UnknownEmbed : Embed

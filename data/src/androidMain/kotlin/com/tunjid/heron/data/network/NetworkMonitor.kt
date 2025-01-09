@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.stateIn
 
 actual class NetworkMonitor(
     scope: CoroutineScope,
-    private val context: Context
+    private val context: Context,
 ) {
     actual val isConnected: Flow<Boolean> = callbackFlow {
         val callback = object : NetworkCallback() {
