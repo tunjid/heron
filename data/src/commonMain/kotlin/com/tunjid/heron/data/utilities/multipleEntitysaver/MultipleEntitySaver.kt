@@ -115,7 +115,11 @@ internal class MultipleEntitySaver(
      */
     suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
-        profileDao.insertOrPartiallyUpdateProfiles(profileEntities)
+        val (fullProfileEntities, partialProfileEntities) = profileEntities.partition {
+            it.followersCount != 0L && it.followsCount != 0L && it.postsCount != 0L
+        }
+        profileDao.upsertProfiles(fullProfileEntities)
+        profileDao.insertOrPartiallyUpdateProfiles(partialProfileEntities)
 
         postDao.upsertPosts(postEntities)
 
