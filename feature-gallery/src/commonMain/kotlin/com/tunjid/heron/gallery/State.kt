@@ -26,6 +26,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val startIndex: Int,
     val sharedElementPrefix: String,
     @Transient
     val items: List<GalleryItem> = emptyList(),

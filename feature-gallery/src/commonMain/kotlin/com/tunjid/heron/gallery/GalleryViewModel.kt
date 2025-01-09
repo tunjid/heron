@@ -24,6 +24,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.media
 import com.tunjid.heron.gallery.di.sharedElementPrefix
+import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -57,6 +58,7 @@ class ActualGalleryStateHolder(
     route: Route,
 ) : ViewModel(viewModelScope = scope), GalleryStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        startIndex = route.startIndex,
         sharedElementPrefix = route.sharedElementPrefix,
         items = when (val media = route.media) {
             is ImageList -> media.images.map(GalleryItem::Photo)

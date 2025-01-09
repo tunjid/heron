@@ -44,7 +44,9 @@ internal fun GalleryScreen(
             .fillMaxSize()
     ) {
         val updatedItems by rememberUpdatedState(state.items)
-        val pagerState = rememberPagerState {
+        val pagerState = rememberPagerState(
+            initialPage = state.startIndex
+        ) {
             updatedItems.size
         }
 
