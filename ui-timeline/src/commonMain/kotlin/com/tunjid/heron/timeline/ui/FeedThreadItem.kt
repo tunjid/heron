@@ -14,9 +14,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostStatistics
@@ -29,7 +29,7 @@ fun FeedThreadItem(
     now: Instant,
     post: Post,
     onProfileClicked: Post?.(Profile) -> Unit,
-    onOpenImage: (Uri) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media) -> Unit,
     onOpenPost: (Post) -> Unit,
     onReplyToPost: () -> Unit,
 ) {
@@ -63,7 +63,7 @@ fun FeedThreadItem(
 //                        now = now,
 //                        embed = post.embed,
 //                        quote = post.quote,
-//                        onOpenImage = onOpenImage,
+//                        onPostMediaClicked = onPostMediaClicked,
 //                        onPostClicked = onOpenPost,
 //                    )
 //                    post.record?.let {

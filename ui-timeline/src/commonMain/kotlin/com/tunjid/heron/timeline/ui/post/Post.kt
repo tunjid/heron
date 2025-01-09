@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -45,7 +44,7 @@ fun Post(
     createdAt: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
-    onImageClicked: (Uri) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     timeline: @Composable (BoxScope.() -> Unit) = {},
@@ -88,7 +87,7 @@ fun Post(
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     sharedElementScope = sharedElementScope,
-                    onOpenImage = onImageClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onPostClicked = onPostClicked,
                 )
                 if (isAnchoredInTimeline) PostDate(

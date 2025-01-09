@@ -104,7 +104,7 @@ internal fun PostDetailScreen(
                             )
                         )
                     },
-                    onImageClicked = {},
+                    onPostMediaClicked = { _, _ -> },
                     onReplyToPost = {},
                     onPostInteraction = {
                         actions(

@@ -27,10 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.utilities.createdAt
@@ -51,7 +51,7 @@ fun TimelineItem(
     sharedElementPrefix: String,
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
-    onImageClicked: (Uri) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
@@ -88,7 +88,7 @@ fun TimelineItem(
                 now = now,
                 onProfileClicked = onProfileClicked,
                 onPostClicked = onPostClicked,
-                onImageClicked = onImageClicked,
+                onPostMediaClicked = onPostMediaClicked,
                 onReplyToPost = onReplyToPost,
                 onPostInteraction = onPostInteraction,
             ) else
@@ -105,7 +105,7 @@ fun TimelineItem(
                     createdAt = item.post.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
-                    onImageClicked = onImageClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = onReplyToPost,
                     onPostInteraction = onPostInteraction,
                 )
@@ -121,7 +121,7 @@ private fun ThreadedPost(
     now: Instant,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
-    onImageClicked: (Uri) -> Unit,
+    onPostMediaClicked: (Post, Embed.Media) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
@@ -155,7 +155,7 @@ private fun ThreadedPost(
                     createdAt = post.createdAt,
                     onProfileClicked = onProfileClicked,
                     onPostClicked = onPostClicked,
-                    onImageClicked = onImageClicked,
+                    onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = onReplyToPost,
                     onPostInteraction = onPostInteraction,
                     timeline = {
