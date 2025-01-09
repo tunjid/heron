@@ -16,12 +16,14 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Password
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
@@ -30,23 +32,38 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.jvm.JvmInline
 
 @Serializable
 data class FormField(
-    val id: String,
+    val id: Id,
     val value: String,
+    val maxLines: Int,
     @Transient
     val leadingIcon: ImageVector? = null,
     @Transient
     val transformation: VisualTransformation = VisualTransformation.None,
     @Transient
-    val autofillTypes: List<AutofillType> = emptyList()
-)
+    val autofillTypes: List<AutofillType> = emptyList(),
+    @Transient
+    val keyboardOptions: KeyboardOptions = KeyboardOptions(),
+) {
+    @Serializable
+    @JvmInline
+    value class Id(
+        private val id: String,
+    ) {
+        override fun toString(): String = id
+    }
+}
 
 fun List<FormField>.update(updatedField: FormField) = map { field ->
     if (field.id == updatedField.id) updatedField
     else field
 }
+
+internal val Username = FormField.Id("username")
+internal val Password = FormField.Id("password")
 
 @Serializable
 data class State(
@@ -54,17 +71,28 @@ data class State(
     val isSubmitting: Boolean = false,
     val fields: List<FormField> = listOf(
         FormField(
-            id = "username",
+            id = Username,
             value = "",
+            maxLines = 1,
             leadingIcon = Icons.Rounded.AccountCircle,
             transformation = VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                imeAction = ImeAction.Next,
+            ),
         ),
         FormField(
-            id = "password",
+            id = Password,
             value = "",
+            maxLines = 1,
             leadingIcon = Icons.Rounded.Lock,
             transformation = PasswordVisualTransformation(),
-            autofillTypes = listOf(AutofillType.Password)
+            autofillTypes = listOf(AutofillType.Password),
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
         )
     ),
     @Transient
@@ -76,8 +104,8 @@ val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 val State.sessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
         SessionRequest(
-            username = formMap.getValue("username").value,
-            password = formMap.getValue("password").value,
+            username = formMap.getValue(Username).value,
+            password = formMap.getValue(Password).value,
         )
     }
 
@@ -85,7 +113,7 @@ sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
     data class Submit(val request: SessionRequest) : Action("Submit")
     data class MessageConsumed(
-        val message: String
+        val message: String,
     ) : Action("MessageConsumed")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
