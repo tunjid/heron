@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import heron.feature_auth.generated.resources.Res
 import heron.feature_auth.generated.resources.password
@@ -52,6 +53,8 @@ internal fun SignInScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         val focusManager = LocalFocusManager.current
+        val keyboardController = LocalSoftwareKeyboardController.current
+
         state.fields.forEach { field ->
             OutlinedTextField(
                 modifier = Modifier,
@@ -69,9 +72,10 @@ internal fun SignInScreen(
                             focusDirection = FocusDirection.Next,
                         )
 
-                        Password -> if (state.submitButtonEnabled) actions(
-                            Action.Submit(state.sessionRequest)
-                        )
+                        Password -> if (state.submitButtonEnabled) {
+                            actions(Action.Submit(state.sessionRequest))
+                            keyboardController?.hide()
+                        }
                     }
                 },
                 label = {
