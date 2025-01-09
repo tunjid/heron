@@ -40,6 +40,7 @@ include(
     ":feature-auth",
     ":feature-compose",
     ":feature-feed",
+    ":feature-gallery",
     ":feature-home",
     ":feature-messages",
     ":feature-notifications",
