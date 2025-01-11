@@ -14,9 +14,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.ui.SharedElementScope
 import org.jetbrains.compose.resources.stringResource
@@ -34,7 +34,8 @@ internal fun NavScaffold(
         modifier = modifier,
     ) {
         AnimatedVisibility(
-            modifier = Modifier,
+            modifier = Modifier
+                .zIndex(2f),
             visible = isVisible && useRail,
             enter = expandHorizontally(),
             exit = shrinkHorizontally(),
@@ -47,6 +48,7 @@ internal fun NavScaffold(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .zIndex(1f)
         ) {
             content()
         }
@@ -115,11 +117,8 @@ private fun NavigationRail(
                 icon = {
                     Icon(
                         imageVector = item.stack.icon,
-                        contentDescription = null,
+                        contentDescription = stringResource(item.stack.titleRes),
                     )
-                },
-                label = {
-                    Text(text = stringResource(item.stack.titleRes))
                 },
                 onClick = {
                     onNavItemSelected(item)
