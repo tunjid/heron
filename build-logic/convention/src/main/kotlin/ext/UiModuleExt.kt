@@ -55,6 +55,8 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.findLibrary("tunjid-mutator-core-common").get())
                 api(libs.findLibrary("tunjid-mutator-coroutines-common").get())
 
+                api(libs.findLibrary("tunjid-composables").get())
+
                 api(libs.findLibrary("tunjid-treenav-compose-common").get())
                 api(libs.findLibrary("tunjid-treenav-core-common").get())
                 api(libs.findLibrary("tunjid-treenav-strings-common").get())
