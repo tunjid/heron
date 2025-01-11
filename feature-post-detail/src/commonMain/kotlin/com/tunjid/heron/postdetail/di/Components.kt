@@ -153,7 +153,7 @@ abstract class PostDetailComponent(
                     Fab(
                         modifier = Modifier
                             .offset {
-                                if (isExpanded) IntOffset.Zero
+                                if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
@@ -201,7 +201,7 @@ abstract class PostDetailComponent(
                     SecondaryPaneCloseBackHandler(
                         enabled = paneState.pane == ThreePane.Primary
                                 && route.children.isNotEmpty()
-                                && isExpanded
+                                && isMediumScreenWidthOrWider
                     )
                 }
             )

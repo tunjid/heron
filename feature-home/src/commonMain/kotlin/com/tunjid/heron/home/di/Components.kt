@@ -154,7 +154,7 @@ abstract class HomeComponent(
                     ComposeFab(
                         modifier = Modifier
                             .offset {
-                                if (isExpanded) IntOffset.Zero
+                                if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,

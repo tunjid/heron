@@ -75,7 +75,7 @@ class AppState @Inject constructor(
         get() = !backPreviewState.progress.isNaN()
                 || dragToPopState.isDraggingToPop
 
-    internal val isExpanded get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
+    internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
     internal fun filteredPaneOrder(
         panedNavHostScope: PanedNavHostScope<ThreePane, Route>,

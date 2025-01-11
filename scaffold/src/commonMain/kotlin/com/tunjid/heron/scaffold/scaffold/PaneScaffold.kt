@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.filterNotNull
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
 ) {
-    val isExpanded get() = appState.isExpanded
+    val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
 }
 
 @Composable
