@@ -33,6 +33,7 @@ class PaneScaffoldState internal constructor(
     private val paneState: PaneState<ThreePane, Route>,
 ) {
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
+    internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
     internal val canShowFab
         get() = when (paneState.pane) {
             ThreePane.Primary -> true
@@ -78,11 +79,18 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
                 exit = slideOutVertically(targetOffsetY = { it }),
                 content = {
                     paneScaffoldState.floatingActionButton()
-                }
+                },
             )
         },
         bottomBar = {
-            paneScaffoldState.bottomBar()
+            AnimatedVisibility(
+                visible = paneScaffoldState.canShowBottomNavigation,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                content = {
+                    paneScaffoldState.bottomBar()
+                },
+            )
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)

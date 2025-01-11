@@ -4,8 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,43 +61,35 @@ fun BottomAppBar(
     sharedElementScope: SharedElementScope,
 ) = with(sharedElementScope) {
     val appState = LocalAppState.current
-    AnimatedVisibility(
-        modifier = modifier,
-        visible = !appState.isMediumScreenWidthOrWider,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it }),
-        content = {
-            val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
-            BottomAppBar(
-                modifier = Modifier
-                    .sharedElement(
-                        state = sharedContentState,
-                        animatedVisibilityScope = sharedElementScope,
-                        zIndexInOverlay = BottomNavSharedElementZIndex,
-                    )
-                    .renderInSharedTransitionScopeOverlay(
-                        renderInOverlay = {
-                            sharedElementScope.isTransitionActive && !sharedContentState.isMatchFound
-                        }
-                    ),
-            ) {
-                appState.navItems.forEach { item ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = item.stack.icon,
-                                contentDescription = stringResource(item.stack.titleRes),
-                            )
-                        },
-                        selected = item.selected,
-                        onClick = {
-                            appState.onNavItemSelected(item)
-                        }
-                    )
+    val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
+    BottomAppBar(
+        modifier = modifier
+            .sharedElement(
+                state = sharedContentState,
+                animatedVisibilityScope = sharedElementScope,
+                zIndexInOverlay = BottomNavSharedElementZIndex,
+            )
+            .renderInSharedTransitionScopeOverlay(
+                renderInOverlay = {
+                    sharedElementScope.isTransitionActive && !sharedContentState.isMatchFound
                 }
-            }
+            ),
+    ) {
+        appState.navItems.forEach { item ->
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = item.stack.icon,
+                        contentDescription = stringResource(item.stack.titleRes),
+                    )
+                },
+                selected = item.selected,
+                onClick = {
+                    appState.onNavItemSelected(item)
+                }
+            )
         }
-    )
+    }
 }
 
 @Composable
