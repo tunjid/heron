@@ -10,7 +10,7 @@ import com.tunjid.heron.scaffold.scaffold.BottomNavHeight
 
 
 @Composable
-fun bottomAppBarAccumulatedOffsetNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
+fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
     val navigationBarInsets = WindowInsets.navigationBars
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,

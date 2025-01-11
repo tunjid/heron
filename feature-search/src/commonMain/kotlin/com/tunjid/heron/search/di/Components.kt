@@ -49,7 +49,7 @@ import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchStateHolder
 import com.tunjid.heron.search.SearchScreen
@@ -110,13 +110,13 @@ abstract class SearchComponent(
 
             val sharedElementScope = requirePanedSharedElementScope()
 
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -159,7 +159,7 @@ abstract class SearchComponent(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             }
                     )
                 },

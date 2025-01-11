@@ -52,7 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -112,14 +112,14 @@ abstract class HomeComponent(
                     maxOffset = { Offset.Zero },
                     minOffset = { Offset(x = 0f, y = -(statusBarHeight + ToolbarHeight).toPx()) },
                 )
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(topAppBarOffsetNestedScrollConnection)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -155,11 +155,11 @@ abstract class HomeComponent(
                         modifier = Modifier
                             .offset {
                                 if (isExpanded) IntOffset.Zero
-                                else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
-                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                            offset = bottomNavigationNestedScrollConnection.offset
                         ),
                         onClick = {
                             viewModel.accept(
@@ -177,7 +177,7 @@ abstract class HomeComponent(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             }
                     )
                 },

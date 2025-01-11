@@ -43,7 +43,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -97,13 +97,13 @@ abstract class NotificationsComponent(
 
             val sharedElementScope = requirePanedSharedElementScope()
 
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -131,11 +131,11 @@ abstract class NotificationsComponent(
                         modifier = Modifier
                             .offset {
                                 if (isExpanded) IntOffset.Zero
-                                else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
-                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                            offset = bottomNavigationNestedScrollConnection.offset
                         ),
                         onClick = {
                             viewModel.accept(
@@ -153,7 +153,7 @@ abstract class NotificationsComponent(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             }
                     )
                 },
