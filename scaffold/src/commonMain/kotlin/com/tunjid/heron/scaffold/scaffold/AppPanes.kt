@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -284,21 +285,30 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
     )
 
     // Make sure desiredPaneWidth is synced with paneSplitState.width before the back gesture
-    LaunchedEffect(started, paneAnchorState.width) {
-        if (started) return@LaunchedEffect
-        desiredPaneWidth = paneAnchorState.width.toFloat()
+    LaunchedEffect(Unit) {
+        snapshotFlow { started to paneAnchorState.width }
+            .collect { (isStarted, paneAnchorStateWidth) ->
+                if (isStarted) return@collect
+                desiredPaneWidth = paneAnchorStateWidth.toFloat()
+            }
     }
 
     // Dispatch changes as the user presses back
     LaunchedEffect(started, animatedDesiredPanelWidth) {
-        if (!started) return@LaunchedEffect
-        paneAnchorState.dispatch(delta = animatedDesiredPanelWidth - paneAnchorState.width.toFloat())
+        snapshotFlow { started to animatedDesiredPanelWidth }
+            .collect { (isStarted, paneWidth) ->
+                if (!isStarted) return@collect
+                paneAnchorState.dispatch(delta = paneWidth - paneAnchorState.width.toFloat())
+            }
     }
 
     // Fling to settle
-    LaunchedEffect(started) {
-        if (started) return@LaunchedEffect
-        paneAnchorState.completeDispatch()
+    LaunchedEffect(Unit) {
+        snapshotFlow { started }
+            .collect { isStarted ->
+                if (isStarted) return@collect
+                paneAnchorState.completeDispatch()
+            }
     }
 }
 
