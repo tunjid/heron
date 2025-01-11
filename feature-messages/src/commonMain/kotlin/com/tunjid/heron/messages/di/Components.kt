@@ -39,7 +39,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -93,13 +93,13 @@ abstract class MessagesComponent(
 
             val sharedElementScope = requirePanedSharedElementScope()
 
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -112,7 +112,7 @@ abstract class MessagesComponent(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             }
                     )
                 },

@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.filterNotNull
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
 ) {
-    val isExpanded get() = appState.isExpanded
+    val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
 }
 
 @Composable
@@ -53,16 +53,16 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
             paneScaffoldState.topBar()
         },
         floatingActionButton = {
-            if (paneState.pane == ThreePane.Primary) paneScaffoldState.floatingActionButton()
+            paneScaffoldState.floatingActionButton()
         },
         bottomBar = {
-            if (paneState.pane == ThreePane.Primary) paneScaffoldState.bottomBar()
+            paneScaffoldState.bottomBar()
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
-        content = {
-            paneScaffoldState.content(it)
+        content = { paddingValues ->
+            paneScaffoldState.content(paddingValues)
         },
     )
 

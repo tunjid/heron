@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.composables.accumulatedoffsetnestedscrollConnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.home.Action
@@ -51,8 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -112,14 +112,14 @@ abstract class HomeComponent(
                     maxOffset = { Offset.Zero },
                     minOffset = { Offset(x = 0f, y = -(statusBarHeight + ToolbarHeight).toPx()) },
                 )
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(topAppBarOffsetNestedScrollConnection)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -154,12 +154,12 @@ abstract class HomeComponent(
                     ComposeFab(
                         modifier = Modifier
                             .offset {
-                                if (isExpanded) IntOffset.Zero
-                                else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                if (isMediumScreenWidthOrWider) IntOffset.Zero
+                                else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
-                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                            offset = bottomNavigationNestedScrollConnection.offset
                         ),
                         onClick = {
                             viewModel.accept(
@@ -177,7 +177,7 @@ abstract class HomeComponent(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
-                                bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             }
                     )
                 },

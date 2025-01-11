@@ -46,6 +46,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.composables.accumulatedoffsetnestedscrollConnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -57,7 +58,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.scaffold.ui.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.SharedElementScope

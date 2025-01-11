@@ -60,7 +60,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.scaffold.ui.bottomAppBarAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -138,13 +138,13 @@ abstract class ProfileComponent(
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             val sharedElementScope = requirePanedSharedElementScope()
-            val bottomNavAccumulatedOffsetNestedScrollConnection =
-                bottomAppBarAccumulatedOffsetNestedScrollConnection()
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection()
 
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
-                    .nestedScroll(bottomNavAccumulatedOffsetNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 topBar = {
                     TopBar {
@@ -157,12 +157,12 @@ abstract class ProfileComponent(
                     Fab(
                         modifier = Modifier
                             .offset {
-                                if (isExpanded) IntOffset.Zero
-                                else bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                                if (isMediumScreenWidthOrWider) IntOffset.Zero
+                                else bottomNavigationNestedScrollConnection.offset.round()
                             },
                         sharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
-                            offset = bottomNavAccumulatedOffsetNestedScrollConnection.offset
+                            offset = bottomNavigationNestedScrollConnection.offset
                         ),
                         text = stringResource(
                             if (state.isSignedInProfile) Res.string.post
@@ -188,7 +188,7 @@ abstract class ProfileComponent(
                     BottomBar(
                         sharedElementScope = sharedElementScope,
                         modifier = Modifier.offset {
-                            bottomNavAccumulatedOffsetNestedScrollConnection.offset.round()
+                            bottomNavigationNestedScrollConnection.offset.round()
                         }
                     )
                 },
@@ -205,7 +205,7 @@ abstract class ProfileComponent(
                     SecondaryPaneCloseBackHandler(
                         enabled = paneState.pane == ThreePane.Primary
                                 && route.children.isNotEmpty()
-                                && isExpanded
+                                && isMediumScreenWidthOrWider
                     )
                 }
             )
