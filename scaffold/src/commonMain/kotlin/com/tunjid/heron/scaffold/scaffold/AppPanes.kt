@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -39,8 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -217,8 +217,12 @@ internal class PaneAnchorState(
                     Image(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .scale(scale = 0.6f),
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            .graphicsLayer {
+                                scaleX = 0.6f
+                                scaleY = 0.6f
+                                rotationZ = 90f
+                            },
+                        imageVector = Icons.Default.UnfoldMore,
                         contentDescription = "Drag",
                         colorFilter = ColorFilter.tint(
                             color = MaterialTheme.colorScheme.surface

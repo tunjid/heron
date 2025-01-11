@@ -1,5 +1,8 @@
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.PaneScope
+import com.tunjid.treenav.compose.PaneState
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
@@ -26,8 +30,18 @@ import kotlinx.coroutines.flow.filterNotNull
 
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
+    private val paneState: PaneState<ThreePane, Route>,
 ) {
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
+    internal val canShowFab
+        get() = when (paneState.pane) {
+            ThreePane.Primary -> true
+            ThreePane.TransientPrimary -> true
+            ThreePane.Secondary -> false
+            ThreePane.Tertiary -> false
+            ThreePane.Overlay -> false
+            null -> false
+        }
 }
 
 @Composable
@@ -44,7 +58,12 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
 ) {
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val paneScaffoldState = remember(appState) { PaneScaffoldState(appState) }
+    val paneScaffoldState = remember(appState, paneState) {
+        PaneScaffoldState(
+            appState = appState,
+            paneState = paneState,
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -53,7 +72,14 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
             paneScaffoldState.topBar()
         },
         floatingActionButton = {
-            paneScaffoldState.floatingActionButton()
+            AnimatedVisibility(
+                visible = paneScaffoldState.canShowFab,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                content = {
+                    paneScaffoldState.floatingActionButton()
+                }
+            )
         },
         bottomBar = {
             paneScaffoldState.bottomBar()

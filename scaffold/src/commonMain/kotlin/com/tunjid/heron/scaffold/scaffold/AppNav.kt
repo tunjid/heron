@@ -65,7 +65,7 @@ fun BottomAppBar(
     val appState = LocalAppState.current
     AnimatedVisibility(
         modifier = modifier,
-        visible = appState.splitLayoutState.size <= SecondaryPaneMinWidthBreakpointDp,
+        visible = !appState.isMediumScreenWidthOrWider,
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         content = {
