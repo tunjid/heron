@@ -47,7 +47,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -56,7 +55,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -74,7 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
-import com.tunjid.composables.collapsingheader.CollapsingHeaderStatus
+import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
@@ -129,27 +127,18 @@ internal fun ProfileScreen(
 ) {
     val density = LocalDensity.current
 
-    var wasCollapsed by rememberSaveable { mutableStateOf(false) }
-
     val collapsedHeight = with(density) { (ToolbarHeight + StatusBarHeight).toPx() }
 
-    val headerState = remember {
-        HeaderState(
-            CollapsingHeaderState(
-                collapsedHeight = collapsedHeight,
-                thresholdFraction = 0.5f,
-                initialExpandedHeight = with(density) { 800.dp.toPx() },
-                decayAnimationSpec = splineBasedDecay(density),
-                initialStatus =
-                if (wasCollapsed) CollapsingHeaderStatus.Collapsed
-                else CollapsingHeaderStatus.Expanded,
-            )
-        )
+    val collapsingHeaderState = rememberCollapsingHeaderState(
+        collapsedHeight = collapsedHeight,
+        thresholdFraction = 0.5f,
+        initialExpandedHeight = with(density) { 800.dp.toPx() },
+        decayAnimationSpec = splineBasedDecay(density),
+    )
+    val headerState = remember(collapsingHeaderState) {
+        HeaderState(collapsingHeaderState)
     }
 
-    DisposableEffect(Unit) {
-        onDispose { wasCollapsed = headerState.isCollapsed }
-    }
     val pagerState = rememberPagerState {
         3
     }
@@ -621,8 +610,6 @@ private class HeaderState(
     val headerState: CollapsingHeaderState,
 ) {
     var width by mutableStateOf(160.dp * 3)
-
-    val isCollapsed get() = headerState.progress > 0.5f
 
     val bioTopPadding get() = profileBannerHeight - sizeToken
     val bioAlpha get() = 1f - headerState.progress
