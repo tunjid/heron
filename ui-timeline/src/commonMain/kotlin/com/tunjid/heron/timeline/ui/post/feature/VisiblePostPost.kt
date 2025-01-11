@@ -2,6 +2,7 @@ package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,8 +31,13 @@ internal fun VisiblePostPost(
     sharedTransitionScope: SharedElementScope,
     onClick: () -> Unit,
 ) {
-    FeatureContainer(onClick = onClick) {
-        Row(horizontalArrangement = spacedBy(8.dp)) {
+    FeatureContainer(
+        modifier = Modifier.padding(16.dp),
+        onClick = onClick,
+        ) {
+        Row(
+            horizontalArrangement = spacedBy(8.dp)
+        ) {
             AsyncImage(
                 modifier = Modifier
                     .size(16.dp)

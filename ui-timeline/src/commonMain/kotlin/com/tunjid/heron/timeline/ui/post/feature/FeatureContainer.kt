@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,12 +24,12 @@ internal fun FeatureContainer(
     }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large)
-            .then(clickableModifier)
-            .padding(16.dp),
+            .then(modifier)
+            .then(clickableModifier),
     ) {
         content()
     }

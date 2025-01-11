@@ -3,9 +3,11 @@ package com.tunjid.heron.timeline.ui.post
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +23,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.ui.SharedElementScope
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -59,13 +61,16 @@ internal fun PostExternal(
                         url = feature.thumb?.uri,
                         contentDescription = feature.title,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedCornerShape(16.dp).toRoundedPolygonShape()
+                        shape = RoundedPolygonShape.Rectangle,
                     ),
                 )
             }
             PostFeatureTextContent(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(
+                        horizontal = 16.dp,
+                    )
                     .sharedElement(
                         key = embedSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -88,7 +93,10 @@ fun PostFeatureTextContent(
     description: String?,
     uri: Uri?,
 ) {
-    Column(modifier, verticalArrangement = spacedBy(4.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = spacedBy(4.dp),
+    ) {
         if (!title.isNullOrBlank()) {
             Text(
                 text = title,
@@ -100,9 +108,9 @@ fun PostFeatureTextContent(
         if (!description.isNullOrBlank()) {
             Text(
                 text = description,
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
         val url = uri?.uri
@@ -114,6 +122,7 @@ fun PostFeatureTextContent(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
+        Spacer(Modifier.height(4.dp))
     }
 }
 
