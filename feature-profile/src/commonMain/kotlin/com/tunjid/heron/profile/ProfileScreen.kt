@@ -137,6 +137,7 @@ internal fun ProfileScreen(
         HeaderState(
             CollapsingHeaderState(
                 collapsedHeight = collapsedHeight,
+                thresholdFraction = 0.5f,
                 initialExpandedHeight = with(density) { 800.dp.toPx() },
                 decayAnimationSpec = splineBasedDecay(density),
                 initialStatus =
