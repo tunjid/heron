@@ -254,7 +254,8 @@ internal class PaneAnchorState(
  */
 @Composable
 fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
-    val paneAnchorState = LocalAppState.current.paneAnchorState
+    val appState = LocalAppState.current
+    val paneAnchorState = appState.paneAnchorState
     var started by remember { mutableStateOf(false) }
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
@@ -308,6 +309,20 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
             .collect { isStarted ->
                 if (isStarted) return@collect
                 paneAnchorState.completeDispatch()
+            }
+    }
+
+    // Pop when fully expanded
+    LaunchedEffect(Unit) {
+        snapshotFlow { appState.paneAnchorState.currentPaneAnchor }
+            .collect { anchor ->
+                when(anchor){
+                    PaneAnchor.Zero -> Unit
+                    PaneAnchor.OneThirds -> Unit
+                    PaneAnchor.Half -> Unit
+                    PaneAnchor.TwoThirds -> Unit
+                    PaneAnchor.Full -> appState.pop()
+                }
             }
     }
 }
