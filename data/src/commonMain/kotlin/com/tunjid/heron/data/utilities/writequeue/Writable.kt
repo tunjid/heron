@@ -25,7 +25,7 @@ sealed interface Writable {
             }
 
         override suspend fun WriteQueue.write() {
-            timelineRepository.sendInteraction(interaction)
+            postRepository.sendInteraction(interaction)
         }
     }
 
@@ -39,7 +39,7 @@ sealed interface Writable {
             get() = "create-post-$request-$replyTo"
 
         override suspend fun WriteQueue.write() {
-            timelineRepository.createPost(request, replyTo)
+            postRepository.createPost(request, replyTo)
         }
     }
 }
