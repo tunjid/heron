@@ -445,7 +445,7 @@ class OfflineTimelineRepository(
             val authProfileId = savedStateRepository.signedInProfileId
             if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                 if (timelineDao.isFirstRequest(query)) {
-//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
