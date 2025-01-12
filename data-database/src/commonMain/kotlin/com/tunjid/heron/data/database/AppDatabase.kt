@@ -17,6 +17,7 @@ import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
@@ -49,6 +50,7 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
+        PostLikeEntity::class,
         ListEntity::class,
         FeedGeneratorEntity::class,
         NotificationEntity::class,
