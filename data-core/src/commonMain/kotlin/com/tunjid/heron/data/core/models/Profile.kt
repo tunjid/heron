@@ -22,6 +22,12 @@ data class Profile(
     val createdAt: Instant?,
 ) : ByteSerializable
 
+@Serializable
+data class ProfileWithRelationship(
+    val profile: Profile,
+    val relationship: ProfileRelationship?,
+)
+
 val Profile.contentDescription get() = displayName ?: handle.id
 
 fun stubProfile(

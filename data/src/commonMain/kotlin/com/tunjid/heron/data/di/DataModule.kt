@@ -19,10 +19,9 @@ package com.tunjid.heron.data.di
 import androidx.room.RoomDatabase
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.AppDatabase
-import com.tunjid.heron.data.database.NonNullPostUriAndAuthorMigration
 import com.tunjid.heron.data.database.TransactionWriter
+import com.tunjid.heron.data.database.configureAndBuild
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
@@ -30,9 +29,11 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
+import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
+import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.repository.SearchRepository
@@ -40,8 +41,6 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
@@ -81,14 +80,7 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
-    fun provideRoomDatabase(): AppDatabase = module.databaseBuilder
-        .fallbackToDestructiveMigrationOnDowngrade(true)
-        .addMigrations(
-            NonNullPostUriAndAuthorMigration,
-        )
-        .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(Dispatchers.IO)
-        .build()
+    fun provideRoomDatabase(): AppDatabase = module.databaseBuilder.configureAndBuild()
 
     @DataScope
     @Provides
@@ -172,6 +164,10 @@ abstract class DataComponent(
         @Provides get() = this
 
     val OfflineSearchRepository.bind: SearchRepository
+        @DataScope
+        @Provides get() = this
+
+    val OfflinePostRepository.bind: PostRepository
         @DataScope
         @Provides get() = this
 }

@@ -13,35 +13,18 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import app.bsky.feed.PostReplyRef
-import app.bsky.richtext.Facet
-import app.bsky.richtext.FacetByteSlice
-import app.bsky.richtext.FacetFeatureUnion.Link
-import app.bsky.richtext.FacetFeatureUnion.Mention
-import app.bsky.richtext.FacetFeatureUnion.Tag
-import app.bsky.richtext.FacetLink
-import app.bsky.richtext.FacetMention
-import app.bsky.richtext.FacetTag
-import com.atproto.repo.CreateRecordRequest
-import com.atproto.repo.CreateRecordValidationStatus
-import com.atproto.repo.DeleteRecordRequest
-import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
@@ -49,9 +32,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -72,21 +52,12 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.KSerializer
 import me.tatarka.inject.annotations.Inject
-import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.AtUri
-import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
-import sh.christian.ozone.api.Nsid
-import sh.christian.ozone.api.model.JsonContent
 import sh.christian.ozone.api.response.AtpResponse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import app.bsky.feed.Like as BskyLike
-import app.bsky.feed.Post as BskyPost
-import app.bsky.feed.Repost as BskyRepost
-import sh.christian.ozone.api.Uri as BskyUri
 
 class TimelineQuery(
     override val data: CursorQuery.Data,
@@ -129,14 +100,6 @@ interface TimelineRepository {
         postUri: Uri,
     ): Flow<List<TimelineItem>>
 
-    suspend fun sendInteraction(
-        interaction: Post.Interaction,
-    )
-
-    suspend fun createPost(
-        request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
-    )
 }
 
 @Inject
@@ -145,7 +108,6 @@ class OfflineTimelineRepository(
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
-    private val transactionWriter: TransactionWriter,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : TimelineRepository {
@@ -469,172 +431,6 @@ class OfflineTimelineRepository(
             }
             .debounce(InvalidationTrackerDebounceMillis)
 
-    override suspend fun createPost(
-        request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
-    ) {
-        val resolvedLinks: List<Post.Link> = coroutineScope {
-            request.links.map { link ->
-                async {
-                    when (val target = link.target) {
-                        is Post.LinkTarget.ExternalLink -> link
-                        is Post.LinkTarget.UserDidMention -> link
-                        is Post.LinkTarget.Hashtag -> link
-                        is Post.LinkTarget.UserHandleMention -> {
-                            profileDao.profiles(ids = listOf(target.handle))
-                                .first()
-                                .firstOrNull()
-                                ?.let { profile ->
-                                    link.copy(
-                                        target = Post.LinkTarget.UserDidMention(profile.did)
-                                    )
-                                }
-                        }
-                    }
-                }
-            }.awaitAll()
-        }.filterNotNull()
-
-        val replyRef = replyTo?.let { original ->
-            PostReplyRef(
-                root = StrongRef(
-                    uri = original.root.uri.uri.let(::AtUri),
-                    cid = original.root.cid.id.let(::Cid),
-                ),
-                parent = StrongRef(
-                    uri = original.parent.uri.uri.let(::AtUri),
-                    cid = original.parent.cid.id.let(::Cid),
-                ),
-            )
-        }
-
-        val createRecordRequest = CreateRecordRequest(
-            repo = request.authorId.id.let(::Did),
-            collection = Nsid(PostCollection),
-            record = BskyPost(
-                text = request.text,
-                reply = replyRef,
-                facets = resolvedLinks.map { link ->
-                    Facet(
-                        index = FacetByteSlice(
-                            byteStart = link.start.toLong(),
-                            byteEnd = link.end.toLong(),
-                        ),
-                        features = when (val target = link.target) {
-                            is Post.LinkTarget.ExternalLink -> listOf(
-                                Link(FacetLink(target.uri.uri.let(::BskyUri)))
-                            )
-
-                            is Post.LinkTarget.UserDidMention -> listOf(
-                                Mention(FacetMention(target.did.id.let(::Did)))
-                            )
-
-                            is Post.LinkTarget.Hashtag -> listOf(
-                                Tag(FacetTag(target.tag))
-                            )
-
-                            is Post.LinkTarget.UserHandleMention -> emptyList()
-                        },
-                    )
-                },
-                createdAt = Clock.System.now(),
-            )
-                .asJsonContent(BskyPost.serializer()),
-        )
-
-        networkService.api.createRecord(createRecordRequest)
-    }
-
-    override suspend fun sendInteraction(
-        interaction: Post.Interaction,
-    ) {
-        val authorId = savedStateRepository.signedInProfileId ?: return
-        when (interaction) {
-            is Post.Interaction.Create -> runCatchingWithNetworkRetry {
-                networkService.api.createRecord(
-                    CreateRecordRequest(
-                        repo = authorId.id.let(::Did),
-                        collection = Nsid(
-                            when (interaction) {
-                                is Post.Interaction.Create.Like -> LikeCollection
-                                is Post.Interaction.Create.Repost -> RepostCollection
-                            }
-                        ),
-                        record = when (interaction) {
-                            is Post.Interaction.Create.Like -> BskyLike(
-                                subject = StrongRef(
-                                    cid = interaction.postId.id.let(::Cid),
-                                    uri = interaction.postUri.uri.let(::AtUri),
-                                ),
-                                createdAt = Clock.System.now(),
-                            ).asJsonContent(BskyLike.serializer())
-
-                            is Post.Interaction.Create.Repost -> BskyRepost(
-                                subject = StrongRef(
-                                    cid = interaction.postId.id.let(::Cid),
-                                    uri = interaction.postUri.uri.let(::AtUri),
-                                ),
-                                createdAt = Clock.System.now(),
-                            ).asJsonContent(BskyRepost.serializer())
-                        },
-                    )
-                )
-            }
-                .getOrNull()
-                ?.let {
-                    if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
-                    upsertInteraction(
-                        partial = when (interaction) {
-                            is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = it.uri.atUri.let(::Uri),
-                                postId = interaction.postId,
-                            )
-
-                            is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
-                                repostUri = it.uri.atUri.let(::Uri),
-                                postId = interaction.postId,
-                            )
-                        }
-                    )
-                }
-
-            is Post.Interaction.Delete -> runCatchingWithNetworkRetry {
-                networkService.api.deleteRecord(
-                    DeleteRecordRequest(
-                        repo = authorId.id.let(::Did),
-                        collection = Nsid(
-                            when (interaction) {
-                                is Post.Interaction.Delete.RemoveRepost -> LikeCollection
-                                is Post.Interaction.Delete.Unlike -> RepostCollection
-                            }
-                        ),
-                        rkey = when (interaction) {
-                            is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri.uri
-                            is Post.Interaction.Delete.Unlike -> interaction.likeUri.uri
-                        }
-                    )
-                )
-            }
-                .getOrNull()
-                ?.let {
-                    upsertInteraction(
-                        partial = when (interaction) {
-                            is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = null,
-                                postId = interaction.postId,
-                            )
-
-                            is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
-                                repostUri = null,
-                                postId = interaction.postId,
-                            )
-                        }
-                    )
-                }
-        }
-
-    }
-
     private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
         currentCursor: Cursor,
@@ -649,7 +445,7 @@ class OfflineTimelineRepository(
             val authProfileId = savedStateRepository.signedInProfileId
             if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                 if (timelineDao.isFirstRequest(query)) {
-//                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
                         TimelineFetchKeyEntity(
                             sourceId = query.timeline.sourceId,
@@ -866,25 +662,6 @@ class OfflineTimelineRepository(
             )
         }
     }
-
-    private suspend fun upsertInteraction(
-        partial: PostViewerStatisticsEntity.Partial,
-    ) = transactionWriter.inTransaction {
-        partialUpsert(
-            items = listOf(partial.asFull()),
-            partialMapper = { listOf(partial) },
-            insertEntities = postDao::insertOrIgnorePostStatistics,
-            updatePartials = {
-                when (partial) {
-                    is PostViewerStatisticsEntity.Partial.Like ->
-                        postDao.updatePostStatisticsLikes(listOf(partial))
-
-                    is PostViewerStatisticsEntity.Partial.Repost ->
-                        postDao.updatePostStatisticsReposts(listOf(partial))
-                }
-            }
-        )
-    }
 }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
@@ -892,15 +669,3 @@ private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
-
-private fun <T> T.asJsonContent(
-    serializer: KSerializer<T>,
-): JsonContent = BlueskyJson.decodeFromString(
-    BlueskyJson.encodeToString(serializer, this)
-)
-
-private const val PostCollection = "app.bsky.feed.post"
-
-private const val RepostCollection = "app.bsky.feed.repost"
-
-private const val LikeCollection = "app.bsky.feed.like"

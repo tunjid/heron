@@ -34,15 +34,15 @@ interface ProfileDao {
             INNER JOIN profiles
             ON profileId = did
             WHERE profileId = :profileId
-                AND otherProfileId = :otherProfileId
+                AND otherProfileId IN (:otherProfileIds)
             OR handle = :profileId
-                AND otherProfileId = :otherProfileId
+                AND otherProfileId IN (:otherProfileIds)
         """
     )
     fun relationships(
         profileId: String,
-        otherProfileId: String,
-    ): Flow<ProfileProfileRelationshipsEntity?>
+        otherProfileIds: Set<Id>,
+    ): Flow<List<ProfileProfileRelationshipsEntity>>
 
     @Upsert
     suspend fun upsertProfiles(
