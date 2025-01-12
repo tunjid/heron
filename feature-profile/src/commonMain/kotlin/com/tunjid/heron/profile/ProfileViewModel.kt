@@ -142,8 +142,8 @@ private fun profileRelationshipMutations(
     profileId: Id,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
-    profileRepository.profileRelationship(profileId).mapToMutation {
-        copy(profileRelationship = it)
+    profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
+        copy(profileRelationship = it.firstOrNull())
     }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =

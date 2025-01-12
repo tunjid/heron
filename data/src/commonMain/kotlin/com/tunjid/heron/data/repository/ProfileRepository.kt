@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
@@ -29,9 +30,9 @@ interface ProfileRepository {
 
     fun profile(profileId: Id): Flow<Profile>
 
-    fun profileRelationship(
-        profileId: Id,
-    ): Flow<ProfileRelationship>
+    fun profileRelationships(
+        profileIds: Set<Id>,
+    ): Flow<List<ProfileRelationship>>
 }
 
 class OfflineProfileRepository @Inject constructor(
@@ -55,17 +56,19 @@ class OfflineProfileRepository @Inject constructor(
             .withRefresh { fetchProfile(profileId) }
             .debounce(InvalidationTrackerDebounceMillis)
 
-    override fun profileRelationship(
-        profileId: Id,
-    ): Flow<ProfileRelationship> =
+    override fun profileRelationships(
+        profileIds: Set<Id>,
+    ): Flow<List<ProfileRelationship>> =
         signedInProfileId()
             .flatMapLatest {
                 profileDao.relationships(
                     profileId = it.id,
-                    otherProfileId = profileId.id,
+                    otherProfileIds = profileIds,
                 )
             }
-            .mapNotNull { it?.asExternalModel() }
+            .map { relationshipsEntities ->
+                relationshipsEntities.map(ProfileProfileRelationshipsEntity::asExternalModel)
+            }
             .debounce(InvalidationTrackerDebounceMillis)
 
     private fun signedInProfileId() = savedStateRepository.savedState
