@@ -11,9 +11,12 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
+import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
@@ -26,31 +29,43 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PostDao {
 
+    @Transaction
     @Upsert
     suspend fun upsertPosts(
         entities: List<PostEntity>,
     )
 
+    @Transaction
+    @Upsert
+    suspend fun upsertPostLikes(
+        entities: List<PostLikeEntity>,
+    )
+
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnoreAuthorCrossRefEntities(
         crossReferences: List<PostAuthorsEntity>,
     )
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnorePostExternalEmbeds(
         crossReferences: List<PostExternalEmbedEntity>,
     )
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnorePostImages(
         crossReferences: List<PostImageEntity>,
     )
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnorePostVideos(
         crossReferences: List<PostVideoEntity>,
     )
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnorePostPosts(
         crossReferences: List<PostPostEntity>,
@@ -90,6 +105,56 @@ interface PostDao {
     fun embeddedPosts(
         postIds: Set<Id>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM posts
+            INNER JOIN postPosts
+            ON cid = postPosts.embeddedPostId
+	        WHERE embeddedPostId = :quotedPostId
+            ORDER BY indexedAt
+        """
+    )
+    fun quotedPosts(
+        quotedPostId: String,
+    ): Flow<List<PopulatedPostEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM profiles
+            INNER JOIN postLikes
+                ON did = authorId
+            LEFT JOIN profileProfileRelationships
+                ON profileProfileRelationships.profileId = :viewingProfileId
+                AND profileProfileRelationships.otherProfileId = authorId
+	        WHERE postId = :postId
+            ORDER BY indexedAt
+        """
+    )
+    fun likedBy(
+        postId: String,
+        viewingProfileId: String?,
+    ): Flow<List<PopulatedProfileEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM profiles
+            INNER JOIN postReposts
+                ON did = authorId
+            LEFT JOIN profileProfileRelationships
+                ON profileProfileRelationships.profileId = :viewingProfileId
+                AND profileProfileRelationships.otherProfileId = authorId
+	        WHERE postId = :postId
+            ORDER BY indexedAt
+        """
+    )
+    fun repostedBy(
+        postId: String,
+        viewingProfileId: String?,
+    ): Flow<List<PopulatedProfileEntity>>
 
     @Upsert
     suspend fun upsertPostStatistics(

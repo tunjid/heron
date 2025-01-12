@@ -29,9 +29,11 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
+import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
+import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.repository.SearchRepository
@@ -162,6 +164,10 @@ abstract class DataComponent(
         @Provides get() = this
 
     val OfflineSearchRepository.bind: SearchRepository
+        @DataScope
+        @Provides get() = this
+
+    val OfflinePostRepository.bind: PostRepository
         @DataScope
         @Provides get() = this
 }

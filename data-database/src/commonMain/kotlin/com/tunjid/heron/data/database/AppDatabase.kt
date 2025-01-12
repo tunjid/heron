@@ -18,6 +18,7 @@ import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
+import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
@@ -35,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 7,
+    version = 8,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -51,6 +52,7 @@ import kotlinx.coroutines.IO
         ProfileProfileRelationshipsEntity::class,
         ProfileEntity::class,
         PostLikeEntity::class,
+        PostRepostEntity::class,
         ListEntity::class,
         FeedGeneratorEntity::class,
         NotificationEntity::class,
@@ -70,7 +72,9 @@ import kotlinx.coroutines.IO
             from = 6,
             to = 7,
             spec = PostViewerStatisticsAutoMigration::class
-        )
+        ),
+        // postLikes and postReposts
+        AutoMigration(from = 7, to = 8),
     ],
     exportSchema = true,
 )
