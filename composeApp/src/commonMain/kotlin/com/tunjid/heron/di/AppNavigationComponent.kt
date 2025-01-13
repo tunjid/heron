@@ -30,6 +30,23 @@ import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
 import me.tatarka.inject.annotations.Component
+import me.tatarka.inject.annotations.KmpComponentCreate
+
+@KmpComponentCreate
+expect fun AppNavigationComponent.Companion.create(
+    signInNavigationComponent: SignInNavigationComponent,
+    composeNavigationComponent: ComposeNavigationComponent,
+    feedNavigationComponent: FeedNavigationComponent,
+    galleryNavigationComponent: GalleryNavigationComponent,
+    homeNavigationComponent: HomeNavigationComponent,
+    messagesNavigationComponent: MessagesNavigationComponent,
+    notificationsNavigationComponent: NotificationsNavigationComponent,
+    postDetailNavigationComponent: PostDetailNavigationComponent,
+    profileNavigationComponent: ProfileNavigationComponent,
+    profilesNavigationComponent: ProfilesNavigationComponent,
+    searchNavigationComponent: SearchNavigationComponent,
+    splashNavigationComponent: SplashNavigationComponent,
+): AppNavigationComponent
 
 //@SingletonScope
 @Component
@@ -48,6 +65,8 @@ abstract class AppNavigationComponent(
     @Component val splashNavigationComponent: SplashNavigationComponent,
 ) {
     internal abstract val routeMatcherMap: Map<String, RouteMatcher>
+
+    companion object
 }
 
 val AppNavigationComponent.allRouteMatchers

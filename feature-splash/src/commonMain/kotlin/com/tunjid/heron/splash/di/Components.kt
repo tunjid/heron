@@ -34,6 +34,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
 private const val RoutePattern = "/splash"
@@ -44,8 +45,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun SplashNavigationComponent.Companion.create(): SplashNavigationComponent
+
+@KmpComponentCreate
+expect fun SplashComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): SplashComponent
+
 @Component
 abstract class SplashNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -62,6 +73,7 @@ abstract class SplashComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

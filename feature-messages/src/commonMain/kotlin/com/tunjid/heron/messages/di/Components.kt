@@ -47,6 +47,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
 private const val RoutePattern = "/messages"
@@ -57,8 +58,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun MessagesNavigationComponent.Companion.create(): MessagesNavigationComponent
+
+@KmpComponentCreate
+expect fun MessagesComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): MessagesComponent
+
 @Component
 abstract class MessagesNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -75,6 +86,7 @@ abstract class MessagesComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

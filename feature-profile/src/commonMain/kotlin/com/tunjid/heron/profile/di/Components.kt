@@ -74,6 +74,7 @@ import heron.feature_profile.generated.resources.mention
 import heron.feature_profile.generated.resources.post
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
@@ -97,8 +98,18 @@ internal val Route.avatarSharedElementKey
 internal val Route.profile
     get():Profile? = routeParams.queryParams["profile"]?.firstOrNull()?.fromBase64EncodedUrl()
 
+@KmpComponentCreate
+expect fun ProfileNavigationComponent.Companion.create(): ProfileNavigationComponent
+
+@KmpComponentCreate
+expect fun ProfileComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): ProfileComponent
+
 @Component
 abstract class ProfileNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -115,6 +126,7 @@ abstract class ProfileComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

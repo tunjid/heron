@@ -16,50 +16,50 @@
 
 package com.tunjid.heron.data.network
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.ConnectivityManager.NetworkCallback
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest.Builder
-import androidx.core.content.getSystemService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.stateIn
-
-actual class NetworkMonitor(
-    scope: CoroutineScope,
-    private val context: Context,
-) {
-    actual val isConnected: Flow<Boolean> = callbackFlow {
-        val callback = object : NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                if (!channel.isClosedForSend) channel.trySend(true)
-            }
-
-            override fun onLost(network: Network) {
-                if (!channel.isClosedForSend) channel.trySend(false)
-            }
-        }
-
-        val connectivityManager = context.getSystemService<ConnectivityManager>()
-        connectivityManager?.registerNetworkCallback(
-            Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build(),
-            callback
-        )
-
-        awaitClose {
-            connectivityManager?.unregisterNetworkCallback(callback)
-        }
-    }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(2000),
-            initialValue = false
-        )
-}
+//import android.content.Context
+//import android.net.ConnectivityManager
+//import android.net.ConnectivityManager.NetworkCallback
+//import android.net.Network
+//import android.net.NetworkCapabilities
+//import android.net.NetworkRequest.Builder
+//import androidx.core.content.getSystemService
+//import kotlinx.coroutines.CoroutineScope
+//import kotlinx.coroutines.channels.awaitClose
+//import kotlinx.coroutines.flow.Flow
+//import kotlinx.coroutines.flow.SharingStarted
+//import kotlinx.coroutines.flow.callbackFlow
+//import kotlinx.coroutines.flow.stateIn
+//
+//actual class NetworkMonitor(
+//    scope: CoroutineScope,
+//    private val context: Context,
+//) {
+//    actual val isConnected: Flow<Boolean> = callbackFlow {
+//        val callback = object : NetworkCallback() {
+//            override fun onAvailable(network: Network) {
+//                if (!channel.isClosedForSend) channel.trySend(true)
+//            }
+//
+//            override fun onLost(network: Network) {
+//                if (!channel.isClosedForSend) channel.trySend(false)
+//            }
+//        }
+//
+//        val connectivityManager = context.getSystemService<ConnectivityManager>()
+//        connectivityManager?.registerNetworkCallback(
+//            Builder()
+//                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+//                .build(),
+//            callback
+//        )
+//
+//        awaitClose {
+//            connectivityManager?.unregisterNetworkCallback(callback)
+//        }
+//    }
+//        .stateIn(
+//            scope = scope,
+//            started = SharingStarted.WhileSubscribed(2000),
+//            initialValue = false
+//        )
+//}

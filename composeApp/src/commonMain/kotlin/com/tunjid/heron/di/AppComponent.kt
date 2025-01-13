@@ -38,7 +38,26 @@ import com.tunjid.treenav.compose.PaneStrategy
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import me.tatarka.inject.annotations.Component
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
+
+@KmpComponentCreate
+expect fun AppComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+    signInComponent: SignInComponent,
+    composeComponent: ComposeComponent,
+    feedComponent: FeedComponent,
+    galleryComponent: GalleryComponent,
+    homeComponent: HomeComponent,
+    messagesComponent: MessagesComponent,
+    notificationsComponent: NotificationsComponent,
+    postDetailComponent: PostDetailComponent,
+    profileComponent: ProfileComponent,
+    profilesComponent: ProfilesComponent,
+    searchComponent: SearchComponent,
+    splashComponent: SplashComponent,
+): AppComponent
 
 @Component
 abstract class AppComponent(
@@ -72,4 +91,6 @@ abstract class AppComponent(
     )
 
     abstract val appState: AppState
+
+    companion object
 }

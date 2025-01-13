@@ -52,6 +52,7 @@ import heron.feature_auth.generated.resources.create_an_account
 import heron.feature_auth.generated.resources.sign_in
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
@@ -63,8 +64,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun SignInNavigationComponent.Companion.create(): SignInNavigationComponent
+
+@KmpComponentCreate
+expect fun SignInComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): SignInComponent
+
 @Component
 abstract class SignInNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -81,6 +92,7 @@ abstract class SignInComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

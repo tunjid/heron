@@ -43,6 +43,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.tatarka.inject.annotations.Component
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import me.tatarka.inject.annotations.Scope
 import okio.FileSystem
@@ -59,6 +60,11 @@ class DataModule(
     val savedStateFileSystem: FileSystem,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
+
+@KmpComponentCreate
+expect fun DataComponent.Companion.create(
+    module: DataModule,
+): DataComponent
 
 @DataScope
 @Component
@@ -170,4 +176,6 @@ abstract class DataComponent(
     val OfflinePostRepository.bind: PostRepository
         @DataScope
         @Provides get() = this
+
+    companion object
 }

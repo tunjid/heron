@@ -27,6 +27,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Component
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import me.tatarka.inject.annotations.Scope
 
@@ -37,6 +38,12 @@ annotation class ScaffoldScope
 class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
 )
+
+@KmpComponentCreate
+expect fun ScaffoldComponent.Companion.create(
+    module: ScaffoldModule,
+    dataComponent: DataComponent,
+): ScaffoldComponent
 
 @ScaffoldScope
 @Component
@@ -62,4 +69,6 @@ abstract class ScaffoldComponent(
         @Provides get() = this
 
     abstract val navStateHolder: NavigationStateHolder
+
+    companion object
 }
