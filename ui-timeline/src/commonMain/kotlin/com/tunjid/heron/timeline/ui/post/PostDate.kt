@@ -51,7 +51,7 @@ internal fun PostMetadata(
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            MetaDataText(
+            MetadataText(
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -63,7 +63,7 @@ internal fun PostMetadata(
                 pluralResource = Res.string.reposts,
                 textStyle = textStyle,
             )
-            MetaDataText(
+            MetadataText(
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -75,7 +75,7 @@ internal fun PostMetadata(
                 pluralResource = Res.string.quotes,
                 textStyle = textStyle,
             )
-            MetaDataText(
+            MetadataText(
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -92,7 +92,7 @@ internal fun PostMetadata(
 }
 
 @Composable
-internal fun MetaDataText(
+internal fun MetadataText(
     modifier: Modifier = Modifier,
     count: Long,
     singularResource: StringResource,
