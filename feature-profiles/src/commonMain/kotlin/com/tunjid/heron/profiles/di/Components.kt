@@ -61,7 +61,7 @@ private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
 }
 
 internal val Route.load
-    get() = LoadTrie[this]?.invoke(this)
+    get() = LoadTrie[this]?.invoke(this)!!
 
 private val Route.profileId
     get() = Id(routeParams.pathArgs.getValue("profileId"))
