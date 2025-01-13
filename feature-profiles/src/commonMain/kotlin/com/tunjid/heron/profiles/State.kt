@@ -16,8 +16,13 @@
 
 package com.tunjid.heron.profiles
 
+import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -25,12 +30,46 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val signedInProfileId: Id? = null,
+    val currentQuery: CursorQuery,
+    @Transient
+    val profiles: TiledList<CursorQuery, ProfileWithRelationship> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
+sealed class Load {
+    sealed class Post : Load() {
+        abstract val postId: Id
+
+        data class Likes(
+            override val postId: Id,
+        ) : Post()
+
+        data class Reposts(
+            override val postId: Id,
+        ) : Post()
+    }
+
+    sealed class Profile : Load() {
+        abstract val profileId: Id
+
+        data class Followers(
+            override val profileId: Id,
+        ) : Profile()
+
+        data class Following(
+            override val profileId: Id,
+        ) : Profile()
+    }
+
+}
 
 sealed class Action(val key: String) {
+
+    data class LoadAround(
+        val query: CursorQuery,
+    ) : Action("LoadAround")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

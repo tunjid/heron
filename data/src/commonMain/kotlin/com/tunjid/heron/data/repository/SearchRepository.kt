@@ -5,6 +5,7 @@ import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.ProfileWithRelationship
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -157,10 +158,12 @@ class OfflineSearchRepository @Inject constructor(
                     )
                     savedStateRepository.signedInProfileId?.let {
                         SearchResult.Profile(
-                            profile = profileView.profile(),
-                            relationship = profileView.profileProfileRelationshipsEntities(
-                                viewingProfileId = it
-                            ).first().asExternalModel()
+                            profileWithRelationship = ProfileWithRelationship(
+                                profile = profileView.profile(),
+                                relationship = profileView.profileProfileRelationshipsEntities(
+                                    viewingProfileId = it
+                                ).first().asExternalModel(),
+                            )
                         )
                     }
                 }
@@ -200,10 +203,12 @@ class OfflineSearchRepository @Inject constructor(
                     )
                     savedStateRepository.signedInProfileId?.let {
                         SearchResult.Profile(
-                            profile = profileView.profile(),
-                            relationship = profileView.profileProfileRelationshipsEntities(
-                                viewingProfileId = it
-                            ).first().asExternalModel()
+                            profileWithRelationship = ProfileWithRelationship(
+                                profile = profileView.profile(),
+                                relationship = profileView.profileProfileRelationshipsEntities(
+                                    viewingProfileId = it
+                                ).first().asExternalModel(),
+                            )
                         )
                     }
                 }

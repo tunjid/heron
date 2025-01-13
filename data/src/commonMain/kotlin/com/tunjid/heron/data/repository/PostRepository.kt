@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.AtUri
@@ -66,6 +67,7 @@ import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
 import sh.christian.ozone.api.Uri as BskyUri
 
+@Serializable
 data class PostDataQuery(
     val postId: Id,
     override val data: CursorQuery.Data,

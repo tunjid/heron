@@ -1,13 +1,11 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Post as CorePost
-import com.tunjid.heron.data.core.models.Profile as CoreProfile
 
 sealed class SearchResult {
 
     data class Profile(
-        val profile: CoreProfile,
-        val relationship: ProfileRelationship,
+        val profileWithRelationship: ProfileWithRelationship,
     ) : SearchResult()
 
     sealed class Post : SearchResult() {

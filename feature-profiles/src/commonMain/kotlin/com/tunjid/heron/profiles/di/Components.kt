@@ -26,8 +26,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profiles.ActualProfilesStateHolder
+import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -37,13 +39,35 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.PathPattern
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteTrie
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/profiles"
+private const val PostLikesPattern = "/posts/{postId}/likes"
+private const val PostRepostsPattern = "/posts/{postId}/reposts"
+private const val ProfileFollowersPattern = "/profiles/{profileId}/followers"
+private const val ProfileFollowingPattern = "/profiles/{profileId}/following"
+
+private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
+    set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postId) }
+    set(PathPattern(PostRepostsPattern)) { Load.Post.Reposts(it.postId) }
+    set(PathPattern(ProfileFollowersPattern)) { Load.Profile.Followers(it.profileId) }
+    set(PathPattern(ProfileFollowingPattern)) { Load.Profile.Following(it.profileId) }
+}
+
+internal val Route.load
+    get() = LoadTrie[this]?.invoke(this)!!
+
+private val Route.profileId
+    get() = Id(routeParams.pathArgs.getValue("profileId"))
+
+private val Route.postId
+    get() = Id(routeParams.pathArgs.getValue("postId"))
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -56,12 +80,35 @@ abstract class ProfilesNavigationComponent {
 
     @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
+    fun postLikesRouteParser(): Pair<String, RouteMatcher> =
         routeAndMatcher(
-            routePattern = RoutePattern,
+            routePattern = PostLikesPattern,
             routeMapper = ::createRoute,
         )
 
+    @IntoMap
+    @Provides
+    fun postRepostsRouteParser(): Pair<String, RouteMatcher> =
+        routeAndMatcher(
+            routePattern = PostRepostsPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @IntoMap
+    @Provides
+    fun profileFollowersRouteParser(): Pair<String, RouteMatcher> =
+        routeAndMatcher(
+            routePattern = ProfileFollowersPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @IntoMap
+    @Provides
+    fun profileFollowingRouteParser(): Pair<String, RouteMatcher> =
+        routeAndMatcher(
+            routePattern = ProfileFollowingPattern,
+            routeMapper = ::createRoute,
+        )
 }
 
 @Component
@@ -72,9 +119,31 @@ abstract class ProfilesComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun postLikesAdaptiveConfiguration(
         creator: ProfilesStateHolderCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = PostLikesPattern to profilesStrategy(creator)
+
+    @IntoMap
+    @Provides
+    fun postRepostsAdaptiveConfiguration(
+        creator: ProfilesStateHolderCreator,
+    ) = PostRepostsPattern to profilesStrategy(creator)
+
+    @IntoMap
+    @Provides
+    fun profileFollowersAdaptiveConfiguration(
+        creator: ProfilesStateHolderCreator,
+    ) = ProfileFollowersPattern to profilesStrategy(creator)
+
+    @IntoMap
+    @Provides
+    fun profileFollowingAdaptiveConfiguration(
+        creator: ProfilesStateHolderCreator,
+    ) = ProfileFollowingPattern to profilesStrategy(creator)
+
+    private fun profilesStrategy(
+        creator: ProfilesStateHolderCreator,
+    ) = threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfilesStateHolder> {
@@ -100,6 +169,8 @@ abstract class ProfilesComponent(
                         sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )

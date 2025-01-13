@@ -45,11 +45,11 @@ fun ProfileSearchResult(
                     .size(48.dp)
                     .clickable { onProfileClicked(result) },
                 key = result.avatarSharedElementKey(),
-                state = remember(result.profile.avatar) {
+                state = remember(result.profileWithRelationship.profile.avatar) {
                     ImageArgs(
-                        url = result.profile.avatar?.uri,
+                        url = result.profileWithRelationship.profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
-                        contentDescription = result.profile.contentDescription,
+                        contentDescription = result.profileWithRelationship.profile.contentDescription,
                         shape = RoundedPolygonShape.Circle,
                     )
                 },
@@ -63,16 +63,16 @@ fun ProfileSearchResult(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 ProfileName(
-                    profile = result.profile
+                    profile = result.profileWithRelationship.profile
                 )
                 ProfileHandle(
-                    profile = result.profile
+                    profile = result.profileWithRelationship.profile
                 )
             }
         },
         action = {
             ProfileRelationship(
-                relationship = result.relationship,
+                relationship = result.profileWithRelationship.relationship,
                 isSignedInProfile = false,
                 onClick = {}
             )
@@ -126,7 +126,7 @@ internal fun PostSearchResult(
 }
 
 internal fun SearchResult.Profile.avatarSharedElementKey(): String =
-    "${sharedElementPrefix()}-${profile.did.id}"
+    "${sharedElementPrefix()}-${profileWithRelationship.profile.did.id}"
 
 internal fun SearchResult.sharedElementPrefix() = when (this) {
     is SearchResult.Post.Top -> "top-post-search-result"
