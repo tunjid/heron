@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profiles
 
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -29,6 +30,32 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
+sealed class Load {
+    sealed class Post : Load() {
+        abstract val postId: Id
+
+        data class Likes(
+            override val postId: Id,
+        ) : Post()
+
+        data class Reposts(
+            override val postId: Id,
+        ) : Post()
+    }
+
+    sealed class Profile: Load() {
+        abstract val profileId: Id
+
+        data class Followers(
+            override val profileId: Id,
+        ) : Profile()
+
+        data class Following(
+            override val profileId: Id,
+        ) : Profile()
+    }
+
+}
 
 sealed class Action(val key: String) {
 
