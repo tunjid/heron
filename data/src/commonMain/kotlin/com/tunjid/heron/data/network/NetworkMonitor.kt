@@ -16,11 +16,11 @@
 
 package com.tunjid.heron.data.network
 
-import kotlinx.coroutines.flow.Flow
-
-/**
- * An interface that reports if there's a network connection
- */
-expect class NetworkMonitor {
-    val isConnected: Flow<Boolean>
-}
+//import kotlinx.coroutines.flow.Flow
+//
+///**
+// * An interface that reports if there's a network connection
+// */
+//expect class NetworkMonitor {
+//    val isConnected: Flow<Boolean>
+//}

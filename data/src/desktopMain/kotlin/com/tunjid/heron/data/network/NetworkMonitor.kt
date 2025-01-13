@@ -16,63 +16,63 @@
 
 package com.tunjid.heron.data.network
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.readBytes
-import io.ktor.client.statement.readRawBytes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-
-private const val NetworkPollIntervalMillis = 10_000L
-private const val NetworkMonitorWhileSubscribedMillis = 2_000L
-
-/**
- * Polls for a valid internet connection. Not efficient, but eh
- */
-actual class NetworkMonitor(scope: CoroutineScope) {
-    actual val isConnected: Flow<Boolean> = flow {
-        var a = 0
-        while (true) {
-            emit(++a)
-            delay(NetworkPollIntervalMillis)
-        }
-    }
-        .buffer(
-            capacity = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
-        )
-        .map {
-            exponentialBackoff(
-                initialDelay = 1_000,
-                maxDelay = 20_000,
-                default = false,
-            ) {
-                HttpClient()
-                    .use {
-                        ByteArrayInputStream(it.get("https://www.google.com").readRawBytes())
-                    }
-                    .buffered()
-                    .use {
-                        it.bufferedReader().use(BufferedReader::readText)
-                    }
-                true
-            }
-        }
-        .distinctUntilChanged()
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(NetworkMonitorWhileSubscribedMillis),
-            initialValue = false
-        )
-}
+//import io.ktor.client.HttpClient
+//import io.ktor.client.request.get
+//import io.ktor.client.statement.readBytes
+//import io.ktor.client.statement.readRawBytes
+//import kotlinx.coroutines.CoroutineScope
+//import kotlinx.coroutines.channels.BufferOverflow
+//import kotlinx.coroutines.delay
+//import kotlinx.coroutines.flow.Flow
+//import kotlinx.coroutines.flow.SharingStarted
+//import kotlinx.coroutines.flow.buffer
+//import kotlinx.coroutines.flow.distinctUntilChanged
+//import kotlinx.coroutines.flow.flow
+//import kotlinx.coroutines.flow.map
+//import kotlinx.coroutines.flow.stateIn
+//import java.io.BufferedReader
+//import java.io.ByteArrayInputStream
+//
+//private const val NetworkPollIntervalMillis = 10_000L
+//private const val NetworkMonitorWhileSubscribedMillis = 2_000L
+//
+///**
+// * Polls for a valid internet connection. Not efficient, but eh
+// */
+//actual class NetworkMonitor(scope: CoroutineScope) {
+//    actual val isConnected: Flow<Boolean> = flow {
+//        var a = 0
+//        while (true) {
+//            emit(++a)
+//            delay(NetworkPollIntervalMillis)
+//        }
+//    }
+//        .buffer(
+//            capacity = 1,
+//            onBufferOverflow = BufferOverflow.DROP_OLDEST
+//        )
+//        .map {
+//            exponentialBackoff(
+//                initialDelay = 1_000,
+//                maxDelay = 20_000,
+//                default = false,
+//            ) {
+//                HttpClient()
+//                    .use {
+//                        ByteArrayInputStream(it.get("https://www.google.com").readRawBytes())
+//                    }
+//                    .buffered()
+//                    .use {
+//                        it.bufferedReader().use(BufferedReader::readText)
+//                    }
+//                true
+//            }
+//        }
+//        .distinctUntilChanged()
+//        .stateIn(
+//            scope = scope,
+//            started = SharingStarted.WhileSubscribed(NetworkMonitorWhileSubscribedMillis),
+//            initialValue = false
+//        )
+//}
 
