@@ -1,7 +1,6 @@
 <resources>
     <string name="reply">Reply</string>
     <string name="reply_to">Reply to %1$s</string>
-    <string name="repost">Reply</string>
     <string name="repost_by">Repost by %1$s</string>
     <string name="pinned">Pinned</string>
     <string name="liked">Liked</string>
@@ -16,4 +15,10 @@
     <string name="back">Back</string>
     <string name="replies">Replies</string>
     <string name="media">Media</string>
+    <string name="like">like</string>
+    <string name="likes">likes</string>
+    <string name="repost">repost</string>
+    <string name="reposts">reposts</string>
+    <string name="quote">quote</string>
+    <string name="quotes">quotes</string>
 </resources>

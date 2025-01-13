@@ -92,11 +92,14 @@ fun Post(
                     },
                     onPostClicked = onPostClicked,
                 )
-                if (isAnchoredInTimeline) PostDate(
+                if (isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
                         vertical = 8.dp,
                     ),
                     time = post.createdAt,
+                    reposts = post.repostCount,
+                    quotes = post.quoteCount,
+                    likes = post.likeCount,
                 )
                 PostActions(
                     replyCount = format(post.replyCount),
