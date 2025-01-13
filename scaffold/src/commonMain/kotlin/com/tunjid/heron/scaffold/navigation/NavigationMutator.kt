@@ -113,20 +113,17 @@ interface NavigationAction {
             val referringRouteOption: ReferringRouteOption,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
-                when (val postUri = post.uri) {
-                    null -> navState
-                    else -> navState.push(
-                        routeString(
-                            path = "/post/${post.cid.id}",
-                            queryParams = mapOf(
-                                "post" to listOf(post.toUrlEncodedBase64()),
-                                "postUri" to listOf(postUri.uri),
-                                "sharedElementPrefix" to listOf(sharedElementPrefix),
-                                referringRouteQueryParams(referringRouteOption),
-                            )
-                        ).toRoute
-                    )
-                }
+                navState.push(
+                    routeString(
+                        path = "/post/${post.cid.id}",
+                        queryParams = mapOf(
+                            "post" to listOf(post.toUrlEncodedBase64()),
+                            "postUri" to listOf(post.uri.uri),
+                            "sharedElementPrefix" to listOf(sharedElementPrefix),
+                            referringRouteQueryParams(referringRouteOption),
+                        )
+                    ).toRoute
+                )
             }
         }
 
