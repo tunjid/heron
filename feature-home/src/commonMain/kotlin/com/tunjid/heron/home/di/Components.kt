@@ -60,6 +60,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
 internal const val RoutePattern = "/home"
@@ -70,8 +71,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun HomeNavigationComponent.Companion.create(): HomeNavigationComponent
+
+@KmpComponentCreate
+expect fun HomeComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): HomeComponent
+
 @Component
 abstract class HomeNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -88,6 +99,7 @@ abstract class HomeComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

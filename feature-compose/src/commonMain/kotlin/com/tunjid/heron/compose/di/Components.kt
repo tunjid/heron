@@ -54,6 +54,7 @@ import heron.feature_compose.generated.resources.Res
 import heron.feature_compose.generated.resources.back
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
@@ -71,8 +72,18 @@ internal val Route.creationType
 internal val Route.sharedElementPrefix
     get() = routeParams.queryParams["sharedElementPrefix"]?.firstOrNull()
 
+@KmpComponentCreate
+expect fun ComposeNavigationComponent.Companion.create(): ComposeNavigationComponent
+
+@KmpComponentCreate
+expect fun ComposeComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): ComposeComponent
+
 @Component
 abstract class ComposeNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -89,6 +100,7 @@ abstract class ComposeComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

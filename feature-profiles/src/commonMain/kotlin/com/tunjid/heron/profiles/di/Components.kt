@@ -46,6 +46,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteTrie
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
 private const val PostLikesPattern = "/posts/{postId}/likes"
@@ -75,8 +76,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun ProfilesNavigationComponent.Companion.create(): ProfilesNavigationComponent
+
+@KmpComponentCreate
+expect fun ProfilesComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): ProfilesComponent
+
 @Component
 abstract class ProfilesNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -116,6 +127,7 @@ abstract class ProfilesComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

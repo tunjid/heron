@@ -71,6 +71,7 @@ import heron.feature_post_detail.generated.resources.back
 import heron.feature_post_detail.generated.resources.reply
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
@@ -94,8 +95,18 @@ internal val Route.postUri
 internal val Route.sharedElementPrefix
     get() = routeParams.queryParams.getValue("sharedElementPrefix").first()
 
+@KmpComponentCreate
+expect fun PostDetailNavigationComponent.Companion.create(): PostDetailNavigationComponent
+
+@KmpComponentCreate
+expect fun PostDetailComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): PostDetailComponent
+
 @Component
 abstract class PostDetailNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -112,6 +123,7 @@ abstract class PostDetailComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides

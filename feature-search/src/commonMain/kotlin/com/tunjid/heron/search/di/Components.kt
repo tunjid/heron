@@ -63,6 +63,7 @@ import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.search
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
@@ -74,8 +75,18 @@ private fun createRoute(
     params = routeParams,
 )
 
+@KmpComponentCreate
+expect fun SearchNavigationComponent.Companion.create(): SearchNavigationComponent
+
+@KmpComponentCreate
+expect fun SearchComponent.Companion.create(
+    dataComponent: DataComponent,
+    scaffoldComponent: ScaffoldComponent,
+): SearchComponent
+
 @Component
 abstract class SearchNavigationComponent {
+    companion object
 
     @IntoMap
     @Provides
@@ -92,6 +103,7 @@ abstract class SearchComponent(
     @Component val dataComponent: DataComponent,
     @Component val scaffoldComponent: ScaffoldComponent,
 ) {
+    companion object
 
     @IntoMap
     @Provides
