@@ -169,6 +169,8 @@ abstract class ProfilesComponent(
                         sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )
