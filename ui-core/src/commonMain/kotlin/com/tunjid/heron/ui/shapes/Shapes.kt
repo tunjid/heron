@@ -216,8 +216,9 @@ fun RoundedPolygonShape.animate(
 
     return remember(currentScale, currentScale.lastPolygon, previousScale.lastPolygon) {
         object : Shape {
-            private var path = Path()
+            private val path = Path()
             val matrix = Matrix()
+            val outline = Outline.Generic(path)
             val morph by lazy {
                 Morph(previousScale.lastPolygon!!, currentScale.lastPolygon!!)
             }
@@ -237,7 +238,7 @@ fun RoundedPolygonShape.animate(
                 currentScale.ensurePolygon(size, density)
 
                 path.rewind()
-                path = morph.toPath(
+                morph.toPath(
                     progress = interpolation,
                     path = path,
                 )
@@ -250,11 +251,11 @@ fun RoundedPolygonShape.animate(
 
                 matrix.translate(
                     x = -currentScale.lastBounds.left,
-                    y = -currentScale.lastBounds.top
+                    y = -currentScale.lastBounds.top,
                 )
                 path.transform(matrix)
 
-                return Outline.Generic(path)
+                return outline
             }
         }
     }
@@ -297,7 +298,7 @@ private fun pathFromCubics(
             element.control1X,
             element.control1Y,
             element.anchor1X,
-            element.anchor1Y
+            element.anchor1Y,
         )
     }
     path.close()
