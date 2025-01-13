@@ -1,11 +1,15 @@
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +34,7 @@ internal fun PostMetadata(
     reposts: Long,
     quotes: Long,
     likes: Long,
+    onMetadataClicked: (Int) -> Unit,
 ) {
     val textStyle = MaterialTheme.typography.bodySmall.copy(
         color = MaterialTheme.colorScheme.outline
@@ -47,18 +52,36 @@ internal fun PostMetadata(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             MetaDataText(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false),
+                        onClick = { onMetadataClicked(0) },
+                    ),
                 count = reposts,
                 singularResource = Res.string.repost,
                 pluralResource = Res.string.reposts,
                 textStyle = textStyle,
             )
             MetaDataText(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false),
+                        onClick = { onMetadataClicked(1) },
+                    ),
                 count = quotes,
                 singularResource = Res.string.quote,
                 pluralResource = Res.string.quotes,
                 textStyle = textStyle,
             )
             MetaDataText(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false),
+                        onClick = { onMetadataClicked(2) },
+                    ),
                 count = likes,
                 singularResource = Res.string.like,
                 pluralResource = Res.string.likes,
@@ -70,12 +93,15 @@ internal fun PostMetadata(
 
 @Composable
 internal fun MetaDataText(
+    modifier: Modifier = Modifier,
     count: Long,
     singularResource: StringResource,
     pluralResource: StringResource,
     textStyle: TextStyle,
-) {
+
+    ) {
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(

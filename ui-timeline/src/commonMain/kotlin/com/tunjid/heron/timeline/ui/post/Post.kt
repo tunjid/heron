@@ -100,6 +100,9 @@ fun Post(
                     reposts = post.repostCount,
                     quotes = post.quoteCount,
                     likes = post.likeCount,
+                    onMetadataClicked = {
+
+                    },
                 )
                 PostActions(
                     replyCount = format(post.replyCount),
