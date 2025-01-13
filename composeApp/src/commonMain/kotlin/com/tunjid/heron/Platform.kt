@@ -50,7 +50,6 @@ import com.tunjid.heron.splash.di.create
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import okio.FileSystem
 
 interface Platform {
     val name: String
