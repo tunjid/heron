@@ -20,6 +20,7 @@ package com.tunjid.heron.profiles
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -65,6 +66,7 @@ class ProfilesStateHolderCreator(
 @Inject
 class ActualProfilesStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    authRepository: AuthRepository,
     postRepository: PostRepository,
     @Assisted
     scope: CoroutineScope,
@@ -93,6 +95,9 @@ class ActualProfilesStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadSignedInProfileIdMutations(
+            authRepository = authRepository
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -100,7 +105,7 @@ class ActualProfilesStateHolder(
         ) {
             when (val action = type()) {
 
-                is Action.LoadAround -> action.flow.profileLoadMutations(
+                is Action.LoadAround -> action.flow.profilesLoadMutations(
                     load = route.load,
                     stateHolder = this@transform,
                     postRepository = postRepository,
@@ -114,7 +119,14 @@ class ActualProfilesStateHolder(
     }
 )
 
-suspend fun Flow<Action.LoadAround>.profileLoadMutations(
+private fun loadSignedInProfileIdMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation {
+        copy(signedInProfileId = it?.did)
+    }
+
+suspend fun Flow<Action.LoadAround>.profilesLoadMutations(
     load: Load,
     stateHolder: SuspendingStateHolder<State>,
     postRepository: PostRepository,

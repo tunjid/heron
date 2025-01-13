@@ -16,30 +16,78 @@
 
 package com.tunjid.heron.profiles
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.scaffold.scaffold.AppLogo
+import com.tunjid.heron.profiles.ui.ProfileWithRelationship
+import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
 internal fun ProfilesScreen(
     sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
+    state: State,
+    actions: (Action) -> Unit,
 ) {
-    Box(
+    val listState = rememberLazyListState()
+    val items by rememberUpdatedState(state.profiles)
+    val signedInProfileId by rememberUpdatedState(state.signedInProfileId)
+    LazyColumn(
         modifier = modifier
+            .padding(horizontal = 8.dp)
             .fillMaxSize()
+            .clip(
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                )
+            ),
+        state = listState,
+        contentPadding = PaddingValues(
+            top = StatusBarHeight + ToolbarHeight,
+            start = 8.dp,
+            end = 8.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        userScrollEnabled = !sharedElementScope.isTransitionActive,
     ) {
-        sharedElementScope.AppLogo(
-            modifier = Modifier
-                .size(100.dp)
-                .align(Alignment.Center)
+        items(
+            items = items,
+            key = { it.profile.did.id },
+            itemContent = { item ->
+                ProfileWithRelationship(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
+                    profileWithRelationship = item,
+                    signedInProfileId = signedInProfileId,
+                )
+            }
         )
     }
+
+    listState.PivotedTilingEffect(
+        items = items,
+        onQueryChanged = { query ->
+            actions(
+                Action.LoadAround(query ?: state.currentQuery)
+            )
+        }
+    )
 }
 

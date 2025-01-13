@@ -30,6 +30,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val signedInProfileId: Id? = null,
     val currentQuery: CursorQuery,
     @Transient
     val profiles: TiledList<CursorQuery, ProfileWithRelationship> = emptyTiledList(),
