@@ -98,8 +98,7 @@ internal fun MetadataText(
     singularResource: StringResource,
     pluralResource: StringResource,
     textStyle: TextStyle,
-
-    ) {
+) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
