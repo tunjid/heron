@@ -83,7 +83,7 @@ internal fun SearchScreen(
                 actions(
                     Action.Navigate.DelegateTo(
                         NavigationAction.Common.ToProfile(
-                            profile = profileSearchResult.profile,
+                            profile = profileSearchResult.profileWithRelationship.profile,
                             avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
                         )
@@ -168,7 +168,7 @@ private fun AutoCompleteProfileSearchResults(
     ) {
         items(
             items = results,
-            key = { it.profile.did.id },
+            key = { it.profileWithRelationship.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
                     sharedElementScope = sharedElementScope,
@@ -299,7 +299,7 @@ private fun SearchResults(
             ) {
                 items(
                     items = results,
-                    key = { it.profile.did.id },
+                    key = { it.profileWithRelationship.profile.did.id },
                     itemContent = { result ->
                         ProfileSearchResult(
                             sharedElementScope = sharedElementScope,
