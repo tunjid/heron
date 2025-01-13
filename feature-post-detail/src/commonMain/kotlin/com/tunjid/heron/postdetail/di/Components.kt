@@ -171,7 +171,8 @@ abstract class PostDetailComponent(
                                         type = Post.Create.Reply(
                                             parent = anchorPost,
                                             root = rootPost,
-                                        )
+                                        ),
+                                        sharedElementPrefix = state.sharedElementPrefix,
                                     )
                                 )
                             )

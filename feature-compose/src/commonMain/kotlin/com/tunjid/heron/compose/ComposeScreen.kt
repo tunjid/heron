@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
@@ -29,9 +30,11 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -63,14 +66,19 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.byteOffsets
+import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import de.cketti.codepoints.codePointCount
 import kotlin.math.min
 
 @Composable
 internal fun ComposeScreen(
+    sharedElementScope: SharedElementScope,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
@@ -78,35 +86,31 @@ internal fun ComposeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
         var postText by remember {
             mutableStateOf(TextFieldValue(AnnotatedString("")))
         }
-        Row(
-            modifier = Modifier
-                .padding(16.dp),
-            horizontalArrangement = spacedBy(16.dp),
-        ) {
-            PostAuthor(
-                author = state.signedInProfile
-            )
-            PostComposition(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                postText = postText,
-                onPostTextChanged = { postText = it },
-                onCreatePost = onCreatePost@{
-                    val authorId = state.signedInProfile?.did ?: return@onCreatePost
-                    actions(
-                        Action.CreatePost(
-                            authorId = authorId,
-                            text = postText.text,
-                            links = postText.annotatedString.links(),
-                        )
+        ReplyingTo(
+            sharedElementScope = sharedElementScope,
+            type = state.postType,
+            sharedElementPrefix = state.sharedElementPrefix
+        )
+        Post(
+            signedInProfile = state.signedInProfile,
+            postText = postText,
+            onPostTextChanged = { postText = it },
+            onCreatePost = onCreatePost@{
+                val authorId = state.signedInProfile?.did ?: return@onCreatePost
+                actions(
+                    Action.CreatePost(
+                        authorId = authorId,
+                        text = postText.text,
+                        links = postText.annotatedString.links(),
                     )
-                }
-            )
-        }
+                )
+            }
+        )
         Spacer(Modifier.weight(1f))
         ComposeBottomBar(
             postText = postText,
@@ -116,18 +120,98 @@ internal fun ComposeScreen(
 }
 
 @Composable
-private fun PostAuthor(author: Profile?) {
-    AsyncImage(
-        modifier = Modifier.size(48.dp),
-        args = remember(author?.avatar) {
-            ImageArgs(
-                url = author?.avatar?.uri,
-                contentDescription = author?.contentDescription,
-                contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Circle,
+private fun Post(
+    signedInProfile: Profile?,
+    postText: TextFieldValue,
+    onPostTextChanged: (TextFieldValue) -> Unit,
+    onCreatePost: () -> Unit,
+) {
+    AuthorAndPost(
+        avatar = {
+            AsyncImage(
+                modifier = Modifier.size(48.dp),
+                args = remember(signedInProfile?.avatar) {
+                    ImageArgs(
+                        url = signedInProfile?.avatar?.uri,
+                        contentDescription = signedInProfile?.contentDescription,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+            )
+        },
+        postContent = {
+            PostComposition(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                postText = postText,
+                onPostTextChanged = onPostTextChanged,
+                onCreatePost = onCreatePost@{
+                    onCreatePost()
+                }
             )
         },
     )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun ReplyingTo(
+    sharedElementScope: SharedElementScope,
+    type: Post.Create?,
+    sharedElementPrefix: String?,
+) {
+    when (type) {
+        is Post.Create.Mention -> Unit
+        is Post.Create.Reply -> AuthorAndPost(
+            avatar = {
+                sharedElementScope.updatedMovableSharedElementOf(
+                    modifier = Modifier
+                        .size(48.dp),
+                    key = type.parent.avatarSharedElementKey(sharedElementPrefix),
+                    state = remember(type.parent.author.avatar) {
+                        ImageArgs(
+                            url = type.parent.author.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = type.parent.author.displayName
+                                ?: type.parent.author.handle.id,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
+                    sharedElement = { state, modifier ->
+                        AsyncImage(state, modifier)
+                    }
+                )
+            },
+            postContent = {
+                Column {
+                    ProfileName(
+                        profile = type.parent.author,
+                        ellipsize = true,
+                    )
+                    Text(text = type.parent.record?.text ?: "")
+                }
+            }
+        )
+
+        Post.Create.Timeline -> Unit
+        else -> Unit
+    }
+}
+
+@Composable
+private inline fun AuthorAndPost(
+    avatar: @Composable () -> Unit,
+    postContent: @Composable () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .padding(16.dp),
+        horizontalArrangement = spacedBy(16.dp),
+    ) {
+        avatar()
+        postContent()
+    }
 }
 
 @Composable

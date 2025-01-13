@@ -301,7 +301,7 @@ private val ReplyThreadEndImageShape =
 
 
 fun Post.avatarSharedElementKey(
-    prefix: String,
+    prefix: String?,
 ): String = "$prefix-${cid.id}-${author.did.id}"
 
 private val TimelineItem.isThreadedAncestor

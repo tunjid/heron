@@ -28,6 +28,8 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val sharedElementPrefix: String?,
+    val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
     @Transient
     val messages: List<String> = emptyList(),

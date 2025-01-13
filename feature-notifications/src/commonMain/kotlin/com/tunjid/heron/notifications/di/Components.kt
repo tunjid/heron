@@ -141,7 +141,8 @@ abstract class NotificationsComponent(
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
-                                        type = Post.Create.Timeline
+                                        type = Post.Create.Timeline,
+                                        sharedElementPrefix = null,
                                     )
                                 )
                             )

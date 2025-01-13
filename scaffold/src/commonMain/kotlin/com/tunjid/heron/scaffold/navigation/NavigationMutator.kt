@@ -132,6 +132,7 @@ interface NavigationAction {
 
         data class ComposePost(
             val type: Post.Create,
+            val sharedElementPrefix: String?,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
@@ -139,6 +140,7 @@ interface NavigationAction {
                         path = "/compose",
                         queryParams = mapOf(
                             "type" to listOf(type.toUrlEncodedBase64()),
+                            "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         )
                     ).toRoute
                 )
