@@ -37,13 +37,17 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeStateHolder
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeStateHolderCreator
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_compose.generated.resources.Res
@@ -60,6 +64,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
 )
+
+internal val Route.creationType
+    get(): Post.Create? = routeParams.queryParams["type"]?.firstOrNull()?.fromBase64EncodedUrl()
+
+internal val Route.sharedElementPrefix
+    get() = routeParams.queryParams["sharedElementPrefix"]?.firstOrNull()
 
 @Component
 abstract class ComposeNavigationComponent {
@@ -107,6 +117,7 @@ abstract class ComposeComponent(
                 },
                 content = { paddingValues ->
                     ComposeScreen(
+                        sharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                         state = state,

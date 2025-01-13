@@ -177,7 +177,8 @@ abstract class ProfileComponent(
                                     NavigationAction.Common.ComposePost(
                                         type =
                                         if (state.isSignedInProfile) Post.Create.Timeline
-                                        else Post.Create.Mention(state.profile)
+                                        else Post.Create.Mention(state.profile),
+                                        sharedElementPrefix = null,
                                     )
                                 )
                             )

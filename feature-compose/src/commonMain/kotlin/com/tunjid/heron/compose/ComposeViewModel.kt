@@ -18,6 +18,8 @@ package com.tunjid.heron.compose
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.compose.di.creationType
+import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -55,11 +57,12 @@ class ActualComposeStateHolder(
     authTokenRepository: AuthTokenRepository,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ComposeStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        sharedElementPrefix = route.sharedElementPrefix,
+        postType = route.creationType,
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
