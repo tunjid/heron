@@ -33,7 +33,7 @@ kotlin {
             dependencies {
                 implementation(project(":data-core"))
                 implementation(project(":ui-core"))
-                implementation(project(":ui-images"))
+                implementation(project(":ui-media"))
 
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.foundation.foundation)
