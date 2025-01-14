@@ -46,6 +46,7 @@ kotlin {
         named("androidMain") {
             dependencies {
                 implementation(libs.ktor.client.android)
+                implementation(libs.androidx.media3.exoplayer)
             }
         }
         named("desktopMain") {
