@@ -19,6 +19,7 @@ import com.tunjid.heron.gallery.di.create
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.home.di.create
+import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesComponent
 import com.tunjid.heron.messages.di.MessagesNavigationComponent
 import com.tunjid.heron.messages.di.create
@@ -58,7 +59,8 @@ interface Platform {
 expect fun getPlatform(): Platform
 
 fun createAppState(
-    dataModule: (CoroutineScope) -> DataModule
+    videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
+    dataModule: (appScope: CoroutineScope) -> DataModule,
 ): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -83,6 +85,7 @@ fun createAppState(
 
     val scaffoldComponent = ScaffoldComponent.create(
         module = ScaffoldModule(
+            videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers
         ),
         dataComponent = dataComponent,

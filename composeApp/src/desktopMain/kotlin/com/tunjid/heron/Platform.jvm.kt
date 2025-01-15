@@ -2,6 +2,7 @@ package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataModule
+import com.tunjid.heron.media.video.NoOpVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import okio.FileSystem
 import okio.Path
@@ -15,14 +16,19 @@ class JVMPlatform : Platform {
 actual fun getPlatform(): Platform = JVMPlatform()
 
 fun createAppState(): AppState =
-    createAppState { appScope ->
-        DataModule(
-            appScope = appScope,
-            savedStatePath = savedStatePath(),
-            savedStateFileSystem = FileSystem.SYSTEM,
-            databaseBuilder = getDatabaseBuilder(),
-        )
-    }
+    createAppState(
+        videoPlayerController = {
+            NoOpVideoPlayerController
+        },
+        dataModule = { appScope ->
+            DataModule(
+                appScope = appScope,
+                savedStatePath = savedStatePath(),
+                savedStateFileSystem = FileSystem.SYSTEM,
+                databaseBuilder = getDatabaseBuilder(),
+            )
+        },
+    )
 
 private fun savedStatePath(): Path = File(
     System.getProperty("java.io.tmpdir"),
