@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Density
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.navItemSelected
@@ -44,6 +45,7 @@ import me.tatarka.inject.annotations.Inject
 class AppState @Inject constructor(
     private val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>,
     private val navigationStateHolder: NavigationStateHolder,
+    private val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
 ) {
 

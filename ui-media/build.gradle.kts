@@ -27,6 +27,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":ui-core"))
 
                 implementation(libs.compose.animation)

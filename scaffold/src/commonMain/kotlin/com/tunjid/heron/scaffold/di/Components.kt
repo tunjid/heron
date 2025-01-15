@@ -64,6 +64,10 @@ abstract class ScaffoldComponent(
         routeParserFrom(*(module.routeMatchers).toTypedArray())
 
     @Provides
+    fun videoPlayerController(): VideoPlayerController =
+        module.videoPlayerController
+
+    @Provides
     fun navActions(): (NavigationMutation) -> Unit = navStateHolder.accept
 
     val PersistedNavigationStateHolder.bind: NavigationStateHolder
