@@ -68,6 +68,7 @@ internal fun PostEmbed(
                     .aspectRatio(if (!embed.aspectRatio.isNaN()) embed.aspectRatio else 1f),
                 state = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
                     videoUrl = embed.playlist.uri,
+                    thumbnail = embed.thumbnail?.uri,
                 )
             )
 
