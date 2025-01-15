@@ -19,12 +19,14 @@ import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 
 @Stable
 internal class ExoPlayerState internal constructor(
     videoId: String,
     videoUrl: String,
+    thumbnail: String?,
     isLooping: Boolean,
     isMuted: Boolean,
     autoplay: Boolean,
@@ -33,9 +35,13 @@ internal class ExoPlayerState internal constructor(
 
     // UI logic fields
 
+    override var thumbnailUrl by mutableStateOf(thumbnail)
+
     override var alignment by mutableStateOf(Alignment.Center)
 
     override var contentScale by mutableStateOf(ContentScale.Crop)
+
+    override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
 
     // Business logic fields
 

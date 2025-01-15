@@ -30,6 +30,8 @@ actual fun VideoPlayer(
     val graphicsLayer = rememberGraphicsLayer()
     val alignment = state.alignment.animate()
     val contentScale = state.contentScale.animate()
+    // TODO: Animate this
+    val shape = state.shape
 
     Box(modifier = modifier) {
         // Note its important the embedded Surface is removed from the composition when it is scrolled
@@ -39,6 +41,7 @@ actual fun VideoPlayer(
             contentScale = contentScale,
             alignment = alignment,
             videoSize = state.videoSize,
+            shape = shape,
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithContent {
@@ -53,10 +56,11 @@ actual fun VideoPlayer(
             lastBitmap = state.videoStill.takeIf {
                 state.status != PlayerStatus.Idle.Initial
             },
-            url = state.videoUrl,
+            url = state.thumbnailUrl,
             modifier = Modifier.fillMaxSize(),
             alignment = alignment,
             contentScale = contentScale,
+            shape = shape,
         )
 
         // Capture a still frame from the video to use as a stand in when buffering playback
@@ -86,17 +90,18 @@ private fun VideoStill(
     modifier: Modifier,
     alignment: Alignment,
     contentScale: ContentScale,
+    shape: RoundedPolygonShape,
 ) {
     when (lastBitmap) {
         null -> AsyncImage(
             modifier = modifier,
-            args = remember {
+            args = remember(url, contentScale, alignment, shape) {
                 ImageArgs(
                     url = url,
                     contentDescription = null,
                     alignment = alignment,
                     contentScale = contentScale,
-                    shape = RoundedPolygonShape.Rectangle,
+                    shape = shape,
                 )
             },
         )

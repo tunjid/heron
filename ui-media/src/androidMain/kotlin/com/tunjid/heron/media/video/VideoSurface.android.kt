@@ -1,7 +1,6 @@
 package com.tunjid.heron.media.video
 
 import androidx.compose.foundation.AndroidEmbeddedExternalSurface
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,12 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.collectLatest
@@ -32,6 +31,7 @@ internal fun VideoSurface(
     exoPlayer: ExoPlayer?,
     contentScale: ContentScale,
     alignment: Alignment,
+    shape: Shape,
     videoSize: IntSize,
 ) {
     val updatedPlayer = rememberUpdatedState(exoPlayer)
@@ -45,7 +45,7 @@ internal fun VideoSurface(
 
     AndroidEmbeddedExternalSurface(
         modifier = modifier
-            .clip(RoundedCornerShape(0.dp))
+            .clip(shape)
             .onSizeChanged { surfaceSize = it },
         transform = videoMatrix,
     ) {

@@ -216,6 +216,7 @@ class ExoplayerController(
     override fun registerVideo(
         videoUrl: String,
         videoId: String,
+        thumbnail: String?,
         isLooping: Boolean,
         isMuted: Boolean,
         autoplay: Boolean,
@@ -225,6 +226,7 @@ class ExoplayerController(
         val videoPlayerState = ExoPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
+            thumbnail = thumbnail,
             autoplay = autoplay,
             isLooping = isLooping,
             isMuted = isMuted,

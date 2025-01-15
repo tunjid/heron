@@ -18,6 +18,7 @@ interface VideoPlayerController {
     fun registerVideo(
         videoUrl: String,
         videoId: String = videoUrl,
+        thumbnail: String? = null,
         isLooping: Boolean = false,
         isMuted: Boolean = false,
         autoplay: Boolean = false,
