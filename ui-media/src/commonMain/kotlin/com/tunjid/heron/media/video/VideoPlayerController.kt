@@ -1,7 +1,6 @@
 package com.tunjid.heron.media.video
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
  * Controller for videos.
@@ -21,7 +20,7 @@ interface VideoPlayerController {
         isLooping: Boolean = false,
         isMuted: Boolean = false,
         autoplay: Boolean = false,
-    )
+    ): VideoPlayerState
 
     /**
      * Plays the video with the specified [videoId].
@@ -65,31 +64,4 @@ interface VideoPlayerController {
      */
     fun unregisterAll(retainedVideoIds: Set<String>): Set<String>
 
-}
-
-object NoOpVideoPlayerController : VideoPlayerController {
-    override fun registerVideo(
-        videoUrl: String,
-        videoId: String,
-        isLooping: Boolean,
-        isMuted: Boolean,
-        autoplay: Boolean,
-    ) = Unit
-
-    override fun play(
-        videoId: String?,
-        seekToMs: Long?,
-    ) = Unit
-
-    override fun pauseActiveVideo() = Unit
-
-    override fun seekTo(position: Long) = Unit
-
-    override fun getVideoStateById(videoId: String): VideoPlayerState? = null
-
-    override fun retry(videoId: String) = Unit
-
-    override fun unregisterAll(
-        retainedVideoIds: Set<String>,
-    ): Set<String> = retainedVideoIds
 }

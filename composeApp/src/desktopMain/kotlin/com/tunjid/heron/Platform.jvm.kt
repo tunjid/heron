@@ -2,7 +2,7 @@ package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataModule
-import com.tunjid.heron.media.video.NoOpVideoPlayerController
+import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import okio.FileSystem
 import okio.Path
@@ -18,7 +18,7 @@ actual fun getPlatform(): Platform = JVMPlatform()
 fun createAppState(): AppState =
     createAppState(
         videoPlayerController = {
-            NoOpVideoPlayerController
+            StubVideoPlayerController
         },
         dataModule = { appScope ->
             DataModule(

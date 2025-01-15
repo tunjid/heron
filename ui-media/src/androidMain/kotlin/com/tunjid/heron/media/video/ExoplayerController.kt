@@ -219,8 +219,8 @@ class ExoplayerController(
         isLooping: Boolean,
         isMuted: Boolean,
         autoplay: Boolean,
-    ) {
-        if (idsToStates.containsKey(videoId)) return
+    ): VideoPlayerState {
+        idsToStates[videoId]?.let { return it }
 
         val videoPlayerState = ExoPlayerState(
             videoUrl = videoUrl,
@@ -249,6 +249,7 @@ class ExoplayerController(
                 }
             }
         }
+        return videoPlayerState
     }
 
     override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
