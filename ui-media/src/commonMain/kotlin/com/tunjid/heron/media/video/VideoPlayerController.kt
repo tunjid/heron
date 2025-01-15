@@ -1,6 +1,7 @@
 package com.tunjid.heron.media.video
 
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
  * Controller for videos.
@@ -64,4 +65,8 @@ interface VideoPlayerController {
      */
     fun unregisterAll(retainedVideoIds: Set<String>): Set<String>
 
+}
+
+val LocalVideoPlayerController = staticCompositionLocalOf<VideoPlayerController> {
+    StubVideoPlayerController
 }

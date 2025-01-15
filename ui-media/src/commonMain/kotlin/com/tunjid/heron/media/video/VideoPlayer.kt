@@ -13,8 +13,8 @@ expect fun VideoPlayer(
 
 @Composable
 fun VideoPlayerController.rememberUpdatedVideoPlayerState(
-    videoId: String,
-    videoUrl: String = videoId,
+    videoUrl: String,
+    videoId: String = videoUrl,
     isLooping: Boolean = true,
     isMuted: Boolean = false,
     autoplay: Boolean = false,

@@ -29,3 +29,8 @@ data class Video(
     val width: Long?,
     val height: Long?,
 ) : Embed.Media
+
+val Video.aspectRatio
+    get() =
+        if (width != null && height != null) width.toFloat() / height
+        else Float.NaN

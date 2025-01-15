@@ -47,8 +47,10 @@ kotlin {
         named("androidMain") {
             dependencies {
                 implementation(libs.ktor.client.android)
-                implementation(libs.androidx.media3.exoplayer)
                 implementation(libs.androidx.media3.datasource.okhttp)
+                implementation(libs.androidx.media3.exoplayer)
+                implementation(libs.androidx.media3.exoplayer.dash)
+                implementation(libs.androidx.media3.exoplayer.hls)
 
                 // TODO: replace with https://github.com/andrewbailey/Difference when it
                 //  supports kotlin 2.x

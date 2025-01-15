@@ -2,6 +2,8 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,7 +16,11 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.aspectRatio
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.media.video.VideoPlayer
+import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
@@ -56,8 +62,14 @@ internal fun PostEmbed(
             )
 
             UnknownEmbed -> UnknownPostPost(onClick = {})
-            is Video -> Unit
-
+            is Video -> VideoPlayer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(if (!embed.aspectRatio.isNaN()) embed.aspectRatio else 1f),
+                state = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
+                    videoUrl = embed.playlist.uri,
+                )
+            )
 
             null -> Unit
         }

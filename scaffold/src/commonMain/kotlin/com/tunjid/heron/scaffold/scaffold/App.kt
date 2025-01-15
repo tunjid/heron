@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.splitlayout.SplitLayout
+import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.MultiStackNav
@@ -46,6 +47,7 @@ fun App(
     AppTheme {
         CompositionLocalProvider(
             LocalAppState provides appState,
+            LocalVideoPlayerController provides appState.videoPlayerController,
         ) {
             Surface {
                 Box(
