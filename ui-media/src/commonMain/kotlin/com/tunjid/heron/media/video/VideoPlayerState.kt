@@ -33,9 +33,9 @@ interface VideoPlayerState {
 
     // UI logic attributes
 
-    val alignment: Alignment
+    var alignment: Alignment
 
-    val contentScale: ContentScale
+    var contentScale: ContentScale
 
     // Business logic attributes
 
