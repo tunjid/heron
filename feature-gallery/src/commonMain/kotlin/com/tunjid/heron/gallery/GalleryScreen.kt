@@ -21,16 +21,23 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.media.video.VideoPlayer
+import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @Composable
@@ -62,9 +69,17 @@ internal fun GalleryScreen(
                                 .fillMaxSize(),
                             sharedElementScope = sharedElementScope,
                             item = item,
-                            state = state
+                            sharedElementPrefix = state.sharedElementPrefix
                         )
                     }
+
+                    is GalleryItem.Video -> GalleryVideo(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        sharedElementScope = sharedElementScope,
+                        item = item,
+                        sharedElementPrefix = state.sharedElementPrefix
+                    )
                 }
             }
         )
@@ -77,12 +92,12 @@ private fun GalleryImage(
     modifier: Modifier = Modifier,
     sharedElementScope: SharedElementScope,
     item: GalleryItem.Photo,
-    state: State,
+    sharedElementPrefix: String,
 ) {
     sharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.image.sharedElementKey(
-            prefix = state.sharedElementPrefix
+            prefix = sharedElementPrefix
         ),
         state = ImageArgs(
             url = item.image.thumb.uri,
@@ -94,6 +109,36 @@ private fun GalleryImage(
             AsyncImage(
                 modifier = innerModifier,
                 args = args,
+            )
+        }
+    )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun GalleryVideo(
+    modifier: Modifier = Modifier,
+    sharedElementScope: SharedElementScope,
+    item: GalleryItem.Video,
+    sharedElementPrefix: String,
+) {
+    val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
+        videoUrl = item.video.playlist.uri,
+        thumbnail = item.video.thumbnail?.uri,
+        shape = remember {
+            RoundedCornerShape(16.dp).toRoundedPolygonShape()
+        }
+    )
+    sharedElementScope.updatedMovableSharedElementOf(
+        modifier = modifier,
+        key = item.video.sharedElementKey(
+            prefix = sharedElementPrefix
+        ),
+        state = videoPlayerState,
+        sharedElement = { state, innerModifier ->
+            VideoPlayer(
+                modifier = innerModifier,
+                state = state,
             )
         }
     )

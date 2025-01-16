@@ -16,12 +16,13 @@
 
 package com.tunjid.heron.gallery
 
-import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import com.tunjid.heron.data.core.models.Image as EmbeddedImage
+import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 
 
 @Serializable
@@ -36,12 +37,17 @@ data class State(
 
 sealed class GalleryItem {
     data class Photo(
-        val image: Image,
+        val image: EmbeddedImage,
     ): GalleryItem()
+
+    data class Video(
+        val video: EmbeddedVideo,
+    ) : GalleryItem()
 }
 
 val GalleryItem.key get() = when(this) {
     is GalleryItem.Photo -> image.thumb.uri
+    is GalleryItem.Video -> video.playlist.uri
 }
 
 sealed class Action(val key: String) {

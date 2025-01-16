@@ -24,14 +24,9 @@ data class Image(
     val thumb: Uri,
     val fullsize: Uri,
     val alt: String,
-    val width: Long?,
-    val height: Long?,
-)
-
-val Image.aspectRatio
-    get() =
-        if (width != null && height != null) width.toFloat() / height
-        else Float.NaN
+   override val width: Long?,
+   override val height: Long?,
+): AspectRatio
 
 @Serializable
 data class ImageList(

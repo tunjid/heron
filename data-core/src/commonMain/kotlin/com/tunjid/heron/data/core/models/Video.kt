@@ -26,11 +26,6 @@ data class Video(
     val playlist: Uri,
     val thumbnail: Uri? = null,
     val alt: String? = null,
-    val width: Long?,
-    val height: Long?,
-) : Embed.Media
-
-val Video.aspectRatio
-    get() =
-        if (width != null && height != null) width.toFloat() / height
-        else Float.NaN
+    override val width: Long?,
+    override val height: Long?,
+) : Embed.Media, AspectRatio
