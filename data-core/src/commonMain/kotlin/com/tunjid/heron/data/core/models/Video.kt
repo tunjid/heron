@@ -26,6 +26,6 @@ data class Video(
     val playlist: Uri,
     val thumbnail: Uri? = null,
     val alt: String? = null,
-    val width: Long?,
-    val height: Long?,
-) : Embed.Media
+    override val width: Long?,
+    override val height: Long?,
+) : Embed.Media, AspectRatio

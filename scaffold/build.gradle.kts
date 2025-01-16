@@ -40,7 +40,7 @@ kotlin {
             dependencies {
                 implementation(project(":data"))
                 implementation(project(":ui-core"))
-                implementation(project(":ui-images"))
+                implementation(project(":ui-media"))
 
                 implementation(libs.compose.animation)
                 implementation(libs.compose.components.resources)

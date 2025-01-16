@@ -56,8 +56,14 @@ internal fun PostEmbed(
             )
 
             UnknownEmbed -> UnknownPostPost(onClick = {})
-            is Video -> Unit
-
+            is Video -> PostVideo(
+                video = embed,
+                sharedElementScope = sharedElementScope,
+                sharedElementPrefix = sharedElementPrefix,
+                onClicked = {
+                    onPostMediaClicked(embed, 0)
+                }
+            )
 
             null -> Unit
         }

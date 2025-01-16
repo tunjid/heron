@@ -51,6 +51,6 @@ include(
     ":feature-splash",
     ":feature-template",
     ":ui-timeline",
-    ":ui-images",
+    ":ui-media",
     ":ui-core",
 )

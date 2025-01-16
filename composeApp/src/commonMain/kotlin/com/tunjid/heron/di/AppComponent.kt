@@ -18,11 +18,11 @@ package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeComponent
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedComponent
 import com.tunjid.heron.gallery.di.GalleryComponent
 import com.tunjid.heron.home.di.HomeComponent
+import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesComponent
 import com.tunjid.heron.notifications.di.NotificationsComponent
 import com.tunjid.heron.postdetail.di.PostDetailComponent
@@ -82,11 +82,12 @@ abstract class AppComponent(
     @Provides
     fun appState(
         navigationStateHolder: NavigationStateHolder,
-        savedStateRepository: SavedStateRepository,
+        videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
     ): AppState = AppState(
         routeConfigurationMap = routeConfigurationMap,
         navigationStateHolder = navigationStateHolder,
+        videoPlayerController = videoPlayerController,
         writeQueue = writeQueue,
     )
 

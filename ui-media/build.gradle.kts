@@ -27,6 +27,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":ui-core"))
 
                 implementation(libs.compose.animation)
@@ -46,6 +47,14 @@ kotlin {
         named("androidMain") {
             dependencies {
                 implementation(libs.ktor.client.android)
+                implementation(libs.androidx.media3.datasource.okhttp)
+                implementation(libs.androidx.media3.exoplayer)
+                implementation(libs.androidx.media3.exoplayer.dash)
+                implementation(libs.androidx.media3.exoplayer.hls)
+
+                // TODO: replace with https://github.com/andrewbailey/Difference when it
+                //  supports kotlin 2.x
+                implementation(libs.java.diff.utils)
             }
         }
         named("desktopMain") {

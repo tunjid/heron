@@ -2,6 +2,7 @@ package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataModule
+import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import kotlinx.cinterop.ExperimentalForeignApi
 import okio.FileSystem
@@ -21,14 +22,19 @@ class IOSPlatform : Platform {
 actual fun getPlatform(): Platform = IOSPlatform()
 
 fun createAppState(): AppState =
-    createAppState { appScope ->
-        DataModule(
-            appScope = appScope,
-            savedStatePath = savedStatePath(),
-            savedStateFileSystem = FileSystem.SYSTEM,
-            databaseBuilder = getDatabaseBuilder(),
-        )
-    }
+    createAppState(
+        videoPlayerController = {
+            StubVideoPlayerController
+        },
+        dataModule = { appScope ->
+            DataModule(
+                appScope = appScope,
+                savedStatePath = savedStatePath(),
+                savedStateFileSystem = FileSystem.SYSTEM,
+                databaseBuilder = getDatabaseBuilder(),
+            )
+        },
+    )
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {

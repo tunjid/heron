@@ -1,6 +1,7 @@
 package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -13,6 +14,7 @@ data class ImageArgs(
     val url: String?,
     val contentDescription: String? = null,
     val contentScale: ContentScale,
+    val alignment: Alignment = Alignment.Center,
     val shape: RoundedPolygonShape,
 )
 

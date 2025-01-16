@@ -18,6 +18,7 @@ package com.tunjid.heron.scaffold.di
 
 
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.PersistedNavigationStateHolder
@@ -37,6 +38,7 @@ annotation class ScaffoldScope
 
 class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
+    val videoPlayerController: VideoPlayerController,
 )
 
 @KmpComponentCreate
@@ -60,6 +62,10 @@ abstract class ScaffoldComponent(
     @Provides
     fun routeParser(): RouteParser =
         routeParserFrom(*(module.routeMatchers).toTypedArray())
+
+    @Provides
+    fun videoPlayerController(): VideoPlayerController =
+        module.videoPlayerController
 
     @Provides
     fun navActions(): (NavigationMutation) -> Unit = navStateHolder.accept

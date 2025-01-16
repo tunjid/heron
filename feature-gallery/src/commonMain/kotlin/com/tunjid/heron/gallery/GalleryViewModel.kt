@@ -62,7 +62,7 @@ class ActualGalleryStateHolder(
         sharedElementPrefix = route.sharedElementPrefix,
         items = when (val media = route.media) {
             is ImageList -> media.images.map(GalleryItem::Photo)
-            is Video -> emptyList()
+            is Video -> listOf(GalleryItem.Video(media))
             null -> emptyList()
         }
     ),
