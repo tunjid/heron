@@ -38,7 +38,6 @@ import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntit
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
-import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -48,7 +47,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -147,7 +145,6 @@ class OfflinePostRepository @Inject constructor(
             ::CursorList
         )
             .distinctUntilChanged()
-            .debounce(InvalidationTrackerDebounceMillis)
 
 
     override fun repostedBy(
@@ -180,7 +177,6 @@ class OfflinePostRepository @Inject constructor(
             ::CursorList
         )
             .distinctUntilChanged()
-            .debounce(InvalidationTrackerDebounceMillis)
 
     override fun quotes(
         query: PostDataQuery,
@@ -222,6 +218,7 @@ class OfflinePostRepository @Inject constructor(
             ),
             ::CursorList,
         )
+            .distinctUntilChanged()
 
     override suspend fun createPost(
         request: Post.Create.Request,
