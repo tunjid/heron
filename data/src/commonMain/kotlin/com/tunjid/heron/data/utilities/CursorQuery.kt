@@ -39,7 +39,7 @@ interface CursorQuery {
         /**
          * How many items to fetch for a query.
          */
-        val limit: Long = 50L,
+        val limit: Long = 30L,
     )
 }
 

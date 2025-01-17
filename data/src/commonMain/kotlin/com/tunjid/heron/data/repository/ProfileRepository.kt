@@ -9,13 +9,11 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -54,7 +52,7 @@ class OfflineProfileRepository @Inject constructor(
             .map { it.firstOrNull()?.asExternalModel() }
             .filterNotNull()
             .withRefresh { fetchProfile(profileId) }
-            .debounce(InvalidationTrackerDebounceMillis)
+            .distinctUntilChanged()
 
     override fun profileRelationships(
         profileIds: Set<Id>,
@@ -69,7 +67,7 @@ class OfflineProfileRepository @Inject constructor(
             .map { relationshipsEntities ->
                 relationshipsEntities.map(ProfileProfileRelationshipsEntity::asExternalModel)
             }
-            .debounce(InvalidationTrackerDebounceMillis)
+            .distinctUntilChanged()
 
     private fun signedInProfileId() = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }

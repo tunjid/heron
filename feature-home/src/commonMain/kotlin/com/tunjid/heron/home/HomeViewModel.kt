@@ -69,7 +69,7 @@ class ActualHomeStateHolder(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         timelineMutations(
-            startNumColumns = 2,
+            startNumColumns = 1,
             scope = scope,
             timelineRepository = timelineRepository,
         ),
