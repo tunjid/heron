@@ -70,7 +70,7 @@ fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     var seenQuery = false
     val lastTileIndex = tileCount - 1
     for (index in 0..<tileCount) {
-        if (!seenQuery) seenQuery = queryAt(index) == currentQuery
+        if (!seenQuery) seenQuery = queryAtTile(index) == currentQuery
         if (index == lastTileIndex) continue
         if (queryAtTile(index).data.page + 1 != queryAtTile(index + 1).data.page) return false
     }
