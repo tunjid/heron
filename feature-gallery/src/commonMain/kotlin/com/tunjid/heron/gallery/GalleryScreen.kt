@@ -99,12 +99,15 @@ private fun GalleryImage(
         key = item.image.sharedElementKey(
             prefix = sharedElementPrefix
         ),
-        state = ImageArgs(
-            url = item.image.thumb.uri,
-            contentDescription = item.image.alt,
-            contentScale = ContentScale.Fit,
-            shape = RoundedPolygonShape.Rectangle,
-        ),
+        state = remember(item.image) {
+            ImageArgs(
+                url = item.image.fullsize.uri,
+                thumbnailUrl = item.image.thumb.uri,
+                contentDescription = item.image.alt,
+                contentScale = ContentScale.Fit,
+                shape = RoundedPolygonShape.Rectangle,
+            )
+        },
         sharedElement = { args, innerModifier ->
             AsyncImage(
                 modifier = innerModifier,
