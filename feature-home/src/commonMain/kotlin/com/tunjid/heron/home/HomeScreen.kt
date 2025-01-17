@@ -43,6 +43,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,6 +72,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 @Composable
 internal fun HomeScreen(
@@ -234,11 +238,19 @@ private fun HomeTimeline(
         }
     }
 
+    val density = LocalDensity.current
     LazyVerticalStaggeredGrid(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .onSizeChanged {
+                timelineStateHolder.accept(
+                    TimelineLoadAction.GridSize(
+                        floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
+                    )
+                )
+            },
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(340.dp),
+        columns = StaggeredGridCells.Adaptive(CardSize),
         verticalItemSpacing = 8.dp,
         contentPadding = PaddingValues(
             top = StatusBarHeight + ToolbarHeight + TabsHeight,
@@ -309,3 +321,5 @@ private fun HomeTimeline(
             }
     }
 }
+
+private val CardSize = 340.dp

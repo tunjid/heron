@@ -64,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
@@ -116,6 +117,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -573,11 +575,19 @@ private fun ProfileTimeline(
         }
     }
 
+    val density = LocalDensity.current
     LazyVerticalStaggeredGrid(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .onSizeChanged {
+                timelineStateHolder.accept(
+                    TimelineLoadAction.GridSize(
+                        floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
+                    )
+                )
+            },
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(340.dp),
+        columns = StaggeredGridCells.Adaptive(CardSize),
         verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -690,3 +700,4 @@ private class HeaderState(
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 32.dp
+private val CardSize = 340.dp
