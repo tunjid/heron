@@ -17,6 +17,7 @@
 package com.tunjid.heron.gallery
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -25,10 +26,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
+import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -39,6 +43,7 @@ import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun GalleryScreen(
@@ -64,9 +69,20 @@ internal fun GalleryScreen(
             pageContent = { page ->
                 when (val item = updatedItems[page]) {
                     is GalleryItem.Photo -> {
+                        val zoomState = rememberGestureZoomState()
+                        val coroutineScope = rememberCoroutineScope()
                         GalleryImage(
                             modifier = Modifier
-                                .fillMaxSize(),
+                                .fillMaxSize()
+                                .gestureZoomable(zoomState)
+                                .combinedClickable(
+                                    onClick = { },
+                                    onDoubleClick = {
+                                        coroutineScope.launch {
+                                            zoomState.toggleZoom()
+                                        }
+                                    }
+                                ),
                             sharedElementScope = sharedElementScope,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix
