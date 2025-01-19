@@ -36,6 +36,8 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)
+
+                implementation(libs.ktor.core)
             }
         }
         named("androidMain") {

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -48,7 +49,7 @@ fun PostText(
             textLinks = post.record?.links ?: emptyList(),
             onProfileClicked = { onProfileClicked(post, it) }
         ),
-        style = LocalTextStyle.current.copy(color = LocalContentColor.current),
+        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
     )
 }
 
