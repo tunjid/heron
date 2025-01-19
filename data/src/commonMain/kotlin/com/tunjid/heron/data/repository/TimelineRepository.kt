@@ -27,6 +27,7 @@ import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -34,6 +35,7 @@ import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emptyFlow
@@ -427,6 +429,7 @@ class OfflineTimelineRepository(
                     .filter(List<Timeline.Home>::isNotEmpty)
             }
             .distinctUntilChanged()
+            .debounce(InvalidationTrackerDebounceMillis)
 
     private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
