@@ -1,5 +1,6 @@
 package com.tunjid.heron.data.core.types
 
+import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
@@ -18,3 +19,5 @@ value class Uri(
 ) {
     override fun toString(): String = uri
 }
+
+val Uri.domain get() = Url(uri).host.removePrefix("www.")

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
@@ -79,7 +80,7 @@ internal fun PostExternal(
                         ),
                     ),
                 title = feature.title,
-                description = feature.description,
+                description = null,
                 uri = feature.uri,
             )
         }
@@ -113,10 +114,10 @@ fun PostFeatureTextContent(
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        val url = uri?.uri
-        if (!url.isNullOrBlank()) {
+        val host = uri?.domain
+        if (!host.isNullOrBlank()) {
             Text(
-                text = url,
+                text = host,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
