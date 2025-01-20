@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
+import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -44,6 +45,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 internal fun GalleryScreen(
@@ -95,6 +97,21 @@ internal fun GalleryScreen(
                         sharedElementScope = sharedElementScope,
                         item = item,
                         sharedElementPrefix = state.sharedElementPrefix
+                    )
+                }
+            }
+        )
+
+        val videoPlayerController = LocalVideoPlayerController.current
+        pagerState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = updatedItems.size,
+            onIndex = { index ->
+                when (val media = updatedItems.getOrNull(index.roundToInt())) {
+                    null -> Unit
+                    is GalleryItem.Photo -> Unit
+                    is GalleryItem.Video -> videoPlayerController.play(
+                        media.video.playlist.uri
                     )
                 }
             }
@@ -154,6 +171,9 @@ private fun GalleryVideo(
             prefix = sharedElementPrefix
         ),
         state = videoPlayerState,
+        alternateOutgoingSharedElement = { _, _ ->
+            // TODO: Put a still from the video here
+        },
         sharedElement = { state, innerModifier ->
             VideoPlayer(
                 modifier = innerModifier,

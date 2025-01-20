@@ -31,14 +31,20 @@ import com.github.difflib.patch.DeltaType
 import com.github.difflib.patch.Patch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.io.File
@@ -117,6 +123,24 @@ class ExoplayerController(
                 currentPlaylistIds = updatedItems.map(MediaItem::mediaId).toSet()
             }
         }
+
+        // TODO this should also be governed by coroutine launch semantics
+        //  as the one used for list diffing
+        // Pause playback when nothing is visible to play
+        snapshotFlow { idsToStates.values }
+            .flatMapLatest { states ->
+                combine(
+                    flows = states.map {
+                        snapshotFlow(it::status)
+                    },
+                    transform = { allStatuses ->
+                        allStatuses.all { it is PlayerStatus.Idle }
+                    }
+                )
+            }
+            .filter(true::equals)
+            .onEach { pauseActiveVideo() }
+            .launchIn(scope + Dispatchers.Main)
     }
 
     internal fun setAutoplay(
@@ -142,9 +166,12 @@ class ExoplayerController(
         val playerIdToPlay = videoId ?: activeVideoId
 
         // Video has not been previously registered
-        idsToStates[playerIdToPlay] ?: return
+        val stateToPlay = idsToStates[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
+
+        // Already playing and not seeking, do nothing
+        if (stateToPlay.status is PlayerStatus.Play.Confirmed && seekToMs == null) return
 
         // Diffing is async. Suspend until the video to play is registered in the player
         playAsync(playerIdToPlay, seekToMs)
@@ -404,6 +431,7 @@ private fun exoPlayer(
     return ExoPlayer
         .Builder(context, DefaultMediaSourceFactory(dataSourceFactory))
         .setAudioAttributes(audioAttributes, false)
+        .setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
         .build()
 }
 

@@ -87,11 +87,15 @@ import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
@@ -206,6 +210,14 @@ internal fun ProfileScreen(
                         )
                     }
                 )
+
+                val videoPlayerController = LocalVideoPlayerController.current
+                LaunchedEffect(Unit) {
+                    snapshotFlow { pagerState.currentPage }
+                        .collect {
+                            videoPlayerController.pauseActiveVideo()
+                        }
+                }
             }
         }
     )
@@ -576,6 +588,8 @@ private fun ProfileTimeline(
     }
 
     val density = LocalDensity.current
+    val videoStates = remember { ThreadedVideoPositionStates() }
+
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize()
@@ -598,7 +612,10 @@ private fun ProfileTimeline(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem(),
+                        .animateItem()
+                        .threadedVideoPosition(
+                            state = videoStates.getOrCreateStateFor(item)
+                        ),
                     sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
@@ -617,6 +634,20 @@ private fun ProfileTimeline(
                 )
             }
         )
+    }
+
+    val videoPlayerController = LocalVideoPlayerController.current
+    gridState.interpolatedVisibleIndexEffect(
+        denominator = 10,
+        itemsAvailable = items.size,
+    ) { interpolatedIndex ->
+        val flooredIndex = floor(interpolatedIndex).toInt()
+        val fraction = interpolatedIndex - flooredIndex
+        items.getOrNull(flooredIndex)
+            ?.let(videoStates::retrieveStateFor)
+            ?.videoIdAt(fraction)
+            ?.let(videoPlayerController::play)
+            ?: videoPlayerController.pauseActiveVideo()
     }
 
     gridState.PivotedTilingEffect(

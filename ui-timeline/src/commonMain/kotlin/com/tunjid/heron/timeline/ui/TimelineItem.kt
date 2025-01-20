@@ -33,6 +33,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
+import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -91,24 +93,25 @@ fun TimelineItem(
                 onPostMediaClicked = onPostMediaClicked,
                 onReplyToPost = onReplyToPost,
                 onPostInteraction = onPostInteraction,
-            ) else
-                Post(
-                    sharedElementScope = sharedElementScope,
-                    now = now,
-                    post = item.post,
-                    embed = item.post.embed,
-                    isAnchoredInTimeline = false,
-                    avatarShape =
-                    if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                    else RoundedPolygonShape.Circle,
-                    sharedElementPrefix = sharedElementPrefix,
-                    createdAt = item.post.createdAt,
-                    onProfileClicked = onProfileClicked,
-                    onPostClicked = onPostClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostInteraction = onPostInteraction,
-                )
+            ) else Post(
+                modifier = Modifier
+                    .childThreadNode(videoId = item.post.videoId),
+                sharedElementScope = sharedElementScope,
+                now = now,
+                post = item.post,
+                embed = item.post.embed,
+                isAnchoredInTimeline = false,
+                avatarShape =
+                if (item is TimelineItem.Thread) ReplyThreadEndImageShape
+                else RoundedPolygonShape.Circle,
+                sharedElementPrefix = sharedElementPrefix,
+                createdAt = item.post.createdAt,
+                onProfileClicked = onProfileClicked,
+                onPostClicked = onPostClicked,
+                onPostMediaClicked = onPostMediaClicked,
+                onReplyToPost = onReplyToPost,
+                onPostInteraction = onPostInteraction,
+            )
         }
     }
 }
@@ -128,8 +131,9 @@ private fun ThreadedPost(
     Column {
         item.posts.forEachIndexed { index, post ->
             if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
-
                 Post(
+                    modifier = Modifier
+                        .childThreadNode(videoId = post.videoId),
                     sharedElementScope = sharedElementScope,
                     now = now,
                     post = post,
@@ -167,17 +171,23 @@ private fun ThreadedPost(
                     }
                 )
                 if (index != item.posts.lastIndex)
-                    if (index == 0 && item.hasBreak) BrokenTimeline {
-                        onPostClicked(post)
-                    }
+                    if (index == 0 && item.hasBreak) BrokenTimeline(
+                        modifier = Modifier
+                            .childThreadNode(videoId = null),
+                        onClick = { onPostClicked(post) }
+                    )
                     else Timeline(
-                        modifier = Modifier.height(
-                            if (index == 0) 16.dp
-                            else 12.dp
-                        )
+                        modifier = Modifier
+                            .height(
+                                if (index == 0) 16.dp
+                                else 12.dp
+                            )
+                            .childThreadNode(videoId = null)
                     )
                 if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
-                    Modifier.height(4.dp)
+                    Modifier
+                        .height(4.dp)
+                        .childThreadNode(videoId = null)
                 )
             }
         }
@@ -201,10 +211,11 @@ private fun Timeline(
 
 @Composable
 private fun BrokenTimeline(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Column(
-        Modifier
+        modifier
             .fillMaxWidth()
             .clickable(
                 interactionSource = NoOpInteractionSource,
