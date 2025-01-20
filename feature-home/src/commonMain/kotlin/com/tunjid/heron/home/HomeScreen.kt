@@ -137,6 +137,13 @@ internal fun HomeScreen(
                     ?.invoke(TimelineLoadAction.Refresh)
             }
         )
+        val videoPlayerController = LocalVideoPlayerController.current
+        LaunchedEffect(Unit) {
+            snapshotFlow { pagerState.currentPage }
+                .collect {
+                    videoPlayerController.pauseActiveVideo()
+                }
+        }
     }
 }
 

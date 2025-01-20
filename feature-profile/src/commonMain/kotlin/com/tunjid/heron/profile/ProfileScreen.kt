@@ -210,6 +210,14 @@ internal fun ProfileScreen(
                         )
                     }
                 )
+
+                val videoPlayerController = LocalVideoPlayerController.current
+                LaunchedEffect(Unit) {
+                    snapshotFlow { pagerState.currentPage }
+                        .collect {
+                            videoPlayerController.pauseActiveVideo()
+                        }
+                }
             }
         }
     )
