@@ -44,7 +44,7 @@ class ThreadedVideoPositionStates {
 
 @Stable
 class ThreadedVideoPositionState : State {
-    private var node: ThreadedNode? = null
+    private var node: ThreadedVideoPositionNode? = null
 
     override fun videoIdAt(fraction: Float): String? {
         return node?.videoIdAt(fraction)
@@ -58,27 +58,31 @@ class ThreadedVideoPositionState : State {
          */
         fun Modifier.threadedVideoPosition(
             state: ThreadedVideoPositionState,
-        ) = this.then(ThreadElement(state))
+        ) = this.then(ThreadedVideoPositionElement(state))
 
         /**
          * Internal modifier for marking child positions in a threaded timeline item.
          */
         internal fun Modifier.childThreadNode(
             videoId: String?,
-        ) = this.then(ThreadElement(ChildState(videoId)))
+        ) = this.then(ThreadedVideoPositionElement(ChildState(videoId)))
 
-        private data class ThreadElement(
+        private data class ThreadedVideoPositionElement(
             private val state: State,
-        ) : ModifierNodeElement<ThreadedNode>() {
-            override fun create(): ThreadedNode =
-                ThreadedNode(state = state)
+        ) : ModifierNodeElement<ThreadedVideoPositionNode>() {
+            override fun create(): ThreadedVideoPositionNode =
+                ThreadedVideoPositionNode(state = state)
 
-            override fun update(node: ThreadedNode) {
+            override fun update(node: ThreadedVideoPositionNode) {
                 node.state = state
+                when (val currentState = state) {
+                    is ChildState -> Unit
+                    is ThreadedVideoPositionState -> currentState.node = node
+                }
             }
         }
 
-        private class ThreadedNode(
+        private class ThreadedVideoPositionNode(
             var state: State,
         ) :
             Modifier.Node(),
