@@ -167,6 +167,7 @@ internal fun PostDetailScreen(
             ?.let(videoStates::retrieveStateFor)
             ?.videoIdAt(fraction)
             ?.let(videoPlayerController::play)
+            ?: videoPlayerController.pauseActiveVideo()
     }
 }
 

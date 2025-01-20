@@ -639,6 +639,7 @@ private fun ProfileTimeline(
             ?.let(videoStates::retrieveStateFor)
             ?.videoIdAt(fraction)
             ?.let(videoPlayerController::play)
+            ?: videoPlayerController.pauseActiveVideo()
     }
 
     gridState.PivotedTilingEffect(

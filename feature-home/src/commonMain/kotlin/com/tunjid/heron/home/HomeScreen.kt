@@ -308,6 +308,7 @@ private fun HomeTimeline(
             ?.let(videoStates::retrieveStateFor)
             ?.videoIdAt(fraction)
             ?.let(videoPlayerController::play)
+            ?: videoPlayerController.pauseActiveVideo()
     }
 
     gridState.PivotedTilingEffect(
