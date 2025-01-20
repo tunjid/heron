@@ -166,9 +166,12 @@ class ExoplayerController(
         val playerIdToPlay = videoId ?: activeVideoId
 
         // Video has not been previously registered
-        idsToStates[playerIdToPlay] ?: return
+        val stateToPlay = idsToStates[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
+
+        // Already playing and not seeking, do nothing
+        if (stateToPlay.status is PlayerStatus.Play.Confirmed && seekToMs == null) return
 
         // Diffing is async. Suspend until the video to play is registered in the player
         playAsync(playerIdToPlay, seekToMs)

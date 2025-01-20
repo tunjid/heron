@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -19,6 +20,10 @@ import com.tunjid.composables.ui.animate
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
 actual fun VideoPlayer(
@@ -73,6 +78,17 @@ actual fun VideoPlayer(
                 state.videoStill = graphicsLayer.toImageBitmap()
             }
         }
+    }
+    // Keep player position up to date
+    LaunchedEffect(Unit) {
+        snapshotFlow { state.player?.let { it to state.status } }
+            .filterNotNull()
+            .collectLatest { (player, status) ->
+                if (status is PlayerStatus.Play) while (true) {
+                    state.lastPositionMs = player.currentPosition
+                    delay(100)
+                }
+            }
     }
     DisposableEffect(graphicsLayer) {
         state.status = PlayerStatus.Idle.Initial
