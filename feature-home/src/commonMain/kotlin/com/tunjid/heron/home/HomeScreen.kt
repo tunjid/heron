@@ -56,12 +56,16 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
+import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -239,6 +243,8 @@ private fun HomeTimeline(
     }
 
     val density = LocalDensity.current
+    val videoStates = remember { ThreadedVideoPositionStates() }
+
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize()
@@ -267,7 +273,10 @@ private fun HomeTimeline(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem(),
+                        .animateItem()
+                        .threadedVideoPosition(
+                            state = videoStates.getOrCreateStateFor(item)
+                        ),
                     sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
@@ -286,6 +295,19 @@ private fun HomeTimeline(
                 )
             }
         )
+    }
+
+    val videoPlayerController = LocalVideoPlayerController.current
+    gridState.interpolatedVisibleIndexEffect(
+        denominator = 10,
+        itemsAvailable = items.size,
+    ) { interpolatedIndex ->
+        val flooredIndex = floor(interpolatedIndex).toInt()
+        val fraction = interpolatedIndex - flooredIndex
+        items.getOrNull(flooredIndex)
+            ?.let(videoStates::retrieveStateFor)
+            ?.videoIdAt(fraction)
+            ?.let(videoPlayerController::play)
     }
 
     gridState.PivotedTilingEffect(

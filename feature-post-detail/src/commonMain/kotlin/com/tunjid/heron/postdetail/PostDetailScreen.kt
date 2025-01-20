@@ -39,11 +39,16 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.SharedElementScope
 import kotlinx.datetime.Clock
+import kotlin.math.floor
 
 @Composable
 internal fun PostDetailScreen(
@@ -98,6 +103,8 @@ internal fun PostDetailScreen(
         }
     }
 
+    val videoStates = remember { ThreadedVideoPositionStates() }
+
     LazyVerticalStaggeredGrid(
         modifier = modifier
             .padding(horizontal = 8.dp)
@@ -121,7 +128,10 @@ internal fun PostDetailScreen(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem(),
+                        .animateItem()
+                        .threadedVideoPosition(
+                            state = videoStates.getOrCreateStateFor(item)
+                        ),
                     sharedElementScope = sharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
@@ -144,6 +154,19 @@ internal fun PostDetailScreen(
         ) {
             Spacer(Modifier.height(800.dp))
         }
+    }
+
+    val videoPlayerController = LocalVideoPlayerController.current
+    gridState.interpolatedVisibleIndexEffect(
+        denominator = 10,
+        itemsAvailable = items.size,
+    ) { interpolatedIndex ->
+        val flooredIndex = floor(interpolatedIndex).toInt()
+        val fraction = interpolatedIndex - flooredIndex
+        items.getOrNull(flooredIndex)
+            ?.let(videoStates::retrieveStateFor)
+            ?.videoIdAt(fraction)
+            ?.let(videoPlayerController::play)
     }
 }
 
