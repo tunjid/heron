@@ -48,7 +48,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -57,7 +56,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,7 +82,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
-import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -94,6 +91,8 @@ import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
+import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
@@ -115,9 +114,6 @@ import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -211,13 +207,7 @@ internal fun ProfileScreen(
                     }
                 )
 
-                val videoPlayerController = LocalVideoPlayerController.current
-                LaunchedEffect(Unit) {
-                    snapshotFlow { pagerState.currentPage }
-                        .collect {
-                            videoPlayerController.pauseActiveVideo()
-                        }
-                }
+                pagerState.PauseVideoOnTabChangeEffect()
             }
         }
     )
@@ -659,19 +649,10 @@ private fun ProfileTimeline(
         }
     )
 
-    LaunchedEffect(gridState) {
-        snapshotFlow { timelineState.status }
-            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
-                pair.copy(first = pair.second, second = current)
-            }
-            .filter { (first, second) ->
-                first != null && first != second && second is TimelineStatus.Refreshing
-            }
-            .collect {
-                delay(100)
-                gridState.animateScrollToItem(index = 0)
-            }
-    }
+    gridState.TimelineRefreshEffect(
+        timelineState = timelineState,
+        onRefresh = { animateScrollToItem(index = 0) }
+    )
 }
 
 @Stable
