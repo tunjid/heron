@@ -42,6 +42,9 @@ internal fun PostVideo(
             prefix = sharedElementPrefix
         ),
         state = videoPlayerState,
+        alternateOutgoingSharedElement = { _, _ ->
+            // TODO: Put a still from the video here
+        },
         sharedElement = { state, innerModifier ->
             VideoPlayer(
                 modifier = innerModifier,
