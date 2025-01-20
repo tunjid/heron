@@ -68,11 +68,6 @@ fun BottomAppBar(
                 state = sharedContentState,
                 animatedVisibilityScope = sharedElementScope,
                 zIndexInOverlay = BottomNavSharedElementZIndex,
-            )
-            .renderInSharedTransitionScopeOverlay(
-                renderInOverlay = {
-                    sharedElementScope.isTransitionActive && !sharedContentState.isMatchFound
-                }
             ),
     ) {
         appState.navItems.forEach { item ->
