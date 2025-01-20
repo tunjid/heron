@@ -55,7 +55,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
-import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -64,6 +63,8 @@ import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
+import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.SharedElementScope
@@ -71,9 +72,6 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -137,13 +135,8 @@ internal fun HomeScreen(
                     ?.invoke(TimelineLoadAction.Refresh)
             }
         )
-        val videoPlayerController = LocalVideoPlayerController.current
-        LaunchedEffect(Unit) {
-            snapshotFlow { pagerState.currentPage }
-                .collect {
-                    videoPlayerController.pauseActiveVideo()
-                }
-        }
+
+        pagerState.PauseVideoOnTabChangeEffect()
     }
 }
 
@@ -327,6 +320,11 @@ private fun HomeTimeline(
         }
     )
 
+    gridState.TimelineRefreshEffect(
+        timelineState = timelineState,
+        onRefresh = { animateScrollToItem(index = 0) }
+    )
+
     LaunchedEffect(gridState) {
         snapshotFlow {
             Action.UpdatePageWithUpdates(
@@ -335,20 +333,6 @@ private fun HomeTimeline(
             )
         }
             .collect(actions)
-    }
-
-    LaunchedEffect(gridState) {
-        snapshotFlow { timelineState.status }
-            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
-                pair.copy(first = pair.second, second = current)
-            }
-            .filter { (first, second) ->
-                first != null && first != second && second is TimelineStatus.Refreshing
-            }
-            .collect {
-                delay(100)
-                gridState.animateScrollToItem(index = 0)
-            }
     }
 }
 
