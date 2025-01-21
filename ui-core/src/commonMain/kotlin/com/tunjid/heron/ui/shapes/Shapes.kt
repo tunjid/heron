@@ -40,7 +40,7 @@ sealed class RoundedPolygonShape : Shape {
     private var lastSize = Size.Unspecified
     private var lastDensity = Density(1f)
     internal var lastBounds: Rect = Rect.Zero
-    internal var lastPolygon by mutableStateOf<RoundedPolygon?>(null)
+    private var lastPolygon: RoundedPolygon? = null
 
     private val bounds = FloatArray(4)
 
@@ -184,16 +184,16 @@ fun RoundedPolygonShape.animate(
     var interpolation by remember {
         mutableFloatStateOf(1f)
     }
-    var previousScale by remember {
+    var previousShape by remember {
         mutableStateOf(this)
     }
 
-    val currentScale by remember {
+    val currentShape by remember {
         mutableStateOf(this)
     }.apply {
         if (value != this@animate) {
             // TODO capture morphs that have not completed
-            previousScale = value
+            previousShape = value
             // Reset the interpolation
             interpolation = 0f
         }
@@ -202,7 +202,7 @@ fun RoundedPolygonShape.animate(
     }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { currentScale }.collect {
+        snapshotFlow { currentShape }.collect {
             androidx.compose.animation.core.animate(
                 initialValue = 0f,
                 targetValue = 1f,
@@ -214,50 +214,76 @@ fun RoundedPolygonShape.animate(
         }
     }
 
-    return remember(currentScale, currentScale.lastPolygon, previousScale.lastPolygon) {
-        object : Shape {
-            private val path = Path()
-            val matrix = Matrix()
-            val outline = Outline.Generic(path)
-            val morph by lazy {
-                Morph(previousScale.lastPolygon!!, currentScale.lastPolygon!!)
-            }
-
-            override fun createOutline(
-                size: Size,
-                layoutDirection: LayoutDirection,
-                density: Density,
-            ): Outline {
-                if (size == Size.Zero) return RectangleShape.createOutline(
-                    size = size,
-                    layoutDirection = layoutDirection,
-                    density = density,
-                )
-
-                previousScale.ensurePolygon(size, density)
-                currentScale.ensurePolygon(size, density)
-
-                path.rewind()
-                morph.toPath(
-                    progress = interpolation,
-                    path = path,
-                )
-                matrix.reset()
-
-                matrix.scale(
-                    x = size.width / currentScale.lastBounds.width,
-                    y = size.height / currentScale.lastBounds.height,
-                )
-
-                matrix.translate(
-                    x = -currentScale.lastBounds.left,
-                    y = -currentScale.lastBounds.top,
-                )
-                path.transform(matrix)
-
-                return outline
-            }
+    return remember {
+        MorphingShape(
+            previousShape = previousShape,
+            currentShape = currentShape,
+            interpolation = interpolation
+        ).also {
+            it.previousShape = previousShape
+            it.currentShape = currentShape
+            it.interpolation = interpolation
         }
+    }
+}
+
+@Stable
+private class MorphingShape(
+    var previousShape: RoundedPolygonShape,
+    var currentShape: RoundedPolygonShape,
+    var interpolation: Float,
+) : Shape {
+    private val path = Path()
+    private val matrix = Matrix()
+    private val outline = Outline.Generic(path)
+
+    private var previousPolygon: RoundedPolygon? = null
+    private var currentPolygon: RoundedPolygon? = null
+    private var morph: Morph? = null
+
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        if (size == Size.Zero) return RectangleShape.createOutline(
+            size = size,
+            layoutDirection = layoutDirection,
+            density = density,
+        )
+
+        val startPolygon = previousShape.ensurePolygon(size, density)
+        val endPolygon = currentShape.ensurePolygon(size, density)
+
+        if (
+            morph == null
+            || startPolygon != previousPolygon
+            || endPolygon != currentPolygon
+        ) {
+            previousPolygon = startPolygon
+            currentPolygon = endPolygon
+            morph = Morph(start = startPolygon, end = endPolygon)
+        }
+
+        path.rewind()
+        requireNotNull(morph).toPath(
+            progress = interpolation,
+            path = path,
+        )
+        matrix.reset()
+
+        matrix.scale(
+            x = size.width / currentShape.lastBounds.width,
+            y = size.height / currentShape.lastBounds.height,
+        )
+
+        matrix.translate(
+            x = -currentShape.lastBounds.left,
+            y = -currentShape.lastBounds.top,
+        )
+        path.transform(matrix)
+
+        return outline
     }
 }
 
@@ -305,4 +331,4 @@ private fun pathFromCubics(
 }
 
 private fun Size.hasSimilarAspectRatio(other: Size?) =
-    other != null && ((width / height) / (other.width / other.height)) in (0.9f..1.1f)
+    other != null && ((width / height) / (other.width / other.height)) in (0.8f..1.2f)
