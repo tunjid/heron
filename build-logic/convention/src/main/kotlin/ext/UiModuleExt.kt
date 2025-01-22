@@ -15,6 +15,7 @@
  */
 
 
+import ext.libs
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -22,8 +23,6 @@ fun org.gradle.api.Project.configureUiModule(
     extension: KotlinMultiplatformExtension,
 ) = extension.apply {
     sourceSets.apply {
-        val catalogs = extensions.getByType(VersionCatalogsExtension::class.java)
-        val libs = catalogs.named("libs")
 
         named("commonMain") {
             dependencies {

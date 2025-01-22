@@ -15,6 +15,7 @@
  */
 
 import ext.configureKotlinJvm
+import ext.libs
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -43,8 +44,6 @@ fun Project.configureKotlinMultiplatform(
                     optIn("kotlinx.coroutines.FlowPreview")
                 }
             }
-            val catalogs = extensions.getByType(VersionCatalogsExtension::class.java)
-            val libs = catalogs.named("libs")
 
             named("commonMain") {
 //                kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
