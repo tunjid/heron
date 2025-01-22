@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.compose")
-    kotlin("plugin.serialization")
-}
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 
-configureCompose()
-kotlin {
-    configureKotlinMultiplatform(this)
-    configureUiModule(this)
+fun Project.configureCompose() {
+    extensions.configure<ComposeCompilerGradlePluginExtension> {
+        stabilityConfigurationFile.set(rootProject.file("stability_config.conf"))
+    }
 }

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.math.max
 
 /**
  * Basic pagination query type, used for tiled requests.
@@ -84,14 +85,14 @@ fun <Query : CursorQuery, Item> cursorTileInputs(
 ): Flow<Tile.Input<Query, Item>> = merge(
     numColumns.map { columns ->
         Tile.Limiter(
-            maxQueries = 3 * columns,
+            maxQueries = 3 * max(1, columns),
             itemSizeHint = null,
         )
     },
     queries.toPivotedTileInputs(
-        numColumns.map {
+        numColumns.map { columns ->
             cursorPivotRequest(
-                numColumns = it,
+                numColumns = max(1, columns),
                 updatePage = updatePage,
             )
         }
