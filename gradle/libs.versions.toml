@@ -1,38 +1,39 @@
 [versions]
-agp = "8.5.2"
-android-desugar-jdk-libs = "2.1.3"
-androidx-activityCompose = "1.9.3"
+agp = "8.7.3"
+android-desugar-jdk-libs = "2.1.4"
+androidx-activityCompose = "1.10.0"
 androidx-appcompat = "1.7.0"
-androidx-constraintlayout = "2.1.4"
+androidx-constraintlayout = "2.2.0"
 androidx-core-ktx = "1.15.0"
-androidx-datastore = "1.1.1"
+androidx-datastore = "1.1.2"
 androidx-graphics-core = "1.0.2"
 androidx-graphics-path = "1.0.1"
 androidx-graphics-shapes = "1.0.1"
-androidx-media3 = "1.4.1"
-androidx-room = "2.7.0-alpha11"
-androidx-sqlite = "2.5.0-alpha11"
+androidx-media3 = "1.5.1"
+androidx-room = "2.7.0-alpha12"
+androidx-sqlite = "2.5.0-alpha12"
 androidx-espresso-core = "3.6.1"
 javaDiffUtils = "4.15"
 lifecycle = "2.8.4"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
-coil = "3.0.1"
-compose-multiplatform = "1.7.3"
+coil = "3.0.3"
+compose-multiplatform = "1.8.0-alpha02"
+compose-material-icons = "1.7.3"
 junit = "4.13.2"
 kotlin-inject = "0.7.2"
-kotlin = "2.0.21"
+kotlin = "2.1.0"
 kotlinx-coroutines = "1.9.0"
 kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.3"
-ksp = "2.0.21-1.0.27"
+ksp = "2.1.0-1.0.29"
 ktor = "3.0.1"
 okio = "3.9.1"
 ozone-bluesky = "0.3.1"
 tunjid-state-holder = "1.1.0"
 tunjid-tiler = "1.1.0"
-tunjid-tree-nav = "0.0.13"
-tunjid-composables = "0.0.13"
+tunjid-tree-nav = "0.0.14"
+tunjid-composables = "0.0.14"
 jetbrainsKotlinJvm = "2.0.21"
 
 [libraries]
@@ -71,8 +72,8 @@ compose-animation = { group = "org.jetbrains.compose.animation", name = "animati
 compose-foundation-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
 compose-foundation-layout = { group = "org.jetbrains.compose.foundation", name = "foundation-layout", version.ref = "compose-multiplatform" }
 compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
-compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-multiplatform" }
-compose-material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-multiplatform" }
+compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-material-icons" }
+compose-material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform" }
 compose-gradlePlugin = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose-multiplatform" }
 compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
