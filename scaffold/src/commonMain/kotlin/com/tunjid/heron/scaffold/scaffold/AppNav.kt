@@ -2,13 +2,8 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.defaultDecayAnimationSpec
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,14 +71,6 @@ fun BottomAppBar(
             ),
     ) {
         appState.navItems.forEach { item ->
-            AnchoredDraggableState(
-                initialValue = 1f,
-                positionalThreshold = { distance: Float -> distance  },
-                velocityThreshold = { 100f },
-                snapAnimationSpec = spring(),
-                decayAnimationSpec = rememberSplineBasedDecay(),
-                anchors = DraggableAnchors {}
-            )
             NavigationBarItem(
                 icon = {
                     Icon(
