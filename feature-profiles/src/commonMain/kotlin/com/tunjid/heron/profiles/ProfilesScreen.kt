@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.profiles.ui.ProfileWithRelationship
+import com.tunjid.heron.profiles.ui.sharedElementKey
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.ui.SharedElementScope
@@ -59,7 +61,6 @@ internal fun ProfilesScreen(
             ),
         state = listState,
         contentPadding = PaddingValues(
-            top = StatusBarHeight + ToolbarHeight,
             start = 8.dp,
             end = 8.dp,
         ),
@@ -74,8 +75,20 @@ internal fun ProfilesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
+                    sharedElementScope = sharedElementScope,
                     profileWithRelationship = item,
                     signedInProfileId = signedInProfileId,
+                    onProfileClicked = { profile ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToProfile(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    profile = profile,
+                                    avatarSharedElementKey = item.sharedElementKey()
+                                )
+                            )
+                        )
+                    },
                 )
             }
         )

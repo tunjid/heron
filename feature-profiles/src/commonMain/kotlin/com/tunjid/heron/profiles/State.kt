@@ -77,5 +77,9 @@ sealed class Action(val key: String) {
                 navState.pop()
             }
         }
+
+        data class DelegateTo(
+            val delegate: NavigationAction.Common,
+        ) : Navigate(), NavigationAction by delegate
     }
 }
