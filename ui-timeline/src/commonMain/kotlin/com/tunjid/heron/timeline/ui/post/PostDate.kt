@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.utilities.formatDate
 import com.tunjid.heron.timeline.utilities.formatTime
 import heron.ui_timeline.generated.resources.Res
@@ -31,10 +33,11 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
+    postId: Id,
     reposts: Long,
     quotes: Long,
     likes: Long,
-    onMetadataClicked: (Int) -> Unit,
+    onMetadataClicked: (Post.Metadata) -> Unit,
 ) {
     val textStyle = MaterialTheme.typography.bodySmall.copy(
         color = MaterialTheme.colorScheme.outline
@@ -56,7 +59,7 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(0) },
+                        onClick = { onMetadataClicked(Post.Metadata.Reposts(postId = postId)) },
                     ),
                 count = reposts,
                 singularResource = Res.string.repost,
@@ -68,7 +71,7 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(1) },
+                        onClick = { onMetadataClicked(Post.Metadata.Quotes(postId = postId)) },
                     ),
                 count = quotes,
                 singularResource = Res.string.quote,
@@ -80,7 +83,7 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(2) },
+                        onClick = { onMetadataClicked(Post.Metadata.Likes(postId = postId)) },
                     ),
                 count = likes,
                 singularResource = Res.string.like,

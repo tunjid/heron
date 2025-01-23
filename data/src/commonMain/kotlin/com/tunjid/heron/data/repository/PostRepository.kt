@@ -32,6 +32,7 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
+import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
@@ -48,7 +49,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.KSerializer
@@ -109,11 +113,13 @@ class OfflinePostRepository @Inject constructor(
     override fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> =
+    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.likedBy(
                 postId = query.postId.id,
                 viewingProfileId = savedStateRepository.signedInProfileId?.id,
+                offset = query.data.page * query.data.limit,
+                limit = query.data.limit,
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),
             nextCursorFlow(
@@ -121,7 +127,7 @@ class OfflinePostRepository @Inject constructor(
                 currentRequestWithNextCursor = {
                     networkService.api.getLikes(
                         GetLikesQueryParams(
-                            uri = query.postId.id.let(::AtUri),
+                            uri = postAtUri,
                             limit = query.data.limit,
                             cursor = cursor.value,
                         )
@@ -145,16 +151,18 @@ class OfflinePostRepository @Inject constructor(
             ::CursorList
         )
             .distinctUntilChanged()
-
+    }
 
     override fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> =
+    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.repostedBy(
                 postId = query.postId.id,
                 viewingProfileId = savedStateRepository.signedInProfileId?.id,
+                offset = query.data.page * query.data.limit,
+                limit = query.data.limit,
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),
 
@@ -163,7 +171,7 @@ class OfflinePostRepository @Inject constructor(
                 currentRequestWithNextCursor = {
                     networkService.api.getRepostedBy(
                         GetRepostedByQueryParams(
-                            uri = query.postId.id.let(::AtUri),
+                            uri = postAtUri,
                             limit = query.data.limit,
                             cursor = cursor.value,
                         )
@@ -177,6 +185,7 @@ class OfflinePostRepository @Inject constructor(
             ::CursorList
         )
             .distinctUntilChanged()
+    }
 
     override fun quotes(
         query: PostDataQuery,
@@ -403,6 +412,21 @@ class OfflinePostRepository @Inject constructor(
                 }
             }
         )
+    }
+
+    private fun <T> withPostUri(
+        postId: Id,
+        block: (AtUri) -> Flow<T>,
+    ): Flow<T> = flow {
+        postDao.posts(setOf(postId))
+            .firstOrNull(List<PopulatedPostEntity>::isNotEmpty)
+            ?.first()
+            ?.entity
+            ?.uri
+            ?.uri
+            ?.let(::AtUri)
+            ?.let(block)
+            ?.let { emitAll(it) }
     }
 }
 

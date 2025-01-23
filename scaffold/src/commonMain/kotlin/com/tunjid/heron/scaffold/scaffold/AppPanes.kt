@@ -1,5 +1,6 @@
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -54,6 +55,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 private val PaneSpring = spring(
+    stiffness = Spring.StiffnessMediumLow,
     visibilityThreshold = 0.1f
 )
 

@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -164,6 +165,44 @@ interface NavigationAction {
                 )
             }
         }
+
+        sealed class ToProfiles: Common() {
+            sealed class Post : ToProfiles() {
+                data class Likes(
+                    val postId: Id,
+                ) : Post()
+
+                data class Repost(
+                    val postId: Id,
+                ) : Post()
+            }
+
+            sealed class Profile : ToProfiles() {
+                data class Followers(
+                    val profileId: Id,
+                ) : Profile()
+
+                data class Following(
+                    val profileId: Id,
+                ) : Profile()
+            }
+
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = when (this@ToProfiles) {
+                            is Post.Likes -> "/post/${postId.id}/likes"
+                            is Post.Repost -> "/post/${postId.id}/reposts"
+                            is Profile.Followers -> "/profile/${profileId.id}/followers"
+                            is Profile.Following -> "/profile/${profileId.id}/following"
+                        },
+                        queryParams = mapOf(
+                            referringRouteQueryParams(ReferringRouteOption.Current),
+                        )
+                    ).toRoute
+                )
+            }
+        }
     }
 
     /**
@@ -214,6 +253,12 @@ interface NavigationAction {
                 queryParams[QueryParam]?.firstOrNull()
                     ?.decodeRoutePathAndQueriesFromQueryParam()
                     ?.let(::routeOf)
+
+            /**
+             * Hydrates a route with metadata that may have been lost like path args and
+             * query args.
+             */
+            fun RouteParser.hydrate(route: Route) = parse(route.routeParams.pathAndQueries) ?: route
         }
     }
 }

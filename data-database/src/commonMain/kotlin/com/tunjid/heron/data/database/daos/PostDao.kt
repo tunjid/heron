@@ -16,7 +16,6 @@ import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
@@ -131,11 +130,16 @@ interface PostDao {
                 AND profileProfileRelationships.otherProfileId = authorId
 	        WHERE postId = :postId
             ORDER BY indexedAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
         """
     )
     fun likedBy(
         postId: String,
         viewingProfileId: String?,
+        limit: Long,
+        offset: Long,
     ): Flow<List<PopulatedProfileEntity>>
 
     @Transaction
@@ -149,11 +153,16 @@ interface PostDao {
                 AND profileProfileRelationships.otherProfileId = authorId
 	        WHERE postId = :postId
             ORDER BY indexedAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
         """
     )
     fun repostedBy(
         postId: String,
         viewingProfileId: String?,
+        limit: Long,
+        offset: Long,
     ): Flow<List<PopulatedProfileEntity>>
 
     @Upsert

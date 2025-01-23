@@ -147,4 +147,22 @@ data class Post(
             ) : Delete()
         }
     }
+
+    @Serializable
+    sealed class Metadata {
+        @Serializable
+        data class Likes(
+            val postId: Id,
+        ): Metadata()
+
+        @Serializable
+        data class Reposts(
+            val postId: Id,
+        ): Metadata()
+
+        @Serializable
+        data class Quotes(
+            val postId: Id,
+        ): Metadata()
+    }
 }

@@ -170,6 +170,9 @@ internal fun ProfileScreen(
                 onRefreshTabClicked = { index ->
                     state.timelineStateHolders[index].accept(TimelineLoadAction.Refresh)
                 },
+                onNavigateToProfiles = { navigationAction ->
+                    actions(Action.Navigate.DelegateTo(navigationAction))
+                },
             )
         },
         body = {
@@ -222,6 +225,7 @@ private fun ProfileHeader(
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
+    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -266,6 +270,7 @@ private fun ProfileHeader(
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
+                    onNavigateToProfiles = onNavigateToProfiles,
                 )
                 Text(text = profile.description ?: "")
                 Spacer(Modifier.height(16.dp))
@@ -419,6 +424,7 @@ private fun ProfileHeadline(
 private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
+    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -427,12 +433,24 @@ private fun ProfileStats(
         Statistic(
             value = profile.followersCount ?: 0,
             description = stringResource(Res.string.followers),
-            onClick = {}
+            onClick = {
+                onNavigateToProfiles(
+                    NavigationAction.Common.ToProfiles.Profile.Followers(
+                        profileId = profile.did,
+                    ),
+                )
+            },
         )
         Statistic(
             value = profile.followsCount ?: 0,
             description = stringResource(Res.string.following),
-            onClick = {}
+            onClick = {
+                onNavigateToProfiles(
+                    NavigationAction.Common.ToProfiles.Profile.Following(
+                        profileId = profile.did,
+                    ),
+                )
+            },
         )
         Statistic(
             value = profile.postsCount ?: 0,

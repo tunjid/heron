@@ -52,6 +52,7 @@ import com.tunjid.heron.profile.ProfileStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.BottomAppBar
@@ -68,6 +69,7 @@ import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteParser
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.mention
@@ -131,6 +133,7 @@ abstract class ProfileComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: ProfileStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy<Route>(
         paneMapping = { route ->
@@ -144,7 +147,7 @@ abstract class ProfileComponent(
             val viewModel = viewModel<ActualProfileStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
-                    route = route,
+                    route = routeParser.hydrate(route),
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()

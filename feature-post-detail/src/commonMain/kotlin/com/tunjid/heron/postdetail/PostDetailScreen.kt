@@ -103,6 +103,25 @@ internal fun PostDetailScreen(
         }
     }
 
+    val onPostMetadataClicked = remember {
+        onPostMetadataClicked@{ postMetadata: Post.Metadata ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    when (postMetadata) {
+                        is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
+                            postId = postMetadata.postId,
+                        )
+
+                        is Post.Metadata.Quotes -> return@onPostMetadataClicked
+                        is Post.Metadata.Reposts -> NavigationAction.Common.ToProfiles.Post.Repost(
+                            postId = postMetadata.postId,
+                        )
+                    }
+                )
+            )
+        }
+    }
+
     val videoStates = remember { ThreadedVideoPositionStates() }
 
     LazyVerticalStaggeredGrid(
@@ -140,6 +159,7 @@ internal fun PostDetailScreen(
                     onProfileClicked = onProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = {},
+                    onPostMetadataClicked = onPostMetadataClicked,
                     onPostInteraction = {
                         actions(
                             Action.SendPostInteraction(it)
