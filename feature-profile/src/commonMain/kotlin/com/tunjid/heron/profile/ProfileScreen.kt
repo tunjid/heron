@@ -18,7 +18,6 @@ package com.tunjid.heron.profile
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -134,9 +133,7 @@ internal fun ProfileScreen(
 
     val collapsingHeaderState = rememberCollapsingHeaderState(
         collapsedHeight = collapsedHeight,
-        thresholdFraction = 0.5f,
         initialExpandedHeight = with(density) { 800.dp.toPx() },
-        decayAnimationSpec = splineBasedDecay(density),
     )
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
