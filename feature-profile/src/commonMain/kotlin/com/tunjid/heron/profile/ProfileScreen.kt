@@ -225,7 +225,7 @@ private fun ProfileHeader(
     profileRelationship: ProfileRelationship?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
-    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit
+    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -424,7 +424,7 @@ private fun ProfileHeadline(
 private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
-    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit
+    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -437,7 +437,7 @@ private fun ProfileStats(
                 onNavigateToProfiles(
                     NavigationAction.Common.ToProfiles.Profile.Followers(
                         profileId = profile.did,
-                    )
+                    ),
                 )
             },
         )
@@ -445,8 +445,10 @@ private fun ProfileStats(
             value = profile.followsCount ?: 0,
             description = stringResource(Res.string.following),
             onClick = {
-                NavigationAction.Common.ToProfiles.Profile.Following(
-                    profileId = profile.did,
+                onNavigateToProfiles(
+                    NavigationAction.Common.ToProfiles.Profile.Following(
+                        profileId = profile.did,
+                    ),
                 )
             },
         )
