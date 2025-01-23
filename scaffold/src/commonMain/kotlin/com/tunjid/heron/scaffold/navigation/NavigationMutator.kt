@@ -253,6 +253,12 @@ interface NavigationAction {
                 queryParams[QueryParam]?.firstOrNull()
                     ?.decodeRoutePathAndQueriesFromQueryParam()
                     ?.let(::routeOf)
+
+            /**
+             * Hydrates a route with metadata that may have been lost like path args and
+             * query args.
+             */
+            fun RouteParser.hydrate(route: Route) = parse(route.routeParams.pathAndQueries) ?: route
         }
     }
 }

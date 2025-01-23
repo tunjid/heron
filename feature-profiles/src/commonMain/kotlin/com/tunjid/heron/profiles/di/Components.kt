@@ -34,6 +34,7 @@ import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -45,6 +46,7 @@ import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.RouteTrie
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
@@ -137,28 +139,45 @@ abstract class ProfilesComponent(
     @IntoMap
     @Provides
     fun postLikesAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: ProfilesStateHolderCreator,
-    ) = PostLikesPattern to profilesStrategy(creator)
+    ) = PostLikesPattern to profilesStrategy(
+        routeParser = routeParser,
+        creator = creator,
+    )
 
     @IntoMap
     @Provides
     fun postRepostsAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: ProfilesStateHolderCreator,
-    ) = PostRepostsPattern to profilesStrategy(creator)
+    ) = PostRepostsPattern to profilesStrategy(
+        routeParser = routeParser,
+        creator = creator,
+    )
 
     @IntoMap
     @Provides
     fun profileFollowersAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: ProfilesStateHolderCreator,
-    ) = ProfileFollowersPattern to profilesStrategy(creator)
+    ) = ProfileFollowersPattern to profilesStrategy(
+        routeParser = routeParser,
+        creator = creator,
+    )
 
     @IntoMap
     @Provides
     fun profileFollowingAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: ProfilesStateHolderCreator,
-    ) = ProfileFollowingPattern to profilesStrategy(creator)
+    ) = ProfileFollowingPattern to profilesStrategy(
+        routeParser = routeParser,
+        creator = creator,
+    )
 
     private fun profilesStrategy(
+        routeParser: RouteParser,
         creator: ProfilesStateHolderCreator,
     ) = threePaneListDetailStrategy(
         paneMapping = { route ->
@@ -172,7 +191,7 @@ abstract class ProfilesComponent(
             val viewModel = viewModel<ActualProfilesStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
-                    route = route,
+                    route = routeParser.hydrate(route),
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
