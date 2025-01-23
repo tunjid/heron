@@ -33,11 +33,13 @@ import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
@@ -49,10 +51,10 @@ import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
-private const val PostLikesPattern = "/posts/{postId}/likes"
-private const val PostRepostsPattern = "/posts/{postId}/reposts"
-private const val ProfileFollowersPattern = "/profiles/{profileId}/followers"
-private const val ProfileFollowingPattern = "/profiles/{profileId}/following"
+private const val PostLikesPattern = "/post/{postId}/likes"
+private const val PostRepostsPattern = "/post/{postId}/reposts"
+private const val ProfileFollowersPattern = "/profile/{profileId}/followers"
+private const val ProfileFollowingPattern = "/profile/{profileId}/following"
 
 private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
     set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postId) }
@@ -74,6 +76,9 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    )
 )
 
 @KmpComponentCreate
@@ -156,6 +161,12 @@ abstract class ProfilesComponent(
     private fun profilesStrategy(
         creator: ProfilesStateHolderCreator,
     ) = threePaneListDetailStrategy(
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfilesStateHolder> {
