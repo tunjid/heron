@@ -47,6 +47,7 @@ fun Post(
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostMetadataClicked: (Post.Metadata) -> Unit = {},
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
@@ -97,12 +98,11 @@ fun Post(
                         vertical = 8.dp,
                     ),
                     time = post.createdAt,
+                    postId = post.cid,
                     reposts = post.repostCount,
                     quotes = post.quoteCount,
                     likes = post.likeCount,
-                    onMetadataClicked = {
-
-                    },
+                    onMetadataClicked = onPostMetadataClicked,
                 )
                 PostActions(
                     replyCount = format(post.replyCount),

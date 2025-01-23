@@ -56,6 +56,7 @@ fun TimelineItem(
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostMetadataClicked: (Post.Metadata) -> Unit = {},
 ) {
     TimelineCard(
         item = item,
@@ -93,6 +94,7 @@ fun TimelineItem(
                 onPostMediaClicked = onPostMediaClicked,
                 onReplyToPost = onReplyToPost,
                 onPostInteraction = onPostInteraction,
+                onPostMetadataClicked = onPostMetadataClicked,
             ) else Post(
                 modifier = Modifier
                     .childThreadNode(videoId = item.post.videoId),
@@ -111,6 +113,7 @@ fun TimelineItem(
                 onPostMediaClicked = onPostMediaClicked,
                 onReplyToPost = onReplyToPost,
                 onPostInteraction = onPostInteraction,
+                onPostMetadataClicked = onPostMetadataClicked,
             )
         }
     }
@@ -127,6 +130,7 @@ private fun ThreadedPost(
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostMetadataClicked: (Post.Metadata) -> Unit,
 ) {
     Column {
         item.posts.forEachIndexed { index, post ->
@@ -162,6 +166,7 @@ private fun ThreadedPost(
                     onPostMediaClicked = onPostMediaClicked,
                     onReplyToPost = onReplyToPost,
                     onPostInteraction = onPostInteraction,
+                    onPostMetadataClicked = onPostMetadataClicked,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                             modifier = Modifier
