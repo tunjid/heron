@@ -5,6 +5,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 expect fun VideoPlayer(
@@ -18,7 +19,6 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     videoId: String = videoUrl,
     thumbnail: String? = null,
     isLooping: Boolean = true,
-    isMuted: Boolean = false,
     autoplay: Boolean = false,
     contentScale: ContentScale = ContentScale.Crop,
     alignment: Alignment = Alignment.Center,
@@ -28,7 +28,6 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     videoId = videoId,
     thumbnail = thumbnail,
     isLooping = isLooping,
-    isMuted = isMuted,
     autoplay = autoplay
 ).also { videoPlayerState ->
     videoPlayerState.thumbnailUrl = thumbnail
@@ -36,3 +35,12 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     videoPlayerState.alignment = alignment
     videoPlayerState.shape = shape
 }
+
+fun Long.formatVideoDuration() =
+    milliseconds.toComponents { h, m, s, _ ->
+        val paddedSeconds = "0$s".takeLast(2)
+        when {
+            h > 0 -> "$h:$m:$paddedSeconds"
+            else -> "$m:$paddedSeconds"
+        }
+    }

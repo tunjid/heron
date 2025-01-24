@@ -9,6 +9,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 @Stable
 interface VideoPlayerController {
 
+    var isMuted: Boolean
+
     /**
      * Registers a video for playback. If a unique ID is not specified, it
      * is defaulted to [videoUrl].
@@ -20,7 +22,6 @@ interface VideoPlayerController {
         videoId: String = videoUrl,
         thumbnail: String? = null,
         isLooping: Boolean = false,
-        isMuted: Boolean = false,
         autoplay: Boolean = false,
     ): VideoPlayerState
 
