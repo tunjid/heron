@@ -3,4 +3,8 @@
     <string name="latest">Latest</string>
     <string name="people">People</string>
     <string name="search">Search</string>
+    <string name="trending_title">Trending</string>
+    <string name="trending_description">What people are posting about.</string>
+    <string name="recommended_title">Recommended</string>
+    <string name="recommended_description">Feeds we think you might like.</string>
 </resources>

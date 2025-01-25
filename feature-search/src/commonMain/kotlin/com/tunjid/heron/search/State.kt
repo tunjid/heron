@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -58,6 +60,7 @@ data class State(
     val currentQuery: String = "",
     val layout: ScreenLayout = ScreenLayout.Trends,
     val signedInProfile: Profile? = null,
+    val trends: Trends = Trends(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
@@ -77,6 +80,10 @@ sealed class Action(val key: String) {
             val isLocalOnly: Boolean,
         ) : Search()
     }
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {
