@@ -28,8 +28,8 @@ internal class ExoPlayerState internal constructor(
     videoUrl: String,
     thumbnail: String?,
     isLooping: Boolean,
-    isMuted: Boolean,
     autoplay: Boolean,
+    isMuted: State<Boolean>,
     exoPlayerState: State<ExoPlayer?>,
 ) : VideoPlayerState {
 
@@ -54,8 +54,7 @@ internal class ExoPlayerState internal constructor(
     override var isLooping by mutableStateOf(isLooping)
         internal set
 
-    override var isMuted by mutableStateOf(isMuted)
-        internal set
+    override val isMuted by isMuted
 
     override var autoplay by mutableStateOf(autoplay)
         internal set
@@ -162,7 +161,6 @@ internal class ExoPlayerState internal constructor(
         val player = player ?: return
         val duration = player.duration.takeIf { it != C.TIME_UNSET } ?: 0
 
-        this.isMuted = player.isMuted
         this.lastPositionMs = player.currentPosition.takeIf { it != C.TIME_UNSET } ?: 0
         totalDuration = duration
     }
@@ -201,7 +199,7 @@ internal fun ExoPlayer.bind(state: ExoPlayerState) {
     pauseAtEndOfMediaItems = !state.isLooping
 }
 
-private var ExoPlayer.isMuted: Boolean
+internal var ExoPlayer.isMuted: Boolean
     get() = volume < VIDEO_PLAYER_MUTE_THRESHOLD
     set(value) {
         volume = if (value) 0f else 1f

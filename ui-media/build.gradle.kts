@@ -17,6 +17,7 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
+    id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
 android {
@@ -31,8 +32,12 @@ kotlin {
                 implementation(project(":ui-core"))
 
                 implementation(libs.compose.animation)
+                implementation(libs.compose.components.resources)
                 implementation(libs.compose.foundation.layout)
                 implementation(libs.compose.foundation.foundation)
+                implementation(libs.compose.material.icons.extended)
+                implementation(libs.compose.material3)
+
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui.ui)
 

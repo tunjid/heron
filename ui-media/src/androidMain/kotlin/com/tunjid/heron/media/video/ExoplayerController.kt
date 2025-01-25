@@ -57,6 +57,9 @@ class ExoplayerController(
     private val diffingDispatcher: CoroutineDispatcher,
 ) : VideoPlayerController,
     Player.Listener {
+
+    override var isMuted: Boolean by mutableStateOf(false)
+
     /**
      * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not discard buffered
      * videos.
@@ -140,6 +143,10 @@ class ExoplayerController(
             }
             .filter(true::equals)
             .onEach { pauseActiveVideo() }
+            .launchIn(scope + Dispatchers.Main)
+
+        snapshotFlow { isMuted }
+            .onEach { player?.isMuted = it }
             .launchIn(scope + Dispatchers.Main)
     }
 
@@ -245,7 +252,6 @@ class ExoplayerController(
         videoId: String,
         thumbnail: String?,
         isLooping: Boolean,
-        isMuted: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState {
         idsToStates[videoId]?.let { return it }
@@ -256,7 +262,9 @@ class ExoplayerController(
             thumbnail = thumbnail,
             autoplay = autoplay,
             isLooping = isLooping,
-            isMuted = isMuted,
+            isMuted = derivedStateOf {
+                isMuted
+            },
             exoPlayerState = derivedStateOf {
                 player.takeIf { isCurrentMediaItem(videoId) }
             },

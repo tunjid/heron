@@ -17,33 +17,41 @@
 package com.tunjid.heron.gallery
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
-import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.media.video.PlayerControlsUiState
+import com.tunjid.heron.media.video.PlayerControls
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -53,9 +61,17 @@ internal fun GalleryScreen(
     modifier: Modifier = Modifier,
     state: State,
 ) {
+    val videoPlayerController = LocalVideoPlayerController.current
+    val playerControlsUiState = remember(videoPlayerController) {
+        PlayerControlsUiState(videoPlayerController)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
+            .clickable(
+                onClick = playerControlsUiState::toggleVisibility
+            )
     ) {
         val updatedItems by rememberUpdatedState(state.items)
         val pagerState = rememberPagerState(
@@ -69,40 +85,69 @@ internal fun GalleryScreen(
             state = pagerState,
             key = { page -> updatedItems[page].key },
             pageContent = { page ->
-                when (val item = updatedItems[page]) {
-                    is GalleryItem.Photo -> {
-                        val zoomState = rememberGestureZoomState()
-                        val coroutineScope = rememberCoroutineScope()
-                        GalleryImage(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .gestureZoomable(zoomState)
-                                .combinedClickable(
-                                    onClick = { },
-                                    onDoubleClick = {
-                                        coroutineScope.launch {
-                                            zoomState.toggleZoom()
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when (val item = updatedItems[page]) {
+                        is GalleryItem.Photo -> {
+                            val zoomState = rememberGestureZoomState()
+                            val coroutineScope = rememberCoroutineScope()
+                            GalleryImage(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .gestureZoomable(zoomState)
+                                    .combinedClickable(
+                                        onClick = { },
+                                        onDoubleClick = {
+                                            coroutineScope.launch {
+                                                zoomState.toggleZoom()
+                                            }
                                         }
-                                    }
-                                ),
+                                    ),
+                                sharedElementScope = sharedElementScope,
+                                item = item,
+                                sharedElementPrefix = state.sharedElementPrefix
+                            )
+                        }
+
+                        is GalleryItem.Video -> GalleryVideo(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .aspectRatio(item.video.aspectRatioOrSquare),
                             sharedElementScope = sharedElementScope,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix
                         )
                     }
-
-                    is GalleryItem.Video -> GalleryVideo(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        sharedElementScope = sharedElementScope,
-                        item = item,
-                        sharedElementPrefix = state.sharedElementPrefix
-                    )
                 }
             }
         )
 
-        val videoPlayerController = LocalVideoPlayerController.current
+        when (
+            val currentItem = updatedItems.getOrNull(pagerState.currentPage)
+        ) {
+            null -> Unit
+            is GalleryItem.Photo -> Unit
+            is GalleryItem.Video -> {
+                val videoPlayerState = videoPlayerController.getVideoStateById(
+                    currentItem.video.playlist.uri
+                )
+                if (videoPlayerState != null) {
+                    PlayerControls(
+                        videoPlayerState = videoPlayerState,
+                        state = playerControlsUiState,
+                    )
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { videoPlayerState.status }
+                            .collectLatest {
+                                playerControlsUiState.update(it)
+                            }
+                    }
+                }
+            }
+        }
+
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
             itemsAvailable = updatedItems.size,
@@ -116,6 +161,8 @@ internal fun GalleryScreen(
                 }
             }
         )
+
+        playerControlsUiState.ControlsVisibilityEffect()
     }
 }
 
@@ -161,9 +208,7 @@ private fun GalleryVideo(
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
         videoUrl = item.video.playlist.uri,
         thumbnail = item.video.thumbnail?.uri,
-        shape = remember {
-            RoundedCornerShape(16.dp).toRoundedPolygonShape()
-        }
+        shape = RoundedPolygonShape.Rectangle,
     )
     sharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
@@ -182,4 +227,3 @@ private fun GalleryVideo(
         }
     )
 }
-

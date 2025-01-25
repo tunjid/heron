@@ -8,6 +8,11 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 object StubVideoPlayerController : VideoPlayerController {
 
+    @Suppress("UNUSED_PARAMETER")
+    override var isMuted: Boolean
+        get() = true
+        set(value) {}
+
     private val idsToStates = mutableStateMapOf<String, NoOpVideoPlayerState>()
 
     override fun registerVideo(
@@ -15,7 +20,6 @@ object StubVideoPlayerController : VideoPlayerController {
         videoId: String,
         thumbnail: String?,
         isLooping: Boolean,
-        isMuted: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState = idsToStates.getOrPut(videoId) {
         NoOpVideoPlayerState(
