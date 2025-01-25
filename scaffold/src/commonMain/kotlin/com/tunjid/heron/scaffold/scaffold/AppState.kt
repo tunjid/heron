@@ -59,7 +59,9 @@ class AppState @Inject constructor(
     internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf { multiStackNavState.value.navItems }
     internal val navigation by multiStackNavState
-    internal val backPreviewState = BackPreviewState()
+    internal val backPreviewState = BackPreviewState(
+        minScale = 0.75f,
+    )
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
         maxCount = paneRenderOrder.size,
