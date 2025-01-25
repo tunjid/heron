@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Replay5
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -43,6 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -172,20 +176,17 @@ private fun PlaybackStatus(
                 )
             },
         )
-        Row(
+        Text(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = videoPlayerState.lastPositionMs.formatVideoDuration()
-            )
-            Text(
-                text = " • "
-            )
-            Text(
-                text = videoPlayerState.totalDuration.formatVideoDuration()
-            )
-        }
+                .padding(horizontal = 16.dp),
+            text = buildAnnotatedString {
+                append(videoPlayerState.lastPositionMs.formatVideoDuration())
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
+                    append(" • ")
+                    append(videoPlayerState.totalDuration.formatVideoDuration())
+                }
+            }
+        )
     }
 }
 
