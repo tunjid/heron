@@ -21,10 +21,13 @@ sealed class Timeline {
         override val sourceId: String
             get() = source.uri
 
+        abstract val lastRefreshed: Instant?
+
         @Serializable
         data class Following(
             override val name: String,
             override val position: Int,
+            override val lastRefreshed: Instant?,
         ) : Home(Constants.timelineFeed)
 
         @Serializable
@@ -32,6 +35,7 @@ sealed class Timeline {
             override val name: String,
             val listUri: Uri,
             override val position: Int,
+            override val lastRefreshed: Instant?,
         ) : Home(listUri)
 
         @Serializable
@@ -39,6 +43,7 @@ sealed class Timeline {
             override val name: String,
             val feedUri: Uri,
             override val position: Int,
+            override val lastRefreshed: Instant?,
         ) : Home(feedUri)
 
     }

@@ -66,7 +66,10 @@ fun timelineStateHolder(
             timeline = timeline,
             data = CursorQuery.Data(
                 page = 0,
-                cursorAnchor = Clock.System.now(),
+                cursorAnchor = when (timeline) {
+                    is Timeline.Home -> timeline.lastRefreshed ?: Clock.System.now()
+                    is Timeline.Profile -> Clock.System.now()
+                },
             ),
         ),
         numColumns = startNumColumns,
