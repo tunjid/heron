@@ -3,10 +3,14 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.unspecced.GetTrendingTopicsQueryParams
+import app.bsky.unspecced.TrendingTopic
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.ProfileWithRelationship
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
@@ -74,6 +78,7 @@ interface SearchRepository {
         cursor: Cursor,
     ): Flow<List<SearchResult.Profile>>
 
+    fun trends(): Flow<Trends>
 }
 
 class OfflineSearchRepository @Inject constructor(
@@ -220,4 +225,26 @@ class OfflineSearchRepository @Inject constructor(
         }
     }
 
+    override fun trends(): Flow<Trends> = flow {
+        runCatchingWithNetworkRetry {
+            networkService.api.getTrendingTopicsUnspecced(
+                GetTrendingTopicsQueryParams()
+            )
+        }
+            .getOrNull()
+            ?.let {
+                Trends(
+                    topics = it.topics.map(TrendingTopic::trend),
+                    suggested = it.suggested.map(TrendingTopic::trend)
+                )
+            }
+            ?.let {
+                emit(it)
+            }
+    }
 }
+
+
+private fun TrendingTopic.trend() = Trend(
+    topic, displayName, description, link
+)

@@ -29,6 +29,8 @@ import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.ensureValidAnchors
 import com.tunjid.heron.data.utilities.isValidFor
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -36,6 +38,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
@@ -76,6 +79,7 @@ class ActualSearchStateHolder(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
     searchRepository: SearchRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -90,7 +94,8 @@ class ActualSearchStateHolder(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-        loadProfileMutations(authTokenRepository)
+        loadProfileMutations(authTokenRepository),
+        trendsMutations(searchRepository),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -100,6 +105,10 @@ class ActualSearchStateHolder(
                 is Action.Search -> action.flow.searchQueryMutations(
                     coroutineScope = scope,
                     searchRepository = searchRepository,
+                )
+
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
                 )
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
@@ -115,6 +124,13 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun trendsMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    searchRepository.trends().mapToMutation {
+        copy(trends = it)
     }
 
 private fun Flow<Action.Search>.searchQueryMutations(
@@ -185,6 +201,12 @@ private fun Flow<Action.Search>.searchQueryMutations(
     )
 }
 
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
 
 private fun searchStateHolders(
     coroutineScope: CoroutineScope,
