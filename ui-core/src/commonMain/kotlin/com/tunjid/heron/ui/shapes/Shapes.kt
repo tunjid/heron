@@ -201,6 +201,14 @@ fun RoundedPolygonShape.animate(
         value = this@animate
     }
 
+    val morphingShape = remember {
+        MorphingShape(
+            previousShape = previousShape,
+            currentShape = currentShape,
+            interpolation = interpolation
+        )
+    }
+
     LaunchedEffect(Unit) {
         snapshotFlow { currentShape }.collect {
             androidx.compose.animation.core.animate(
@@ -209,29 +217,22 @@ fun RoundedPolygonShape.animate(
                 animationSpec = updatedAnimationSpec,
                 block = { progress, _ ->
                     interpolation = progress
+                    morphingShape.previousShape = previousShape
+                    morphingShape.currentShape = currentShape
+                    morphingShape.interpolation = progress
                 },
             )
         }
     }
 
-    return remember {
-        MorphingShape(
-            previousShape = previousShape,
-            currentShape = currentShape,
-            interpolation = interpolation
-        ).also {
-            it.previousShape = previousShape
-            it.currentShape = currentShape
-            it.interpolation = interpolation
-        }
-    }
+    return morphingShape
 }
 
 @Stable
 private class MorphingShape(
     var previousShape: RoundedPolygonShape,
     var currentShape: RoundedPolygonShape,
-    var interpolation: Float,
+    interpolation: Float,
 ) : Shape {
     private val path = Path()
     private val matrix = Matrix()
@@ -240,6 +241,7 @@ private class MorphingShape(
     private var previousPolygon: RoundedPolygon? = null
     private var currentPolygon: RoundedPolygon? = null
     private var morph: Morph? = null
+    var interpolation by mutableFloatStateOf(interpolation)
 
     override fun createOutline(
         size: Size,

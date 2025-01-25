@@ -36,11 +36,15 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Clock
 
 sealed class TimelineStatus {
+    data object Initial: TimelineStatus()
+
     data class Refreshing(
         val query: TimelineQuery,
     ) : TimelineStatus()
 
-    data object Refreshed : TimelineStatus()
+    data class Refreshed(
+        val query: TimelineQuery,
+    ) : TimelineStatus()
 }
 
 data class TimelineState(
@@ -71,7 +75,7 @@ fun timelineStateHolder(
         ),
         numColumns = startNumColumns,
         hasUpdates = false,
-        status = TimelineStatus.Refreshed,
+        status = TimelineStatus.Initial,
         items = emptyTiledList(),
     ),
     inputs = listOf(
@@ -178,7 +182,7 @@ private fun queryMutations(queries: MutableStateFlow<TimelineQuery>) =
             if (currentQuery.hasDifferentAnchor(newQuery)) TimelineStatus.Refreshing(
                 newQuery
             )
-            else TimelineStatus.Refreshed
+            else status
         )
     }
 
@@ -218,7 +222,7 @@ private fun itemMutations(
         .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
             // Ignore results from stale queries
             if (it.isValidFor(currentQuery)) copy(
-                status = TimelineStatus.Refreshed,
+                status = TimelineStatus.Refreshed(currentQuery),
                 items = it.distinctBy(TimelineItem::id)
             )
             else this
