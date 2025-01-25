@@ -13,6 +13,7 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
@@ -44,7 +45,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -384,30 +384,45 @@ class OfflineTimelineRepository(
                     when (Type.safeValueOf(preference.type)) {
                         Type.Feed -> timelineDao.feedGenerator(preference.value)
                             .filterNotNull()
-                            .map {
-                                Timeline.Home.Feed(
-                                    name = it.displayName,
-                                    feedUri = it.uri,
-                                    position = index,
-                                )
+                            .distinctUntilChanged()
+                            .flatMapLatest {
+                                timelineDao.lastFetchKey(it.uri.uri)
+                                    .distinctUntilChanged()
+                                    .map { fetchKeyEntity ->
+                                        Timeline.Home.Feed(
+                                            name = it.displayName,
+                                            feedUri = it.uri,
+                                            position = index,
+                                            lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                        )
+                                    }
                             }
 
                         Type.List -> timelineDao.list(preference.value)
                             .filterNotNull()
-                            .map {
-                                Timeline.Home.List(
-                                    listUri = it.uri,
-                                    name = it.name,
-                                    position = index,
-                                )
+                            .distinctUntilChanged()
+                            .flatMapLatest {
+                                timelineDao.lastFetchKey(it.uri.uri)
+                                    .distinctUntilChanged()
+                                    .map { fetchKeyEntity ->
+                                        Timeline.Home.List(
+                                            listUri = it.uri,
+                                            name = it.name,
+                                            position = index,
+                                            lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                        )
+                                    }
                             }
 
-                        Type.Timeline -> flowOf(
-                            Timeline.Home.Following(
-                                name = preference.value,
-                                position = index,
-                            )
-                        )
+                        Type.Timeline -> timelineDao.lastFetchKey(Constants.timelineFeed.uri)
+                            .distinctUntilChanged()
+                            .map { fetchKeyEntity ->
+                                Timeline.Home.Following(
+                                    name = preference.value,
+                                    position = index,
+                                    lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                )
+                            }
 
                         is Type.Unknown -> emptyFlow()
                     }
