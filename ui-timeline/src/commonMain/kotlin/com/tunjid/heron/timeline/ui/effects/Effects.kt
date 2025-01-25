@@ -13,7 +13,6 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.scan
 
 @Composable
@@ -24,15 +23,14 @@ fun <LazyState : ScrollableState> LazyState.TimelineRefreshEffect(
     val updatedTimelineState by rememberUpdatedState(timelineState)
     LaunchedEffect(this) {
         snapshotFlow { updatedTimelineState.status }
+            // Scan to make sure its not the first refreshed emission
             .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
                 pair.copy(first = pair.second, second = current)
             }
             .filter { (first, second) ->
-                first != null && first != second && second is TimelineStatus.Refreshing
+                first != null && first != second && second is TimelineStatus.Refreshed
             }
             .collectLatest {
-                snapshotFlow { updatedTimelineState.status }
-                    .first { it is TimelineStatus.Refreshed }
                 onRefresh()
             }
     }
