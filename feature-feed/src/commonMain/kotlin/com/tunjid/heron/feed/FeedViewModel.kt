@@ -18,16 +18,21 @@ package com.tunjid.heron.feed
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.UriLookup
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.domain.timeline.timelineStateHolder
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.feed.di.feedLookup
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
@@ -53,22 +58,26 @@ class FeedStateHolderCreator(
 class ActualFeedStateHolder(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    timelineRepository: TimelineRepository,
     @Assisted
     scope: CoroutineScope,
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), FeedStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-    ),
+    initialState = State(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        timelineStateHolderMutations(
+            lookup = route.feedLookup,
+            scope = scope,
+            timelineRepository = timelineRepository,
+        )
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                     writeQueue = writeQueue,
                 )
@@ -80,6 +89,27 @@ class ActualFeedStateHolder(
         }
     }
 )
+
+private fun timelineStateHolderMutations(
+    lookup: UriLookup.Timeline,
+    scope: CoroutineScope,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.lookupTimeline(lookup)
+        .mapToMutation { timeline ->
+            when (timelineStateHolder) {
+                // TODO: Update the timeline properties
+                null -> this
+                else -> copy(
+                    timelineStateHolder = timelineStateHolder(
+                        timeline = timeline,
+                        startNumColumns = 1,
+                        scope = scope,
+                        timelineRepository = timelineRepository,
+                    )
+                )
+            }
+        }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

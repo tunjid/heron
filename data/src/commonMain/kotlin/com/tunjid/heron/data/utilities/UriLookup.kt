@@ -34,7 +34,8 @@ internal suspend fun lookupUri(
                         Handle(profile)
                     )
                 )
-            }.getOrNull()
+            }
+                .getOrNull()
                 ?.did
 
         else -> null
