@@ -40,7 +40,7 @@ import com.tunjid.heron.scaffold.scaffold.BottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
@@ -121,7 +121,7 @@ abstract class MessagesComponent(
                 },
                 bottomBar = {
                     BottomBar(
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
@@ -130,7 +130,7 @@ abstract class MessagesComponent(
                 },
                 content = { paddingValues ->
                     MessagesScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
@@ -158,10 +158,10 @@ private fun TopBar() {
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
 ) {
     BottomAppBar(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
     )
 }

@@ -41,7 +41,7 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -51,7 +51,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 internal fun PostVideo(
     video: Video,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
@@ -73,11 +73,11 @@ internal fun PostVideo(
                 videoPlayerController.play(videoId = video.playlist.uri)
                 onClicked()
             }
-        if (sharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+        if (panedSharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
             modifier = videoModifier,
             state = videoPlayerState,
         )
-        else sharedElementScope.updatedMovableSharedElementOf(
+        else panedSharedElementScope.updatedMovableSharedElementOf(
             modifier = videoModifier,
             key = video.sharedElementKey(
                 prefix = sharedElementPrefix

@@ -19,7 +19,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -27,7 +27,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NotificationAggregateScaffold(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     notification: Notification,
     profiles: List<Profile>,
@@ -54,7 +54,7 @@ fun NotificationAggregateScaffold(
                     in 0..6 -> profiles
                     else -> profiles.take(6)
                 }.forEach { profile ->
-                    sharedElementScope.updatedMovableSharedElementOf(
+                    panedSharedElementScope.updatedMovableSharedElementOf(
                         key = notification.avatarSharedElementKey(profile),
                         modifier = Modifier
                             .size(32.dp)

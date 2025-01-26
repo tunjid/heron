@@ -26,14 +26,14 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
 fun Post(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
@@ -56,7 +56,7 @@ fun Post(
             modifier = Modifier,
         ) {
             PostAttribution(
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 avatarShape = avatarShape,
                 onProfileClicked = onProfileClicked,
                 post = post,
@@ -75,7 +75,7 @@ fun Post(
                 PostText(
                     post = post,
                     sharedElementPrefix = sharedElementPrefix,
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { onPostClicked(post) },
@@ -87,7 +87,7 @@ fun Post(
                     quote = post.quote,
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     onPostMediaClicked = { media, index ->
                         onPostMediaClicked(post, media, index)
                     },
@@ -114,7 +114,7 @@ fun Post(
                     postId = post.cid,
                     postUri = post.uri,
                     sharedElementPrefix = sharedElementPrefix,
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     onReplyToPost = onReplyToPost,
                     onPostInteraction = onPostInteraction,
                 )
@@ -127,14 +127,14 @@ fun Post(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PostAttribution(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     avatarShape: RoundedPolygonShape,
     onProfileClicked: (Post, Profile) -> Unit,
     post: Post,
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     AttributionLayout(
         avatar = {
             updatedMovableSharedElementOf(
@@ -163,7 +163,7 @@ private fun PostAttribution(
                 author = post.author,
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
             )
         }
     )

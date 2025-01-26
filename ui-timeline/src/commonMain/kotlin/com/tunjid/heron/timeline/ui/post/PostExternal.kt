@@ -23,7 +23,7 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -32,9 +32,9 @@ internal fun PostExternal(
     feature: ExternalEmbed,
     postId: Id,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     FeatureContainer(
         modifier = Modifier.sharedElement(
             key = embedSharedElementKey(

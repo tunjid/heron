@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.scaffold.navigation.NavItem
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -58,15 +58,15 @@ internal fun NavScaffold(
 @Composable
 fun BottomAppBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
-) = with(sharedElementScope) {
+    panedSharedElementScope: PanedSharedElementScope,
+) = with(panedSharedElementScope) {
     val appState = LocalAppState.current
     val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
     BottomAppBar(
         modifier = modifier
             .sharedElement(
                 sharedContentState = sharedContentState,
-                animatedVisibilityScope = sharedElementScope,
+                animatedVisibilityScope = panedSharedElementScope,
                 zIndexInOverlay = BottomNavSharedElementZIndex,
             ),
     ) {

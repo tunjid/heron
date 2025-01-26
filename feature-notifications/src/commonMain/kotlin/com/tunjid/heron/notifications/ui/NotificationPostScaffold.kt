@@ -28,7 +28,7 @@ import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
@@ -36,7 +36,7 @@ import kotlinx.datetime.Instant
 @Composable
 internal fun NotificationPostScaffold(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
     notification: Notification.PostAssociated,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
@@ -50,7 +50,7 @@ internal fun NotificationPostScaffold(
             modifier = modifier,
         ) {
             PostAttribution(
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 avatarShape = RoundedPolygonShape.Circle,
                 onProfileClicked = onProfileClicked,
                 notification = notification,
@@ -69,7 +69,7 @@ internal fun NotificationPostScaffold(
                 PostText(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
@@ -98,7 +98,7 @@ internal fun NotificationPostScaffold(
                     postId = notification.associatedPost.cid,
                     postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     onReplyToPost = onReplyToPost,
                     onPostInteraction = onPostInteraction,
                 )
@@ -110,14 +110,14 @@ internal fun NotificationPostScaffold(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PostAttribution(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     avatarShape: RoundedPolygonShape,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     val post = notification.associatedPost
     AttributionLayout(
         avatar = {
@@ -147,7 +147,7 @@ private fun PostAttribution(
                 author = post.author,
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
             )
         }
     )

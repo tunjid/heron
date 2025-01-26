@@ -54,7 +54,7 @@ import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchStateHolder
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
@@ -136,7 +136,7 @@ abstract class SearchComponent(
                 topBar = {
                     RootDestinationTopAppBar(
                         modifier = Modifier,
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
@@ -168,7 +168,7 @@ abstract class SearchComponent(
                 },
                 bottomBar = {
                     BottomBar(
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
@@ -177,7 +177,7 @@ abstract class SearchComponent(
                 },
                 content = {
                     SearchScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier,
                         state = state,
                         actions = viewModel.accept,
@@ -235,10 +235,10 @@ private fun SearchBar(
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
 ) {
     BottomAppBar(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
     )
 }

@@ -15,11 +15,11 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun SharedElementScope.AppLogo(
+fun PanedSharedElementScope.AppLogo(
     modifier: Modifier,
 ) {
     Icon(

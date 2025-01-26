@@ -19,7 +19,7 @@ import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.post.feature.VisiblePostPost
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
 @Composable
@@ -29,7 +29,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: Id,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onPostMediaClicked: (Embed.Media, Int) -> Unit,
     onPostClicked: (Post) -> Unit,
 ) {
@@ -40,7 +40,7 @@ internal fun PostEmbed(
                 feature = embed,
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
                 },
@@ -49,7 +49,7 @@ internal fun PostEmbed(
             is ImageList -> PostImages(
                 feature = embed,
                 sharedElementPrefix = sharedElementPrefix,
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 onImageClicked = { index ->
                     onPostMediaClicked(embed, index)
                 }
@@ -58,7 +58,7 @@ internal fun PostEmbed(
             UnknownEmbed -> UnknownPostPost(onClick = {})
             is Video -> PostVideo(
                 video = embed,
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
                 onClicked = {
                     onPostMediaClicked(embed, 0)
@@ -79,7 +79,7 @@ internal fun PostEmbed(
                     post = quote,
                     author = quote.author,
                     sharedElementPrefix = sharedElementPrefix,
-                    sharedTransitionScope = sharedElementScope,
+                    sharedTransitionScope = panedSharedElementScope,
                     onClick = {
                         onPostClicked(quote)
                     }

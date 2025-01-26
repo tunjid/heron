@@ -27,7 +27,7 @@ import com.tunjid.treenav.strings.Route
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Stable
-interface SharedElementScope :
+interface PanedSharedElementScope :
     SharedTransitionScope, PaneScope<ThreePane, Route>, MovableSharedElementScope {
     fun Modifier.sharedElement(
         key: Any,
@@ -40,10 +40,10 @@ interface SharedElementScope :
 }
 
 @Stable
-private class PanedSharedElementScope(
+private class DelegatingPanedSharedElementScope(
     val paneScope: PaneScope<ThreePane, Route>,
     val movableSharedElementScope: MovableSharedElementScope,
-) : SharedElementScope,
+) : PanedSharedElementScope,
     PaneScope<ThreePane, Route> by paneScope,
     MovableSharedElementScope by movableSharedElementScope {
 
@@ -110,9 +110,9 @@ private class PanedSharedElementScope(
 fun PaneScope<
         ThreePane,
         Route
-        >.requirePanedSharedElementScope(): SharedElementScope =
+        >.requirePanedSharedElementScope(): PanedSharedElementScope =
     remember {
-        PanedSharedElementScope(
+        DelegatingPanedSharedElementScope(
             paneScope = this,
             movableSharedElementScope = requireThreePaneMovableSharedElementScope()
         )

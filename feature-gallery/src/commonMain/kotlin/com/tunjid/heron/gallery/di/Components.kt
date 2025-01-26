@@ -124,7 +124,7 @@ abstract class GalleryComponent(
                 },
                 content = {
                     GalleryScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier,
                         state = state,
                     )

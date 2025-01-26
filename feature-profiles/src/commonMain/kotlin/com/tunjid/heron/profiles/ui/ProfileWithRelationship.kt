@@ -22,18 +22,18 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileWithRelationship(
     modifier: Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     profileWithRelationship: ProfileWithRelationship,
     signedInProfileId: Id?,
     onProfileClicked: (Profile) -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     AttributionLayout(
         modifier = modifier,
         avatar = {

@@ -123,7 +123,7 @@ abstract class SignInComponent(
                 floatingActionButton = {
                     Fab(
                         modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         expanded = true,
                         text = stringResource(Res.string.sign_in),
                         icon = Icons.Rounded.Check,

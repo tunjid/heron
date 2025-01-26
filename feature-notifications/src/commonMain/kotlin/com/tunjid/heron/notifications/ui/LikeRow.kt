@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.liked_your_post
@@ -30,7 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LikeRow(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
     notification: Notification.Liked,
     aggregatedProfiles: List<Profile>,
@@ -38,7 +38,7 @@ fun LikeRow(
     onPostClicked: (Notification.PostAssociated) -> Unit,
 ) {
     NotificationAggregateScaffold(
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
         modifier = modifier.clickable {
             onPostClicked(notification)
         },

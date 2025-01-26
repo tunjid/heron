@@ -49,7 +49,7 @@ import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -59,7 +59,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun GalleryScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     state: State,
 ) {
@@ -106,7 +106,7 @@ internal fun GalleryScreen(
                                             }
                                         }
                                     ),
-                                sharedElementScope = sharedElementScope,
+                                panedSharedElementScope = panedSharedElementScope,
                                 item = item,
                                 sharedElementPrefix = state.sharedElementPrefix
                             )
@@ -117,7 +117,7 @@ internal fun GalleryScreen(
                                 .align(Alignment.Center)
                                 .fillMaxWidth()
                                 .aspectRatio(item.video.aspectRatioOrSquare),
-                            sharedElementScope = sharedElementScope,
+                            panedSharedElementScope = panedSharedElementScope,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix
                         )
@@ -172,11 +172,11 @@ internal fun GalleryScreen(
 @Composable
 private fun GalleryImage(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     item: GalleryItem.Photo,
     sharedElementPrefix: String,
 ) {
-    sharedElementScope.updatedMovableSharedElementOf(
+    panedSharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.image.sharedElementKey(
             prefix = sharedElementPrefix
@@ -203,7 +203,7 @@ private fun GalleryImage(
 @Composable
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     item: GalleryItem.Video,
     sharedElementPrefix: String,
 ) {
@@ -212,11 +212,11 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (sharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+    if (panedSharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else sharedElementScope.updatedMovableSharedElementOf(
+    else panedSharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.video.sharedElementKey(
             prefix = sharedElementPrefix

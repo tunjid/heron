@@ -18,7 +18,7 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
@@ -27,7 +27,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 internal fun PostImages(
     feature: ImageList,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onImageClicked: (Int) -> Unit,
 ) {
     LazyRow(
@@ -37,7 +37,7 @@ internal fun PostImages(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
-                sharedElementScope.updatedMovableSharedElementOf(
+                panedSharedElementScope.updatedMovableSharedElementOf(
                     modifier = when (feature.images.size) {
                         1 -> Modifier
                             .fillParentMaxWidth()

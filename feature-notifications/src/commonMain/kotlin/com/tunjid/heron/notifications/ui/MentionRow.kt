@@ -5,13 +5,13 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
 @Composable
 fun MentionRow(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
     notification: Notification.Mentioned,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
@@ -20,7 +20,7 @@ fun MentionRow(
 ) {
     NotificationPostScaffold(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
         now = now,
         notification = notification,
         onProfileClicked = onProfileClicked,

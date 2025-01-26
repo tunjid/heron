@@ -34,14 +34,12 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.profiles.ui.ProfileWithRelationship
 import com.tunjid.heron.profiles.ui.sharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
 internal fun ProfilesScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
@@ -65,7 +63,7 @@ internal fun ProfilesScreen(
             end = 8.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        userScrollEnabled = !sharedElementScope.isTransitionActive,
+        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
     ) {
         items(
             items = items,
@@ -75,7 +73,7 @@ internal fun ProfilesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     profileWithRelationship = item,
                     signedInProfileId = signedInProfileId,
                     onProfileClicked = { profile ->
