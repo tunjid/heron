@@ -107,6 +107,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
@@ -641,18 +642,20 @@ private fun ProfileTimeline(
         )
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (sharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 
     gridState.PivotedTilingEffect(

@@ -47,6 +47,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
 
@@ -176,18 +177,20 @@ internal fun PostDetailScreen(
         }
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (sharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 }
 

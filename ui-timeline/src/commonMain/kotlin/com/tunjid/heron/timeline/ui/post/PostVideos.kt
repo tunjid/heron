@@ -44,6 +44,7 @@ import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.threepane.ThreePane
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -66,13 +67,18 @@ internal fun PostVideo(
             .fillMaxWidth()
             .aspectRatio(video.aspectRatioOrSquare)
     ) {
-        sharedElementScope.updatedMovableSharedElementOf(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    videoPlayerController.play(videoId = video.playlist.uri)
-                    onClicked()
-                },
+        val videoModifier = Modifier
+            .fillMaxSize()
+            .clickable {
+                videoPlayerController.play(videoId = video.playlist.uri)
+                onClicked()
+            }
+        if (sharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+            modifier = videoModifier,
+            state = videoPlayerState,
+        )
+        else sharedElementScope.updatedMovableSharedElementOf(
+            modifier = videoModifier,
             key = video.sharedElementKey(
                 prefix = sharedElementPrefix
             ),

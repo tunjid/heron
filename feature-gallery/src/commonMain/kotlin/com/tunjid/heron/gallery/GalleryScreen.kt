@@ -52,6 +52,7 @@ import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -211,7 +212,11 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    sharedElementScope.updatedMovableSharedElementOf(
+    if (sharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+        modifier = modifier,
+        state = videoPlayerState,
+    )
+    else sharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.video.sharedElementKey(
             prefix = sharedElementPrefix

@@ -72,6 +72,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -297,18 +298,20 @@ private fun HomeTimeline(
         )
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (sharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 
     gridState.PivotedTilingEffect(
