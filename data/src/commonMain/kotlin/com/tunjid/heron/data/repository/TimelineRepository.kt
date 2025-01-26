@@ -458,7 +458,7 @@ class OfflineTimelineRepository(
     override fun lookupTimeline(
         lookup: UriLookup.Timeline
     ): Flow<Timeline.Home> = flow {
-        val uri = lookupUri(
+        val atUri = lookupUri(
             networkService = networkService,
             profileDao = profileDao,
             uriLookup = lookup,
@@ -466,7 +466,7 @@ class OfflineTimelineRepository(
 
        emitAll(
            when(lookup) {
-               is UriLookup.Timeline.FeedGenerator -> timelineDao.feedGenerator(uri.uri)
+               is UriLookup.Timeline.FeedGenerator -> timelineDao.feedGenerator(atUri.atUri)
                    .filterNotNull()
                    .distinctUntilChanged()
                    .flatMapLatest {
@@ -485,7 +485,7 @@ class OfflineTimelineRepository(
                        runCatchingWithNetworkRetry(times = 2) {
                            networkService.api.getFeedGenerator(
                                GetFeedGeneratorQueryParams(
-                                   feed = AtUri(uri.uri)
+                                   feed = atUri
                                )
                            )
                        }
@@ -495,7 +495,7 @@ class OfflineTimelineRepository(
                                multipleEntitySaverProvider.saveInTransaction { add(it) }
                            }
                    }
-               is UriLookup.Timeline.List -> timelineDao.list(uri.uri)
+               is UriLookup.Timeline.List -> timelineDao.list(atUri.atUri)
                    .filterNotNull()
                    .distinctUntilChanged()
                    .flatMapLatest {
@@ -516,7 +516,7 @@ class OfflineTimelineRepository(
                                GetListQueryParams(
                                    cursor = null,
                                    limit = 1,
-                                   list = AtUri(uri.uri)
+                                   list = atUri,
                                )
                            )
                        }

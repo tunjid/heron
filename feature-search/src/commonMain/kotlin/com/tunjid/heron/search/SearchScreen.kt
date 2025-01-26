@@ -161,6 +161,13 @@ internal fun SearchScreen(
                         .fillMaxSize()
                         .padding(top = 16.dp),
                     trends = state.trends,
+                    onTrendClicked = { trend ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToRawUrl(trend.link)
+                            )
+                        )
+                    },
                 )
 
                 ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
@@ -193,6 +200,7 @@ internal fun SearchScreen(
 private fun Trends(
     modifier: Modifier = Modifier,
     trends: Trends,
+    onTrendClicked: (Trend) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -209,7 +217,10 @@ private fun Trends(
             )
         }
         item {
-            TrendChips(trends.topics)
+            TrendChips(
+                trendList = trends.topics,
+                onTrendClicked = onTrendClicked,
+            )
         }
         item {
             TrendTitle(
@@ -219,7 +230,10 @@ private fun Trends(
             )
         }
         item {
-            TrendChips(trends.suggested)
+            TrendChips(
+                trendList = trends.suggested,
+                onTrendClicked = onTrendClicked,
+            )
         }
         item {
             Spacer(
@@ -269,14 +283,17 @@ private fun TrendTitle(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TrendChips(trendList: List<Trend>) {
+private fun TrendChips(
+    trendList: List<Trend>,
+    onTrendClicked: (Trend) -> Unit,
+) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         trendList.forEach { trend ->
             SuggestionChip(
                 shape = CircleShape,
-                onClick = {},
+                onClick = { onTrendClicked(trend) },
                 label = {
                     Text(text = trend.topic)
                 },

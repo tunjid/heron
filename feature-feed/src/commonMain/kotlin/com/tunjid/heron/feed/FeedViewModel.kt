@@ -98,9 +98,7 @@ private fun timelineStateHolderMutations(
     timelineRepository.lookupTimeline(lookup)
         .mapToMutation { timeline ->
             when (timelineStateHolder) {
-                // TODO: Update the timeline properties
-                null -> this
-                else -> copy(
+                null -> copy(
                     timelineStateHolder = timelineStateHolder(
                         timeline = timeline,
                         startNumColumns = 1,
@@ -108,6 +106,8 @@ private fun timelineStateHolderMutations(
                         timelineRepository = timelineRepository,
                     )
                 )
+                // TODO: Update the timeline properties
+                else -> this
             }
         }
 
