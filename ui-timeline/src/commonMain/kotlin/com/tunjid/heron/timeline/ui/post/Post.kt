@@ -99,6 +99,7 @@ fun Post(
                     ),
                     time = post.createdAt,
                     postId = post.cid,
+                    profileId = post.author.did,
                     reposts = post.repostCount,
                     quotes = post.quoteCount,
                     likes = post.likeCount,

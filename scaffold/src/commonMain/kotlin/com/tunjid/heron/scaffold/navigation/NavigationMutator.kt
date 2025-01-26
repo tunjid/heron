@@ -116,7 +116,7 @@ interface NavigationAction {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
-                        path = "/post/${post.cid.id}",
+                        path = "/profile/{profileId}/post/${post.cid.id}",
                         queryParams = mapOf(
                             "post" to listOf(post.toUrlEncodedBase64()),
                             "postUri" to listOf(post.uri.uri),
@@ -194,7 +194,7 @@ interface NavigationAction {
                             is Post.Likes -> "/post/${postId.id}/likes"
                             is Post.Repost -> "/post/${postId.id}/reposts"
                             is Profile.Followers -> "/profile/${profileId.id}/followers"
-                            is Profile.Following -> "/profile/${profileId.id}/following"
+                            is Profile.Following -> "/profile/${profileId.id}/follows"
                         },
                         queryParams = mapOf(
                             referringRouteQueryParams(ReferringRouteOption.Current),

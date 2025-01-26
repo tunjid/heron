@@ -44,7 +44,7 @@ import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/feed"
+private const val RoutePattern = "/profile/{profileId}/feed/{feedId}"
 
 private fun createRoute(
     routeParams: RouteParams,

@@ -77,7 +77,7 @@ import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/post/{postId}"
+private const val RoutePattern = "/profile/{profileId}/post/{postId}"
 
 private fun createRoute(
     routeParams: RouteParams,
