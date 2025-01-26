@@ -43,8 +43,8 @@ internal suspend fun lookupUri(
 
     return Uri(
         when (uriLookup) {
-            is UriLookup.FeedGenerator -> "${profileDid.did}/$FeedGeneratorCollection/${uriLookup.feedUriSuffix}"
-            is UriLookup.List -> "${profileDid.did}/$ListCollection/${uriLookup.listUriSuffix}"
+            is UriLookup.Timeline.FeedGenerator -> "${profileDid.did}/$FeedGeneratorCollection/${uriLookup.feedUriSuffix}"
+            is UriLookup.Timeline.List -> "${profileDid.did}/$ListCollection/${uriLookup.listUriSuffix}"
             is UriLookup.Post -> "${profileDid.did}/$PostCollection${uriLookup.postUriSuffix}"
             is UriLookup.Profile -> profileDid.did
         }

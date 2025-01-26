@@ -55,7 +55,7 @@ private fun createRoute(
 )
 
 internal val Route.feedLookup
-    get() = UriLookup.FeedGenerator(
+    get() = UriLookup.Timeline.FeedGenerator(
         profileHandleOrDid = routeParams.pathArgs.getValue("profileId"),
         feedUriSuffix = routeParams.pathArgs.getValue("feedId"),
     )

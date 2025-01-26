@@ -26,14 +26,18 @@ sealed class UriLookup {
         val postUriSuffix: String,
     ) : UriLookup()
 
-    data class FeedGenerator(
-        override val profileHandleOrDid: String,
-        val feedUriSuffix: String,
+    sealed class Timeline : UriLookup() {
 
-        ) : UriLookup()
+        data class FeedGenerator(
+            override val profileHandleOrDid: String,
+            val feedUriSuffix: String,
+        ) : Timeline()
 
-    data class List(
-        override val profileHandleOrDid: String,
-        val listUriSuffix: String,
-    ) : UriLookup()
+        data class List(
+            override val profileHandleOrDid: String,
+            val listUriSuffix: String,
+        ) : Timeline()
+
+    }
+
 }
