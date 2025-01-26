@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.feed.ActualFeedStateHolder
 import com.tunjid.heron.feed.FeedScreen
@@ -37,6 +38,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
@@ -51,6 +53,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
 )
+
+internal val Route.feedLookup
+    get() = UriLookup.FeedGenerator(
+        profileHandleOrDid = routeParams.pathArgs.getValue("profileId"),
+        feedUriSuffix = routeParams.pathArgs.getValue("feedId"),
+    )
 
 @KmpComponentCreate
 expect fun FeedNavigationComponent.Companion.create(): FeedNavigationComponent

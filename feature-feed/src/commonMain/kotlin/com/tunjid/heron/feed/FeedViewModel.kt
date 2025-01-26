@@ -49,7 +49,6 @@ class ActualFeedStateHolder(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), FeedStateHolder by scope.actionStateFlowMutator(
