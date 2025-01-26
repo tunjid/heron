@@ -32,19 +32,23 @@ sealed class Timeline {
 
         @Serializable
         data class List(
-            override val name: String,
-            val listUri: Uri,
             override val position: Int,
             override val lastRefreshed: Instant?,
-        ) : Home(listUri)
+            val feedList: FeedList,
+        ) : Home(feedList.uri) {
+            override val name: String
+                get() = feedList.name
+        }
 
         @Serializable
         data class Feed(
-            override val name: String,
-            val feedUri: Uri,
             override val position: Int,
             override val lastRefreshed: Instant?,
-        ) : Home(feedUri)
+            val feedGenerator: FeedGenerator,
+        ) : Home(feedGenerator.uri) {
+            override val name: String
+                get() = feedGenerator.displayName
+        }
 
     }
 

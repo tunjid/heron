@@ -3,7 +3,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class FeedList(
     val cid: Id,
     val uri: Uri,
