@@ -76,7 +76,7 @@ internal class ExoPlayerState internal constructor(
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
 
-    internal var videoStill by mutableStateOf<ImageBitmap?>(
+    override var videoStill by mutableStateOf<ImageBitmap?>(
         value = null,
         policy = referentialEqualityPolicy()
     )

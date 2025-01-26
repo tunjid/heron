@@ -38,6 +38,7 @@ import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
+import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.SharedElementScope
@@ -76,13 +77,16 @@ internal fun PostVideo(
                 prefix = sharedElementPrefix
             ),
             state = videoPlayerState,
-            alternateOutgoingSharedElement = { _, _ ->
-                // TODO: Put a still from the video here
+            alternateOutgoingSharedElement = { state, innerModifier ->
+                VideoStill(
+                    modifier = innerModifier,
+                    state = state,
+                )
             },
             sharedElement = { state, innerModifier ->
                 VideoPlayer(
                     modifier = innerModifier,
-                    state = state
+                    state = state,
                 )
             }
         )

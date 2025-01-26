@@ -46,6 +46,7 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.PlayerControls
 import com.tunjid.heron.media.video.VideoPlayer
+import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.SharedElementScope
@@ -216,8 +217,11 @@ private fun GalleryVideo(
             prefix = sharedElementPrefix
         ),
         state = videoPlayerState,
-        alternateOutgoingSharedElement = { _, _ ->
-            // TODO: Put a still from the video here
+        alternateOutgoingSharedElement = { state, innerModifier ->
+            VideoStill(
+                modifier = innerModifier,
+                state = state,
+            )
         },
         sharedElement = { state, innerModifier ->
             VideoPlayer(

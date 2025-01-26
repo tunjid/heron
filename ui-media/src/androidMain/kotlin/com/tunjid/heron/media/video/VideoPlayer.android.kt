@@ -57,14 +57,8 @@ actual fun VideoPlayer(
 
         )
         if (state.canShowStill) VideoStill(
-            lastBitmap = state.videoStill.takeIf {
-                state.status != PlayerStatus.Idle.Initial
-            },
-            url = state.thumbnailUrl,
             modifier = Modifier.fillMaxSize(),
-            alignment = alignment,
-            contentScale = contentScale,
-            shape = shape,
+            state = state,
         )
 
         // Capture a still frame from the video to use as a stand in when buffering playback
@@ -95,39 +89,6 @@ actual fun VideoPlayer(
             state.hasRenderedFirstFrame = false
             state.status = PlayerStatus.Idle.Evicted
         }
-    }
-}
-
-@Composable
-private fun VideoStill(
-    lastBitmap: ImageBitmap?,
-    url: String?,
-    modifier: Modifier,
-    alignment: Alignment,
-    contentScale: ContentScale,
-    shape: RoundedPolygonShape,
-) {
-    when (lastBitmap) {
-        null -> AsyncImage(
-            modifier = modifier,
-            args = remember(url, contentScale, alignment, shape) {
-                ImageArgs(
-                    url = url,
-                    contentDescription = null,
-                    alignment = alignment,
-                    contentScale = contentScale,
-                    shape = shape,
-                )
-            },
-        )
-
-        else -> Image(
-            modifier = modifier,
-            bitmap = lastBitmap,
-            contentDescription = null,
-            alignment = alignment,
-            contentScale = contentScale
-        )
     }
 }
 
