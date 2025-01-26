@@ -116,7 +116,7 @@ interface NavigationAction {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
-                        path = "/post/${post.cid.id}",
+                        path = "/profile/{profileId}/post/${post.cid.id}",
                         queryParams = mapOf(
                             "post" to listOf(post.toUrlEncodedBase64()),
                             "postUri" to listOf(post.uri.uri),
@@ -166,24 +166,28 @@ interface NavigationAction {
             }
         }
 
-        sealed class ToProfiles: Common() {
+        sealed class ToProfiles : Common() {
+            abstract val profileId: Id
+
             sealed class Post : ToProfiles() {
                 data class Likes(
+                    override val profileId: Id,
                     val postId: Id,
                 ) : Post()
 
                 data class Repost(
+                    override val profileId: Id,
                     val postId: Id,
                 ) : Post()
             }
 
             sealed class Profile : ToProfiles() {
                 data class Followers(
-                    val profileId: Id,
+                    override val profileId: Id,
                 ) : Profile()
 
                 data class Following(
-                    val profileId: Id,
+                    override val profileId: Id,
                 ) : Profile()
             }
 
@@ -191,10 +195,10 @@ interface NavigationAction {
                 navState.push(
                     routeString(
                         path = when (this@ToProfiles) {
-                            is Post.Likes -> "/post/${postId.id}/likes"
-                            is Post.Repost -> "/post/${postId.id}/reposts"
+                            is Post.Likes -> "/profile/${profileId.id}/post/${postId.id}/liked-by"
+                            is Post.Repost -> "/profile/${profileId.id}/post/${postId.id}/reposted-by"
                             is Profile.Followers -> "/profile/${profileId.id}/followers"
-                            is Profile.Following -> "/profile/${profileId.id}/following"
+                            is Profile.Following -> "/profile/${profileId.id}/follows"
                         },
                         queryParams = mapOf(
                             referringRouteQueryParams(ReferringRouteOption.Current),

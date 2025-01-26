@@ -65,10 +65,10 @@ import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val PostLikesPattern = "/post/{postId}/likes"
-private const val PostRepostsPattern = "/post/{postId}/reposts"
+private const val PostLikesPattern = "/profile/{profileId}/post/{postId}/liked-by"
+private const val PostRepostsPattern = "/profile/{profileId}/post/{postId}/reposted-by"
 private const val ProfileFollowersPattern = "/profile/{profileId}/followers"
-private const val ProfileFollowingPattern = "/profile/{profileId}/following"
+private const val ProfileFollowingPattern = "/profile/{profileId}/follows"
 
 private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
     set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postId) }

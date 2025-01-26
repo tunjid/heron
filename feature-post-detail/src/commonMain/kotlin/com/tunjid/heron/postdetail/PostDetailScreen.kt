@@ -110,11 +110,13 @@ internal fun PostDetailScreen(
                 Action.Navigate.DelegateTo(
                     when (postMetadata) {
                         is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
+                            profileId = postMetadata.profileId,
                             postId = postMetadata.postId,
                         )
 
                         is Post.Metadata.Quotes -> return@onPostMetadataClicked
                         is Post.Metadata.Reposts -> NavigationAction.Common.ToProfiles.Post.Repost(
+                            profileId = postMetadata.profileId,
                             postId = postMetadata.postId,
                         )
                     }

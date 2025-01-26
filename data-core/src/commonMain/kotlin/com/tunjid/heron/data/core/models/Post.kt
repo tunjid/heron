@@ -152,17 +152,20 @@ data class Post(
     sealed class Metadata {
         @Serializable
         data class Likes(
+            val profileId: Id,
             val postId: Id,
-        ): Metadata()
+        ) : Metadata()
 
         @Serializable
         data class Reposts(
+            val profileId: Id,
             val postId: Id,
-        ): Metadata()
+        ) : Metadata()
 
         @Serializable
         data class Quotes(
+            val profileId: Id,
             val postId: Id,
-        ): Metadata()
+        ) : Metadata()
     }
 }

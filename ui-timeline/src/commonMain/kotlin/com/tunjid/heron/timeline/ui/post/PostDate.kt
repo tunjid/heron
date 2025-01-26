@@ -34,6 +34,7 @@ internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
     postId: Id,
+    profileId: Id,
     reposts: Long,
     quotes: Long,
     likes: Long,
@@ -59,7 +60,14 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(Post.Metadata.Reposts(postId = postId)) },
+                        onClick = {
+                            onMetadataClicked(
+                                Post.Metadata.Reposts(
+                                    profileId = profileId,
+                                    postId = postId
+                                )
+                            )
+                        },
                     ),
                 count = reposts,
                 singularResource = Res.string.repost,
@@ -71,7 +79,14 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(Post.Metadata.Quotes(postId = postId)) },
+                        onClick = {
+                            onMetadataClicked(
+                                Post.Metadata.Quotes(
+                                    profileId = profileId,
+                                    postId = postId,
+                                )
+                            )
+                        },
                     ),
                 count = quotes,
                 singularResource = Res.string.quote,
@@ -83,7 +98,14 @@ internal fun PostMetadata(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = false),
-                        onClick = { onMetadataClicked(Post.Metadata.Likes(postId = postId)) },
+                        onClick = {
+                            onMetadataClicked(
+                                Post.Metadata.Likes(
+                                    profileId = profileId,
+                                    postId = postId,
+                                )
+                            )
+                        },
                     ),
                 count = likes,
                 singularResource = Res.string.like,
