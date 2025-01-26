@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.liked
 import heron.ui_timeline.generated.resources.reply
@@ -52,11 +52,11 @@ fun PostActions(
     postId: Id,
     postUri: Uri,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,

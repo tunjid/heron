@@ -73,7 +73,7 @@ import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
@@ -92,7 +92,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SearchScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -167,7 +167,7 @@ internal fun SearchScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     results = state.autoCompletedProfiles,
                     onProfileClicked = onProfileSearchResultClicked,
                 )
@@ -178,7 +178,7 @@ internal fun SearchScreen(
                         .padding(horizontal = 8.dp),
                     pagerState = pagerState,
                     state = state,
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     onProfileClicked = onProfileSearchResultClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
@@ -287,7 +287,7 @@ private fun TrendChips(trendList: List<Trend>) {
 
 @Composable
 private fun AutoCompleteProfileSearchResults(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     results: List<SearchResult.Profile>,
     onProfileClicked: (SearchResult.Profile) -> Unit,
@@ -304,7 +304,7 @@ private fun AutoCompleteProfileSearchResults(
             key = { it.profileWithRelationship.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     result = result,
                     onProfileClicked = onProfileClicked
                 )
@@ -318,7 +318,7 @@ private fun TabbedSearchResults(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     state: State,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
@@ -365,7 +365,7 @@ private fun TabbedSearchResults(
             pageContent = { page ->
                 val searchResultStateHolder = remember { state.searchStateHolders[page] }
                 SearchResults(
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     searchResultStateHolder = searchResultStateHolder,
                     onProfileClicked = onProfileClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
@@ -380,7 +380,7 @@ private fun TabbedSearchResults(
 @Composable
 private fun SearchResults(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
@@ -403,7 +403,7 @@ private fun SearchResults(
                     key = { it.post.cid.id },
                     itemContent = { result ->
                         PostSearchResult(
-                            sharedElementScope = sharedElementScope,
+                            panedSharedElementScope = panedSharedElementScope,
                             now = now,
                             result = result,
                             onProfileClicked = onPostSearchResultProfileClicked,
@@ -435,7 +435,7 @@ private fun SearchResults(
                     key = { it.profileWithRelationship.profile.did.id },
                     itemContent = { result ->
                         ProfileSearchResult(
-                            sharedElementScope = sharedElementScope,
+                            panedSharedElementScope = panedSharedElementScope,
                             result = result,
                             onProfileClicked = onProfileClicked
                         )

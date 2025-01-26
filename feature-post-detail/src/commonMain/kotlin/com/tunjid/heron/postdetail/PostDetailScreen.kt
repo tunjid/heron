@@ -46,13 +46,14 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
 
 @Composable
 internal fun PostDetailScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -138,7 +139,7 @@ internal fun PostDetailScreen(
         columns = StaggeredGridCells.Adaptive(340.dp),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = !sharedElementScope.isTransitionActive,
+        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
     ) {
         items(
             items = items,
@@ -151,7 +152,7 @@ internal fun PostDetailScreen(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item)
                         ),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
@@ -176,18 +177,20 @@ internal fun PostDetailScreen(
         }
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 }
 

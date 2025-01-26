@@ -16,22 +16,22 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
     onSignedInProfileClicked: (Profile, String) -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
-            sharedElementScope.AppLogo(
+            panedSharedElementScope.AppLogo(
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(36.dp)

@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.post
 import kotlinx.coroutines.launch
@@ -59,12 +59,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun Fab(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     text: String,
     icon: ImageVector,
     expanded: Boolean,
     onClick: () -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     // The material3 ExtendedFloatingActionButton does not allow for placing
     // Modifier.animateContentSize() on its row.
     FloatingActionButton(
@@ -124,13 +124,13 @@ private fun FabIcon(icon: ImageVector) {
 @Composable
 fun ComposeFab(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     expanded: Boolean,
     onClick: () -> Unit,
 ) {
     Fab(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
         onClick = onClick,
         text = stringResource(Res.string.post),
         icon = Icons.Rounded.Edit,

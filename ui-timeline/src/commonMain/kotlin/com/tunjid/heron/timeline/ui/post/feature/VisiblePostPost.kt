@@ -17,7 +17,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostHeadline
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -28,7 +28,7 @@ internal fun VisiblePostPost(
     post: Post,
     author: Profile,
     sharedElementPrefix: String,
-    sharedTransitionScope: SharedElementScope,
+    sharedTransitionScope: PanedSharedElementScope,
     onClick: () -> Unit,
 ) {
     FeatureContainer(
@@ -55,7 +55,7 @@ internal fun VisiblePostPost(
                 author = author,
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
-                sharedElementScope = sharedTransitionScope,
+                panedSharedElementScope = sharedTransitionScope,
             )
         }
         Text(

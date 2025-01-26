@@ -23,7 +23,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
@@ -32,10 +32,10 @@ import kotlinx.datetime.Instant
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileSearchResult(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     result: SearchResult.Profile,
     onProfileClicked: (SearchResult.Profile) -> Unit,
-) = with(sharedElementScope) {
+) = with(panedSharedElementScope) {
     AttributionLayout(
         modifier = Modifier
             .clickable { onProfileClicked(result) },
@@ -82,7 +82,7 @@ fun ProfileSearchResult(
 
 @Composable
 internal fun PostSearchResult(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
     result: SearchResult.Post,
     onProfileClicked: (SearchResult.Post) -> Unit,
@@ -103,7 +103,7 @@ internal fun PostSearchResult(
                         start = 16.dp,
                         end = 16.dp
                     ),
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 now = now,
                 post = result.post,
                 embed = result.post.embed,

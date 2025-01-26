@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -221,7 +220,7 @@ abstract class ProfilesComponent(
                 },
                 content = { paddingValues ->
                     ProfilesScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(
                                 paddingValues = PaddingValues(

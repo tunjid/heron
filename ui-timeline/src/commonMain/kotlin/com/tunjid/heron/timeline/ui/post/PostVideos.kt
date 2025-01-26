@@ -38,18 +38,20 @@ import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
+import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.threepane.ThreePane
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostVideo(
     video: Video,
     sharedElementPrefix: String,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
@@ -65,24 +67,32 @@ internal fun PostVideo(
             .fillMaxWidth()
             .aspectRatio(video.aspectRatioOrSquare)
     ) {
-        sharedElementScope.updatedMovableSharedElementOf(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    videoPlayerController.play(videoId = video.playlist.uri)
-                    onClicked()
-                },
+        val videoModifier = Modifier
+            .fillMaxSize()
+            .clickable {
+                videoPlayerController.play(videoId = video.playlist.uri)
+                onClicked()
+            }
+        if (panedSharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+            modifier = videoModifier,
+            state = videoPlayerState,
+        )
+        else panedSharedElementScope.updatedMovableSharedElementOf(
+            modifier = videoModifier,
             key = video.sharedElementKey(
                 prefix = sharedElementPrefix
             ),
             state = videoPlayerState,
-            alternateOutgoingSharedElement = { _, _ ->
-                // TODO: Put a still from the video here
+            alternateOutgoingSharedElement = { state, innerModifier ->
+                VideoStill(
+                    modifier = innerModifier,
+                    state = state,
+                )
             },
             sharedElement = { state, innerModifier ->
                 VideoPlayer(
                     modifier = innerModifier,
-                    state = state
+                    state = state,
                 )
             }
         )

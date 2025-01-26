@@ -67,11 +67,12 @@ import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -79,7 +80,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun HomeScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -109,7 +110,7 @@ internal fun HomeScreen(
             pageContent = { page ->
                 val timelineStateHolder = remember { updatedPages[page].value }
                 HomeTimeline(
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     timelineStateHolder = timelineStateHolder,
                     actions = actions,
                 )
@@ -170,7 +171,7 @@ private fun HomeTabs(
 
 @Composable
 private fun HomeTimeline(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -264,7 +265,7 @@ private fun HomeTimeline(
             end = 8.dp,
         ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = !sharedElementScope.isTransitionActive,
+        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
     ) {
         items(
             items = items,
@@ -277,7 +278,7 @@ private fun HomeTimeline(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item)
                         ),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sourceId,
@@ -297,18 +298,20 @@ private fun HomeTimeline(
         )
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 
     gridState.PivotedTilingEffect(

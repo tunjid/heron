@@ -69,7 +69,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.byteOffsets
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -78,7 +78,7 @@ import kotlin.math.min
 
 @Composable
 internal fun ComposeScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
@@ -92,7 +92,7 @@ internal fun ComposeScreen(
             mutableStateOf(TextFieldValue(AnnotatedString("")))
         }
         ReplyingTo(
-            sharedElementScope = sharedElementScope,
+            panedSharedElementScope = panedSharedElementScope,
             type = state.postType,
             sharedElementPrefix = state.sharedElementPrefix
         )
@@ -157,7 +157,7 @@ private fun Post(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ReplyingTo(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     type: Post.Create?,
     sharedElementPrefix: String?,
 ) {
@@ -165,7 +165,7 @@ private fun ReplyingTo(
         is Post.Create.Mention -> Unit
         is Post.Create.Reply -> AuthorAndPost(
             avatar = {
-                sharedElementScope.updatedMovableSharedElementOf(
+                panedSharedElementScope.updatedMovableSharedElementOf(
                     modifier = Modifier
                         .size(48.dp),
                     key = type.parent.avatarSharedElementKey(sharedElementPrefix),

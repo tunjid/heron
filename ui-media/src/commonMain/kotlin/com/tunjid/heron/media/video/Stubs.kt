@@ -2,6 +2,7 @@ package com.tunjid.heron.media.video
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
@@ -65,4 +66,5 @@ private data class NoOpVideoPlayerState(
     override var shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
     override val status: PlayerStatus = PlayerStatus.Idle.Initial,
     override val shouldReplay: Boolean = false,
+    override val videoStill: ImageBitmap? = null,
 ) : VideoPlayerState

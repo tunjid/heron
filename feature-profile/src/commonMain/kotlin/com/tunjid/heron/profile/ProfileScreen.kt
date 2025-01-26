@@ -99,7 +99,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -107,6 +107,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
@@ -122,7 +123,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun ProfileScreen(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -148,7 +149,7 @@ internal fun ProfileScreen(
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
-                movableSharedElementScope = sharedElementScope,
+                movableSharedElementScope = panedSharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
                 timelineTabs = state.timelines.map { timeline ->
@@ -200,7 +201,7 @@ internal fun ProfileScreen(
                     pageContent = { page ->
                         val timelineStateHolder = remember { state.timelineStateHolders[page] }
                         ProfileTimeline(
-                            sharedElementScope = sharedElementScope,
+                            panedSharedElementScope = panedSharedElementScope,
                             timelineStateHolder = timelineStateHolder,
                             actions = actions,
                         )
@@ -520,7 +521,7 @@ private fun ProfileTabs(
 
 @Composable
 private fun ProfileTimeline(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -621,7 +622,7 @@ private fun ProfileTimeline(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item)
                         ),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sourceId,
@@ -641,18 +642,20 @@ private fun ProfileTimeline(
         )
     }
 
-    val videoPlayerController = LocalVideoPlayerController.current
-    gridState.interpolatedVisibleIndexEffect(
-        denominator = 10,
-        itemsAvailable = items.size,
-    ) { interpolatedIndex ->
-        val flooredIndex = floor(interpolatedIndex).toInt()
-        val fraction = interpolatedIndex - flooredIndex
-        items.getOrNull(flooredIndex)
-            ?.let(videoStates::retrieveStateFor)
-            ?.videoIdAt(fraction)
-            ?.let(videoPlayerController::play)
-            ?: videoPlayerController.pauseActiveVideo()
+    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = items.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            items.getOrNull(flooredIndex)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
+        }
     }
 
     gridState.PivotedTilingEffect(

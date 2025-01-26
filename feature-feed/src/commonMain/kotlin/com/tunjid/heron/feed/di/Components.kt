@@ -109,7 +109,7 @@ abstract class FeedComponent(
                 },
                 content = { paddingValues ->
                     FeedScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )

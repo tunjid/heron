@@ -36,7 +36,7 @@ import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import heron.ui_timeline.generated.resources.Res
@@ -47,7 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TimelineItem(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
@@ -85,7 +85,7 @@ fun TimelineItem(
                 )
             }
             if (item is TimelineItem.Thread) ThreadedPost(
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 item = item,
                 sharedElementPrefix = sharedElementPrefix,
                 now = now,
@@ -98,7 +98,7 @@ fun TimelineItem(
             ) else Post(
                 modifier = Modifier
                     .childThreadNode(videoId = item.post.videoId),
-                sharedElementScope = sharedElementScope,
+                panedSharedElementScope = panedSharedElementScope,
                 now = now,
                 post = item.post,
                 embed = item.post.embed,
@@ -121,7 +121,7 @@ fun TimelineItem(
 
 @Composable
 private fun ThreadedPost(
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
@@ -138,7 +138,7 @@ private fun ThreadedPost(
                 Post(
                     modifier = Modifier
                         .childThreadNode(videoId = post.videoId),
-                    sharedElementScope = sharedElementScope,
+                    panedSharedElementScope = panedSharedElementScope,
                     now = now,
                     post = post,
                     embed = post.embed,

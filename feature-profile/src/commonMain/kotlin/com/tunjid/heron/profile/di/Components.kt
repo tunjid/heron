@@ -62,7 +62,7 @@ import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -175,7 +175,7 @@ abstract class ProfileComponent(
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
@@ -202,7 +202,7 @@ abstract class ProfileComponent(
                 },
                 bottomBar = {
                     BottomBar(
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
                         }
@@ -213,7 +213,7 @@ abstract class ProfileComponent(
                 },
                 content = {
                     ProfileScreen(
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
@@ -266,10 +266,10 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
 ) {
     BottomAppBar(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
     )
 }

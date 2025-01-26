@@ -53,7 +53,7 @@ import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.SharedElementScope
+import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
@@ -141,7 +141,7 @@ abstract class HomeComponent(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -169,7 +169,7 @@ abstract class HomeComponent(
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
@@ -187,7 +187,7 @@ abstract class HomeComponent(
                 },
                 bottomBar = {
                     BottomBar(
-                        sharedElementScope = sharedElementScope,
+                        panedSharedElementScope = sharedElementScope,
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
@@ -196,7 +196,7 @@ abstract class HomeComponent(
                 },
                 content = {
                     HomeScreen(
-                        sharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = requirePanedSharedElementScope(),
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
@@ -210,10 +210,10 @@ abstract class HomeComponent(
 @Composable
 private fun BottomBar(
     modifier: Modifier = Modifier,
-    sharedElementScope: SharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
 ) {
     BottomAppBar(
         modifier = modifier,
-        sharedElementScope = sharedElementScope,
+        panedSharedElementScope = panedSharedElementScope,
     )
 }

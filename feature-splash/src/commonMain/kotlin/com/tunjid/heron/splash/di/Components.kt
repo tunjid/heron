@@ -91,7 +91,7 @@ abstract class SplashComponent(
             viewModel.state.collectAsStateWithLifecycle()
 
             SplashScreen(
-                sharedElementScope = requirePanedSharedElementScope(),
+                panedSharedElementScope = requirePanedSharedElementScope(),
                 modifier = Modifier,
             )
         }

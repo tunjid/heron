@@ -1,6 +1,5 @@
 package com.tunjid.heron.ui
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -28,8 +27,8 @@ import com.tunjid.treenav.strings.Route
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Stable
-interface SharedElementScope :
-    SharedTransitionScope, AnimatedVisibilityScope, MovableSharedElementScope {
+interface PanedSharedElementScope :
+    SharedTransitionScope, PaneScope<ThreePane, Route>, MovableSharedElementScope {
     fun Modifier.sharedElement(
         key: Any,
         boundsTransform: BoundsTransform = DefaultBoundsTransform,
@@ -41,11 +40,11 @@ interface SharedElementScope :
 }
 
 @Stable
-private class PanedSharedElementScope(
+private class DelegatingPanedSharedElementScope(
     val paneScope: PaneScope<ThreePane, Route>,
     val movableSharedElementScope: MovableSharedElementScope,
-) : SharedElementScope,
-    AnimatedVisibilityScope by paneScope,
+) : PanedSharedElementScope,
+    PaneScope<ThreePane, Route> by paneScope,
     MovableSharedElementScope by movableSharedElementScope {
 
     @OptIn(ExperimentalSharedTransitionApi::class)
@@ -111,9 +110,9 @@ private class PanedSharedElementScope(
 fun PaneScope<
         ThreePane,
         Route
-        >.requirePanedSharedElementScope(): SharedElementScope =
+        >.requirePanedSharedElementScope(): PanedSharedElementScope =
     remember {
-        PanedSharedElementScope(
+        DelegatingPanedSharedElementScope(
             paneScope = this,
             movableSharedElementScope = requireThreePaneMovableSharedElementScope()
         )
@@ -123,12 +122,12 @@ fun PaneScope<
 private val ParentClip: OverlayClip =
     object : OverlayClip {
         override fun getClipPath(
-            state: SharedContentState,
+            sharedContentState: SharedContentState,
             bounds: Rect,
             layoutDirection: LayoutDirection,
             density: Density,
         ): Path? {
-            return state.parentSharedContentState?.clipPathInOverlay
+            return sharedContentState.parentSharedContentState?.clipPathInOverlay
         }
     }
 
