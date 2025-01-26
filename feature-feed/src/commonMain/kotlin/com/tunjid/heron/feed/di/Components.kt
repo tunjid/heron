@@ -17,7 +17,6 @@
 package com.tunjid.heron.feed.di
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.FilledTonalIconButton
@@ -27,13 +26,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.di.DataComponent
@@ -41,7 +40,7 @@ import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedStateHolder
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolderCreator
-import com.tunjid.heron.feed.ui.Timeline
+import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
@@ -127,19 +126,16 @@ abstract class FeedComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    val timelineStateHolder = remember(state.timelineStateHolder) {
-                        state.timelineStateHolder
-                    }
                     TopBar(
-                        timeline = timelineStateHolder?.state?.collectAsStateWithLifecycle()?.value?.timeline,
+                        timeline = state.timelineState?.timeline,
+                        creator = state.creator,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     FeedScreen(
                         panedSharedElementScope = requirePanedSharedElementScope(),
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                        modifier = Modifier,
                         state = state,
                         actions = viewModel.accept,
                     )
@@ -152,12 +148,10 @@ abstract class FeedComponent(
 @Composable
 private fun TopBar(
     timeline: Timeline?,
+    creator: Profile?,
     onBackPressed: () -> Unit,
 ) {
     TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
         navigationIcon = {
             FilledTonalIconButton(
                 modifier = Modifier,
@@ -175,8 +169,9 @@ private fun TopBar(
             }
         },
         title = {
-            Timeline(
+            TimelineTitle(
                 timeline = timeline,
+                creator = creator,
             )
         },
     )

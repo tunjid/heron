@@ -170,7 +170,7 @@ private fun FeedTimeline(
         columns = StaggeredGridCells.Adaptive(CardSize),
         verticalItemSpacing = 8.dp,
         contentPadding = PaddingValues(
-            top = StatusBarHeight + ToolbarHeight + TabsHeight,
+            top = StatusBarHeight + ToolbarHeight,
             start = 8.dp,
             end = 8.dp,
         ),

@@ -17,6 +17,8 @@
 package com.tunjid.heron.feed
 
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.domain.timeline.TimelineState
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -27,6 +29,9 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val creator: Profile? = null,
+    @Transient
+    val timelineState: TimelineState? = null,
     @Transient
     val timelineStateHolder: TimelineStateHolder? = null,
     @Transient

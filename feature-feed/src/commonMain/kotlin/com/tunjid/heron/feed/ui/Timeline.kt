@@ -3,6 +3,7 @@ package com.tunjid.heron.feed.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -20,10 +22,16 @@ import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun Timeline(
+internal fun TimelineTitle(
     timeline: Timeline?,
+    creator: Profile?
 ) {
-    if (timeline != null) Row {
+    if (timeline != null) Row(
+        modifier = Modifier
+            .padding(
+                horizontal = 8.dp
+            )
+    ) {
         timeline.avatarImageArgs?.let { args ->
             AsyncImage(
                 modifier = Modifier
@@ -38,7 +46,7 @@ internal fun Timeline(
                 style = MaterialTheme.typography.titleSmallEmphasized,
             )
             Text(
-                text = timeline.description,
+                text = timeline.getDescription(creator),
                 style = MaterialTheme.typography.labelSmall,
             )
         }
@@ -70,14 +78,15 @@ private val Timeline.avatarImageArgs: ImageArgs?
             -> null
     }
 
-private val Timeline.description: String
-    get() = when (this) {
-        is Timeline.Home.Feed -> feedGenerator.creatorId.id
-        is Timeline.Home.List -> feedList.creatorId.id
+private fun Timeline.getDescription(
+    creator: Profile?
+): String = when (this) {
+    is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creatorId.id
+    is Timeline.Home.List -> creator?.displayName ?: feedList.creatorId.id
 
-        is Timeline.Home.Following,
-        is Timeline.Profile,
-            -> null
-    } ?: ""
+    is Timeline.Home.Following,
+    is Timeline.Profile,
+        -> null
+} ?: ""
 
 private val TimelineAvatarShape = RoundedCornerShape(4.dp).toRoundedPolygonShape()
