@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,13 +17,13 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun TimelineTitle(
     timeline: Timeline?,
-    creator: Profile?
+    creator: Profile?,
 ) {
     if (timeline != null) Row(
         modifier = Modifier
@@ -35,10 +34,10 @@ internal fun TimelineTitle(
         timeline.avatarImageArgs?.let { args ->
             AsyncImage(
                 modifier = Modifier
-                    .size(36.dp),
+                    .size(40.dp),
                 args = args,
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(12.dp))
         }
         Column {
             Text(
@@ -79,7 +78,7 @@ private val Timeline.avatarImageArgs: ImageArgs?
     }
 
 private fun Timeline.getDescription(
-    creator: Profile?
+    creator: Profile?,
 ): String = when (this) {
     is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creatorId.id
     is Timeline.Home.List -> creator?.displayName ?: feedList.creatorId.id
@@ -89,4 +88,6 @@ private fun Timeline.getDescription(
         -> null
 } ?: ""
 
-private val TimelineAvatarShape = RoundedCornerShape(4.dp).toRoundedPolygonShape()
+private val TimelineAvatarShape = RoundedPolygonShape.Star(
+    (0..<40).map { 40.dp }
+)
