@@ -18,15 +18,20 @@ package com.tunjid.heron.feed
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
@@ -47,6 +52,7 @@ class FeedStateHolderCreator(
 @Inject
 class ActualFeedStateHolder(
     navActions: (NavigationMutation) -> Unit,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -63,6 +69,9 @@ class ActualFeedStateHolder(
         ) {
             when (val action = type()) {
 
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
 
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
@@ -71,3 +80,10 @@ class ActualFeedStateHolder(
         }
     }
 )
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }

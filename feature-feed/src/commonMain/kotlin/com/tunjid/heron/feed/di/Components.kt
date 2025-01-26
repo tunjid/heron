@@ -120,6 +120,8 @@ abstract class FeedComponent(
                         panedSharedElementScope = requirePanedSharedElementScope(),
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
+                        state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )

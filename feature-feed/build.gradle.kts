@@ -31,6 +31,7 @@ kotlin {
                 implementation(project(":data"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
+                implementation(project(":domain-timeline"))
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)

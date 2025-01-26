@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.feed
 
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -26,11 +28,17 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     @Transient
+    val timelineStateHolder: TimelineStateHolder? = null,
+    @Transient
     val messages: List<String> = emptyList(),
 )
 
 
 sealed class Action(val key: String) {
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {
@@ -38,5 +46,9 @@ sealed class Action(val key: String) {
                 navState.pop()
             }
         }
+
+        data class DelegateTo(
+            val delegate: NavigationAction.Common,
+        ) : Navigate(), NavigationAction by delegate
     }
 }
