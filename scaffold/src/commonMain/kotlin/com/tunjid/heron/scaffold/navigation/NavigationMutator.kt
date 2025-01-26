@@ -166,6 +166,14 @@ interface NavigationAction {
             }
         }
 
+        data class ToRawUrl(
+            val path: String,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(path.toRoute)
+            }
+        }
+
         sealed class ToProfiles : Common() {
             abstract val profileId: Id
 

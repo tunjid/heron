@@ -5,6 +5,7 @@ import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetAuthorFeedFilter
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
+import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetFeedQueryParams
 import app.bsky.feed.GetFeedResponse
 import app.bsky.feed.GetListFeedQueryParams
@@ -13,11 +14,13 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.PostDao
@@ -29,6 +32,7 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
+import com.tunjid.heron.data.utilities.lookupUri
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -39,6 +43,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -86,6 +91,10 @@ class TimelineQuery(
 
 interface TimelineRepository {
     fun homeTimelines(): Flow<List<Timeline.Home>>
+
+    fun lookupTimeline(
+        lookup: UriLookup.Timeline,
+    ): Flow<Timeline.Home>
 
     fun hasUpdates(
         timeline: Timeline,
@@ -141,7 +150,7 @@ class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     networkService.api.getFeed(
                         GetFeedQueryParams(
-                            feed = AtUri(timeline.feedUri.uri),
+                            feed = AtUri(timeline.source.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         )
@@ -160,7 +169,7 @@ class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     networkService.api.getListFeed(
                         GetListFeedQueryParams(
-                            list = AtUri(timeline.listUri.uri),
+                            list = AtUri(timeline.source.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         )
@@ -242,7 +251,7 @@ class OfflineTimelineRepository(
             networkRequestBlock = {
                 networkService.api.getFeed(
                     GetFeedQueryParams(
-                        feed = AtUri(timeline.feedUri.uri),
+                        feed = AtUri(timeline.source.uri),
                         limit = 1,
                         cursor = null,
                     )
@@ -271,7 +280,7 @@ class OfflineTimelineRepository(
             networkRequestBlock = {
                 networkService.api.getListFeed(
                     GetListFeedQueryParams(
-                        list = AtUri(timeline.listUri.uri),
+                        list = AtUri(timeline.source.uri),
                         limit = 1,
                         cursor = null,
                     )
@@ -382,37 +391,15 @@ class OfflineTimelineRepository(
             .flatMapLatest { timelinePreferences ->
                 timelinePreferences.mapIndexed { index, preference ->
                     when (Type.safeValueOf(preference.type)) {
-                        Type.Feed -> timelineDao.feedGenerator(preference.value)
-                            .filterNotNull()
-                            .distinctUntilChanged()
-                            .flatMapLatest {
-                                timelineDao.lastFetchKey(it.uri.uri)
-                                    .distinctUntilChanged()
-                                    .map { fetchKeyEntity ->
-                                        Timeline.Home.Feed(
-                                            name = it.displayName,
-                                            feedUri = it.uri,
-                                            position = index,
-                                            lastRefreshed = fetchKeyEntity?.lastFetchedAt,
-                                        )
-                                    }
-                            }
+                        Type.Feed -> feedGeneratorTimeline(
+                            atUri = AtUri(preference.value),
+                            position = index,
+                        )
 
-                        Type.List -> timelineDao.list(preference.value)
-                            .filterNotNull()
-                            .distinctUntilChanged()
-                            .flatMapLatest {
-                                timelineDao.lastFetchKey(it.uri.uri)
-                                    .distinctUntilChanged()
-                                    .map { fetchKeyEntity ->
-                                        Timeline.Home.List(
-                                            listUri = it.uri,
-                                            name = it.name,
-                                            position = index,
-                                            lastRefreshed = fetchKeyEntity?.lastFetchedAt,
-                                        )
-                                    }
-                            }
+                        Type.List -> listTimeline(
+                            atUri = AtUri(preference.value),
+                            position = index,
+                        )
 
                         Type.Timeline -> timelineDao.lastFetchKey(Constants.timelineFeed.uri)
                             .distinctUntilChanged()
@@ -445,6 +432,60 @@ class OfflineTimelineRepository(
             }
             .distinctUntilChanged()
             .debounce(InvalidationTrackerDebounceMillis)
+
+    override fun lookupTimeline(
+        lookup: UriLookup.Timeline,
+    ): Flow<Timeline.Home> = flow {
+        val atUri = lookupUri(
+            networkService = networkService,
+            profileDao = profileDao,
+            uriLookup = lookup,
+        ) ?: return@flow
+
+        emitAll(
+            when (lookup) {
+                is UriLookup.Timeline.FeedGenerator -> feedGeneratorTimeline(
+                    atUri = atUri,
+                    position = 0
+                )
+                    .withRefresh {
+                        runCatchingWithNetworkRetry(times = 2) {
+                            networkService.api.getFeedGenerator(
+                                GetFeedGeneratorQueryParams(
+                                    feed = atUri
+                                )
+                            )
+                        }
+                            .getOrNull()
+                            ?.view
+                            ?.let {
+                                multipleEntitySaverProvider.saveInTransaction { add(it) }
+                            }
+                    }
+
+                is UriLookup.Timeline.List -> listTimeline(
+                    atUri = atUri,
+                    position = 0
+                )
+                    .withRefresh {
+                        runCatchingWithNetworkRetry(times = 2) {
+                            networkService.api.getList(
+                                GetListQueryParams(
+                                    cursor = null,
+                                    limit = 1,
+                                    list = atUri,
+                                )
+                            )
+                        }
+                            .getOrNull()
+                            ?.list
+                            ?.let {
+                                multipleEntitySaverProvider.saveInTransaction { add(it) }
+                            }
+                    }
+            }
+        )
+    }
 
     private fun <NetworkResponse : Any> nextCursorFlow(
         query: TimelineQuery,
@@ -636,6 +677,43 @@ class OfflineTimelineRepository(
                     }
                 }
             }
+
+    private fun feedGeneratorTimeline(
+        atUri: AtUri,
+        position: Int,
+
+        ) = timelineDao.feedGenerator(atUri.atUri)
+        .filterNotNull()
+        .distinctUntilChanged()
+        .flatMapLatest {
+            timelineDao.lastFetchKey(it.uri.uri)
+                .distinctUntilChanged()
+                .map { fetchKeyEntity ->
+                    Timeline.Home.Feed(
+                        position = position,
+                        feedGenerator = it.asExternalModel(),
+                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                    )
+                }
+        }
+
+    private fun listTimeline(
+        atUri: AtUri,
+        position: Int,
+    ) = timelineDao.list(atUri.atUri)
+        .filterNotNull()
+        .distinctUntilChanged()
+        .flatMapLatest {
+            timelineDao.lastFetchKey(it.uri.uri)
+                .distinctUntilChanged()
+                .map { fetchKeyEntity ->
+                    Timeline.Home.List(
+                        position = position,
+                        feedList = it.asExternalModel(),
+                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                    )
+                }
+        }
 
     private fun spinThread(
         list: List<TimelineItem.Thread>,
