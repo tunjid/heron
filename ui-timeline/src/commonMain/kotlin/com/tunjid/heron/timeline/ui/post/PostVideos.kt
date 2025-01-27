@@ -42,9 +42,9 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
-import com.tunjid.treenav.compose.threepane.ThreePane
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -73,7 +73,7 @@ internal fun PostVideo(
                 videoPlayerController.play(videoId = video.playlist.uri)
                 onClicked()
             }
-        if (panedSharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+        if (!panedSharedElementScope.isPrimaryOrPreview) VideoStill(
             modifier = videoModifier,
             state = videoPlayerState,
         )
