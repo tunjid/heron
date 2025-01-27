@@ -30,7 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.notifications.Action
-import com.tunjid.heron.notifications.ActualNotificationsStateHolder
+import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.NotificationsStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -99,7 +99,7 @@ abstract class NotificationsComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualNotificationsStateHolder> {
+            val viewModel = viewModel<ActualNotificationsViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

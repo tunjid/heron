@@ -38,7 +38,7 @@ import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.Action
-import com.tunjid.heron.signin.ActualSignInStateHolder
+import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolderCreator
 import com.tunjid.heron.signin.sessionRequest
@@ -101,7 +101,7 @@ abstract class SignInComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualSignInStateHolder> {
+            val viewModel = viewModel<ActualSignInViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

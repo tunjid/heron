@@ -35,7 +35,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.feed.Action
-import com.tunjid.heron.feed.ActualFeedStateHolder
+import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolderCreator
 import com.tunjid.heron.feed.ui.TimelineTitle
@@ -111,7 +111,7 @@ abstract class FeedComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualFeedStateHolder> {
+            val viewModel = viewModel<ActualFeedViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),

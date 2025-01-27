@@ -47,16 +47,16 @@ typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class PostDetailStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualPostDetailStateHolder = creator.invoke(scope, route)
+    ): ActualPostDetailViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualPostDetailStateHolder(
+class ActualPostDetailViewModel(
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,

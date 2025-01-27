@@ -41,16 +41,16 @@ typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class GalleryStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualGalleryStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualGalleryViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualGalleryStateHolder = creator.invoke(scope, route)
+    ): ActualGalleryViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualGalleryStateHolder(
+class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,

@@ -54,16 +54,16 @@ typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>
 
 @Inject
 class NotificationsStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualNotificationsStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualNotificationsViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualNotificationsStateHolder = creator.invoke(scope, route)
+    ): ActualNotificationsViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualNotificationsStateHolder(
+class ActualNotificationsViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
     authTokenRepository: AuthTokenRepository,

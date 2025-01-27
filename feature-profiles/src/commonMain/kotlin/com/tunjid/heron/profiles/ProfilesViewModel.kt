@@ -55,16 +55,16 @@ typealias ProfilesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ProfilesStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfilesStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfilesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualProfilesStateHolder = creator.invoke(scope, route)
+    ): ActualProfilesViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualProfilesStateHolder(
+class ActualProfilesViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     postRepository: PostRepository,

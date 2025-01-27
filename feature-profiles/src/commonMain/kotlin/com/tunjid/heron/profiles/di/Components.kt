@@ -37,7 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profiles.Action
-import com.tunjid.heron.profiles.ActualProfilesStateHolder
+import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolderCreator
@@ -200,7 +200,7 @@ abstract class ProfilesComponent(
         },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualProfilesStateHolder> {
+            val viewModel = viewModel<ActualProfilesViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),

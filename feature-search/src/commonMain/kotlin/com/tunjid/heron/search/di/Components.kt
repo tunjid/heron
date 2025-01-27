@@ -51,7 +51,7 @@ import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
-import com.tunjid.heron.search.ActualSearchStateHolder
+import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolderCreator
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -112,7 +112,7 @@ abstract class SearchComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualSearchStateHolder> {
+            val viewModel = viewModel<ActualSearchViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

@@ -37,7 +37,7 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAc
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.home.Action
-import com.tunjid.heron.home.ActualHomeStateHolder
+import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -108,7 +108,7 @@ abstract class HomeComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualHomeStateHolder> {
+            val viewModel = viewModel<ActualHomeViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

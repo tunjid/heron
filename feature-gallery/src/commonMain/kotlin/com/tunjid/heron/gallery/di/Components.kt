@@ -28,7 +28,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.gallery.ActualGalleryStateHolder
+import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.GalleryStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -106,7 +106,7 @@ abstract class GalleryComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualGalleryStateHolder> {
+            val viewModel = viewModel<ActualGalleryViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

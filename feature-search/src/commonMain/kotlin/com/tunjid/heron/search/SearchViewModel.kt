@@ -66,16 +66,16 @@ typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SearchStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSearchStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSearchViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSearchStateHolder = creator.invoke(scope, route)
+    ): ActualSearchViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualSearchStateHolder(
+class ActualSearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
     searchRepository: SearchRepository,

@@ -44,7 +44,7 @@ import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
-import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
+import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -141,7 +141,7 @@ abstract class PostDetailComponent(
         },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualPostDetailStateHolder> {
+            val viewModel = viewModel<ActualPostDetailViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),

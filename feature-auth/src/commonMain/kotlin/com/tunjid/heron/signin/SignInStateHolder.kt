@@ -49,16 +49,16 @@ typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SignInStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSignInStateHolder = creator.invoke(scope, route)
+    ): ActualSignInViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualSignInStateHolder(
+class ActualSignInViewModel(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted

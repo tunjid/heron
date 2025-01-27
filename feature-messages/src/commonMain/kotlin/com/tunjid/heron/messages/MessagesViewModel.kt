@@ -36,16 +36,16 @@ typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class MessagesStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualMessagesStateHolder = creator.invoke(scope, route)
+    ): ActualMessagesViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualMessagesStateHolder(
+class ActualMessagesViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,

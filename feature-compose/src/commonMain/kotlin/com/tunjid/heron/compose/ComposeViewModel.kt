@@ -43,16 +43,16 @@ typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ComposeStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualComposeStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualComposeViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualComposeStateHolder = creator.invoke(scope, route)
+    ): ActualComposeViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualComposeStateHolder(
+class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
     @Assisted

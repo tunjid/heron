@@ -52,16 +52,16 @@ typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ProfileStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileStateHolder,
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualProfileStateHolder = creator.invoke(scope, route)
+    ): ActualProfileViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualProfileStateHolder(
+class ActualProfileViewModel(
     authTokenRepository: AuthTokenRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,

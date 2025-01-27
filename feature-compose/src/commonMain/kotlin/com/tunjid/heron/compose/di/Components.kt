@@ -34,7 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.compose.Action
-import com.tunjid.heron.compose.ActualComposeStateHolder
+import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeStateHolderCreator
 import com.tunjid.heron.data.core.models.Post
@@ -109,7 +109,7 @@ abstract class ComposeComponent(
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualComposeStateHolder> {
+            val viewModel = viewModel<ActualComposeViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
