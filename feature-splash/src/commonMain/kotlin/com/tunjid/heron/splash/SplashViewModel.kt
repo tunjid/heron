@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SplashViewModelCreator(

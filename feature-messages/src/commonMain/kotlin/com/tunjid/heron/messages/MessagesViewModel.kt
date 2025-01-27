@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class MessagesViewModelCreator(

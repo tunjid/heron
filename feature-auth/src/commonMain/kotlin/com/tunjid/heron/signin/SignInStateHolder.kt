@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SignInViewModelCreator(

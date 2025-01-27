@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class ComposeViewModelCreator(

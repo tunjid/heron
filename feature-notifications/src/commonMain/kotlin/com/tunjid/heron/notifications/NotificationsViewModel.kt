@@ -50,7 +50,7 @@ import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class NotificationsViewModelCreator(

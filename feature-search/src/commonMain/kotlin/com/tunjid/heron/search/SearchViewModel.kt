@@ -62,7 +62,7 @@ import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
-typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class SearchViewModelCreator(

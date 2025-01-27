@@ -37,7 +37,7 @@ enum class ScreenLayout {
     GeneralSearchResults
 }
 
-typealias SearchResultStateHolder = ActionStateMutator<SearchState.LoadAround, StateFlow<SearchState>>
+internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.LoadAround, StateFlow<SearchState>>
 
 sealed class SearchState {
     data class Post(

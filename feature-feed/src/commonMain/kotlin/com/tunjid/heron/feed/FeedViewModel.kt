@@ -50,7 +50,7 @@ import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
 class FeedViewModelCreator(
