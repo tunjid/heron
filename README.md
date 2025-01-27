@@ -31,8 +31,8 @@ There are 6 kinds of modules:
 
 1. `data-*` is the [data layer](https://developer.android.com/topic/architecture/data-layer) of the
   app containing models data and repository implementations for reading and writing that data.
-  Data reads should never error, while writes are queued with a [WriteQueue]. Given the highly
-  relational nature of the app, a class called a [MultipleEntitySaver] is used to save bluesky
+  Data reads should never error, while writes are queued with a `WriteQueue`. Given the highly
+  relational nature of the app, a class called a `MultipleEntitySaver` is used to save bluesky
   network models.
     - [Jetpack Room](https://developer.android.com/jetpack/androidx/releases/room)
       is used for persisting data with SQLite.
