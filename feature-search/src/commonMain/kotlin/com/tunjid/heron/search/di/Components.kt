@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2024 Adetunji Dahunsi
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 package com.tunjid.heron.search.di
@@ -51,9 +51,9 @@ import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
-import com.tunjid.heron.search.ActualSearchStateHolder
+import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
-import com.tunjid.heron.search.SearchStateHolderCreator
+import com.tunjid.heron.search.SearchViewModelCreator
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
@@ -108,11 +108,11 @@ abstract class SearchComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SearchStateHolderCreator,
+        creator: SearchViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualSearchStateHolder> {
+            val viewModel = viewModel<ActualSearchViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,

@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2024 Adetunji Dahunsi
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 package com.tunjid.heron.messages
@@ -32,20 +32,20 @@ import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class MessagesStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesStateHolder,
+class MessagesViewModelCreator(
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualMessagesStateHolder = creator.invoke(scope, route)
+    ): ActualMessagesViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualMessagesStateHolder(
+class ActualMessagesViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,

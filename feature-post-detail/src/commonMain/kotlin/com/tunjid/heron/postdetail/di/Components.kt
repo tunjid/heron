@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2024 Adetunji Dahunsi
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 package com.tunjid.heron.postdetail.di
@@ -44,9 +44,9 @@ import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
-import com.tunjid.heron.postdetail.ActualPostDetailStateHolder
+import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
-import com.tunjid.heron.postdetail.PostDetailStateHolderCreator
+import com.tunjid.heron.postdetail.PostDetailViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -131,7 +131,7 @@ abstract class PostDetailComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: PostDetailStateHolderCreator,
+        creator: PostDetailViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy<Route>(
         paneMapping = { route ->
             mapOf(
@@ -141,7 +141,7 @@ abstract class PostDetailComponent(
         },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualPostDetailStateHolder> {
+            val viewModel = viewModel<ActualPostDetailViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),

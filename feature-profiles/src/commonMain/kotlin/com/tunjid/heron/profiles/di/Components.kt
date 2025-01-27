@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2024 Adetunji Dahunsi
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 package com.tunjid.heron.profiles.di
@@ -37,10 +37,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profiles.Action
-import com.tunjid.heron.profiles.ActualProfilesStateHolder
+import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
-import com.tunjid.heron.profiles.ProfilesStateHolderCreator
+import com.tunjid.heron.profiles.ProfilesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -152,7 +152,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = PostLikesPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -162,7 +162,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = PostRepostsPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -172,7 +172,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = ProfileFollowersPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -182,7 +182,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = ProfileFollowingPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -190,7 +190,7 @@ abstract class ProfilesComponent(
 
     private fun profilesStrategy(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = threePaneListDetailStrategy(
         paneMapping = { route ->
             mapOf(
@@ -200,7 +200,7 @@ abstract class ProfilesComponent(
         },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
-            val viewModel = viewModel<ActualProfilesStateHolder> {
+            val viewModel = viewModel<ActualProfilesViewModel> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),

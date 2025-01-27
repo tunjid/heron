@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2024 Adetunji Dahunsi
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 // See YouTrack: KTIJ-18375
@@ -45,20 +45,20 @@ import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
-typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class SignInStateHolderCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInStateHolder,
+class SignInViewModelCreator(
+    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSignInStateHolder = creator.invoke(scope, route)
+    ): ActualSignInViewModel = creator.invoke(scope, route)
 }
 
 @Inject
-class ActualSignInStateHolder(
+class ActualSignInViewModel(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted

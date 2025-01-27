@@ -21,18 +21,21 @@ Libraries:
 
 ## Architecture 
 
-This is a multi-module [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html) project targeting Android, iOS, Desktop that follows the
-[Android architecture guide](https://developer.android.com/topic/architecture).
+This is a multi-module [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)
+project targeting Android, iOS and Desktop that follows the [Android architecture guide](https://developer.android.com/topic/architecture).
+
+For more details about this kind of architecture, take a look at the [Now in Android sample](https://github.com/android/nowinandroid) repository,
+this app follows the same architecture principles it does, and the architecture decisions are very similar.
 
 There are 6 kinds of modules:
 
 1. `data-*` is the [data layer](https://developer.android.com/topic/architecture/data-layer) of the
   app containing models data and repository implementations for reading and writing that data.
-  Data reads should never error, while writes are queued with a [WriteQueue]. Given the highly
-  relational nature of the app, a class called a [MultipleEntitySaver] is used to save bluesky
-  network models.
+  Data reads should never error, while writes are queued with a `WriteQueue`.
     - [Jetpack Room](https://developer.android.com/jetpack/androidx/releases/room)
       is used for persisting data with SQLite.
+      - Given the highly relational nature of the app, a class called a `MultipleEntitySaver` is used to save bluesky
+        network models.
     - [Jetpack DataStore](https://developer.android.com/jetpack/androidx/releases/datastore)
       is used for blob storage of arbitrary data with protobufs.
     - [Ktor](https://ktor.io/) is used for network connections via the
@@ -55,13 +58,31 @@ There are 6 kinds of modules:
       folder name.
     - `/iosApp` is the entry point for the iOS app.
 
+### Dependency Injection
+
+Dependency injection is implemented with the [Kotlin Inject](https://github.com/evant/kotlin-inject) library which constructs the dependency graph at build time
+and therefore is compile time safe. Assisted injection is used for feature screens to pass navigation arguments information to the feature.
+
+### Navigation
+
+Navigation uses the [treenav experiment](https://github.com/tunjid/treeNav) to implement
+Android [adaptive navigation](https://developer.android.com/develop/ui/compose/layouts/adaptive).
+Specifically it uses a `ThreePane` configuration, where up to 3 navigation panes may be shown, with
+one reserved for back previews and another for modals. Navigation state is also saved to disk and
+persisted across app restarts.
+
 ### State production 
 
 * State production follows the [Android guide to UI State Production](https://developer.android.com/topic/architecture/ui-layer/state-production).
 * Each feature uses a single [Jetpack ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel) as the [business logic state holder](https://developer.android.com/topic/architecture/ui-layer/stateholders).
-  * The specifics of producing state over time is implemented with the [Mutator library](https://github.com/tunjid/Mutator).
-
-### Navigation
-
-Navigation uses the [treenav experiment](https://github.com/tunjid/treeNav) to implement Android [adaptive navigation](https://developer.android.com/develop/ui/compose/layouts/adaptive).
-Specifically it uses a `ThreePane` configuration, where up to 3 navigation panes may be shown, with one reserved for back previews and another for modals.
+* State is produced in a lifecycle aware way using the [Jetpack Lifecyle](https://developer.android.com/jetpack/androidx/releases/lifecycle) APIs.
+  * The `CoroutineScope` for each `ViewModel` is obtained from the composition's `LocalLifecycleOwner`
+* The specifics of producing state over time is implemented with the [Mutator library](https://github.com/tunjid/Mutator).
+  * Inputs to the state production pipeline are passed to the mutator in the `inputs` argument, or derived from an action in `actionTransform`.
+  * Every coroutine launched is limited to running when the lifecycle of the component displaying it is resumed. When the lifecyle
+    is paused, the coroutines are cancelled after 2 seconds: `SharingStarted.WhileSubscribed(FeatureWhileSubscribed)`.
+  * Each user `Action` is in a sealed hierarchy, and action parallelism is defined by the `Action.key`. Actions with different keys run in parallel
+    while those in the same key are processed sequentially. Each distinct subtype of an `Action` hierarchy typically has it's own
+    key unless sequential processing is required for example:
+    * All subtypes of `Action.Navigation` typically share the same key.
+    * All subtypes of pagination actions, also share the same key and are processed with the [Tiling library](https://github.com/tunjid/Tiler).
