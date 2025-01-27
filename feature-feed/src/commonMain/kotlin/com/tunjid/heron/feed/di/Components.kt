@@ -23,11 +23,9 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -42,6 +40,7 @@ import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolderCreator
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -51,6 +50,7 @@ import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteParser
 import heron.feature_feed.generated.resources.Res
 import heron.feature_feed.generated.resources.back
 import me.tatarka.inject.annotations.Component
@@ -106,6 +106,7 @@ abstract class FeedComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
+        routeParser: RouteParser,
         creator: FeedStateHolderCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
@@ -113,7 +114,7 @@ abstract class FeedComponent(
             val viewModel = viewModel<ActualFeedStateHolder> {
                 creator.invoke(
                     scope = lifecycleCoroutineScope,
-                    route = route,
+                    route = routeParser.hydrate(route),
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
