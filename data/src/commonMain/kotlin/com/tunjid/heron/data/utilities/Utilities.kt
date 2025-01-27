@@ -1,5 +1,7 @@
 package com.tunjid.heron.data.utilities
 
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
@@ -24,9 +26,12 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
                 )
             }
         } catch (e: IOException) {
-            // TODO: Be more descriptive with this error
-            // you can log an error here and/or make a more finer-grained
-            // analysis of the cause to see if retry is needed
+            // TODO: Log this exception
+            e.printStackTrace()
+        }
+        catch (e: ResponseException) {
+            // TODO: Log this exception
+            e.printStackTrace()
         }
         if (retry != times) {
             delay(currentDelay)
