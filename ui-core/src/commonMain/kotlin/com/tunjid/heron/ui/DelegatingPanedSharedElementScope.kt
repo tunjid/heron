@@ -39,6 +39,9 @@ interface PanedSharedElementScope :
     ): Modifier
 }
 
+val PanedSharedElementScope.isPrimaryOrPreview get() =
+    paneState.pane == ThreePane.Primary || paneState.pane == ThreePane.TransientPrimary
+
 @Stable
 private class DelegatingPanedSharedElementScope(
     val paneScope: PaneScope<ThreePane, Route>,

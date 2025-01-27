@@ -43,16 +43,16 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.PlayerControls
+import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
-import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -212,7 +212,7 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (panedSharedElementScope.paneState.pane != ThreePane.Primary) VideoStill(
+    if (!panedSharedElementScope.isPrimaryOrPreview) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )
