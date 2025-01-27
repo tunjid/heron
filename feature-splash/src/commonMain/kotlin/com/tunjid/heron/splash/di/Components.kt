@@ -27,7 +27,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
-import com.tunjid.heron.splash.SplashStateHolderCreator
+import com.tunjid.heron.splash.SplashViewModelCreator
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
@@ -78,7 +78,7 @@ abstract class SplashComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SplashStateHolderCreator,
+        creator: SplashViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

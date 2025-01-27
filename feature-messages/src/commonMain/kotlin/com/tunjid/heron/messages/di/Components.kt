@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
-import com.tunjid.heron.messages.MessagesStateHolderCreator
+import com.tunjid.heron.messages.MessagesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
@@ -91,7 +91,7 @@ abstract class MessagesComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: MessagesStateHolderCreator,
+        creator: MessagesViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

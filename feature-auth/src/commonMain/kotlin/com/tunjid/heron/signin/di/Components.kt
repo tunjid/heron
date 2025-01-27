@@ -40,7 +40,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.SignInScreen
-import com.tunjid.heron.signin.SignInStateHolderCreator
+import com.tunjid.heron.signin.SignInViewModelCreator
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.ui.requirePanedSharedElementScope
@@ -97,7 +97,7 @@ abstract class SignInComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: SignInStateHolderCreator,
+        creator: SignInViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

@@ -48,7 +48,7 @@ import me.tatarka.inject.annotations.Inject
 typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class SignInStateHolderCreator(
+class SignInViewModelCreator(
     private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(

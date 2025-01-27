@@ -39,7 +39,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
-import com.tunjid.heron.home.HomeStateHolderCreator
+import com.tunjid.heron.home.HomeViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
@@ -104,7 +104,7 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: HomeStateHolderCreator,
+        creator: HomeViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

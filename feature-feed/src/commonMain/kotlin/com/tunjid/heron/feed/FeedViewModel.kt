@@ -53,7 +53,7 @@ import me.tatarka.inject.annotations.Inject
 typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class FeedStateHolderCreator(
+class FeedViewModelCreator(
     private val creator: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(

@@ -30,7 +30,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
-import com.tunjid.heron.gallery.GalleryStateHolderCreator
+import com.tunjid.heron.gallery.GalleryViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
@@ -102,7 +102,7 @@ abstract class GalleryComponent(
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
-        creator: GalleryStateHolderCreator,
+        creator: GalleryViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

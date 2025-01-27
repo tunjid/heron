@@ -37,7 +37,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
-import com.tunjid.heron.feed.FeedStateHolderCreator
+import com.tunjid.heron.feed.FeedViewModelCreator
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -107,7 +107,7 @@ abstract class FeedComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: FeedStateHolderCreator,
+        creator: FeedViewModelCreator,
     ) = RoutePattern to threePaneListDetailStrategy(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

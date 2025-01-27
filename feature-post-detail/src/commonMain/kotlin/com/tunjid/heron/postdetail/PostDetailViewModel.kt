@@ -46,7 +46,7 @@ import me.tatarka.inject.annotations.Inject
 typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class PostDetailStateHolderCreator(
+class PostDetailViewModelCreator(
     private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(

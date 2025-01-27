@@ -40,7 +40,7 @@ import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
-import com.tunjid.heron.profiles.ProfilesStateHolderCreator
+import com.tunjid.heron.profiles.ProfilesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -152,7 +152,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = PostLikesPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -162,7 +162,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = PostRepostsPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -172,7 +172,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = ProfileFollowersPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -182,7 +182,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = ProfileFollowingPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -190,7 +190,7 @@ abstract class ProfilesComponent(
 
     private fun profilesStrategy(
         routeParser: RouteParser,
-        creator: ProfilesStateHolderCreator,
+        creator: ProfilesViewModelCreator,
     ) = threePaneListDetailStrategy(
         paneMapping = { route ->
             mapOf(

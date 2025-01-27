@@ -54,7 +54,7 @@ import me.tatarka.inject.annotations.Inject
 typealias ProfilesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class ProfilesStateHolderCreator(
+class ProfilesViewModelCreator(
     private val creator: (scope: CoroutineScope, route: Route) -> ActualProfilesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
