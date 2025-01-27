@@ -21,21 +21,21 @@ Libraries:
 
 ## Architecture 
 
-This is a multi-module [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html) project targeting Android, iOS and Desktop that follows the
-[Android architecture guide](https://developer.android.com/topic/architecture).
+This is a multi-module [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)
+project targeting Android, iOS and Desktop that follows the [Android architecture guide](https://developer.android.com/topic/architecture).
 
-For more details about this kind of architecture, take a look at the [Now in Android sample](https://github.com/android/nowinandroid) repository.
-This app follows the same architecture principles it does, and the architecture decisions are very similar.
+For more details about this kind of architecture, take a look at the [Now in Android sample](https://github.com/android/nowinandroid) repository,
+this app follows the same architecture principles it does, and the architecture decisions are very similar.
 
 There are 6 kinds of modules:
 
 1. `data-*` is the [data layer](https://developer.android.com/topic/architecture/data-layer) of the
   app containing models data and repository implementations for reading and writing that data.
-  Data reads should never error, while writes are queued with a `WriteQueue`. Given the highly
-  relational nature of the app, a class called a `MultipleEntitySaver` is used to save bluesky
-  network models.
+  Data reads should never error, while writes are queued with a `WriteQueue`.
     - [Jetpack Room](https://developer.android.com/jetpack/androidx/releases/room)
       is used for persisting data with SQLite.
+      - Given the highly relational nature of the app, a class called a `MultipleEntitySaver` is used to save bluesky
+        network models.
     - [Jetpack DataStore](https://developer.android.com/jetpack/androidx/releases/datastore)
       is used for blob storage of arbitrary data with protobufs.
     - [Ktor](https://ktor.io/) is used for network connections via the
@@ -65,8 +65,11 @@ and therefore is compile time safe. Assisted injection is used for feature scree
 
 ### Navigation
 
-Navigation uses the [treenav experiment](https://github.com/tunjid/treeNav) to implement Android [adaptive navigation](https://developer.android.com/develop/ui/compose/layouts/adaptive).
-Specifically it uses a `ThreePane` configuration, where up to 3 navigation panes may be shown, with one reserved for back previews and another for modals.
+Navigation uses the [treenav experiment](https://github.com/tunjid/treeNav) to implement
+Android [adaptive navigation](https://developer.android.com/develop/ui/compose/layouts/adaptive).
+Specifically it uses a `ThreePane` configuration, where up to 3 navigation panes may be shown, with
+one reserved for back previews and another for modals. Navigation state is also saved to disk and
+persisted across app restarts.
 
 ### State production 
 
