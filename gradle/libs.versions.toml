@@ -23,7 +23,7 @@ compose-material-icons = "1.7.3"
 junit = "4.13.2"
 kotlin-inject = "0.7.2"
 kotlin = "2.1.0"
-kotlinx-coroutines = "1.9.0"
+kotlinx-coroutines = "1.10.1"
 kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.3"
 ksp = "2.1.0-1.0.29"
@@ -40,6 +40,7 @@ jetbrainsKotlinJvm = "2.0.21"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+andrew-bailey-difference = { group = "dev.andrewbailey.difference", name = "difference", version = "1.1.0" }
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "android-desugar-jdk-libs" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
