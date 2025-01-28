@@ -111,6 +111,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
+import heron.feature_profile.generated.resources.likes
 import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
@@ -166,6 +167,7 @@ internal fun ProfileScreen(
                         title = when (timeline) {
                             is Timeline.Profile.Media -> stringResource(Res.string.media)
                             is Timeline.Profile.Posts -> stringResource(Res.string.posts)
+                            is Timeline.Profile.Likes -> stringResource(Res.string.likes)
                             is Timeline.Profile.Replies -> stringResource(Res.string.replies)
                         },
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,

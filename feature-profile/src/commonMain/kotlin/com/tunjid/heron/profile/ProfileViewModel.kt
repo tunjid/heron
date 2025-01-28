@@ -129,13 +129,16 @@ private fun loadIsSignedInProfileMutations(
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.isSignedInProfile(profileId).mapToMutation {
+    authTokenRepository.isSignedInProfile(profileId).mapToMutation { isSignedInProfile ->
         copy(
-            isSignedInProfile = it,
+            isSignedInProfile = isSignedInProfile,
             timelineStateHolders = timelineStateHolders.update(
                 scope = scope,
                 startNumColumns = 1,
-                updatedTimelines = timelines(profileId),
+                updatedTimelines = timelines(
+                    profileId = profileId,
+                    isSignedInUser = isSignedInProfile,
+                ),
                 timelineRepository = timelineRepository,
             )
         )
@@ -163,12 +166,17 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun timelines(
     profileId: Id,
+    isSignedInUser: Boolean,
 ): List<Timeline.Profile> = buildList {
     Timeline.Profile.Posts(
         name = "Posts",
         profileId = profileId,
     ).also(::add)
     Timeline.Profile.Replies(
+        name = "Replies",
+        profileId = profileId,
+    ).also(::add)
+    if (isSignedInUser) Timeline.Profile.Likes(
         name = "Replies",
         profileId = profileId,
     ).also(::add)
