@@ -293,8 +293,11 @@ private fun ProfileHeader(
             }
             ProfileTabs(
                 modifier = Modifier
-                    .padding(horizontal = headerState.sizeToken)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(
+                        start = headerState.tabsStartPadding,
+                        end = headerState.tabsEndPadding,
+                    ),
                 headerState = headerState,
                 pagerState = pagerState,
                 tabs = timelineTabs,
@@ -522,6 +525,7 @@ private fun ProfileTabs(
     val scope = rememberCoroutineScope()
     Tabs(
         modifier = modifier
+            .clip(CircleShape)
             .offset { headerState.tabsOffset(density = this) },
         tabs = tabs,
         selectedTabIndex = pagerState.tabIndex,
@@ -704,6 +708,8 @@ private class HeaderState(
     val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
     val avatarPadding get() = 4.dp * (1f - progress)
     val avatarAlignmentLerp get() = progress
+    val tabsStartPadding get() = sizeToken
+    val tabsEndPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
 
     fun bioOffset() = IntOffset(
         x = 0,
