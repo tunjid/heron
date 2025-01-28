@@ -126,7 +126,7 @@ class OfflineSearchRepository @Inject constructor(
             multipleEntitySaverProvider.saveInTransaction {
                 val authProfileId = savedStateRepository.signedInProfileId
                 val posts = it.map { postView ->
-                    if (authProfileId != null) add(
+                    add(
                         viewingProfileId = authProfileId,
                         postView = postView
                     )
@@ -172,21 +172,21 @@ class OfflineSearchRepository @Inject constructor(
         multipleEntitySaverProvider.saveInTransaction {
             val authProfileId = savedStateRepository.signedInProfileId
             response?.actors
-                ?.mapNotNull { profileView ->
-                    if (authProfileId != null) add(
+                ?.map { profileView ->
+                    add(
                         viewingProfileId = authProfileId,
                         profileView = profileView,
                     )
-                    savedStateRepository.signedInProfileId?.let {
-                        SearchResult.Profile(
-                            profileWithRelationship = ProfileWithRelationship(
-                                profile = profileView.profile(),
-                                relationship = profileView.profileProfileRelationshipsEntities(
-                                    viewingProfileId = it
-                                ).first().asExternalModel(),
-                            )
+                    SearchResult.Profile(
+                        profileWithRelationship = ProfileWithRelationship(
+                            profile = profileView.profile(),
+                            relationship =
+                            if (authProfileId == null) null
+                            else profileView.profileProfileRelationshipsEntities(
+                                viewingProfileId = authProfileId
+                            ).first().asExternalModel(),
                         )
-                    }
+                    )
                 }
                 ?.let { profiles ->
                     emit(
@@ -217,21 +217,21 @@ class OfflineSearchRepository @Inject constructor(
         multipleEntitySaverProvider.saveInTransaction {
             val authProfileId = savedStateRepository.signedInProfileId
             response?.actors
-                ?.mapNotNull { profileView ->
-                    if (authProfileId != null) add(
+                ?.map { profileView ->
+                    add(
                         viewingProfileId = authProfileId,
                         profileView = profileView,
                     )
-                    savedStateRepository.signedInProfileId?.let {
-                        SearchResult.Profile(
-                            profileWithRelationship = ProfileWithRelationship(
-                                profile = profileView.profile(),
-                                relationship = profileView.profileProfileRelationshipsEntities(
-                                    viewingProfileId = it
-                                ).first().asExternalModel(),
-                            )
+                    SearchResult.Profile(
+                        profileWithRelationship = ProfileWithRelationship(
+                            profile = profileView.profile(),
+                            relationship =
+                            if (authProfileId == null) null
+                            else profileView.profileProfileRelationshipsEntities(
+                                viewingProfileId = authProfileId
+                            ).first().asExternalModel(),
                         )
-                    }
+                    )
                 }
                 ?.let { profiles ->
                     emit(

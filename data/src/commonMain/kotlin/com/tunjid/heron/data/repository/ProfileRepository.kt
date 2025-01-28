@@ -97,10 +97,9 @@ class OfflineProfileRepository @Inject constructor(
         }
             .getOrNull()
             ?.let { response ->
-                val authProfileId = savedStateRepository.signedInProfileId ?: return@let
                 multipleEntitySaverProvider.saveInTransaction {
                     add(
-                        viewingProfileId = authProfileId,
+                        viewingProfileId = savedStateRepository.signedInProfileId,
                         profileView = response,
                     )
                 }

@@ -27,7 +27,7 @@ import sh.christian.ozone.api.AtUri
 
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     listNotificationsNotification: List<ListNotificationsNotification>,
     associatedPosts: List<PostView>,
 ) {

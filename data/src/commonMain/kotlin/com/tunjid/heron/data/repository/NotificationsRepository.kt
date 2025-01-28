@@ -118,7 +118,7 @@ class OfflineNotificationsRepository @Inject constructor(
                         savedStateRepository.savedState.value.auth?.authProfileId
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            viewingProfileId = authProfileId,
+                            viewingProfileId = savedStateRepository.signedInProfileId,
                             listNotificationsNotification = first.notifications,
                             associatedPosts = second,
                         )

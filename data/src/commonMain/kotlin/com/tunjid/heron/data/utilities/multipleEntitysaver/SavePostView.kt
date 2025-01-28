@@ -27,7 +27,7 @@ import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     postView: PostView,
 ) {
     val postEntity = postView.postEntity().also(::add)
