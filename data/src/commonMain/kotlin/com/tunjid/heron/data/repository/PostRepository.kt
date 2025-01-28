@@ -152,11 +152,9 @@ class OfflinePostRepository @Inject constructor(
                 nextCursor = GetLikesResponse::cursor,
                 onResponse = {
                     multipleEntitySaverProvider.saveInTransaction {
-                        val viewingProfileId = savedStateRepository.signedInProfileId
-                            ?: return@saveInTransaction
                         likes.forEach {
                             add(
-                                viewingProfileId = viewingProfileId,
+                                viewingProfileId = savedStateRepository.signedInProfileId,
                                 postId = query.postId,
                                 like = it,
                             )
@@ -230,11 +228,9 @@ class OfflinePostRepository @Inject constructor(
                 nextCursor = GetQuotesResponse::cursor,
                 onResponse = {
                     multipleEntitySaverProvider.saveInTransaction {
-                        val viewingProfileId = savedStateRepository.signedInProfileId
-                            ?: return@saveInTransaction
                         posts.forEach {
                             add(
-                                viewingProfileId = viewingProfileId,
+                                viewingProfileId = savedStateRepository.signedInProfileId,
                                 postView = it,
                             )
                         }

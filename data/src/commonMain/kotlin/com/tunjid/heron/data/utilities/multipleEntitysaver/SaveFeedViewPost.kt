@@ -26,7 +26,7 @@ import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     timeline: Timeline,
     feedViewPosts: List<FeedViewPost>,
 ) {

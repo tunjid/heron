@@ -384,11 +384,10 @@ class OfflineTimelineRepository(
                             is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
                             is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
                             is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                                val authProfileId = savedStateRepository.signedInProfileId
-                                if (authProfileId != null) multipleEntitySaverProvider
+                                multipleEntitySaverProvider
                                     .saveInTransaction {
                                         add(
-                                            viewingProfileId = authProfileId,
+                                            viewingProfileId = savedStateRepository.signedInProfileId,
                                             threadViewPost = thread.value,
                                         )
                                     }
@@ -514,8 +513,7 @@ class OfflineTimelineRepository(
         currentRequestWithNextCursor = currentRequestWithNextCursor,
         nextCursor = nextCursor,
         onResponse = {
-            val authProfileId = savedStateRepository.signedInProfileId
-            if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
+            multipleEntitySaverProvider.saveInTransaction {
                 if (timelineDao.isFirstRequest(query)) {
                     timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
@@ -527,7 +525,7 @@ class OfflineTimelineRepository(
                     )
                 }
                 add(
-                    viewingProfileId = authProfileId,
+                    viewingProfileId = savedStateRepository.signedInProfileId,
                     timeline = query.timeline,
                     feedViewPosts = networkFeed(),
                 )
@@ -547,10 +545,9 @@ class OfflineTimelineRepository(
                 .getOrNull()
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
-                    val authProfileId = savedStateRepository.signedInProfileId
-                    if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
+                    multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            viewingProfileId = authProfileId,
+                            viewingProfileId = savedStateRepository.signedInProfileId,
                             timeline = timeline,
                             feedViewPosts = fetchedFeedViewPosts,
                         )

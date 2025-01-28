@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     postId: Id,
     like: GetLikesLike,
 ) {

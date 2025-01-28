@@ -24,31 +24,31 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     profileView: ProfileViewBasic,
 ) {
     add(profileView.profileEntity())
-    profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     profileView: ProfileView,
 ) {
     add(profileView.profileEntity())
-    profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id,
+    viewingProfileId: Id?,
     profileView: ProfileViewDetailed,
 ) {
     add(profileView.profileEntity())
-    profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
