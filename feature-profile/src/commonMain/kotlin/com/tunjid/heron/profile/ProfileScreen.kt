@@ -139,10 +139,13 @@ internal fun ProfileScreen(
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
     }
-
+    val updatedTimelineStateHolders by rememberUpdatedState(
+        state.timelineStateHolders
+    )
     val pagerState = rememberPagerState {
-        3
+        updatedTimelineStateHolders.size
     }
+
     CollapsingHeaderLayout(
         modifier = modifier
             .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
@@ -152,7 +155,13 @@ internal fun ProfileScreen(
                 movableSharedElementScope = panedSharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = state.timelines.map { timeline ->
+                timelineTabs = (0..<updatedTimelineStateHolders.size).map { page ->
+                    val timeline = remember {
+                        updatedTimelineStateHolders.stateHolderAt(page).state
+                            .value
+                            .timeline
+                    }
+                    check(timeline is Timeline.Profile)
                     Tab(
                         title = when (timeline) {
                             is Timeline.Profile.Media -> stringResource(Res.string.media)
@@ -169,7 +178,9 @@ internal fun ProfileScreen(
                 profileRelationship = state.profileRelationship,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    state.timelineStateHolders[index].accept(TimelineLoadAction.Refresh)
+                    updatedTimelineStateHolders.stateHolderAt(
+                        index = index
+                    ).accept(TimelineLoadAction.Refresh)
                 },
                 onNavigateToProfiles = { navigationAction ->
                     actions(Action.Navigate.DelegateTo(navigationAction))
@@ -199,7 +210,9 @@ internal fun ProfileScreen(
                     state = pagerState,
                     key = { page -> page },
                     pageContent = { page ->
-                        val timelineStateHolder = remember { state.timelineStateHolders[page] }
+                        val timelineStateHolder = remember {
+                            updatedTimelineStateHolders.stateHolderAt(page)
+                        }
                         ProfileTimeline(
                             panedSharedElementScope = panedSharedElementScope,
                             timelineStateHolder = timelineStateHolder,

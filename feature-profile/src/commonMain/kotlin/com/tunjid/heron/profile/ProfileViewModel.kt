@@ -26,7 +26,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.timelineStateHolder
+import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
@@ -79,15 +79,6 @@ class ActualProfileViewModel(
             handle = route.profileId,
             avatar = null,
         ),
-        timelines = timelines(route),
-        timelineStateHolders = timelines(route).map {
-            timelineStateHolder(
-                timeline = it,
-                startNumColumns = 1,
-                scope = scope,
-                timelineRepository = timelineRepository,
-            )
-        },
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
@@ -97,7 +88,9 @@ class ActualProfileViewModel(
         ),
         loadIsSignedInProfileMutations(
             profileId = route.profileId,
+            scope = scope,
             authTokenRepository = authTokenRepository,
+            timelineRepository = timelineRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileId,
@@ -132,10 +125,20 @@ private fun loadProfileMutations(
 
 private fun loadIsSignedInProfileMutations(
     profileId: Id,
+    scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
+    timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     authTokenRepository.isSignedInProfile(profileId).mapToMutation {
-        copy(isSignedInProfile = it)
+        copy(
+            isSignedInProfile = it,
+            timelineStateHolders = timelineStateHolders.update(
+                scope = scope,
+                startNumColumns = 1,
+                updatedTimelines = timelines(profileId),
+                timelineRepository = timelineRepository,
+            )
+        )
     }
 
 private fun profileRelationshipMutations(
@@ -158,17 +161,19 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
-private fun timelines(route: Route) = listOf(
+private fun timelines(
+    profileId: Id,
+): List<Timeline.Profile> = buildList {
     Timeline.Profile.Posts(
         name = "Posts",
-        profileId = route.profileId,
-    ),
+        profileId = profileId,
+    ).also(::add)
     Timeline.Profile.Replies(
         name = "Replies",
-        profileId = route.profileId,
-    ),
+        profileId = profileId,
+    ).also(::add)
     Timeline.Profile.Media(
         name = "Media",
-        profileId = route.profileId,
-    ),
-)
+        profileId = profileId,
+    ).also(::add)
+}

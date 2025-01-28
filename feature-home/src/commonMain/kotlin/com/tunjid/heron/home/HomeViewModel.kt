@@ -22,7 +22,7 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.timelineStateHolder
+import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -110,18 +110,12 @@ private fun timelineMutations(
     timelineRepository.homeTimelines().mapToMutation {
         copy(
             timelines = it,
-            timelineIdsToTimelineStates = it.fold(emptyMap()) { newTimelines, timeline ->
-                newTimelines + Pair(
-                    timeline.sourceId,
-                    timelineIdsToTimelineStates[timeline.sourceId]
-                        ?: timelineStateHolder(
-                            timeline = timeline,
-                            startNumColumns = startNumColumns,
-                            scope = scope,
-                            timelineRepository = timelineRepository,
-                        )
-                )
-            }
+            timelineStateHolders = timelineStateHolders.update(
+                updatedTimelines = it,
+                scope = scope,
+                startNumColumns = startNumColumns,
+                timelineRepository = timelineRepository,
+            )
         )
     }
 

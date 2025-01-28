@@ -19,7 +19,7 @@ package com.tunjid.heron.home
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -32,7 +32,7 @@ data class State(
     @Transient
     val timelines: List<Timeline.Home> = emptyList(),
     @Transient
-    val timelineIdsToTimelineStates: Map<String, TimelineStateHolder> = emptyMap(),
+    val timelineStateHolders: TimelineStateHolders = TimelineStateHolders(),
     @Transient
     val signedInProfile: Profile? = null,
     @Transient
