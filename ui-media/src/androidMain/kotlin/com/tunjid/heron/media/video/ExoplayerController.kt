@@ -41,10 +41,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import com.github.difflib.DiffUtils
-import com.github.difflib.patch.AbstractDelta
-import com.github.difflib.patch.DeltaType
-import com.github.difflib.patch.Patch
+import dev.andrewbailey.diff.differenceOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -379,23 +376,21 @@ class ExoplayerController(
     private suspend fun Player.update(newMediaItems: List<MediaItem>) {
         val oldMediaItems = currentMediaItems
         // Run this on a CoroutineContext that handles computation well, e.g. Dispatchers.Default
-        val patch: Patch<MediaItem> = withContext(diffingDispatcher) {
-            DiffUtils.diff(oldMediaItems, newMediaItems)
+        val diff = withContext(diffingDispatcher) {
+            differenceOf(
+                original = oldMediaItems,
+                updated = newMediaItems,
+                detectMoves = true,
+            )
         }
 
-        patch.deltas.forEach { delta: AbstractDelta<MediaItem> ->
-            @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-            when (delta.type) {
-                DeltaType.CHANGE -> {
-                    delete(delta)
-                    insert(delta)
-                }
-
-                DeltaType.DELETE -> delete(delta)
-                DeltaType.INSERT -> insert(delta)
-                DeltaType.EQUAL -> {} // Nothing to do here
-            }
-        }
+        diff.applyDiff(
+            remove = ::removeMediaItem,
+            insert = { item: MediaItem, index: Int ->
+                addMediaItem(index, item)
+            },
+            move = ::moveMediaItem
+        )
     }
 
     private fun isCurrentMediaItem(videoId: String) =
@@ -404,21 +399,6 @@ class ExoplayerController(
     private val Player.currentMediaItems: List<MediaItem>
         get() = List(mediaItemCount, ::getMediaItemAt)
 
-    private fun Player.delete(abstractDelta: AbstractDelta<MediaItem>) =
-        removeMediaItems(
-            // fromIndex =
-            abstractDelta.target.position,
-            // toIndex =
-            abstractDelta.target.position + abstractDelta.source.lines.size,
-        )
-
-    private fun Player.insert(abstractDelta: AbstractDelta<MediaItem>) =
-        addMediaItems(
-            // index =
-            abstractDelta.target.position,
-            // mediaItems =
-            abstractDelta.target.lines,
-        )
 }
 
 @OptIn(UnstableApi::class)

@@ -15,6 +15,7 @@
  */
 
 import com.android.build.api.dsl.CommonExtension
+import ext.ProjectJavaVersion
 import ext.configureKotlinJvm
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.VersionCatalogsExtension
@@ -38,8 +39,8 @@ fun org.gradle.api.Project.commonConfiguration(
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = ProjectJavaVersion
+        targetCompatibility = ProjectJavaVersion
     }
     configureKotlinJvm()
 }

@@ -47,6 +47,8 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.tunjid.composables)
+
+                implementation(libs.andrew.bailey.difference)
             }
         }
         named("androidMain") {

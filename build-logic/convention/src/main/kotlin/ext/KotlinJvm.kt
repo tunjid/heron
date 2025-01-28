@@ -19,8 +19,10 @@ package ext
 import org.gradle.api.Action
 import org.gradle.api.JavaVersion
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -29,8 +31,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  */
 internal fun org.gradle.api.Project.configureKotlinJvm() {
     extensions.configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = ProjectJavaVersion
+        targetCompatibility = ProjectJavaVersion
+
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
     }
     configureKotlin()
 }
@@ -41,29 +47,19 @@ internal fun org.gradle.api.Project.configureKotlinJvm() {
 private fun org.gradle.api.Project.configureKotlin() {
     // Use withType to workaround https://youtrack.jetbrains.com/issue/KT-55947
     tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            // Set JVM target to 11
-            jvmTarget = JavaVersion.VERSION_11.toString()
-            freeCompilerArgs = freeCompilerArgs + listOf(
-                "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
-                "-opt-in=androidx.compose.material.ExperimentalMaterialApi",
-                "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-opt-in=kotlinx.coroutines.FlowPreview"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+            freeCompilerArgs.set(
+                freeCompilerArgs.get() + listOf(
+                    "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
+                    "-opt-in=androidx.compose.material.ExperimentalMaterialApi",
+                    "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+                    "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                    "-opt-in=kotlinx.coroutines.FlowPreview"
+                )
             )
         }
     }
-    val kotlinOptions = "kotlinOptions"
-    if (extensions.findByName(kotlinOptions) != null) {
-        extensions.configure(kotlinOptions, Action<KotlinJvmOptions> {
-            jvmTarget = JavaVersion.VERSION_11.toString()
-            freeCompilerArgs = freeCompilerArgs + listOf(
-                "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
-                "-opt-in=androidx.compose.material.ExperimentalMaterialApi",
-                "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-opt-in=kotlinx.coroutines.FlowPreview"
-            )
-        })
-    }
 }
+
+internal val ProjectJavaVersion = JavaVersion.VERSION_17
