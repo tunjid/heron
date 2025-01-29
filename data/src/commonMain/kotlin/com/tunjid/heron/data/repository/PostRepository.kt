@@ -40,7 +40,7 @@ import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -96,12 +96,12 @@ interface PostRepository {
     fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>>
+    ): Flow<CursorList<ProfileWithViewerState>>
 
     fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>>
+    ): Flow<CursorList<ProfileWithViewerState>>
 
     fun quotes(
         query: PostDataQuery,
@@ -129,7 +129,7 @@ class OfflinePostRepository @Inject constructor(
     override fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
+    ): Flow<CursorList<ProfileWithViewerState>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.likedBy(
                 postId = query.postId.id,
@@ -170,7 +170,7 @@ class OfflinePostRepository @Inject constructor(
     override fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
+    ): Flow<CursorList<ProfileWithViewerState>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.repostedBy(
                 postId = query.postId.id,
@@ -444,9 +444,9 @@ class OfflinePostRepository @Inject constructor(
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
     map {
-        ProfileWithRelationship(
+        ProfileWithViewerState(
             profile = it.profileEntity.asExternalModel(),
-            relationship = it.relationship?.asExternalModel(),
+            viewerState = it.relationship?.asExternalModel(),
         )
     }
 

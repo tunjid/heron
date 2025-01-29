@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.Post as CorePost
 sealed class SearchResult {
 
     data class Profile(
-        val profileWithRelationship: ProfileWithRelationship,
+        val profileWithViewerState: ProfileWithViewerState,
     ) : SearchResult()
 
     sealed class Post : SearchResult() {

@@ -18,11 +18,11 @@ package com.tunjid.heron.data.repository
 
 import app.bsky.actor.GetProfileQueryParams
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -46,7 +46,7 @@ interface ProfileRepository {
 
     fun profileRelationships(
         profileIds: Set<Id>,
-    ): Flow<List<ProfileRelationship>>
+    ): Flow<List<ProfileViewerState>>
 }
 
 class OfflineProfileRepository @Inject constructor(
@@ -72,16 +72,16 @@ class OfflineProfileRepository @Inject constructor(
 
     override fun profileRelationships(
         profileIds: Set<Id>,
-    ): Flow<List<ProfileRelationship>> =
+    ): Flow<List<ProfileViewerState>> =
         signedInProfileId()
             .flatMapLatest {
-                profileDao.relationships(
+                profileDao.viewerState(
                     profileId = it.id,
                     otherProfileIds = profileIds,
                 )
             }
-            .map { relationshipsEntities ->
-                relationshipsEntities.map(ProfileProfileRelationshipsEntity::asExternalModel)
+            .map { viewerEntities ->
+                viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
             }
             .distinctUntilChanged()
 

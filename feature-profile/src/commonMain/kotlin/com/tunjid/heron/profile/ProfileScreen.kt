@@ -76,7 +76,7 @@ import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
@@ -96,7 +96,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
+import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -177,7 +177,7 @@ internal fun ProfileScreen(
                     .fillMaxWidth(),
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
-                profileRelationship = state.profileRelationship,
+                viewerState = state.viewerState,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
                     updatedTimelineStateHolders.stateHolderAt(
@@ -238,7 +238,7 @@ private fun ProfileHeader(
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
-    profileRelationship: ProfileRelationship?,
+    viewerState: ProfileViewerState?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
@@ -281,7 +281,7 @@ private fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
-                    profileRelationship = profileRelationship,
+                    viewerState = viewerState,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -405,7 +405,7 @@ private fun ProfileHeadline(
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
-    profileRelationship: ProfileRelationship?,
+    viewerState: ProfileViewerState?,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -426,10 +426,10 @@ private fun ProfileHeadline(
         },
         action = {
             AnimatedVisibility(
-                visible = profileRelationship != null || isSignedInProfile,
+                visible = viewerState != null || isSignedInProfile,
                 content = {
-                    ProfileRelationship(
-                        relationship = profileRelationship,
+                    ProfileViewerState(
+                        viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
                         onClick = {}
                     )

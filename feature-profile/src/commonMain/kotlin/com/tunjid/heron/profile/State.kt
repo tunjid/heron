@@ -18,9 +18,7 @@ package com.tunjid.heron.profile
 
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileRelationship
-import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
@@ -31,7 +29,7 @@ import kotlinx.serialization.Transient
 data class State(
     val profile: Profile,
     val isSignedInProfile: Boolean = false,
-    val profileRelationship: ProfileRelationship? = null,
+    val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),

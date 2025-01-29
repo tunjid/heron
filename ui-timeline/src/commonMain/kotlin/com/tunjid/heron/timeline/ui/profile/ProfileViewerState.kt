@@ -26,7 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.isFollowing
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.edit
 import heron.ui_timeline.generated.resources.follow
@@ -34,12 +35,12 @@ import heron.ui_timeline.generated.resources.following
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ProfileRelationship(
-    relationship: ProfileRelationship?,
+fun ProfileViewerState(
+    viewerState: ProfileViewerState?,
     isSignedInProfile: Boolean,
     onClick: () -> Unit,
 ) {
-    val follows = relationship?.follows == true
+    val follows = viewerState.isFollowing
     val followStatusText = stringResource(
         if (isSignedInProfile) Res.string.edit
         else if (follows) Res.string.following

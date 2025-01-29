@@ -19,7 +19,7 @@ package com.tunjid.heron.profiles
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
@@ -139,7 +139,7 @@ suspend fun Flow<Action.LoadAround>.profilesLoadMutations(
         }
 
     }
-    return cursorTileInputs<CursorQuery, ProfileWithRelationship>(
+    return cursorTileInputs<CursorQuery, ProfileWithViewerState>(
         numColumns = flowOf(1),
         queries = map { it.query },
         updatePage = updatePage,

@@ -74,7 +74,7 @@ internal fun ProfilesScreen(
                         .fillMaxWidth()
                         .animateItem(),
                     panedSharedElementScope = panedSharedElementScope,
-                    profileWithRelationship = item,
+                    profileWithViewerState = item,
                     signedInProfileId = signedInProfileId,
                     onProfileClicked = { profile ->
                         actions(

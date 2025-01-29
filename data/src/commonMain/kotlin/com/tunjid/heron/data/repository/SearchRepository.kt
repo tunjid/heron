@@ -23,7 +23,7 @@ import app.bsky.unspecced.GetTrendingTopicsQueryParams
 import app.bsky.unspecced.TrendingTopic
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.Trends
@@ -32,7 +32,7 @@ import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
-import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
+import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -178,11 +178,11 @@ class OfflineSearchRepository @Inject constructor(
                         profileView = profileView,
                     )
                     SearchResult.Profile(
-                        profileWithRelationship = ProfileWithRelationship(
+                        profileWithViewerState = ProfileWithViewerState(
                             profile = profileView.profile(),
-                            relationship =
+                            viewerState =
                             if (authProfileId == null) null
-                            else profileView.profileProfileRelationshipsEntities(
+                            else profileView.profileViewerStateEntities(
                                 viewingProfileId = authProfileId
                             ).first().asExternalModel(),
                         )
@@ -223,11 +223,11 @@ class OfflineSearchRepository @Inject constructor(
                         profileView = profileView,
                     )
                     SearchResult.Profile(
-                        profileWithRelationship = ProfileWithRelationship(
+                        profileWithViewerState = ProfileWithViewerState(
                             profile = profileView.profile(),
-                            relationship =
+                            viewerState =
                             if (authProfileId == null) null
-                            else profileView.profileProfileRelationshipsEntities(
+                            else profileView.profileViewerStateEntities(
                                 viewingProfileId = authProfileId
                             ).first().asExternalModel(),
                         )

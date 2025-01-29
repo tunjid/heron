@@ -39,9 +39,9 @@ data class Profile(
 ) : ByteSerializable
 
 @Serializable
-data class ProfileWithRelationship(
+data class ProfileWithViewerState(
     val profile: Profile,
-    val relationship: ProfileRelationship?,
+    val viewerState: ProfileViewerState?,
 )
 
 val Profile.contentDescription get() = displayName ?: handle.id

@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.database
 
 import androidx.room.DeleteColumn
+import androidx.room.DeleteTable
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
@@ -94,3 +95,6 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
 @DeleteColumn(tableName = "postViewerStatistics", columnName = "liked")
 @DeleteColumn(tableName = "postViewerStatistics", columnName = "reposted")
 internal class PostViewerStatisticsAutoMigration : AutoMigrationSpec
+
+@DeleteTable(tableName = "profileProfileRelationships")
+internal class ProfileViewersAutoMigration : AutoMigrationSpec

@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.profiles
 
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -33,7 +33,7 @@ data class State(
     val signedInProfileId: Id? = null,
     val currentQuery: CursorQuery,
     @Transient
-    val profiles: TiledList<CursorQuery, ProfileWithRelationship> = emptyTiledList(),
+    val profiles: TiledList<CursorQuery, ProfileWithViewerState> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )

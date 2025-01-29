@@ -21,14 +21,14 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.network.models.profileProfileRelationshipsEntities
+import com.tunjid.heron.data.network.models.profileViewerStateEntities
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: Id?,
     profileView: ProfileViewBasic,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
@@ -38,7 +38,7 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileView,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
@@ -48,7 +48,7 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewDetailed,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileProfileRelationshipsEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
 }
