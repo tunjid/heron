@@ -111,6 +111,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
+import heron.feature_profile.generated.resources.likes
 import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
 import heron.feature_profile.generated.resources.replies
@@ -139,10 +140,13 @@ internal fun ProfileScreen(
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
     }
-
+    val updatedTimelineStateHolders by rememberUpdatedState(
+        state.timelineStateHolders
+    )
     val pagerState = rememberPagerState {
-        3
+        updatedTimelineStateHolders.size
     }
+
     CollapsingHeaderLayout(
         modifier = modifier
             .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
@@ -152,11 +156,18 @@ internal fun ProfileScreen(
                 movableSharedElementScope = panedSharedElementScope,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = state.timelines.map { timeline ->
+                timelineTabs = (0..<updatedTimelineStateHolders.size).map { page ->
+                    val timeline = remember {
+                        updatedTimelineStateHolders.stateHolderAt(page).state
+                            .value
+                            .timeline
+                    }
+                    check(timeline is Timeline.Profile)
                     Tab(
                         title = when (timeline) {
                             is Timeline.Profile.Media -> stringResource(Res.string.media)
                             is Timeline.Profile.Posts -> stringResource(Res.string.posts)
+                            is Timeline.Profile.Likes -> stringResource(Res.string.likes)
                             is Timeline.Profile.Replies -> stringResource(Res.string.replies)
                         },
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
@@ -169,7 +180,9 @@ internal fun ProfileScreen(
                 profileRelationship = state.profileRelationship,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    state.timelineStateHolders[index].accept(TimelineLoadAction.Refresh)
+                    updatedTimelineStateHolders.stateHolderAt(
+                        index = index
+                    ).accept(TimelineLoadAction.Refresh)
                 },
                 onNavigateToProfiles = { navigationAction ->
                     actions(Action.Navigate.DelegateTo(navigationAction))
@@ -199,7 +212,9 @@ internal fun ProfileScreen(
                     state = pagerState,
                     key = { page -> page },
                     pageContent = { page ->
-                        val timelineStateHolder = remember { state.timelineStateHolders[page] }
+                        val timelineStateHolder = remember {
+                            updatedTimelineStateHolders.stateHolderAt(page)
+                        }
                         ProfileTimeline(
                             panedSharedElementScope = panedSharedElementScope,
                             timelineStateHolder = timelineStateHolder,
@@ -278,8 +293,11 @@ private fun ProfileHeader(
             }
             ProfileTabs(
                 modifier = Modifier
-                    .padding(horizontal = headerState.sizeToken)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(
+                        start = headerState.tabsStartPadding,
+                        end = headerState.tabsEndPadding,
+                    ),
                 headerState = headerState,
                 pagerState = pagerState,
                 tabs = timelineTabs,
@@ -507,6 +525,7 @@ private fun ProfileTabs(
     val scope = rememberCoroutineScope()
     Tabs(
         modifier = modifier
+            .clip(CircleShape)
             .offset { headerState.tabsOffset(density = this) },
         tabs = tabs,
         selectedTabIndex = pagerState.tabIndex,
@@ -689,6 +708,8 @@ private class HeaderState(
     val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
     val avatarPadding get() = 4.dp * (1f - progress)
     val avatarAlignmentLerp get() = progress
+    val tabsStartPadding get() = sizeToken
+    val tabsEndPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
 
     fun bioOffset() = IntOffset(
         x = 0,

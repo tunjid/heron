@@ -25,6 +25,7 @@
     <string name="back">Back</string>
     <string name="replies">Replies</string>
     <string name="media">Media</string>
+    <string name="likes">Likes</string>
     <string name="mention">Mention</string>
     <string name="post">Post</string>
 </resources>

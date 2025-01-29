@@ -34,7 +34,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -85,16 +84,13 @@ internal fun HomeScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val updatedTimelineIdsToTimelineStates by rememberUpdatedState(
-        state.timelineIdsToTimelineStates
+    val updatedTimelineStateHolders by rememberUpdatedState(
+        state.timelineStateHolders
     )
-    val updatedPages by remember {
-        derivedStateOf { updatedTimelineIdsToTimelineStates.entries.toList() }
+    val pagerState = rememberPagerState {
+        updatedTimelineStateHolders.size
     }
 
-    val pagerState = rememberPagerState {
-        updatedPages.size
-    }
     Box(
         modifier = modifier
     ) {
@@ -106,9 +102,11 @@ internal fun HomeScreen(
             modifier = Modifier
                 .nestedScroll(tabsOffsetNestedScrollConnection),
             state = pagerState,
-            key = { page -> updatedPages[page].key },
+            key = { page -> updatedTimelineStateHolders.keyAt(page) },
             pageContent = { page ->
-                val timelineStateHolder = remember { updatedPages[page].value }
+                val timelineStateHolder = remember {
+                    updatedTimelineStateHolders.stateHolderAt(page)
+                }
                 HomeTimeline(
                     panedSharedElementScope = panedSharedElementScope,
                     timelineStateHolder = timelineStateHolder,
@@ -129,11 +127,9 @@ internal fun HomeScreen(
                     )
                 }
             },
-            onRefreshTabClicked = {
-                updatedPages.getOrNull(it)
-                    ?.value
-                    ?.accept
-                    ?.invoke(TimelineLoadAction.Refresh)
+            onRefreshTabClicked = { page ->
+                updatedTimelineStateHolders.stateHolderAt(page)
+                    .accept(TimelineLoadAction.Refresh)
             }
         )
 

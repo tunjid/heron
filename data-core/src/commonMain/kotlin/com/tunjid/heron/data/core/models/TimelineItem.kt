@@ -77,6 +77,7 @@ sealed class Timeline {
             get() = when (this) {
                 is Media -> "${profileId.id}-media"
                 is Posts -> "${profileId.id}-posts"
+                is Likes -> "${profileId.id}-likes"
                 is Replies -> "${profileId.id}-posts-and-replies"
             }
 
@@ -88,6 +89,12 @@ sealed class Timeline {
 
         @Serializable
         data class Replies(
+            override val name: String,
+            override val profileId: Id,
+        ) : Profile()
+
+        @Serializable
+        data class Likes(
             override val name: String,
             override val profileId: Id,
         ) : Profile()

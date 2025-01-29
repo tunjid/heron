@@ -18,6 +18,8 @@ package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Type
 import app.bsky.feed.FeedViewPost
+import app.bsky.feed.GetActorLikesQueryParams
+import app.bsky.feed.GetActorLikesResponse
 import app.bsky.feed.GetAuthorFeedFilter
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
@@ -196,6 +198,25 @@ class OfflineTimelineRepository(
             )
         )
 
+        is Timeline.Profile.Likes -> observeAndRefreshTimeline(
+            query = query,
+            nextCursorFlow = nextCursorFlow(
+                query = query,
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
+                    networkService.api.getActorLikes(
+                        GetActorLikesQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        )
+                    )
+                },
+                nextCursor = GetActorLikesResponse::cursor,
+                networkFeed = GetActorLikesResponse::feed,
+            )
+        )
+
         is Timeline.Profile.Media -> observeAndRefreshTimeline(
             query = query,
             nextCursorFlow = nextCursorFlow(
@@ -303,6 +324,21 @@ class OfflineTimelineRepository(
                 )
             },
             networkResponseToFeedViews = GetListFeedResponse::feed,
+        )
+
+        is Timeline.Profile.Likes -> pollForTimelineUpdates(
+            timeline = timeline,
+            pollInterval = 15.seconds,
+            networkRequestBlock = {
+                networkService.api.getActorLikes(
+                    GetActorLikesQueryParams(
+                        actor = Did(timeline.profileId.id),
+                        limit = 1,
+                        cursor = null,
+                    )
+                )
+            },
+            networkResponseToFeedViews = GetActorLikesResponse::feed,
         )
 
         is Timeline.Profile.Media -> pollForTimelineUpdates(

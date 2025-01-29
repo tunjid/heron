@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileRelationship
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -35,9 +36,7 @@ data class State(
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
-    val timelines: List<Timeline.Profile> = emptyList(),
-    @Transient
-    val timelineStateHolders: List<TimelineStateHolder> = emptyList(),
+    val timelineStateHolders: TimelineStateHolders = TimelineStateHolders(),
     @Transient
     val messages: List<String> = emptyList(),
 )
