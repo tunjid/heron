@@ -20,10 +20,9 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import kotlinx.datetime.Instant
 
 
@@ -79,5 +78,5 @@ data class PopulatedProfileEntity(
     @Embedded
     val profileEntity: ProfileEntity,
     @Embedded
-    val relationship: ProfileProfileRelationshipsEntity?,
+    val relationship: ProfileViewerStateEntity?,
 )

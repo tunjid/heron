@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.network.models
 
+import app.bsky.actor.KnownFollowers
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
@@ -23,22 +24,22 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 
 
-//internal fun PostViewerState.profileProfileRelationshipsEntities(
+//internal fun PostViewerState.profileViewerEntity(
 //    viewingProfileId: Id,
 //    otherProfileId: Id,
-//): List<ProfileProfileRelationshipsEntity> =
+//): List<ProfileViewerEntity> =
 //    listOf(
-//        ProfileProfileRelationshipsEntity(
+//        ProfileViewerEntity(
 //            profileId = viewingProfileId,
 //            otherProfileId = otherProfileId,
 //            follows = following != null,
 //            muted = muted == true,
 //            blocking = blocking != null,
 //        ),
-//        ProfileProfileRelationshipsEntity(
+//        ProfileViewerEntity(
 //            profileId = otherProfileId,
 //            otherProfileId = viewingProfileId,
 //            follows = followedBy != null,
@@ -95,63 +96,54 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
         createdAt = createdAt,
     )
 
-internal fun ProfileViewBasic.profileProfileRelationshipsEntities(
+internal fun ProfileViewBasic.profileViewerStateEntities(
     viewingProfileId: Id,
-): List<ProfileProfileRelationshipsEntity> =
+): List<ProfileViewerStateEntity> =
     listOf(
-        ProfileProfileRelationshipsEntity(
+        ProfileViewerStateEntity(
             profileId = viewingProfileId,
             otherProfileId = Id(did.did),
-            follows = viewer?.following != null,
-            muted = viewer?.muted == true,
-            blocking = viewer?.blocking != null,
-        ),
-        ProfileProfileRelationshipsEntity(
-            profileId = Id(did.did),
-            otherProfileId = viewingProfileId,
-            follows = viewer?.followedBy != null,
-            muted = viewer?.mutedByList != null,
-            blocking = viewer?.blockedBy == true,
+            muted = viewer?.muted,
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            blockedBy = viewer?.blockedBy,
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
+            following = viewer?.following?.atUri?.let(::Uri),
+            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
+            blocking = viewer?.blocking?.atUri?.let(::Uri),
         ),
     )
 
-internal fun ProfileView.profileProfileRelationshipsEntities(
+internal fun ProfileView.profileViewerStateEntities(
     viewingProfileId: Id,
-): List<ProfileProfileRelationshipsEntity> =
+): List<ProfileViewerStateEntity> =
     listOf(
-        ProfileProfileRelationshipsEntity(
+        ProfileViewerStateEntity(
             profileId = viewingProfileId,
             otherProfileId = Id(did.did),
-            follows = viewer?.following != null,
-            muted = viewer?.muted == true,
-            blocking = viewer?.blocking != null,
-        ),
-        ProfileProfileRelationshipsEntity(
-            profileId = Id(did.did),
-            otherProfileId = viewingProfileId,
-            follows = viewer?.followedBy != null,
-            muted = viewer?.mutedByList != null,
-            blocking = viewer?.blockedBy == true,
+            muted = viewer?.muted,
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            blockedBy = viewer?.blockedBy,
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
+            following = viewer?.following?.atUri?.let(::Uri),
+            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
+            blocking = viewer?.blocking?.atUri?.let(::Uri),
         ),
     )
 
-internal fun ProfileViewDetailed.profileProfileRelationshipsEntities(
+internal fun ProfileViewDetailed.profileViewerStateEntities(
     viewingProfileId: Id,
-): List<ProfileProfileRelationshipsEntity> =
+): List<ProfileViewerStateEntity> =
     listOf(
-        ProfileProfileRelationshipsEntity(
+        ProfileViewerStateEntity(
             profileId = viewingProfileId,
             otherProfileId = Id(did.did),
-            follows = viewer?.following != null,
-            muted = viewer?.muted == true,
-            blocking = viewer?.blocking != null,
-        ),
-        ProfileProfileRelationshipsEntity(
-            profileId = Id(did.did),
-            otherProfileId = viewingProfileId,
-            follows = viewer?.followedBy != null,
-            muted = viewer?.mutedByList != null,
-            blocking = viewer?.blockedBy == true,
+            muted = viewer?.muted,
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            blockedBy = viewer?.blockedBy,
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
+            following = viewer?.following?.atUri?.let(::Uri),
+            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
+            blocking = viewer?.blocking?.atUri?.let(::Uri),
         ),
     )
 
@@ -186,15 +178,15 @@ internal fun ProfileView.profile() = Profile(
     createdAt = createdAt
 )
 
-//internal fun PostViewerState.postAuthorKnownProfileRelationshipsEntities(
-//    viewingProfileId: Id,
-//    ): List<ProfileProfileRelationshipsEntity> =
-//    (knownFollowers?.followers ?: emptyList()).map {
-//        ProfileProfileRelationshipsEntity(
-//            profileId = viewingProfileId,
-//            otherProfileId = postEntity.cid,
-//            follows = following != null,
-//            muted = muted == true,
-//            blocking = blocking != null,
-//        )
-//        }
+// TODO: Use this when known follower profiles are also saved
+@Suppress("unused")
+private fun KnownFollowers?.profileViewers(
+    viewingProfileId: Id,
+): List<ProfileViewerStateEntity> = when (this) {
+    null -> emptyList()
+    else -> followers.flatMap { profileViewBasic ->
+        profileViewBasic.profileViewerStateEntities(
+            viewingProfileId = viewingProfileId
+        )
+    }
+}

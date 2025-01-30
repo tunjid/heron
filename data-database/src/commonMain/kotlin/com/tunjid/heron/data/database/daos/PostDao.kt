@@ -141,9 +141,9 @@ interface PostDao {
             SELECT * FROM profiles
             INNER JOIN postLikes
                 ON did = authorId
-            LEFT JOIN profileProfileRelationships
-                ON profileProfileRelationships.profileId = :viewingProfileId
-                AND profileProfileRelationships.otherProfileId = authorId
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :viewingProfileId
+                AND profileViewerStates.otherProfileId = authorId
 	        WHERE postId = :postId
             ORDER BY indexedAt
             DESC
@@ -164,9 +164,9 @@ interface PostDao {
             SELECT * FROM profiles
             INNER JOIN postReposts
                 ON did = authorId
-            LEFT JOIN profileProfileRelationships
-                ON profileProfileRelationships.profileId = :viewingProfileId
-                AND profileProfileRelationships.otherProfileId = authorId
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :viewingProfileId
+                AND profileViewerStates.otherProfileId = authorId
 	        WHERE postId = :postId
             ORDER BY indexedAt
             DESC

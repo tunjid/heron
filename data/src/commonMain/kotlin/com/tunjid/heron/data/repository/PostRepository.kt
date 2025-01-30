@@ -40,7 +40,7 @@ import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -54,7 +54,9 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -71,15 +73,12 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
-import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
-import sh.christian.ozone.api.model.JsonContent
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
@@ -96,12 +95,12 @@ interface PostRepository {
     fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>>
+    ): Flow<CursorList<ProfileWithViewerState>>
 
     fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>>
+    ): Flow<CursorList<ProfileWithViewerState>>
 
     fun quotes(
         query: PostDataQuery,
@@ -129,7 +128,7 @@ class OfflinePostRepository @Inject constructor(
     override fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
+    ): Flow<CursorList<ProfileWithViewerState>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.likedBy(
                 postId = query.postId.id,
@@ -170,7 +169,7 @@ class OfflinePostRepository @Inject constructor(
     override fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithRelationship>> = withPostUri(query.postId) { postAtUri ->
+    ): Flow<CursorList<ProfileWithViewerState>> = withPostUri(query.postId) { postAtUri ->
         combine(
             postDao.repostedBy(
                 postId = query.postId.id,
@@ -282,7 +281,7 @@ class OfflinePostRepository @Inject constructor(
 
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
-            collection = Nsid(PostCollection),
+            collection = Nsid(Collections.Post),
             record = BskyPost(
                 text = request.text,
                 reply = replyRef,
@@ -328,8 +327,8 @@ class OfflinePostRepository @Inject constructor(
                         repo = authorId.id.let(::Did),
                         collection = Nsid(
                             when (interaction) {
-                                is Post.Interaction.Create.Like -> LikeCollection
-                                is Post.Interaction.Create.Repost -> RepostCollection
+                                is Post.Interaction.Create.Like -> Collections.Like
+                                is Post.Interaction.Create.Repost -> Collections.Repost
                             }
                         ),
                         record = when (interaction) {
@@ -376,14 +375,16 @@ class OfflinePostRepository @Inject constructor(
                         repo = authorId.id.let(::Did),
                         collection = Nsid(
                             when (interaction) {
-                                is Post.Interaction.Delete.RemoveRepost -> LikeCollection
-                                is Post.Interaction.Delete.Unlike -> RepostCollection
+                                is Post.Interaction.Delete.RemoveRepost -> Collections.Repost
+                                is Post.Interaction.Delete.Unlike -> Collections.Like
                             }
                         ),
-                        rkey = when (interaction) {
-                            is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri.uri
-                            is Post.Interaction.Delete.Unlike -> interaction.likeUri.uri
-                        }
+                        rkey = Collections.recordKey(
+                            when (interaction) {
+                                is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri
+                                is Post.Interaction.Delete.Unlike -> interaction.likeUri
+                            }
+                        )
                     )
                 )
             }
@@ -444,21 +445,8 @@ class OfflinePostRepository @Inject constructor(
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
     map {
-        ProfileWithRelationship(
+        ProfileWithViewerState(
             profile = it.profileEntity.asExternalModel(),
-            relationship = it.relationship?.asExternalModel(),
+            viewerState = it.relationship?.asExternalModel(),
         )
     }
-
-
-private fun <T> T.asJsonContent(
-    serializer: KSerializer<T>,
-): JsonContent = BlueskyJson.decodeFromString(
-    BlueskyJson.encodeToString(serializer, this)
-)
-
-private const val PostCollection = "app.bsky.feed.post"
-
-private const val RepostCollection = "app.bsky.feed.repost"
-
-private const val LikeCollection = "app.bsky.feed.like"

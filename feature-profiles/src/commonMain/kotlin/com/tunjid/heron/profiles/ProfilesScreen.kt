@@ -74,7 +74,7 @@ internal fun ProfilesScreen(
                         .fillMaxWidth()
                         .animateItem(),
                     panedSharedElementScope = panedSharedElementScope,
-                    profileWithRelationship = item,
+                    profileWithViewerState = item,
                     signedInProfileId = signedInProfileId,
                     onProfileClicked = { profile ->
                         actions(
@@ -86,6 +86,18 @@ internal fun ProfilesScreen(
                                 )
                             )
                         )
+                    },
+                    onViewerStateClicked = { viewerState ->
+                        state.signedInProfileId?.let {
+                            actions(
+                                Action.ToggleViewerState(
+                                    signedInProfileId = it,
+                                    viewedProfileId = item.profile.did,
+                                    following = viewerState?.following,
+                                    followedBy = viewerState?.followedBy,
+                                )
+                            )
+                        }
                     },
                 )
             }

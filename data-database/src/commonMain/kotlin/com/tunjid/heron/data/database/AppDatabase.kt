@@ -47,12 +47,12 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 8,
+    version = 9,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -65,7 +65,7 @@ import kotlinx.coroutines.IO
         PostAuthorsEntity::class,
         PostThreadEntity::class,
         PostViewerStatisticsEntity::class,
-        ProfileProfileRelationshipsEntity::class,
+        ProfileViewerStateEntity::class,
         ProfileEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
@@ -91,6 +91,12 @@ import kotlinx.coroutines.IO
         ),
         // postLikes and postReposts
         AutoMigration(from = 7, to = 8),
+        // profile profile relationships, follows, mutes, blocks, etc
+        AutoMigration(
+            from = 8,
+            to = 9,
+            spec = ProfileViewersAutoMigration::class,
+        ),
     ],
     exportSchema = true,
 )

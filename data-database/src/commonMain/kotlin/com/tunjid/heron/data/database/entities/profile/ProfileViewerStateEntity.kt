@@ -18,12 +18,13 @@ package com.tunjid.heron.data.database.entities.profile
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
-    tableName = "profileProfileRelationships",
+    tableName = "profileViewerStates",
     primaryKeys = [
         "profileId",
         "otherProfileId",
@@ -43,30 +44,35 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
         ),
     ],
 )
-data class ProfileProfileRelationshipsEntity(
+data class ProfileViewerStateEntity(
     val profileId: Id,
     val otherProfileId: Id,
-    val blocking: Boolean,
-    val muted: Boolean,
-    val follows: Boolean,
+    val muted: Boolean?,
+    val mutedByList: Id?,
+    val blockedBy: Boolean?,
+    val blocking: Uri?,
+    val blockingByList: Id?,
+    val following: Uri?,
+    val followedBy: Uri?,
 ) {
     data class Partial(
         val profileId: Id,
         val otherProfileId: Id,
-        val follows: Boolean,
+        val following: Uri?,
+        val followedBy: Uri?,
     )
 }
 
-internal fun ProfileProfileRelationshipsEntity.partial() =
-    ProfileProfileRelationshipsEntity.Partial(
+internal fun ProfileViewerStateEntity.partial() =
+    ProfileViewerStateEntity.Partial(
         profileId = profileId,
         otherProfileId = otherProfileId,
-        follows = follows,
+        following = following,
+        followedBy = followedBy,
     )
 
-fun ProfileProfileRelationshipsEntity.asExternalModel() =
-    ProfileRelationship(
-        blocking = blocking,
-        muted = muted,
-        follows = follows,
+fun ProfileViewerStateEntity.asExternalModel() =
+    ProfileViewerState(
+        following = following,
+        followedBy = followedBy,
     )

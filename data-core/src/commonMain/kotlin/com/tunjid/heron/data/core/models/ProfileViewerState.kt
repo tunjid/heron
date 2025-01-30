@@ -16,11 +16,15 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ProfileRelationship(
-    val blocking: Boolean,
-    val muted: Boolean,
-    val follows: Boolean,
+data class ProfileViewerState(
+    val following: Uri?,
+    val followedBy: Uri?,
+    // TODO: Add other fields when working on those features,
+    //  they should already exist in the entity
 )
+
+val ProfileViewerState?.isFollowing: Boolean get() = this?.following != null

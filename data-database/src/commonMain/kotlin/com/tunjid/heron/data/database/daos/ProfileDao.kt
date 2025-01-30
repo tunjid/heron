@@ -26,7 +26,7 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
 import kotlinx.coroutines.flow.Flow
 
@@ -46,7 +46,7 @@ interface ProfileDao {
 
     @Query(
         """
-            SELECT * FROM profileProfileRelationships
+            SELECT * FROM profileViewerStates
             INNER JOIN profiles
             ON profileId = did
             WHERE profileId = :profileId
@@ -55,10 +55,10 @@ interface ProfileDao {
                 AND otherProfileId IN (:otherProfileIds)
         """
     )
-    fun relationships(
+    fun viewerState(
         profileId: String,
         otherProfileIds: Set<Id>,
-    ): Flow<List<ProfileProfileRelationshipsEntity>>
+    ): Flow<List<ProfileViewerStateEntity>>
 
     @Upsert
     suspend fun upsertProfiles(
@@ -86,28 +86,28 @@ interface ProfileDao {
     )
 
     @Upsert
-    suspend fun upsertProfileProfileRelationships(
-        entities: List<ProfileProfileRelationshipsEntity>,
+    suspend fun upsertProfileViewers(
+        entities: List<ProfileViewerStateEntity>,
     )
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateProfileProfileRelationships(
-        entities: List<ProfileProfileRelationshipsEntity>,
+    suspend fun insertOrPartiallyUpdateProfileViewers(
+        entities: List<ProfileViewerStateEntity>,
     ) = partialUpsert(
         items = entities,
-        partialMapper = ProfileProfileRelationshipsEntity::partial,
-        insertEntities = ::insertOrIgnoreProfileProfileRelationships,
-        updatePartials = ::updatePartialProfileProfileRelationships
+        partialMapper = ProfileViewerStateEntity::partial,
+        insertEntities = ::insertOrIgnoreProfileViewers,
+        updatePartials = ::updatePartialProfileViewers
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreProfileProfileRelationships(
-        entities: List<ProfileProfileRelationshipsEntity>,
+    suspend fun insertOrIgnoreProfileViewers(
+        entities: List<ProfileViewerStateEntity>,
     ): List<Long>
 
-    @Update(entity = ProfileProfileRelationshipsEntity::class)
-    suspend fun updatePartialProfileProfileRelationships(
-        entities: List<ProfileProfileRelationshipsEntity.Partial>,
+    @Update(entity = ProfileViewerStateEntity::class)
+    suspend fun updatePartialProfileViewers(
+        entities: List<ProfileViewerStateEntity.Partial>,
     )
 
 }

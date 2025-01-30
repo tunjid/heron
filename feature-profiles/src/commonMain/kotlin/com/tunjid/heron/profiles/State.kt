@@ -16,8 +16,9 @@
 
 package com.tunjid.heron.profiles
 
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -33,7 +34,7 @@ data class State(
     val signedInProfileId: Id? = null,
     val currentQuery: CursorQuery,
     @Transient
-    val profiles: TiledList<CursorQuery, ProfileWithRelationship> = emptyTiledList(),
+    val profiles: TiledList<CursorQuery, ProfileWithViewerState> = emptyTiledList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -70,6 +71,13 @@ sealed class Action(val key: String) {
     data class LoadAround(
         val query: CursorQuery,
     ) : Action("LoadAround")
+
+    data class ToggleViewerState(
+        val signedInProfileId: Id,
+        val viewedProfileId: Id,
+        val following: Uri?,
+        val followedBy: Uri?,
+    ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

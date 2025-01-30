@@ -36,12 +36,33 @@ data class Profile(
     val joinedViaStarterPack: Id?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
-) : ByteSerializable
+) : ByteSerializable {
+
+    @Serializable
+    sealed class Connection {
+        abstract val signedInProfileId: Id
+        abstract val profileId: Id
+        abstract val followedBy: Uri?
+
+        data class Follow(
+            override val signedInProfileId: Id,
+            override val profileId: Id,
+            override val followedBy: Uri?,
+        ) : Connection()
+
+        data class Unfollow(
+            override val signedInProfileId: Id,
+            override val profileId: Id,
+            override val followedBy: Uri?,
+            val followUri: Uri,
+        ) : Connection()
+    }
+}
 
 @Serializable
-data class ProfileWithRelationship(
+data class ProfileWithViewerState(
     val profile: Profile,
-    val relationship: ProfileRelationship?,
+    val viewerState: ProfileViewerState?,
 )
 
 val Profile.contentDescription get() = displayName ?: handle.id

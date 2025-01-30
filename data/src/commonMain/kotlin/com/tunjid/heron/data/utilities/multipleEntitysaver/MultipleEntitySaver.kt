@@ -39,7 +39,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.ProfileProfileRelationshipsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
@@ -117,8 +117,8 @@ internal class MultipleEntitySaver(
     private val postLikeEntities =
         mutableListOf<PostLikeEntity>()
 
-    private val profileProfileRelationshipsEntities =
-        mutableListOf<ProfileProfileRelationshipsEntity>()
+    private val profileViewerEntities =
+        mutableListOf<ProfileViewerStateEntity>()
 
     private val listEntities =
         mutableListOf<ListEntity>()
@@ -157,8 +157,8 @@ internal class MultipleEntitySaver(
         postDao.upsertPostStatistics(postViewerStatisticsEntities)
         postDao.upsertPostLikes(postLikeEntities)
 
-        profileDao.upsertProfileProfileRelationships(
-            profileProfileRelationshipsEntities
+        profileDao.upsertProfileViewers(
+            profileViewerEntities
         )
 
         notificationsDao.upsertNotifications(notificationEntities)
@@ -205,8 +205,8 @@ internal class MultipleEntitySaver(
 
     fun add(entity: PostLikeEntity) = postLikeEntities.add(entity)
 
-    fun add(entity: ProfileProfileRelationshipsEntity) =
-        profileProfileRelationshipsEntities.add(entity)
+    fun add(entity: ProfileViewerStateEntity) =
+        profileViewerEntities.add(entity)
 
     fun add(entity: ListEntity) = listEntities.add(entity)
 

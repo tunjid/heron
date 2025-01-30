@@ -76,7 +76,7 @@ import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
@@ -96,7 +96,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
+import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -177,12 +177,24 @@ internal fun ProfileScreen(
                     .fillMaxWidth(),
                 profile = state.profile,
                 isSignedInProfile = state.isSignedInProfile,
-                profileRelationship = state.profileRelationship,
+                viewerState = state.viewerState,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
                     updatedTimelineStateHolders.stateHolderAt(
                         index = index
                     ).accept(TimelineLoadAction.Refresh)
+                },
+                onViewerStateClicked = { viewerState ->
+                    state.signedInProfileId?.let {
+                        actions(
+                            Action.ToggleViewerState(
+                                signedInProfileId = it,
+                                viewedProfileId = state.profile.did,
+                                following = viewerState?.following,
+                                followedBy = viewerState?.followedBy,
+                            )
+                        )
+                    }
                 },
                 onNavigateToProfiles = { navigationAction ->
                     actions(Action.Navigate.DelegateTo(navigationAction))
@@ -238,9 +250,10 @@ private fun ProfileHeader(
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
-    profileRelationship: ProfileRelationship?,
+    viewerState: ProfileViewerState?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Box(
@@ -281,7 +294,8 @@ private fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
-                    profileRelationship = profileRelationship,
+                    viewerState = viewerState,
+                    onViewerStateClicked = onViewerStateClicked,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -405,7 +419,8 @@ private fun ProfileHeadline(
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
-    profileRelationship: ProfileRelationship?,
+    viewerState: ProfileViewerState?,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -426,12 +441,14 @@ private fun ProfileHeadline(
         },
         action = {
             AnimatedVisibility(
-                visible = profileRelationship != null || isSignedInProfile,
+                visible = viewerState != null || isSignedInProfile,
                 content = {
-                    ProfileRelationship(
-                        relationship = profileRelationship,
+                    ProfileViewerState(
+                        viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
-                        onClick = {}
+                        onClick = {
+                            onViewerStateClicked(viewerState)
+                        }
                     )
                 },
             )

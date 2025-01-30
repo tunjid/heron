@@ -30,13 +30,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileWithRelationship
+import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
+import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -46,20 +47,21 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 fun ProfileWithRelationship(
     modifier: Modifier,
     panedSharedElementScope: PanedSharedElementScope,
-    profileWithRelationship: ProfileWithRelationship,
+    profileWithViewerState: ProfileWithViewerState,
     signedInProfileId: Id?,
     onProfileClicked: (Profile) -> Unit,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
 ) = with(panedSharedElementScope) {
     AttributionLayout(
         modifier = modifier,
         avatar = {
-            val profile = profileWithRelationship.profile
+            val profile = profileWithViewerState.profile
             AsyncImage(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedPolygonShape.Circle)
                     .sharedElement(
-                        key = profileWithRelationship.sharedElementKey()
+                        key = profileWithViewerState.sharedElementKey()
                     )
                     .clickable { onProfileClicked(profile) },
                 args = remember(profile.avatar) {
@@ -76,25 +78,27 @@ fun ProfileWithRelationship(
             Column {
                 ProfileName(
                     modifier = Modifier,
-                    profile = profileWithRelationship.profile,
+                    profile = profileWithViewerState.profile,
                     ellipsize = false,
                 )
                 Spacer(Modifier.height(4.dp))
                 ProfileHandle(
                     modifier = Modifier,
-                    profile = profileWithRelationship.profile,
+                    profile = profileWithViewerState.profile,
                 )
             }
         },
         action = {
-            val isSignedInProfile = signedInProfileId == profileWithRelationship.profile.did
+            val isSignedInProfile = signedInProfileId == profileWithViewerState.profile.did
             AnimatedVisibility(
-                visible = profileWithRelationship.relationship != null || isSignedInProfile,
+                visible = profileWithViewerState.viewerState != null || isSignedInProfile,
                 content = {
-                    ProfileRelationship(
-                        relationship = profileWithRelationship.relationship,
+                    ProfileViewerState(
+                        viewerState = profileWithViewerState.viewerState,
                         isSignedInProfile = isSignedInProfile,
-                        onClick = {}
+                        onClick = {
+                            onViewerStateClicked(profileWithViewerState.viewerState)
+                        }
                     )
                 },
             )
@@ -102,5 +106,5 @@ fun ProfileWithRelationship(
     )
 }
 
-internal fun ProfileWithRelationship.sharedElementKey() =
+internal fun ProfileWithViewerState.sharedElementKey() =
     "profiles-${profile.did}"

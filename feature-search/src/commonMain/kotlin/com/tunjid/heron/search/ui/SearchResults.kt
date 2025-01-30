@@ -36,7 +36,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRelationship
+import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -61,11 +61,11 @@ fun ProfileSearchResult(
                     .size(48.dp)
                     .clickable { onProfileClicked(result) },
                 key = result.avatarSharedElementKey(),
-                state = remember(result.profileWithRelationship.profile.avatar) {
+                state = remember(result.profileWithViewerState.profile.avatar) {
                     ImageArgs(
-                        url = result.profileWithRelationship.profile.avatar?.uri,
+                        url = result.profileWithViewerState.profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
-                        contentDescription = result.profileWithRelationship.profile.contentDescription,
+                        contentDescription = result.profileWithViewerState.profile.contentDescription,
                         shape = RoundedPolygonShape.Circle,
                     )
                 },
@@ -79,16 +79,16 @@ fun ProfileSearchResult(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 ProfileName(
-                    profile = result.profileWithRelationship.profile
+                    profile = result.profileWithViewerState.profile
                 )
                 ProfileHandle(
-                    profile = result.profileWithRelationship.profile
+                    profile = result.profileWithViewerState.profile
                 )
             }
         },
         action = {
-            ProfileRelationship(
-                relationship = result.profileWithRelationship.relationship,
+            ProfileViewerState(
+                viewerState = result.profileWithViewerState.viewerState,
                 isSignedInProfile = false,
                 onClick = {}
             )
@@ -142,7 +142,7 @@ internal fun PostSearchResult(
 }
 
 internal fun SearchResult.Profile.avatarSharedElementKey(): String =
-    "${sharedElementPrefix()}-${profileWithRelationship.profile.did.id}"
+    "${sharedElementPrefix()}-${profileWithViewerState.profile.did.id}"
 
 internal fun SearchResult.sharedElementPrefix() = when (this) {
     is SearchResult.Post.Top -> "top-post-search-result"
