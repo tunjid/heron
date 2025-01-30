@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,8 +89,16 @@ internal fun ComposeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        var postText by remember {
-            mutableStateOf(TextFieldValue(AnnotatedString("")))
+        var postText by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+            val startingText = when (val postType = state.postType) {
+                is Post.Create.Mention -> "@${postType.profile.handle}"
+                is Post.Create.Reply -> ""
+                Post.Create.Timeline -> ""
+                null -> ""
+            }
+            mutableStateOf(
+                TextFieldValue(AnnotatedString(startingText))
+            )
         }
         ReplyingTo(
             panedSharedElementScope = panedSharedElementScope,
@@ -104,6 +113,7 @@ internal fun ComposeScreen(
                 val authorId = state.signedInProfile?.did ?: return@onCreatePost
                 actions(
                     Action.CreatePost(
+                        postType = state.postType,
                         authorId = authorId,
                         text = postText.text,
                         links = postText.annotatedString.links(),

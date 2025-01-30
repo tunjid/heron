@@ -20,7 +20,10 @@ package com.tunjid.heron.compose
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -36,6 +39,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flowOf
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -55,6 +60,7 @@ class ComposeViewModelCreator(
 class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -75,7 +81,11 @@ class ActualComposeViewModel(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-                is Action.CreatePost -> action.flow.createPostMutations()
+                is Action.CreatePost -> action.flow.createPostMutations(
+                    navActions = navActions,
+                    writeQueue = writeQueue,
+                )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -92,8 +102,29 @@ private fun loadSignedInProfileMutations(
     }
 
 private fun Flow<Action.CreatePost>.createPostMutations(
-
+    navActions: (NavigationMutation) -> Unit,
+    writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations {
+    mapToManyMutations { action ->
+        val postWrite = Writable.Create(
+            request = Post.Create.Request(
+                authorId = action.authorId,
+                text = action.text,
+                links = action.links,
+            ),
+            replyTo = when (val postType = action.postType) {
+                is Post.Create.Mention -> null
+                is Post.Create.Reply -> postType
+                Post.Create.Timeline -> null
+                null -> null
+            },
+        )
 
+        writeQueue.enqueue(postWrite)
+        writeQueue.awaitDequeue(postWrite)
+        emitAll(
+            flowOf(Action.Navigate.Pop).consumeNavigationActions(
+                navigationMutationConsumer = navActions
+            )
+        )
     }

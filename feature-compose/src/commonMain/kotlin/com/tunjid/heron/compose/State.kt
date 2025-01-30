@@ -39,6 +39,7 @@ data class State(
 sealed class Action(val key: String) {
 
     data class CreatePost(
+        val postType: Post.Create?,
         val authorId: Id,
         val text: String,
         val links: List<Post.Link>,

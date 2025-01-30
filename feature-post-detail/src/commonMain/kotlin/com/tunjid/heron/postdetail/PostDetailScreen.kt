@@ -103,7 +103,26 @@ internal fun PostDetailScreen(
             )
         }
     }
-
+    val onReplyToPost = remember {
+        { item: TimelineItem ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Reply(
+                            parent = item.post,
+                            root = when (item) {
+                                is TimelineItem.Pinned -> item.post
+                                is TimelineItem.Repost -> item.post
+                                is TimelineItem.Single -> item.post
+                                is TimelineItem.Thread -> item.posts.first()
+                            }
+                        ),
+                        sharedElementPrefix = state.sharedElementPrefix,
+                    )
+                )
+            )
+        }
+    }
     val onPostMetadataClicked = remember {
         onPostMetadataClicked@{ postMetadata: Post.Metadata ->
             actions(
@@ -161,7 +180,9 @@ internal fun PostDetailScreen(
                     onPostClicked = onPostClicked,
                     onProfileClicked = onProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = {},
+                    onReplyToPost = {
+                        onReplyToPost(item)
+                    },
                     onPostMetadataClicked = onPostMetadataClicked,
                     onPostInteraction = {
                         actions(
