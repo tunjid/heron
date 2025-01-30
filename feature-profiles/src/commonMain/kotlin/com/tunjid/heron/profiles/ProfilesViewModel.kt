@@ -19,6 +19,7 @@ package com.tunjid.heron.profiles
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostDataQuery
@@ -27,6 +28,8 @@ import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.isValidFor
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profiles.di.load
@@ -36,6 +39,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.toTiledList
@@ -68,6 +72,7 @@ class ActualProfilesViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     postRepository: PostRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -110,7 +115,9 @@ class ActualProfilesViewModel(
                     stateHolder = this@transform,
                     postRepository = postRepository,
                 )
-
+                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    writeQueue = writeQueue,
+                )
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -178,3 +185,27 @@ suspend fun Flow<Action.LoadAround>.profilesLoadMutations(
             else this
         }
 }
+
+private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.Connection(
+                when (val following = action.following) {
+                    null -> Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
+
+                    else -> Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+                }
+            )
+        )
+    }

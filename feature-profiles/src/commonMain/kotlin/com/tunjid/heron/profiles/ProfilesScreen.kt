@@ -87,6 +87,18 @@ internal fun ProfilesScreen(
                             )
                         )
                     },
+                    onViewerStateClicked = { viewerState ->
+                        state.signedInProfileId?.let {
+                            actions(
+                                Action.ToggleViewerState(
+                                    signedInProfileId = it,
+                                    viewedProfileId = item.profile.did,
+                                    following = viewerState?.following,
+                                    followedBy = viewerState?.followedBy,
+                                )
+                            )
+                        }
+                    },
                 )
             }
         )
