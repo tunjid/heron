@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.writequeue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.filterNotNull
@@ -28,6 +29,7 @@ import me.tatarka.inject.annotations.Inject
 sealed class WriteQueue {
 
     internal abstract val postRepository: PostRepository
+    internal abstract val profileRepository: ProfileRepository
 
     abstract suspend fun enqueue(
         writable: Writable,
@@ -38,6 +40,7 @@ sealed class WriteQueue {
 
 class SnapshotWriteQueue @Inject constructor(
     override val postRepository: PostRepository,
+    override val profileRepository: ProfileRepository,
 ) : WriteQueue() {
     // At some point this queue should be persisted to disk
     private val queue = mutableStateListOf<Writable>()

@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
@@ -45,6 +46,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.merge
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -86,7 +88,7 @@ class ActualProfileViewModel(
             profileId = route.profileId,
             profileRepository = profileRepository,
         ),
-        loadIsSignedInProfileMutations(
+        loadSignedInProfileMutations(
             profileId = route.profileId,
             scope = scope,
             authTokenRepository = authTokenRepository,
@@ -107,6 +109,10 @@ class ActualProfileViewModel(
                     writeQueue = writeQueue,
                 )
 
+                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    writeQueue = writeQueue,
+                )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -123,26 +129,31 @@ private fun loadProfileMutations(
         copy(profile = it)
     }
 
-private fun loadIsSignedInProfileMutations(
+private fun loadSignedInProfileMutations(
     profileId: Id,
     scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.isSignedInProfile(profileId).mapToMutation { isSignedInProfile ->
-        copy(
-            isSignedInProfile = isSignedInProfile,
-            timelineStateHolders = timelineStateHolders.update(
-                scope = scope,
-                startNumColumns = 1,
-                updatedTimelines = timelines(
-                    profileId = profileId,
-                    isSignedInUser = isSignedInProfile,
-                ),
-                timelineRepository = timelineRepository,
+    merge(
+        authTokenRepository.isSignedInProfile(profileId).mapToMutation { isSignedInProfile ->
+            copy(
+                isSignedInProfile = isSignedInProfile,
+                timelineStateHolders = timelineStateHolders.update(
+                    scope = scope,
+                    startNumColumns = 1,
+                    updatedTimelines = timelines(
+                        profileId = profileId,
+                        isSignedInUser = isSignedInProfile,
+                    ),
+                    timelineRepository = timelineRepository,
+                )
             )
-        )
-    }
+        },
+        authTokenRepository.signedInUser.mapToMutation { signedInProfile ->
+            copy(signedInProfileId = signedInProfile?.did)
+        }
+    )
 
 private fun profileRelationshipMutations(
     profileId: Id,
@@ -162,6 +173,30 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.Connection(
+                when (val following = action.following) {
+                    null -> Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
+
+                    else -> Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+                }
+            )
+        )
     }
 
 private fun timelines(

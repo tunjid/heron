@@ -17,14 +17,20 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.GetProfileQueryParams
+import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.CreateRecordValidationStatus
+import com.atproto.repo.DeleteRecordRequest
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -35,8 +41,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
+import app.bsky.graph.Follow as BskyFollow
 
 interface ProfileRepository {
 
@@ -47,6 +56,10 @@ interface ProfileRepository {
     fun profileRelationships(
         profileIds: Set<Id>,
     ): Flow<List<ProfileViewerState>>
+
+    suspend fun sendConnection(
+        connection: Profile.Connection,
+    )
 }
 
 class OfflineProfileRepository @Inject constructor(
@@ -84,6 +97,62 @@ class OfflineProfileRepository @Inject constructor(
                 viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
             }
             .distinctUntilChanged()
+
+    override suspend fun sendConnection(
+        connection: Profile.Connection,
+    ) {
+        when (connection) {
+            is Profile.Connection.Follow -> runCatchingWithNetworkRetry {
+                networkService.api.createRecord(
+                    CreateRecordRequest(
+                        repo = connection.signedInProfileId.id.let(::Did),
+                        collection = Nsid(Collections.Follow),
+                        record = BskyFollow(
+                            subject = connection.profileId.id.let(::Did),
+                            createdAt = Clock.System.now(),
+                        ).asJsonContent(BskyFollow.serializer()),
+                    )
+                )
+            }
+                .getOrNull()
+                ?.let {
+                    if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
+                    profileDao.updatePartialProfileViewers(
+                        listOf(
+                            ProfileViewerStateEntity.Partial(
+                                profileId = connection.signedInProfileId,
+                                otherProfileId = connection.profileId,
+                                following = it.uri.atUri.let(::Uri),
+                                followedBy = connection.followedBy,
+                            )
+                        )
+                    )
+                }
+
+            is Profile.Connection.Unfollow  -> runCatchingWithNetworkRetry {
+                networkService.api.deleteRecord(
+                    DeleteRecordRequest(
+                        repo = connection.signedInProfileId.id.let(::Did),
+                        collection = Nsid(Collections.Follow),
+                        rkey = Collections.recordKey(connection.followUri),
+                    )
+                )
+            }
+                .getOrNull()
+                ?.let {
+                    profileDao.updatePartialProfileViewers(
+                        listOf(
+                            ProfileViewerStateEntity.Partial(
+                                profileId = connection.signedInProfileId,
+                                otherProfileId = connection.profileId,
+                                following = null,
+                                followedBy = connection.followedBy,
+                            )
+                        )
+                    )
+                }
+        }
+    }
 
     private fun signedInProfileId() = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }

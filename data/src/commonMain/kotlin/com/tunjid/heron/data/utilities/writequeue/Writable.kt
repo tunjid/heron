@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.writequeue
 
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import kotlinx.serialization.Serializable
 
 sealed interface Writable {
@@ -56,6 +57,22 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write() {
             postRepository.createPost(request, replyTo)
+        }
+    }
+
+    @Serializable
+    data class Connection(
+        val connection: Profile.Connection,
+    ) : Writable {
+
+        override val queueId: String
+            get() = when (connection) {
+                is Profile.Connection.Follow -> "follow-${connection.profileId}"
+                is Profile.Connection.Unfollow -> "unfollow-${connection.profileId}"
+            }
+
+        override suspend fun WriteQueue.write() {
+            profileRepository.sendConnection(connection)
         }
     }
 }

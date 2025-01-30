@@ -184,6 +184,18 @@ internal fun ProfileScreen(
                         index = index
                     ).accept(TimelineLoadAction.Refresh)
                 },
+                onViewerStateClicked = { viewerState ->
+                    state.signedInProfileId?.let {
+                        actions(
+                            Action.ToggleViewerState(
+                                signedInProfileId = it,
+                                viewedProfileId = state.profile.did,
+                                following = viewerState?.following,
+                                followedBy = viewerState?.followedBy,
+                            )
+                        )
+                    }
+                },
                 onNavigateToProfiles = { navigationAction ->
                     actions(Action.Navigate.DelegateTo(navigationAction))
                 },
@@ -241,6 +253,7 @@ private fun ProfileHeader(
     viewerState: ProfileViewerState?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Box(
@@ -282,6 +295,7 @@ private fun ProfileHeader(
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
                     viewerState = viewerState,
+                    onViewerStateClicked = onViewerStateClicked,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -406,6 +420,7 @@ private fun ProfileHeadline(
     profile: Profile,
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -431,7 +446,9 @@ private fun ProfileHeadline(
                     ProfileViewerState(
                         viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
-                        onClick = {}
+                        onClick = {
+                            onViewerStateClicked(viewerState)
+                        }
                     )
                 },
             )
