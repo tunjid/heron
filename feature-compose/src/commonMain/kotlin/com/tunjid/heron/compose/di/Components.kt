@@ -17,9 +17,14 @@
 package com.tunjid.heron.compose.di
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +33,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
@@ -37,12 +46,15 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeViewModelCreator
+import com.tunjid.heron.compose.ui.ComposePostBottomBar
+import com.tunjid.heron.compose.ui.links
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.Fab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.ui.requirePanedSharedElementScope
@@ -52,6 +64,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_compose.generated.resources.Res
 import heron.feature_compose.generated.resources.back
+import heron.feature_compose.generated.resources.post
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
@@ -117,6 +130,8 @@ abstract class ComposeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val sharedElementScope = requirePanedSharedElementScope()
+
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
@@ -125,7 +140,54 @@ abstract class ComposeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar { viewModel.accept(Action.Navigate.Pop) }
+                    TopBar(
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
+                },
+                floatingActionButton = {
+                    Fab(
+                        modifier = Modifier
+                            .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
+                        panedSharedElementScope = sharedElementScope,
+                        expanded = true,
+                        text = stringResource(Res.string.post),
+                        icon = Icons.AutoMirrored.Rounded.Send,
+                        onClick = onClick@{
+                            val authorId = state.signedInProfile?.did ?: return@onClick
+                            val postText = state.postText
+                            viewModel.accept(
+                                Action.CreatePost(
+                                    postType = state.postType,
+                                    authorId = authorId,
+                                    text = postText.text,
+                                    links = postText.annotatedString.links(),
+                                )
+                            )
+                        }
+                    )
+                },
+                bottomBar = {
+                    val borderColor = MaterialTheme.colorScheme.outline
+                    val imePadding = WindowInsets.ime.asPaddingValues()
+                    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                    ComposePostBottomBar(
+                        modifier = Modifier
+                            .drawBehind {
+                                drawLine(
+                                    color = borderColor,
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, 0f),
+                                    strokeWidth = 1f,
+                                )
+                            }
+                            .padding(horizontal = 8.dp)
+                            .padding(
+                                imePadding.takeIf {
+                                    it.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
+                                } ?: navBarPadding
+                            ),
+                        postText = state.postText,
+                    )
                 },
                 content = { paddingValues ->
                     ComposeScreen(

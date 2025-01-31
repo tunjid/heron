@@ -17,6 +17,8 @@
 package com.tunjid.heron.compose
 
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
@@ -67,6 +69,16 @@ class ActualComposeViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope), ComposeStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        postText = TextFieldValue(
+            AnnotatedString(
+                when (val postType = route.creationType) {
+                    is Post.Create.Mention -> "@${postType.profile.handle}"
+                    is Post.Create.Reply -> ""
+                    Post.Create.Timeline -> ""
+                    null -> ""
+                }
+            )
+        ),
         sharedElementPrefix = route.sharedElementPrefix,
         postType = route.creationType,
     ),
@@ -81,6 +93,7 @@ class ActualComposeViewModel(
             keySelector = Action::key
         ) {
             when (val action = type()) {
+                is Action.PostTextChanged -> action.flow.postTextMutations()
                 is Action.CreatePost -> action.flow.createPostMutations(
                     navActions = navActions,
                     writeQueue = writeQueue,
@@ -99,6 +112,12 @@ private fun loadSignedInProfileMutations(
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun Flow<Action.PostTextChanged>.postTextMutations(
+): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(postText = action.textFieldValue)
     }
 
 private fun Flow<Action.CreatePost>.createPostMutations(

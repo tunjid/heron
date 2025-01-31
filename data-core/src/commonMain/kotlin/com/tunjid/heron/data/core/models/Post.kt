@@ -44,7 +44,7 @@ data class Post(
         val text: String,
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
-        val replyRef: ReplyRef?,
+        val replyRef: ReplyRef? = null,
     ) : ByteSerializable
 
     @Serializable
