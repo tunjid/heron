@@ -132,18 +132,12 @@ private fun FeedTimeline(
         }
     }
     val onReplyToPost = remember {
-        { item: TimelineItem ->
+        { post: Post ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ComposePost(
                         type = Post.Create.Reply(
-                            parent = item.post,
-                            root = when (item) {
-                                is TimelineItem.Pinned -> item.post
-                                is TimelineItem.Repost -> item.post
-                                is TimelineItem.Single -> item.post
-                                is TimelineItem.Thread -> item.posts.first()
-                            }
+                            parent = post,
                         ),
                         sharedElementPrefix = timelineState.timeline.sourceId,
                     )
@@ -194,9 +188,7 @@ private fun FeedTimeline(
                     onPostClicked = onPostClicked,
                     onProfileClicked = onProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = {
-                        onReplyToPost(item)
-                    },
+                    onReplyToPost = onReplyToPost,
                     onPostInteraction = {
                         actions(
                             Action.SendPostInteraction(it)

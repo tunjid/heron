@@ -44,6 +44,7 @@ data class Post(
         val text: String,
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
+        val replyRef: ReplyRef? = null,
     ) : ByteSerializable
 
     @Serializable
@@ -61,6 +62,14 @@ data class Post(
         val start: Int,
         val end: Int,
         val target: LinkTarget,
+    )
+
+    @Serializable
+    data class ReplyRef(
+        val rootCid: Id,
+        val rootUri: Uri,
+        val parentCid: Id,
+        val parentUri: Uri,
     )
 
     @Serializable
@@ -92,7 +101,6 @@ data class Post(
         @Serializable
         data class Reply(
             val parent: Post,
-            val root: Post,
         ) : Create()
 
         @Serializable

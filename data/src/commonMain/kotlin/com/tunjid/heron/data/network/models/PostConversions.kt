@@ -222,6 +222,14 @@ private fun BskyPost.toPostRecord() =
         text = text,
         createdAt = createdAt,
         links = facets.mapNotNull(Facet::toLinkOrNull),
+        replyRef = reply?.let {
+            Post.ReplyRef(
+                rootCid = it.root.cid.cid.let(::Id),
+                rootUri = it.root.uri.atUri.let(::Uri),
+                parentCid = it.parent.cid.cid.let(::Id),
+                parentUri = it.parent.uri.atUri.let(::Uri),
+            )
+        },
     )
 
 private fun Facet.toLinkOrNull(): Post.Link? {

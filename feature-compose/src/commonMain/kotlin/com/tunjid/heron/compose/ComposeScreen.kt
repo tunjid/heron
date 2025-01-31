@@ -17,64 +17,45 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.lerp
+import com.tunjid.heron.compose.ui.links
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.utilities.byteOffsets
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
-import de.cketti.codepoints.codePointCount
-import kotlin.math.min
 
 @Composable
 internal fun ComposeScreen(
@@ -88,9 +69,7 @@ internal fun ComposeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        var postText by remember {
-            mutableStateOf(TextFieldValue(AnnotatedString("")))
-        }
+        val postText = state.postText
         ReplyingTo(
             panedSharedElementScope = panedSharedElementScope,
             type = state.postType,
@@ -99,11 +78,12 @@ internal fun ComposeScreen(
         Post(
             signedInProfile = state.signedInProfile,
             postText = postText,
-            onPostTextChanged = { postText = it },
+            onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onCreatePost = onCreatePost@{
                 val authorId = state.signedInProfile?.did ?: return@onCreatePost
                 actions(
                     Action.CreatePost(
+                        postType = state.postType,
                         authorId = authorId,
                         text = postText.text,
                         links = postText.annotatedString.links(),
@@ -112,21 +92,19 @@ internal fun ComposeScreen(
             }
         )
         Spacer(Modifier.weight(1f))
-        ComposeBottomBar(
-            postText = postText,
-            postTextLimit = PostTextLimit,
-        )
     }
 }
 
 @Composable
 private fun Post(
+    modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
 ) {
     AuthorAndPost(
+        modifier = modifier,
         avatar = {
             AsyncImage(
                 modifier = Modifier.size(48.dp),
@@ -201,11 +179,12 @@ private fun ReplyingTo(
 
 @Composable
 private inline fun AuthorAndPost(
+    modifier: Modifier = Modifier,
     avatar: @Composable () -> Unit,
     postContent: @Composable () -> Unit,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .padding(16.dp),
         horizontalArrangement = spacedBy(16.dp),
     ) {
@@ -258,103 +237,3 @@ private fun PostComposition(
         textFieldFocusRequester.requestFocus()
     }
 }
-
-@Composable
-private fun ComposeBottomBar(
-    postText: TextFieldValue,
-    postTextLimit: Int,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .windowInsetsPadding(WindowInsets.ime),
-        horizontalArrangement = spacedBy(16.dp, Alignment.End),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val postByteCount = postText.text.codePointCount(0, postText.text.length)
-        val unboundedProgress = postByteCount / postTextLimit.toFloat()
-
-        Text(
-            modifier = Modifier.padding(top = 12.dp),
-            textAlign = TextAlign.Right,
-            text = (postTextLimit - postByteCount).toString(),
-        )
-
-        val progress = min(1f, unboundedProgress)
-        val easing = remember { CubicBezierEasing(.42f, 0f, 1f, 0.58f) }
-
-        CircularProgressIndicator(
-            modifier = Modifier.height(24.dp),
-            progress = { progress },
-            strokeWidth = lerp(
-                start = 8.dp,
-                stop = 24.dp,
-                fraction = ((unboundedProgress - 1) * 4).coerceIn(0f, 1f),
-            ),
-            color = lerp(
-                start = MaterialTheme.colorScheme.primary,
-                stop = Color.Red,
-                fraction = easing.transform(progress),
-            )
-        )
-    }
-}
-
-private fun AnnotatedString.links(): List<Post.Link> {
-    val byteOffsets = text.byteOffsets()
-
-    val mentions = handleRegex.findAll(text)
-        .map {
-            Post.Link(
-                start = byteOffsets.indexOf(it.range.first),
-                end = byteOffsets.indexOf(it.range.last + 1),
-                // Ok this is actually a handle for now, but it is resolved to a Did later on.
-                target = Post.LinkTarget.UserHandleMention(Id(it.groupValues[3])),
-            )
-        }
-
-    val hashtags = hashtagRegex.findAll(text)
-        .map {
-            Post.Link(
-                start = byteOffsets.indexOf(it.range.first),
-                end = byteOffsets.indexOf(it.range.last + 1),
-                target = Post.LinkTarget.Hashtag(it.groupValues[3]),
-            )
-        }
-
-    val hyperlinks = hyperlinkRegex.findAll(text)
-        .map {
-            var url = it.groupValues[2]
-            if (!url.startsWith("http")) {
-                url = "https://$url"
-            }
-            url = url.dropLastWhile { c -> c in ".,;!?" }
-            if (url.endsWith(')') && '(' !in url) {
-                url = url.dropLast(1)
-            }
-
-            Post.Link(
-                start = byteOffsets.indexOf(it.range.first),
-                end = byteOffsets.indexOf(it.range.last + 1),
-                target = Post.LinkTarget.ExternalLink(Uri(url)),
-            )
-        }
-
-    return (mentions + hashtags + hyperlinks).toList()
-}
-
-private const val PostTextLimit = 300
-
-private val handleRegex = Regex(
-    "(^|\\s|\\()(@)([a-zA-Z0-9.-]+)(\\b)",
-)
-
-private val hashtagRegex = Regex(
-    "(^|\\s|\\()(#)([a-zA-Z0-9]+)(\\b)",
-)
-
-private val hyperlinkRegex = Regex(
-    "(^|\\s|\\()((https?://\\S+)|(([a-z][a-z0-9]*(\\.[a-z0-9]+)+)\\S*))",
-    setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE),
-)

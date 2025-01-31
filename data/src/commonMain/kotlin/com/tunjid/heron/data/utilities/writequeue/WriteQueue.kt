@@ -23,6 +23,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Inject
 
@@ -32,6 +33,10 @@ sealed class WriteQueue {
     internal abstract val profileRepository: ProfileRepository
 
     abstract suspend fun enqueue(
+        writable: Writable,
+    )
+
+    abstract suspend fun awaitDequeue(
         writable: Writable,
     )
 
@@ -54,6 +59,12 @@ class SnapshotWriteQueue @Inject constructor(
             if (queue.any { writable.queueId == it.queueId }) return@withContext
             queue.add(writable)
         }
+    }
+
+    override suspend fun awaitDequeue(writable: Writable) {
+        snapshotFlow {
+            queue.firstOrNull { it.queueId == writable.queueId }
+        }.first { it == null }
     }
 
     override suspend fun drain() {

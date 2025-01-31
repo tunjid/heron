@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
@@ -31,6 +32,9 @@ data class State(
     val sharedElementPrefix: String?,
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
+    val fabExpanded: Boolean = true,
+    @Transient // TODO: Write a custom serializer for this
+    val postText: TextFieldValue = TextFieldValue(),
     @Transient
     val messages: List<String> = emptyList(),
 )
@@ -38,11 +42,20 @@ data class State(
 
 sealed class Action(val key: String) {
 
+    data class PostTextChanged(
+        val textFieldValue: TextFieldValue,
+    ) : Action("PostTextChanged")
+
     data class CreatePost(
+        val postType: Post.Create?,
         val authorId: Id,
         val text: String,
         val links: List<Post.Link>,
     ) : Action("CreatePost")
+
+    data class SetFabExpanded(
+        val expanded: Boolean,
+    ) : Action("SetFabExpanded")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {

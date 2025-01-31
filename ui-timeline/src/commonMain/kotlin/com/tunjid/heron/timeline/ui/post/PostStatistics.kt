@@ -19,6 +19,7 @@ package com.tunjid.heron.timeline.ui.post
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
@@ -27,7 +28,7 @@ import com.tunjid.heron.timeline.ui.Statistic
 @Composable
 internal fun PostStatistics(
     post: Post,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -37,12 +38,17 @@ internal fun PostStatistics(
         val reposts = post.repostCount
         val likes = post.likeCount
 
+        val replyToPost = remember {
+            {
+                onReplyToPost(post)
+            }
+        }
         val noOpHandler = { /* TODO */ }
 
         when (replies) {
             0L -> Unit
-            1L -> Statistic(replies, "reply", onReplyToPost)
-            else -> Statistic(replies, "replies", onReplyToPost)
+            1L -> Statistic(replies, "reply", replyToPost)
+            else -> Statistic(replies, "replies", replyToPost)
         }
 
         when (reposts) {

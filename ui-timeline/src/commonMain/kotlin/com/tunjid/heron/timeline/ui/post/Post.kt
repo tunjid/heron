@@ -61,7 +61,7 @@ fun Post(
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostMetadataClicked: (Post.Metadata) -> Unit = {},
     timeline: @Composable (BoxScope.() -> Unit) = {},
@@ -132,7 +132,9 @@ fun Post(
                     postUri = post.uri,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
-                    onReplyToPost = onReplyToPost,
+                    onReplyToPost = {
+                        onReplyToPost(post)
+                    },
                     onPostInteraction = onPostInteraction,
                 )
             }

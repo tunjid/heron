@@ -266,25 +266,32 @@ class OfflinePostRepository @Inject constructor(
             }.awaitAll()
         }.filterNotNull()
 
-        val replyRef = replyTo?.let { original ->
-            PostReplyRef(
-                root = StrongRef(
-                    uri = original.root.uri.uri.let(::AtUri),
-                    cid = original.root.cid.id.let(::Cid),
-                ),
-                parent = StrongRef(
-                    uri = original.parent.uri.uri.let(::AtUri),
-                    cid = original.parent.cid.id.let(::Cid),
-                ),
-            )
-        }
-
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
             record = BskyPost(
                 text = request.text,
-                reply = replyRef,
+                reply = replyTo?.parent?.let { parent ->
+                    val parentRef = StrongRef(
+                        uri = parent.uri.uri.let(::AtUri),
+                        cid = parent.cid.id.let(::Cid),
+                    )
+                    when (val ref = parent.record?.replyRef) {
+                        // Starting a new thread
+                        null -> PostReplyRef(
+                            root = parentRef,
+                            parent = parentRef,
+                        )
+                        // Continuing a thread
+                        else -> PostReplyRef(
+                            root = StrongRef(
+                                uri = ref.rootUri.uri.let(::AtUri),
+                                cid = ref.rootCid.id.let(::Cid),
+                            ),
+                            parent = parentRef,
+                        )
+                    }
+                },
                 facets = resolvedLinks.map { link ->
                     Facet(
                         index = FacetByteSlice(
@@ -313,7 +320,9 @@ class OfflinePostRepository @Inject constructor(
                 .asJsonContent(BskyPost.serializer()),
         )
 
-        networkService.api.createRecord(createRecordRequest)
+        runCatchingWithNetworkRetry {
+            networkService.api.createRecord(createRecordRequest)
+        }
     }
 
     override suspend fun sendInteraction(
