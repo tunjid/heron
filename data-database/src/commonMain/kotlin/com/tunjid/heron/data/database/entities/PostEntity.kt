@@ -176,15 +176,9 @@ fun PostViewerStatisticsEntity.asExternalModel() =
         pinned = pinned,
     )
 
-fun PostEntity.RecordData.asExternalModel() =
-    Post.Record(
-        text = text,
-        createdAt = createdAt,
-        links = base64EncodedRecord
-            ?.fromBase64EncodedUrl<Post.Record>()
-            ?.links
-            ?: emptyList(),
-    )
+fun PostEntity.RecordData.asExternalModel(): Post.Record? =
+    base64EncodedRecord
+        ?.fromBase64EncodedUrl<Post.Record>()
 
 private fun emptyProfile() = Profile(
     did = Id(""),

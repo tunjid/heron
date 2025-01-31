@@ -110,12 +110,6 @@ internal fun PostDetailScreen(
                     NavigationAction.Common.ComposePost(
                         type = Post.Create.Reply(
                             parent = item.post,
-                            root = when (item) {
-                                is TimelineItem.Pinned -> item.post
-                                is TimelineItem.Repost -> item.post
-                                is TimelineItem.Single -> item.post
-                                is TimelineItem.Thread -> item.posts.first()
-                            }
                         ),
                         sharedElementPrefix = state.sharedElementPrefix,
                     )

@@ -179,13 +179,11 @@ abstract class PostDetailComponent(
                         icon = Icons.AutoMirrored.Rounded.Reply,
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
-                            val rootPost = state.items.firstOrNull()?.post ?: return@onClick
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Reply(
                                             parent = anchorPost,
-                                            root = rootPost,
                                         ),
                                         sharedElementPrefix = state.sharedElementPrefix,
                                     )
