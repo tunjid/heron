@@ -102,7 +102,20 @@ internal fun NotificationsScreen(
             )
         }
     }
-
+    val onReplyToPost = remember {
+        { notification: Notification.PostAssociated ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Reply(
+                            parent = notification.associatedPost,
+                        ),
+                        sharedElementPrefix = notification.sharedElementPrefix(),
+                    )
+                )
+            )
+        }
+    }
     val onPostInteraction = remember {
         { interaction: Post.Interaction ->
             actions(Action.SendPostInteraction(interaction))
@@ -191,6 +204,7 @@ internal fun NotificationsScreen(
                         notification = notification,
                         onProfileClicked = onProfileClicked,
                         onPostClicked = onPostClicked,
+                        onReplyToPost = onReplyToPost,
                         onPostInteraction = onPostInteraction,
                     )
 

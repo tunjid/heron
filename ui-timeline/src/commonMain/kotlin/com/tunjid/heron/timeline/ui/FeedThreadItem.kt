@@ -47,7 +47,7 @@ fun FeedThreadItem(
     onProfileClicked: Post?.(Profile) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onOpenPost: (Post) -> Unit,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
 ) {
     Column(modifier = modifier.padding(top = 16.dp)) {
         Row(

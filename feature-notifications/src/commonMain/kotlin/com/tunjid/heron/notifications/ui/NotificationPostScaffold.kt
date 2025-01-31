@@ -58,7 +58,7 @@ internal fun NotificationPostScaffold(
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Notification.PostAssociated) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     Box {
@@ -115,7 +115,9 @@ internal fun NotificationPostScaffold(
                     postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     panedSharedElementScope = panedSharedElementScope,
-                    onReplyToPost = onReplyToPost,
+                    onReplyToPost = {
+                        onReplyToPost(notification)
+                    },
                     onPostInteraction = onPostInteraction,
                 )
             }

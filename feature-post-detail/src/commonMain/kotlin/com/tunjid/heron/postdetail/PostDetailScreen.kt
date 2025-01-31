@@ -104,12 +104,12 @@ internal fun PostDetailScreen(
         }
     }
     val onReplyToPost = remember {
-        { item: TimelineItem ->
+        { post: Post ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ComposePost(
                         type = Post.Create.Reply(
-                            parent = item.post,
+                            parent = post,
                         ),
                         sharedElementPrefix = state.sharedElementPrefix,
                     )
@@ -174,9 +174,7 @@ internal fun PostDetailScreen(
                     onPostClicked = onPostClicked,
                     onProfileClicked = onProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = {
-                        onReplyToPost(item)
-                    },
+                    onReplyToPost = onReplyToPost,
                     onPostMetadataClicked = onPostMetadataClicked,
                     onPostInteraction = {
                         actions(

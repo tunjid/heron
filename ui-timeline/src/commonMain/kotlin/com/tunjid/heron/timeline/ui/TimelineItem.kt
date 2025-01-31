@@ -70,7 +70,7 @@ fun TimelineItem(
     onPostClicked: (Post) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostMetadataClicked: (Post.Metadata) -> Unit = {},
 ) {
@@ -144,7 +144,7 @@ private fun ThreadedPost(
     onProfileClicked: (Post, Profile) -> Unit,
     onPostClicked: (Post) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostMetadataClicked: (Post.Metadata) -> Unit,
 ) {

@@ -609,12 +609,12 @@ private fun ProfileTimeline(
     }
 
     val onReplyToPost = remember {
-        { item: TimelineItem ->
+        { post: Post ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ComposePost(
                         type = Post.Create.Reply(
-                            parent = item.post,
+                            parent = post,
                         ),
                         sharedElementPrefix = timelineState.timeline.sourceId,
                     )
@@ -659,9 +659,7 @@ private fun ProfileTimeline(
                     onPostClicked = onPostClicked,
                     onProfileClicked = onProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = {
-                        onReplyToPost(item)
-                    },
+                    onReplyToPost = onReplyToPost,
                     onPostInteraction = {
                         actions(
                             Action.SendPostInteraction(it)
