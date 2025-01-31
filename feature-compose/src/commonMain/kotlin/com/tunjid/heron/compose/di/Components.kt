@@ -31,7 +31,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
@@ -149,7 +153,7 @@ abstract class ComposeComponent(
                         modifier = Modifier
                             .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
                         panedSharedElementScope = sharedElementScope,
-                        expanded = true,
+                        expanded = state.fabExpanded,
                         text = stringResource(Res.string.post),
                         icon = Icons.AutoMirrored.Rounded.Send,
                         onClick = onClick@{
@@ -170,6 +174,14 @@ abstract class ComposeComponent(
                     val borderColor = MaterialTheme.colorScheme.outline
                     val imePadding = WindowInsets.ime.asPaddingValues()
                     val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                    val imeShowing by remember {
+                        derivedStateOf {
+                            imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
+                        }
+                    }
+                    val hasBlankText by remember {
+                        derivedStateOf { state.postText.text.isBlank() }
+                    }
                     ComposePostBottomBar(
                         modifier = Modifier
                             .drawBehind {
@@ -183,11 +195,17 @@ abstract class ComposeComponent(
                             .padding(horizontal = 8.dp)
                             .padding(
                                 imePadding.takeIf {
-                                    it.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
+                                    imeShowing
                                 } ?: navBarPadding
                             ),
                         postText = state.postText,
                     )
+
+                    DisposableEffect(hasBlankText, imeShowing) {
+                        val fabExpanded = hasBlankText || !imeShowing
+                        viewModel.accept(Action.SetFabExpanded(expanded = fabExpanded))
+                        onDispose { }
+                    }
                 },
                 content = { paddingValues ->
                     ComposeScreen(

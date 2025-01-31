@@ -32,6 +32,7 @@ data class State(
     val sharedElementPrefix: String?,
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
+    val fabExpanded: Boolean = true,
     @Transient // TODO: Write a custom serializer for this
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
@@ -51,6 +52,10 @@ sealed class Action(val key: String) {
         val text: String,
         val links: List<Post.Link>,
     ) : Action("CreatePost")
+
+    data class SetFabExpanded(
+        val expanded: Boolean,
+    ) : Action("SetFabExpanded")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {
