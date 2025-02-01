@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
+import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -36,9 +37,42 @@ data class State(
     @Transient // TODO: Write a custom serializer for this
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
+    val photos: List<MediaItem.Photo> = emptyList(),
+    @Transient
+    val video: MediaItem.Video? = null,
+    @Transient
     val messages: List<String> = emptyList(),
 )
 
+// On Android, a content resolver may be invoked for the path.
+// Make sure it is only ever invoked off the main thread by enforcing with this class
+sealed class MediaItem(
+    val path: String?
+) {
+
+    abstract val file: PlatformFile
+
+    class Photo(
+        override val file: PlatformFile,
+    ) : MediaItem(file.path)
+
+    class Video(
+        override val file: PlatformFile,
+    ) : MediaItem(file.path)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as MediaItem
+
+        return path == other.path
+    }
+
+    override fun hashCode(): Int {
+        return path?.hashCode() ?: 0
+    }
+}
 
 sealed class Action(val key: String) {
 
@@ -56,6 +90,20 @@ sealed class Action(val key: String) {
     data class SetFabExpanded(
         val expanded: Boolean,
     ) : Action("SetFabExpanded")
+
+    sealed class EditMedia : Action("EditMedia") {
+        data class AddPhotos(
+            val photos: List<PlatformFile>,
+        ) : EditMedia()
+
+        data class AddVideo(
+            val video: PlatformFile?,
+        ) : EditMedia()
+
+        data class RemoveMedia(
+            val media: MediaItem?,
+        ) : EditMedia()
+    }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate() {
