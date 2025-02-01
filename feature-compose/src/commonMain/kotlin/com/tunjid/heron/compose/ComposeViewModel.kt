@@ -38,11 +38,15 @@ import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -95,6 +99,7 @@ class ActualComposeViewModel(
             when (val action = type()) {
                 is Action.PostTextChanged -> action.flow.postTextMutations()
                 is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
+                is Action.EditMedia -> action.flow.editMediaMutations()
                 is Action.CreatePost -> action.flow.createPostMutations(
                     navActions = navActions,
                     writeQueue = writeQueue,
@@ -126,6 +131,35 @@ private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(
     mapToMutation { action ->
         copy(fabExpanded = action.expanded)
     }
+
+private fun Flow<Action.EditMedia>.editMediaMutations(
+): Flow<Mutation<State>> =
+    map { action ->
+        // Invoke in IO context as creating media items may perform IO
+        withContext(Dispatchers.IO) {
+            action to when (action) {
+                is Action.EditMedia.AddPhotos -> action.photos.map(MediaItem::Photo)
+                is Action.EditMedia.AddVideo -> listOf(action.video?.let(MediaItem::Video))
+                is Action.EditMedia.RemoveMedia -> emptyList()
+            }
+        }
+    }
+        .mapToMutation { (action, media) ->
+            when (action) {
+                is Action.EditMedia.AddPhotos -> copy(
+                    photos = photos + media.filterIsInstance<MediaItem.Photo>()
+                )
+
+                is Action.EditMedia.AddVideo -> copy(
+                    video = media.filterIsInstance<MediaItem.Video>().firstOrNull()
+                )
+
+                is Action.EditMedia.RemoveMedia -> copy(
+                    photos = photos.filter { it != action.media },
+                    video = video?.takeIf { it != action.media }
+                )
+            }
+        }
 
 private fun Flow<Action.CreatePost>.createPostMutations(
     navActions: (NavigationMutation) -> Unit,

@@ -35,7 +35,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
@@ -199,6 +198,7 @@ abstract class ComposeComponent(
                                 } ?: navBarPadding
                             ),
                         postText = state.postText,
+                        onMediaEdited = viewModel.accept,
                     )
 
                     DisposableEffect(hasBlankText, imeShowing) {

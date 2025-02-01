@@ -29,11 +29,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.AndroidViewModel
 import com.tunjid.heron.scaffold.navigation.PredictiveBackEffects
 import com.tunjid.heron.scaffold.scaffold.App
+import io.github.vinceglb.filekit.core.FileKit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        FileKit.init(this)
+
         val appViewModel by viewModels<AppViewModel>()
         val appState = appViewModel.appState
 

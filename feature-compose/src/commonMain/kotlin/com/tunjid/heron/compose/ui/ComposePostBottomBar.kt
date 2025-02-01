@@ -42,13 +42,18 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
+import com.tunjid.heron.compose.Action
 import de.cketti.codepoints.codePointCount
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import kotlin.math.min
 
 @Composable
 internal fun ComposePostBottomBar(
     postText: TextFieldValue,
     modifier: Modifier = Modifier,
+    onMediaEdited: (Action.EditMedia) -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -58,12 +63,35 @@ internal fun ComposePostBottomBar(
         horizontalArrangement = spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TabIcons.forEach {
+        val imagePickerLauncher = rememberFilePickerLauncher(
+            type = PickerType.Image,
+            mode = PickerMode.Multiple(maxItems = 4)
+        ) { images ->
+            images
+                ?.let(Action.EditMedia::AddPhotos)
+                ?.let(onMediaEdited)
+        }
+
+        val videoPickerLauncher = rememberFilePickerLauncher(
+            type = PickerType.Video,
+            mode = PickerMode.Single
+        ) { video ->
+            video
+                ?.let(Action.EditMedia::AddVideo)
+                ?.let(onMediaEdited)
+        }
+
+        TabIcons.forEachIndexed { index, imageVector ->
             IconButton(
-                onClick = { },
+                onClick = {
+                    when (index) {
+                        0 -> imagePickerLauncher.launch()
+                        1 -> videoPickerLauncher.launch()
+                    }
+                },
                 content = {
                     Icon(
-                        imageVector = it,
+                        imageVector = imageVector,
                         contentDescription = null,
                         tint = FloatingActionButtonDefaults.containerColor
                     )
