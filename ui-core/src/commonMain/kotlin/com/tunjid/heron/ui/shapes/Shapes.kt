@@ -191,6 +191,7 @@ sealed class RoundedPolygonShape : Shape {
     @Stable
     data class Star(
         val cornerSizeAtIndex: List<Dp>,
+        val roundingRadius: Float,
     ) : RoundedPolygonShape() {
 
         override fun createPolygon(
@@ -198,6 +199,7 @@ sealed class RoundedPolygonShape : Shape {
             density: Density,
         ): RoundedPolygon = RoundedPolygon.star(
             numVerticesPerRadius = cornerSizeAtIndex.size / 2,
+            rounding = CornerRounding(roundingRadius),
             perVertexRounding = cornerSizeAtIndex.map {
                 val maxDimension = max(size.width, size.height)
                 val absoluteCornerSize = with(density) { it.toPx() }

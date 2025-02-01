@@ -105,5 +105,6 @@ private fun Timeline.getDescription(
 } ?: ""
 
 private val TimelineAvatarShape = RoundedPolygonShape.Star(
-    (0..<40).map { 40.dp }
+    cornerSizeAtIndex = (0..<40).map { 40.dp },
+    roundingRadius = 0.32f,
 )
