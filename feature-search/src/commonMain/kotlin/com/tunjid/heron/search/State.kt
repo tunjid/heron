@@ -22,11 +22,9 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
-import com.tunjid.treenav.pop
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -61,6 +59,7 @@ data class State(
     val layout: ScreenLayout = ScreenLayout.Trends,
     val signedInProfile: Profile? = null,
     val trends: Trends = Trends(),
+    val unreadNotificationCount: Long = 0,
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
@@ -86,11 +85,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
 
         data class DelegateTo(
             val delegate: NavigationAction.Common,

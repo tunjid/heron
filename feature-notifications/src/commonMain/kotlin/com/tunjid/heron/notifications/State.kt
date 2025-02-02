@@ -41,6 +41,7 @@ data class State(
             cursorAnchor = Clock.System.now(),
         )
     ),
+    val unreadNotificationCount: Long = 0,
     @Transient
     val signedInProfile: Profile? = null,
     @Transient
