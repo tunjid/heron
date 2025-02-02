@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -43,6 +44,7 @@ data class SavedState(
     val auth: AuthTokens?,
     val navigation: Navigation,
     val preferences: Preferences?,
+    val notifications: Notifications?,
 ) {
 
     @Serializable
@@ -57,18 +59,25 @@ data class SavedState(
         val activeNav: Int = 0,
         val backStacks: List<List<String>> = emptyList(),
     )
+
+    @Serializable
+    data class Notifications(
+        val lastSeen: Instant? = null,
+    )
 }
 
 val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
     preferences = null,
+    notifications = null
 )
 
 val EmptySavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = 0),
     preferences = null,
+    notifications = null,
 )
 
 val SavedStateRepository.signedInProfileId
