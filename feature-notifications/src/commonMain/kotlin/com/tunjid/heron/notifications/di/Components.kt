@@ -42,7 +42,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneRootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -126,7 +126,7 @@ abstract class NotificationsComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneRootDestinationTopAppBar(
+                    PaneTopAppBar.RootDestination(
                         modifier = Modifier,
                         panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,

@@ -47,7 +47,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneRootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
@@ -134,7 +134,7 @@ abstract class SearchComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneRootDestinationTopAppBar(
+                    PaneTopAppBar.RootDestination(
                         modifier = Modifier,
                         panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,

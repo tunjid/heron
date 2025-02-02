@@ -49,7 +49,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneRootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
@@ -142,7 +142,7 @@ abstract class HomeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneRootDestinationTopAppBar(
+                    PaneTopAppBar.RootDestination(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },

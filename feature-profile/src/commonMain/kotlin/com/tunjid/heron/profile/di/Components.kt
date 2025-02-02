@@ -48,9 +48,9 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
-import com.tunjid.heron.scaffold.scaffold.PaneDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
@@ -154,7 +154,7 @@ abstract class ProfileComponent(
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 topBar = {
-                    PaneDestinationTopAppBar(
+                    PaneTopAppBar.PoppableDestination(
                         // Limit width so tabs may be tapped
                         modifier = Modifier.width(60.dp),
                         panedSharedElementScope = sharedElementScope,
