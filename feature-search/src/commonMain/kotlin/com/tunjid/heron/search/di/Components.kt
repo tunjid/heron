@@ -47,15 +47,13 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModelCreator
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -120,8 +118,6 @@ abstract class SearchComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -134,9 +130,8 @@ abstract class SearchComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneTopAppBar.RootDestination(
+                    RootDestinationTopAppBar(
                         modifier = Modifier,
-                        panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
@@ -167,17 +162,16 @@ abstract class SearchComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
-                            }
+                            },
                     )
                 },
                 content = {
                     SearchScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         modifier = Modifier,
                         state = state,
                         actions = viewModel.accept,
@@ -230,15 +224,4 @@ private fun SearchBar(
             )
         }
     }
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    PaneBottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
-    )
 }

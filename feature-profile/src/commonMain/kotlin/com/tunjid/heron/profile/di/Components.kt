@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,13 +49,11 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -144,7 +141,6 @@ abstract class ProfileComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -154,10 +150,9 @@ abstract class ProfileComponent(
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 topBar = {
-                    PaneTopAppBar.PoppableDestination(
+                    PoppableDestinationTopAppBar(
                         // Limit width so tabs may be tapped
                         modifier = Modifier.width(60.dp),
-                        panedSharedElementScope = sharedElementScope,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
@@ -168,10 +163,6 @@ abstract class ProfileComponent(
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        panedSharedElementScope = sharedElementScope,
-                        expanded = isFabExpanded(
-                            offset = bottomNavigationNestedScrollConnection.offset
-                        ),
                         text = stringResource(
                             if (state.isSignedInProfile) Res.string.post
                             else Res.string.mention
@@ -179,6 +170,9 @@ abstract class ProfileComponent(
                         icon =
                         if (state.isSignedInProfile) Icons.Rounded.Edit
                         else Icons.Rounded.AlternateEmail,
+                        expanded = isFabExpanded(
+                            offset = bottomNavigationNestedScrollConnection.offset
+                        ),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
@@ -194,11 +188,10 @@ abstract class ProfileComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
-                        }
+                        },
                     )
                 },
                 snackBarMessages = state.messages,
@@ -206,7 +199,7 @@ abstract class ProfileComponent(
                 },
                 content = {
                     ProfileScreen(
-                        panedSharedElementScope = sharedElementScope,
+                        panedSharedElementScope = panedSharedElementScope,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
@@ -219,16 +212,5 @@ abstract class ProfileComponent(
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    PaneBottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
     )
 }

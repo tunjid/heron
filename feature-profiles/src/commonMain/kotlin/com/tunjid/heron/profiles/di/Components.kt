@@ -48,7 +48,6 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.PathPattern
@@ -220,7 +219,7 @@ abstract class ProfilesComponent(
                 },
                 content = { paddingValues ->
                     ProfilesScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         modifier = Modifier
                             .padding(
                                 paddingValues = PaddingValues(

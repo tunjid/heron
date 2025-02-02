@@ -36,7 +36,6 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -124,7 +123,7 @@ abstract class GalleryComponent(
                 },
                 content = {
                     GalleryScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         modifier = Modifier,
                         state = state,
                     )

@@ -48,9 +48,8 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -119,8 +118,6 @@ abstract class ComposeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
             PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
@@ -129,12 +126,10 @@ abstract class ComposeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneTopAppBar.PoppableDestination(
-                        panedSharedElementScope = sharedElementScope,
+                    PoppableDestinationTopAppBar(
                         actions = {
                             TopAppBarFab(
                                 modifier = Modifier,
-                                panedSharedElementScope = sharedElementScope,
                                 state = state,
                                 onCreatePost = viewModel.accept,
                             )
@@ -147,7 +142,6 @@ abstract class ComposeComponent(
                 floatingActionButton = {
                     BottomAppBarFab(
                         modifier = Modifier,
-                        panedSharedElementScope = sharedElementScope,
                         state = state,
                         onCreatePost = viewModel.accept,
                     )
@@ -192,7 +186,7 @@ abstract class ComposeComponent(
                 },
                 content = { paddingValues ->
                     ComposeScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                         state = state,

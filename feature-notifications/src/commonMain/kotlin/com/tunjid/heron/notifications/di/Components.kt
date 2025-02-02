@@ -19,7 +19,6 @@ package com.tunjid.heron.notifications.di
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,12 +41,10 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -112,8 +109,6 @@ abstract class NotificationsComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -126,9 +121,8 @@ abstract class NotificationsComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneTopAppBar.RootDestination(
+                    RootDestinationTopAppBar(
                         modifier = Modifier,
-                        panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -150,12 +144,11 @@ abstract class NotificationsComponent(
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        panedSharedElementScope = sharedElementScope,
+                        text = stringResource(Res.string.create_post),
+                        icon = Icons.Rounded.Edit,
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
-                        text = stringResource(Res.string.create_post),
-                        icon = Icons.Rounded.Edit,
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
@@ -169,17 +162,16 @@ abstract class NotificationsComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
-                            }
+                            },
                     )
                 },
                 content = {
                     NotificationsScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
@@ -187,17 +179,5 @@ abstract class NotificationsComponent(
                 }
             )
         }
-    )
-}
-
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    PaneBottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
     )
 }

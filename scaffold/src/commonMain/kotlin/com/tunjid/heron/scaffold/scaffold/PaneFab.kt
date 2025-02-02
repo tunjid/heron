@@ -63,14 +63,12 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PaneFab(
+fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     text: String,
     icon: ImageVector?,
     expanded: Boolean,

@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -49,14 +48,12 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneTopAppBar
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -121,8 +118,6 @@ abstract class HomeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
             val statusBarHeight = StatusBarHeight
             val topAppBarOffsetNestedScrollConnection =
                 rememberAccumulatedOffsetNestedScrollConnection(
@@ -142,11 +137,10 @@ abstract class HomeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    PaneTopAppBar.RootDestination(
+                    RootDestinationTopAppBar(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
-                        panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -174,12 +168,11 @@ abstract class HomeComponent(
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        panedSharedElementScope = sharedElementScope,
+                        text = stringResource(Res.string.create_post),
+                        icon = Icons.Rounded.Edit,
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
-                        text = stringResource(Res.string.create_post),
-                        icon = Icons.Rounded.Edit,
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
@@ -193,42 +186,26 @@ abstract class HomeComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
                             viewModel.accept(Action.RefreshCurrentTab)
+                            true
                         },
                     )
                 },
                 content = {
                     HomeScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        panedSharedElementScope = panedSharedElementScope,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
                     )
                 }
             )
-        }
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-    onNavItemReselected: () -> Unit,
-) {
-    PaneBottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
-        onNavItemReselected = {
-            onNavItemReselected()
-            true
         }
     )
 }
