@@ -44,6 +44,8 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
+val State.hasLongPost get() = postText.text.length > 120
+
 // On Android, a content resolver may be invoked for the path.
 // Make sure it is only ever invoked off the main thread by enforcing with this class
 sealed class MediaItem(
