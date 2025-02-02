@@ -17,6 +17,8 @@
 package com.tunjid.heron.notifications.di
 
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -37,10 +39,10 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
-import com.tunjid.heron.scaffold.scaffold.ComposeFab
+import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneRootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -49,10 +51,13 @@ import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import heron.feature_notifications.generated.resources.Res
+import heron.feature_notifications.generated.resources.create_post
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/notifications"
 
@@ -121,7 +126,7 @@ abstract class NotificationsComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    RootDestinationTopAppBar(
+                    PaneRootDestinationTopAppBar(
                         modifier = Modifier,
                         panedSharedElementScope = sharedElementScope,
                         signedInProfile = state.signedInProfile,
@@ -139,7 +144,7 @@ abstract class NotificationsComponent(
                     )
                 },
                 floatingActionButton = {
-                    ComposeFab(
+                    PaneFab(
                         modifier = Modifier
                             .offset {
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
@@ -149,6 +154,8 @@ abstract class NotificationsComponent(
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
+                        text = stringResource(Res.string.create_post),
+                        icon = Icons.Rounded.Edit,
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
@@ -189,7 +196,7 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
 ) {
-    BottomAppBar(
+    PaneBottomAppBar(
         modifier = modifier,
         panedSharedElementScope = panedSharedElementScope,
     )

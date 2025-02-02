@@ -37,7 +37,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 
 @Stable
-class DragToPopState {
+internal class DragToPopState {
     var isDraggingToPop by mutableStateOf(false)
     internal val dragToDismissState = DragToDismissState(
         enabled = false,

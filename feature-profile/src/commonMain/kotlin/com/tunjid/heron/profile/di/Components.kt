@@ -55,8 +55,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
@@ -169,7 +169,7 @@ abstract class ProfileComponent(
                     }
                 },
                 floatingActionButton = {
-                    Fab(
+                    PaneFab(
                         modifier = Modifier
                             .offset {
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
@@ -268,7 +268,7 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
 ) {
-    BottomAppBar(
+    PaneBottomAppBar(
         modifier = modifier,
         panedSharedElementScope = panedSharedElementScope,
     )

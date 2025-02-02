@@ -72,7 +72,7 @@ internal fun NavScaffold(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun BottomAppBar(
+fun PaneBottomAppBar(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     onNavItemReselected: () -> Boolean = { false },

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.PanedSharedElementScope
 import heron.feature_compose.generated.resources.Res
 import heron.feature_compose.generated.resources.post
@@ -73,7 +73,7 @@ private fun ComposePostFab(
     isInTopAppBar: Boolean,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
-    Fab(
+    PaneFab(
         modifier = modifier
             .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
         panedSharedElementScope = panedSharedElementScope,

@@ -27,4 +27,5 @@
     <string name="joined_from_your_started_pack_description">Liked your post</string>
     <string name="joined_from_your_starter_pack">%1$s joined from your starter pack</string>
     <string name="multiple_joined_from_your_starter_pack">%1$s and %2$d others joined from your starter pack</string>
+    <string name="create_post">Create Post</string>
 </resources>

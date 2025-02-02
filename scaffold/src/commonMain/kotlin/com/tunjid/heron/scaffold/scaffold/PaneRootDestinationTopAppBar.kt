@@ -37,7 +37,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RootDestinationTopAppBar(
+fun PaneRootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     signedInProfile: Profile?,

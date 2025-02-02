@@ -34,7 +34,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.Action
@@ -121,7 +121,7 @@ abstract class SignInComponent(
                     TopBar()
                 },
                 floatingActionButton = {
-                    Fab(
+                    PaneFab(
                         modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
                         panedSharedElementScope = requirePanedSharedElementScope(),
                         expanded = true,
