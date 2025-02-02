@@ -134,4 +134,4 @@ data object PaneTopAppBar {
 }
 
 
-private const val SignedInUserAvatarSharedElementKey = "self"
+private data object SignedInUserAvatarSharedElementKey
