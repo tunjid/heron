@@ -27,6 +27,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val currentSourceId: String? = null,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
@@ -50,6 +51,12 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class SetCurrentTab(
+        val sourceId: String,
+    ): Action(key = "SetCurrentTab")
+
+    data object RefreshCurrentTab: Action(key = "RefreshCurrentTab")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

@@ -191,7 +191,10 @@ abstract class HomeComponent(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
-                            }
+                            },
+                        onNavItemReselected = {
+                            viewModel.accept(Action.RefreshCurrentTab)
+                        },
                     )
                 },
                 content = {
@@ -211,9 +214,14 @@ abstract class HomeComponent(
 private fun BottomBar(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
+    onNavItemReselected: () -> Unit,
 ) {
     BottomAppBar(
         modifier = modifier,
         panedSharedElementScope = panedSharedElementScope,
+        onNavItemReselected = {
+            onNavItemReselected()
+            true
+        }
     )
 }

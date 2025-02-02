@@ -446,7 +446,7 @@ private val SignedInNavigationState = MultiStackNav(
 )
 
 
-internal enum class AppStack(
+enum class AppStack(
     val stackName: String,
     val titleRes: StringResource,
     val icon: ImageVector,
