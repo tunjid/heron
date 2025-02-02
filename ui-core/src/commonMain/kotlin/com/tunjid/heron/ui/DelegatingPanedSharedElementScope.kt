@@ -45,11 +45,13 @@ import com.tunjid.treenav.strings.Route
 @Stable
 interface PanedSharedElementScope :
     SharedTransitionScope, PaneScope<ThreePane, Route>, MovableSharedElementScope {
+
     fun Modifier.sharedElement(
         key: Any,
         boundsTransform: BoundsTransform = DefaultBoundsTransform,
         placeHolderSize: PlaceHolderSize = contentSize,
         renderInOverlayDuringTransition: Boolean = true,
+        visible: Boolean? = null,
         zIndexInOverlay: Float = 0f,
         clipInOverlayDuringTransition: OverlayClip = ParentClip,
     ): Modifier
@@ -72,6 +74,7 @@ private class DelegatingPanedSharedElementScope(
         boundsTransform: BoundsTransform,
         placeHolderSize: PlaceHolderSize,
         renderInOverlayDuringTransition: Boolean,
+        visible: Boolean?,
         zIndexInOverlay: Float,
         clipInOverlayDuringTransition: OverlayClip,
     ): Modifier = composed {
@@ -96,7 +99,10 @@ private class DelegatingPanedSharedElementScope(
                     // Share the element
                     else -> sharedElementWithCallerManagedVisibility(
                         sharedContentState = rememberSharedContentState(key),
-                        visible = paneScope.isActive,
+                        visible = when(visible) {
+                            null -> paneScope.isActive
+                            else -> paneScope.isActive && visible
+                        },
                         boundsTransform = boundsTransform,
                         placeHolderSize = placeHolderSize,
                         renderInOverlayDuringTransition = renderInOverlayDuringTransition,

@@ -77,8 +77,9 @@ fun Fab(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     text: String,
-    icon: ImageVector,
+    icon: ImageVector?,
     expanded: Boolean,
+    visible: Boolean? = null,
     onClick: () -> Unit,
 ) = with(panedSharedElementScope) {
     // The material3 ExtendedFloatingActionButton does not allow for placing
@@ -88,6 +89,7 @@ fun Fab(
             .animateFabSize()
             .sharedElement(
                 key = FabSharedElementKey,
+                visible = visible,
                 zIndexInOverlay = FabSharedElementZIndex,
             ),
         onClick = onClick,
@@ -96,12 +98,12 @@ fun Fab(
             Row(
                 modifier = Modifier
                     .animateFabSize()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FabIcon(icon)
-                if (expanded) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                if (icon != null) FabIcon(icon)
+                if (icon == null || expanded) {
+                    if (icon != null) Spacer(modifier = Modifier.width(8.dp))
                     AnimatedContent(targetState = text) { text ->
                         Text(
                             text = text,
