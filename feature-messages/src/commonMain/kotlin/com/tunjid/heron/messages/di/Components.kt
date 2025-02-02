@@ -18,9 +18,6 @@ package com.tunjid.heron.messages.di
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -36,12 +33,10 @@ import com.tunjid.heron.messages.MessagesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -103,8 +98,6 @@ abstract class MessagesComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
-
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -116,52 +109,22 @@ abstract class MessagesComponent(
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                 },
-                topBar = {
-                    TopBar()
-                },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
-                            }
+                            },
                     )
                 },
                 content = { paddingValues ->
                     MessagesScreen(
-                        panedSharedElementScope = requirePanedSharedElementScope(),
+                        paneScaffoldState = this,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar() {
-    TopAppBar(
-        title = {},
-        actions = {
-            TextButton(
-                onClick = {},
-                content = {
-
-                }
-            )
-        },
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    BottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
     )
 }

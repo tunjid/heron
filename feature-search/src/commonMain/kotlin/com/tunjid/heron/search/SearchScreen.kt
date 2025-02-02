@@ -66,6 +66,7 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.BottomNavHeight
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.search.ui.PostSearchResult
@@ -92,7 +93,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SearchScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -174,7 +175,7 @@ internal fun SearchScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
-                    panedSharedElementScope = panedSharedElementScope,
+                    panedSharedElementScope = paneScaffoldState,
                     results = state.autoCompletedProfiles,
                     onProfileClicked = onProfileSearchResultClicked,
                 )
@@ -185,7 +186,7 @@ internal fun SearchScreen(
                         .padding(horizontal = 8.dp),
                     pagerState = pagerState,
                     state = state,
-                    panedSharedElementScope = panedSharedElementScope,
+                    panedSharedElementScope = paneScaffoldState,
                     onProfileClicked = onProfileSearchResultClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,

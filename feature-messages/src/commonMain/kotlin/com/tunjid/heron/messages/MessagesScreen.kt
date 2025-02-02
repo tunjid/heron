@@ -24,18 +24,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.AppLogo
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 internal fun MessagesScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
     ) {
-        panedSharedElementScope.AppLogo(
+        paneScaffoldState.AppLogo(
             modifier = Modifier
                 .size(100.dp)
                 .align(Alignment.Center)

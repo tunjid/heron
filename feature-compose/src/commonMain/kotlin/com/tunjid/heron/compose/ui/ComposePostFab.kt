@@ -26,23 +26,21 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
-import com.tunjid.heron.scaffold.scaffold.Fab
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.scaffold.scaffold.PaneFab
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import heron.feature_compose.generated.resources.Res
 import heron.feature_compose.generated.resources.post
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun TopAppBarFab(
+fun PaneScaffoldState.TopAppBarFab(
     modifier: Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
     ComposePostFab(
         modifier = modifier
             .height(36.dp),
-        panedSharedElementScope = panedSharedElementScope,
         state = state,
         isInTopAppBar = true,
         onCreatePost = onCreatePost,
@@ -50,15 +48,13 @@ fun TopAppBarFab(
 }
 
 @Composable
-fun BottomAppBarFab(
+fun PaneScaffoldState.BottomAppBarFab(
     modifier: Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
     ComposePostFab(
         modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
         state = state,
         isInTopAppBar = false,
         onCreatePost = onCreatePost,
@@ -66,17 +62,15 @@ fun BottomAppBarFab(
 }
 
 @Composable
-private fun ComposePostFab(
+private fun PaneScaffoldState.ComposePostFab(
     modifier: Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     state: State,
     isInTopAppBar: Boolean,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
-    Fab(
+    PaneFab(
         modifier = modifier
             .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
-        panedSharedElementScope = panedSharedElementScope,
         expanded = state.fabExpanded,
         text = stringResource(Res.string.post),
         icon = Icons.AutoMirrored.Rounded.Send.takeIf { !isInTopAppBar },

@@ -34,7 +34,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.signin.Action
@@ -43,7 +43,6 @@ import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInViewModelCreator
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -121,12 +120,11 @@ abstract class SignInComponent(
                     TopBar()
                 },
                 floatingActionButton = {
-                    Fab(
+                    PaneFab(
                         modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
-                        panedSharedElementScope = requirePanedSharedElementScope(),
-                        expanded = true,
                         text = stringResource(Res.string.sign_in),
                         icon = Icons.Rounded.Check,
+                        expanded = true,
                         onClick = {
                             if (state.submitButtonEnabled) viewModel.accept(Action.Submit(state.sessionRequest))
                         }

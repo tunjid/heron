@@ -44,16 +44,16 @@ import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.datetime.Clock
 
 @Composable
 internal fun NotificationsScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
@@ -139,7 +139,7 @@ internal fun NotificationsScreen(
             end = 8.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+        userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
         items(
             items = items,
@@ -151,7 +151,7 @@ internal fun NotificationsScreen(
                 when (val notification = item.notification) {
                     is Notification.Followed -> FollowRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -160,7 +160,7 @@ internal fun NotificationsScreen(
 
                     is Notification.JoinedStarterPack -> JoinedStarterPackRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -169,7 +169,7 @@ internal fun NotificationsScreen(
 
                     is Notification.Liked -> LikeRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,
@@ -179,7 +179,7 @@ internal fun NotificationsScreen(
 
                     is Notification.Mentioned -> MentionRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
@@ -189,7 +189,7 @@ internal fun NotificationsScreen(
 
                     is Notification.Quoted -> QuoteRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
@@ -199,7 +199,7 @@ internal fun NotificationsScreen(
 
                     is Notification.RepliedTo -> ReplyRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         onProfileClicked = onProfileClicked,
@@ -210,7 +210,7 @@ internal fun NotificationsScreen(
 
                     is Notification.Reposted -> RepostRow(
                         modifier = itemModifier,
-                        panedSharedElementScope = panedSharedElementScope,
+                        panedSharedElementScope = paneScaffoldState,
                         now = now,
                         notification = notification,
                         aggregatedProfiles = item.aggregatedProfiles,

@@ -86,6 +86,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -124,7 +125,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun ProfileScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -153,7 +154,7 @@ internal fun ProfileScreen(
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
-                movableSharedElementScope = panedSharedElementScope,
+                movableSharedElementScope = paneScaffoldState,
                 headerState = headerState,
                 pagerState = pagerState,
                 timelineTabs = (0..<updatedTimelineStateHolders.size).map { page ->
@@ -228,7 +229,7 @@ internal fun ProfileScreen(
                             updatedTimelineStateHolders.stateHolderAt(page)
                         }
                         ProfileTimeline(
-                            panedSharedElementScope = panedSharedElementScope,
+                            panedSharedElementScope = paneScaffoldState,
                             timelineStateHolder = timelineStateHolder,
                             actions = actions,
                         )

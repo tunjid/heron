@@ -37,8 +37,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.PaneScope
-import com.tunjid.treenav.compose.PaneState
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
@@ -46,8 +47,8 @@ import kotlinx.coroutines.flow.filterNotNull
 
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
-    private val paneState: PaneState<ThreePane, Route>,
-) {
+    panedSharedElementScope: PanedSharedElementScope,
+): PanedSharedElementScope by panedSharedElementScope{
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
     internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
     internal val canShowFab
@@ -75,10 +76,11 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
 ) {
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val paneScaffoldState = remember(appState, paneState) {
+    val panedSharedElementScope = requirePanedSharedElementScope()
+    val paneScaffoldState = remember(appState, panedSharedElementScope) {
         PaneScaffoldState(
             appState = appState,
-            paneState = paneState,
+            panedSharedElementScope = panedSharedElementScope,
         )
     }
 

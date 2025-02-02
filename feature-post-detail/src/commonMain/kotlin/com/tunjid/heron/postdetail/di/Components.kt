@@ -16,22 +16,13 @@
 
 package com.tunjid.heron.postdetail.di
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Reply
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
@@ -53,15 +44,14 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -69,7 +59,6 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import heron.feature_post_detail.generated.resources.Res
-import heron.feature_post_detail.generated.resources.back
 import heron.feature_post_detail.generated.resources.reply
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
@@ -149,7 +138,6 @@ abstract class PostDetailComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -162,16 +150,17 @@ abstract class PostDetailComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar { viewModel.accept(Action.Navigate.Pop) }
+                    PoppableDestinationTopAppBar(
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
                 },
                 floatingActionButton = {
-                    Fab(
+                    PaneFab(
                         modifier = Modifier
                             .offset {
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        panedSharedElementScope = sharedElementScope,
                         expanded = isFabExpanded(
                             offset = bottomNavigationNestedScrollConnection.offset
                         ),
@@ -193,16 +182,15 @@ abstract class PostDetailComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
-                        }
+                        },
                     )
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
-                        panedSharedElementScope = sharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
@@ -220,44 +208,5 @@ abstract class PostDetailComponent(
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar(
-    onBackPressed: () -> Unit,
-) {
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
-        navigationIcon = {
-            FilledTonalIconButton(
-                modifier = Modifier,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f
-                    )
-                ),
-                onClick = onBackPressed,
-            ) {
-                Image(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
-            }
-        },
-        title = {},
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    BottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
     )
 }

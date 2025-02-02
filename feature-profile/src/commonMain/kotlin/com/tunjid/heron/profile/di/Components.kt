@@ -16,22 +16,13 @@
 
 package com.tunjid.heron.profile.di
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -55,15 +46,14 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.BottomAppBar
-import com.tunjid.heron.scaffold.scaffold.Fab
+import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
@@ -71,7 +61,6 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.back
 import heron.feature_profile.generated.resources.mention
 import heron.feature_profile.generated.resources.post
 import me.tatarka.inject.annotations.Component
@@ -152,7 +141,6 @@ abstract class ProfileComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val sharedElementScope = requirePanedSharedElementScope()
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -162,23 +150,19 @@ abstract class ProfileComponent(
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 topBar = {
-                    TopBar {
-                        viewModel.accept(
-                            Action.Navigate.DelegateTo(NavigationAction.Common.Pop)
-                        )
-                    }
+                    PoppableDestinationTopAppBar(
+                        // Limit width so tabs may be tapped
+                        modifier = Modifier.width(60.dp),
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
                 },
                 floatingActionButton = {
-                    Fab(
+                    PaneFab(
                         modifier = Modifier
                             .offset {
                                 if (isMediumScreenWidthOrWider) IntOffset.Zero
                                 else bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        panedSharedElementScope = sharedElementScope,
-                        expanded = isFabExpanded(
-                            offset = bottomNavigationNestedScrollConnection.offset
-                        ),
                         text = stringResource(
                             if (state.isSignedInProfile) Res.string.post
                             else Res.string.mention
@@ -186,6 +170,9 @@ abstract class ProfileComponent(
                         icon =
                         if (state.isSignedInProfile) Icons.Rounded.Edit
                         else Icons.Rounded.AlternateEmail,
+                        expanded = isFabExpanded(
+                            offset = bottomNavigationNestedScrollConnection.offset
+                        ),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
@@ -201,11 +188,10 @@ abstract class ProfileComponent(
                     )
                 },
                 bottomBar = {
-                    BottomBar(
-                        panedSharedElementScope = sharedElementScope,
+                    PaneBottomAppBar(
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
-                        }
+                        },
                     )
                 },
                 snackBarMessages = state.messages,
@@ -213,7 +199,7 @@ abstract class ProfileComponent(
                 },
                 content = {
                     ProfileScreen(
-                        panedSharedElementScope = sharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,
@@ -226,50 +212,5 @@ abstract class ProfileComponent(
                 }
             )
         }
-    )
-}
-
-
-@Composable
-private fun TopBar(
-    modifier: Modifier = Modifier,
-    onBackPressed: () -> Unit,
-) {
-    TopAppBar(
-        // Limit width so tabs may be tapped
-        modifier = modifier.width(60.dp),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
-        navigationIcon = {
-            FilledTonalIconButton(
-                modifier = Modifier,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f
-                    )
-                ),
-                onClick = onBackPressed,
-            ) {
-                Image(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
-            }
-        },
-        title = {
-
-        },
-    )
-}
-
-@Composable
-private fun BottomBar(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-) {
-    BottomAppBar(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
     )
 }

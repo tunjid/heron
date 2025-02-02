@@ -43,6 +43,7 @@ import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -59,7 +60,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun FeedScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -71,7 +72,7 @@ internal fun FeedScreen(
         when (val timelineStateHolder = state.timelineStateHolder) {
             null -> Unit
             else -> FeedTimeline(
-                panedSharedElementScope = panedSharedElementScope,
+                panedSharedElementScope = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
             )

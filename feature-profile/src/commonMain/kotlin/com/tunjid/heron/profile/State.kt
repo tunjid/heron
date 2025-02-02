@@ -62,6 +62,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
+
         data class DelegateTo(
             val delegate: NavigationAction.Common,
         ) : Navigate(), NavigationAction by delegate

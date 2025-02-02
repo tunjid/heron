@@ -50,6 +50,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -59,7 +60,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 
 @Composable
 internal fun ComposeScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     state: State,
     actions: (Action) -> Unit,
@@ -71,7 +72,7 @@ internal fun ComposeScreen(
     ) {
         val postText = state.postText
         ReplyingTo(
-            panedSharedElementScope = panedSharedElementScope,
+            panedSharedElementScope = paneScaffoldState,
             type = state.postType,
             sharedElementPrefix = state.sharedElementPrefix
         )

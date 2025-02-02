@@ -32,8 +32,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -65,23 +63,18 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.ui.PanedSharedElementScope
-import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.post
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun Fab(
+fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     text: String,
     icon: ImageVector?,
     expanded: Boolean,
     visible: Boolean? = null,
     onClick: () -> Unit,
-) = with(panedSharedElementScope) {
+) {
     // The material3 ExtendedFloatingActionButton does not allow for placing
     // Modifier.animateContentSize() on its row.
     FloatingActionButton(
@@ -137,23 +130,6 @@ private fun FabIcon(icon: ImageVector) {
         rotationAnimatable.animateTo(targetValue = 30f, animationSpec = animationSpec)
         rotationAnimatable.animateTo(targetValue = 0f, animationSpec = animationSpec)
     }
-}
-
-@Composable
-fun ComposeFab(
-    modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
-    expanded: Boolean,
-    onClick: () -> Unit,
-) {
-    Fab(
-        modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
-        onClick = onClick,
-        text = stringResource(Res.string.post),
-        icon = Icons.Rounded.Edit,
-        expanded = expanded,
-    )
 }
 
 @Composable

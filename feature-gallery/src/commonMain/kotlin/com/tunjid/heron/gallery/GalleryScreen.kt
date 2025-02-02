@@ -48,6 +48,7 @@ import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.isPrimaryOrPreview
@@ -59,7 +60,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun GalleryScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     state: State,
 ) {
@@ -106,7 +107,7 @@ internal fun GalleryScreen(
                                             }
                                         }
                                     ),
-                                panedSharedElementScope = panedSharedElementScope,
+                                panedSharedElementScope = paneScaffoldState,
                                 item = item,
                                 sharedElementPrefix = state.sharedElementPrefix
                             )
@@ -117,7 +118,7 @@ internal fun GalleryScreen(
                                 .align(Alignment.Center)
                                 .fillMaxWidth()
                                 .aspectRatio(item.video.aspectRatioOrSquare),
-                            panedSharedElementScope = panedSharedElementScope,
+                            panedSharedElementScope = paneScaffoldState,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix
                         )

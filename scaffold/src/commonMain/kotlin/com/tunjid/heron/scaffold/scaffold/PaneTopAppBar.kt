@@ -19,35 +19,45 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.threepane.ThreePane
+import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.go_back
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RootDestinationTopAppBar(
+fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
     onSignedInProfileClicked: (Profile, String) -> Unit,
-) = with(panedSharedElementScope) {
+) {
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
-            panedSharedElementScope.AppLogo(
+            AppLogo(
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(36.dp)
@@ -84,6 +94,36 @@ fun RootDestinationTopAppBar(
             }
             Spacer(Modifier.width(16.dp))
         },
+    )
+}
+
+@Composable
+fun PaneScaffoldState.PoppableDestinationTopAppBar(
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    onBackPressed: () -> Unit,
+) {
+    TopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+        ),
+        navigationIcon = {
+            IconButton(
+                modifier = Modifier,
+                onClick = onBackPressed,
+            ) {
+                Icon(
+                    imageVector =
+                    if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
+                    else Icons.Rounded.Close,
+                    contentDescription = stringResource(Res.string.go_back),
+                )
+            }
+        },
+        title = title,
+        actions = actions,
     )
 }
 
