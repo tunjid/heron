@@ -186,7 +186,7 @@ abstract class ComposeComponent(
                 },
                 content = { paddingValues ->
                     ComposeScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                         state = state,

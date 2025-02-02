@@ -219,7 +219,7 @@ abstract class ProfilesComponent(
                 },
                 content = { paddingValues ->
                     ProfilesScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier
                             .padding(
                                 paddingValues = PaddingValues(

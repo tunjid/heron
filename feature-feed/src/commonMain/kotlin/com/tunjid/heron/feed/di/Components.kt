@@ -126,7 +126,7 @@ abstract class FeedComponent(
                 },
                 content = {
                     FeedScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier,
                         state = state,
                         actions = viewModel.accept,

@@ -190,7 +190,7 @@ abstract class PostDetailComponent(
                 },
                 content = { paddingValues ->
                     PostDetailScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

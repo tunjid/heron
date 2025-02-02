@@ -171,7 +171,7 @@ abstract class SearchComponent(
                 },
                 content = {
                     SearchScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier,
                         state = state,
                         actions = viewModel.accept,

@@ -57,6 +57,7 @@ import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
@@ -79,7 +80,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun HomeScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -108,7 +109,7 @@ internal fun HomeScreen(
                     updatedTimelineStateHolders.stateHolderAt(page)
                 }
                 HomeTimeline(
-                    panedSharedElementScope = panedSharedElementScope,
+                    panedSharedElementScope = paneScaffoldState,
                     timelineStateHolder = timelineStateHolder,
                     actions = actions,
                 )

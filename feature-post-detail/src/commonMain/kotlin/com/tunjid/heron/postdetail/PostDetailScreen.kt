@@ -42,18 +42,18 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
 
 @Composable
 internal fun PostDetailScreen(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -154,7 +154,7 @@ internal fun PostDetailScreen(
         columns = StaggeredGridCells.Adaptive(340.dp),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+        userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
         items(
             items = items,
@@ -167,7 +167,7 @@ internal fun PostDetailScreen(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item)
                         ),
-                    panedSharedElementScope = panedSharedElementScope,
+                    panedSharedElementScope = paneScaffoldState,
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
@@ -192,7 +192,7 @@ internal fun PostDetailScreen(
         }
     }
 
-    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

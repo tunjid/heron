@@ -74,7 +74,7 @@ fun PaneScaffoldState.PaneFab(
     expanded: Boolean,
     visible: Boolean? = null,
     onClick: () -> Unit,
-) = with(panedSharedElementScope) {
+) {
     // The material3 ExtendedFloatingActionButton does not allow for placing
     // Modifier.animateContentSize() on its row.
     FloatingActionButton(

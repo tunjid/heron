@@ -199,7 +199,7 @@ abstract class ProfileComponent(
                 },
                 content = {
                     ProfileScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,

@@ -171,7 +171,7 @@ abstract class NotificationsComponent(
                 },
                 content = {
                     NotificationsScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,

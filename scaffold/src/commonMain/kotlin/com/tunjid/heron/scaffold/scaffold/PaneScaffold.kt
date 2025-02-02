@@ -47,12 +47,12 @@ import kotlinx.coroutines.flow.filterNotNull
 
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
-    val panedSharedElementScope: PanedSharedElementScope,
-) {
+    panedSharedElementScope: PanedSharedElementScope,
+): PanedSharedElementScope by panedSharedElementScope{
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
     internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
     internal val canShowFab
-        get() = when (panedSharedElementScope.paneState.pane) {
+        get() = when (paneState.pane) {
             ThreePane.Primary -> true
             ThreePane.TransientPrimary -> true
             ThreePane.Secondary -> false

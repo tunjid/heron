@@ -123,7 +123,7 @@ abstract class GalleryComponent(
                 },
                 content = {
                     GalleryScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier,
                         state = state,
                     )

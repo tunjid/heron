@@ -53,11 +53,11 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
     onSignedInProfileClicked: (Profile, String) -> Unit,
-) = with(panedSharedElementScope) {
+) {
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
-            panedSharedElementScope.AppLogo(
+            AppLogo(
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(36.dp)
@@ -116,7 +116,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             ) {
                 Icon(
                     imageVector =
-                    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
+                    if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
                     else Icons.Rounded.Close,
                     contentDescription = stringResource(Res.string.go_back),
                 )

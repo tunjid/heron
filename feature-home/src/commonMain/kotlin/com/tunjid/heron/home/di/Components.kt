@@ -199,7 +199,7 @@ abstract class HomeComponent(
                 },
                 content = {
                     HomeScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier,

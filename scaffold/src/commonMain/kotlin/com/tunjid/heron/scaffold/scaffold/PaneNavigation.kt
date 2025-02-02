@@ -74,7 +74,7 @@ internal fun NavScaffold(
 fun PaneScaffoldState.PaneBottomAppBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean = { false },
-) = with(this.panedSharedElementScope) {
+) {
     val appState = LocalAppState.current
     val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
     BottomAppBar(

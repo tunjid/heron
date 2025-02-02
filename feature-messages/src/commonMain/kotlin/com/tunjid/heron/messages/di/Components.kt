@@ -119,7 +119,7 @@ abstract class MessagesComponent(
                 },
                 content = { paddingValues ->
                     MessagesScreen(
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneScaffoldState = this,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
