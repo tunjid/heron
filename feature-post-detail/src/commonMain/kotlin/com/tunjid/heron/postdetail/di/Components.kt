@@ -16,22 +16,14 @@
 
 package com.tunjid.heron.postdetail.di
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Reply
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
@@ -54,6 +46,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -69,7 +62,6 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import heron.feature_post_detail.generated.resources.Res
-import heron.feature_post_detail.generated.resources.back
 import heron.feature_post_detail.generated.resources.reply
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
@@ -162,7 +154,10 @@ abstract class PostDetailComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar { viewModel.accept(Action.Navigate.Pop) }
+                    PaneDestinationTopAppBar(
+                        panedSharedElementScope = sharedElementScope,
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
                 },
                 floatingActionButton = {
                     PaneFab(
@@ -220,34 +215,6 @@ abstract class PostDetailComponent(
                 }
             )
         }
-    )
-}
-
-@Composable
-private fun TopBar(
-    onBackPressed: () -> Unit,
-) {
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
-        navigationIcon = {
-            FilledTonalIconButton(
-                modifier = Modifier,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f
-                    )
-                ),
-                onClick = onBackPressed,
-            ) {
-                Image(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
-            }
-        },
-        title = {},
     )
 }
 

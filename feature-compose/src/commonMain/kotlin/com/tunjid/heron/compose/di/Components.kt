@@ -16,20 +16,12 @@
 
 package com.tunjid.heron.compose.di
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -37,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,7 +38,6 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeViewModelCreator
-import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.ui.BottomAppBarFab
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.TopAppBarFab
@@ -57,21 +47,18 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.PaneDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
-import heron.feature_compose.generated.resources.Res
-import heron.feature_compose.generated.resources.back
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
-import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/compose"
 
@@ -142,11 +129,19 @@ abstract class ComposeComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    TopBar(
-                        state = state,
+                    PaneDestinationTopAppBar(
                         panedSharedElementScope = sharedElementScope,
-                        onCreatePost = viewModel.accept,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        actions = {
+                            TopAppBarFab(
+                                modifier = Modifier,
+                                panedSharedElementScope = sharedElementScope,
+                                state = state,
+                                onCreatePost = viewModel.accept,
+                            )
+                        },
+                        onBackPressed = {
+                            viewModel.accept(Action.Navigate.Pop)
+                        }
                     )
                 },
                 floatingActionButton = {
@@ -204,45 +199,6 @@ abstract class ComposeComponent(
                         actions = viewModel.accept,
                     )
                 }
-            )
-        }
-    )
-}
-
-@Composable
-private fun TopBar(
-    state: State,
-    panedSharedElementScope: PanedSharedElementScope,
-    onCreatePost: (Action.CreatePost) -> Unit,
-    onBackPressed: () -> Unit,
-) {
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
-        navigationIcon = {
-            FilledTonalIconButton(
-                modifier = Modifier,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f
-                    )
-                ),
-                onClick = onBackPressed,
-            ) {
-                Image(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
-            }
-        },
-        title = {},
-        actions = {
-            TopAppBarFab(
-                modifier = Modifier,
-                panedSharedElementScope = panedSharedElementScope,
-                state = state,
-                onCreatePost = onCreatePost,
             )
         }
     )

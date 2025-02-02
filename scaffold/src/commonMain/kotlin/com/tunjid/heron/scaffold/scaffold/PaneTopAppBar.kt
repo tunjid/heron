@@ -18,15 +18,25 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
@@ -34,6 +44,10 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.threepane.ThreePane
+import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.go_back
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -84,6 +98,42 @@ fun PaneRootDestinationTopAppBar(
             }
             Spacer(Modifier.width(16.dp))
         },
+    )
+}
+
+@Composable
+fun PaneDestinationTopAppBar(
+    modifier: Modifier = Modifier,
+    panedSharedElementScope: PanedSharedElementScope,
+    title: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    onBackPressed: () -> Unit,
+) {
+    TopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+        ),
+        navigationIcon = {
+            FilledTonalIconButton(
+                modifier = Modifier,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
+                        alpha = 0.9f
+                    )
+                ),
+                onClick = onBackPressed,
+            ) {
+                Image(
+                    imageVector =
+                    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
+                    else Icons.Rounded.Close,
+                    contentDescription = stringResource(Res.string.go_back),
+                )
+            }
+        },
+        title = title,
+        actions = actions,
     )
 }
 
