@@ -19,6 +19,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -58,6 +59,7 @@ class PostDetailViewModelCreator(
 @Inject
 class ActualPostDetailViewModel(
     timelineRepository: TimelineRepository,
+    notificationsRepository: NotificationsRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -71,6 +73,9 @@ class ActualPostDetailViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        unreadCountMutations(
+            notificationsRepository
+        ),
         postThreadsMutations(
             postUri = route.postUri,
             timelineRepository = timelineRepository,
@@ -92,6 +97,13 @@ class ActualPostDetailViewModel(
         }
     }
 )
+
+fun unreadCountMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.unreadCount.mapToMutation {
+        copy(unreadNotificationCount = it)
+    }
 
 fun postThreadsMutations(
     postUri: Uri,

@@ -23,6 +23,7 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
@@ -31,6 +32,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import org.jetbrains.compose.resources.stringResource
 
@@ -74,6 +76,7 @@ internal fun NavScaffold(
 fun PaneScaffoldState.PaneBottomAppBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean = { false },
+    badge: @Composable (AppStack) -> Unit = {},
 ) {
     val appState = LocalAppState.current
     val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
@@ -88,9 +91,16 @@ fun PaneScaffoldState.PaneBottomAppBar(
         appState.navItems.forEach { item ->
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        imageVector = item.stack.icon,
-                        contentDescription = stringResource(item.stack.titleRes),
+                    BadgedBox(
+                        badge = {
+                            badge(item.stack)
+                        },
+                        content = {
+                            Icon(
+                                imageVector = item.stack.icon,
+                                contentDescription = stringResource(item.stack.titleRes),
+                            )
+                        },
                     )
                 },
                 selected = item.selected,

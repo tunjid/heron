@@ -78,6 +78,9 @@ class ActualNotificationsViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        unreadCountMutations(
+            notificationsRepository
+        ),
         loadProfileMutations(
             authTokenRepository
         ),
@@ -109,6 +112,13 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+fun unreadCountMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.unreadCount.mapToMutation {
+        copy(unreadNotificationCount = it)
     }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(

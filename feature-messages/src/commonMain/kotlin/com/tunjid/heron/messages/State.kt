@@ -25,6 +25,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val unreadNotificationCount: Long = 0,
     @Transient
     val messages: List<String> = emptyList(),
 )

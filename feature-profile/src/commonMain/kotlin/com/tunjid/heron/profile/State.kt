@@ -34,6 +34,7 @@ data class State(
     val isSignedInProfile: Boolean = false,
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
+    val unreadNotificationCount: Long = 0,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient

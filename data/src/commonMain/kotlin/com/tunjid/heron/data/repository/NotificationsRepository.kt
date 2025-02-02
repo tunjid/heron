@@ -17,8 +17,10 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.feed.GetPostsQueryParams
+import app.bsky.notification.GetUnreadCountQueryParams
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsQueryParams
+import app.bsky.notification.UpdateSeenRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Notification
@@ -32,11 +34,16 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
@@ -47,19 +54,43 @@ data class NotificationsQuery(
 ) : CursorQuery
 
 interface NotificationsRepository {
+    val unreadCount: Flow<Long>
+
     fun notifications(
         query: NotificationsQuery,
         cursor: Cursor,
     ): Flow<CursorList<Notification>>
+
+    suspend fun markRead()
 }
 
 class OfflineNotificationsRepository @Inject constructor(
+    appScope: CoroutineScope,
     private val postDao: PostDao,
     private val notificationsDao: NotificationsDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
 ) : NotificationsRepository {
+
+    override val unreadCount: Flow<Long> = savedStateRepository.savedState
+        .map { it.notifications?.lastSeen }
+        .distinctUntilChanged()
+        .map { lastSeen ->
+            runCatchingWithNetworkRetry {
+                networkService.api.getUnreadCount(
+                    params = GetUnreadCountQueryParams(
+                        seenAt = lastSeen
+                    )
+                )
+            }
+                .getOrNull()?.count ?: 0
+        }
+        .stateIn(
+            scope = appScope,
+            started = SharingStarted.Eagerly,
+            initialValue = 0,
+        )
 
     override fun notifications(
         query: NotificationsQuery,
@@ -127,6 +158,14 @@ class OfflineNotificationsRepository @Inject constructor(
             )
         )
             .distinctUntilChanged()
+
+    override suspend fun markRead() {
+        runCatchingWithNetworkRetry {
+            networkService.api.updateSeen(
+                request = UpdateSeenRequest(Clock.System.now())
+            )
+        }
+    }
 
     private fun observeAndRefreshNotifications(
         query: NotificationsQuery,

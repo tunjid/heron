@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -67,6 +68,7 @@ class ActualProfileViewModel(
     authTokenRepository: AuthTokenRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    notificationsRepository: NotificationsRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -84,6 +86,9 @@ class ActualProfileViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        unreadCountMutations(
+            notificationsRepository = notificationsRepository,
+        ),
         loadProfileMutations(
             profileId = route.profileId,
             profileRepository = profileRepository,
@@ -154,6 +159,13 @@ private fun loadSignedInProfileMutations(
             copy(signedInProfileId = signedInProfile?.did)
         }
     )
+
+fun unreadCountMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.unreadCount.mapToMutation {
+        copy(unreadNotificationCount = it)
+    }
 
 private fun profileRelationshipMutations(
     profileId: Id,

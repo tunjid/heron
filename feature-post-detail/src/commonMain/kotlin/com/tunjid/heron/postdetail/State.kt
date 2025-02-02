@@ -27,6 +27,7 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    val unreadNotificationCount: Long = 0,
     @Transient
     val items: List<TimelineItem> = listOfNotNull(
         anchorPost?.let {
