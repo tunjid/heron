@@ -19,6 +19,7 @@ package com.tunjid.heron.home
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -59,6 +60,7 @@ class HomeViewModelCreator(
 class ActualHomeViewModel(
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
+    notificationsRepository: NotificationsRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -70,6 +72,9 @@ class ActualHomeViewModel(
     initialState = State(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        unreadCountMutations(
+            notificationsRepository,
+        ),
         timelineMutations(
             startNumColumns = 1,
             scope = scope,
@@ -101,6 +106,13 @@ class ActualHomeViewModel(
         }
     }
 )
+
+fun unreadCountMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.unreadCount.mapToMutation {
+        copy(unreadNotificationCount = it)
+    }
 
 private fun loadProfileMutations(
     authTokenRepository: AuthTokenRepository,

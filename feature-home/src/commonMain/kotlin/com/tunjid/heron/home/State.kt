@@ -28,6 +28,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val currentSourceId: String? = null,
+    val unreadNotificationCount: Long = 0,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient

@@ -32,6 +32,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import org.jetbrains.compose.resources.stringResource
 
@@ -75,7 +76,7 @@ internal fun NavScaffold(
 fun PaneScaffoldState.PaneBottomAppBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean = { false },
-    badge: @Composable (Int) -> Unit = {},
+    badge: @Composable (AppStack) -> Unit = {},
 ) {
     val appState = LocalAppState.current
     val sharedContentState = rememberSharedContentState(BottomNavSharedElementKey)
@@ -87,12 +88,12 @@ fun PaneScaffoldState.PaneBottomAppBar(
                 zIndexInOverlay = BottomNavSharedElementZIndex,
             ),
     ) {
-        appState.navItems.forEachIndexed { index, item ->
+        appState.navItems.forEach { item ->
             NavigationBarItem(
                 icon = {
                     BadgedBox(
                         badge = {
-                            badge(index)
+                            badge(item.stack)
                         },
                         content = {
                             Icon(

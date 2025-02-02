@@ -18,9 +18,12 @@ package com.tunjid.heron.messages.di
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Badge
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,6 +34,7 @@ import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
 import com.tunjid.heron.messages.MessagesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
@@ -115,6 +119,11 @@ abstract class MessagesComponent(
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
+                        badge = { stack ->
+                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
+                                Badge(Modifier.size(4.dp))
+                            }
+                        },
                     )
                 },
                 content = { paddingValues ->
