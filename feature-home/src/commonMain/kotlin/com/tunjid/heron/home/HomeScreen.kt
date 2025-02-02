@@ -134,6 +134,21 @@ internal fun HomeScreen(
         )
 
         pagerState.PauseVideoOnTabChangeEffect()
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { pagerState.currentPage }
+                .collect { page ->
+                    if (page < updatedTimelineStateHolders.size) actions(
+                        Action.SetCurrentTab(
+                            updatedTimelineStateHolders.stateHolderAt(page)
+                                .state
+                                .value
+                                .timeline
+                                .sourceId
+                        )
+                    )
+                }
+        }
     }
 }
 

@@ -22,6 +22,7 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -29,6 +30,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
@@ -87,6 +89,11 @@ class ActualHomeViewModel(
                     writeQueue = writeQueue,
                 )
 
+                is Action.RefreshCurrentTab -> action.flow.tabRefreshMutations(
+                    stateHolder = this@transform,
+                )
+
+                is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -107,11 +114,15 @@ private fun timelineMutations(
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.homeTimelines().mapToMutation {
+    timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
         copy(
-            timelines = it,
+            currentSourceId = currentSourceId
+                ?: homeTimelines
+                    .firstOrNull()
+                    ?.sourceId,
+            timelines = homeTimelines,
             timelineStateHolders = timelineStateHolders.update(
-                updatedTimelines = it,
+                updatedTimelines = homeTimelines,
                 scope = scope,
                 startNumColumns = startNumColumns,
                 timelineRepository = timelineRepository,
@@ -129,4 +140,22 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
+): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(currentSourceId = action.sourceId)
+    }
+
+private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
+    stateHolder: SuspendingStateHolder<State>,
+): Flow<Mutation<State>> =
+    mapToManyMutations {
+        val currentState = stateHolder.state()
+        (0..<currentState.timelineStateHolders.size)
+            .map(currentState.timelineStateHolders::stateHolderAt)
+            .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
+            ?.accept
+            ?.invoke(TimelineLoadAction.Refresh)
     }
