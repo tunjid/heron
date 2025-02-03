@@ -760,5 +760,5 @@ private class HeaderState(
 }
 
 private val ExpandedProfilePhotoSize = 68.dp
-private val CollapsedProfilePhotoSize = 32.dp
+private val CollapsedProfilePhotoSize = 36.dp
 private val CardSize = 340.dp

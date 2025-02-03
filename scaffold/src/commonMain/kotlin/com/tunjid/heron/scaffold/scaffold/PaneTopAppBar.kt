@@ -71,7 +71,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 signedInProfile?.let { profile ->
                     AsyncImage(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(36.dp)
                             .sharedElement(
                                 key = SignedInUserAvatarSharedElementKey,
                             )
