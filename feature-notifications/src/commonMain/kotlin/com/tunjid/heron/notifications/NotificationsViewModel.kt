@@ -99,6 +99,10 @@ class ActualNotificationsViewModel(
                     writeQueue = writeQueue,
                 )
 
+                is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
+                    notificationsRepository = notificationsRepository,
+                )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -126,6 +130,13 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.MarkNotificationsRead>.markNotificationsReadMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations {
+        notificationsRepository.markRead()
     }
 
 suspend fun Flow<Action.LoadAround>.notificationsMutations(

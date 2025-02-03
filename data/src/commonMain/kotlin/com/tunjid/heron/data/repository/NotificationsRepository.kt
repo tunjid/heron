@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.Clock
@@ -76,15 +77,21 @@ class OfflineNotificationsRepository @Inject constructor(
     override val unreadCount: Flow<Long> = savedStateRepository.savedState
         .map { it.notifications?.lastSeen }
         .distinctUntilChanged()
-        .map { lastSeen ->
-            runCatchingWithNetworkRetry {
-                networkService.api.getUnreadCount(
-                    params = GetUnreadCountQueryParams(
-                        seenAt = lastSeen
-                    )
-                )
+        .flatMapLatest { lastSeen ->
+            flow {
+                while (true) {
+                    val unreadCount = runCatchingWithNetworkRetry {
+                        networkService.api.getUnreadCount(
+                            params = GetUnreadCountQueryParams(
+                                seenAt = lastSeen
+                            )
+                        )
+                    }
+                        .getOrNull()?.count ?: 0
+                    emit(unreadCount)
+                    kotlinx.coroutines.delay(10_000)
+                }
             }
-                .getOrNull()?.count ?: 0
         }
         .stateIn(
             scope = appScope,
@@ -160,10 +167,14 @@ class OfflineNotificationsRepository @Inject constructor(
             .distinctUntilChanged()
 
     override suspend fun markRead() {
-        runCatchingWithNetworkRetry {
+        val now = Clock.System.now()
+        val isSuccess = runCatchingWithNetworkRetry {
             networkService.api.updateSeen(
-                request = UpdateSeenRequest(Clock.System.now())
+                request = UpdateSeenRequest(now)
             )
+        }.isSuccess
+        if (isSuccess) savedStateRepository.updateState {
+            copy(notifications = notifications?.copy(lastSeen = now))
         }
     }
 

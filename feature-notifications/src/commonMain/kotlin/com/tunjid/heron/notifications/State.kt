@@ -84,17 +84,14 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
+    data object MarkNotificationsRead : Action(key = "markNotificationsRead")
+
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
         data class DelegateTo(
             val delegate: NavigationAction.Common,
         ) : Navigate(), NavigationAction by delegate
 
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
     }
 }
 

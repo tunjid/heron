@@ -20,11 +20,12 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -36,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -57,6 +60,7 @@ import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun ComposeScreen(
@@ -65,10 +69,11 @@ internal fun ComposeScreen(
     state: State,
     actions: (Action) -> Unit,
 ) {
+    val scrollState = rememberScrollState()
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
         val postText = state.postText
         ReplyingTo(
@@ -92,7 +97,13 @@ internal fun ComposeScreen(
                 )
             }
         )
-        Spacer(Modifier.weight(1f))
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { state.postText.text.length }
+                .collect {
+                    scrollState.scrollTo(Int.MAX_VALUE)
+                }
+        }
     }
 }
 
@@ -202,10 +213,13 @@ private fun PostComposition(
     onCreatePost: () -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
 
     BasicTextField(
         modifier = modifier
-            .focusRequester(textFieldFocusRequester),
+            .focusRequester(textFieldFocusRequester)
+            .bringIntoViewRequester(bringIntoViewRequester),
         value = postText,
         onValueChange = {
             onPostTextChanged(
@@ -219,6 +233,12 @@ private fun PostComposition(
                     )
                 )
             )
+        },
+        onTextLayout = {
+            val cursorRect = it.getCursorRect(postText.selection.start)
+            coroutineScope.launch {
+                bringIntoViewRequester.bringIntoView(cursorRect)
+            }
         },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
