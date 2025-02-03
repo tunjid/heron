@@ -16,26 +16,12 @@
 
 package com.tunjid.heron.search.di
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Badge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -57,16 +43,14 @@ import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModelCreator
+import com.tunjid.heron.search.ui.SearchBar
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
-import heron.feature_search.generated.resources.Res
-import heron.feature_search.generated.resources.search
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
-import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
 
@@ -188,48 +172,4 @@ abstract class SearchComponent(
             )
         }
     )
-}
-
-@Composable
-private fun SearchBar(
-    searchQuery: String,
-    onQueryChanged: (String) -> Unit,
-    onQueryConfirmed: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth()
-            .height(48.dp),
-    ) {
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            value = searchQuery,
-            onValueChange = {
-                onQueryChanged(it)
-            },
-            textStyle = MaterialTheme.typography.labelLarge,
-            singleLine = true,
-            shape = RoundedCornerShape(36.dp),
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search,
-            ),
-            keyboardActions = KeyboardActions {
-                onQueryConfirmed()
-            },
-        )
-        AnimatedVisibility(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .align(Alignment.CenterStart),
-            visible = searchQuery.isBlank(),
-        ) {
-            Text(
-                text = stringResource(Res.string.search),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    }
 }
