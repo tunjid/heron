@@ -16,22 +16,16 @@
 
 package com.tunjid.heron.images
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
-import coil3.compose.LocalPlatformContext
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
@@ -51,27 +45,27 @@ fun AsyncImage(
     args: ImageArgs,
     modifier: Modifier = Modifier,
 ) {
-    var size by remember { mutableStateOf(IntSize.Zero) }
-    val updatedThumbnail = rememberUpdatedState(args.thumbnailUrl)
-    val platformContext = LocalPlatformContext.current
-    val thumbnailRequest by remember {
-        derivedStateOf {
-            if (size == IntSize.Zero) return@derivedStateOf null
-            val thumbnailUrl = updatedThumbnail.value ?: return@derivedStateOf null
-            ImageRequest.Builder(platformContext)
-                .data(thumbnailUrl)
-                .size(size.width, size.height)
-                .build()
-        }
-    }
-
-    CoilAsyncImage(
+    Box(
         modifier = modifier
             .clip(args.shape.animate())
-            .onSizeChanged { size = it },
-        model = args.url,
-        placeholder = thumbnailRequest?.let { rememberAsyncImagePainter(it) },
-        contentDescription = args.contentDescription,
-        contentScale = args.contentScale.animate()
-    )
+    ) {
+        var thumbnailVisible by remember(args.thumbnailUrl) {
+            mutableStateOf(args.thumbnailUrl != null)
+        }
+        val contentScale = args.contentScale.animate()
+
+        CoilAsyncImage(
+            modifier = Modifier.matchParentSize(),
+            model = args.url,
+            contentDescription = args.contentDescription,
+            contentScale = contentScale,
+            onSuccess = { thumbnailVisible = false }
+        )
+        if (thumbnailVisible) CoilAsyncImage(
+            modifier = Modifier.matchParentSize(),
+            model = args.thumbnailUrl,
+            contentDescription = args.contentDescription,
+            contentScale = contentScale,
+        )
+    }
 }
