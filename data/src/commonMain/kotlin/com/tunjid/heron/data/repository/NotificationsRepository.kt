@@ -160,10 +160,14 @@ class OfflineNotificationsRepository @Inject constructor(
             .distinctUntilChanged()
 
     override suspend fun markRead() {
-        runCatchingWithNetworkRetry {
+        val now = Clock.System.now()
+        val isSuccess = runCatchingWithNetworkRetry {
             networkService.api.updateSeen(
-                request = UpdateSeenRequest(Clock.System.now())
+                request = UpdateSeenRequest(now)
             )
+        }.isSuccess
+        if (isSuccess) savedStateRepository.updateState {
+            copy(notifications = notifications?.copy(lastSeen = now))
         }
     }
 
