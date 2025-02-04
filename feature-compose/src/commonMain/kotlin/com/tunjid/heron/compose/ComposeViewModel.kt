@@ -24,6 +24,7 @@ import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -66,6 +67,7 @@ class ComposeViewModelCreator(
 class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
+    notificationsRepository: NotificationsRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -88,6 +90,9 @@ class ActualComposeViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        unreadCountMutations(
+            notificationsRepository
+        ),
         loadSignedInProfileMutations(
             authTokenRepository = authTokenRepository,
         )
@@ -112,6 +117,13 @@ class ActualComposeViewModel(
         }
     }
 )
+
+private fun unreadCountMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.unreadCount.mapToMutation {
+        copy(unreadNotificationCount = it)
+    }
 
 private fun loadSignedInProfileMutations(
     authTokenRepository: AuthTokenRepository,

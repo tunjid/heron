@@ -17,10 +17,15 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,6 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.PaneScope
@@ -48,9 +54,15 @@ import kotlinx.coroutines.flow.filterNotNull
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
     panedSharedElementScope: PanedSharedElementScope,
-): PanedSharedElementScope by panedSharedElementScope{
+) : PanedSharedElementScope by panedSharedElementScope {
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
+
     internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
+
+    internal val canShowNavRail
+        get() = appState.filteredPaneOrder.firstOrNull() == paneState.pane
+                && appState.isMediumScreenWidthOrWider
+
     internal val canShowFab
         get() = when (paneState.pane) {
             ThreePane.Primary -> true
@@ -62,6 +74,7 @@ class PaneScaffoldState internal constructor(
         }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScope<ThreePane, Route>.PaneScaffold(
     modifier: Modifier = Modifier,
@@ -71,7 +84,8 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     onSnackBarMessageConsumed: (String) -> Unit,
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
-    bottomBar: @Composable PaneScaffoldState.() -> Unit = {},
+    navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
+    navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     val appState = LocalAppState.current
@@ -84,40 +98,53 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
         )
     }
 
-    Scaffold(
+    PaneScaffold(
         modifier = modifier,
-        containerColor = containerColor,
-        topBar = {
-            paneScaffoldState.topBar()
+        navigationRail = {
+            if (paneScaffoldState.canShowNavRail) Box(
+                modifier = Modifier
+                    .zIndex(2f),
+            ) {
+                paneScaffoldState.navigationRail()
+            }
         },
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = paneScaffoldState.canShowFab,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it }),
-                content = {
-                    paneScaffoldState.floatingActionButton()
+        content = {
+            Scaffold(
+                modifier = Modifier
+                    .animateBounds(panedSharedElementScope),
+                containerColor = containerColor,
+                topBar = {
+                    paneScaffoldState.topBar()
+                },
+                floatingActionButton = {
+                    AnimatedVisibility(
+                        visible = paneScaffoldState.canShowFab,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it }),
+                        content = {
+                            paneScaffoldState.floatingActionButton()
+                        },
+                    )
+                },
+                bottomBar = {
+                    AnimatedVisibility(
+                        visible = paneScaffoldState.canShowBottomNavigation,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it }),
+                        content = {
+                            paneScaffoldState.navigationBar()
+                        },
+                    )
+                },
+                snackbarHost = {
+                    SnackbarHost(snackbarHostState)
+                },
+                content = { paddingValues ->
+                    paneScaffoldState.content(paddingValues)
                 },
             )
-        },
-        bottomBar = {
-            AnimatedVisibility(
-                visible = paneScaffoldState.canShowBottomNavigation,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it }),
-                content = {
-                    paneScaffoldState.bottomBar()
-                },
-            )
-        },
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
-        },
-        content = { paddingValues ->
-            paneScaffoldState.content(paddingValues)
-        },
+        }
     )
-
     val updatedMessages = rememberUpdatedState(snackBarMessages.firstOrNull())
     LaunchedEffect(Unit) {
         snapshotFlow { updatedMessages.value }
@@ -136,6 +163,28 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
             appState.showNavigation = showNavigation
         }
     }
+}
+
+@Composable
+private inline fun PaneScaffold(
+    modifier: Modifier = Modifier,
+    navigationRail: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier = modifier,
+        content = {
+            navigationRail()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f),
+                content = {
+                    content()
+                }
+            )
+        },
+    )
 }
 
 val ToolbarHeight = 64.dp

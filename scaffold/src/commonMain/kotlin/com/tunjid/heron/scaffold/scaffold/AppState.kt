@@ -68,6 +68,7 @@ class AppState @Inject constructor(
     private var density = Density(1f)
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
     private val paneRenderOrder = listOf(
+        ThreePane.Tertiary,
         ThreePane.Secondary,
         ThreePane.Primary,
     )
@@ -97,11 +98,10 @@ class AppState @Inject constructor(
 
     internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
-    internal fun filteredPaneOrder(
-        panedNavHostScope: PanedNavHostScope<ThreePane, Route>,
-    ): List<ThreePane> {
-        val order = paneRenderOrder.filter { panedNavHostScope.nodeFor(it) != null }
-        return order
+    internal var panedNavHostScope by mutableStateOf<PanedNavHostScope<ThreePane, Route>?>(null)
+
+    internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
+        paneRenderOrder.filter { panedNavHostScope?.nodeFor(it) != null }
     }
 
     private val configurationTrie = RouteTrie<PaneStrategy<ThreePane, Route>>().apply {

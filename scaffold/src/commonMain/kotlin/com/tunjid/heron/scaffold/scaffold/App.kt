@@ -27,9 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -138,41 +138,33 @@ fun App(
                                     }
                             },
                         ) {
-                            NavScaffold(
-                                isVisible = appState.showNavigation,
-                                useRail = appState.isMediumScreenWidthOrWider,
-                                modifier = Modifier.fillMaxSize(),
-                                navItems = appState.navItems,
-                                onNavItemSelected = appState::onNavItemSelected
-                            ) {
-                                val filteredPaneOrder by remember {
-                                    derivedStateOf { appState.filteredPaneOrder(this) }
+                            appState.panedNavHostScope = this
+                            appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
+                            appState.paneAnchorState.updateMaxWidth(
+                                with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
+                            )
+                            SplitLayout(
+                                state = appState.splitLayoutState,
+                                modifier = modifier
+                                    .fillMaxSize()
+                                    .then(sharedElementModifier),
+                                itemSeparators = { _, offset ->
+                                    DraggableThumb(
+                                        splitLayoutState = appState.splitLayoutState,
+                                        paneAnchorState = appState.paneAnchorState,
+                                        offset = offset
+                                    )
+                                },
+                                itemContent = { index ->
+                                    DragToPopLayout(
+                                        state = appState,
+                                        pane = appState.filteredPaneOrder[index]
+                                    )
                                 }
-                                appState.splitLayoutState.visibleCount = filteredPaneOrder.size
-                                appState.paneAnchorState.updateMaxWidth(
-                                    with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
-                                )
-                                SplitLayout(
-                                    state = appState.splitLayoutState,
-                                    modifier = modifier
-                                        .fillMaxSize()
-                                        .then(sharedElementModifier),
-                                    itemSeparators = { _, offset ->
-                                        DraggableThumb(
-                                            splitLayoutState = appState.splitLayoutState,
-                                            paneAnchorState = appState.paneAnchorState,
-                                            offset = offset
-                                        )
-                                    },
-                                    itemContent = { index ->
-                                        DragToPopLayout(
-                                            state = appState,
-                                            pane = filteredPaneOrder[index]
-                                        )
-                                    }
-                                )
-                                LaunchedEffect(filteredPaneOrder) {
-                                    if (filteredPaneOrder.size != 1) return@LaunchedEffect
+                            )
+                            LaunchedEffect(Unit) {
+                                snapshotFlow { appState.filteredPaneOrder }.collect { order ->
+                                    if (order.size != 1) return@collect
                                     appState.paneAnchorState.onClosed()
                                 }
                             }

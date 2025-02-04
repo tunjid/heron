@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
@@ -45,8 +47,10 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
@@ -146,7 +150,7 @@ abstract class ComposeComponent(
                         onCreatePost = viewModel.accept,
                     )
                 },
-                bottomBar = {
+                navigationBar = {
                     val borderColor = MaterialTheme.colorScheme.outline
                     val imePadding = WindowInsets.ime.asPaddingValues()
                     val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
@@ -183,6 +187,15 @@ abstract class ComposeComponent(
                         viewModel.accept(Action.SetFabExpanded(expanded = fabExpanded))
                         onDispose { }
                     }
+                },
+                navigationRail = {
+                    PaneNavigationRail(
+                        badge = { stack ->
+                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
+                                Badge(Modifier.size(4.dp))
+                            }
+                        },
+                    )
                 },
                 content = { paddingValues ->
                     ComposeScreen(
