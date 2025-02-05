@@ -17,8 +17,11 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -27,22 +30,31 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
+import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.requirePanedSharedElementScope
 import com.tunjid.treenav.compose.PaneScope
@@ -50,6 +62,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
+import kotlin.math.abs
 
 class PaneScaffoldState internal constructor(
     private val appState: AppState,
@@ -72,6 +85,13 @@ class PaneScaffoldState internal constructor(
             ThreePane.Overlay -> false
             null -> false
         }
+
+    internal var scaffoldTargetSize by mutableStateOf(IntSize.Zero)
+    internal var scaffoldCurrentSize by mutableStateOf(IntSize.Zero)
+
+    internal fun hasMatchedSize(): Boolean =
+        abs(scaffoldCurrentSize.width - scaffoldTargetSize.width) <= 2
+                && abs(scaffoldCurrentSize.height - scaffoldTargetSize.height) <= 2
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -111,7 +131,18 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
         content = {
             Scaffold(
                 modifier = Modifier
-                    .animateBounds(panedSharedElementScope),
+                    .animateBounds(
+                        lookaheadScope = panedSharedElementScope,
+                        boundsTransform = remember {
+                            scaffoldBoundsTransform(
+                                appState = appState,
+                                paneScaffoldState = paneScaffoldState,
+                            )
+                        }
+                    )
+                    .onSizeChanged {
+                        paneScaffoldState.scaffoldCurrentSize = it
+                    },
                 containerColor = containerColor,
                 topBar = {
                     paneScaffoldState.topBar()
@@ -174,7 +205,12 @@ private inline fun PaneScaffold(
     Row(
         modifier = modifier,
         content = {
-            navigationRail()
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 80.dp)
+            ) {
+                navigationRail()
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -185,6 +221,30 @@ private inline fun PaneScaffold(
             )
         },
     )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+private fun scaffoldBoundsTransform(
+    appState: AppState,
+    paneScaffoldState: PaneScaffoldState,
+): BoundsTransform = BoundsTransform { _, targetBounds ->
+    paneScaffoldState.scaffoldTargetSize =
+        targetBounds.size.roundToIntSize()
+
+    when (paneScaffoldState.paneState.pane) {
+        ThreePane.Primary,
+        ThreePane.Secondary,
+        ThreePane.Tertiary,
+            -> if (appState.paneAnchorState.hasInteractions) snap()
+        else spring()
+
+        ThreePane.TransientPrimary,
+            -> spring<Rect>().skipIf(paneScaffoldState::hasMatchedSize)
+
+        ThreePane.Overlay,
+        null,
+            -> snap()
+    }
 }
 
 val ToolbarHeight = 64.dp
