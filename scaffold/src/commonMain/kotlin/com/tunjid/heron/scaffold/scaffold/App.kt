@@ -21,15 +21,14 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -41,7 +40,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThu
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.compose.PanedNavHost
-import com.tunjid.treenav.compose.configurations.animatePaneBoundsConfiguration
 import com.tunjid.treenav.compose.configurations.paneModifierConfiguration
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -100,22 +98,6 @@ fun App(
                                     .threePanedMovableSharedElementConfiguration(
                                         movableSharedElementHostState
                                     )
-                                    .animatePaneBoundsConfiguration(
-                                        lookaheadScope = this@SharedTransitionScope,
-                                        shouldAnimatePane = {
-                                            when (paneState.pane) {
-                                                ThreePane.Primary,
-                                                ThreePane.Secondary,
-                                                ThreePane.Tertiary,
-                                                    -> !appState.paneAnchorState.hasInteractions
-
-                                                ThreePane.TransientPrimary -> true
-                                                ThreePane.Overlay,
-                                                null,
-                                                    -> false
-                                            }
-                                        }
-                                    )
                                     .paneModifierConfiguration {
                                         Modifier
                                             .fillMaxSize()
@@ -123,11 +105,6 @@ fun App(
                                                 orientation = Orientation.Horizontal,
                                                 minSize = 180.dp,
                                                 atStart = paneState.pane == ThreePane.Secondary,
-                                            )
-                                            .padding(
-                                                horizontal =
-                                                if (appState.splitLayoutState.visibleCount > 1) 16.dp
-                                                else 0.dp
                                             )
                                             .run {
                                                 if (paneState.pane == ThreePane.TransientPrimary) backPreview(
@@ -138,41 +115,33 @@ fun App(
                                     }
                             },
                         ) {
-                            NavScaffold(
-                                isVisible = appState.showNavigation,
-                                useRail = appState.isMediumScreenWidthOrWider,
-                                modifier = Modifier.fillMaxSize(),
-                                navItems = appState.navItems,
-                                onNavItemSelected = appState::onNavItemSelected
-                            ) {
-                                val filteredPaneOrder by remember {
-                                    derivedStateOf { appState.filteredPaneOrder(this) }
+                            appState.panedNavHostScope = this
+                            appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
+                            appState.paneAnchorState.updateMaxWidth(
+                                with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
+                            )
+                            SplitLayout(
+                                state = appState.splitLayoutState,
+                                modifier = modifier
+                                    .fillMaxSize()
+                                    .then(sharedElementModifier),
+                                itemSeparators = { _, offset ->
+                                    DraggableThumb(
+                                        splitLayoutState = appState.splitLayoutState,
+                                        paneAnchorState = appState.paneAnchorState,
+                                        offset = offset
+                                    )
+                                },
+                                itemContent = { index ->
+                                    DragToPopLayout(
+                                        state = appState,
+                                        pane = appState.filteredPaneOrder[index]
+                                    )
                                 }
-                                appState.splitLayoutState.visibleCount = filteredPaneOrder.size
-                                appState.paneAnchorState.updateMaxWidth(
-                                    with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
-                                )
-                                SplitLayout(
-                                    state = appState.splitLayoutState,
-                                    modifier = modifier
-                                        .fillMaxSize()
-                                        .then(sharedElementModifier),
-                                    itemSeparators = { _, offset ->
-                                        DraggableThumb(
-                                            splitLayoutState = appState.splitLayoutState,
-                                            paneAnchorState = appState.paneAnchorState,
-                                            offset = offset
-                                        )
-                                    },
-                                    itemContent = { index ->
-                                        DragToPopLayout(
-                                            state = appState,
-                                            pane = filteredPaneOrder[index]
-                                        )
-                                    }
-                                )
-                                LaunchedEffect(filteredPaneOrder) {
-                                    if (filteredPaneOrder.size != 1) return@LaunchedEffect
+                            )
+                            LaunchedEffect(Unit) {
+                                snapshotFlow { appState.filteredPaneOrder }.collect { order ->
+                                    if (order.size != 1) return@collect
                                     appState.paneAnchorState.onClosed()
                                 }
                             }

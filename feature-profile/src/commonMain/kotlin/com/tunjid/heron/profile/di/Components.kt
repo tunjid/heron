@@ -51,6 +51,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
+import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -190,11 +191,20 @@ abstract class ProfileComponent(
                         }
                     )
                 },
-                bottomBar = {
+                navigationBar = {
                     PaneBottomAppBar(
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
                         },
+                        badge = { stack ->
+                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
+                                Badge(Modifier.size(4.dp))
+                            }
+                        },
+                    )
+                },
+                navigationRail = {
+                    PaneNavigationRail(
                         badge = { stack ->
                             if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
                                 Badge(Modifier.size(4.dp))
