@@ -18,9 +18,12 @@ package com.tunjid.heron.feed
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -44,8 +47,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -152,7 +154,9 @@ private fun FeedTimeline(
 
     LazyVerticalStaggeredGrid(
         modifier = Modifier
+            .padding(horizontal = 8.dp)
             .fillMaxSize()
+            .paneClip()
             .onSizeChanged {
                 timelineStateHolder.accept(
                     TimelineLoadAction.GridSize(
@@ -163,11 +167,7 @@ private fun FeedTimeline(
         state = gridState,
         columns = StaggeredGridCells.Adaptive(CardSize),
         verticalItemSpacing = 8.dp,
-        contentPadding = PaddingValues(
-            top = StatusBarHeight + ToolbarHeight,
-            start = 8.dp,
-            end = 8.dp,
-        ),
+        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !panedSharedElementScope.isTransitionActive,
     ) {

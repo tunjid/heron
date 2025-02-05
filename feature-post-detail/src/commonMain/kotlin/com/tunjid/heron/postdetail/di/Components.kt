@@ -214,9 +214,7 @@ abstract class PostDetailComponent(
                         actions = viewModel.accept,
                         modifier = Modifier
                             .padding(
-                                paddingValues = PaddingValues(
-                                    top = paddingValues.calculateTopPadding()
-                                )
+                                top = paddingValues.calculateTopPadding()
                             ),
                     )
                     SecondaryPaneCloseBackHandler(

@@ -201,7 +201,9 @@ abstract class ComposeComponent(
                     ComposeScreen(
                         paneScaffoldState = this,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(
+                                top = paddingValues.calculateTopPadding()
+                            ),
                         state = state,
                         actions = viewModel.accept,
                     )

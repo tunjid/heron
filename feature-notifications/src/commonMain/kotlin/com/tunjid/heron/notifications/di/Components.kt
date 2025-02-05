@@ -17,6 +17,7 @@
 package com.tunjid.heron.notifications.di
 
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
@@ -188,12 +189,13 @@ abstract class NotificationsComponent(
                         },
                     )
                 },
-                content = {
+                content = { contentPadding ->
                     NotificationsScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .padding(top = contentPadding.calculateTopPadding()),
                     )
                 }
             )
