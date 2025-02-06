@@ -55,11 +55,10 @@ import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -124,11 +123,16 @@ abstract class HomeComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val statusBarHeight = StatusBarHeight
+            val statusBarHeight = UiTokens.statusBarHeight
             val topAppBarOffsetNestedScrollConnection =
                 rememberAccumulatedOffsetNestedScrollConnection(
                     maxOffset = { Offset.Zero },
-                    minOffset = { Offset(x = 0f, y = -(statusBarHeight + ToolbarHeight).toPx()) },
+                    minOffset = {
+                        Offset(
+                            x = 0f,
+                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                        )
+                    },
                 )
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()

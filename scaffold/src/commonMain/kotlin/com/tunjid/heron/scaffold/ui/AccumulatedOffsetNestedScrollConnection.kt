@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.scaffold.scaffold.BottomNavHeight
+import com.tunjid.heron.ui.UiTokens
 
 
 @Composable
@@ -35,7 +35,7 @@ fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConne
                 x = 0f,
                 y = navigationBarInsets.run {
                     getTop(this@maxOffset) + getBottom(this@maxOffset)
-                } + BottomNavHeight.toPx()
+                } + UiTokens.bottomNavHeight.toPx()
             )
         },
         minOffset = { Offset.Zero },

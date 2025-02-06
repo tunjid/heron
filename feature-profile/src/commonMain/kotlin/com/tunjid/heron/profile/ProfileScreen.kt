@@ -90,9 +90,6 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.TabsHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -108,6 +105,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -137,7 +135,9 @@ internal fun ProfileScreen(
 ) {
     val density = LocalDensity.current
 
-    val collapsedHeight = with(density) { (ToolbarHeight + StatusBarHeight).toPx() }
+    val collapsedHeight = with(density) {
+        (UiTokens.toolbarHeight + UiTokens.statusBarHeight).toPx()
+    }
 
     val collapsingHeaderState = rememberCollapsingHeaderState(
         collapsedHeight = collapsedHeight,
@@ -369,7 +369,7 @@ private fun ProfileAvatar(
     profile: Profile,
     avatarSharedElementKey: String,
 ) {
-    val statusBarHeight = StatusBarHeight
+    val statusBarHeight = UiTokens.statusBarHeight
     Card(
         modifier = modifier
             .padding(top = headerState.avatarTopPadding)
@@ -735,7 +735,7 @@ private class HeaderState(
         density: Density,
     ) = with(density) {
         IntOffset(
-            x = (headerState.progress * TabsHeight.toPx()).roundToInt(),
+            x = (headerState.progress * UiTokens.tabsHeight.toPx()).roundToInt(),
             y = 0,
         )
     }
@@ -745,7 +745,9 @@ private class HeaderState(
     private val progress get() = headerState.progress
 
     private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
-    private val screenTopToCollapsedAvatarAppBarCenter get() = (ToolbarHeight - CollapsedProfilePhotoSize) / 2
+
+    private val screenTopToCollapsedAvatarAppBarCenter
+        get() = (UiTokens.toolbarHeight - CollapsedProfilePhotoSize) / 2
 
     private val topToAnchoredCollapsedAvatar
         get() = screenTopToAvatarTop - screenTopToCollapsedAvatarAppBarCenter

@@ -16,12 +16,29 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 val AvatarSize = 40.dp
 
 @Stable
 object UiTokens {
+
     val avatarSize = 40.dp
+
+    val toolbarHeight = 64.dp
+
+    val tabsHeight = 48.dp
+
+    val bottomNavHeight: Dp = 80.dp
+
+    val statusBarHeight: Dp
+        @Composable get() = WindowInsets.statusBars.asPaddingValues().run {
+            calculateTopPadding() + calculateBottomPadding()
+        }
 }
