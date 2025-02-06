@@ -25,7 +25,6 @@ import androidx.compose.material3.Badge
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -48,6 +47,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -147,14 +147,11 @@ abstract class NotificationsComponent(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                if (isMediumScreenWidthOrWider) IntOffset.Zero
-                                else bottomNavigationNestedScrollConnection.offset.round()
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(Res.string.create_post),
                         icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded(
-                            offset = bottomNavigationNestedScrollConnection.offset
-                        ),
+                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(

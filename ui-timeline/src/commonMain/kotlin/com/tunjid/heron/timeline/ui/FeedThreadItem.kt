@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostStatistics
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Instant
 
@@ -57,7 +58,7 @@ fun FeedThreadItem(
             val author: Profile = post.author
             AsyncImage(
                 modifier = Modifier
-                    .size(48.dp),
+                    .size(UiTokens.avatarSize),
                 args = ImageArgs(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,

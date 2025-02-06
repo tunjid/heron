@@ -190,7 +190,10 @@ private fun PostAction(
                 indication = ripple(bounded = false),
                 onClick = onClick,
             )
-            .padding(vertical = 4.dp),
+            .padding(
+                top = 4.dp,
+                bottom = 2.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = spacedBy(4.dp),
     ) {

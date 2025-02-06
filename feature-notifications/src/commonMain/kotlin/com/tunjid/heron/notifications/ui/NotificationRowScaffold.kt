@@ -36,6 +36,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -56,7 +57,7 @@ fun NotificationAggregateScaffold(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(UiTokens.avatarSize),
             contentAlignment = Alignment.TopCenter,
         ) {
             icon()

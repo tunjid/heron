@@ -27,10 +27,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
@@ -68,6 +65,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlin.math.abs
 
 class PaneScaffoldState internal constructor(
+    internal val density: Density,
     private val appState: AppState,
     panedSharedElementScope: PanedSharedElementScope,
 ) : PanedSharedElementScope by panedSharedElementScope {
@@ -111,13 +109,15 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
+    val density = LocalDensity.current
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
     val panedSharedElementScope = requirePanedSharedElementScope()
-    val paneScaffoldState = remember(appState, panedSharedElementScope) {
+    val paneScaffoldState = remember(appState, panedSharedElementScope, density) {
         PaneScaffoldState(
             appState = appState,
             panedSharedElementScope = panedSharedElementScope,
+            density = density,
         )
     }
 
@@ -252,25 +252,6 @@ private fun scaffoldBoundsTransform(
             -> snap()
     }
 }
-
-val ToolbarHeight = 64.dp
-
-val TabsHeight = 48.dp
-
-val StatusBarHeight: Dp
-    @Composable get() = with(LocalDensity.current) {
-        statusBarHeight
-    }
-
-val BottomNavHeight: Dp = 80.dp
-
-val Density.statusBarHeight: Dp
-    @Composable get() {
-        val statusBarInsets = WindowInsets.statusBars
-        return statusBarInsets.run {
-            getTop(this@statusBarHeight) + getBottom(this@statusBarHeight)
-        }.toDp()
-    }
 
 fun Modifier.paneClip() =
     then(PaneClipModifier)

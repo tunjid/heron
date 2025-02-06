@@ -18,4 +18,12 @@ package com.tunjid.heron.scaffold.ui.theme
 
 import androidx.compose.material3.Typography
 
-val AppTypography = Typography()
+fun appTypography(): Typography {
+    val default = Typography()
+
+    return default.copy(
+        bodyLarge = default.bodyLarge.copy(
+            lineHeight = default.bodyLarge.lineHeight * 0.9f
+        )
+    )
+}

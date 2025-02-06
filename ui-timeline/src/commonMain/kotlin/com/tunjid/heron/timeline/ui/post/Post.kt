@@ -43,6 +43,7 @@ import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
@@ -84,7 +85,7 @@ fun Post(
             Column(
                 modifier = Modifier.padding(
                     start = 24.dp,
-                    bottom = 8.dp
+                    bottom = 4.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
@@ -111,7 +112,7 @@ fun Post(
                 )
                 if (isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
-                        vertical = 8.dp,
+                        vertical = 4.dp,
                     ),
                     time = post.createdAt,
                     postId = post.cid,
@@ -158,7 +159,7 @@ private fun PostAttribution(
         avatar = {
             updatedMovableSharedElementOf(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(UiTokens.avatarSize)
                     .clip(avatarShape)
                     .clickable { onProfileClicked(post, post.author) },
                 key = post.avatarSharedElementKey(sharedElementPrefix),

@@ -56,7 +56,9 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -119,7 +121,7 @@ private fun Post(
         modifier = modifier,
         avatar = {
             AsyncImage(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(UiTokens.avatarSize),
                 args = remember(signedInProfile?.avatar) {
                     ImageArgs(
                         url = signedInProfile?.avatar?.uri,
@@ -157,7 +159,7 @@ private fun ReplyingTo(
             avatar = {
                 panedSharedElementScope.updatedMovableSharedElementOf(
                     modifier = Modifier
-                        .size(48.dp),
+                        .size(AvatarSize),
                     key = type.parent.avatarSharedElementKey(sharedElementPrefix),
                     state = remember(type.parent.author.avatar) {
                         ImageArgs(

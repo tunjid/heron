@@ -40,6 +40,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -58,7 +59,7 @@ fun ProfileWithRelationship(
             val profile = profileWithViewerState.profile
             AsyncImage(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(UiTokens.avatarSize)
                     .clip(RoundedPolygonShape.Circle)
                     .sharedElement(
                         key = profileWithViewerState.sharedElementKey()

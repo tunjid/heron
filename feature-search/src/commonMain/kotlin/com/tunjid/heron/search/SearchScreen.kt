@@ -65,10 +65,7 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.BottomNavHeight
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
@@ -77,6 +74,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_search.generated.resources.Res
@@ -101,7 +99,7 @@ internal fun SearchScreen(
     Column(
         modifier = modifier
     ) {
-        Spacer(Modifier.height(ToolbarHeight + StatusBarHeight))
+        Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
         val pagerState = rememberPagerState {
             3
         }
@@ -240,7 +238,7 @@ private fun Trends(
             Spacer(
                 Modifier
                     .padding(WindowInsets.navigationBars.asPaddingValues())
-                    .height(BottomNavHeight)
+                    .height(UiTokens.bottomNavHeight)
             )
         }
     }

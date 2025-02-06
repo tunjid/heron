@@ -61,7 +61,6 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -72,6 +71,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -100,7 +100,7 @@ internal fun HomeScreen(
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = (-TabsHeight).toPx()) },
+            minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
         )
         HorizontalPager(
             modifier = Modifier
@@ -108,7 +108,7 @@ internal fun HomeScreen(
                 .offset {
                     tabsOffsetNestedScrollConnection.offset.round() + IntOffset(
                         x = 0,
-                        y = TabsHeight.roundToPx()
+                        y = UiTokens.tabsHeight.roundToPx(),
                     )
                 }
                 .paneClip(),
