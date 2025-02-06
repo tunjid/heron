@@ -19,7 +19,7 @@ package com.tunjid.heron.data.core.models
 import kotlinx.serialization.Serializable
 
 sealed interface Embed {
-    sealed interface Media: Embed, ByteSerializable
+    sealed interface Media : Embed, ByteSerializable
 }
 
 sealed interface AspectRatio {
@@ -28,12 +28,23 @@ sealed interface AspectRatio {
 }
 
 val AspectRatio.aspectRatioOrSquare: Float
-    get() {
-        val currentWidth = width
-        val currentHeight = height
-        return if (currentWidth != null && currentHeight != null) currentWidth.toFloat() / currentHeight
-        else 1f
+    get() = withWidthAndHeight(1f) { width, height ->
+        width.toFloat() / height
     }
+
+val AspectRatio.isLandscape
+    get() = withWidthAndHeight(false) { width, height ->
+        width > height
+    }
+
+private inline fun <T> AspectRatio.withWidthAndHeight(
+    default: T,
+    crossinline block: (Long, Long) -> T,
+): T {
+    val currentWidth = width ?: return default
+    val currentHeight = height ?: return default
+    return block(currentWidth, currentHeight)
+}
 
 @Serializable
 data object UnknownEmbed : Embed
