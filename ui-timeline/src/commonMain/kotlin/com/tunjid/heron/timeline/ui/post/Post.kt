@@ -85,7 +85,7 @@ fun Post(
             Column(
                 modifier = Modifier.padding(
                     start = 24.dp,
-                    bottom = 8.dp
+                    bottom = 4.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
