@@ -61,7 +61,7 @@ internal fun PostExternal(
         ),
         onClick = onClick,
     ) {
-        Column(verticalArrangement = spacedBy(16.dp)) {
+        Column(verticalArrangement = spacedBy(8.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
                 AsyncImage(
                     modifier = Modifier
