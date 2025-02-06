@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.scaffold.ui
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
@@ -27,15 +25,13 @@ import com.tunjid.heron.ui.UiTokens
 
 @Composable
 fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
-    val navigationBarInsets = WindowInsets.navigationBars
+    val navigationBarHeight = UiTokens.navigationBarHeight
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,
         maxOffset = maxOffset@{
             Offset(
                 x = 0f,
-                y = navigationBarInsets.run {
-                    getTop(this@maxOffset) + getBottom(this@maxOffset)
-                } + UiTokens.bottomNavHeight.toPx()
+                y = (navigationBarHeight + UiTokens.bottomNavHeight).toPx()
             )
         },
         minOffset = { Offset.Zero },
