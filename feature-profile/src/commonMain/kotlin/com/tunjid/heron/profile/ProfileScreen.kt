@@ -26,9 +26,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -89,6 +92,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
@@ -205,25 +209,15 @@ internal fun ProfileScreen(
         body = {
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                        )
-                    ),
+                    .padding(horizontal = 8.dp),
             ) {
                 HorizontalPager(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 16.dp,
-                                topEnd = 16.dp,
-                            )
-                        ),
+                        .paneClip(),
                     state = pagerState,
                     key = { page -> page },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     pageContent = { page ->
                         val timelineStateHolder = remember {
                             updatedTimelineStateHolders.stateHolderAt(page)

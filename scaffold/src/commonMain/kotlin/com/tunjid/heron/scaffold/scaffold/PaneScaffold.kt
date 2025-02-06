@@ -29,8 +29,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -44,6 +46,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
@@ -139,6 +142,9 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
                                 paneScaffoldState = paneScaffoldState,
                             )
                         }
+                    )
+                    .padding(
+                        horizontal = if (appState.filteredPaneOrder.size > 1) 8.dp else 0.dp
                     )
                     .onSizeChanged {
                         paneScaffoldState.scaffoldCurrentSize = it
@@ -265,3 +271,13 @@ val Density.statusBarHeight: Dp
             getTop(this@statusBarHeight) + getBottom(this@statusBarHeight)
         }.toDp()
     }
+
+fun Modifier.paneClip() =
+    then(PaneClipModifier)
+
+private val PaneClipModifier = Modifier.clip(
+    shape = RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+    )
+)

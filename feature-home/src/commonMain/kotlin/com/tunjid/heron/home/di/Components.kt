@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
@@ -220,12 +221,13 @@ abstract class HomeComponent(
                         },
                     )
                 },
-                content = {
+                content = { contentPadding ->
                     HomeScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .padding(top = contentPadding.calculateTopPadding()),
                     )
                 }
             )

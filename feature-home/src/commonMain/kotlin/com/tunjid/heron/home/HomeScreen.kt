@@ -19,9 +19,11 @@ package com.tunjid.heron.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -44,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,9 +61,8 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
 import com.tunjid.heron.scaffold.scaffold.TabsHeight
-import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
+import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
@@ -94,6 +96,7 @@ internal fun HomeScreen(
 
     Box(
         modifier = modifier
+            .padding(horizontal = 8.dp)
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
@@ -101,7 +104,14 @@ internal fun HomeScreen(
         )
         HorizontalPager(
             modifier = Modifier
-                .nestedScroll(tabsOffsetNestedScrollConnection),
+                .nestedScroll(tabsOffsetNestedScrollConnection)
+                .offset {
+                    tabsOffsetNestedScrollConnection.offset.round() + IntOffset(
+                        x = 0,
+                        y = TabsHeight.roundToPx()
+                    )
+                }
+                .paneClip(),
             state = pagerState,
             key = { page -> updatedTimelineStateHolders.keyAt(page) },
             pageContent = { page ->
@@ -116,9 +126,10 @@ internal fun HomeScreen(
             }
         )
         HomeTabs(
-            modifier = Modifier.offset {
-                tabsOffsetNestedScrollConnection.offset.round()
-            },
+            modifier = Modifier
+                .offset {
+                    tabsOffsetNestedScrollConnection.offset.round()
+                },
             pagerState = pagerState,
             tabs = remember(state.sourceIdsToHasUpdates, state.timelines) {
                 state.timelines.map { timeline ->
@@ -164,11 +175,6 @@ private fun HomeTabs(
     Tabs(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
-            .padding(
-                top = StatusBarHeight + ToolbarHeight,
-                start = 8.dp,
-                end = 8.dp,
-            )
             .fillMaxWidth(),
         tabs = tabs,
         selectedTabIndex = pagerState.tabIndex,
@@ -265,11 +271,7 @@ private fun HomeTimeline(
         state = gridState,
         columns = StaggeredGridCells.Adaptive(CardSize),
         verticalItemSpacing = 8.dp,
-        contentPadding = PaddingValues(
-            top = StatusBarHeight + ToolbarHeight + TabsHeight,
-            start = 8.dp,
-            end = 8.dp,
-        ),
+        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !panedSharedElementScope.isTransitionActive,
     ) {

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed.di
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -124,10 +125,13 @@ abstract class FeedComponent(
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
                     )
                 },
-                content = {
+                content = { paddingValues ->
                     FeedScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding()
+                            ),
                         state = state,
                         actions = viewModel.accept,
                     )

@@ -18,6 +18,8 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -27,8 +29,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -110,17 +112,24 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            IconButton(
-                modifier = Modifier,
-                onClick = onBackPressed,
-            ) {
-                Icon(
-                    imageVector =
-                    if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
-                    else Icons.Rounded.Close,
-                    contentDescription = stringResource(Res.string.go_back),
-                )
-            }
+            AnimatedVisibility(
+                visible = paneState.pane == ThreePane.Primary,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                content = {
+                    FilledTonalIconButton(
+                        modifier = Modifier,
+                        onClick = onBackPressed,
+                    ) {
+                        Icon(
+                            imageVector =
+                            if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
+                            else Icons.Rounded.Close,
+                            contentDescription = stringResource(Res.string.go_back),
+                        )
+                    }
+                }
+            )
         },
         title = title,
         actions = actions,
