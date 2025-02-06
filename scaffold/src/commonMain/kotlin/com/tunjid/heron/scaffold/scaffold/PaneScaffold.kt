@@ -48,6 +48,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
@@ -63,6 +65,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlin.math.abs
 
 class PaneScaffoldState internal constructor(
+    internal val density: Density,
     private val appState: AppState,
     panedSharedElementScope: PanedSharedElementScope,
 ) : PanedSharedElementScope by panedSharedElementScope {
@@ -106,13 +109,15 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
+    val density = LocalDensity.current
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
     val panedSharedElementScope = requirePanedSharedElementScope()
-    val paneScaffoldState = remember(appState, panedSharedElementScope) {
+    val paneScaffoldState = remember(appState, panedSharedElementScope, density) {
         PaneScaffoldState(
             appState = appState,
             panedSharedElementScope = panedSharedElementScope,
+            density = density,
         )
     }
 

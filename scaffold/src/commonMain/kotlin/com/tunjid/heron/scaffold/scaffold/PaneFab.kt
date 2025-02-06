@@ -60,10 +60,14 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.UiTokens
 import kotlinx.coroutines.launch
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -132,20 +136,19 @@ private fun FabIcon(icon: ImageVector) {
     }
 }
 
-@Composable
-fun isFabExpanded(offset: Offset): Boolean {
-    val density = LocalDensity.current
-    var result by remember { mutableStateOf(true) }
-    val updatedOffset by rememberUpdatedState(offset)
-    LaunchedEffect(Unit) {
-        snapshotFlow {
-            updatedOffset.y < with(density) { 56.dp.toPx() }
-        }
-            .collect {
-                result = it
-            }
-    }
-    return result
+fun PaneScaffoldState.isFabExpanded(offset: Offset): Boolean {
+    return offset.y < with(density) { 56.dp.toPx() }
+}
+
+fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
+    return if (isMediumScreenWidthOrWider) IntOffset.Zero
+    else IntOffset(
+        x = offset.x.roundToInt(),
+        y = min(
+            offset.y.roundToInt(),
+            with(density) { UiTokens.bottomNavHeight.roundToPx() },
+        )
+    )
 }
 
 private data object FabSharedElementKey

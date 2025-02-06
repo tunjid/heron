@@ -17,6 +17,8 @@
 package com.tunjid.heron.scaffold.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
@@ -25,7 +27,7 @@ import com.tunjid.heron.ui.UiTokens
 
 @Composable
 fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
-    val navigationBarHeight = UiTokens.navigationBarHeight
+    val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,
         maxOffset = maxOffset@{
