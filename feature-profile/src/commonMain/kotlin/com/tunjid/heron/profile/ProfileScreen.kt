@@ -91,6 +91,7 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.StatusBarHeight
+import com.tunjid.heron.scaffold.scaffold.TabsHeight
 import com.tunjid.heron.scaffold.scaffold.ToolbarHeight
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -734,7 +735,7 @@ private class HeaderState(
         density: Density,
     ) = with(density) {
         IntOffset(
-            x = (headerState.progress * 48.dp.toPx()).roundToInt(),
+            x = (headerState.progress * TabsHeight.toPx()).roundToInt(),
             y = 0,
         )
     }

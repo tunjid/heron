@@ -40,6 +40,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
@@ -58,7 +59,7 @@ fun ProfileSearchResult(
         avatar = {
             updatedMovableSharedElementOf(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(result) },
                 key = result.avatarSharedElementKey(),
                 state = remember(result.profileWithViewerState.profile.avatar) {
