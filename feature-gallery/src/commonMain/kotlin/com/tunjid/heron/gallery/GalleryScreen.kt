@@ -21,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
@@ -37,7 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
+import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
+import com.tunjid.heron.data.core.models.isLandscape
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -97,7 +100,11 @@ internal fun GalleryScreen(
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .align(Alignment.Center)
+                                    .aspectRatioFor(
+                                        paneScaffoldState = paneScaffoldState,
+                                        aspectRatio = item.image,
+                                    )
                                     .gestureZoomable(zoomState)
                                     .combinedClickable(
                                         onClick = { },
@@ -116,8 +123,10 @@ internal fun GalleryScreen(
                         is GalleryItem.Video -> GalleryVideo(
                             modifier = Modifier
                                 .align(Alignment.Center)
-                                .fillMaxWidth()
-                                .aspectRatio(item.video.aspectRatioOrSquare),
+                                .aspectRatioFor(
+                                    paneScaffoldState = paneScaffoldState,
+                                    aspectRatio = item.video,
+                                ),
                             panedSharedElementScope = paneScaffoldState,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix
@@ -187,7 +196,7 @@ private fun GalleryImage(
                 url = item.image.fullsize.uri,
                 thumbnailUrl = item.image.thumb.uri,
                 contentDescription = item.image.alt,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 shape = RoundedPolygonShape.Rectangle,
             )
         },
@@ -237,3 +246,17 @@ private fun GalleryVideo(
         }
     )
 }
+
+private fun Modifier.aspectRatioFor(
+    paneScaffoldState: PaneScaffoldState,
+    aspectRatio: AspectRatio,
+): Modifier = when {
+    paneScaffoldState.isMediumScreenWidthOrWider && aspectRatio.isLandscape -> fillMaxWidth()
+    paneScaffoldState.isMediumScreenWidthOrWider && !aspectRatio.isLandscape -> fillMaxHeight()
+    !paneScaffoldState.isMediumScreenWidthOrWider && aspectRatio.isLandscape -> fillMaxWidth()
+    !paneScaffoldState.isMediumScreenWidthOrWider && !aspectRatio.isLandscape -> fillMaxHeight()
+    else -> fillMaxWidth()
+}.aspectRatio(
+    ratio = aspectRatio.aspectRatioOrSquare,
+    matchHeightConstraintsFirst = !aspectRatio.isLandscape
+)
