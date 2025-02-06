@@ -112,7 +112,7 @@ fun Post(
                 )
                 if (isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
-                        vertical = 8.dp,
+                        vertical = 4.dp,
                     ),
                     time = post.createdAt,
                     postId = post.cid,
