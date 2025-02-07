@@ -215,20 +215,20 @@ private fun timelines(
     profileId: Id,
     isSignedInUser: Boolean,
 ): List<Timeline.Profile> = buildList {
-    Timeline.Profile.Posts(
-        name = "Posts",
+    Timeline.Profile(
+        type = Timeline.Profile.Type.Posts,
         profileId = profileId,
     ).also(::add)
-    Timeline.Profile.Replies(
-        name = "Replies",
+    Timeline.Profile(
+        type = Timeline.Profile.Type.Replies,
         profileId = profileId,
     ).also(::add)
-    if (isSignedInUser) Timeline.Profile.Likes(
-        name = "Replies",
+    if (isSignedInUser) Timeline.Profile(
+        type = Timeline.Profile.Type.Likes,
         profileId = profileId,
     ).also(::add)
-    Timeline.Profile.Media(
-        name = "Media",
+    Timeline.Profile(
+        type = Timeline.Profile.Type.Media,
         profileId = profileId,
     ).also(::add)
 }

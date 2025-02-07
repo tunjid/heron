@@ -25,7 +25,6 @@ import kotlinx.serialization.Serializable
 sealed class Timeline {
 
     abstract val sourceId: String
-    abstract val name: String
 
     @Serializable
     sealed class Home(
@@ -33,6 +32,8 @@ sealed class Timeline {
     ) : Timeline() {
 
         abstract val position: Int
+
+        abstract val name: String
 
         override val sourceId: String
             get() = source.uri
@@ -69,42 +70,25 @@ sealed class Timeline {
     }
 
     @Serializable
-    sealed class Profile : Timeline() {
-
-        abstract val profileId: Id
+    data class Profile(
+        val profileId: Id,
+        val type: Type,
+    ) : Timeline() {
 
         override val sourceId: String
-            get() = when (this) {
-                is Media -> "${profileId.id}-media"
-                is Posts -> "${profileId.id}-posts"
-                is Likes -> "${profileId.id}-likes"
-                is Replies -> "${profileId.id}-posts-and-replies"
+            get() = when (type) {
+                Type.Media -> "${profileId.id}-media"
+                Type.Posts -> "${profileId.id}-posts"
+                Type.Likes -> "${profileId.id}-likes"
+                Type.Replies -> "${profileId.id}-posts-and-replies"
             }
 
-        @Serializable
-        data class Posts(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
-        @Serializable
-        data class Replies(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
-        @Serializable
-        data class Likes(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
-        @Serializable
-        data class Media(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
+        enum class Type {
+            Posts,
+            Replies,
+            Likes,
+            Media,
+        }
     }
 }
 

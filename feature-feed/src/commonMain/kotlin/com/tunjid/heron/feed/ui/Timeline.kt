@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -57,7 +58,7 @@ internal fun TimelineTitle(
         }
         Column {
             Text(
-                text = timeline.name,
+                text = timeline.displayName(),
                 style = MaterialTheme.typography.titleSmallEmphasized,
             )
             Text(

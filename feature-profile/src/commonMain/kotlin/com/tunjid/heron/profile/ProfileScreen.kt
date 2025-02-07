@@ -100,6 +100,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -115,10 +116,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
-import heron.feature_profile.generated.resources.likes
-import heron.feature_profile.generated.resources.media
 import heron.feature_profile.generated.resources.posts
-import heron.feature_profile.generated.resources.replies
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -170,12 +168,7 @@ internal fun ProfileScreen(
                     }
                     check(timeline is Timeline.Profile)
                     Tab(
-                        title = when (timeline) {
-                            is Timeline.Profile.Media -> stringResource(Res.string.media)
-                            is Timeline.Profile.Posts -> stringResource(Res.string.posts)
-                            is Timeline.Profile.Likes -> stringResource(Res.string.likes)
-                            is Timeline.Profile.Replies -> stringResource(Res.string.replies)
-                        },
+                        title = timeline.displayName(),
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
                 },
