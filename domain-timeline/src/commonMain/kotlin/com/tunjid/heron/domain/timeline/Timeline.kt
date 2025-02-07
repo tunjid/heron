@@ -76,6 +76,7 @@ data class TimelineState(
 typealias TimelineStateHolder = ActionStateMutator<TimelineLoadAction, StateFlow<TimelineState>>
 
 fun timelineStateHolder(
+    refreshOnStart: Boolean,
     timeline: Timeline,
     startNumColumns: Int,
     scope: CoroutineScope,
@@ -88,7 +89,10 @@ fun timelineStateHolder(
             data = CursorQuery.Data(
                 page = 0,
                 cursorAnchor = when (timeline) {
-                    is Timeline.Home -> timeline.lastRefreshed ?: Clock.System.now()
+                    is Timeline.Home -> timeline.lastRefreshed
+                        .takeUnless { refreshOnStart }
+                        ?: Clock.System.now()
+
                     is Timeline.Profile -> Clock.System.now()
                 },
             ),

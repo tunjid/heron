@@ -136,6 +136,7 @@ private fun timelineMutations(
             timelineStateHolders = timelineStateHolders.update(
                 updatedTimelines = homeTimelines,
                 scope = scope,
+                refreshOnStart = false,
                 startNumColumns = startNumColumns,
                 timelineRepository = timelineRepository,
             )

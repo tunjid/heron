@@ -120,6 +120,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     val timeline = timelineRepository.lookupTimeline(lookup)
         .first()
     val createdHolder = timelineStateHolder(
+        refreshOnStart = true,
         timeline = timeline,
         startNumColumns = 1,
         scope = scope,

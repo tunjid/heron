@@ -146,6 +146,7 @@ private fun loadSignedInProfileMutations(
                 isSignedInProfile = isSignedInProfile,
                 timelineStateHolders = timelineStateHolders.update(
                     scope = scope,
+                    refreshOnStart = true,
                     startNumColumns = 1,
                     updatedTimelines = timelines(
                         profileId = profileId,
