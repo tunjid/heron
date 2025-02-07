@@ -54,6 +54,10 @@ sealed class UriLookup {
             val listUriSuffix: String,
         ) : Timeline()
 
+        data class Profile(
+            override val profileHandleOrDid: String,
+            val type: com.tunjid.heron.data.core.models.Timeline.Profile.Type,
+        ) : Timeline()
     }
 
 }

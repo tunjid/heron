@@ -40,10 +40,12 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -112,7 +114,7 @@ interface TimelineRepository {
 
     fun lookupTimeline(
         lookup: UriLookup.Timeline,
-    ): Flow<Timeline.Home>
+    ): Flow<Timeline>
 
     fun hasUpdates(
         timeline: Timeline,
@@ -490,7 +492,7 @@ class OfflineTimelineRepository(
 
     override fun lookupTimeline(
         lookup: UriLookup.Timeline,
-    ): Flow<Timeline.Home> = flow {
+    ): Flow<Timeline> = flow {
         val atUri = lookupUri(
             networkService = networkService,
             profileDao = profileDao,
@@ -538,6 +540,20 @@ class OfflineTimelineRepository(
                                 multipleEntitySaverProvider.saveInTransaction { add(it) }
                             }
                     }
+
+                is UriLookup.Timeline.Profile -> {
+                    profileDao.profiles(
+                        ids = listOf(Id(lookup.profileHandleOrDid))
+                    )
+                        .mapNotNull(List<ProfileEntity>::firstOrNull)
+                        .distinctUntilChangedBy(ProfileEntity::did)
+                        .map {
+                            Timeline.Profile(
+                                profileId = it.did,
+                                type = lookup.type,
+                            )
+                        }
+                }
             }
         )
     }
@@ -734,8 +750,7 @@ class OfflineTimelineRepository(
     private fun feedGeneratorTimeline(
         atUri: AtUri,
         position: Int,
-
-        ) = timelineDao.feedGenerator(atUri.atUri)
+    ) = timelineDao.feedGenerator(atUri.atUri)
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest {
