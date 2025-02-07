@@ -21,26 +21,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.models.isLandscape
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -91,8 +92,13 @@ internal fun GalleryScreen(
             state = pagerState,
             key = { page -> updatedItems[page].key },
             pageContent = { page ->
+                var windowSize by remember { mutableStateOf(IntSize.Zero) }
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onSizeChanged {
+                            windowSize = it
+                        }
                 ) {
                     when (val item = updatedItems[page]) {
                         is GalleryItem.Photo -> {
@@ -102,7 +108,7 @@ internal fun GalleryScreen(
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .aspectRatioFor(
-                                        paneScaffoldState = paneScaffoldState,
+                                        windowSize = windowSize,
                                         aspectRatio = item.image,
                                     )
                                     .gestureZoomable(zoomState)
@@ -124,7 +130,7 @@ internal fun GalleryScreen(
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .aspectRatioFor(
-                                    paneScaffoldState = paneScaffoldState,
+                                    windowSize = windowSize,
                                     aspectRatio = item.video,
                                 ),
                             panedSharedElementScope = paneScaffoldState,
@@ -248,15 +254,15 @@ private fun GalleryVideo(
 }
 
 private fun Modifier.aspectRatioFor(
-    paneScaffoldState: PaneScaffoldState,
+    windowSize: IntSize,
     aspectRatio: AspectRatio,
-): Modifier = when {
-    paneScaffoldState.isMediumScreenWidthOrWider && aspectRatio.isLandscape -> fillMaxWidth()
-    paneScaffoldState.isMediumScreenWidthOrWider && !aspectRatio.isLandscape -> fillMaxHeight()
-    !paneScaffoldState.isMediumScreenWidthOrWider && aspectRatio.isLandscape -> fillMaxWidth()
-    !paneScaffoldState.isMediumScreenWidthOrWider && !aspectRatio.isLandscape -> fillMaxHeight()
-    else -> fillMaxWidth()
-}.aspectRatio(
-    ratio = aspectRatio.aspectRatioOrSquare,
-    matchHeightConstraintsFirst = !aspectRatio.isLandscape
-)
+): Modifier {
+    val screenAspectRatio = windowSize.width.toFloat() / windowSize.height.toFloat()
+    val isWiderAspectRatioThanMedia = screenAspectRatio > aspectRatio.aspectRatioOrSquare
+    return this
+        .fillMaxSize()
+        .aspectRatio(
+            ratio = aspectRatio.aspectRatioOrSquare,
+            matchHeightConstraintsFirst = isWiderAspectRatioThanMedia
+        )
+}
