@@ -139,7 +139,14 @@ private fun hasUpdatesMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.hasUpdates(timeline)
-        .mapToMutation { copy(hasUpdates = it) }
+        .mapToMutation {
+            copy(
+                hasUpdates = it,
+                status = if (hasUpdates) status else TimelineStatus.Refreshed(
+                    cursorAnchor = currentQuery.data.cursorAnchor
+                ),
+            )
+        }
 
 /**
  * Feed mutations as a function of the user's scroll position
@@ -246,9 +253,6 @@ private fun itemMutations(
         .mapToMutation<TiledList<TimelineQuery, TimelineItem>, TimelineState> {
             // Ignore results from stale queries
             if (it.isValidFor(currentQuery)) copy(
-                status = TimelineStatus.Refreshed(
-                    cursorAnchor = currentQuery.data.cursorAnchor
-                ),
                 items = it.distinctBy(TimelineItem::id)
             )
             else this

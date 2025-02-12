@@ -20,6 +20,7 @@ package com.tunjid.heron.profile
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -47,7 +48,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -141,19 +145,45 @@ private fun loadSignedInProfileMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     merge(
-        authTokenRepository.isSignedInProfile(profileId).mapToMutation { isSignedInProfile ->
-            copy(
-                isSignedInProfile = isSignedInProfile,
-                timelineStateHolders = timelineStateHolders.update(
-                    scope = scope,
-                    refreshOnStart = true,
-                    startNumColumns = 1,
-                    updatedTimelines = timelines(
-                        profileId = profileId,
-                        isSignedInUser = isSignedInProfile,
-                    ),
-                    timelineRepository = timelineRepository,
-                )
+        authTokenRepository.isSignedInProfile(profileId).mapToManyMutations { isSignedInProfile ->
+            emit { copy(isSignedInProfile = isSignedInProfile) }
+            emitAll(
+                Timeline.Profile.Type.entries
+                    .filter {
+                        when (it) {
+                            Timeline.Profile.Type.Posts -> true
+                            Timeline.Profile.Type.Replies -> true
+                            Timeline.Profile.Type.Likes -> isSignedInProfile
+                            Timeline.Profile.Type.Media -> true
+                        }
+                    }
+                    .map { type ->
+                        timelineRepository.lookupTimeline(
+                            UriLookup.Timeline.Profile(
+                                profileHandleOrDid = profileId.id,
+                                type = type
+                            )
+                        )
+                            // Only take 1 emission, timelines should be loaded lazily
+                            .take(1)
+                    }
+                    .let { timelineFlows ->
+                        combine<Timeline, List<Timeline>>(
+                            flows = timelineFlows,
+                            transform = Array<Timeline>::toList,
+                        )
+                    }
+                    .mapToMutation { timelines ->
+                        copy(
+                            timelineStateHolders = timelineStateHolders.update(
+                                scope = scope,
+                                refreshOnStart = true,
+                                startNumColumns = 1,
+                                updatedTimelines = timelines,
+                                timelineRepository = timelineRepository,
+                            )
+                        )
+                    }
             )
         },
         authTokenRepository.signedInUser.mapToMutation { signedInProfile ->
@@ -211,25 +241,3 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
             )
         )
     }
-
-private fun timelines(
-    profileId: Id,
-    isSignedInUser: Boolean,
-): List<Timeline.Profile> = buildList {
-    Timeline.Profile(
-        type = Timeline.Profile.Type.Posts,
-        profileId = profileId,
-    ).also(::add)
-    Timeline.Profile(
-        type = Timeline.Profile.Type.Replies,
-        profileId = profileId,
-    ).also(::add)
-    if (isSignedInUser) Timeline.Profile(
-        type = Timeline.Profile.Type.Likes,
-        profileId = profileId,
-    ).also(::add)
-    Timeline.Profile(
-        type = Timeline.Profile.Type.Media,
-        profileId = profileId,
-    ).also(::add)
-}

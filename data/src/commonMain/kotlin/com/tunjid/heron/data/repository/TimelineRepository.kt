@@ -547,11 +547,18 @@ class OfflineTimelineRepository(
                     )
                         .mapNotNull(List<ProfileEntity>::firstOrNull)
                         .distinctUntilChangedBy(ProfileEntity::did)
-                        .map {
-                            Timeline.Profile(
-                                profileId = it.did,
-                                type = lookup.type,
+                        .flatMapLatest { profile ->
+                            timelineDao.lastFetchKey(
+                                sourceId = lookup.type.sourceId(profile.did)
                             )
+                                .distinctUntilChanged()
+                                .map { fetchKeyEntity ->
+                                    Timeline.Profile(
+                                        profileId = profile.did,
+                                        type = lookup.type,
+                                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                    )
+                                }
                         }
                 }
             }

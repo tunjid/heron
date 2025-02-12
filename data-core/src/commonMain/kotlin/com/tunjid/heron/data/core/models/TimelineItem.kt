@@ -26,6 +26,8 @@ sealed class Timeline {
 
     abstract val sourceId: String
 
+    abstract val lastRefreshed: Instant?
+
     @Serializable
     sealed class Home(
         val source: Uri,
@@ -37,8 +39,6 @@ sealed class Timeline {
 
         override val sourceId: String
             get() = source.uri
-
-        abstract val lastRefreshed: Instant?
 
         @Serializable
         data class Following(
@@ -73,21 +73,21 @@ sealed class Timeline {
     data class Profile(
         val profileId: Id,
         val type: Type,
+        override val lastRefreshed: Instant?,
     ) : Timeline() {
 
         override val sourceId: String
-            get() = when (type) {
-                Type.Media -> "${profileId.id}-media"
-                Type.Posts -> "${profileId.id}-posts"
-                Type.Likes -> "${profileId.id}-likes"
-                Type.Replies -> "${profileId.id}-posts-and-replies"
-            }
+            get() = type.sourceId(profileId)
 
-        enum class Type {
-            Posts,
-            Replies,
-            Likes,
-            Media,
+        enum class Type(
+            val suffix: String,
+        ) {
+            Posts(suffix = "posts"),
+            Replies(suffix = "posts-and-replies"),
+            Likes(suffix = "likes"),
+            Media(suffix = "media");
+
+            fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
         }
     }
 }
