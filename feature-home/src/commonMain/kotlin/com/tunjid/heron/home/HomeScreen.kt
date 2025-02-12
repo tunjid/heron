@@ -34,6 +34,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,6 +60,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -258,50 +262,63 @@ private fun HomeTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
-    LazyVerticalStaggeredGrid(
+    PullToRefreshBox(
         modifier = Modifier
-            .fillMaxSize()
-            .onSizeChanged {
-                timelineStateHolder.accept(
-                    TimelineLoadAction.GridSize(
-                        floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
-                    )
-                )
-            },
-        state = gridState,
-        columns = StaggeredGridCells.Adaptive(CardSize),
-        verticalItemSpacing = 8.dp,
-        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+            .pullToRefresh(
+                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
+                state = rememberPullToRefreshState(),
+                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
+            )
+            .fillMaxSize(),
+        isRefreshing = timelineState.status is TimelineStatus.Refreshing,
+        state = rememberPullToRefreshState(),
+        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
     ) {
-        items(
-            items = items,
-            key = TimelineItem::id,
-            itemContent = { item ->
-                TimelineItem(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item)
-                        ),
-                    panedSharedElementScope = panedSharedElementScope,
-                    now = remember { Clock.System.now() },
-                    item = item,
-                    sharedElementPrefix = timelineState.timeline.sourceId,
-                    onPostClicked = onPostClicked,
-                    onProfileClicked = onProfileClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostInteraction = {
-                        actions(
-                            Action.SendPostInteraction(it)
+        LazyVerticalStaggeredGrid(
+            modifier = Modifier
+                .fillMaxSize()
+                .onSizeChanged {
+                    timelineStateHolder.accept(
+                        TimelineLoadAction.GridSize(
+                            floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
                         )
-                    },
-                )
-            }
-        )
+                    )
+                },
+            state = gridState,
+            columns = StaggeredGridCells.Adaptive(CardSize),
+            verticalItemSpacing = 8.dp,
+            contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+        ) {
+            items(
+                items = items,
+                key = TimelineItem::id,
+                itemContent = { item ->
+                    TimelineItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .threadedVideoPosition(
+                                state = videoStates.getOrCreateStateFor(item)
+                            ),
+                        panedSharedElementScope = panedSharedElementScope,
+                        now = remember { Clock.System.now() },
+                        item = item,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        onPostClicked = onPostClicked,
+                        onProfileClicked = onProfileClicked,
+                        onPostMediaClicked = onPostMediaClicked,
+                        onReplyToPost = onReplyToPost,
+                        onPostInteraction = {
+                            actions(
+                                Action.SendPostInteraction(it)
+                            )
+                        },
+                    )
+                }
+            )
+        }
     }
 
     if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {

@@ -28,6 +28,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,6 +46,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -152,8 +156,13 @@ private fun FeedTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
-    LazyVerticalStaggeredGrid(
+    PullToRefreshBox(
         modifier = Modifier
+            .pullToRefresh(
+                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
+                state = rememberPullToRefreshState(),
+                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
+            )
             .padding(horizontal = 8.dp)
             .fillMaxSize()
             .paneClip()
@@ -164,42 +173,47 @@ private fun FeedTimeline(
                     )
                 )
             },
-        state = gridState,
-        columns = StaggeredGridCells.Adaptive(CardSize),
-        verticalItemSpacing = 8.dp,
-        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+        isRefreshing = timelineState.status is TimelineStatus.Refreshing,
+        state = rememberPullToRefreshState(),
+        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
     ) {
-        items(
-            items = items,
-            key = TimelineItem::id,
-            itemContent = { item ->
-                TimelineItem(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item)
-                        ),
-                    panedSharedElementScope = panedSharedElementScope,
-                    now = remember { Clock.System.now() },
-                    item = item,
-                    sharedElementPrefix = timelineState.timeline.sourceId,
-                    onPostClicked = onPostClicked,
-                    onProfileClicked = onProfileClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostInteraction = {
-                        actions(
-                            Action.SendPostInteraction(it)
-                        )
-                    },
-                )
-            }
-        )
+        LazyVerticalStaggeredGrid(
+            state = gridState,
+            columns = StaggeredGridCells.Adaptive(CardSize),
+            verticalItemSpacing = 8.dp,
+            contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+        ) {
+            items(
+                items = items,
+                key = TimelineItem::id,
+                itemContent = { item ->
+                    TimelineItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .threadedVideoPosition(
+                                state = videoStates.getOrCreateStateFor(item)
+                            ),
+                        panedSharedElementScope = panedSharedElementScope,
+                        now = remember { Clock.System.now() },
+                        item = item,
+                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        onPostClicked = onPostClicked,
+                        onProfileClicked = onProfileClicked,
+                        onPostMediaClicked = onPostMediaClicked,
+                        onReplyToPost = onReplyToPost,
+                        onPostInteraction = {
+                            actions(
+                                Action.SendPostInteraction(it)
+                            )
+                        },
+                    )
+                }
+            )
+        }
     }
-
     if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
