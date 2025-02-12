@@ -120,6 +120,7 @@ abstract class FeedComponent(
                             TimelineTitle(
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
+                                hasUpdates = state.timelineState?.hasUpdates == true,
                             )
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) }

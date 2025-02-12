@@ -40,10 +40,12 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -112,7 +114,7 @@ interface TimelineRepository {
 
     fun lookupTimeline(
         lookup: UriLookup.Timeline,
-    ): Flow<Timeline.Home>
+    ): Flow<Timeline>
 
     fun hasUpdates(
         timeline: Timeline,
@@ -198,84 +200,86 @@ class OfflineTimelineRepository(
             )
         )
 
-        is Timeline.Profile.Likes -> observeAndRefreshTimeline(
-            query = query,
-            nextCursorFlow = nextCursorFlow(
+        is Timeline.Profile -> when (timeline.type) {
+            Timeline.Profile.Type.Likes -> observeAndRefreshTimeline(
                 query = query,
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    networkService.api.getActorLikes(
-                        GetActorLikesQueryParams(
-                            actor = Did(timeline.profileId.id),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
+                nextCursorFlow = nextCursorFlow(
+                    query = query,
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getActorLikes(
+                            GetActorLikesQueryParams(
+                                actor = Did(timeline.profileId.id),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            )
                         )
-                    )
-                },
-                nextCursor = GetActorLikesResponse::cursor,
-                networkFeed = GetActorLikesResponse::feed,
+                    },
+                    nextCursor = GetActorLikesResponse::cursor,
+                    networkFeed = GetActorLikesResponse::feed,
+                )
             )
-        )
 
-        is Timeline.Profile.Media -> observeAndRefreshTimeline(
-            query = query,
-            nextCursorFlow = nextCursorFlow(
+            Timeline.Profile.Type.Media -> observeAndRefreshTimeline(
                 query = query,
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    networkService.api.getAuthorFeed(
-                        GetAuthorFeedQueryParams(
-                            actor = Did(timeline.profileId.id),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                            filter = GetAuthorFeedFilter.PostsWithMedia,
+                nextCursorFlow = nextCursorFlow(
+                    query = query,
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getAuthorFeed(
+                            GetAuthorFeedQueryParams(
+                                actor = Did(timeline.profileId.id),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                                filter = GetAuthorFeedFilter.PostsWithMedia,
+                            )
                         )
-                    )
-                },
-                nextCursor = GetAuthorFeedResponse::cursor,
-                networkFeed = GetAuthorFeedResponse::feed,
+                    },
+                    nextCursor = GetAuthorFeedResponse::cursor,
+                    networkFeed = GetAuthorFeedResponse::feed,
+                )
             )
-        )
 
-        is Timeline.Profile.Posts -> observeAndRefreshTimeline(
-            query = query,
-            nextCursorFlow = nextCursorFlow(
+            Timeline.Profile.Type.Posts -> observeAndRefreshTimeline(
                 query = query,
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    networkService.api.getAuthorFeed(
-                        GetAuthorFeedQueryParams(
-                            actor = Did(timeline.profileId.id),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                nextCursorFlow = nextCursorFlow(
+                    query = query,
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getAuthorFeed(
+                            GetAuthorFeedQueryParams(
+                                actor = Did(timeline.profileId.id),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                                filter = GetAuthorFeedFilter.PostsNoReplies,
+                            )
                         )
-                    )
-                },
-                nextCursor = GetAuthorFeedResponse::cursor,
-                networkFeed = GetAuthorFeedResponse::feed,
+                    },
+                    nextCursor = GetAuthorFeedResponse::cursor,
+                    networkFeed = GetAuthorFeedResponse::feed,
+                )
             )
-        )
 
-        is Timeline.Profile.Replies -> observeAndRefreshTimeline(
-            query = query,
-            nextCursorFlow = nextCursorFlow(
+            Timeline.Profile.Type.Replies -> observeAndRefreshTimeline(
                 query = query,
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    networkService.api.getAuthorFeed(
-                        GetAuthorFeedQueryParams(
-                            actor = Did(timeline.profileId.id),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                            filter = GetAuthorFeedFilter.PostsWithReplies,
+                nextCursorFlow = nextCursorFlow(
+                    query = query,
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getAuthorFeed(
+                            GetAuthorFeedQueryParams(
+                                actor = Did(timeline.profileId.id),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                                filter = GetAuthorFeedFilter.PostsWithReplies,
+                            )
                         )
-                    )
-                },
-                nextCursor = GetAuthorFeedResponse::cursor,
-                networkFeed = GetAuthorFeedResponse::feed,
+                    },
+                    nextCursor = GetAuthorFeedResponse::cursor,
+                    networkFeed = GetAuthorFeedResponse::feed,
+                )
             )
-        )
+        }
     }
         .distinctUntilChanged()
 
@@ -326,68 +330,70 @@ class OfflineTimelineRepository(
             networkResponseToFeedViews = GetListFeedResponse::feed,
         )
 
-        is Timeline.Profile.Likes -> pollForTimelineUpdates(
-            timeline = timeline,
-            pollInterval = 15.seconds,
-            networkRequestBlock = {
-                networkService.api.getActorLikes(
-                    GetActorLikesQueryParams(
-                        actor = Did(timeline.profileId.id),
-                        limit = 1,
-                        cursor = null,
+        is Timeline.Profile -> when (timeline.type) {
+            Timeline.Profile.Type.Likes -> pollForTimelineUpdates(
+                timeline = timeline,
+                pollInterval = 15.seconds,
+                networkRequestBlock = {
+                    networkService.api.getActorLikes(
+                        GetActorLikesQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = 1,
+                            cursor = null,
+                        )
                     )
-                )
-            },
-            networkResponseToFeedViews = GetActorLikesResponse::feed,
-        )
+                },
+                networkResponseToFeedViews = GetActorLikesResponse::feed,
+            )
 
-        is Timeline.Profile.Media -> pollForTimelineUpdates(
-            timeline = timeline,
-            pollInterval = 15.seconds,
-            networkRequestBlock = {
-                networkService.api.getAuthorFeed(
-                    GetAuthorFeedQueryParams(
-                        actor = Did(timeline.profileId.id),
-                        limit = 1,
-                        cursor = null,
-                        filter = GetAuthorFeedFilter.PostsNoReplies,
+            Timeline.Profile.Type.Media -> pollForTimelineUpdates(
+                timeline = timeline,
+                pollInterval = 15.seconds,
+                networkRequestBlock = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = 1,
+                            cursor = null,
+                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                        )
                     )
-                )
-            },
-            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
-        )
+                },
+                networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+            )
 
-        is Timeline.Profile.Posts -> pollForTimelineUpdates(
-            timeline = timeline,
-            pollInterval = 15.seconds,
-            networkRequestBlock = {
-                networkService.api.getAuthorFeed(
-                    GetAuthorFeedQueryParams(
-                        actor = Did(timeline.profileId.id),
-                        limit = 1,
-                        cursor = null,
-                        filter = GetAuthorFeedFilter.PostsNoReplies,
+            Timeline.Profile.Type.Posts -> pollForTimelineUpdates(
+                timeline = timeline,
+                pollInterval = 15.seconds,
+                networkRequestBlock = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = 1,
+                            cursor = null,
+                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                        )
                     )
-                )
-            },
-            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
-        )
+                },
+                networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+            )
 
-        is Timeline.Profile.Replies -> pollForTimelineUpdates(
-            timeline = timeline,
-            pollInterval = 15.seconds,
-            networkRequestBlock = {
-                networkService.api.getAuthorFeed(
-                    GetAuthorFeedQueryParams(
-                        actor = Did(timeline.profileId.id),
-                        limit = 1,
-                        cursor = null,
-                        filter = GetAuthorFeedFilter.PostsNoReplies,
+            Timeline.Profile.Type.Replies -> pollForTimelineUpdates(
+                timeline = timeline,
+                pollInterval = 15.seconds,
+                networkRequestBlock = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = 1,
+                            cursor = null,
+                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                        )
                     )
-                )
-            },
-            networkResponseToFeedViews = GetAuthorFeedResponse::feed,
-        )
+                },
+                networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+            )
+        }
     }
 
     override fun postThreadedItems(
@@ -486,7 +492,7 @@ class OfflineTimelineRepository(
 
     override fun lookupTimeline(
         lookup: UriLookup.Timeline,
-    ): Flow<Timeline.Home> = flow {
+    ): Flow<Timeline> = flow {
         val atUri = lookupUri(
             networkService = networkService,
             profileDao = profileDao,
@@ -534,6 +540,27 @@ class OfflineTimelineRepository(
                                 multipleEntitySaverProvider.saveInTransaction { add(it) }
                             }
                     }
+
+                is UriLookup.Timeline.Profile -> {
+                    profileDao.profiles(
+                        ids = listOf(Id(lookup.profileHandleOrDid))
+                    )
+                        .mapNotNull(List<ProfileEntity>::firstOrNull)
+                        .distinctUntilChangedBy(ProfileEntity::did)
+                        .flatMapLatest { profile ->
+                            timelineDao.lastFetchKey(
+                                sourceId = lookup.type.sourceId(profile.did)
+                            )
+                                .distinctUntilChanged()
+                                .map { fetchKeyEntity ->
+                                    Timeline.Profile(
+                                        profileId = profile.did,
+                                        type = lookup.type,
+                                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                    )
+                                }
+                        }
+                }
             }
         )
     }
@@ -730,8 +757,7 @@ class OfflineTimelineRepository(
     private fun feedGeneratorTimeline(
         atUri: AtUri,
         position: Int,
-
-        ) = timelineDao.feedGenerator(atUri.atUri)
+    ) = timelineDao.feedGenerator(atUri.atUri)
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest {

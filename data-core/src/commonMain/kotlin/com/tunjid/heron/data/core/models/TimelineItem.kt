@@ -25,7 +25,8 @@ import kotlinx.serialization.Serializable
 sealed class Timeline {
 
     abstract val sourceId: String
-    abstract val name: String
+
+    abstract val lastRefreshed: Instant?
 
     @Serializable
     sealed class Home(
@@ -34,10 +35,10 @@ sealed class Timeline {
 
         abstract val position: Int
 
+        abstract val name: String
+
         override val sourceId: String
             get() = source.uri
-
-        abstract val lastRefreshed: Instant?
 
         @Serializable
         data class Following(
@@ -69,42 +70,25 @@ sealed class Timeline {
     }
 
     @Serializable
-    sealed class Profile : Timeline() {
-
-        abstract val profileId: Id
+    data class Profile(
+        val profileId: Id,
+        val type: Type,
+        override val lastRefreshed: Instant?,
+    ) : Timeline() {
 
         override val sourceId: String
-            get() = when (this) {
-                is Media -> "${profileId.id}-media"
-                is Posts -> "${profileId.id}-posts"
-                is Likes -> "${profileId.id}-likes"
-                is Replies -> "${profileId.id}-posts-and-replies"
-            }
+            get() = type.sourceId(profileId)
 
-        @Serializable
-        data class Posts(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
+        enum class Type(
+            val suffix: String,
+        ) {
+            Posts(suffix = "posts"),
+            Replies(suffix = "posts-and-replies"),
+            Likes(suffix = "likes"),
+            Media(suffix = "media");
 
-        @Serializable
-        data class Replies(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
-        @Serializable
-        data class Likes(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
-        @Serializable
-        data class Media(
-            override val name: String,
-            override val profileId: Id,
-        ) : Profile()
-
+            fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
+        }
     }
 }
 

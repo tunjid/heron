@@ -53,6 +53,7 @@ class TimelineStateHolders internal constructor(
 fun TimelineStateHolders.update(
     updatedTimelines: List<Timeline>,
     scope: CoroutineScope,
+    refreshOnStart: Boolean,
     startNumColumns: Int,
     timelineRepository: TimelineRepository,
 ): TimelineStateHolders =
@@ -62,6 +63,7 @@ fun TimelineStateHolders.update(
                 timeline.sourceId,
                 timelineIdsToTimelineStates[timeline.sourceId]
                     ?: timelineStateHolder(
+                        refreshOnStart = refreshOnStart,
                         timeline = timeline,
                         startNumColumns = startNumColumns,
                         scope = scope,

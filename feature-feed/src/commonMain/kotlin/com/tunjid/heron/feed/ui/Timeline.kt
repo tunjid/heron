@@ -16,12 +16,14 @@
 
 package com.tunjid.heron.feed.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +35,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -40,6 +43,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 internal fun TimelineTitle(
     timeline: Timeline?,
     creator: Profile?,
+    hasUpdates: Boolean,
 ) {
     if (timeline != null) Row(
         modifier = Modifier
@@ -55,14 +59,19 @@ internal fun TimelineTitle(
             )
             Spacer(Modifier.width(12.dp))
         }
-        Column {
-            Text(
-                text = timeline.name,
-                style = MaterialTheme.typography.titleSmallEmphasized,
-            )
-            Text(
-                text = timeline.getDescription(creator),
-                style = MaterialTheme.typography.labelSmall,
+        Box {
+            Column {
+                Text(
+                    text = timeline.displayName(),
+                    style = MaterialTheme.typography.titleSmallEmphasized,
+                )
+                Text(
+                    text = timeline.getDescription(creator),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            if (hasUpdates) Badge(
+                modifier = Modifier.size(4.dp)
             )
         }
     }
