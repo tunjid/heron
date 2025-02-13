@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.composables.dragtodismiss.DragToDismissState
 import com.tunjid.composables.dragtodismiss.dragToDismiss
-import com.tunjid.treenav.compose.PanedNavHostScope
+import com.tunjid.treenav.compose.MultiPaneDisplayScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 
@@ -64,7 +64,7 @@ fun Modifier.dragToPop(): Modifier {
 }
 
 @Composable
-internal fun PanedNavHostScope<ThreePane, Route>.DragToPopLayout(
+internal fun MultiPaneDisplayScope<ThreePane, Route>.DragToPopLayout(
     state: AppState,
     pane: ThreePane,
 ) {

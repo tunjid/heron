@@ -45,7 +45,7 @@ import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModelCreator
 import com.tunjid.heron.search.ui.SearchBar
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
@@ -95,7 +95,7 @@ abstract class SearchComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: SearchViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSearchViewModel> {

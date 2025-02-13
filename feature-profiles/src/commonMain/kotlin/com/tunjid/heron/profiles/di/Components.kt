@@ -49,7 +49,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -190,7 +190,7 @@ abstract class ProfilesComponent(
     private fun profilesStrategy(
         routeParser: RouteParser,
         creator: ProfilesViewModelCreator,
-    ) = threePaneListDetailStrategy(
+    ) = threePaneEntry(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

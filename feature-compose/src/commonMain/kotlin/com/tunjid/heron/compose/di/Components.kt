@@ -54,7 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -111,7 +111,7 @@ abstract class ComposeComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: ComposeViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualComposeViewModel> {

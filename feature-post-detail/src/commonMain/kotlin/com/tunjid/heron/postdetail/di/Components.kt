@@ -57,7 +57,7 @@ import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -125,7 +125,7 @@ abstract class PostDetailComponent(
     fun routeAdaptiveConfiguration(
         routeParser: RouteParser,
         creator: PostDetailViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy<Route>(
+    ) = RoutePattern to threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

@@ -42,7 +42,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
@@ -92,7 +92,7 @@ abstract class MessagesComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: MessagesViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualMessagesViewModel> {
