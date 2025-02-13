@@ -29,7 +29,7 @@ import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashViewModelCreator
 import com.tunjid.heron.ui.requirePanedSharedElementScope
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import me.tatarka.inject.annotations.Component
@@ -79,7 +79,7 @@ abstract class SplashComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: SplashViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSplashViewModel> {

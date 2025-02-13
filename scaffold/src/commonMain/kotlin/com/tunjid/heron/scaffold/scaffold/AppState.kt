@@ -40,13 +40,13 @@ import com.tunjid.heron.scaffold.navigation.navItems
 import com.tunjid.heron.scaffold.navigation.unknownRoute
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.treenav.MultiStackNav
-import com.tunjid.treenav.compose.PaneStrategy
-import com.tunjid.treenav.compose.PanedNavHostConfiguration
-import com.tunjid.treenav.compose.PanedNavHostScope
-import com.tunjid.treenav.compose.SavedStatePanedNavHostState
-import com.tunjid.treenav.compose.panedNavHostConfiguration
+import com.tunjid.treenav.backStack
+import com.tunjid.treenav.compose.MultiPaneDisplayScope
+import com.tunjid.treenav.compose.MultiPaneDisplayState
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.compose.transforms.Transform
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.strings.PathPattern
@@ -59,7 +59,7 @@ import me.tatarka.inject.annotations.Inject
 
 @Stable
 class AppState @Inject constructor(
-    private val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>,
+    private val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val navigationStateHolder: NavigationStateHolder,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
@@ -98,43 +98,44 @@ class AppState @Inject constructor(
 
     internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
-    internal var panedNavHostScope by mutableStateOf<PanedNavHostScope<ThreePane, Route>?>(null)
+    internal var displayScope by mutableStateOf<MultiPaneDisplayScope<ThreePane, Route>?>(null)
 
     internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
-        paneRenderOrder.filter { panedNavHostScope?.nodeFor(it) != null }
+        paneRenderOrder.filter { displayScope?.destinationIn(it) != null }
     }
 
-    private val configurationTrie = RouteTrie<PaneStrategy<ThreePane, Route>>().apply {
+    private val configurationTrie = RouteTrie<PaneEntry<ThreePane, Route>>().apply {
         routeConfigurationMap
             .mapKeys { (template) -> PathPattern(template) }
             .forEach { set(it.key, it.value) }
     }
 
-    private val navHostConfiguration = panedNavHostConfiguration(
-        navigationState = multiStackNavState,
-        destinationTransform = { multiStackNav ->
-            multiStackNav.current as? Route ?: unknownRoute("")
-        },
-        strategyTransform = { node ->
-            configurationTrie[node] ?: threePaneListDetailStrategy(
-                render = { },
-            )
-        }
-    )
-
     @Composable
-    internal fun rememberPanedNavHostState(
-        configurationBlock: PanedNavHostConfiguration<
-                ThreePane,
-                MultiStackNav,
-                Route
-                >.() -> PanedNavHostConfiguration<ThreePane, MultiStackNav, Route>,
-    ): SavedStatePanedNavHostState<ThreePane, Route> {
+    internal fun rememberMultiPaneDisplayState(
+        transforms: List<Transform<ThreePane, MultiStackNav, Route>>,
+    ): MultiPaneDisplayState<ThreePane, MultiStackNav, Route> {
         LocalDensity.current.also { density = it }
-        val adaptiveNavHostState = remember {
-            SavedStatePanedNavHostState(
+        val displayState = remember {
+            MultiPaneDisplayState(
                 panes = ThreePane.entries.toList(),
-                configuration = navHostConfiguration.configurationBlock(),
+                navigationState = multiStackNavState,
+                backStackTransform = { multiStackNav ->
+                    multiStackNav.backStack(
+                        includeCurrentDestinationChildren = true,
+                        placeChildrenBeforeParent = true,
+                    )
+                        .filterIsInstance<Route>()
+                        .toList()
+                },
+                destinationTransform = { multiStackNav ->
+                    multiStackNav.current as? Route ?: unknownRoute("")
+                },
+                entryProvider = { node ->
+                    configurationTrie[node] ?: threePaneEntry(
+                        render = { },
+                    )
+                },
+                transforms = transforms,
             )
         }
         DisposableEffect(Unit) {
@@ -151,7 +152,7 @@ class AppState @Inject constructor(
             writeQueue.drain()
         }
 
-        return adaptiveNavHostState
+        return displayState
     }
 
 

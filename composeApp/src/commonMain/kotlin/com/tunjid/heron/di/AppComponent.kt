@@ -34,7 +34,7 @@ import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchComponent
 import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.splash.di.SplashComponent
-import com.tunjid.treenav.compose.PaneStrategy
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import me.tatarka.inject.annotations.Component
@@ -77,7 +77,7 @@ abstract class AppComponent(
     @Component val splashComponent: SplashComponent,
 ) {
 
-    abstract val routeConfigurationMap: Map<String, PaneStrategy<ThreePane, Route>>
+    abstract val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>
 
     @Provides
     fun appState(

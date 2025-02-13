@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.configurations.requireThreePaneMovableSharedElementScope
+import com.tunjid.treenav.compose.threepane.transforms.requireThreePaneMovableSharedElementScope
 import com.tunjid.treenav.strings.Route
 
 @OptIn(ExperimentalSharedTransitionApi::class)

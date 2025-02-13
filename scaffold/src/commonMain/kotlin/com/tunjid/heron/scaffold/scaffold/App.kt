@@ -39,13 +39,13 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.MultiStackNav
-import com.tunjid.treenav.compose.PanedNavHost
-import com.tunjid.treenav.compose.configurations.paneModifierConfiguration
+import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.configurations.predictiveBackConfiguration
-import com.tunjid.treenav.compose.threepane.configurations.threePanedMovableSharedElementConfiguration
-import com.tunjid.treenav.compose.threepane.configurations.threePanedNavHostConfiguration
+import com.tunjid.treenav.compose.threepane.transforms.backPreviewTransform
+import com.tunjid.treenav.compose.threepane.transforms.threePanedAdaptiveTransform
+import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementTransform
+import com.tunjid.treenav.compose.transforms.paneModifierTransform
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.strings.Route
 
@@ -74,11 +74,11 @@ fun App(
                                 sharedTransitionScope = this@SharedTransitionScope,
                             )
                         }
-                        PanedNavHost(
+                        MultiPaneDisplay(
                             modifier = Modifier.fillMaxSize(),
-                            state = appState.rememberPanedNavHostState {
-                                this
-                                    .threePanedNavHostConfiguration(
+                            state = appState.rememberMultiPaneDisplayState(
+                                transforms = listOf(
+                                    threePanedAdaptiveTransform(
                                         secondaryPaneBreakPoint = mutableStateOf(
                                             SecondaryPaneMinWidthBreakpointDp
                                         ),
@@ -88,17 +88,17 @@ fun App(
                                         windowWidthState = derivedStateOf {
                                             appState.splitLayoutState.size
                                         }
-                                    )
-                                    .predictiveBackConfiguration(
+                                    ),
+                                    backPreviewTransform(
                                         isPreviewingBack = derivedStateOf {
                                             appState.isPreviewingBack
                                         },
-                                        backPreviewTransform = MultiStackNav::pop,
-                                    )
-                                    .threePanedMovableSharedElementConfiguration(
+                                        navigationStateBackTransform = MultiStackNav::pop,
+                                    ),
+                                    threePanedMovableSharedElementTransform(
                                         movableSharedElementHostState
-                                    )
-                                    .paneModifierConfiguration {
+                                    ),
+                                    paneModifierTransform {
                                         Modifier
                                             .fillMaxSize()
                                             .constrainedSizePlacement(
@@ -112,10 +112,11 @@ fun App(
                                                 )
                                                 else this
                                             }
-                                    }
-                            },
+                                    },
+                                )
+                            ),
                         ) {
-                            appState.panedNavHostScope = this
+                            appState.displayScope = this
                             appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
                             appState.paneAnchorState.updateMaxWidth(
                                 with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }

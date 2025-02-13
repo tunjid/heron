@@ -43,7 +43,7 @@ import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInViewModelCreator
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
-import com.tunjid.treenav.compose.threepane.threePaneListDetailStrategy
+import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import heron.feature_auth.generated.resources.Res
@@ -97,7 +97,7 @@ abstract class SignInComponent(
     @Provides
     fun routeAdaptiveConfiguration(
         creator: SignInViewModelCreator,
-    ) = RoutePattern to threePaneListDetailStrategy(
+    ) = RoutePattern to threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSignInViewModel> {
