@@ -152,8 +152,8 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
             )
         }
 
-        is PostViewEmbedUnion.RecordView -> embed.embedEntities()
-        is PostViewEmbedUnion.RecordWithMediaView -> embed.embedEntities()
+        is PostViewEmbedUnion.RecordView -> emptyList()
+        is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
             VideoEntity(
