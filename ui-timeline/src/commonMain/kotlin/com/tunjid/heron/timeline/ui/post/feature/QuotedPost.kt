@@ -18,6 +18,8 @@ package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -26,31 +28,41 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.UnknownEmbed
+import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
+import com.tunjid.heron.timeline.ui.post.PostImages
+import com.tunjid.heron.timeline.ui.post.PostVideo
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Composable
-internal fun VisiblePostPost(
+internal fun QuotedPost(
     now: Instant,
     post: Post,
     author: Profile,
     sharedElementPrefix: String,
-    sharedTransitionScope: PanedSharedElementScope,
+    panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
+    onPostMediaClicked: (Embed.Media, Int) -> Unit,
 ) {
     FeatureContainer(
         modifier = Modifier.padding(16.dp),
         onClick = onClick,
-        ) {
+    ) {
         Row(
             horizontalArrangement = spacedBy(8.dp)
         ) {
@@ -71,13 +83,50 @@ internal fun VisiblePostPost(
                 author = author,
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = sharedTransitionScope,
+                panedSharedElementScope = panedSharedElementScope,
             )
         }
+        Spacer(Modifier.height(2.dp))
         Text(
             text = post.record?.text ?: "",
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
+
+        Spacer(Modifier.height(8.dp))
+
+        val uriHandler = LocalUriHandler.current
+        when (val embed = post.embed) {
+            is ExternalEmbed -> PostExternal(
+                feature = embed,
+                postId = post.cid,
+                sharedElementPrefix = sharedElementPrefix,
+                panedSharedElementScope = panedSharedElementScope,
+                onClick = {
+                    uriHandler.openUri(embed.uri.uri)
+                },
+            )
+
+            is ImageList -> PostImages(
+                feature = embed,
+                sharedElementPrefix = sharedElementPrefix,
+                panedSharedElementScope = panedSharedElementScope,
+                onImageClicked = { index ->
+                    onPostMediaClicked(embed, index)
+                }
+            )
+
+            UnknownEmbed -> UnknownPostPost(onClick = {})
+            is Video -> PostVideo(
+                video = embed,
+                panedSharedElementScope = panedSharedElementScope,
+                sharedElementPrefix = sharedElementPrefix,
+                onClicked = {
+                    onPostMediaClicked(embed, 0)
+                }
+            )
+
+            null -> Unit
+        }
     }
 }
