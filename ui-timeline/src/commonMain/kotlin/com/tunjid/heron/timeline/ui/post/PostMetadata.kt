@@ -89,19 +89,17 @@ internal fun PostEmbed(
             Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
             Constants.blockedPostId -> BlockedPostPost(onClick = {})
             Constants.unknownPostId -> UnknownPostPost(onClick = {})
-            else -> {
-                QuotedPost(
-                    now = now,
-                    post = quote,
-                    author = quote.author,
-                    sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onClick = {
-                        onPostClicked(quote)
-                    }
-                )
-            }
+            else -> QuotedPost(
+                now = now,
+                post = quote,
+                author = quote.author,
+                sharedElementPrefix = sharedElementPrefix,
+                panedSharedElementScope = panedSharedElementScope,
+                onPostMediaClicked = onPostMediaClicked,
+                onClick = {
+                    onPostClicked(quote)
+                }
+            )
         }
     }
 }
