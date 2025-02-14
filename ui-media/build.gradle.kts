@@ -47,8 +47,6 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.tunjid.composables)
-
-                implementation(libs.andrew.bailey.difference)
             }
         }
         named("androidMain") {
@@ -59,9 +57,7 @@ kotlin {
                 implementation(libs.androidx.media3.exoplayer.dash)
                 implementation(libs.androidx.media3.exoplayer.hls)
 
-                // TODO: replace with https://github.com/andrewbailey/Difference when it
-                //  supports kotlin 2.x
-                implementation(libs.java.diff.utils)
+                implementation(libs.andrew.bailey.difference)
             }
         }
         named("desktopMain") {
