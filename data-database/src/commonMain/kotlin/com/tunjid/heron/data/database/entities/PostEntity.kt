@@ -131,9 +131,9 @@ data class EmbeddedPopulatedPostEntity(
     val embeddedPostId: Id,
 )
 
-data class ThreadedPopulatedPostEntity(
+data class ThreadedPostEntity(
     @Embedded
-    val entity: PopulatedPostEntity,
+    val entity: PostEntity,
     val generation: Long,
     val postId: Id,
     val parentPostId: Id?,

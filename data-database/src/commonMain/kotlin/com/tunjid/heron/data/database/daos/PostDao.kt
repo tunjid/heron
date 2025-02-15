@@ -32,7 +32,7 @@ import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
-import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
+import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -293,5 +293,5 @@ interface PostDao {
     )
     fun postThread(
         postId: String,
-    ): Flow<List<ThreadedPopulatedPostEntity>>
+    ): Flow<List<ThreadedPostEntity>>
 }

@@ -36,6 +36,7 @@ import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
@@ -46,7 +47,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.ThreadedPopulatedPostEntity
+import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
@@ -403,11 +404,39 @@ class OfflineTimelineRepository(
             .mapNotNull { it.firstOrNull() }
             .take(1)
             .flatMapLatest { postEntity ->
-                postDao.postThread(postId = postEntity.cid.id)
-                    .map {
-                        it.fold(
-                            initial = emptyList(),
-                            operation = ::spinThread,
+                postDao.postThread(
+                    postId = postEntity.cid.id
+                )
+                    .flatMapLatest { postThread ->
+                        val postIds = postThread.map { it.postId }.toSet()
+                        combine(
+                            flow = postDao.posts(
+                                postIds = postIds
+                            ),
+                            flow2 = postDao.embeddedPosts(
+                                postIds = postIds
+                            ),
+                            transform = { posts, embeddedPosts ->
+                                val idsToPosts = posts.associateBy { it.entity.cid }
+                                val idsToEmbeddedPosts = embeddedPosts.associateBy { it.postId }
+
+                                postThread.fold(
+                                    initial = emptyList<TimelineItem.Thread>(),
+                                    operation = { list, thread ->
+                                        val populatedPostEntity = idsToPosts.getValue(thread.entity.cid)
+                                        val post = populatedPostEntity.asExternalModel(
+                                            quote = idsToEmbeddedPosts[thread.entity.cid]
+                                                ?.entity
+                                                ?.asExternalModel(quote = null)
+                                        )
+                                        spinThread(
+                                            list = list,
+                                            thread = thread,
+                                            post = post,
+                                        )
+                                    },
+                                )
+                            }
                         )
                     }
             }
@@ -792,24 +821,19 @@ class OfflineTimelineRepository(
 
     private fun spinThread(
         list: List<TimelineItem.Thread>,
-        thread: ThreadedPopulatedPostEntity,
+        thread: ThreadedPostEntity,
+        post: Post,
     ) = when {
         list.isEmpty() || thread.generation == 0L -> list + TimelineItem.Thread(
             id = thread.postId.id,
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,
-            posts = listOf(
-                thread.entity.asExternalModel(
-                    quote = null
-                )
-            )
+            posts = listOf(post),
         )
 
         thread.generation <= -1L -> list.dropLast(1) + list.last().let {
-            it.copy(
-                posts = it.posts + thread.entity.asExternalModel(quote = null)
-            )
+            it.copy(posts = it.posts + post)
         }
 
         list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
@@ -817,17 +841,11 @@ class OfflineTimelineRepository(
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,
-            posts = listOf(
-                thread.entity.asExternalModel(
-                    quote = null
-                )
-            )
+            posts = listOf(post),
         )
 
         else -> list.dropLast(1) + list.last().let {
-            it.copy(
-                posts = it.posts + thread.entity.asExternalModel(quote = null)
-            )
+            it.copy(posts = it.posts + post)
         }
     }
 }

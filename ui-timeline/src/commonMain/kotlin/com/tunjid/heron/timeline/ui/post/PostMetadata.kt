@@ -34,7 +34,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
-import com.tunjid.heron.timeline.ui.post.feature.VisiblePostPost
+import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
@@ -89,18 +89,17 @@ internal fun PostEmbed(
             Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
             Constants.blockedPostId -> BlockedPostPost(onClick = {})
             Constants.unknownPostId -> UnknownPostPost(onClick = {})
-            else -> {
-                VisiblePostPost(
-                    now = now,
-                    post = quote,
-                    author = quote.author,
-                    sharedElementPrefix = sharedElementPrefix,
-                    sharedTransitionScope = panedSharedElementScope,
-                    onClick = {
-                        onPostClicked(quote)
-                    }
-                )
-            }
+            else -> QuotedPost(
+                now = now,
+                post = quote,
+                author = quote.author,
+                sharedElementPrefix = sharedElementPrefix,
+                panedSharedElementScope = panedSharedElementScope,
+                onPostMediaClicked = onPostMediaClicked,
+                onClick = {
+                    onPostClicked(quote)
+                }
+            )
         }
     }
 }
