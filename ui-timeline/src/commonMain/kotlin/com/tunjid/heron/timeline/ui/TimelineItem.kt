@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
@@ -324,7 +325,16 @@ private val ReplyThreadEndImageShape =
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${cid.id}-${author.did.id}"
+    quotingPostId: Id? = null,
+): String = quotingPostId
+    ?.let { "$prefix-${cid.id}-${author.did.id}-$it"}
+    ?:"$prefix-${cid.id}-${author.did.id}"
+
+fun String.withQuotedPostPrefix(
+    quotingPostId: Id? = null
+): String = quotingPostId
+    ?.let { "$this-$it"}
+    ?: this
 
 private val TimelineItem.isThreadedAncestor
     get() = this is TimelineItem.Thread && when (val gen = generation) {

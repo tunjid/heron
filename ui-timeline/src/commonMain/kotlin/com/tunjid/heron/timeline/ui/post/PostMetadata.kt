@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
@@ -93,7 +94,9 @@ internal fun PostEmbed(
                 now = now,
                 post = quote,
                 author = quote.author,
-                sharedElementPrefix = sharedElementPrefix,
+                sharedElementPrefix = sharedElementPrefix.withQuotedPostPrefix(
+                    quotingPostId = postId,
+                ),
                 panedSharedElementScope = panedSharedElementScope,
                 onPostMediaClicked = { media, index ->
                     onPostMediaClicked(media, index, postId)

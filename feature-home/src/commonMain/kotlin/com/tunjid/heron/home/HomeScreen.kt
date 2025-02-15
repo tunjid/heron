@@ -58,6 +58,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
@@ -67,6 +68,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -204,38 +206,45 @@ private fun HomeTimeline(
     val items by rememberUpdatedState(timelineState.items)
 
     val postActions = rememberPostActions(
-        onPostClicked = { post: Post, _ ->
+        onPostClicked = { post: Post, quotingPostId: Id? ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToPost(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                            quotingPostId = quotingPostId,
+                        ),
                         post = post,
                     )
                 )
             )
         },
-        onProfileClicked = { profile: Profile, post: Post, _ ->
+        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToProfile(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
-                        avatarSharedElementKey = post.avatarSharedElementKey(
-                            prefix = timelineState.timeline.sourceId,
-                        ).takeIf { post.author.did == profile.did }
+                        avatarSharedElementKey = post
+                            .avatarSharedElementKey(
+                                prefix = timelineState.timeline.sourceId,
+                                quotingPostId = quotingPostId,
+                            )
+                            .takeIf { post.author.did == profile.did }
                     )
                 )
             )
         },
-        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, _ ->
+        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToMedia(
                         post = post,
                         media = media,
                         startIndex = index,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                            quotingPostId = quotingPostId,
+                        ),
                     )
                 )
             )
@@ -247,7 +256,7 @@ private fun HomeTimeline(
                         type = Post.Create.Reply(
                             parent = post,
                         ),
-                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
                     )
                 )
             )
