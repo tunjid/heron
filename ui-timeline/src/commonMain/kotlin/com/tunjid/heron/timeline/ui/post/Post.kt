@@ -38,6 +38,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
@@ -59,12 +60,7 @@ fun Post(
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
-    onProfileClicked: (Post, Profile) -> Unit,
-    onPostClicked: (Post) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: (Post) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-    onPostMetadataClicked: (Post.Metadata) -> Unit = {},
+    postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
@@ -75,7 +71,13 @@ fun Post(
             PostAttribution(
                 panedSharedElementScope = panedSharedElementScope,
                 avatarShape = avatarShape,
-                onProfileClicked = onProfileClicked,
+                onProfileClicked = { post, profile ->
+                    postActions.onProfileClicked(
+                        profile = profile,
+                        post = post,
+                        quotingPostId = null,
+                    )
+                },
                 post = post,
                 sharedElementPrefix = sharedElementPrefix,
                 now = now,
@@ -95,8 +97,19 @@ fun Post(
                     panedSharedElementScope = panedSharedElementScope,
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { onPostClicked(post) },
-                    onProfileClicked = onProfileClicked
+                    onClick = {
+                        postActions.onPostClicked(
+                            post = post,
+                            quotingPostId = null,
+                        )
+                    },
+                    onProfileClicked = { post, profile ->
+                        postActions.onProfileClicked(
+                            profile = profile,
+                            post = post,
+                            quotingPostId = null
+                        )
+                    }
                 )
                 PostEmbed(
                     now = now,
@@ -105,10 +118,20 @@ fun Post(
                     postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
-                    onPostMediaClicked = { media, index ->
-                        onPostMediaClicked(post, media, index)
+                    onPostMediaClicked = { media, index, quotingPostId ->
+                        postActions.onPostMediaClicked(
+                            media = media,
+                            index = index,
+                            post = post,
+                            quotingPostId = quotingPostId,
+                        )
                     },
-                    onPostClicked = onPostClicked,
+                    onQuotedPostClicked = { quotedPost ->
+                        postActions.onPostClicked(
+                            post = quotedPost,
+                            quotingPostId = post.cid
+                        )
+                    },
                 )
                 if (isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
@@ -120,7 +143,7 @@ fun Post(
                     reposts = post.repostCount,
                     quotes = post.quoteCount,
                     likes = post.likeCount,
-                    onMetadataClicked = onPostMetadataClicked,
+                    onMetadataClicked = postActions::onPostMetadataClicked,
                 )
                 PostActions(
                     replyCount = format(post.replyCount),
@@ -134,9 +157,9 @@ fun Post(
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     onReplyToPost = {
-                        onReplyToPost(post)
+                        postActions.onReplyToPost(post)
                     },
-                    onPostInteraction = onPostInteraction,
+                    onPostInteraction = postActions::onPostInteraction,
                 )
             }
         }

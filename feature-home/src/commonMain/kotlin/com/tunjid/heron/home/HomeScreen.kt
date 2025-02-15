@@ -72,6 +72,7 @@ import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -202,8 +203,8 @@ private fun HomeTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
-    val onPostClicked = remember {
-        { post: Post ->
+    val postActions = rememberPostActions(
+        onPostClicked = { post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToPost(
@@ -213,10 +214,8 @@ private fun HomeTimeline(
                     )
                 )
             )
-        }
-    }
-    val onProfileClicked = remember {
-        { post: Post, profile: Profile ->
+        },
+        onProfileClicked = { profile: Profile, post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToProfile(
@@ -228,10 +227,8 @@ private fun HomeTimeline(
                     )
                 )
             )
-        }
-    }
-    val onPostMediaClicked = remember {
-        { post: Post, media: Embed.Media, index: Int ->
+        },
+        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToMedia(
@@ -242,10 +239,8 @@ private fun HomeTimeline(
                     )
                 )
             )
-        }
-    }
-    val onReplyToPost = remember {
-        { post: Post ->
+        },
+        onReplyToPost = { post: Post ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ComposePost(
@@ -256,8 +251,14 @@ private fun HomeTimeline(
                     )
                 )
             )
+        },
+        onPostInteraction = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
         }
-    }
+    )
+
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
@@ -306,15 +307,7 @@ private fun HomeTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sourceId,
-                        onPostClicked = onPostClicked,
-                        onProfileClicked = onProfileClicked,
-                        onPostMediaClicked = onPostMediaClicked,
-                        onReplyToPost = onReplyToPost,
-                        onPostInteraction = {
-                            actions(
-                                Action.SendPostInteraction(it)
-                            )
-                        },
+                        postActions = postActions,
                     )
                 }
             )

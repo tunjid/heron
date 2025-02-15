@@ -37,6 +37,7 @@ import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -128,15 +129,19 @@ internal fun PostSearchResult(
                 avatarShape = RoundedPolygonShape.Circle,
                 sharedElementPrefix = result.sharedElementPrefix(),
                 createdAt = result.post.createdAt,
-                onProfileClicked = { _, _ ->
-                    onProfileClicked(result)
-                },
-                onPostClicked = {
-                    onPostClicked(result)
-                },
-                onPostMediaClicked = { _, _, _ -> },
-                onReplyToPost = {},
-                onPostInteraction = onPostInteraction,
+                postActions = rememberPostActions(
+                    onPostClicked = { _, _ ->
+                        onPostClicked(result)
+                    },
+                    onProfileClicked = { _, _, _ ->
+                        onProfileClicked(result)
+                    },
+                    onPostMediaClicked = { _, _, _, _ ->
+
+                    },
+                    onReplyToPost = {},
+                    onPostInteraction = onPostInteraction,
+                ),
             )
         },
     )

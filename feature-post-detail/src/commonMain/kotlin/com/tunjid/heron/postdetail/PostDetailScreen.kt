@@ -49,6 +49,7 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -63,8 +64,8 @@ internal fun PostDetailScreen(
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
 
-    val onPostClicked = remember {
-        { post: Post ->
+    val postActions = rememberPostActions(
+        onPostClicked = { post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToPost(
@@ -74,10 +75,8 @@ internal fun PostDetailScreen(
                     )
                 )
             )
-        }
-    }
-    val onProfileClicked = remember {
-        { post: Post, profile: Profile ->
+        },
+        onProfileClicked = { profile: Profile, post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToProfile(
@@ -89,10 +88,8 @@ internal fun PostDetailScreen(
                     )
                 )
             )
-        }
-    }
-    val onPostMediaClicked = remember {
-        { post: Post, media: Embed.Media, index: Int ->
+        },
+        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, _ ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ToMedia(
@@ -103,10 +100,8 @@ internal fun PostDetailScreen(
                     )
                 )
             )
-        }
-    }
-    val onReplyToPost = remember {
-        { post: Post ->
+        },
+        onReplyToPost = { post: Post ->
             actions(
                 Action.Navigate.DelegateTo(
                     NavigationAction.Common.ComposePost(
@@ -117,10 +112,8 @@ internal fun PostDetailScreen(
                     )
                 )
             )
-        }
-    }
-    val onPostMetadataClicked = remember {
-        onPostMetadataClicked@{ postMetadata: Post.Metadata ->
+        },
+        onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
             actions(
                 Action.Navigate.DelegateTo(
                     when (postMetadata) {
@@ -137,8 +130,13 @@ internal fun PostDetailScreen(
                     }
                 )
             )
+        },
+        onPostInteraction = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
         }
-    }
+    )
 
     val videoStates = remember { ThreadedVideoPositionStates() }
 
@@ -169,16 +167,7 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
-                    onPostClicked = onPostClicked,
-                    onProfileClicked = onProfileClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostMetadataClicked = onPostMetadataClicked,
-                    onPostInteraction = {
-                        actions(
-                            Action.SendPostInteraction(it)
-                        )
-                    },
+                    postActions = postActions,
                 )
             }
         )

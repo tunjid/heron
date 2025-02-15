@@ -43,9 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
@@ -67,72 +65,69 @@ fun TimelineItem(
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
-    onPostClicked: (Post) -> Unit,
-    onProfileClicked: (Post, Profile) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: (Post) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-    onPostMetadataClicked: (Post.Metadata) -> Unit = {},
+    postActions: PostActions,
 ) {
     TimelineCard(
         item = item,
         modifier = modifier,
-        onPostClicked = onPostClicked,
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(
-                    top = if (item.isThreadedAnchor) 0.dp
-                    else 16.dp,
-                    bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
-                    else 8.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-        ) {
-            if (item is TimelineItem.Repost) {
-                PostReasonLine(
-                    modifier = Modifier.padding(
-                        start = 32.dp,
-                        bottom = 4.dp
+        onPostClicked = { post ->
+            postActions.onPostClicked(
+                post = post,
+                quotingPostId = null,
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(
+                        top = if (item.isThreadedAnchor) 0.dp
+                        else 16.dp,
+                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
+                        else 8.dp,
+                        start = 16.dp,
+                        end = 16.dp
                     ),
+            ) {
+                if (item is TimelineItem.Repost) {
+                    PostReasonLine(
+                        modifier = Modifier.padding(
+                            start = 32.dp,
+                            bottom = 4.dp
+                        ),
+                        item = item,
+                        onProfileClicked = { post, profile ->
+                            postActions.onProfileClicked(
+                                profile = profile,
+                                post = post,
+                                quotingPostId = null
+                            )
+                        },
+                    )
+                }
+                if (item is TimelineItem.Thread) ThreadedPost(
+                    panedSharedElementScope = panedSharedElementScope,
                     item = item,
-                    onProfileClicked = onProfileClicked,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    postActions = postActions,
+                ) else Post(
+                    modifier = Modifier
+                        .childThreadNode(videoId = item.post.videoId),
+                    panedSharedElementScope = panedSharedElementScope,
+                    now = now,
+                    post = item.post,
+                    embed = item.post.embed,
+                    isAnchoredInTimeline = false,
+                    avatarShape =
+                    if (item is TimelineItem.Thread) ReplyThreadEndImageShape
+                    else RoundedPolygonShape.Circle,
+                    sharedElementPrefix = sharedElementPrefix,
+                    createdAt = item.post.createdAt,
+                    postActions = postActions,
                 )
             }
-            if (item is TimelineItem.Thread) ThreadedPost(
-                panedSharedElementScope = panedSharedElementScope,
-                item = item,
-                sharedElementPrefix = sharedElementPrefix,
-                now = now,
-                onProfileClicked = onProfileClicked,
-                onPostClicked = onPostClicked,
-                onPostMediaClicked = onPostMediaClicked,
-                onReplyToPost = onReplyToPost,
-                onPostInteraction = onPostInteraction,
-                onPostMetadataClicked = onPostMetadataClicked,
-            ) else Post(
-                modifier = Modifier
-                    .childThreadNode(videoId = item.post.videoId),
-                panedSharedElementScope = panedSharedElementScope,
-                now = now,
-                post = item.post,
-                embed = item.post.embed,
-                isAnchoredInTimeline = false,
-                avatarShape =
-                if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                else RoundedPolygonShape.Circle,
-                sharedElementPrefix = sharedElementPrefix,
-                createdAt = item.post.createdAt,
-                onProfileClicked = onProfileClicked,
-                onPostClicked = onPostClicked,
-                onPostMediaClicked = onPostMediaClicked,
-                onReplyToPost = onReplyToPost,
-                onPostInteraction = onPostInteraction,
-                onPostMetadataClicked = onPostMetadataClicked,
-            )
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -141,12 +136,7 @@ private fun ThreadedPost(
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
-    onProfileClicked: (Post, Profile) -> Unit,
-    onPostClicked: (Post) -> Unit,
-    onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: (Post) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-    onPostMetadataClicked: (Post.Metadata) -> Unit,
+    postActions: PostActions,
 ) {
     Column {
         item.posts.forEachIndexed { index, post ->
@@ -177,12 +167,7 @@ private fun ThreadedPost(
                     },
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = post.createdAt,
-                    onProfileClicked = onProfileClicked,
-                    onPostClicked = onPostClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostInteraction = onPostInteraction,
-                    onPostMetadataClicked = onPostMetadataClicked,
+                    postActions = postActions,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                             modifier = Modifier
@@ -195,7 +180,12 @@ private fun ThreadedPost(
                     if (index == 0 && item.hasBreak) BrokenTimeline(
                         modifier = Modifier
                             .childThreadNode(videoId = null),
-                        onClick = { onPostClicked(post) }
+                        onClick = {
+                            postActions.onPostClicked(
+                                post = post,
+                                quotingPostId = null,
+                            )
+                        }
                     )
                     else Timeline(
                         modifier = Modifier

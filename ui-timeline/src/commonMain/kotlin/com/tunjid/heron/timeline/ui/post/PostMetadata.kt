@@ -46,8 +46,8 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
-    onPostMediaClicked: (Embed.Media, Int) -> Unit,
-    onPostClicked: (Post) -> Unit,
+    onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
+    onQuotedPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
     Column {
@@ -67,7 +67,7 @@ internal fun PostEmbed(
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
                 onImageClicked = { index ->
-                    onPostMediaClicked(embed, index)
+                    onPostMediaClicked(embed, index, null)
                 }
             )
 
@@ -77,7 +77,7 @@ internal fun PostEmbed(
                 panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
                 onClicked = {
-                    onPostMediaClicked(embed, 0)
+                    onPostMediaClicked(embed, 0, null)
                 }
             )
 
@@ -95,9 +95,11 @@ internal fun PostEmbed(
                 author = quote.author,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
-                onPostMediaClicked = onPostMediaClicked,
+                onPostMediaClicked = { media, index ->
+                    onPostMediaClicked(media, index, postId)
+                },
                 onClick = {
-                    onPostClicked(quote)
+                    onQuotedPostClicked(quote)
                 }
             )
         }
