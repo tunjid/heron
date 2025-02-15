@@ -561,69 +561,6 @@ private fun ProfileTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
-    val postActions = rememberPostActions(
-        onPostClicked = { post: Post, quotingPostId: Id? ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToPost(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
-                            quotingPostId = quotingPostId,
-                        ),
-                        post = post,
-                    )
-                )
-            )
-        },
-        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToProfile(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        profile = profile,
-                        avatarSharedElementKey = post
-                            .avatarSharedElementKey(
-                                prefix = timelineState.timeline.sourceId,
-                                quotingPostId = quotingPostId,
-                            )
-                            .takeIf { post.author.did == profile.did }
-                    )
-                )
-            )
-        },
-        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToMedia(
-                        post = post,
-                        media = media,
-                        startIndex = index,
-                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
-                            quotingPostId = quotingPostId,
-                        ),
-                    )
-                )
-            )
-        },
-        onReplyToPost = { post: Post ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
-                        type = Post.Create.Reply(
-                            parent = post,
-                        ),
-                        sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
-                    )
-                )
-            )
-        },
-        onPostInteraction = {
-            actions(
-                Action.SendPostInteraction(it)
-            )
-        }
-    )
-
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
@@ -669,7 +606,68 @@ private fun ProfileTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sourceId,
-                        postActions = postActions,
+                        postActions = rememberPostActions(
+                            onPostClicked = { post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                            post = post,
+                                        )
+                                    )
+                                )
+                            },
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToProfile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = post
+                                                .avatarSharedElementKey(
+                                                    prefix = timelineState.timeline.sourceId,
+                                                    quotingPostId = quotingPostId,
+                                                )
+                                                .takeIf { post.author.did == profile.did }
+                                        )
+                                    )
+                                )
+                            },
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToMedia(
+                                            post = post,
+                                            media = media,
+                                            startIndex = index,
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                        )
+                                    )
+                                )
+                            },
+                            onReplyToPost = { post: Post ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ComposePost(
+                                            type = Post.Create.Reply(
+                                                parent = post,
+                                            ),
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
+                                        )
+                                    )
+                                )
+                            },
+                            onPostInteraction = {
+                                actions(
+                                    Action.SendPostInteraction(it)
+                                )
+                            }
+                        ),
                     )
                 }
             )
