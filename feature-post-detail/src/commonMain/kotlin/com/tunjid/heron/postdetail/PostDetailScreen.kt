@@ -40,15 +40,18 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -62,83 +65,6 @@ internal fun PostDetailScreen(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
-
-    val onPostClicked = remember {
-        { post: Post ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToPost(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                        sharedElementPrefix = state.sharedElementPrefix,
-                        post = post,
-                    )
-                )
-            )
-        }
-    }
-    val onProfileClicked = remember {
-        { post: Post, profile: Profile ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToProfile(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                        profile = profile,
-                        avatarSharedElementKey = post.avatarSharedElementKey(
-                            prefix = state.sharedElementPrefix,
-                        ).takeIf { post.author.did == profile.did }
-                    )
-                )
-            )
-        }
-    }
-    val onPostMediaClicked = remember {
-        { post: Post, media: Embed.Media, index: Int ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToMedia(
-                        post = post,
-                        media = media,
-                        startIndex = index,
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    )
-                )
-            )
-        }
-    }
-    val onReplyToPost = remember {
-        { post: Post ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
-                        type = Post.Create.Reply(
-                            parent = post,
-                        ),
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    )
-                )
-            )
-        }
-    }
-    val onPostMetadataClicked = remember {
-        onPostMetadataClicked@{ postMetadata: Post.Metadata ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    when (postMetadata) {
-                        is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
-                            profileId = postMetadata.profileId,
-                            postId = postMetadata.postId,
-                        )
-
-                        is Post.Metadata.Quotes -> return@onPostMetadataClicked
-                        is Post.Metadata.Reposts -> NavigationAction.Common.ToProfiles.Post.Repost(
-                            profileId = postMetadata.profileId,
-                            postId = postMetadata.postId,
-                        )
-                    }
-                )
-            )
-        }
-    }
 
     val videoStates = remember { ThreadedVideoPositionStates() }
 
@@ -169,16 +95,84 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
-                    onPostClicked = onPostClicked,
-                    onProfileClicked = onProfileClicked,
-                    onPostMediaClicked = onPostMediaClicked,
-                    onReplyToPost = onReplyToPost,
-                    onPostMetadataClicked = onPostMetadataClicked,
-                    onPostInteraction = {
-                        actions(
-                            Action.SendPostInteraction(it)
-                        )
-                    },
+                    postActions = rememberPostActions(
+                        onPostClicked = { post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToPost(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                        sharedElementPrefix = state.sharedElementPrefix.withQuotedPostPrefix(
+                                            quotingPostId = quotingPostId,
+                                        ),
+                                        post = post,
+                                    )
+                                )
+                            )
+                        },
+                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                        profile = profile,
+                                        avatarSharedElementKey = post.avatarSharedElementKey(
+                                            prefix = state.sharedElementPrefix,
+                                            quotingPostId = quotingPostId,
+                                        ).takeIf { post.author.did == profile.did }
+                                    )
+                                )
+                            )
+                        },
+                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToMedia(
+                                        post = post,
+                                        media = media,
+                                        startIndex = index,
+                                        sharedElementPrefix = state.sharedElementPrefix.withQuotedPostPrefix(
+                                            quotingPostId = quotingPostId,
+                                        ),
+                                    )
+                                )
+                            )
+                        },
+                        onReplyToPost = { post: Post ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ComposePost(
+                                        type = Post.Create.Reply(
+                                            parent = post,
+                                        ),
+                                        sharedElementPrefix = state.sharedElementPrefix,
+                                    )
+                                )
+                            )
+                        },
+                        onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    when (postMetadata) {
+                                        is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
+                                            profileId = postMetadata.profileId,
+                                            postId = postMetadata.postId,
+                                        )
+
+                                        is Post.Metadata.Quotes -> return@onPostMetadataClicked
+                                        is Post.Metadata.Reposts -> NavigationAction.Common.ToProfiles.Post.Repost(
+                                            profileId = postMetadata.profileId,
+                                            postId = postMetadata.postId,
+                                        )
+                                    }
+                                )
+                            )
+                        },
+                        onPostInteraction = {
+                            actions(
+                                Action.SendPostInteraction(it)
+                            )
+                        }
+                    ),
                 )
             }
         )

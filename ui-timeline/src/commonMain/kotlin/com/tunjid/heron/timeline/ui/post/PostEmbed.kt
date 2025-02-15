@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
@@ -46,8 +47,8 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
-    onPostMediaClicked: (Embed.Media, Int) -> Unit,
-    onPostClicked: (Post) -> Unit,
+    onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
+    onQuotedPostClicked: (Post) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
     Column {
@@ -67,7 +68,7 @@ internal fun PostEmbed(
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
                 onImageClicked = { index ->
-                    onPostMediaClicked(embed, index)
+                    onPostMediaClicked(embed, index, null)
                 }
             )
 
@@ -77,7 +78,7 @@ internal fun PostEmbed(
                 panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
                 onClicked = {
-                    onPostMediaClicked(embed, 0)
+                    onPostMediaClicked(embed, 0, null)
                 }
             )
 
@@ -93,11 +94,15 @@ internal fun PostEmbed(
                 now = now,
                 post = quote,
                 author = quote.author,
-                sharedElementPrefix = sharedElementPrefix,
+                sharedElementPrefix = sharedElementPrefix.withQuotedPostPrefix(
+                    quotingPostId = postId,
+                ),
                 panedSharedElementScope = panedSharedElementScope,
-                onPostMediaClicked = onPostMediaClicked,
+                onPostMediaClicked = { media, index ->
+                    onPostMediaClicked(media, index, postId)
+                },
                 onClick = {
-                    onPostClicked(quote)
+                    onQuotedPostClicked(quote)
                 }
             )
         }

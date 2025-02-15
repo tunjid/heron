@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStatus
@@ -53,10 +54,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -95,63 +98,6 @@ private fun FeedTimeline(
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
-
-    val onPostClicked = remember {
-        { post: Post ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToPost(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
-                        post = post,
-                    )
-                )
-            )
-        }
-    }
-    val onProfileClicked = remember {
-        { post: Post, profile: Profile ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToProfile(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        profile = profile,
-                        avatarSharedElementKey = post.avatarSharedElementKey(
-                            prefix = timelineState.timeline.sourceId,
-                        ).takeIf { post.author.did == profile.did }
-                    )
-                )
-            )
-        }
-    }
-    val onPostMediaClicked = remember {
-        { post: Post, media: Embed.Media, index: Int ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToMedia(
-                        post = post,
-                        media = media,
-                        startIndex = index,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
-                    )
-                )
-            )
-        }
-    }
-    val onReplyToPost = remember {
-        { post: Post ->
-            actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
-                        type = Post.Create.Reply(
-                            parent = post,
-                        ),
-                        sharedElementPrefix = timelineState.timeline.sourceId,
-                    )
-                )
-            )
-        }
-    }
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
@@ -200,15 +146,68 @@ private fun FeedTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sourceId,
-                        onPostClicked = onPostClicked,
-                        onProfileClicked = onProfileClicked,
-                        onPostMediaClicked = onPostMediaClicked,
-                        onReplyToPost = onReplyToPost,
-                        onPostInteraction = {
-                            actions(
-                                Action.SendPostInteraction(it)
-                            )
-                        },
+                        postActions = rememberPostActions(
+                            onPostClicked = { post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                            post = post,
+                                        )
+                                    )
+                                )
+                            },
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToProfile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = post
+                                                .avatarSharedElementKey(
+                                                    prefix = timelineState.timeline.sourceId,
+                                                    quotingPostId = quotingPostId,
+                                                )
+                                                .takeIf { post.author.did == profile.did }
+                                        )
+                                    )
+                                )
+                            },
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToMedia(
+                                            post = post,
+                                            media = media,
+                                            startIndex = index,
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                        )
+                                    )
+                                )
+                            },
+                            onReplyToPost = { post: Post ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ComposePost(
+                                            type = Post.Create.Reply(
+                                                parent = post,
+                                            ),
+                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
+                                        )
+                                    )
+                                )
+                            },
+                            onPostInteraction = {
+                                actions(
+                                    Action.SendPostInteraction(it)
+                                )
+                            }
+                        ),
                     )
                 }
             )
