@@ -54,12 +54,13 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
+import com.tunjid.heron.timeline.utilities.viewType
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -99,6 +100,7 @@ private fun FeedTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
+    val viewType = timelineState.timeline.viewType
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
@@ -113,9 +115,12 @@ private fun FeedTimeline(
             .fillMaxSize()
             .paneClip()
             .onSizeChanged {
+                val itemWidth = with(density) {
+                    viewType.cardSize.toPx()
+                }
                 timelineStateHolder.accept(
                     TimelineLoadAction.GridSize(
-                        floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
+                        floor(it.width / itemWidth).roundToInt()
                     )
                 )
             },
@@ -125,7 +130,7 @@ private fun FeedTimeline(
     ) {
         LazyVerticalStaggeredGrid(
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(CardSize),
+            columns = StaggeredGridCells.Adaptive(viewType.cardSize),
             verticalItemSpacing = 8.dp,
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -145,14 +150,15 @@ private fun FeedTimeline(
                         panedSharedElementScope = panedSharedElementScope,
                         now = remember { Clock.System.now() },
                         item = item,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        viewType = viewType,
                         postActions = rememberPostActions(
                             onPostClicked = { post: Post, quotingPostId: Id? ->
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToPost(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                             post = post,
@@ -183,7 +189,7 @@ private fun FeedTimeline(
                                             post = post,
                                             media = media,
                                             startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                         )
@@ -197,7 +203,7 @@ private fun FeedTimeline(
                                             type = Post.Create.Reply(
                                                 parent = post,
                                             ),
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                                         )
                                     )
                                 )
@@ -243,5 +249,3 @@ private fun FeedTimeline(
         onRefresh = { animateScrollToItem(index = 0) }
     )
 }
-
-private val CardSize = 340.dp

@@ -97,7 +97,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -109,6 +108,8 @@ import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
+import com.tunjid.heron.timeline.utilities.viewType
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
@@ -576,18 +577,22 @@ private fun ProfileTimeline(
         state = rememberPullToRefreshState(),
         onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
     ) {
+        val viewType = timelineState.timeline.viewType
         LazyVerticalStaggeredGrid(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged {
+                    val itemWidth = with(density) {
+                        viewType.cardSize.toPx()
+                    }
                     timelineStateHolder.accept(
                         TimelineLoadAction.GridSize(
-                            floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
+                            floor(it.width / itemWidth).roundToInt()
                         )
                     )
                 },
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(CardSize),
+            columns = StaggeredGridCells.Adaptive(viewType.cardSize),
             verticalItemSpacing = 8.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -605,14 +610,15 @@ private fun ProfileTimeline(
                         panedSharedElementScope = panedSharedElementScope,
                         now = remember { Clock.System.now() },
                         item = item,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        viewType = viewType,
                         postActions = rememberPostActions(
                             onPostClicked = { post: Post, quotingPostId: Id? ->
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToPost(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                             post = post,
@@ -643,7 +649,7 @@ private fun ProfileTimeline(
                                             post = post,
                                             media = media,
                                             startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                         )
@@ -657,7 +663,7 @@ private fun ProfileTimeline(
                                             type = Post.Create.Reply(
                                                 parent = post,
                                             ),
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                                         )
                                     )
                                 )
@@ -766,4 +772,3 @@ private class HeaderState(
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 36.dp
-private val CardSize = 340.dp

@@ -20,6 +20,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -47,6 +48,8 @@ internal fun PostImages(
     onImageClicked: (Int) -> Unit,
 ) {
     LazyRow(
+        modifier = Modifier
+            .fillMaxWidth(),
         horizontalArrangement = spacedBy(8.dp),
     ) {
         itemsIndexed(

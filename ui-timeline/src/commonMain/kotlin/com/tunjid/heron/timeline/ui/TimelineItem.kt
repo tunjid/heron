@@ -51,6 +51,7 @@ import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.timeline.utilities.viewTypePadding
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
@@ -66,6 +67,7 @@ fun TimelineItem(
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
+    viewType: TimelineViewType,
     postActions: PostActions,
 ) {
     TimelineCard(
@@ -80,7 +82,9 @@ fun TimelineItem(
         content = {
             Column(
                 modifier = Modifier
-                    .padding(
+                    .fillMaxWidth()
+                    .viewTypePadding(
+                        viewType = viewType,
                         top = if (item.isThreadedAnchor) 0.dp
                         else 16.dp,
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
@@ -105,25 +109,28 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread) ThreadedPost(
+                if (item is TimelineItem.Thread && viewType is TimelineViewType.Blog) ThreadedPost(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
                     now = now,
+                    viewType = viewType,
                     postActions = postActions,
                 ) else Post(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .childThreadNode(videoId = item.post.videoId),
                     panedSharedElementScope = panedSharedElementScope,
                     now = now,
                     post = item.post,
                     embed = item.post.embed,
                     isAnchoredInTimeline = false,
-                    avatarShape =
-                    if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                    else RoundedPolygonShape.Circle,
+                    avatarShape = RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = item.post.createdAt,
+                    viewType = viewType,
                     postActions = postActions,
                 )
             }
@@ -133,13 +140,17 @@ fun TimelineItem(
 
 @Composable
 private fun ThreadedPost(
+    modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
+    viewType: TimelineViewType,
     postActions: PostActions,
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         item.posts.forEachIndexed { index, post ->
             if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
                 Post(
@@ -168,6 +179,7 @@ private fun ThreadedPost(
                     },
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = post.createdAt,
+                    viewType = viewType,
                     postActions = postActions,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
@@ -322,18 +334,28 @@ private val ReplyThreadEndImageShape =
         bottomEndPercent = 100,
     ).toRoundedPolygonShape()
 
+sealed class TimelineViewType {
+    data object Blog : TimelineViewType()
+    data object Media : TimelineViewType()
+
+    val cardSize
+        get() = when (this) {
+            Blog -> 340.dp
+            Media -> 160.dp
+        }
+}
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
     quotingPostId: Id? = null,
 ): String = quotingPostId
-    ?.let { "$prefix-${cid.id}-${author.did.id}-$it"}
-    ?:"$prefix-${cid.id}-${author.did.id}"
+    ?.let { "$prefix-${cid.id}-${author.did.id}-$it" }
+    ?: "$prefix-${cid.id}-${author.did.id}"
 
-fun String.withQuotedPostPrefix(
-    quotingPostId: Id? = null
+fun String.withQuotingPostIdPrefix(
+    quotingPostId: Id? = null,
 ): String = quotingPostId
-    ?.let { "$this-$it"}
+    ?.let { "$this-$it" }
     ?: this
 
 private val TimelineItem.isThreadedAncestor
