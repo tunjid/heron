@@ -18,6 +18,9 @@ package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.timeline.ui.TimelineViewType
+import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.likes
 import heron.ui_timeline.generated.resources.media
@@ -37,3 +40,18 @@ fun Timeline.displayName() = when (this) {
         Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
     }.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
+
+val Timeline.viewType get() = when(this) {
+    is Timeline.Home.Feed -> TimelineViewType.Blog
+    is Timeline.Home.Following -> TimelineViewType.Blog
+    is Timeline.Home.List -> TimelineViewType.Blog
+    is Timeline.Profile -> TimelineViewType.Blog
+}
+
+val Timeline.sharedElementPrefix get() = sourceId
+
+fun Timeline.sharedElementPrefix(
+    quotingPostId: Id?
+) = sourceId.withQuotingPostIdPrefix(
+    quotingPostId = quotingPostId
+)

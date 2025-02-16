@@ -347,7 +347,7 @@ fun Post.avatarSharedElementKey(
     ?.let { "$prefix-${cid.id}-${author.did.id}-$it" }
     ?: "$prefix-${cid.id}-${author.did.id}"
 
-fun String.withQuotedPostPrefix(
+fun String.withQuotingPostIdPrefix(
     quotingPostId: Id? = null,
 ): String = quotingPostId
     ?.let { "$this-$it" }

@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
@@ -65,7 +66,7 @@ fun Post(
     viewType: TimelineViewType,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
-) {
+) = LookaheadScope {
     val movableEmbedContent = remember {
         // TODO: Pass any other content that changes
         movableContentOf {

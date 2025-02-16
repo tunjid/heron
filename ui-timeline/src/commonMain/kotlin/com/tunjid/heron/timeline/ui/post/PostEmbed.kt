@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Constants
@@ -38,13 +39,13 @@ import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun PostEmbed(
+internal fun LookaheadScope.PostEmbed(
     now: Instant,
     embed: Embed?,
     quote: Post?,
@@ -60,7 +61,7 @@ internal fun PostEmbed(
         // Needed to animate view type changes
         modifier = Modifier
             .animateBounds(
-                lookaheadScope = panedSharedElementScope,
+                lookaheadScope = this,
             )
     ) {
         when (embed) {
@@ -107,7 +108,7 @@ internal fun PostEmbed(
                     now = now,
                     post = quote,
                     author = quote.author,
-                    sharedElementPrefix = sharedElementPrefix.withQuotedPostPrefix(
+                    sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
                         quotingPostId = postId,
                     ),
                     panedSharedElementScope = panedSharedElementScope,

@@ -48,7 +48,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.TimelineViewType
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -103,7 +103,7 @@ internal fun PostDetailScreen(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                        sharedElementPrefix = state.sharedElementPrefix.withQuotedPostPrefix(
+                                        sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
                                             quotingPostId = quotingPostId,
                                         ),
                                         post = post,
@@ -132,7 +132,7 @@ internal fun PostDetailScreen(
                                         post = post,
                                         media = media,
                                         startIndex = index,
-                                        sharedElementPrefix = state.sharedElementPrefix.withQuotedPostPrefix(
+                                        sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
                                             quotingPostId = quotingPostId,
                                         ),
                                     )

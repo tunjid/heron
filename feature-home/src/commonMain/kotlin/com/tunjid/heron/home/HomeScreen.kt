@@ -68,14 +68,14 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.TimelineViewType
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
+import com.tunjid.heron.timeline.utilities.viewType
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -221,18 +221,22 @@ private fun HomeTimeline(
         state = rememberPullToRefreshState(),
         onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
     ) {
+        val viewType = timelineState.timeline.viewType
         LazyVerticalStaggeredGrid(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged {
+                    val itemWidth = with(density) {
+                        viewType.cardSize.toPx()
+                    }
                     timelineStateHolder.accept(
                         TimelineLoadAction.GridSize(
-                            floor(it.width / with(density) { CardSize.toPx() }).roundToInt()
+                            floor(it.width / itemWidth).roundToInt()
                         )
                     )
                 },
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(CardSize),
+            columns = StaggeredGridCells.Adaptive(viewType.cardSize),
             verticalItemSpacing = 8.dp,
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -252,15 +256,15 @@ private fun HomeTimeline(
                         panedSharedElementScope = panedSharedElementScope,
                         now = remember { Clock.System.now() },
                         item = item,
-                        sharedElementPrefix = timelineState.timeline.sourceId,
-                        viewType = TimelineViewType.Blog,
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        viewType = viewType,
                         postActions = rememberPostActions(
                             onPostClicked = { post: Post, quotingPostId: Id? ->
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToPost(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                             post = post,
@@ -276,7 +280,7 @@ private fun HomeTimeline(
                                             profile = profile,
                                             avatarSharedElementKey = post
                                                 .avatarSharedElementKey(
-                                                    prefix = timelineState.timeline.sourceId,
+                                                    prefix = timelineState.timeline.sharedElementPrefix,
                                                     quotingPostId = quotingPostId,
                                                 )
                                                 .takeIf { post.author.did == profile.did }
@@ -291,7 +295,7 @@ private fun HomeTimeline(
                                             post = post,
                                             media = media,
                                             startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
                                         )
@@ -305,7 +309,7 @@ private fun HomeTimeline(
                                             type = Post.Create.Reply(
                                                 parent = post,
                                             ),
-                                            sharedElementPrefix = timelineState.timeline.sourceId.withQuotedPostPrefix(),
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                                         )
                                     )
                                 )
@@ -362,5 +366,3 @@ private fun HomeTimeline(
             .collect(actions)
     }
 }
-
-private val CardSize = 340.dp
