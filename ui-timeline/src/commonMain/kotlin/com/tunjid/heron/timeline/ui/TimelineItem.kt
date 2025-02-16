@@ -66,6 +66,7 @@ fun TimelineItem(
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
+    viewType: TimelineViewType,
     postActions: PostActions,
 ) {
     TimelineCard(
@@ -110,6 +111,7 @@ fun TimelineItem(
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
                     now = now,
+                    viewType = viewType,
                     postActions = postActions,
                 ) else Post(
                     modifier = Modifier
@@ -124,6 +126,7 @@ fun TimelineItem(
                     else RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = item.post.createdAt,
+                    viewType = viewType,
                     postActions = postActions,
                 )
             }
@@ -137,6 +140,7 @@ private fun ThreadedPost(
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
+    viewType: TimelineViewType,
     postActions: PostActions,
 ) {
     Column {
@@ -168,6 +172,7 @@ private fun ThreadedPost(
                     },
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = post.createdAt,
+                    viewType = viewType,
                     postActions = postActions,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
@@ -322,6 +327,10 @@ private val ReplyThreadEndImageShape =
         bottomEndPercent = 100,
     ).toRoundedPolygonShape()
 
+sealed class TimelineViewType {
+    data object Blog : TimelineViewType()
+    data object Media : TimelineViewType()
+}
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
