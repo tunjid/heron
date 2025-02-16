@@ -20,6 +20,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -60,6 +61,7 @@ internal fun LookaheadScope.PostEmbed(
     Column(
         // Needed to animate view type changes
         modifier = Modifier
+            .fillMaxWidth()
             .animateBounds(
                 lookaheadScope = this,
             )

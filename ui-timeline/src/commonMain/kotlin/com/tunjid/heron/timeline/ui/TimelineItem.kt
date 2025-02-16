@@ -82,6 +82,7 @@ fun TimelineItem(
         content = {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .viewTypePadding(
                         viewType = viewType,
                         top = if (item.isThreadedAnchor) 0.dp
@@ -109,6 +110,8 @@ fun TimelineItem(
                     )
                 }
                 if (item is TimelineItem.Thread && viewType is TimelineViewType.Blog) ThreadedPost(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
@@ -117,6 +120,7 @@ fun TimelineItem(
                     postActions = postActions,
                 ) else Post(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .childThreadNode(videoId = item.post.videoId),
                     panedSharedElementScope = panedSharedElementScope,
                     now = now,
@@ -136,6 +140,7 @@ fun TimelineItem(
 
 @Composable
 private fun ThreadedPost(
+    modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
@@ -143,7 +148,9 @@ private fun ThreadedPost(
     viewType: TimelineViewType,
     postActions: PostActions,
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         item.posts.forEachIndexed { index, post ->
             if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
                 Post(

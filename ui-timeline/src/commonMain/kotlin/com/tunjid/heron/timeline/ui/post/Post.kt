@@ -99,7 +99,8 @@ fun Post(
         TimelineViewType.Blog -> Box(modifier = modifier) {
             timeline()
             Column(
-                modifier = Modifier,
+                modifier = Modifier
+                    .fillMaxWidth(),
             ) {
                 PostAttribution(
                     panedSharedElementScope = panedSharedElementScope,
