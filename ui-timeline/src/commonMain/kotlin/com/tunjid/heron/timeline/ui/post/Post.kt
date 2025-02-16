@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,105 +66,120 @@ fun Post(
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    Box(modifier = modifier) {
-        timeline()
-        Column(
-            modifier = Modifier,
-        ) {
-            PostAttribution(
+    val movableEmbedContent = remember {
+        // TODO: Pass any other content that changes
+        movableContentOf {
+            PostEmbed(
+                now = now,
+                embed = embed,
+                quote = post.quote,
+                postId = post.cid,
+                viewType = viewType,
+                sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
-                avatarShape = avatarShape,
-                onProfileClicked = { post, profile ->
-                    postActions.onProfileClicked(
-                        profile = profile,
+                onPostMediaClicked = { media, index, quotingPostId ->
+                    postActions.onPostMediaClicked(
+                        media = media,
+                        index = index,
                         post = post,
-                        quotingPostId = null,
+                        quotingPostId = quotingPostId,
                     )
                 },
-                post = post,
-                sharedElementPrefix = sharedElementPrefix,
-                now = now,
-                createdAt = createdAt,
+                onQuotedPostClicked = { quotedPost ->
+                    postActions.onPostClicked(
+                        post = quotedPost,
+                        quotingPostId = post.cid
+                    )
+                },
             )
-            Spacer(Modifier.height(4.dp))
+        }
+    }
+    when (viewType) {
+        TimelineViewType.Blog -> Box(modifier = modifier) {
+            timeline()
             Column(
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    bottom = 4.dp
-                ),
-                verticalArrangement = spacedBy(8.dp),
+                modifier = Modifier,
             ) {
-                PostText(
-                    post = post,
-                    sharedElementPrefix = sharedElementPrefix,
+                PostAttribution(
                     panedSharedElementScope = panedSharedElementScope,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        postActions.onPostClicked(
-                            post = post,
-                            quotingPostId = null,
-                        )
-                    },
+                    avatarShape = avatarShape,
                     onProfileClicked = { post, profile ->
                         postActions.onProfileClicked(
                             profile = profile,
                             post = post,
-                            quotingPostId = null
+                            quotingPostId = null,
                         )
-                    }
-                )
-                PostEmbed(
+                    },
+                    post = post,
+                    sharedElementPrefix = sharedElementPrefix,
                     now = now,
-                    embed = embed,
-                    quote = post.quote,
-                    postId = post.cid,
-                    sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
-                    onPostMediaClicked = { media, index, quotingPostId ->
-                        postActions.onPostMediaClicked(
-                            media = media,
-                            index = index,
-                            post = post,
-                            quotingPostId = quotingPostId,
-                        )
-                    },
-                    onQuotedPostClicked = { quotedPost ->
-                        postActions.onPostClicked(
-                            post = quotedPost,
-                            quotingPostId = post.cid
-                        )
-                    },
+                    createdAt = createdAt,
                 )
-                if (isAnchoredInTimeline) PostMetadata(
+                Spacer(Modifier.height(4.dp))
+                Column(
                     modifier = Modifier.padding(
-                        vertical = 4.dp,
+                        start = 24.dp,
+                        bottom = 4.dp
                     ),
-                    time = post.createdAt,
-                    postId = post.cid,
-                    profileId = post.author.did,
-                    reposts = post.repostCount,
-                    quotes = post.quoteCount,
-                    likes = post.likeCount,
-                    onMetadataClicked = postActions::onPostMetadataClicked,
-                )
-                PostActions(
-                    replyCount = format(post.replyCount),
-                    repostCount = format(post.repostCount),
-                    likeCount = format(post.likeCount),
-                    repostUri = post.viewerStats?.repostUri,
-                    likeUri = post.viewerStats?.likeUri,
-                    iconSize = 16.dp,
-                    postId = post.cid,
-                    postUri = post.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
-                    onReplyToPost = {
-                        postActions.onReplyToPost(post)
-                    },
-                    onPostInteraction = postActions::onPostInteraction,
-                )
+                    verticalArrangement = spacedBy(8.dp),
+                ) {
+                    PostText(
+                        post = post,
+                        sharedElementPrefix = sharedElementPrefix,
+                        panedSharedElementScope = panedSharedElementScope,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = {
+                            postActions.onPostClicked(
+                                post = post,
+                                quotingPostId = null,
+                            )
+                        },
+                        onProfileClicked = { post, profile ->
+                            postActions.onProfileClicked(
+                                profile = profile,
+                                post = post,
+                                quotingPostId = null
+                            )
+                        }
+                    )
+
+                    movableEmbedContent()
+
+                    if (isAnchoredInTimeline) PostMetadata(
+                        modifier = Modifier.padding(
+                            vertical = 4.dp,
+                        ),
+                        time = post.createdAt,
+                        postId = post.cid,
+                        profileId = post.author.did,
+                        reposts = post.repostCount,
+                        quotes = post.quoteCount,
+                        likes = post.likeCount,
+                        onMetadataClicked = postActions::onPostMetadataClicked,
+                    )
+                    PostActions(
+                        replyCount = format(post.replyCount),
+                        repostCount = format(post.repostCount),
+                        likeCount = format(post.likeCount),
+                        repostUri = post.viewerStats?.repostUri,
+                        likeUri = post.viewerStats?.likeUri,
+                        iconSize = 16.dp,
+                        postId = post.cid,
+                        postUri = post.uri,
+                        sharedElementPrefix = sharedElementPrefix,
+                        panedSharedElementScope = panedSharedElementScope,
+                        onReplyToPost = {
+                            postActions.onReplyToPost(post)
+                        },
+                        onPostInteraction = postActions::onPostInteraction,
+                    )
+                }
             }
+        }
+
+        TimelineViewType.Media -> Box(modifier = modifier) {
+            movableEmbedContent()
         }
     }
 }

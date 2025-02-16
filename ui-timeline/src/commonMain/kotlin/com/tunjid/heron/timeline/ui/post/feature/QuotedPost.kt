@@ -41,6 +41,7 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
@@ -108,6 +109,8 @@ internal fun QuotedPost(
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
+                // Quotes are exclusively in blog view types
+                viewType = TimelineViewType.Blog,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
                 },

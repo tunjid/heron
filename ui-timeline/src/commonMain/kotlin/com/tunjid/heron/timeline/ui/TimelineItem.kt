@@ -51,6 +51,7 @@ import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.timeline.utilities.viewTypePadding
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
@@ -81,7 +82,8 @@ fun TimelineItem(
         content = {
             Column(
                 modifier = Modifier
-                    .padding(
+                    .viewTypePadding(
+                        viewType = viewType,
                         top = if (item.isThreadedAnchor) 0.dp
                         else 16.dp,
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
@@ -330,19 +332,25 @@ private val ReplyThreadEndImageShape =
 sealed class TimelineViewType {
     data object Blog : TimelineViewType()
     data object Media : TimelineViewType()
+
+    val cardSize
+        get() = when (this) {
+            Blog -> 340.dp
+            Media -> 160.dp
+        }
 }
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
     quotingPostId: Id? = null,
 ): String = quotingPostId
-    ?.let { "$prefix-${cid.id}-${author.did.id}-$it"}
-    ?:"$prefix-${cid.id}-${author.did.id}"
+    ?.let { "$prefix-${cid.id}-${author.did.id}-$it" }
+    ?: "$prefix-${cid.id}-${author.did.id}"
 
 fun String.withQuotedPostPrefix(
-    quotingPostId: Id? = null
+    quotingPostId: Id? = null,
 ): String = quotingPostId
-    ?.let { "$this-$it"}
+    ?.let { "$this-$it" }
     ?: this
 
 private val TimelineItem.isThreadedAncestor

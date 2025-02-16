@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -31,14 +33,16 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
+import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
-import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
+import com.tunjid.heron.timeline.ui.withQuotedPostPrefix
 import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostEmbed(
     now: Instant,
@@ -49,14 +53,22 @@ internal fun PostEmbed(
     panedSharedElementScope: PanedSharedElementScope,
     onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
+    viewType: TimelineViewType,
 ) {
     val uriHandler = LocalUriHandler.current
-    Column {
+    Column(
+        // Needed to animate view type changes
+        modifier = Modifier
+            .animateBounds(
+                lookaheadScope = panedSharedElementScope,
+            )
+    ) {
         when (embed) {
             is ExternalEmbed -> PostExternal(
                 feature = embed,
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
+                viewType = viewType,
                 panedSharedElementScope = panedSharedElementScope,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
@@ -84,27 +96,29 @@ internal fun PostEmbed(
 
             null -> Unit
         }
-        if (quote != null) Spacer(Modifier.height(16.dp))
-        when (quote?.cid) {
-            null -> Unit
-            Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
-            Constants.blockedPostId -> BlockedPostPost(onClick = {})
-            Constants.unknownPostId -> UnknownPostPost(onClick = {})
-            else -> QuotedPost(
-                now = now,
-                post = quote,
-                author = quote.author,
-                sharedElementPrefix = sharedElementPrefix.withQuotedPostPrefix(
-                    quotingPostId = postId,
-                ),
-                panedSharedElementScope = panedSharedElementScope,
-                onPostMediaClicked = { media, index ->
-                    onPostMediaClicked(media, index, postId)
-                },
-                onClick = {
-                    onQuotedPostClicked(quote)
-                }
-            )
+        if (viewType is TimelineViewType.Blog) {
+            if (quote != null) Spacer(Modifier.height(16.dp))
+            when (quote?.cid) {
+                null -> Unit
+                Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
+                Constants.blockedPostId -> BlockedPostPost(onClick = {})
+                Constants.unknownPostId -> UnknownPostPost(onClick = {})
+                else -> QuotedPost(
+                    now = now,
+                    post = quote,
+                    author = quote.author,
+                    sharedElementPrefix = sharedElementPrefix.withQuotedPostPrefix(
+                        quotingPostId = postId,
+                    ),
+                    panedSharedElementScope = panedSharedElementScope,
+                    onPostMediaClicked = { media, index ->
+                        onPostMediaClicked(media, index, postId)
+                    },
+                    onClick = {
+                        onQuotedPostClicked(quote)
+                    }
+                )
+            }
         }
     }
 }
