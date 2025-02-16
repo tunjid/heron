@@ -108,7 +108,7 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread) ThreadedPost(
+                if (item is TimelineItem.Thread && viewType is TimelineViewType.Blog) ThreadedPost(
                     panedSharedElementScope = panedSharedElementScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
@@ -123,9 +123,7 @@ fun TimelineItem(
                     post = item.post,
                     embed = item.post.embed,
                     isAnchoredInTimeline = false,
-                    avatarShape =
-                    if (item is TimelineItem.Thread) ReplyThreadEndImageShape
-                    else RoundedPolygonShape.Circle,
+                    avatarShape = RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = item.post.createdAt,
                     viewType = viewType,
