@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -44,12 +45,12 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -57,6 +58,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -158,14 +160,38 @@ internal fun ProfileScreen(
     val pagerState = rememberPagerState {
         updatedTimelineStateHolders.size
     }
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    val isRefreshing by produceState(
+        initialValue = false,
+        key1 = pagerState.currentPage,
+        key2 = updatedTimelineStateHolders.size
+    ) {
+        updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
+            ?.state
+            ?.collect {
+                value = it.status is TimelineStatus.Refreshing
+            }
+    }
 
     CollapsingHeaderLayout(
         modifier = modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                isRefreshing = isRefreshing,
+                state = pullToRefreshState,
+                onRefresh = {
+                    updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
+                        ?.accept
+                        ?.invoke(TimelineLoadAction.Refresh)
+                }
+            )
             .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
                 movableSharedElementScope = paneScaffoldState,
+                pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
                 timelineTabs = (0..<updatedTimelineStateHolders.size).map { page ->
@@ -183,6 +209,7 @@ internal fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
                 avatarSharedElementKey = state.avatarSharedElementKey,
@@ -241,11 +268,13 @@ internal fun ProfileScreen(
 @Composable
 private fun ProfileHeader(
     movableSharedElementScope: MovableSharedElementScope,
+    pullToRefreshState: PullToRefreshState,
     headerState: HeaderState,
     pagerState: PagerState,
     timelineTabs: List<Tab>,
     modifier: Modifier = Modifier,
     profile: Profile,
+    isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
     avatarSharedElementKey: String,
@@ -318,6 +347,7 @@ private fun ProfileHeader(
         }
         ProfileAvatar(
             movableSharedElementScope = movableSharedElementScope,
+            pullToRefreshState = pullToRefreshState,
             modifier = Modifier
                 .align(
                     lerp(
@@ -327,6 +357,7 @@ private fun ProfileHeader(
                     )
                 ),
             headerState = headerState,
+            isRefreshing = isRefreshing,
             profile = profile,
             avatarSharedElementKey = avatarSharedElementKey,
         )
@@ -361,31 +392,44 @@ private fun ProfileBanner(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileAvatar(
     modifier: Modifier = Modifier,
     movableSharedElementScope: MovableSharedElementScope,
     headerState: HeaderState,
+    pullToRefreshState: PullToRefreshState,
+    isRefreshing: Boolean,
     profile: Profile,
     avatarSharedElementKey: String,
 ) {
     val statusBarHeight = UiTokens.statusBarHeight
-    Card(
+    Box(
         modifier = modifier
             .padding(top = headerState.avatarTopPadding)
-            .size(headerState.avatarSize)
+            .size(headerState.avatarSize + 2.dp)
             .offset {
                 headerState.avatarOffset(
                     density = this,
                     statusBarHeight = statusBarHeight
                 )
             },
-        shape = CircleShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
     ) {
+        val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
+        val scale = animateFloatAsState(
+            if (showWave) 1.2f else 1f
+        )
+        CircularWavyProgressIndicator(
+            progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
+            trackColor = MaterialTheme.colorScheme.surface,
+            amplitude = { if (showWave) 1f else 0f },
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                }
+        )
         movableSharedElementScope.updatedMovableSharedElementOf(
             key = avatarSharedElementKey,
             modifier = modifier
@@ -565,119 +609,106 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
-    PullToRefreshBox(
+    val viewType = timelineState.timeline.viewType
+    LazyVerticalStaggeredGrid(
         modifier = Modifier
-            .pullToRefresh(
-                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
-                state = rememberPullToRefreshState(),
-                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
-            )
-            .fillMaxSize(),
-        isRefreshing = timelineState.status is TimelineStatus.Refreshing,
-        state = rememberPullToRefreshState(),
-        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
-    ) {
-        val viewType = timelineState.timeline.viewType
-        LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged {
-                    val itemWidth = with(density) {
-                        viewType.cardSize.toPx()
-                    }
-                    timelineStateHolder.accept(
-                        TimelineLoadAction.GridSize(
-                            floor(it.width / itemWidth).roundToInt()
-                        )
-                    )
-                },
-            state = gridState,
-            columns = StaggeredGridCells.Adaptive(viewType.cardSize),
-            verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(
-                items = items,
-                key = TimelineItem::id,
-                itemContent = { item ->
-                    TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item)
-                            ),
-                        panedSharedElementScope = panedSharedElementScope,
-                        now = remember { Clock.System.now() },
-                        item = item,
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                        viewType = viewType,
-                        postActions = rememberPostActions(
-                            onPostClicked = { post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToPost(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
-                                            post = post,
-                                        )
-                                    )
-                                )
-                            },
-                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToProfile(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            profile = profile,
-                                            avatarSharedElementKey = post
-                                                .avatarSharedElementKey(
-                                                    prefix = timelineState.timeline.sourceId,
-                                                    quotingPostId = quotingPostId,
-                                                )
-                                                .takeIf { post.author.did == profile.did }
-                                        )
-                                    )
-                                )
-                            },
-                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToMedia(
-                                            post = post,
-                                            media = media,
-                                            startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
-                                        )
-                                    )
-                                )
-                            },
-                            onReplyToPost = { post: Post ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ComposePost(
-                                            type = Post.Create.Reply(
-                                                parent = post,
-                                            ),
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                        )
-                                    )
-                                )
-                            },
-                            onPostInteraction = {
-                                actions(
-                                    Action.SendPostInteraction(it)
-                                )
-                            }
-                        ),
-                    )
+            .fillMaxSize()
+            .onSizeChanged {
+                val itemWidth = with(density) {
+                    viewType.cardSize.toPx()
                 }
-            )
-        }
+                timelineStateHolder.accept(
+                    TimelineLoadAction.GridSize(
+                        floor(it.width / itemWidth).roundToInt()
+                    )
+                )
+            },
+        state = gridState,
+        columns = StaggeredGridCells.Adaptive(viewType.cardSize),
+        verticalItemSpacing = 8.dp,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = items,
+            key = TimelineItem::id,
+            itemContent = { item ->
+                TimelineItem(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem()
+                        .threadedVideoPosition(
+                            state = videoStates.getOrCreateStateFor(item)
+                        ),
+                    panedSharedElementScope = panedSharedElementScope,
+                    now = remember { Clock.System.now() },
+                    item = item,
+                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    viewType = viewType,
+                    postActions = rememberPostActions(
+                        onPostClicked = { post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToPost(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                            quotingPostId = quotingPostId,
+                                        ),
+                                        post = post,
+                                    )
+                                )
+                            )
+                        },
+                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        profile = profile,
+                                        avatarSharedElementKey = post
+                                            .avatarSharedElementKey(
+                                                prefix = timelineState.timeline.sourceId,
+                                                quotingPostId = quotingPostId,
+                                            )
+                                            .takeIf { post.author.did == profile.did }
+                                    )
+                                )
+                            )
+                        },
+                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToMedia(
+                                        post = post,
+                                        media = media,
+                                        startIndex = index,
+                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                            quotingPostId = quotingPostId,
+                                        ),
+                                    )
+                                )
+                            )
+                        },
+                        onReplyToPost = { post: Post ->
+                            actions(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ComposePost(
+                                        type = Post.Create.Reply(
+                                            parent = post,
+                                        ),
+                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                    )
+                                )
+                            )
+                        },
+                        onPostInteraction = {
+                            actions(
+                                Action.SendPostInteraction(it)
+                            )
+                        }
+                    ),
+                )
+            }
+        )
     }
 
     if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
