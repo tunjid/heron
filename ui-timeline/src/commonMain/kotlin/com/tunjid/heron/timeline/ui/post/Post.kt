@@ -57,7 +57,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAnimatableApi::class)
+@OptIn(ExperimentalAnimatableApi::class)
 @Composable
 fun Post(
     panedSharedElementScope: PanedSharedElementScope,
@@ -147,6 +147,13 @@ fun Post(
                     },
                     onQuotedPostClicked = { quotedPost ->
                         postActions.onPostClicked(
+                            post = quotedPost,
+                            quotingPostId = post.cid
+                        )
+                    },
+                    onQuotedProfileClicked = { quotedPost, quotedProfile ->
+                        postActions.onProfileClicked(
+                            profile = quotedProfile,
                             post = quotedPost,
                             quotingPostId = post.cid
                         )

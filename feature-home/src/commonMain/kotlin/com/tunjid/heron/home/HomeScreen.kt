@@ -273,6 +273,7 @@ private fun HomeTimeline(
                                 )
                             },
                             onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                println("CLICKED $quotingPostId")
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToProfile(

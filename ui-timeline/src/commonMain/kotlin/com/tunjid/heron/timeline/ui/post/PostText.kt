@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
@@ -40,6 +41,7 @@ fun PostText(
     post: Post,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
+    maxLines: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
@@ -64,6 +66,8 @@ fun PostText(
             textLinks = post.record?.links ?: emptyList(),
             onProfileClicked = { onProfileClicked(post, it) }
         ),
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
         style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
     )
 }

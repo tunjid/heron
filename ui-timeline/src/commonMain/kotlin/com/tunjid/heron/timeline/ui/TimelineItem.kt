@@ -348,9 +348,12 @@ sealed class TimelineViewType {
 fun Post.avatarSharedElementKey(
     prefix: String?,
     quotingPostId: Id? = null,
-): String = quotingPostId
-    ?.let { "$prefix-${cid.id}-${author.did.id}-$it" }
-    ?: "$prefix-${cid.id}-${author.did.id}"
+): String {
+    val finalPrefix = quotingPostId
+        ?.let { "$prefix-$it" }
+        ?: prefix
+    return "$finalPrefix-${cid.id}-${author.did.id}"
+}
 
 fun String.withQuotingPostIdPrefix(
     quotingPostId: Id? = null,
