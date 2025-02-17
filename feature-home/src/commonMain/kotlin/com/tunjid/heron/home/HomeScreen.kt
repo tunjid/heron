@@ -35,7 +35,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -211,11 +210,6 @@ private fun HomeTimeline(
 
     PullToRefreshBox(
         modifier = Modifier
-            .pullToRefresh(
-                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
-                state = rememberPullToRefreshState(),
-                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
-            )
             .fillMaxSize(),
         isRefreshing = timelineState.status is TimelineStatus.Refreshing,
         state = rememberPullToRefreshState(),
@@ -273,7 +267,6 @@ private fun HomeTimeline(
                                 )
                             },
                             onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
-                                println("CLICKED $quotingPostId")
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToProfile(

@@ -106,11 +106,6 @@ private fun FeedTimeline(
 
     PullToRefreshBox(
         modifier = Modifier
-            .pullToRefresh(
-                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
-                state = rememberPullToRefreshState(),
-                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
-            )
             .padding(horizontal = 8.dp)
             .fillMaxSize()
             .paneClip()
