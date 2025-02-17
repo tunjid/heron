@@ -47,7 +47,11 @@ fun PostText(
     onProfileClicked: (Post, Profile) -> Unit,
 ) = with(panedSharedElementScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
-    val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()
+    val text = post.record
+        ?.text
+        ?.removeSuffix(maybeExternalLink.orEmpty())
+        ?.trim()
+        .orEmpty()
 
     if (text.isBlank()) Spacer(Modifier.height(0.dp))
     else Text(
