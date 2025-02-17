@@ -16,15 +16,11 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Constants
@@ -44,9 +40,9 @@ import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.PanedSharedElementScope
 import kotlinx.datetime.Instant
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun LookaheadScope.PostEmbed(
+internal fun PostEmbed(
+    modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,
     quote: Post?,
@@ -59,12 +55,7 @@ internal fun LookaheadScope.PostEmbed(
 ) {
     val uriHandler = LocalUriHandler.current
     Column(
-        // Needed to animate view type changes
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateBounds(
-                lookaheadScope = this,
-            )
+        modifier = modifier
     ) {
         when (embed) {
             is ExternalEmbed -> PostExternal(
