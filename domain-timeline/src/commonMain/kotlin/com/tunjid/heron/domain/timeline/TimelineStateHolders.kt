@@ -34,6 +34,8 @@ class TimelineStateHolders internal constructor(
 
     fun stateHolderAt(index: Int) = stateHolders[index].value
 
+    fun stateHolderAtOrNull(index: Int) = stateHolders.getOrNull(index)?.value
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
@@ -51,6 +52,7 @@ internal fun PostEmbed(
     panedSharedElementScope: PanedSharedElementScope,
     onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
+    onQuotedProfileClicked: (Post, Profile) -> Unit,
     viewType: TimelineViewType,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -105,6 +107,7 @@ internal fun PostEmbed(
                         quotingPostId = postId,
                     ),
                     panedSharedElementScope = panedSharedElementScope,
+                    onProfileClicked = onQuotedProfileClicked,
                     onPostMediaClicked = { media, index ->
                         onPostMediaClicked(media, index, postId)
                     },

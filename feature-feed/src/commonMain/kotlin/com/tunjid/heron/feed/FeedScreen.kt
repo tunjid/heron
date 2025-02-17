@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -106,11 +105,6 @@ private fun FeedTimeline(
 
     PullToRefreshBox(
         modifier = Modifier
-            .pullToRefresh(
-                isRefreshing = timelineState.status is TimelineStatus.Refreshing,
-                state = rememberPullToRefreshState(),
-                onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
-            )
             .padding(horizontal = 8.dp)
             .fillMaxSize()
             .paneClip()

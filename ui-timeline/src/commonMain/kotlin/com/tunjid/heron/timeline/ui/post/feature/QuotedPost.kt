@@ -17,20 +17,19 @@
 package com.tunjid.heron.timeline.ui.post.feature
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -46,6 +45,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostImages
+import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.PostVideo
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -61,8 +61,9 @@ internal fun QuotedPost(
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
+    onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int) -> Unit,
-)= with(panedSharedElementScope) {
+) = with(panedSharedElementScope) {
     FeatureContainer(
         modifier = Modifier.padding(16.dp),
         onClick = onClick,
@@ -72,11 +73,14 @@ internal fun QuotedPost(
         ) {
             AsyncImage(
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(24.dp)
                     .align(Alignment.CenterVertically)
                     .sharedElement(
                         key = post.avatarSharedElementKey(sharedElementPrefix)
-                    ),
+                    )
+                    .clickable {
+                        onProfileClicked(post, author)
+                    },
                 args = ImageArgs(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
@@ -94,10 +98,14 @@ internal fun QuotedPost(
             )
         }
         Spacer(Modifier.height(2.dp))
-        Text(
-            text = post.record?.text ?: "",
+        PostText(
+            post = post,
+            sharedElementPrefix = sharedElementPrefix,
+            panedSharedElementScope = panedSharedElementScope,
             maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier,
+            onClick = onClick,
+            onProfileClicked = onProfileClicked,
         )
 
         Spacer(Modifier.height(8.dp))
