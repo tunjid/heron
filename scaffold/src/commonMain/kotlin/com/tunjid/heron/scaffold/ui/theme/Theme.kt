@@ -24,7 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-private val lightScheme = lightColorScheme(
+internal val lightScheme = lightColorScheme(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
     primaryContainer = primaryContainerLight,
@@ -62,7 +62,7 @@ private val lightScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLight,
 )
 
-private val darkScheme = darkColorScheme(
+internal val darkScheme = darkColorScheme(
     primary = primaryDark,
     onPrimary = onPrimaryDark,
     primaryContainer = primaryContainerDark,
@@ -268,18 +268,13 @@ val unspecified_scheme = ColorFamily(
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-//    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-//      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-//          val context = LocalContext.current
-//          if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-//      }
-
-        darkTheme -> darkScheme
-        else -> lightScheme
-    }
+    val colorScheme = colorScheme(
+        darkTheme = darkTheme,
+        dynamicColor = dynamicColor,
+    )
 
     MaterialTheme(
         colorScheme = colorScheme,
