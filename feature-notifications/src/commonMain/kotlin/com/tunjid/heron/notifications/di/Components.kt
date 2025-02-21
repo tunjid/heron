@@ -175,6 +175,10 @@ abstract class NotificationsComponent(
                                 Badge(Modifier.size(4.dp))
                             }
                         },
+                        onNavItemReselected = {
+                            viewModel.accept(Action.Fetch.Refresh)
+                            true
+                        },
                     )
                 },
                 navigationRail = {
@@ -183,6 +187,10 @@ abstract class NotificationsComponent(
                             if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
                                 Badge(Modifier.size(4.dp))
                             }
+                        },
+                        onNavItemReselected = {
+                            viewModel.accept(Action.Fetch.Refresh)
+                            true
                         },
                     )
                 },

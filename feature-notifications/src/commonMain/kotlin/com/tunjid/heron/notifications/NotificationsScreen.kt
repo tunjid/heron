@@ -17,6 +17,7 @@
 package com.tunjid.heron.notifications
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,11 +26,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
@@ -49,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.Clock
 
 @Composable
@@ -121,110 +125,132 @@ internal fun NotificationsScreen(
             actions(Action.SendPostInteraction(interaction))
         }
     }
-WindowInsets.navigationBars.asPaddingValues()
-    LazyColumn(
+    PullToRefreshBox(
         modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxSize()
-            .paneClip(),
-        state = listState,
-        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        userScrollEnabled = !paneScaffoldState.isTransitionActive,
+            .fillMaxSize(),
+        isRefreshing = state.isRefreshing,
+        onRefresh = { actions(Action.Fetch.Refresh) },
     ) {
-        items(
-            items = items,
-            key = AggregatedNotification::id,
-            itemContent = { item ->
-                val itemModifier = Modifier
-                    .animateItem()
-
-                when (val notification = item.notification) {
-                    is Notification.Followed -> FollowRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onAggregatedProfileClicked,
-                    )
-
-                    is Notification.JoinedStarterPack -> JoinedStarterPackRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onAggregatedProfileClicked,
-                    )
-
-                    is Notification.Liked -> LikeRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onAggregatedProfileClicked,
-                        onPostClicked = onPostClicked,
-                    )
-
-                    is Notification.Mentioned -> MentionRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        onProfileClicked = onProfileClicked,
-                        onPostClicked = onPostClicked,
-                        onPostInteraction = onPostInteraction,
-                    )
-
-                    is Notification.Quoted -> QuoteRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        onProfileClicked = onProfileClicked,
-                        onPostClicked = onPostClicked,
-                        onPostInteraction = onPostInteraction,
-                    )
-
-                    is Notification.RepliedTo -> ReplyRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        onProfileClicked = onProfileClicked,
-                        onPostClicked = onPostClicked,
-                        onReplyToPost = onReplyToPost,
-                        onPostInteraction = onPostInteraction,
-                    )
-
-                    is Notification.Reposted -> RepostRow(
-                        modifier = itemModifier,
-                        panedSharedElementScope = paneScaffoldState,
-                        now = now,
-                        notification = notification,
-                        aggregatedProfiles = item.aggregatedProfiles,
-                        onProfileClicked = onAggregatedProfileClicked,
-                        onPostClicked = onPostClicked,
-                    )
-
-                    is Notification.Unknown -> Unit
+        LazyColumn(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxSize()
+                .paneClip(),
+            state = listState,
+            contentPadding = PaddingValues(
+                top = 8.dp,
+                bottom = WindowInsets.navigationBars.asPaddingValues().let {
+                    it.calculateBottomPadding() + it.calculateTopPadding()
                 }
-            }
-        )
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            userScrollEnabled = !paneScaffoldState.isTransitionActive,
+        ) {
+            items(
+                items = items,
+                key = AggregatedNotification::id,
+                itemContent = { item ->
+                    val itemModifier = Modifier
+                        .animateItem()
+
+                    when (val notification = item.notification) {
+                        is Notification.Followed -> FollowRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            aggregatedProfiles = item.aggregatedProfiles,
+                            onProfileClicked = onAggregatedProfileClicked,
+                        )
+
+                        is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            aggregatedProfiles = item.aggregatedProfiles,
+                            onProfileClicked = onAggregatedProfileClicked,
+                        )
+
+                        is Notification.Liked -> LikeRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            aggregatedProfiles = item.aggregatedProfiles,
+                            onProfileClicked = onAggregatedProfileClicked,
+                            onPostClicked = onPostClicked,
+                        )
+
+                        is Notification.Mentioned -> MentionRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            onProfileClicked = onProfileClicked,
+                            onPostClicked = onPostClicked,
+                            onPostInteraction = onPostInteraction,
+                        )
+
+                        is Notification.Quoted -> QuoteRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            onProfileClicked = onProfileClicked,
+                            onPostClicked = onPostClicked,
+                            onPostInteraction = onPostInteraction,
+                        )
+
+                        is Notification.RepliedTo -> ReplyRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            onProfileClicked = onProfileClicked,
+                            onPostClicked = onPostClicked,
+                            onReplyToPost = onReplyToPost,
+                            onPostInteraction = onPostInteraction,
+                        )
+
+                        is Notification.Reposted -> RepostRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            notification = notification,
+                            aggregatedProfiles = item.aggregatedProfiles,
+                            onProfileClicked = onAggregatedProfileClicked,
+                            onPostClicked = onPostClicked,
+                        )
+
+                        is Notification.Unknown -> Unit
+                    }
+                }
+            )
+        }
     }
 
     listState.PivotedTilingEffect(
         items = items,
         onQueryChanged = { query ->
             actions(
-                Action.LoadAround(query ?: state.currentQuery)
+                Action.Fetch.LoadAround(query ?: state.currentQuery)
             )
         }
     )
 
-    LaunchedEffect(Unit) {
-        actions(Action.MarkNotificationsRead)
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            if (listState.lastScrolledForward) return@snapshotFlow null
+
+            val firstVisibleNotification = state.notifications.getOrNull(
+                listState.firstVisibleItemIndex
+            ) ?: return@snapshotFlow null
+            firstVisibleNotification.indexedAt
+        }
+            .filterNotNull()
+            .collect {
+                actions(Action.MarkNotificationsRead(it))
+            }
     }
 }

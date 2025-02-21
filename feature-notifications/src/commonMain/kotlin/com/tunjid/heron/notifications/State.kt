@@ -23,12 +23,11 @@ import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.buildTiledList
 import com.tunjid.tiler.emptyTiledList
-import com.tunjid.treenav.pop
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -41,6 +40,8 @@ data class State(
             cursorAnchor = Clock.System.now(),
         )
     ),
+    val isRefreshing: Boolean = false,
+    val lastRefreshed: Instant? = null,
     val unreadNotificationCount: Long = 0,
     @Transient
     val signedInProfile: Profile? = null,
@@ -76,15 +77,22 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
 
 sealed class Action(val key: String) {
 
-    data class LoadAround(
-        val query: NotificationsQuery,
-    ) : Action("LoadAround")
+    sealed class Fetch : Action(key = "Load") {
+
+        data object Refresh : Fetch()
+
+        data class LoadAround(
+            val query: NotificationsQuery,
+        ) : Fetch()
+    }
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
-    data object MarkNotificationsRead : Action(key = "markNotificationsRead")
+    data class MarkNotificationsRead(
+        val at: Instant,
+    ) : Action(key = "markNotificationsRead")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
