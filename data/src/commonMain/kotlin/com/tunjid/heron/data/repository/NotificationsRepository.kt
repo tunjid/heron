@@ -44,7 +44,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
@@ -57,12 +57,14 @@ data class NotificationsQuery(
 interface NotificationsRepository {
     val unreadCount: Flow<Long>
 
+    val lastRefreshed: Flow<Instant?>
+
     fun notifications(
         query: NotificationsQuery,
         cursor: Cursor,
     ): Flow<CursorList<Notification>>
 
-    suspend fun markRead()
+    suspend fun markRead(at: Instant)
 }
 
 class OfflineNotificationsRepository @Inject constructor(
@@ -74,23 +76,17 @@ class OfflineNotificationsRepository @Inject constructor(
     private val savedStateRepository: SavedStateRepository,
 ) : NotificationsRepository {
 
-    override val unreadCount: Flow<Long> = savedStateRepository.savedState
-        .map { it.notifications?.lastSeen }
-        .distinctUntilChanged()
-        .flatMapLatest { lastSeen ->
-            flow {
-                while (true) {
-                    val unreadCount = runCatchingWithNetworkRetry {
-                        networkService.api.getUnreadCount(
-                            params = GetUnreadCountQueryParams(
-                                seenAt = lastSeen
-                            )
-                        )
-                    }
-                        .getOrNull()?.count ?: 0
-                    emit(unreadCount)
-                    kotlinx.coroutines.delay(10_000)
+    override val unreadCount: Flow<Long> =
+        flow {
+            while (true) {
+                val unreadCount = runCatchingWithNetworkRetry {
+                    networkService.api.getUnreadCount(
+                        params = GetUnreadCountQueryParams()
+                    )
                 }
+                    .getOrNull()?.count ?: 0
+                emit(unreadCount)
+                kotlinx.coroutines.delay(10_000)
             }
         }
         .stateIn(
@@ -98,6 +94,10 @@ class OfflineNotificationsRepository @Inject constructor(
             started = SharingStarted.Eagerly,
             initialValue = 0,
         )
+
+    override val lastRefreshed: Flow<Instant?> = savedStateRepository.savedState
+        .map { it.notifications?.lastRefreshed }
+        .distinctUntilChanged()
 
     override fun notifications(
         query: NotificationsQuery,
@@ -108,13 +108,6 @@ class OfflineNotificationsRepository @Inject constructor(
             nextCursorFlow = nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api
-                        .listNotifications(
-                            ListNotificationsQueryParams(
-                                limit = query.data.limit,
-                                cursor = cursor.value
-                            )
-                        )
                     val notificationsAtpResponse = networkService.api
                         .listNotifications(
                             ListNotificationsQueryParams(
@@ -152,29 +145,41 @@ class OfflineNotificationsRepository @Inject constructor(
                     first.cursor
                 },
                 onResponse = {
-                    val authProfileId =
-                        savedStateRepository.savedState.value.auth?.authProfileId
+                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            viewingProfileId = savedStateRepository.signedInProfileId,
+                            viewingProfileId = authProfileId,
                             listNotificationsNotification = first.notifications,
                             associatedPosts = second,
                         )
+                    }
+                    if (query.data.page == 0) {
+                        updateNotifications {
+                            copy(lastRefreshed = query.data.cursorAnchor)
+                        }
                     }
                 },
             )
         )
             .distinctUntilChanged()
 
-    override suspend fun markRead() {
-        val now = Clock.System.now()
+    override suspend fun markRead(at: Instant) {
+        val lastReadAt = savedStateRepository.savedState.value.notifications?.lastRead
+        if (lastReadAt != null && lastReadAt > at) return
+
         val isSuccess = runCatchingWithNetworkRetry {
             networkService.api.updateSeen(
-                request = UpdateSeenRequest(now)
+                request = UpdateSeenRequest(at)
             )
         }.isSuccess
-        if (isSuccess) savedStateRepository.updateState {
-            copy(notifications = notifications?.copy(lastSeen = now))
+        if (isSuccess) updateNotifications {
+            // Try to always make this increment
+            copy(
+                lastRead = maxOf(
+                    a = lastRead ?: Instant.DISTANT_PAST,
+                    b = at,
+                )
+            )
         }
     }
 
@@ -212,4 +217,14 @@ class OfflineNotificationsRepository @Inject constructor(
                     }
                 }
             }
+
+    private suspend inline fun updateNotifications(
+        crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
+    ) {
+        savedStateRepository.updateState {
+            copy(
+                notifications = (notifications ?: SavedState.Notifications()).block()
+            )
+        }
+    }
 }

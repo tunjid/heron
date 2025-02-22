@@ -45,6 +45,7 @@ fun JoinedStarterPackRow(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
+    isRead: Boolean,
     notification: Notification.JoinedStarterPack,
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
@@ -55,9 +56,10 @@ fun JoinedStarterPackRow(
             .clickable {
                 onProfileClicked(notification, notification.author)
             },
+        isRead = isRead,
         notification = notification,
-        onProfileClicked = onProfileClicked,
         profiles = aggregatedProfiles,
+        onProfileClicked = onProfileClicked,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),

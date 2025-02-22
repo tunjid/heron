@@ -62,7 +62,8 @@ data class SavedState(
 
     @Serializable
     data class Notifications(
-        val lastSeen: Instant? = null,
+        val lastRead: Instant? = null,
+        val lastRefreshed: Instant? = null,
     )
 }
 

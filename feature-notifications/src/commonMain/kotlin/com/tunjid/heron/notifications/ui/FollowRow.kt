@@ -44,6 +44,7 @@ fun FollowRow(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
+    isRead: Boolean,
     notification: Notification.Followed,
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
@@ -54,9 +55,10 @@ fun FollowRow(
             .clickable {
                 onProfileClicked(notification, notification.author)
             },
-        onProfileClicked = onProfileClicked,
+        isRead = isRead,
         notification = notification,
         profiles = aggregatedProfiles,
+        onProfileClicked = onProfileClicked,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Default.Person),

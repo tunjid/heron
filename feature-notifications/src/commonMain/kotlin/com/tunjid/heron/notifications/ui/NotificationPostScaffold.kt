@@ -18,16 +18,21 @@ package com.tunjid.heron.notifications.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -55,6 +60,7 @@ internal fun NotificationPostScaffold(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
+    isRead: Boolean,
     notification: Notification.PostAssociated,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
@@ -62,23 +68,35 @@ internal fun NotificationPostScaffold(
     onReplyToPost: (Notification.PostAssociated) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
-    Box {
-        Column(
-            modifier = modifier,
+    Column(
+        modifier = modifier,
+    ) {
+        PostAttribution(
+            panedSharedElementScope = panedSharedElementScope,
+            avatarShape = RoundedPolygonShape.Circle,
+            onProfileClicked = onProfileClicked,
+            notification = notification,
+            sharedElementPrefix = notification.sharedElementPrefix(),
+            now = now,
+            createdAt = notification.indexedAt
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(
+            horizontalArrangement = spacedBy(14.dp)
         ) {
-            PostAttribution(
-                panedSharedElementScope = panedSharedElementScope,
-                avatarShape = RoundedPolygonShape.Circle,
-                onProfileClicked = onProfileClicked,
-                notification = notification,
-                sharedElementPrefix = notification.sharedElementPrefix(),
-                now = now,
-                createdAt = notification.indexedAt
-            )
-            Spacer(Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(UiTokens.avatarSize)
+            ) {
+                if (!isRead) Badge(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(vertical = 8.dp)
+                        .size(4.dp)
+                )
+            }
             Column(
                 modifier = Modifier.padding(
-                    start = 64.dp,
                     bottom = 8.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),

@@ -48,6 +48,7 @@ fun LikeRow(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     now: Instant,
+    isRead: Boolean,
     notification: Notification.Liked,
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
@@ -58,9 +59,10 @@ fun LikeRow(
         modifier = modifier.clickable {
             onPostClicked(notification)
         },
-        onProfileClicked = onProfileClicked,
+        isRead = isRead,
         notification = notification,
         profiles = aggregatedProfiles,
+        onProfileClicked = onProfileClicked,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
