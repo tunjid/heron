@@ -243,10 +243,10 @@ internal fun NotificationsScreen(
         snapshotFlow {
             if (listState.lastScrolledForward) return@snapshotFlow null
 
-            val firstVisibleNotification = state.notifications.getOrNull(
+            val firstVisibleNotification = items.getOrNull(
                 listState.firstVisibleItemIndex
             ) ?: return@snapshotFlow null
-            firstVisibleNotification.indexedAt
+            firstVisibleNotification.notification.indexedAt
         }
             .filterNotNull()
             .collect {

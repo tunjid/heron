@@ -114,13 +114,6 @@ class OfflineNotificationsRepository @Inject constructor(
             nextCursorFlow = nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api
-                        .listNotifications(
-                            ListNotificationsQueryParams(
-                                limit = query.data.limit,
-                                cursor = cursor.value
-                            )
-                        )
                     val notificationsAtpResponse = networkService.api
                         .listNotifications(
                             ListNotificationsQueryParams(
