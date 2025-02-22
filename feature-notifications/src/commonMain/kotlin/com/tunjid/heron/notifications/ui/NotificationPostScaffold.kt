@@ -18,6 +18,7 @@ package com.tunjid.heron.notifications.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,7 +81,9 @@ internal fun NotificationPostScaffold(
             createdAt = notification.indexedAt
         )
         Spacer(Modifier.height(4.dp))
-        Row {
+        Row(
+            horizontalArrangement = spacedBy(14.dp)
+        ) {
             Box(
                 modifier = Modifier
                     .width(UiTokens.avatarSize)
