@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentWithReceiverOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,7 +83,10 @@ fun NotificationAggregateScaffold(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            var isExpanded by remember { mutableStateOf(false) }
+
+            // TODO: Consider moving this to the VM.
+            var isExpanded by rememberSaveable { mutableStateOf(false) }
+
             val renderedProfiles = remember(profiles) {
                 when (profiles.size) {
                     in 0..6 -> profiles
@@ -204,6 +208,9 @@ private fun PanedSharedElementScope.ExpandableProfiles(
             ) {
                 Text(
                     modifier = Modifier
+                        // Fill max width is needed so the text measuring doesn't cause
+                        // animation glitches. This is also why the link is used for clicking
+                        // as opposed to the full text.
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
                     text = remember {
