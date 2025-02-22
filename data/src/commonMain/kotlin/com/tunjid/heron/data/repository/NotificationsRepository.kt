@@ -76,23 +76,17 @@ class OfflineNotificationsRepository @Inject constructor(
     private val savedStateRepository: SavedStateRepository,
 ) : NotificationsRepository {
 
-    override val unreadCount: Flow<Long> = savedStateRepository.savedState
-        .map { it.notifications?.lastRead }
-        .distinctUntilChanged()
-        .flatMapLatest { lastSeen ->
-            flow {
-                while (true) {
-                    val unreadCount = runCatchingWithNetworkRetry {
-                        networkService.api.getUnreadCount(
-                            params = GetUnreadCountQueryParams(
-                                seenAt = lastSeen
-                            )
-                        )
-                    }
-                        .getOrNull()?.count ?: 0
-                    emit(unreadCount)
-                    kotlinx.coroutines.delay(10_000)
+    override val unreadCount: Flow<Long> =
+        flow {
+            while (true) {
+                val unreadCount = runCatchingWithNetworkRetry {
+                    networkService.api.getUnreadCount(
+                        params = GetUnreadCountQueryParams()
+                    )
                 }
+                    .getOrNull()?.count ?: 0
+                emit(unreadCount)
+                kotlinx.coroutines.delay(10_000)
             }
         }
         .stateIn(
