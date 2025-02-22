@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.notifications
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -55,6 +57,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.Clock
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun NotificationsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -151,6 +154,9 @@ internal fun NotificationsScreen(
                 key = AggregatedNotification::id,
                 itemContent = { item ->
                     val itemModifier = Modifier
+                        .animateBounds(
+                            lookaheadScope = paneScaffoldState
+                        )
                         .animateItem()
 
                     when (val notification = item.notification) {
