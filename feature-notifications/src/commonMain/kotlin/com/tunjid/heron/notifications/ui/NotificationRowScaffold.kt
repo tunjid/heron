@@ -26,12 +26,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -65,6 +68,7 @@ import org.jetbrains.compose.resources.stringResource
 fun NotificationAggregateScaffold(
     panedSharedElementScope: PanedSharedElementScope,
     modifier: Modifier = Modifier,
+    isRead: Boolean,
     notification: Notification,
     profiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
@@ -75,11 +79,17 @@ fun NotificationAggregateScaffold(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
-            modifier = Modifier.width(UiTokens.avatarSize),
-            contentAlignment = Alignment.TopCenter,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            icon()
+            Box(
+                modifier = Modifier.width(UiTokens.avatarSize),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                icon()
+            }
+            Spacer(Modifier.height(8.dp))
+            if (!isRead) Badge(Modifier.size(4.dp))
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

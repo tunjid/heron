@@ -59,7 +59,8 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
                 add(
                     query = notifications.queryAt(index),
                     item = last.copy(
-                        aggregatedProfiles = last.aggregatedProfiles + notification.author
+                        isRead = last.isRead && notification.isRead,
+                        aggregatedProfiles = last.aggregatedProfiles + notification.author,
                     )
                 )
             }
@@ -67,6 +68,7 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
             else -> add(
                 query = notifications.queryAt(index),
                 item = AggregatedNotification(
+                    isRead = notification.isRead,
                     notification = notification,
                     aggregatedProfiles = listOf(notification.author),
                 )
@@ -114,6 +116,7 @@ private fun AggregatedNotification.canAggregate(
 val AggregatedNotification.id get() = notification.cid.id
 
 data class AggregatedNotification(
+    val isRead: Boolean,
     val notification: Notification,
     val aggregatedProfiles: List<Profile>,
 )
