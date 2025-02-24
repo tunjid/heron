@@ -18,6 +18,8 @@ package com.tunjid.heron.data.database
 
 import androidx.room.DeleteColumn
 import androidx.room.DeleteTable
+import androidx.room.RenameColumn
+import androidx.room.RenameTable
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
@@ -98,3 +100,14 @@ internal class PostViewerStatisticsAutoMigration : AutoMigrationSpec
 
 @DeleteTable(tableName = "profileProfileRelationships")
 internal class ProfileViewersAutoMigration : AutoMigrationSpec
+
+@RenameColumn(
+    tableName = "timelineFetchKeys",
+    fromColumnName = "filterDescription",
+    toColumnName = "preferredPresentation",
+)
+@RenameTable(
+    fromTableName = "timelineFetchKeys",
+    toTableName = "timelinePreferences",
+)
+internal class TimelineItemEntityAutoMigration : AutoMigrationSpec

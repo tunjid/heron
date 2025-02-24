@@ -21,7 +21,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
-import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
@@ -64,18 +64,18 @@ interface TimelineDao {
 
     @Query(
         """
-            SELECT * FROM timelineFetchKeys
+            SELECT * FROM timelinePreferences
             WHERE sourceId = :sourceId
             LIMIT 1
         """
     )
     fun lastFetchKey(
         sourceId: String,
-    ): Flow<TimelineFetchKeyEntity?>
+    ): Flow<TimelinePreferencesEntity?>
 
     @Upsert
     suspend fun upsertFeedFetchKey(
-        entity: TimelineFetchKeyEntity,
+        entity: TimelinePreferencesEntity,
     )
 
     @Query(

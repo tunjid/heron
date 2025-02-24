@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.KSerializer
 import sh.christian.ozone.BlueskyJson
+import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
@@ -27,7 +28,9 @@ internal object Collections {
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
 
-    fun recordKey(uri: Uri) = uri.uri.split("/").last()
+    fun recordKey(uri: Uri) = RKey(
+        rkey = uri.uri.split("/").last(),
+    )
 }
 
 internal fun <T> T.asJsonContent(

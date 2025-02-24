@@ -48,7 +48,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
-import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -609,10 +609,10 @@ class OfflineTimelineRepository(
                 if (timelineDao.isFirstRequest(query)) {
                     timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                     timelineDao.upsertFeedFetchKey(
-                        TimelineFetchKeyEntity(
+                        TimelinePreferencesEntity(
                             sourceId = query.timeline.sourceId,
                             lastFetchedAt = query.data.cursorAnchor,
-                            filterDescription = null,
+                            preferredPresentation = null,
                         )
                     )
                 }

@@ -22,12 +22,12 @@ import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "timelineFetchKeys",
+    tableName = "timelinePreferences",
 )
-data class TimelineFetchKeyEntity(
+data class TimelinePreferencesEntity(
     @PrimaryKey
     var sourceId: String,
     val lastFetchedAt: Instant,
-    val filterDescription: String?,
+    val preferredPresentation: String?,
 )
 
