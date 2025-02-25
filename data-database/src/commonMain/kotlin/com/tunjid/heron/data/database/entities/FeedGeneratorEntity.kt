@@ -51,6 +51,7 @@ data class FeedGeneratorEntity(
     val displayName: String,
     val description: String?,
     val acceptsInteractions: Boolean?,
+    val contentMode: String?,
     val indexedAt: Instant,
 )
 
@@ -65,6 +66,7 @@ fun FeedGeneratorEntity.asExternalModel() =
         displayName = displayName,
         description = description,
         acceptsInteractions = acceptsInteractions,
+        contentMode = contentMode,
         indexedAt = indexedAt,
     )
 
