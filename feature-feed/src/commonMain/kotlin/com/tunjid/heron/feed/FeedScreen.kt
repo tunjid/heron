@@ -113,14 +113,14 @@ private fun FeedTimeline(
                     viewType.cardSize.toPx()
                 }
                 timelineStateHolder.accept(
-                    TimelineLoadAction.GridSize(
+                    TimelineLoadAction.Fetch.GridSize(
                         floor(it.width / itemWidth).roundToInt()
                     )
                 )
             },
         isRefreshing = timelineState.status is TimelineStatus.Refreshing,
         state = rememberPullToRefreshState(),
-        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
+        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
     ) {
         LazyVerticalStaggeredGrid(
             state = gridState,
@@ -233,7 +233,7 @@ private fun FeedTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
             )
         }
     )

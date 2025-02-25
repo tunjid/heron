@@ -32,6 +32,7 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.feed.Token
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
@@ -814,15 +815,21 @@ class OfflineTimelineRepository(
     ) = timelineDao.feedGenerator(atUri.atUri)
         .filterNotNull()
         .distinctUntilChanged()
-        .flatMapLatest {
-            timelineDao.lastFetchKey(it.uri.uri)
+        .flatMapLatest { feedGeneratorEntity ->
+            timelineDao.lastFetchKey(feedGeneratorEntity.uri.uri)
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
                         position = position,
-                        feedGenerator = it.asExternalModel(),
+                        feedGenerator = feedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
+                        supportedPresentations = listOfNotNull(
+                            Timeline.Presentation.Blog,
+                            Timeline.Presentation.Media.takeIf {
+                                feedGeneratorEntity.contentMode == Token.ContentModeVideo.value
+                            }
+                        ),
                     )
                 }
         }

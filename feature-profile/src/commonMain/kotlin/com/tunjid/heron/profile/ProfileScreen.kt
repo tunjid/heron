@@ -183,7 +183,7 @@ internal fun ProfileScreen(
                 onRefresh = {
                     updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
                         ?.accept
-                        ?.invoke(TimelineLoadAction.Refresh)
+                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
                 }
             )
             .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
@@ -216,7 +216,7 @@ internal fun ProfileScreen(
                 onRefreshTabClicked = { index ->
                     updatedTimelineStateHolders.stateHolderAt(
                         index = index
-                    ).accept(TimelineLoadAction.Refresh)
+                    ).accept(TimelineLoadAction.Fetch.Refresh)
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -618,7 +618,7 @@ private fun ProfileTimeline(
                     viewType.cardSize.toPx()
                 }
                 timelineStateHolder.accept(
-                    TimelineLoadAction.GridSize(
+                    TimelineLoadAction.Fetch.GridSize(
                         floor(it.width / itemWidth).roundToInt()
                     )
                 )
@@ -731,7 +731,7 @@ private fun ProfileTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
             )
         }
     )

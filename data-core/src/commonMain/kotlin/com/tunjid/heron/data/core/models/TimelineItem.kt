@@ -30,6 +30,8 @@ sealed class Timeline {
 
     abstract val presentation: Presentation
 
+    abstract val supportedPresentations: List<Presentation>
+
     @Serializable
     sealed class Home(
         val source: Uri,
@@ -48,7 +50,11 @@ sealed class Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
-        ) : Home(Constants.timelineFeed)
+        ) : Home(
+            source = Constants.timelineFeed,
+        ) {
+            override val supportedPresentations get() = BlogOnlyPresentation
+        }
 
         @Serializable
         data class List(
@@ -56,9 +62,13 @@ sealed class Timeline {
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
             val feedList: FeedList,
-        ) : Home(feedList.uri) {
+        ) : Home(
+            source = feedList.uri,
+        ) {
             override val name: String
                 get() = feedList.name
+
+            override val supportedPresentations get() = BlogOnlyPresentation
         }
 
         @Serializable
@@ -66,8 +76,11 @@ sealed class Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
+            override val supportedPresentations: kotlin.collections.List<Presentation>,
             val feedGenerator: FeedGenerator,
-        ) : Home(feedGenerator.uri) {
+        ) : Home(
+            source = feedGenerator.uri,
+        ) {
             override val name: String
                 get() = feedGenerator.displayName
         }
@@ -85,6 +98,17 @@ sealed class Timeline {
         override val sourceId: String
             get() = type.sourceId(profileId)
 
+        override val supportedPresentations: List<Presentation>
+            get() = when (type) {
+                Type.Posts -> BlogOnlyPresentation
+                Type.Replies -> BlogOnlyPresentation
+                Type.Likes -> BlogOnlyPresentation
+                Type.Media -> listOf(
+                    Presentation.Blog,
+                    Presentation.Media,
+                )
+            }
+
         enum class Type(
             val suffix: String,
         ) {
@@ -98,12 +122,16 @@ sealed class Timeline {
     }
 
     enum class Presentation(
-        val key: String
+        val key: String,
     ) {
         Blog(key = "presentation-blog"),
         Media(key = "presentation-media"),
     }
 }
+
+private val BlogOnlyPresentation = listOf(
+    Timeline.Presentation.Blog
+)
 
 sealed class TimelineItem {
 

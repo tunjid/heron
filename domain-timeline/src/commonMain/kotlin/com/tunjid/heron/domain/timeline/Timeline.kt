@@ -32,6 +32,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
@@ -110,28 +111,40 @@ fun timelineStateHolder(
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(keySelector = TimelineLoadAction::key) {
-            type().flow.timelineMutations(
-                stateHolder = this@transform,
-                cursorListLoader = timelineRepository::timelineItems,
-            )
+            when (val action = type()) {
+                is TimelineLoadAction.Fetch -> action.flow.timelineMutations(
+                    stateHolder = this@transform,
+                    cursorListLoader = timelineRepository::timelineItems,
+                )
+
+                is TimelineLoadAction.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
+                    timelineRepository = timelineRepository,
+                )
+            }
         }
     }
 )
 
-sealed interface TimelineLoadAction {
+sealed class TimelineLoadAction(
+    val key: String,
+) {
 
-    // Every action uses the same key, so they're processed sequentially
-    val key get() = "TimelineLoadAction"
+    sealed class Fetch : TimelineLoadAction(key = "Fetch") {
+        data class GridSize(
+            val numColumns: Int,
+        ) : Fetch()
 
-    data class GridSize(
-        val numColumns: Int,
-    ) : TimelineLoadAction
+        data class LoadAround(
+            val query: TimelineQuery,
+        ) : Fetch()
 
-    data class LoadAround(
-        val query: TimelineQuery,
-    ) : TimelineLoadAction
+        data object Refresh : Fetch()
+    }
 
-    data object Refresh : TimelineLoadAction
+    data class UpdatePreferredPresentation(
+        val timeline: Timeline,
+        val presentation: Timeline.Presentation,
+    ) : TimelineLoadAction(key = "UpdatePreferredPresentation")
 }
 
 private fun hasUpdatesMutations(
@@ -148,10 +161,19 @@ private fun hasUpdatesMutations(
             )
         }
 
+private suspend fun Flow<TimelineLoadAction.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
+   timelineRepository: TimelineRepository
+): Flow<Mutation<TimelineState>> = mapLatestToManyMutations {
+    timelineRepository.updatePreferredPresentation(
+        timeline = it.timeline,
+        presentation = it.presentation,
+    )
+}
+
 /**
  * Feed mutations as a function of the user's scroll position
  */
-private suspend fun Flow<TimelineLoadAction>.timelineMutations(
+private suspend fun Flow<TimelineLoadAction.Fetch>.timelineMutations(
     stateHolder: SuspendingStateHolder<TimelineState>,
     cursorListLoader: (TimelineQuery, Cursor) -> Flow<CursorList<TimelineItem>>,
 ) = with(stateHolder) {
@@ -167,16 +189,16 @@ private suspend fun Flow<TimelineLoadAction>.timelineMutations(
             val (queries, numColumns) = accumulator
             // update backing states as a side effect
             when (action) {
-                is TimelineLoadAction.GridSize -> {
+                is TimelineLoadAction.Fetch.GridSize -> {
                     numColumns.value = action.numColumns
                 }
 
-                is TimelineLoadAction.LoadAround -> {
+                is TimelineLoadAction.Fetch.LoadAround -> {
                     if (!queries.value.hasDifferentAnchor(action.query))
                         queries.value = action.query
                 }
 
-                is TimelineLoadAction.Refresh -> {
+                is TimelineLoadAction.Fetch.Refresh -> {
                     queries.value = TimelineQuery(
                         timeline = queries.value.timeline,
                         data = queries.value.data.copy(

@@ -148,7 +148,7 @@ internal fun HomeScreen(
             },
             onRefreshTabClicked = { page ->
                 updatedTimelineStateHolders.stateHolderAt(page)
-                    .accept(TimelineLoadAction.Refresh)
+                    .accept(TimelineLoadAction.Fetch.Refresh)
             }
         )
 
@@ -213,7 +213,7 @@ private fun HomeTimeline(
             .fillMaxSize(),
         isRefreshing = timelineState.status is TimelineStatus.Refreshing,
         state = rememberPullToRefreshState(),
-        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
+        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
     ) {
         val viewType = timelineState.timeline.viewType
         LazyVerticalStaggeredGrid(
@@ -224,7 +224,7 @@ private fun HomeTimeline(
                         viewType.cardSize.toPx()
                     }
                     timelineStateHolder.accept(
-                        TimelineLoadAction.GridSize(
+                        TimelineLoadAction.Fetch.GridSize(
                             floor(it.width / itemWidth).roundToInt()
                         )
                     )
@@ -340,7 +340,7 @@ private fun HomeTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
             )
         }
     )
