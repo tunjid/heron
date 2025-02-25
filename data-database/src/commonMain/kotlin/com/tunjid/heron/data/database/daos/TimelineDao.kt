@@ -17,12 +17,17 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
+import com.tunjid.heron.data.database.entities.fetchedAtPartial
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
@@ -73,9 +78,32 @@ interface TimelineDao {
         sourceId: String,
     ): Flow<TimelinePreferencesEntity?>
 
-    @Upsert
-    suspend fun upsertFeedFetchKey(
-        entity: TimelinePreferencesEntity,
+    @Transaction
+    suspend fun insertOrPartiallyUpdateTimelineFetchedAt(
+        entities: List<TimelinePreferencesEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
+        insertEntities = ::insertOrIgnoreTimelinePreferences,
+        updatePartials = ::updatePartialTimelinePreferencesFetchedAt
+    )
+
+    @Transaction
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreTimelinePreferences(
+        entities: List<TimelinePreferencesEntity>,
+    ): List<Long>
+
+    @Transaction
+    @Update(entity = TimelinePreferencesEntity::class)
+    suspend fun updatePartialTimelinePreferencesFetchedAt(
+        entities: List<TimelinePreferencesEntity.Partial.FetchedAt>,
+    )
+
+    @Transaction
+    @Update(entity = TimelinePreferencesEntity::class)
+    suspend fun updatePreferredTimelinePresentation(
+        partial: TimelinePreferencesEntity.Partial.PreferredPresentation,
     )
 
     @Query(

@@ -41,11 +41,9 @@ fun Timeline.displayName() = when (this) {
     }.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
 
-val Timeline.viewType get() = when(this) {
-    is Timeline.Home.Feed -> TimelineViewType.Blog
-    is Timeline.Home.Following -> TimelineViewType.Blog
-    is Timeline.Home.List -> TimelineViewType.Blog
-    is Timeline.Profile -> TimelineViewType.Blog
+val Timeline.viewType get() = when(presentation) {
+    Timeline.Presentation.Blog -> TimelineViewType.Blog
+    Timeline.Presentation.Media -> TimelineViewType.Media
 }
 
 val Timeline.sharedElementPrefix get() = sourceId

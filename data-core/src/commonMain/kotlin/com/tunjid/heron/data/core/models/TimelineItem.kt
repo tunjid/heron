@@ -28,6 +28,8 @@ sealed class Timeline {
 
     abstract val lastRefreshed: Instant?
 
+    abstract val presentation: Presentation
+
     @Serializable
     sealed class Home(
         val source: Uri,
@@ -45,12 +47,14 @@ sealed class Timeline {
             override val name: String,
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val presentation: Presentation,
         ) : Home(Constants.timelineFeed)
 
         @Serializable
         data class List(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val presentation: Presentation,
             val feedList: FeedList,
         ) : Home(feedList.uri) {
             override val name: String
@@ -61,6 +65,7 @@ sealed class Timeline {
         data class Feed(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val presentation: Presentation,
             val feedGenerator: FeedGenerator,
         ) : Home(feedGenerator.uri) {
             override val name: String
@@ -74,6 +79,7 @@ sealed class Timeline {
         val profileId: Id,
         val type: Type,
         override val lastRefreshed: Instant?,
+        override val presentation: Presentation,
     ) : Timeline() {
 
         override val sourceId: String
@@ -89,6 +95,13 @@ sealed class Timeline {
 
             fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
         }
+    }
+
+    enum class Presentation(
+        val key: String
+    ) {
+        Blog(key = "presentation-blog"),
+        Media(key = "presentation-media"),
     }
 }
 

@@ -17,10 +17,20 @@
 package com.tunjid.heron.data.utilities
 
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.ServerResponseException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
+
+internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
+    return try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
+}
 
 internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
     times: Int = 3,
@@ -44,8 +54,7 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
         } catch (e: IOException) {
             // TODO: Log this exception
             e.printStackTrace()
-        }
-        catch (e: ResponseException) {
+        } catch (e: ResponseException) {
             // TODO: Log this exception
             e.printStackTrace()
         }
