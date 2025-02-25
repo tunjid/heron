@@ -92,7 +92,7 @@ internal fun PostEmbed(
 
             null -> Unit
         }
-        if (viewType is TimelineViewType.Blog) {
+        if (viewType is TimelineViewType.TextAndEmbed) {
             if (quote != null) Spacer(Modifier.height(16.dp))
             when (quote?.cid) {
                 null -> Unit

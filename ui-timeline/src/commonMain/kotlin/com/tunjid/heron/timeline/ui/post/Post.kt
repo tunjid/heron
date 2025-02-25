@@ -74,12 +74,12 @@ fun Post(
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
-        if (viewType is TimelineViewType.Blog) timeline()
+        if (viewType is TimelineViewType.TextAndEmbed) timeline()
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
         ) {
-            if (viewType is TimelineViewType.Blog) PostAttribution(
+            if (viewType is TimelineViewType.TextAndEmbed) PostAttribution(
                 panedSharedElementScope = panedSharedElementScope,
                 avatarShape = avatarShape,
                 onProfileClicked = { post, profile ->
@@ -94,7 +94,7 @@ fun Post(
                 now = now,
                 createdAt = createdAt,
             )
-            if (viewType is TimelineViewType.Blog) Spacer(Modifier.height(4.dp))
+            if (viewType is TimelineViewType.TextAndEmbed) Spacer(Modifier.height(4.dp))
             Column(
                 modifier = Modifier.viewTypePadding(
                     viewType = viewType,
@@ -103,7 +103,7 @@ fun Post(
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
-                if (viewType is TimelineViewType.Blog) PostText(
+                if (viewType is TimelineViewType.TextAndEmbed) PostText(
                     post = post,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
@@ -159,7 +159,7 @@ fun Post(
                         )
                     },
                 )
-                if (viewType is TimelineViewType.Blog && isAnchoredInTimeline) PostMetadata(
+                if (viewType is TimelineViewType.TextAndEmbed && isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
                         vertical = 4.dp,
                     ),
@@ -171,7 +171,7 @@ fun Post(
                     likes = post.likeCount,
                     onMetadataClicked = postActions::onPostMetadataClicked,
                 )
-                if (viewType is TimelineViewType.Blog) PostActions(
+                if (viewType is TimelineViewType.TextAndEmbed) PostActions(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
                     likeCount = format(post.likeCount),

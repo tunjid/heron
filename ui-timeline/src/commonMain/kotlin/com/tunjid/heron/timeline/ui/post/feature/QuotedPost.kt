@@ -118,7 +118,7 @@ internal fun QuotedPost(
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
                 // Quotes are exclusively in blog view types
-                viewType = TimelineViewType.Blog,
+                viewType = TimelineViewType.TextAndEmbed,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
                 },

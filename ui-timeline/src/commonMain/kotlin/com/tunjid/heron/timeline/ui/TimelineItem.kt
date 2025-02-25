@@ -109,7 +109,7 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread && viewType is TimelineViewType.Blog) ThreadedPost(
+                if (item is TimelineItem.Thread && viewType is TimelineViewType.TextAndEmbed) ThreadedPost(
                     modifier = Modifier
                         .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
@@ -335,13 +335,13 @@ private val ReplyThreadEndImageShape =
     ).toRoundedPolygonShape()
 
 sealed class TimelineViewType {
-    data object Blog : TimelineViewType()
-    data object Media : TimelineViewType()
+    data object TextAndEmbed : TimelineViewType()
+    data object CondensedMedia : TimelineViewType()
 
     val cardSize
         get() = when (this) {
-            Blog -> 340.dp
-            Media -> 160.dp
+            TextAndEmbed -> 340.dp
+            CondensedMedia -> 160.dp
         }
 }
 

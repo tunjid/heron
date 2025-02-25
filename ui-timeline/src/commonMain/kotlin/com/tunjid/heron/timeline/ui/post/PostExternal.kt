@@ -84,7 +84,7 @@ internal fun PostExternal(
                     ),
                 )
             }
-            if (viewType is TimelineViewType.Blog) PostFeatureTextContent(
+            if (viewType is TimelineViewType.TextAndEmbed) PostFeatureTextContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(

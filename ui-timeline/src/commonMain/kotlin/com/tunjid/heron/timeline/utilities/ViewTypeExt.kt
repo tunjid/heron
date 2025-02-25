@@ -29,12 +29,12 @@ internal fun Modifier.viewTypePadding(
     end: Dp = 0.dp,
     bottom: Dp = 0.dp,
 ) = when (viewType) {
-    TimelineViewType.Blog -> padding(
+    TimelineViewType.TextAndEmbed -> padding(
         start = start,
         top = top,
         end = end,
         bottom = bottom,
     )
 
-    TimelineViewType.Media -> this
+    TimelineViewType.CondensedMedia -> this
 }

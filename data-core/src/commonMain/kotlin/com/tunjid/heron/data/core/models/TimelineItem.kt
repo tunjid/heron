@@ -53,7 +53,7 @@ sealed class Timeline {
         ) : Home(
             source = Constants.timelineFeed,
         ) {
-            override val supportedPresentations get() = BlogOnlyPresentation
+            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
         }
 
         @Serializable
@@ -68,7 +68,7 @@ sealed class Timeline {
             override val name: String
                 get() = feedList.name
 
-            override val supportedPresentations get() = BlogOnlyPresentation
+            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
         }
 
         @Serializable
@@ -100,12 +100,12 @@ sealed class Timeline {
 
         override val supportedPresentations: List<Presentation>
             get() = when (type) {
-                Type.Posts -> BlogOnlyPresentation
-                Type.Replies -> BlogOnlyPresentation
-                Type.Likes -> BlogOnlyPresentation
+                Type.Posts -> TextAndEmbedOnlyPresentation
+                Type.Replies -> TextAndEmbedOnlyPresentation
+                Type.Likes -> TextAndEmbedOnlyPresentation
                 Type.Media -> listOf(
-                    Presentation.Blog,
-                    Presentation.Media,
+                    Presentation.TextAndEmbed,
+                    Presentation.CondensedMedia,
                 )
             }
 
@@ -124,13 +124,13 @@ sealed class Timeline {
     enum class Presentation(
         val key: String,
     ) {
-        Blog(key = "presentation-blog"),
-        Media(key = "presentation-media"),
+        TextAndEmbed(key = "presentation-text-and-embed"),
+        CondensedMedia(key = "presentation-condensed-media"),
     }
 }
 
-private val BlogOnlyPresentation = listOf(
-    Timeline.Presentation.Blog
+private val TextAndEmbedOnlyPresentation = listOf(
+    Timeline.Presentation.TextAndEmbed
 )
 
 sealed class TimelineItem {

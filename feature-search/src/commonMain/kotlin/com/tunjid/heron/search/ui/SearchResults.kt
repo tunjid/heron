@@ -130,7 +130,7 @@ internal fun PostSearchResult(
                 avatarShape = RoundedPolygonShape.Circle,
                 sharedElementPrefix = result.sharedElementPrefix(),
                 createdAt = result.post.createdAt,
-                viewType = TimelineViewType.Blog,
+                viewType = TimelineViewType.TextAndEmbed,
                 postActions = rememberPostActions(
                     onPostClicked = { _, _ ->
                         onPostClicked(result)

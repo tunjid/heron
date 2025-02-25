@@ -96,7 +96,7 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
-                    viewType = TimelineViewType.Blog,
+                    viewType = TimelineViewType.TextAndEmbed,
                     postActions = rememberPostActions(
                         onPostClicked = { post: Post, quotingPostId: Id? ->
                             actions(

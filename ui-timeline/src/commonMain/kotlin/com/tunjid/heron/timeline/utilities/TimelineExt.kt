@@ -42,8 +42,8 @@ fun Timeline.displayName() = when (this) {
 }
 
 val Timeline.viewType get() = when(presentation) {
-    Timeline.Presentation.Blog -> TimelineViewType.Blog
-    Timeline.Presentation.Media -> TimelineViewType.Media
+    Timeline.Presentation.TextAndEmbed -> TimelineViewType.TextAndEmbed
+    Timeline.Presentation.CondensedMedia -> TimelineViewType.CondensedMedia
 }
 
 val Timeline.sharedElementPrefix get() = sourceId
