@@ -29,10 +29,10 @@ import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
@@ -53,7 +53,7 @@ internal fun PostEmbed(
     onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
-    viewType: TimelineViewType,
+    presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
     Column(
@@ -64,7 +64,7 @@ internal fun PostEmbed(
                 feature = embed,
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
-                viewType = viewType,
+                presentation = presentation,
                 panedSharedElementScope = panedSharedElementScope,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
@@ -92,7 +92,7 @@ internal fun PostEmbed(
 
             null -> Unit
         }
-        if (viewType is TimelineViewType.TextAndEmbed) {
+        if (presentation == Timeline.Presentation.TextAndEmbed) {
             if (quote != null) Spacer(Modifier.height(16.dp))
             when (quote?.cid) {
                 null -> Unit

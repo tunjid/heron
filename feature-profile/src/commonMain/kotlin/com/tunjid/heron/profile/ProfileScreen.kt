@@ -108,10 +108,11 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.viewType
+
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
@@ -609,13 +610,13 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
-    val viewType = timelineState.timeline.viewType
+    val presentation = timelineState.timeline.presentation
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged {
                 val itemWidth = with(density) {
-                    viewType.cardSize.toPx()
+                    presentation.cardSize.toPx()
                 }
                 timelineStateHolder.accept(
                     TimelineLoadAction.Fetch.GridSize(
@@ -624,7 +625,7 @@ private fun ProfileTimeline(
                 )
             },
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(viewType.cardSize),
+        columns = StaggeredGridCells.Adaptive(presentation.cardSize),
         verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -643,7 +644,7 @@ private fun ProfileTimeline(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    viewType = viewType,
+                    presentation = presentation,
                     postActions = rememberPostActions(
                         onPostClicked = { post: Post, quotingPostId: Id? ->
                             actions(
