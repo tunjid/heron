@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -28,6 +29,7 @@ import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.hasDifferentAnchor
 import com.tunjid.heron.data.utilities.isValidFor
+import com.tunjid.heron.data.utilities.recordKey
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -107,7 +109,11 @@ fun timelineStateHolder(
         hasUpdatesMutations(
             timeline = timeline,
             timelineRepository = timelineRepository,
-        )
+        ),
+        timelineUpdateMutations(
+            timeline = timeline,
+            timelineRepository = timelineRepository,
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(keySelector = TimelineLoadAction::key) {
@@ -161,8 +167,36 @@ private fun hasUpdatesMutations(
             )
         }
 
+private fun timelineUpdateMutations(
+    timeline: Timeline,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<TimelineState>> =
+    timelineRepository.lookupTimeline(
+        when (timeline) {
+            is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
+                profileHandleOrDid = timeline.feedGenerator.creatorId.id,
+                feedUriSuffix = timeline.feedGenerator.uri.recordKey,
+            )
+
+            is Timeline.Home.Following -> UriLookup.Timeline.Following(
+                profileHandleOrDid = timeline.signedInProfileId.id,
+            )
+
+            is Timeline.Home.List -> UriLookup.Timeline.List(
+                profileHandleOrDid = timeline.feedList.creatorId.id,
+                listUriSuffix = timeline.feedList.uri.recordKey,
+            )
+
+            is Timeline.Profile -> UriLookup.Timeline.Profile(
+                profileHandleOrDid = timeline.profileId.id,
+                type = timeline.type,
+            )
+        }
+    )
+        .mapToMutation { copy(timeline = it) }
+
 private suspend fun Flow<TimelineLoadAction.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
-   timelineRepository: TimelineRepository
+    timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> = mapLatestToManyMutations {
     timelineRepository.updatePreferredPresentation(
         timeline = it.timeline,

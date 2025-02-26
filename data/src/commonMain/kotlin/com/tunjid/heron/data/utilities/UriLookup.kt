@@ -65,6 +65,7 @@ internal suspend fun lookupUri(
             is UriLookup.Post -> "at://${profileDid.did}/$PostCollection${uriLookup.postUriSuffix}"
             is UriLookup.Profile -> "at://${profileDid.did}"
             is UriLookup.Timeline.Profile -> "at://${profileDid.did}"
+            is UriLookup.Timeline.Following -> "at://${profileDid.did}"
         }
     )
 }

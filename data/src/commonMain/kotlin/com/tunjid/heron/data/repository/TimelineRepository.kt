@@ -495,16 +495,10 @@ class OfflineTimelineRepository(
                             position = index,
                         )
 
-                        Type.Timeline -> timelineDao.lastFetchKey(Constants.timelineFeed.uri)
-                            .distinctUntilChanged()
-                            .map { timelinePreferenceEntity ->
-                                Timeline.Home.Following(
-                                    name = preference.value,
-                                    position = index,
-                                    lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
-                                    presentation = timelinePreferenceEntity.preferredPresentation()
-                                )
-                            }
+                        Type.Timeline -> followingTimeline(
+                            name = preference.value,
+                            position = index,
+                        )
 
                         is Type.Unknown -> emptyFlow()
                     }
@@ -517,10 +511,10 @@ class OfflineTimelineRepository(
                     .map { homeTimelines ->
                         homeTimelines.sortedBy(Timeline.Home::position)
                     }
-                    .distinctUntilChangedBy {
-                        it.joinToString(
+                    .distinctUntilChangedBy { timelines ->
+                        timelines.joinToString(
                             separator = "-",
-                            transform = Timeline.Home::name,
+                            transform = { "${it.name}-${it.presentation.key}" },
                         )
                     }
                     .filter(List<Timeline.Home>::isNotEmpty)
@@ -600,6 +594,11 @@ class OfflineTimelineRepository(
                                 }
                         }
                 }
+
+                is UriLookup.Timeline.Following -> followingTimeline(
+                    name = "",
+                    position = 0,
+                )
             }
         )
     }
@@ -808,6 +807,26 @@ class OfflineTimelineRepository(
                     }
                 }
             }
+
+    private fun followingTimeline(
+        name: String,
+        position: Int,
+    ) = savedStateRepository.savedState
+        .mapNotNull { it.auth?.authProfileId }
+        .distinctUntilChanged()
+        .flatMapLatest { signedInProfileId ->
+            timelineDao.lastFetchKey(Constants.timelineFeed.uri)
+                .distinctUntilChanged()
+                .map { timelinePreferenceEntity ->
+                    Timeline.Home.Following(
+                        name = name,
+                        position = position,
+                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        presentation = timelinePreferenceEntity.preferredPresentation(),
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
+        }
 
     private fun feedGeneratorTimeline(
         atUri: AtUri,

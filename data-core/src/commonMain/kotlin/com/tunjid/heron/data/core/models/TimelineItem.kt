@@ -50,6 +50,7 @@ sealed class Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
+            val signedInProfileId: Id,
         ) : Home(
             source = Constants.timelineFeed,
         ) {

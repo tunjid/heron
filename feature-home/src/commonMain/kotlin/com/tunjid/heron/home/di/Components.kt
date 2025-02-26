@@ -17,7 +17,9 @@
 package com.tunjid.heron.home.di
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -27,7 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -40,10 +44,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeViewModelCreator
+import com.tunjid.heron.home.State
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -58,6 +64,7 @@ import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
@@ -151,6 +158,9 @@ abstract class HomeComponent(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
+                        title = {
+                            TimelinePresentationSelector(state)
+                        },
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -234,4 +244,33 @@ abstract class HomeComponent(
             )
         }
     )
+}
+
+@Composable
+private fun TimelinePresentationSelector(state: State) {
+    val timeline = state.timelines.firstOrNull {
+        it.sourceId == state.currentSourceId
+    }
+    if (timeline != null) Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.aligned(Alignment.End)
+    ) {
+        TimelinePresentationSelector(
+            selected = timeline.presentation,
+            available = timeline.supportedPresentations,
+            onPresentationSelected = { presentation ->
+                val index = state.timelines.indexOfFirst {
+                    it.sourceId == state.currentSourceId
+                }
+                state.timelineStateHolders.stateHolderAtOrNull(index)
+                    ?.accept
+                    ?.invoke(
+                        TimelineLoadAction.UpdatePreferredPresentation(
+                            timeline = timeline,
+                            presentation = presentation,
+                        )
+                    )
+            }
+        )
+    }
 }

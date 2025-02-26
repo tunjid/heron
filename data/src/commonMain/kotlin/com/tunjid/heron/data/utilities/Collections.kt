@@ -29,9 +29,11 @@ internal object Collections {
     const val Follow = "app.bsky.graph.follow"
 
     fun recordKey(uri: Uri) = RKey(
-        rkey = uri.uri.split("/").last(),
+        rkey = uri.recordKey,
     )
 }
+
+val Uri.recordKey get() = uri.split("/").last()
 
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
