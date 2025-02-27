@@ -28,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
@@ -44,17 +46,19 @@ internal fun TimelineTitle(
     timeline: Timeline?,
     creator: Profile?,
     hasUpdates: Boolean,
+    onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
 ) {
     if (timeline != null) Row(
         modifier = Modifier
             .padding(
                 horizontal = 8.dp
-            )
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         timeline.avatarImageArgs?.let { args ->
             AsyncImage(
                 modifier = Modifier
-                    .size(40.dp),
+                    .size(44.dp),
                 args = args,
             )
             Spacer(Modifier.width(12.dp))
@@ -74,6 +78,17 @@ internal fun TimelineTitle(
                 modifier = Modifier.size(4.dp)
             )
         }
+        Spacer(Modifier.weight(1f))
+        TimelinePresentationSelector(
+            selected = timeline.presentation,
+            available = timeline.supportedPresentations,
+            onPresentationSelected = { presentation ->
+                onPresentationSelected(
+                    timeline,
+                    presentation,
+                )
+            }
+        )
     }
 }
 
