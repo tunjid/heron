@@ -26,6 +26,7 @@ import heron.ui_timeline.generated.resources.likes
 import heron.ui_timeline.generated.resources.media
 import heron.ui_timeline.generated.resources.posts
 import heron.ui_timeline.generated.resources.replies
+import heron.ui_timeline.generated.resources.videos
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -38,6 +39,7 @@ fun Timeline.displayName() = when (this) {
         Timeline.Profile.Type.Posts -> stringResource(Res.string.posts)
         Timeline.Profile.Type.Likes -> stringResource(Res.string.likes)
         Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
+        Timeline.Profile.Type.Videos -> stringResource(Res.string.videos)
     }.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
 

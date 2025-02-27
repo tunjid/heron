@@ -108,6 +108,10 @@ sealed class Timeline {
                     Presentation.TextAndEmbed,
                     Presentation.CondensedMedia,
                 )
+                Type.Videos -> listOf(
+                    Presentation.TextAndEmbed,
+                    Presentation.CondensedMedia,
+                )
             }
 
         enum class Type(
@@ -116,7 +120,8 @@ sealed class Timeline {
             Posts(suffix = "posts"),
             Replies(suffix = "posts-and-replies"),
             Likes(suffix = "likes"),
-            Media(suffix = "media");
+            Media(suffix = "media"),
+            Videos(suffix = "videos");
 
             fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
         }
