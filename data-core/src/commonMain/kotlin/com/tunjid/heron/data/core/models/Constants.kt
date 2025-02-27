@@ -44,6 +44,10 @@ sealed class UriLookup {
 
     sealed class Timeline : UriLookup() {
 
+        data class Following(
+            override val profileHandleOrDid: String,
+        ) : Timeline()
+
         data class FeedGenerator(
             override val profileHandleOrDid: String,
             val feedUriSuffix: String,

@@ -37,7 +37,7 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
@@ -52,7 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 9,
+    version = 10,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -73,7 +73,7 @@ import kotlinx.coroutines.IO
         FeedGeneratorEntity::class,
         NotificationEntity::class,
         TimelineItemEntity::class,
-        TimelineFetchKeyEntity::class,
+        TimelinePreferencesEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -96,6 +96,12 @@ import kotlinx.coroutines.IO
             from = 8,
             to = 9,
             spec = ProfileViewersAutoMigration::class,
+        ),
+        // TimelineFetchKeyEntity to TimelinePreferencesEntity
+        AutoMigration(
+            from = 9,
+            to = 10,
+            spec = TimelineItemEntityAutoMigration::class,
         ),
     ],
     exportSchema = true,

@@ -108,10 +108,11 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.viewType
+
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
@@ -183,7 +184,7 @@ internal fun ProfileScreen(
                 onRefresh = {
                     updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
                         ?.accept
-                        ?.invoke(TimelineLoadAction.Refresh)
+                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
                 }
             )
             .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
@@ -216,7 +217,7 @@ internal fun ProfileScreen(
                 onRefreshTabClicked = { index ->
                     updatedTimelineStateHolders.stateHolderAt(
                         index = index
-                    ).accept(TimelineLoadAction.Refresh)
+                    ).accept(TimelineLoadAction.Fetch.Refresh)
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -609,22 +610,22 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
 
-    val viewType = timelineState.timeline.viewType
+    val presentation = timelineState.timeline.presentation
     LazyVerticalStaggeredGrid(
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged {
                 val itemWidth = with(density) {
-                    viewType.cardSize.toPx()
+                    presentation.cardSize.toPx()
                 }
                 timelineStateHolder.accept(
-                    TimelineLoadAction.GridSize(
+                    TimelineLoadAction.Fetch.GridSize(
                         floor(it.width / itemWidth).roundToInt()
                     )
                 )
             },
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(viewType.cardSize),
+        columns = StaggeredGridCells.Adaptive(presentation.cardSize),
         verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -643,7 +644,7 @@ private fun ProfileTimeline(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    viewType = viewType,
+                    presentation = presentation,
                     postActions = rememberPostActions(
                         onPostClicked = { post: Post, quotingPostId: Id? ->
                             actions(
@@ -731,7 +732,7 @@ private fun ProfileTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
             )
         }
     )

@@ -37,6 +37,7 @@ internal fun MultipleEntitySaver.add(
             avatar = feedGeneratorView.avatar?.uri?.let(::Uri),
             likeCount = feedGeneratorView.likeCount,
             acceptsInteractions = feedGeneratorView.acceptsInteractions,
+            contentMode = feedGeneratorView.contentMode,
             indexedAt = feedGeneratorView.indexedAt,
         )
     )

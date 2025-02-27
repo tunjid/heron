@@ -73,8 +73,8 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.viewType
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -148,7 +148,7 @@ internal fun HomeScreen(
             },
             onRefreshTabClicked = { page ->
                 updatedTimelineStateHolders.stateHolderAt(page)
-                    .accept(TimelineLoadAction.Refresh)
+                    .accept(TimelineLoadAction.Fetch.Refresh)
             }
         )
 
@@ -213,24 +213,24 @@ private fun HomeTimeline(
             .fillMaxSize(),
         isRefreshing = timelineState.status is TimelineStatus.Refreshing,
         state = rememberPullToRefreshState(),
-        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Refresh) }
+        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
     ) {
-        val viewType = timelineState.timeline.viewType
+        val presentation = timelineState.timeline.presentation
         LazyVerticalStaggeredGrid(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged {
                     val itemWidth = with(density) {
-                        viewType.cardSize.toPx()
+                        presentation.cardSize.toPx()
                     }
                     timelineStateHolder.accept(
-                        TimelineLoadAction.GridSize(
+                        TimelineLoadAction.Fetch.GridSize(
                             floor(it.width / itemWidth).roundToInt()
                         )
                     )
                 },
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(viewType.cardSize),
+            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             verticalItemSpacing = 8.dp,
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -251,7 +251,7 @@ private fun HomeTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                        viewType = viewType,
+                        presentation = presentation,
                         postActions = rememberPostActions(
                             onPostClicked = { post: Post, quotingPostId: Id? ->
                                 actions(
@@ -340,7 +340,7 @@ private fun HomeTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.LoadAround(query ?: timelineState.currentQuery)
+                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
             )
         }
     )

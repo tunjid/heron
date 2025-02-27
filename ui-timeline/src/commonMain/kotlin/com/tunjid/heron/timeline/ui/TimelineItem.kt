@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.post.Post
@@ -51,7 +52,7 @@ import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.timeline.utilities.viewTypePadding
+import com.tunjid.heron.timeline.utilities.presentationPadding
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
@@ -67,7 +68,7 @@ fun TimelineItem(
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
-    viewType: TimelineViewType,
+    presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
     TimelineCard(
@@ -83,8 +84,8 @@ fun TimelineItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .viewTypePadding(
-                        viewType = viewType,
+                    .presentationPadding(
+                        presentation = presentation,
                         top = if (item.isThreadedAnchor) 0.dp
                         else 16.dp,
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
@@ -109,14 +110,14 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread && viewType is TimelineViewType.Blog) ThreadedPost(
+                if (item is TimelineItem.Thread && presentation == Timeline.Presentation.TextAndEmbed) ThreadedPost(
                     modifier = Modifier
                         .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
                     now = now,
-                    viewType = viewType,
+                    presentation = presentation,
                     postActions = postActions,
                 ) else Post(
                     modifier = Modifier
@@ -130,7 +131,7 @@ fun TimelineItem(
                     avatarShape = RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = item.post.createdAt,
-                    viewType = viewType,
+                    presentation = presentation,
                     postActions = postActions,
                 )
             }
@@ -145,7 +146,7 @@ private fun ThreadedPost(
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
-    viewType: TimelineViewType,
+    presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
     Column(
@@ -179,7 +180,7 @@ private fun ThreadedPost(
                     },
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = post.createdAt,
-                    viewType = viewType,
+                    presentation = presentation,
                     postActions = postActions,
                     timeline = {
                         if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
@@ -333,17 +334,6 @@ private val ReplyThreadEndImageShape =
         bottomStartPercent = 100,
         bottomEndPercent = 100,
     ).toRoundedPolygonShape()
-
-sealed class TimelineViewType {
-    data object Blog : TimelineViewType()
-    data object Media : TimelineViewType()
-
-    val cardSize
-        get() = when (this) {
-            Blog -> 340.dp
-            Media -> 160.dp
-        }
-}
 
 fun Post.avatarSharedElementKey(
     prefix: String?,

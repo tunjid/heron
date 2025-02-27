@@ -30,10 +30,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -130,7 +130,7 @@ internal fun PostSearchResult(
                 avatarShape = RoundedPolygonShape.Circle,
                 sharedElementPrefix = result.sharedElementPrefix(),
                 createdAt = result.post.createdAt,
-                viewType = TimelineViewType.Blog,
+                presentation = Timeline.Presentation.TextAndEmbed,
                 postActions = rememberPostActions(
                     onPostClicked = { _, _ ->
                         onPostClicked(result)

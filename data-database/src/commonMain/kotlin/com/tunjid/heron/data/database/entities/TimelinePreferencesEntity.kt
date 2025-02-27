@@ -18,16 +18,36 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity.Partial.FetchedAt
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "timelineFetchKeys",
+    tableName = "timelinePreferences",
 )
-data class TimelineFetchKeyEntity(
+data class TimelinePreferencesEntity(
     @PrimaryKey
-    var sourceId: String,
+    val sourceId: String,
     val lastFetchedAt: Instant,
-    val filterDescription: String?,
+    val preferredPresentation: String?,
+) {
+    sealed class Partial {
+        abstract val sourceId: String
+
+        data class FetchedAt(
+            override val sourceId: String,
+            val lastFetchedAt: Instant,
+        ) : Partial()
+
+        data class PreferredPresentation(
+            override val sourceId: String,
+            val preferredPresentation: String?,
+        ) : Partial()
+    }
+}
+
+fun TimelinePreferencesEntity.fetchedAtPartial() = FetchedAt(
+    sourceId = sourceId,
+    lastFetchedAt = lastFetchedAt,
 )
 

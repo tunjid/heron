@@ -25,6 +25,7 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
@@ -121,6 +122,16 @@ abstract class FeedComponent(
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
                                 hasUpdates = state.timelineState?.hasUpdates == true,
+                                onPresentationSelected = {timeline, presentation ->
+                                    state.timelineStateHolder
+                                        ?.accept
+                                        ?.invoke(
+                                            TimelineLoadAction.UpdatePreferredPresentation(
+                                                timeline = timeline,
+                                                presentation = presentation
+                                            )
+                                        )
+                                }
                             )
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) }

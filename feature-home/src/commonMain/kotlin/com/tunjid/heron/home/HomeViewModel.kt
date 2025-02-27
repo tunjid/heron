@@ -170,5 +170,5 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
             .map(currentState.timelineStateHolders::stateHolderAt)
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
             ?.accept
-            ?.invoke(TimelineLoadAction.Refresh)
+            ?.invoke(TimelineLoadAction.Fetch.Refresh)
     }

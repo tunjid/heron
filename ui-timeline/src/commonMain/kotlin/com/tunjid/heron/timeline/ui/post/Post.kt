@@ -41,14 +41,14 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.timeline.utilities.viewTypePadding
+import com.tunjid.heron.timeline.utilities.presentationPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.UiTokens
@@ -69,17 +69,17 @@ fun Post(
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
-    viewType: TimelineViewType,
+    presentation: Timeline.Presentation,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
-        if (viewType is TimelineViewType.Blog) timeline()
+        if (presentation == Timeline.Presentation.TextAndEmbed) timeline()
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
         ) {
-            if (viewType is TimelineViewType.Blog) PostAttribution(
+            if (presentation == Timeline.Presentation.TextAndEmbed) PostAttribution(
                 panedSharedElementScope = panedSharedElementScope,
                 avatarShape = avatarShape,
                 onProfileClicked = { post, profile ->
@@ -94,16 +94,16 @@ fun Post(
                 now = now,
                 createdAt = createdAt,
             )
-            if (viewType is TimelineViewType.Blog) Spacer(Modifier.height(4.dp))
+            if (presentation == Timeline.Presentation.TextAndEmbed) Spacer(Modifier.height(4.dp))
             Column(
-                modifier = Modifier.viewTypePadding(
-                    viewType = viewType,
+                modifier = Modifier.presentationPadding(
+                    presentation = presentation,
                     start = 24.dp,
                     bottom = 4.dp
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
-                if (viewType is TimelineViewType.Blog) PostText(
+                if (presentation == Timeline.Presentation.TextAndEmbed) PostText(
                     post = post,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
@@ -134,7 +134,7 @@ fun Post(
                     embed = embed,
                     quote = post.quote,
                     postId = post.cid,
-                    viewType = viewType,
+                    presentation = presentation,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     onPostMediaClicked = { media, index, quotingPostId ->
@@ -159,7 +159,7 @@ fun Post(
                         )
                     },
                 )
-                if (viewType is TimelineViewType.Blog && isAnchoredInTimeline) PostMetadata(
+                if (presentation == Timeline.Presentation.TextAndEmbed && isAnchoredInTimeline) PostMetadata(
                     modifier = Modifier.padding(
                         vertical = 4.dp,
                     ),
@@ -171,7 +171,7 @@ fun Post(
                     likes = post.likeCount,
                     onMetadataClicked = postActions::onPostMetadataClicked,
                 )
-                if (viewType is TimelineViewType.Blog) PostActions(
+                if (presentation == Timeline.Presentation.TextAndEmbed) PostActions(
                     replyCount = format(post.replyCount),
                     repostCount = format(post.repostCount),
                     likeCount = format(post.likeCount),

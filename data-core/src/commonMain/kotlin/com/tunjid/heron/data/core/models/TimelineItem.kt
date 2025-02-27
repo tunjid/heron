@@ -28,6 +28,10 @@ sealed class Timeline {
 
     abstract val lastRefreshed: Instant?
 
+    abstract val presentation: Presentation
+
+    abstract val supportedPresentations: List<Presentation>
+
     @Serializable
     sealed class Home(
         val source: Uri,
@@ -45,24 +49,39 @@ sealed class Timeline {
             override val name: String,
             override val position: Int,
             override val lastRefreshed: Instant?,
-        ) : Home(Constants.timelineFeed)
+            override val presentation: Presentation,
+            val signedInProfileId: Id,
+        ) : Home(
+            source = Constants.timelineFeed,
+        ) {
+            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
+        }
 
         @Serializable
         data class List(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val presentation: Presentation,
             val feedList: FeedList,
-        ) : Home(feedList.uri) {
+        ) : Home(
+            source = feedList.uri,
+        ) {
             override val name: String
                 get() = feedList.name
+
+            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
         }
 
         @Serializable
         data class Feed(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val presentation: Presentation,
+            override val supportedPresentations: kotlin.collections.List<Presentation>,
             val feedGenerator: FeedGenerator,
-        ) : Home(feedGenerator.uri) {
+        ) : Home(
+            source = feedGenerator.uri,
+        ) {
             override val name: String
                 get() = feedGenerator.displayName
         }
@@ -74,10 +93,22 @@ sealed class Timeline {
         val profileId: Id,
         val type: Type,
         override val lastRefreshed: Instant?,
+        override val presentation: Presentation,
     ) : Timeline() {
 
         override val sourceId: String
             get() = type.sourceId(profileId)
+
+        override val supportedPresentations: List<Presentation>
+            get() = when (type) {
+                Type.Posts -> TextAndEmbedOnlyPresentation
+                Type.Replies -> TextAndEmbedOnlyPresentation
+                Type.Likes -> TextAndEmbedOnlyPresentation
+                Type.Media -> listOf(
+                    Presentation.TextAndEmbed,
+                    Presentation.CondensedMedia,
+                )
+            }
 
         enum class Type(
             val suffix: String,
@@ -90,7 +121,18 @@ sealed class Timeline {
             fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
         }
     }
+
+    enum class Presentation(
+        val key: String,
+    ) {
+        TextAndEmbed(key = "presentation-text-and-embed"),
+        CondensedMedia(key = "presentation-condensed-media"),
+    }
 }
+
+private val TextAndEmbedOnlyPresentation = listOf(
+    Timeline.Presentation.TextAndEmbed
+)
 
 sealed class TimelineItem {
 

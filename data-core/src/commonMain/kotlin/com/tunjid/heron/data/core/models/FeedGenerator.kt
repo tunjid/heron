@@ -31,6 +31,7 @@ data class FeedGenerator(
     val creatorId: Id,
     val displayName: String,
     val description: String?,
+    val contentMode: String?,
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
 )

@@ -32,6 +32,7 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.feed.Token
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
@@ -48,7 +49,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
-import com.tunjid.heron.data.database.entities.TimelineFetchKeyEntity
+import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -56,6 +57,7 @@ import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.lookupUri
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.delay
@@ -129,6 +131,11 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: Uri,
     ): Flow<List<TimelineItem>>
+
+    suspend fun updatePreferredPresentation(
+        timeline: Timeline,
+        presentation: Timeline.Presentation,
+    )
 }
 
 @Inject
@@ -423,7 +430,8 @@ class OfflineTimelineRepository(
                                 postThread.fold(
                                     initial = emptyList<TimelineItem.Thread>(),
                                     operation = { list, thread ->
-                                        val populatedPostEntity = idsToPosts.getValue(thread.entity.cid)
+                                        val populatedPostEntity =
+                                            idsToPosts.getValue(thread.entity.cid)
                                         val post = populatedPostEntity.asExternalModel(
                                             quote = idsToEmbeddedPosts[thread.entity.cid]
                                                 ?.entity
@@ -487,15 +495,10 @@ class OfflineTimelineRepository(
                             position = index,
                         )
 
-                        Type.Timeline -> timelineDao.lastFetchKey(Constants.timelineFeed.uri)
-                            .distinctUntilChanged()
-                            .map { fetchKeyEntity ->
-                                Timeline.Home.Following(
-                                    name = preference.value,
-                                    position = index,
-                                    lastRefreshed = fetchKeyEntity?.lastFetchedAt,
-                                )
-                            }
+                        Type.Timeline -> followingTimeline(
+                            name = preference.value,
+                            position = index,
+                        )
 
                         is Type.Unknown -> emptyFlow()
                     }
@@ -508,10 +511,10 @@ class OfflineTimelineRepository(
                     .map { homeTimelines ->
                         homeTimelines.sortedBy(Timeline.Home::position)
                     }
-                    .distinctUntilChangedBy {
-                        it.joinToString(
+                    .distinctUntilChangedBy { timelines ->
+                        timelines.joinToString(
                             separator = "-",
-                            transform = Timeline.Home::name,
+                            transform = { "${it.name}-${it.presentation.key}" },
                         )
                     }
                     .filter(List<Timeline.Home>::isNotEmpty)
@@ -581,17 +584,37 @@ class OfflineTimelineRepository(
                                 sourceId = lookup.type.sourceId(profile.did)
                             )
                                 .distinctUntilChanged()
-                                .map { fetchKeyEntity ->
+                                .map { timelinePreferenceEntity ->
                                     Timeline.Profile(
                                         profileId = profile.did,
                                         type = lookup.type,
-                                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                                        presentation = timelinePreferenceEntity.preferredPresentation(),
                                     )
                                 }
                         }
                 }
+
+                is UriLookup.Timeline.Following -> followingTimeline(
+                    name = "",
+                    position = 0,
+                )
             }
         )
+    }
+
+    override suspend fun updatePreferredPresentation(
+        timeline: Timeline,
+        presentation: Timeline.Presentation,
+    ) {
+        runCatchingUnlessCancelled {
+            timelineDao.updatePreferredTimelinePresentation(
+                TimelinePreferencesEntity.Partial.PreferredPresentation(
+                    sourceId = timeline.sourceId,
+                    preferredPresentation = presentation.key,
+                )
+            )
+        }
     }
 
     private fun <NetworkResponse : Any> nextCursorFlow(
@@ -608,11 +631,13 @@ class OfflineTimelineRepository(
             multipleEntitySaverProvider.saveInTransaction {
                 if (timelineDao.isFirstRequest(query)) {
                     timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                    timelineDao.upsertFeedFetchKey(
-                        TimelineFetchKeyEntity(
-                            sourceId = query.timeline.sourceId,
-                            lastFetchedAt = query.data.cursorAnchor,
-                            filterDescription = null,
+                    timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
+                        listOf(
+                            TimelinePreferencesEntity(
+                                sourceId = query.timeline.sourceId,
+                                lastFetchedAt = query.data.cursorAnchor,
+                                preferredPresentation = null,
+                            )
                         )
                     )
                 }
@@ -783,20 +808,47 @@ class OfflineTimelineRepository(
                 }
             }
 
+    private fun followingTimeline(
+        name: String,
+        position: Int,
+    ) = savedStateRepository.savedState
+        .mapNotNull { it.auth?.authProfileId }
+        .distinctUntilChanged()
+        .flatMapLatest { signedInProfileId ->
+            timelineDao.lastFetchKey(Constants.timelineFeed.uri)
+                .distinctUntilChanged()
+                .map { timelinePreferenceEntity ->
+                    Timeline.Home.Following(
+                        name = name,
+                        position = position,
+                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        presentation = timelinePreferenceEntity.preferredPresentation(),
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
+        }
+
     private fun feedGeneratorTimeline(
         atUri: AtUri,
         position: Int,
     ) = timelineDao.feedGenerator(atUri.atUri)
         .filterNotNull()
         .distinctUntilChanged()
-        .flatMapLatest {
-            timelineDao.lastFetchKey(it.uri.uri)
+        .flatMapLatest { feedGeneratorEntity ->
+            timelineDao.lastFetchKey(feedGeneratorEntity.uri.uri)
                 .distinctUntilChanged()
-                .map { fetchKeyEntity ->
+                .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
                         position = position,
-                        feedGenerator = it.asExternalModel(),
-                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                        feedGenerator = feedGeneratorEntity.asExternalModel(),
+                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        presentation = timelinePreferenceEntity.preferredPresentation(),
+                        supportedPresentations = listOfNotNull(
+                            Timeline.Presentation.TextAndEmbed,
+                            Timeline.Presentation.CondensedMedia.takeIf {
+                                feedGeneratorEntity.contentMode == Token.ContentModeVideo.value
+                            }
+                        ),
                     )
                 }
         }
@@ -810,11 +862,12 @@ class OfflineTimelineRepository(
         .flatMapLatest {
             timelineDao.lastFetchKey(it.uri.uri)
                 .distinctUntilChanged()
-                .map { fetchKeyEntity ->
+                .map { timelinePreferenceEntity ->
                     Timeline.Home.List(
                         position = position,
                         feedList = it.asExternalModel(),
-                        lastRefreshed = fetchKeyEntity?.lastFetchedAt,
+                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        presentation = timelinePreferenceEntity.preferredPresentation(),
                     )
                 }
         }
@@ -849,6 +902,14 @@ class OfflineTimelineRepository(
         }
     }
 }
+
+
+private fun TimelinePreferencesEntity?.preferredPresentation() =
+    when (this?.preferredPresentation) {
+        Timeline.Presentation.CondensedMedia.key -> Timeline.Presentation.CondensedMedia
+        Timeline.Presentation.TextAndEmbed.key -> Timeline.Presentation.TextAndEmbed
+        else -> Timeline.Presentation.TextAndEmbed
+    }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false

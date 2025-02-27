@@ -20,21 +20,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.timeline.ui.TimelineViewType
+import com.tunjid.heron.data.core.models.Timeline
 
-internal fun Modifier.viewTypePadding(
-    viewType: TimelineViewType,
+internal fun Modifier.presentationPadding(
+    presentation: Timeline.Presentation,
     start: Dp = 0.dp,
     top: Dp = 0.dp,
     end: Dp = 0.dp,
     bottom: Dp = 0.dp,
-) = when (viewType) {
-    TimelineViewType.Blog -> padding(
+) = when (presentation) {
+    Timeline.Presentation.TextAndEmbed -> padding(
         start = start,
         top = top,
         end = end,
         bottom = bottom,
     )
 
-    TimelineViewType.Media -> this
+    Timeline.Presentation.CondensedMedia -> this
 }

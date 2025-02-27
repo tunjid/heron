@@ -33,12 +33,12 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.ui.TimelineViewType
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -49,7 +49,7 @@ internal fun PostExternal(
     feature: ExternalEmbed,
     postId: Id,
     sharedElementPrefix: String,
-    viewType: TimelineViewType,
+    presentation: Timeline.Presentation,
     panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
 ) = with(panedSharedElementScope) {
@@ -84,7 +84,7 @@ internal fun PostExternal(
                     ),
                 )
             }
-            if (viewType is TimelineViewType.Blog) PostFeatureTextContent(
+            if (presentation == Timeline.Presentation.TextAndEmbed) PostFeatureTextContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
