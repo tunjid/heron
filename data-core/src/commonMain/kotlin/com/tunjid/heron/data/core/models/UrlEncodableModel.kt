@@ -77,6 +77,7 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
         polymorphic(Post.Create::class) {
             subclass(Post.Create.Reply::class)
             subclass(Post.Create.Mention::class)
+            subclass(Post.Create.Quote::class)
             subclass(Post.Create.Timeline::class)
         }
     }

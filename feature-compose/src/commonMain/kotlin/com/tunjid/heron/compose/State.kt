@@ -49,6 +49,7 @@ val State.hasLongPost
     get() = when (val type = postType) {
         is Post.Create.Mention -> type.profile.handle.id.length
         is Post.Create.Reply -> type.parent.record?.text?.length ?: 0
+        is Post.Create.Quote -> 180
         Post.Create.Timeline -> 0
         null -> 0
     } + postText.text.length > 180

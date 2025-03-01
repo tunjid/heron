@@ -99,6 +99,14 @@ data class Post(
     sealed class Create : ByteSerializable {
 
         @Serializable
+        data class Metadata(
+            val quote: Quote? = null,
+            val reply: Reply? = null,
+            val imageList: ImageList? = null,
+            val video: Video? = null,
+        )
+
+        @Serializable
         data class Reply(
             val parent: Post,
         ) : Create()
@@ -109,6 +117,11 @@ data class Post(
         ) : Create()
 
         @Serializable
+        data class Quote(
+            val postId: Id,
+        ) : Create()
+
+        @Serializable
         data object Timeline : Create()
 
         @Serializable
@@ -116,6 +129,7 @@ data class Post(
             val authorId: Id,
             val text: String,
             val links: List<Link>,
+            val metadata: Metadata,
         )
     }
 

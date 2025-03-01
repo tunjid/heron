@@ -23,6 +23,7 @@ import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
+import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.richtext.Facet
@@ -79,6 +80,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
+import tools.ozone.moderation.GetRecordQueryParams
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
@@ -113,7 +115,6 @@ interface PostRepository {
 
     suspend fun createPost(
         request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
     )
 }
 
@@ -242,7 +243,6 @@ class OfflinePostRepository @Inject constructor(
 
     override suspend fun createPost(
         request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
     ) {
         val resolvedLinks: List<Post.Link> = coroutineScope {
             request.links.map { link ->
@@ -266,32 +266,56 @@ class OfflinePostRepository @Inject constructor(
             }.awaitAll()
         }.filterNotNull()
 
+        val reply = request.metadata.reply?.parent?.let { parent ->
+            val parentRef = StrongRef(
+                uri = parent.uri.uri.let(::AtUri),
+                cid = parent.cid.id.let(::Cid),
+            )
+            when (val ref = parent.record?.replyRef) {
+                // Starting a new thread
+                null -> PostReplyRef(
+                    root = parentRef,
+                    parent = parentRef,
+                )
+                // Continuing a thread
+                else -> PostReplyRef(
+                    root = StrongRef(
+                        uri = ref.rootUri.uri.let(::AtUri),
+                        cid = ref.rootCid.id.let(::Cid),
+                    ),
+                    parent = parentRef,
+                )
+            }
+        }
+
+        val embed = request.metadata.quote?.postId?.let { postId ->
+            val uri = postDao.posts(
+                postIds = setOf(postId)
+            )
+                .first()
+                .firstOrNull()
+                ?.entity
+                ?.uri
+            if (uri == null) null
+            else runCatchingWithNetworkRetry {
+                networkService.api.getRecord(
+                    params = GetRecordQueryParams(
+                        uri = AtUri(uri.uri)
+                    )
+                )
+            }
+                .getOrNull()
+                ?.value
+                ?.decodeAs<PostEmbedUnion>()
+        }
+
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
             record = BskyPost(
                 text = request.text,
-                reply = replyTo?.parent?.let { parent ->
-                    val parentRef = StrongRef(
-                        uri = parent.uri.uri.let(::AtUri),
-                        cid = parent.cid.id.let(::Cid),
-                    )
-                    when (val ref = parent.record?.replyRef) {
-                        // Starting a new thread
-                        null -> PostReplyRef(
-                            root = parentRef,
-                            parent = parentRef,
-                        )
-                        // Continuing a thread
-                        else -> PostReplyRef(
-                            root = StrongRef(
-                                uri = ref.rootUri.uri.let(::AtUri),
-                                cid = ref.rootCid.id.let(::Cid),
-                            ),
-                            parent = parentRef,
-                        )
-                    }
-                },
+                reply = reply,
+                embed = embed,
                 facets = resolvedLinks.map { link ->
                     Facet(
                         index = FacetByteSlice(

@@ -79,8 +79,9 @@ class ActualComposeViewModel(
             AnnotatedString(
                 when (val postType = route.creationType) {
                     is Post.Create.Mention -> "@${postType.profile.handle}"
-                    is Post.Create.Reply -> ""
-                    Post.Create.Timeline -> ""
+                    is Post.Create.Reply,
+                    is Post.Create.Quote,
+                    Post.Create.Timeline,
                     null -> ""
                 }
             )
@@ -183,13 +184,11 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                 authorId = action.authorId,
                 text = action.text,
                 links = action.links,
+                metadata = Post.Create.Metadata(
+                    reply = action.postType as? Post.Create.Reply,
+                    quote = action.postType as? Post.Create.Quote,
+                ),
             ),
-            replyTo = when (val postType = action.postType) {
-                is Post.Create.Mention -> null
-                is Post.Create.Reply -> postType
-                Post.Create.Timeline -> null
-                null -> null
-            },
         )
 
         writeQueue.enqueue(postWrite)
