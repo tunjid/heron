@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
@@ -47,6 +50,12 @@ val Timeline.Presentation.cardSize
     get() = when (this) {
         Timeline.Presentation.TextAndEmbed -> 340.dp
         Timeline.Presentation.CondensedMedia -> 160.dp
+    }
+
+val Timeline.Presentation.icon
+    get() = when (this) {
+        Timeline.Presentation.TextAndEmbed -> Icons.Rounded.Splitscreen
+        Timeline.Presentation.CondensedMedia -> Icons.Rounded.Dashboard
     }
 
 val Timeline.sharedElementPrefix get() = sourceId

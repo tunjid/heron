@@ -31,7 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.AutoSize
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -67,6 +68,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 internal fun PostVideo(
     video: Video,
     sharedElementPrefix: String,
+    presentation: Timeline.Presentation,
     panedSharedElementScope: PanedSharedElementScope,
     onClicked: () -> Unit,
 ) {
@@ -123,7 +125,7 @@ internal fun PostVideo(
             videoPlayerController = videoPlayerController,
         )
 
-        PlayButton(
+        if (presentation == Timeline.Presentation.TextAndEmbed) PlayButton(
             modifier = Modifier
                 .align(Alignment.Center),
             videoPlayerState = videoPlayerState,
@@ -148,7 +150,7 @@ private fun PlayerInfo(
                     modifier = Modifier.padding(horizontal = 4.dp),
                     text = videoPlayerState.lastPositionMs.formatVideoDuration(),
                     style = MaterialTheme.typography.bodySmall,
-                    autoSize = AutoSize.StepBased(
+                    autoSize = TextAutoSize.StepBased(
                         minFontSize = 8.sp,
                         maxFontSize = 10.sp,
                     ),
