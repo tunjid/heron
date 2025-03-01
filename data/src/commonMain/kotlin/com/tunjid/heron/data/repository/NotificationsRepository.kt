@@ -48,6 +48,7 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.response.AtpResponse
+import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable
 data class NotificationsQuery(
@@ -147,6 +148,9 @@ class OfflineNotificationsRepository @Inject constructor(
                 onResponse = {
                     val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
+                        if (query.data.page == 0) {
+                            notificationsDao.deleteAllNotifications()
+                        }
                         add(
                             viewingProfileId = authProfileId,
                             listNotificationsNotification = first.notifications,
@@ -169,7 +173,8 @@ class OfflineNotificationsRepository @Inject constructor(
 
         val isSuccess = runCatchingWithNetworkRetry {
             networkService.api.updateSeen(
-                request = UpdateSeenRequest(at)
+                // Add 1 millisecond to the request to be past the time on the backend
+                request = UpdateSeenRequest(at + 1.milliseconds)
             )
         }.isSuccess
         if (isSuccess) updateNotifications {
