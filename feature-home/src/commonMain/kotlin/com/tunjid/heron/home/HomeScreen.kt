@@ -70,6 +70,8 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
+import com.tunjid.heron.timeline.ui.post.PostInteractionState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
@@ -207,6 +209,7 @@ private fun HomeTimeline(
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
+    val postInteractionState = rememberPostInteractionState()
 
     PullToRefreshBox(
         modifier = Modifier
@@ -308,11 +311,7 @@ private fun HomeTimeline(
                                     )
                                 )
                             },
-                            onPostInteraction = {
-                                actions(
-                                    Action.SendPostInteraction(it)
-                                )
-                            }
+                            onPostInteraction = postInteractionState::onInteraction,
                         ),
                     )
                 }
@@ -320,6 +319,24 @@ private fun HomeTimeline(
         }
     }
 
+    PostInteractions(
+        state = postInteractionState,
+        onInteractionConfirmed = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    )
+                )
+            )
+        }
+    )
     if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(

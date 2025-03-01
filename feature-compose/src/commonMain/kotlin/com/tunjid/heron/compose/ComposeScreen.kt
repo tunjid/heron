@@ -55,6 +55,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -63,6 +64,9 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 internal fun ComposeScreen(
@@ -86,6 +90,8 @@ internal fun ComposeScreen(
         Post(
             signedInProfile = state.signedInProfile,
             postText = postText,
+            quotedPost = state.quotedPost,
+            panedSharedElementScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onCreatePost = onCreatePost@{
                 val authorId = state.signedInProfile?.did ?: return@onCreatePost
@@ -114,36 +120,56 @@ private fun Post(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
+    quotedPost: Post?,
+    panedSharedElementScope: PanedSharedElementScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
 ) {
-    AuthorAndPost(
+    Column(
         modifier = modifier,
-        avatar = {
-            AsyncImage(
-                modifier = Modifier.size(UiTokens.avatarSize),
-                args = remember(signedInProfile?.avatar) {
-                    ImageArgs(
-                        url = signedInProfile?.avatar?.uri,
-                        contentDescription = signedInProfile?.contentDescription,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-            )
-        },
-        postContent = {
-            PostComposition(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                postText = postText,
-                onPostTextChanged = onPostTextChanged,
-                onCreatePost = onCreatePost@{
-                    onCreatePost()
-                }
-            )
-        },
-    )
+        verticalArrangement = spacedBy(8.dp)
+    ) {
+        AuthorAndPost(
+            modifier = modifier,
+            avatar = {
+                AsyncImage(
+                    modifier = Modifier.size(UiTokens.avatarSize),
+                    args = remember(signedInProfile?.avatar) {
+                        ImageArgs(
+                            url = signedInProfile?.avatar?.uri,
+                            contentDescription = signedInProfile?.contentDescription,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
+                )
+            },
+            postContent = {
+                PostComposition(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    postText = postText,
+                    onPostTextChanged = onPostTextChanged,
+                    onCreatePost = onCreatePost@{
+                        onCreatePost()
+                    }
+                )
+            },
+        )
+
+        if (quotedPost != null) QuotedPost(
+            modifier = Modifier.padding(
+                horizontal = 24.dp,
+            ),
+            now = remember { Clock.System.now() },
+            post = quotedPost,
+            sharedElementPrefix = NeverMatchedSharedElementPrefix,
+            panedSharedElementScope = panedSharedElementScope,
+            onClick = {},
+            onProfileClicked = { _, _ -> },
+            onPostMediaClicked = { _, _ -> },
+        )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -260,3 +286,6 @@ private fun PostComposition(
         textFieldFocusRequester.requestFocus()
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+private val NeverMatchedSharedElementPrefix = Uuid.random().toString()

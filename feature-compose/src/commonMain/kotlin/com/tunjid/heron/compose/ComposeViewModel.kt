@@ -23,8 +23,10 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -45,6 +47,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -68,6 +71,7 @@ class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
     notificationsRepository: NotificationsRepository,
+    postRepository: PostRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -79,9 +83,11 @@ class ActualComposeViewModel(
             AnnotatedString(
                 when (val postType = route.creationType) {
                     is Post.Create.Mention -> "@${postType.profile.handle}"
-                    is Post.Create.Reply -> ""
-                    Post.Create.Timeline -> ""
-                    null -> ""
+                    is Post.Create.Reply,
+                    is Post.Create.Quote,
+                    Post.Create.Timeline,
+                    null,
+                        -> ""
                 }
             )
         ),
@@ -95,6 +101,17 @@ class ActualComposeViewModel(
         ),
         loadSignedInProfileMutations(
             authTokenRepository = authTokenRepository,
+        ),
+        quotedPostMutations(
+            quotedPostId = when (val creationType = route.creationType) {
+                is Post.Create.Quote -> creationType.interaction.postId
+                is Post.Create.Mention,
+                is Post.Create.Reply,
+                Post.Create.Timeline,
+                null,
+                    -> null
+            },
+            postRepository = postRepository,
         )
     ),
     actionTransform = transform@{ actions ->
@@ -131,6 +148,17 @@ private fun loadSignedInProfileMutations(
     authTokenRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
+
+private fun quotedPostMutations(
+    quotedPostId: Id?,
+    postRepository: PostRepository,
+): Flow<Mutation<State>> =
+    quotedPostId?.let { id ->
+        postRepository.post(id).mapToMutation {
+            copy(quotedPost = it)
+        }
+    }
+        ?: emptyFlow()
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(
 ): Flow<Mutation<State>> =
@@ -183,13 +211,11 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                 authorId = action.authorId,
                 text = action.text,
                 links = action.links,
+                metadata = Post.Create.Metadata(
+                    reply = action.postType as? Post.Create.Reply,
+                    quote = action.postType as? Post.Create.Quote,
+                ),
             ),
-            replyTo = when (val postType = action.postType) {
-                is Post.Create.Mention -> null
-                is Post.Create.Reply -> postType
-                Post.Create.Timeline -> null
-                null -> null
-            },
         )
 
         writeQueue.enqueue(postWrite)

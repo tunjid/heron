@@ -49,14 +49,13 @@ sealed interface Writable {
     @Serializable
     data class Create(
         val request: Post.Create.Request,
-        val replyTo: Post.Create.Reply?,
     ) : Writable {
 
         override val queueId: String
-            get() = "create-post-$request-$replyTo"
+            get() = "create-post-$request"
 
         override suspend fun WriteQueue.write() {
-            postRepository.createPost(request, replyTo)
+            postRepository.createPost(request)
         }
     }
 

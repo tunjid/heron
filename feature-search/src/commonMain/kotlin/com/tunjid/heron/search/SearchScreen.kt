@@ -71,6 +71,8 @@ import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.PostInteractionState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -96,6 +98,8 @@ internal fun SearchScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val postInteractionState = rememberPostInteractionState()
+
     Column(
         modifier = modifier
     ) {
@@ -144,13 +148,8 @@ internal fun SearchScreen(
                 )
             }
         }
-        val onPostInteraction = remember {
-            { interaction: Post.Interaction ->
-                actions(
-                    Action.SendPostInteraction(interaction)
-                )
-            }
-        }
+        val onPostInteraction = postInteractionState::onInteraction
+
         AnimatedContent(
             targetState = state.layout
         ) { targetLayout ->
@@ -193,6 +192,25 @@ internal fun SearchScreen(
             }
         }
     }
+
+    PostInteractions(
+        state = postInteractionState,
+        onInteractionConfirmed = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = null,
+                    )
+                )
+            )
+        }
+    )
 }
 
 @Composable

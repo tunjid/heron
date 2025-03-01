@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.embed.Record
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetQuotesQueryParams
@@ -23,6 +24,7 @@ import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
+import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.richtext.Facet
@@ -72,6 +74,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -107,13 +110,16 @@ interface PostRepository {
         cursor: Cursor,
     ): Flow<CursorList<Post>>
 
+    fun post(
+        id: Id,
+    ): Flow<Post>
+
     suspend fun sendInteraction(
         interaction: Post.Interaction,
     )
 
     suspend fun createPost(
         request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
     )
 }
 
@@ -240,9 +246,16 @@ class OfflinePostRepository @Inject constructor(
         )
             .distinctUntilChanged()
 
+    override fun post(
+        id: Id,
+    ): Flow<Post> =
+        postDao.posts(setOf(id))
+            .mapNotNull {
+                it.firstOrNull()?.asExternalModel(quote = null)
+            }
+
     override suspend fun createPost(
         request: Post.Create.Request,
-        replyTo: Post.Create.Reply?,
     ) {
         val resolvedLinks: List<Post.Link> = coroutineScope {
             request.links.map { link ->
@@ -266,32 +279,44 @@ class OfflinePostRepository @Inject constructor(
             }.awaitAll()
         }.filterNotNull()
 
+        val reply = request.metadata.reply?.parent?.let { parent ->
+            val parentRef = StrongRef(
+                uri = parent.uri.uri.let(::AtUri),
+                cid = parent.cid.id.let(::Cid),
+            )
+            when (val ref = parent.record?.replyRef) {
+                // Starting a new thread
+                null -> PostReplyRef(
+                    root = parentRef,
+                    parent = parentRef,
+                )
+                // Continuing a thread
+                else -> PostReplyRef(
+                    root = StrongRef(
+                        uri = ref.rootUri.uri.let(::AtUri),
+                        cid = ref.rootCid.id.let(::Cid),
+                    ),
+                    parent = parentRef,
+                )
+            }
+        }
+        val embed = request.metadata.quote?.interaction?.let { interaction ->
+            PostEmbedUnion.Record(
+                value = Record(
+                    record = StrongRef(
+                        uri = AtUri(interaction.postUri.uri),
+                        cid = Cid(interaction.postId.id),
+                    )
+                )
+            )
+        }
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
             record = BskyPost(
                 text = request.text,
-                reply = replyTo?.parent?.let { parent ->
-                    val parentRef = StrongRef(
-                        uri = parent.uri.uri.let(::AtUri),
-                        cid = parent.cid.id.let(::Cid),
-                    )
-                    when (val ref = parent.record?.replyRef) {
-                        // Starting a new thread
-                        null -> PostReplyRef(
-                            root = parentRef,
-                            parent = parentRef,
-                        )
-                        // Continuing a thread
-                        else -> PostReplyRef(
-                            root = StrongRef(
-                                uri = ref.rootUri.uri.let(::AtUri),
-                                cid = ref.rootCid.id.let(::Cid),
-                            ),
-                            parent = parentRef,
-                        )
-                    }
-                },
+                reply = reply,
+                embed = embed,
                 facets = resolvedLinks.map { link ->
                     Facet(
                         index = FacetByteSlice(
