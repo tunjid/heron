@@ -61,14 +61,12 @@ fun TimelinePresentationSelector(
     available: List<Timeline.Presentation>,
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
-    if (available.size < 2) return
     var expanded by remember {
         mutableStateOf(
             if (alwaysExpanded) selected
             else null
         )
     }
-
     LookaheadScope {
         ElevatedCard(
             modifier = modifier,
@@ -80,7 +78,7 @@ fun TimelinePresentationSelector(
                 ),
                 horizontalArrangement = Arrangement.aligned(Alignment.End)
             ) {
-                Timeline.Presentation.entries.forEach { presentation ->
+                if (available.size > 1) Timeline.Presentation.entries.forEach { presentation ->
                     val isSelected = selected == presentation
                     key(presentation.key) {
                         AnimatedVisibility(

@@ -775,25 +775,21 @@ private fun TimelinePresentationSelector(
         }
     }.value
 
-    AnimatedVisibility(
-        visible = timeline != null
-    ) {
-        if (timeline != null) com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
-            modifier = modifier,
-            selected = timeline.presentation,
-            available = timeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                timelineStateHolders.stateHolderAtOrNull(page)
-                    ?.accept
-                    ?.invoke(
-                        TimelineLoadAction.UpdatePreferredPresentation(
-                            timeline = timeline,
-                            presentation = presentation,
-                        )
+    if (timeline != null) com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
+        modifier = modifier,
+        selected = timeline.presentation,
+        available = timeline.supportedPresentations,
+        onPresentationSelected = { presentation ->
+            timelineStateHolders.stateHolderAtOrNull(page)
+                ?.accept
+                ?.invoke(
+                    TimelineLoadAction.UpdatePreferredPresentation(
+                        timeline = timeline,
+                        presentation = presentation,
                     )
-            }
-        )
-    }
+                )
+        }
+    )
 }
 
 @Stable
