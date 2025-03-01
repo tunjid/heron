@@ -46,4 +46,11 @@ interface NotificationsDao {
     suspend fun upsertNotifications(
         entities: List<NotificationEntity>,
     )
+
+    @Query(
+        """
+        DELETE FROM notifications
+    """
+    )
+    suspend fun deleteAllNotifications()
 }
