@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -108,6 +109,10 @@ interface PostRepository {
         query: PostDataQuery,
         cursor: Cursor,
     ): Flow<CursorList<Post>>
+
+    fun post(
+        id: Id,
+    ): Flow<Post>
 
     suspend fun sendInteraction(
         interaction: Post.Interaction,
@@ -240,6 +245,14 @@ class OfflinePostRepository @Inject constructor(
             ::CursorList,
         )
             .distinctUntilChanged()
+
+    override fun post(
+        id: Id,
+    ): Flow<Post> =
+        postDao.posts(setOf(id))
+            .mapNotNull {
+                it.firstOrNull()?.asExternalModel(quote = null)
+            }
 
     override suspend fun createPost(
         request: Post.Create.Request,

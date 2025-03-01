@@ -103,7 +103,6 @@ internal fun PostEmbed(
                 else -> QuotedPost(
                     now = now,
                     post = quote,
-                    author = quote.author,
                     sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
                         quotingPostId = postId,
                     ),

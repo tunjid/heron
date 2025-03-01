@@ -19,6 +19,7 @@ package com.tunjid.heron.timeline.ui.post.feature
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -54,98 +55,103 @@ import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun QuotedPost(
+fun QuotedPost(
+    modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
-    author: Profile,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int) -> Unit,
 ) = with(panedSharedElementScope) {
-    FeatureContainer(
-        modifier = Modifier.padding(16.dp),
-        onClick = onClick,
+    val author = post.author
+    Box(
+        modifier = modifier,
     ) {
-        Row(
-            horizontalArrangement = spacedBy(8.dp)
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.CenterVertically)
-                    .sharedElement(
-                        key = post.avatarSharedElementKey(sharedElementPrefix)
-                    )
-                    .clickable {
-                        onProfileClicked(post, author)
-                    },
-                args = ImageArgs(
-                    url = author.avatar?.uri,
-                    contentDescription = author.displayName ?: author.handle.id,
-                    contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
-                )
-            )
-            PostHeadline(
-                now = now,
-                createdAt = post.record?.createdAt ?: remember { Clock.System.now() },
-                author = author,
-                postId = post.cid,
-                sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = panedSharedElementScope,
-            )
-        }
-        Spacer(Modifier.height(2.dp))
-        PostText(
-            post = post,
-            sharedElementPrefix = sharedElementPrefix,
-            panedSharedElementScope = panedSharedElementScope,
-            maxLines = 3,
-            modifier = Modifier,
+        FeatureContainer(
+            modifier = Modifier.padding(16.dp),
             onClick = onClick,
-            onProfileClicked = onProfileClicked,
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        val uriHandler = LocalUriHandler.current
-        when (val embed = post.embed) {
-            is ExternalEmbed -> PostExternal(
-                feature = embed,
-                postId = post.cid,
+        ) {
+            Row(
+                horizontalArrangement = spacedBy(8.dp)
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                        .sharedElement(
+                            key = post.avatarSharedElementKey(sharedElementPrefix)
+                        )
+                        .clickable {
+                            onProfileClicked(post, author)
+                        },
+                    args = ImageArgs(
+                        url = author.avatar?.uri,
+                        contentDescription = author.displayName ?: author.handle.id,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                )
+                PostHeadline(
+                    now = now,
+                    createdAt = post.record?.createdAt ?: remember { Clock.System.now() },
+                    author = author,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    panedSharedElementScope = panedSharedElementScope,
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+            PostText(
+                post = post,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
-                // Quotes are exclusively in blog view types
-                presentation = Timeline.Presentation.TextAndEmbed,
-                onClick = {
-                    uriHandler.openUri(embed.uri.uri)
-                },
+                maxLines = 3,
+                modifier = Modifier,
+                onClick = onClick,
+                onProfileClicked = onProfileClicked,
             )
 
-            is ImageList -> PostImages(
-                feature = embed,
-                sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = panedSharedElementScope,
-                onImageClicked = { index ->
-                    onPostMediaClicked(embed, index)
-                }
-            )
+            Spacer(Modifier.height(8.dp))
 
-            UnknownEmbed -> UnknownPostPost(onClick = {})
-            is Video -> PostVideo(
-                video = embed,
-                panedSharedElementScope = panedSharedElementScope,
-                sharedElementPrefix = sharedElementPrefix,
-                // Quote videos only show in text and embeds
-                presentation = Timeline.Presentation.TextAndEmbed,
-                onClicked = {
-                    onPostMediaClicked(embed, 0)
-                }
-            )
+            val uriHandler = LocalUriHandler.current
+            when (val embed = post.embed) {
+                is ExternalEmbed -> PostExternal(
+                    feature = embed,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    panedSharedElementScope = panedSharedElementScope,
+                    // Quotes are exclusively in blog view types
+                    presentation = Timeline.Presentation.TextAndEmbed,
+                    onClick = {
+                        uriHandler.openUri(embed.uri.uri)
+                    },
+                )
 
-            null -> Unit
+                is ImageList -> PostImages(
+                    feature = embed,
+                    sharedElementPrefix = sharedElementPrefix,
+                    panedSharedElementScope = panedSharedElementScope,
+                    onImageClicked = { index ->
+                        onPostMediaClicked(embed, index)
+                    }
+                )
+
+                UnknownEmbed -> UnknownPostPost(onClick = {})
+                is Video -> PostVideo(
+                    video = embed,
+                    panedSharedElementScope = panedSharedElementScope,
+                    sharedElementPrefix = sharedElementPrefix,
+                    // Quote videos only show in text and embeds
+                    presentation = Timeline.Presentation.TextAndEmbed,
+                    onClicked = {
+                        onPostMediaClicked(embed, 0)
+                    }
+                )
+
+                null -> Unit
+            }
         }
     }
 }
