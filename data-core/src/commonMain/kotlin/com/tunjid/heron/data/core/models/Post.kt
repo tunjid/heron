@@ -118,7 +118,7 @@ data class Post(
 
         @Serializable
         data class Quote(
-            val postId: Id,
+            val interaction: Interaction.Create.Repost,
         ) : Create()
 
         @Serializable

@@ -81,7 +81,7 @@ class PostInteractionState private constructor(){
 fun PostInteractions(
     state: PostInteractionState,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
-    onQuotePostClicked: () -> Unit,
+    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -132,10 +132,10 @@ fun PostInteractions(
                             .fillMaxWidth()
                             .clip(CircleShape)
                             .clickable {
-                                if (index == 0) state.currentInteraction?.let(
-                                    onInteractionConfirmed
-                                )
-                                else onQuotePostClicked()
+                                if (index == 0) state.currentInteraction
+                                    ?.let(onInteractionConfirmed)
+                                else (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                    ?.let(onQuotePostClicked)
                                 hideSheet()
                             }
                             .padding(

@@ -288,19 +288,11 @@ class OfflinePostRepository @Inject constructor(
             }
         }
 
-        val embed = request.metadata.quote?.postId?.let { postId ->
-            val uri = postDao.posts(
-                postIds = setOf(postId)
-            )
-                .first()
-                .firstOrNull()
-                ?.entity
-                ?.uri
-            if (uri == null) null
-            else runCatchingWithNetworkRetry {
+        val embed = request.metadata.quote?.interaction?.postUri?.let { postUri ->
+            runCatchingWithNetworkRetry {
                 networkService.api.getRecord(
                     params = GetRecordQueryParams(
-                        uri = AtUri(uri.uri)
+                        uri = AtUri(postUri.uri)
                     )
                 )
             }

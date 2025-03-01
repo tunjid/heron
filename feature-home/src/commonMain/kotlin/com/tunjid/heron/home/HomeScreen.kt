@@ -328,17 +328,15 @@ private fun HomeTimeline(
                 Action.SendPostInteraction(it)
             )
         },
-        onQuotePostClicked = {
-//            actions(
-//                Action.Navigate.DelegateTo(
-//                    NavigationAction.Common.ComposePost(
-//                        type = Post.Create.Reply(
-//                            parent = post,
-//                        ),
-//                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-//                    )
-//                )
-//            )
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    )
+                )
+            )
         }
     )
     if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
