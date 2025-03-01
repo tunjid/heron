@@ -21,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -45,6 +47,8 @@ data class FormField(
     val transformation: VisualTransformation = VisualTransformation.None,
     @Transient
     val autofillTypes: List<AutofillType> = emptyList(),
+    @Transient
+    val contentType: ContentType? = null,
     @Transient
     val keyboardOptions: KeyboardOptions = KeyboardOptions(),
 ) {
@@ -76,8 +80,12 @@ data class State(
             maxLines = 1,
             leadingIcon = Icons.Rounded.AccountCircle,
             transformation = VisualTransformation.None,
+            autofillTypes = listOf(AutofillType.Username),
+            contentType = ContentType.Username,
             keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
                 autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Uri,
                 imeAction = ImeAction.Next,
             ),
         ),
@@ -88,7 +96,9 @@ data class State(
             leadingIcon = Icons.Rounded.Lock,
             transformation = PasswordVisualTransformation(),
             autofillTypes = listOf(AutofillType.Password),
+            contentType = ContentType.Password,
             keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,

@@ -16,7 +16,12 @@
 
 package com.tunjid.heron.signin.di
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Text
@@ -93,6 +98,7 @@ abstract class SignInComponent(
 ) {
     companion object
 
+    @OptIn(ExperimentalSharedTransitionApi::class)
     @IntoMap
     @Provides
     fun routeAdaptiveConfiguration(
@@ -121,7 +127,10 @@ abstract class SignInComponent(
                 },
                 floatingActionButton = {
                     PaneFab(
-                        modifier = Modifier.alpha(if (state.submitButtonEnabled) 1f else 0.6f),
+                        modifier = Modifier
+                            .animateBounds(lookaheadScope = this)
+                            .windowInsetsPadding(WindowInsets.ime)
+                            .alpha(if (state.submitButtonEnabled) 1f else 0.6f),
                         text = stringResource(Res.string.sign_in),
                         icon = Icons.Rounded.Check,
                         expanded = true,

@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import heron.feature_auth.generated.resources.Res
 import heron.feature_auth.generated.resources.password
@@ -57,7 +59,10 @@ internal fun SignInScreen(
 
         state.fields.forEach { field ->
             OutlinedTextField(
-                modifier = Modifier,
+                modifier = Modifier
+                    .semantics {
+                        field.contentType?.let { contentType = it }
+                    },
                 value = field.value,
                 maxLines = field.maxLines,
                 onValueChange = {
