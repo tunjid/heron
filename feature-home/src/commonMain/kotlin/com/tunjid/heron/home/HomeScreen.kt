@@ -311,9 +311,7 @@ private fun HomeTimeline(
                                     )
                                 )
                             },
-                            onPostInteraction = {
-                                postInteractionState.onInteraction(it)
-                            }
+                            onPostInteraction = postInteractionState::onInteraction,
                         ),
                     )
                 }

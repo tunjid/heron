@@ -53,6 +53,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.PostInteractionState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.Clock
@@ -66,6 +68,7 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val postInteractionState = rememberPostInteractionState()
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
     val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
@@ -123,11 +126,8 @@ internal fun NotificationsScreen(
             )
         }
     }
-    val onPostInteraction = remember {
-        { interaction: Post.Interaction ->
-            actions(Action.SendPostInteraction(interaction))
-        }
-    }
+    val onPostInteraction = postInteractionState::onInteraction
+
     PullToRefreshBox(
         modifier = modifier
             .fillMaxSize(),
@@ -242,6 +242,25 @@ internal fun NotificationsScreen(
             )
         }
     }
+
+    PostInteractions(
+        state = postInteractionState,
+        onInteractionConfirmed = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.DelegateTo(
+                    NavigationAction.Common.ComposePost(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = null,
+                    )
+                )
+            )
+        }
+    )
 
     listState.PivotedTilingEffect(
         items = items,

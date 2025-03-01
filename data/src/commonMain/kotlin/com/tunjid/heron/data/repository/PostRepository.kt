@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.embed.Record
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetQuotesQueryParams
@@ -80,7 +81,6 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
-import tools.ozone.moderation.GetRecordQueryParams
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
@@ -287,20 +287,16 @@ class OfflinePostRepository @Inject constructor(
                 )
             }
         }
-
-        val embed = request.metadata.quote?.interaction?.postUri?.let { postUri ->
-            runCatchingWithNetworkRetry {
-                networkService.api.getRecord(
-                    params = GetRecordQueryParams(
-                        uri = AtUri(postUri.uri)
+        val embed = request.metadata.quote?.interaction?.let { interaction ->
+            PostEmbedUnion.Record(
+                value = Record(
+                    record = StrongRef(
+                        uri = AtUri(interaction.postUri.uri),
+                        cid = Cid(interaction.postId.id),
                     )
                 )
-            }
-                .getOrNull()
-                ?.value
-                ?.decodeAs<PostEmbedUnion>()
+            )
         }
-
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
