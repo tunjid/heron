@@ -37,6 +37,8 @@
     <string name="reposts">reposts</string>
     <string name="quote">quote</string>
     <string name="quotes">quotes</string>
+    <string name="quote_post">quote post</string>
+    <string name="cancel">cancel</string>
     <string name="videos">videos</string>
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>

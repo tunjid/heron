@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
@@ -43,7 +45,7 @@ fun Timeline.displayName() = when (this) {
         Timeline.Profile.Type.Likes -> stringResource(Res.string.likes)
         Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
         Timeline.Profile.Type.Videos -> stringResource(Res.string.videos)
-    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    }.capitalize(Locale.current)
 }
 
 val Timeline.Presentation.cardSize
