@@ -25,6 +25,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dashboard
@@ -43,7 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.timeline.utilities.icon
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.condensed_media
 import heron.ui_timeline.generated.resources.text_and_embeds
@@ -52,16 +55,21 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TimelinePresentationSelector(
+    modifier: Modifier = Modifier,
+    alwaysExpanded: Boolean = false,
     selected: Timeline.Presentation,
     available: List<Timeline.Presentation>,
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
-    if (available.size < 2) return
-    var expanded by remember { mutableStateOf<Timeline.Presentation?>(null) }
-
+    var expanded by remember {
+        mutableStateOf(
+            if (alwaysExpanded) selected
+            else null
+        )
+    }
     LookaheadScope {
         ElevatedCard(
-            modifier = Modifier,
+            modifier = modifier,
             shape = CircleShape,
         ) {
             Row(
@@ -70,7 +78,7 @@ fun TimelinePresentationSelector(
                 ),
                 horizontalArrangement = Arrangement.aligned(Alignment.End)
             ) {
-                Timeline.Presentation.entries.forEach { presentation ->
+                if (available.size > 1) Timeline.Presentation.entries.forEach { presentation ->
                     val isSelected = selected == presentation
                     key(presentation.key) {
                         AnimatedVisibility(
@@ -82,19 +90,18 @@ fun TimelinePresentationSelector(
                             exit = fadeOut() + scaleOut(),
                         ) {
                             IconButton(
+                                modifier = Modifier
+                                    .size(40.dp),
                                 onClick = {
                                     when (expanded) {
                                         null -> expanded = presentation
-                                        presentation -> expanded = null
+                                        presentation -> if (!alwaysExpanded) expanded = null
                                         else -> onPresentationSelected(presentation)
                                     }
                                 },
                                 content = {
                                     Icon(
-                                        imageVector = when (presentation) {
-                                            Timeline.Presentation.TextAndEmbed -> Icons.Rounded.Splitscreen
-                                            Timeline.Presentation.CondensedMedia -> Icons.Rounded.Dashboard
-                                        },
+                                        imageVector = presentation.icon,
                                         contentDescription = stringResource(
                                             when (presentation) {
                                                 Timeline.Presentation.TextAndEmbed -> Res.string.text_and_embeds
@@ -114,9 +121,11 @@ fun TimelinePresentationSelector(
         }
     }
 
-    DisposableEffect(expanded, selected) {
-        if (expanded != null && expanded != selected) {
-            expanded = null
+    DisposableEffect(expanded, selected, alwaysExpanded) {
+        if (!alwaysExpanded) {
+            if (expanded != null && expanded != selected) {
+                expanded = null
+            }
         }
         onDispose { }
     }

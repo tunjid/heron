@@ -155,6 +155,7 @@ private fun loadSignedInProfileMutations(
                             Timeline.Profile.Type.Replies -> true
                             Timeline.Profile.Type.Likes -> isSignedInProfile
                             Timeline.Profile.Type.Media -> true
+                            Timeline.Profile.Type.Videos -> true
                         }
                     }
                     .map { type ->

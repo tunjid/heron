@@ -85,6 +85,7 @@ internal fun PostEmbed(
                 video = embed,
                 panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
+                presentation = presentation,
                 onClicked = {
                     onPostMediaClicked(embed, 0, null)
                 }

@@ -287,6 +287,26 @@ class OfflineTimelineRepository(
                     networkFeed = GetAuthorFeedResponse::feed,
                 )
             )
+
+            Timeline.Profile.Type.Videos -> observeAndRefreshTimeline(
+                query = query,
+                nextCursorFlow = nextCursorFlow(
+                    query = query,
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getAuthorFeed(
+                            GetAuthorFeedQueryParams(
+                                actor = Did(timeline.profileId.id),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                                filter = GetAuthorFeedFilter.PostsWithVideo,
+                            )
+                        )
+                    },
+                    nextCursor = GetAuthorFeedResponse::cursor,
+                    networkFeed = GetAuthorFeedResponse::feed,
+                )
+            )
         }
     }
         .distinctUntilChanged()
@@ -363,7 +383,7 @@ class OfflineTimelineRepository(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
                             cursor = null,
-                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                            filter = GetAuthorFeedFilter.PostsWithMedia,
                         )
                     )
                 },
@@ -395,7 +415,23 @@ class OfflineTimelineRepository(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
                             cursor = null,
-                            filter = GetAuthorFeedFilter.PostsNoReplies,
+                            filter = GetAuthorFeedFilter.PostsWithReplies,
+                        )
+                    )
+                },
+                networkResponseToFeedViews = GetAuthorFeedResponse::feed,
+            )
+
+            Timeline.Profile.Type.Videos -> pollForTimelineUpdates(
+                timeline = timeline,
+                pollInterval = 15.seconds,
+                networkRequestBlock = {
+                    networkService.api.getAuthorFeed(
+                        GetAuthorFeedQueryParams(
+                            actor = Did(timeline.profileId.id),
+                            limit = 1,
+                            cursor = null,
+                            filter = GetAuthorFeedFilter.PostsWithVideo,
                         )
                     )
                 },

@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
@@ -26,6 +29,7 @@ import heron.ui_timeline.generated.resources.likes
 import heron.ui_timeline.generated.resources.media
 import heron.ui_timeline.generated.resources.posts
 import heron.ui_timeline.generated.resources.replies
+import heron.ui_timeline.generated.resources.videos
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -38,6 +42,7 @@ fun Timeline.displayName() = when (this) {
         Timeline.Profile.Type.Posts -> stringResource(Res.string.posts)
         Timeline.Profile.Type.Likes -> stringResource(Res.string.likes)
         Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
+        Timeline.Profile.Type.Videos -> stringResource(Res.string.videos)
     }.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
 
@@ -45,6 +50,12 @@ val Timeline.Presentation.cardSize
     get() = when (this) {
         Timeline.Presentation.TextAndEmbed -> 340.dp
         Timeline.Presentation.CondensedMedia -> 160.dp
+    }
+
+val Timeline.Presentation.icon
+    get() = when (this) {
+        Timeline.Presentation.TextAndEmbed -> Icons.Rounded.Splitscreen
+        Timeline.Presentation.CondensedMedia -> Icons.Rounded.Dashboard
     }
 
 val Timeline.sharedElementPrefix get() = sourceId

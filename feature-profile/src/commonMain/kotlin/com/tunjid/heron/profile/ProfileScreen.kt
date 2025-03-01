@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -90,6 +91,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -112,7 +114,6 @@ import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
@@ -213,6 +214,7 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
+                timelineStateHolders = state.timelineStateHolders,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
                     updatedTimelineStateHolders.stateHolderAt(
@@ -278,6 +280,7 @@ private fun ProfileHeader(
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
+    timelineStateHolders: TimelineStateHolders,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
@@ -336,12 +339,11 @@ private fun ProfileHeader(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = headerState.tabsStartPadding,
-                        end = headerState.tabsEndPadding,
+                        horizontal = headerState.tabsHorizontalPadding,
                     ),
-                headerState = headerState,
                 pagerState = pagerState,
                 tabs = timelineTabs,
+                timelineStateHolders = timelineStateHolders,
                 onRefreshTabClicked = onRefreshTabClicked,
             )
             Spacer(Modifier.height(8.dp))
@@ -577,24 +579,36 @@ fun Statistic(
 private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    headerState: HeaderState,
     tabs: List<Tab>,
+    timelineStateHolders: TimelineStateHolders,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    Tabs(
+    Row(
         modifier = modifier
-            .clip(CircleShape)
-            .offset { headerState.tabsOffset(density = this) },
-        tabs = tabs,
-        selectedTabIndex = pagerState.tabIndex,
-        onTabSelected = {
-            scope.launch {
-                pagerState.animateScrollToPage(it)
-            }
-        },
-        onTabReselected = onRefreshTabClicked,
-    )
+            .clip(CircleShape),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Tabs(
+            modifier = Modifier
+                .animateContentSize()
+                .weight(1f)
+                .clip(CircleShape),
+            tabs = tabs,
+            selectedTabIndex = pagerState.tabIndex,
+            onTabSelected = {
+                scope.launch {
+                    pagerState.animateScrollToPage(it)
+                }
+            },
+            onTabReselected = onRefreshTabClicked,
+        )
+        TimelinePresentationSelector(
+            page = pagerState.currentPage,
+            timelineStateHolders = timelineStateHolders,
+        )
+    }
 }
 
 @Composable
@@ -743,6 +757,41 @@ private fun ProfileTimeline(
     )
 }
 
+@Composable
+private fun TimelinePresentationSelector(
+    modifier: Modifier = Modifier,
+    page: Int,
+    timelineStateHolders: TimelineStateHolders,
+) {
+    val timeline = produceState(
+        initialValue = timelineStateHolders.stateHolderAtOrNull(page)?.state?.value?.timeline,
+        key1 = page,
+        key2 = timelineStateHolders,
+    ) {
+        val holder = timelineStateHolders.stateHolderAtOrNull(page) ?: return@produceState
+        value = holder.state.value.timeline
+        holder.state.collect {
+            value = it.timeline
+        }
+    }.value
+
+    if (timeline != null) com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
+        modifier = modifier,
+        selected = timeline.presentation,
+        available = timeline.supportedPresentations,
+        onPresentationSelected = { presentation ->
+            timelineStateHolders.stateHolderAtOrNull(page)
+                ?.accept
+                ?.invoke(
+                    TimelineLoadAction.UpdatePreferredPresentation(
+                        timeline = timeline,
+                        presentation = presentation,
+                    )
+                )
+        }
+    )
+}
+
 @Stable
 private class HeaderState(
     val headerState: CollapsingHeaderState,
@@ -759,8 +808,7 @@ private class HeaderState(
     val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
     val avatarPadding get() = 4.dp * (1f - progress)
     val avatarAlignmentLerp get() = progress
-    val tabsStartPadding get() = sizeToken
-    val tabsEndPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
+    val tabsHorizontalPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
 
     fun bioOffset() = IntOffset(
         x = 0,
@@ -774,15 +822,6 @@ private class HeaderState(
         IntOffset(
             x = -(16.dp * progress).roundToPx(),
             y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx()
-        )
-    }
-
-    fun tabsOffset(
-        density: Density,
-    ) = with(density) {
-        IntOffset(
-            x = (headerState.progress * UiTokens.tabsHeight.toPx()).roundToInt(),
-            y = 0,
         )
     }
 

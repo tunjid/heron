@@ -138,6 +138,8 @@ internal fun QuotedPost(
                 video = embed,
                 panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
+                // Quote videos only show in text and embeds
+                presentation = Timeline.Presentation.TextAndEmbed,
                 onClicked = {
                     onPostMediaClicked(embed, 0)
                 }
