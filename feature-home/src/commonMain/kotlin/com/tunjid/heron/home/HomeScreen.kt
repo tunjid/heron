@@ -68,7 +68,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.effects.PauseVideoOnTabChangeEffect
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.PostInteractionState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractions
@@ -153,8 +152,6 @@ internal fun HomeScreen(
                     .accept(TimelineLoadAction.Fetch.Refresh)
             }
         )
-
-        pagerState.PauseVideoOnTabChangeEffect()
 
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }

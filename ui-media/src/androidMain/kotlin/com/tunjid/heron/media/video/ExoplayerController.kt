@@ -47,7 +47,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
@@ -55,6 +54,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -143,19 +143,10 @@ class ExoplayerController(
         // TODO this should also be governed by coroutine launch semantics
         //  as the one used for list diffing
         // Pause playback when nothing is visible to play
-        snapshotFlow { idsToStates.toMap() }
-            .flatMapLatest { map ->
-                combine(
-                    flows = map.values.map {
-                        snapshotFlow(it::status)
-                    },
-                    transform = { allStatuses ->
-                        allStatuses.all { it is PlayerStatus.Idle }
-                    }
-                )
-            }
+        snapshotFlow { idsToStates[activeVideoId]?.status }
+            .map { it == null || it is PlayerStatus.Idle }
             .filter(true::equals)
-            .onEach { pauseActiveVideo() }
+            .onEach { player?.pause() }
             .launchIn(scope + Dispatchers.Main)
 
         snapshotFlow { isMuted }
@@ -457,4 +448,4 @@ private fun VideoPlayerState.toMediaItem() =
         .setMediaId(videoId)
         .build()
 
-private const val MaxVideoStates = 0
+private const val MaxVideoStates = 30
