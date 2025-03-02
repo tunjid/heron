@@ -143,10 +143,10 @@ class ExoplayerController(
         // TODO this should also be governed by coroutine launch semantics
         //  as the one used for list diffing
         // Pause playback when nothing is visible to play
-        snapshotFlow { idsToStates.values }
-            .flatMapLatest { states ->
+        snapshotFlow { idsToStates.toMap() }
+            .flatMapLatest { map ->
                 combine(
-                    flows = states.map {
+                    flows = map.values.map {
                         snapshotFlow(it::status)
                     },
                     transform = { allStatuses ->
@@ -269,6 +269,7 @@ class ExoplayerController(
     ): VideoPlayerState {
         idsToStates[videoId]?.let { return it }
 
+        trim()
         val videoPlayerState = ExoPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
@@ -368,6 +369,16 @@ class ExoplayerController(
         }
     }
 
+    private fun trim() {
+        val size = idsToStates.size
+        if (size >= MaxVideoStates) idsToStates.keys.filter {
+            val state = idsToStates[it]
+            state?.status is PlayerStatus.Idle.Evicted
+        }
+            .take(size - MaxVideoStates)
+            .forEach(idsToStates::remove)
+    }
+
     /**
      * Diffs media items and inserts them in the ExoPlayer playlist.
      * This ensures that a previously buffered video does not need to re-buffer when it is swapped
@@ -445,3 +456,5 @@ private fun VideoPlayerState.toMediaItem() =
         .setUri(videoUrl)
         .setMediaId(videoId)
         .build()
+
+private const val MaxVideoStates = 0
