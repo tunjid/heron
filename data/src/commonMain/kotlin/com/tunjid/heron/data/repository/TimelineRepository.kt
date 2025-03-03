@@ -573,41 +573,11 @@ class OfflineTimelineRepository(
                     atUri = atUri,
                     position = 0
                 )
-                    .withRefresh {
-                        runCatchingWithNetworkRetry(times = 2) {
-                            networkService.api.getFeedGenerator(
-                                GetFeedGeneratorQueryParams(
-                                    feed = atUri
-                                )
-                            )
-                        }
-                            .getOrNull()
-                            ?.view
-                            ?.let {
-                                multipleEntitySaverProvider.saveInTransaction { add(it) }
-                            }
-                    }
 
                 is UriLookup.Timeline.List -> listTimeline(
                     atUri = atUri,
                     position = 0
                 )
-                    .withRefresh {
-                        runCatchingWithNetworkRetry(times = 2) {
-                            networkService.api.getList(
-                                GetListQueryParams(
-                                    cursor = null,
-                                    limit = 1,
-                                    list = atUri,
-                                )
-                            )
-                        }
-                            .getOrNull()
-                            ?.list
-                            ?.let {
-                                multipleEntitySaverProvider.saveInTransaction { add(it) }
-                            }
-                    }
 
                 is UriLookup.Timeline.Profile -> {
                     profileDao.profiles(
@@ -888,6 +858,20 @@ class OfflineTimelineRepository(
                     )
                 }
         }
+        .withRefresh {
+            runCatchingWithNetworkRetry(times = 2) {
+                networkService.api.getFeedGenerator(
+                    GetFeedGeneratorQueryParams(
+                        feed = atUri
+                    )
+                )
+            }
+                .getOrNull()
+                ?.view
+                ?.let {
+                    multipleEntitySaverProvider.saveInTransaction { add(it) }
+                }
+        }
 
     private fun listTimeline(
         atUri: AtUri,
@@ -907,7 +891,22 @@ class OfflineTimelineRepository(
                     )
                 }
         }
-
+        .withRefresh {
+            runCatchingWithNetworkRetry(times = 2) {
+                networkService.api.getList(
+                    GetListQueryParams(
+                        cursor = null,
+                        limit = 1,
+                        list = atUri,
+                    )
+                )
+            }
+                .getOrNull()
+                ?.list
+                ?.let {
+                    multipleEntitySaverProvider.saveInTransaction { add(it) }
+                }
+        }
     private fun spinThread(
         list: List<TimelineItem.Thread>,
         thread: ThreadedPostEntity,
