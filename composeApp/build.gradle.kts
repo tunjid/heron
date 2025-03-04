@@ -53,7 +53,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs)
         }
         commonMain.dependencies {
             implementation(project(":data"))

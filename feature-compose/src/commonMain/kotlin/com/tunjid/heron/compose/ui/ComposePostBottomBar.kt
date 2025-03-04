@@ -44,9 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.tunjid.heron.compose.Action
 import de.cketti.codepoints.codePointCount
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+
 import kotlin.math.min
 
 @Composable
@@ -64,8 +65,8 @@ internal fun ComposePostBottomBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val imagePickerLauncher = rememberFilePickerLauncher(
-            type = PickerType.Image,
-            mode = PickerMode.Multiple(maxItems = 4)
+            type = FileKitType.Image,
+            mode = FileKitMode.Multiple(maxItems = 4)
         ) { images ->
             images
                 ?.let(Action.EditMedia::AddPhotos)
@@ -73,8 +74,8 @@ internal fun ComposePostBottomBar(
         }
 
         val videoPickerLauncher = rememberFilePickerLauncher(
-            type = PickerType.Video,
-            mode = PickerMode.Single
+            type = FileKitType.Video,
+            mode = FileKitMode.Single
         ) { video ->
             video
                 ?.let(Action.EditMedia::AddVideo)
