@@ -44,6 +44,8 @@ kotlin {
                 implementation(libs.coil.compose)
                 implementation(libs.coil.ktor)
 
+                implementation(libs.filekit.coil)
+
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.tunjid.composables)

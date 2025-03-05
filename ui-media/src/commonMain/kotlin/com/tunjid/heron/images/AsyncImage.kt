@@ -29,15 +29,61 @@ import androidx.compose.ui.layout.ContentScale
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
+import io.github.vinceglb.filekit.PlatformFile
 import coil3.compose.AsyncImage as CoilAsyncImage
+import io.github.vinceglb.filekit.coil.AsyncImage as FileAsyncImage
+
+sealed class ImageRequest {
+    data class Network(
+        val url: String?,
+        val thumbnailUrl: String? = null,
+    ): ImageRequest()
+
+    data class Local(
+        val file: PlatformFile,
+    ): ImageRequest()
+}
 
 data class ImageArgs(
-    val url: String?,
-    val thumbnailUrl: String? = null,
+    val request: ImageRequest,
     val contentDescription: String? = null,
     val contentScale: ContentScale,
     val alignment: Alignment = Alignment.Center,
     val shape: RoundedPolygonShape,
+)
+
+fun ImageArgs(
+    url: String?,
+    thumbnailUrl: String? = null,
+    contentDescription: String? = null,
+    contentScale: ContentScale,
+    alignment: Alignment = Alignment.Center,
+    shape: RoundedPolygonShape,
+) = ImageArgs(
+    request = ImageRequest.Network(
+        url = url,
+        thumbnailUrl = thumbnailUrl
+    ),
+    contentDescription = contentDescription,
+    contentScale = contentScale,
+    alignment = alignment,
+    shape = shape,
+)
+
+fun ImageArgs(
+    file: PlatformFile,
+    contentDescription: String? = null,
+    contentScale: ContentScale,
+    alignment: Alignment = Alignment.Center,
+    shape: RoundedPolygonShape,
+) = ImageArgs(
+    request = ImageRequest.Local(
+        file = file,
+    ),
+    contentDescription = contentDescription,
+    contentScale = contentScale,
+    alignment = alignment,
+    shape = shape,
 )
 
 @Composable
@@ -49,23 +95,35 @@ fun AsyncImage(
         modifier = modifier
             .clip(args.shape.animate())
     ) {
-        var thumbnailVisible by remember(args.thumbnailUrl) {
-            mutableStateOf(args.thumbnailUrl != null)
-        }
         val contentScale = args.contentScale.animate()
 
-        CoilAsyncImage(
-            modifier = Modifier.matchParentSize(),
-            model = args.url,
-            contentDescription = args.contentDescription,
-            contentScale = contentScale,
-            onSuccess = { thumbnailVisible = false }
-        )
-        if (thumbnailVisible) CoilAsyncImage(
-            modifier = Modifier.matchParentSize(),
-            model = args.thumbnailUrl,
-            contentDescription = args.contentDescription,
-            contentScale = contentScale,
-        )
+        when(val request = args.request) {
+            is ImageRequest.Local -> {
+                FileAsyncImage(
+                    modifier = Modifier.matchParentSize(),
+                    file = request.file,
+                    contentDescription = args.contentDescription,
+                    contentScale = contentScale,
+                )
+            }
+            is ImageRequest.Network -> {
+                var thumbnailVisible by remember(request.thumbnailUrl) {
+                    mutableStateOf(request.thumbnailUrl != null)
+                }
+                CoilAsyncImage(
+                    modifier = Modifier.matchParentSize(),
+                    model = request.url,
+                    contentDescription = args.contentDescription,
+                    contentScale = contentScale,
+                    onSuccess = { thumbnailVisible = false }
+                )
+                if (thumbnailVisible) CoilAsyncImage(
+                    modifier = Modifier.matchParentSize(),
+                    model = request.thumbnailUrl,
+                    contentDescription = args.contentDescription,
+                    contentScale = contentScale,
+                )
+            }
+        }
     }
 }

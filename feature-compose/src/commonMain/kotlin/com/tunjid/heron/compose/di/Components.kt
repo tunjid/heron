@@ -179,6 +179,7 @@ abstract class ComposeComponent(
                                 } ?: navBarPadding
                             ),
                         postText = state.postText,
+                        photos = state.photos,
                         onMediaEdited = viewModel.accept,
                     )
 
