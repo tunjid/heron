@@ -19,6 +19,7 @@ package com.tunjid.heron.timeline.ui.post
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -114,24 +115,22 @@ fun Post(
                 ActionsContent(data)
             }
         }
+        val verticalPadding = when (presentation) {
+            Timeline.Presentation.TextAndEmbed -> 4.dp
+            Timeline.Presentation.ExpandedMedia -> 8.dp
+            Timeline.Presentation.CondensedMedia -> 0.dp
+        }
         Column(
             modifier = Modifier
+                .padding(vertical = verticalPadding)
                 .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(verticalPadding)
         ) {
             when (presentation) {
                 Timeline.Presentation.TextAndEmbed -> {
-                    attributionContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    textContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    embedContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(4.dp))
+                    attributionContent(postData)
+                    textContent(postData)
+                    embedContent(postData)
                     if (isAnchoredInTimeline) PostMetadata(
                         modifier = Modifier
                             .padding(horizontal = 24.dp)
@@ -146,36 +145,18 @@ fun Post(
                         likes = post.likeCount,
                         onMetadataClicked = postActions::onPostMetadataClicked,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    actionsContent(
-                        postData,
-                    )
+                    actionsContent(postData)
                 }
 
                 Timeline.Presentation.CondensedMedia -> {
-                    embedContent(
-                        postData,
-                    )
+                    embedContent(postData)
                 }
 
                 Timeline.Presentation.ExpandedMedia -> {
-                    Spacer(Modifier.height(8.dp))
-                    attributionContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    embedContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    actionsContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    textContent(
-                        postData,
-                    )
-                    Spacer(Modifier.height(8.dp))
+                    attributionContent(postData)
+                    embedContent(postData)
+                    actionsContent(postData)
+                    textContent(postData)
                 }
             }
         }
