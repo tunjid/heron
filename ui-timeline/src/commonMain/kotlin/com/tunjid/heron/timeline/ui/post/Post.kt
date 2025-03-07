@@ -23,9 +23,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -45,7 +43,6 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
@@ -133,8 +130,8 @@ fun Post(
                     embedContent(postData)
                     if (isAnchoredInTimeline) PostMetadata(
                         modifier = Modifier
-                            .padding(horizontal = 24.dp)
                             .padding(
+                                horizontal = 24.dp,
                                 vertical = 4.dp,
                             ),
                         time = post.createdAt,
