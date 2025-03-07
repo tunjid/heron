@@ -107,10 +107,13 @@ sealed class Timeline {
                 Type.Media -> listOf(
                     Presentation.TextAndEmbed,
                     Presentation.CondensedMedia,
+                    Presentation.ExpandedMedia,
                 )
+
                 Type.Videos -> listOf(
                     Presentation.TextAndEmbed,
                     Presentation.CondensedMedia,
+                    Presentation.ExpandedMedia,
                 )
             }
 
@@ -131,6 +134,7 @@ sealed class Timeline {
         val key: String,
     ) {
         TextAndEmbed(key = "presentation-text-and-embed"),
+        ExpandedMedia(key = "presentation-expanded-media"),
         CondensedMedia(key = "presentation-condensed-media"),
     }
 }

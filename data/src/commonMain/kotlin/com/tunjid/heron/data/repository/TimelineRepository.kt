@@ -47,6 +47,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
@@ -852,8 +853,11 @@ class OfflineTimelineRepository(
                         supportedPresentations = listOfNotNull(
                             Timeline.Presentation.TextAndEmbed,
                             Timeline.Presentation.CondensedMedia.takeIf {
-                                feedGeneratorEntity.contentMode == Token.ContentModeVideo.value
-                            }
+                                feedGeneratorEntity.isMediaOnly()
+                            },
+                            Timeline.Presentation.ExpandedMedia.takeIf {
+                                feedGeneratorEntity.isMediaOnly()
+                            },
                         ),
                     )
                 }
@@ -907,6 +911,7 @@ class OfflineTimelineRepository(
                     multipleEntitySaverProvider.saveInTransaction { add(it) }
                 }
         }
+
     private fun spinThread(
         list: List<TimelineItem.Thread>,
         thread: ThreadedPostEntity,
@@ -941,6 +946,7 @@ class OfflineTimelineRepository(
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
+        Timeline.Presentation.ExpandedMedia.key -> Timeline.Presentation.ExpandedMedia
         Timeline.Presentation.CondensedMedia.key -> Timeline.Presentation.CondensedMedia
         Timeline.Presentation.TextAndEmbed.key -> Timeline.Presentation.TextAndEmbed
         else -> Timeline.Presentation.TextAndEmbed
@@ -951,3 +957,15 @@ private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
+
+private fun FeedGeneratorEntity.isMediaOnly() =
+    when (contentMode) {
+        Token.ContentModeVideo.value,
+        "app.bsky.feed.defs#contentModeVideo",
+        "app.bsky.feed.defs#contentModePhoto",
+        "app.bsky.feed.defs#contentModeImage",
+        "app.bsky.feed.defs#contentModeMedia",
+            -> true
+
+        else -> false
+    }

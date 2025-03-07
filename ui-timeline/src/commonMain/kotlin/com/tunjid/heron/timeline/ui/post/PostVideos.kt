@@ -18,6 +18,7 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -31,8 +32,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
@@ -40,7 +41,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,9 +76,13 @@ internal fun PostVideo(
     val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
         videoUrl = video.playlist.uri,
         thumbnail = video.thumbnail?.uri,
-        shape = remember {
-            RoundedCornerShape(16.dp).toRoundedPolygonShape()
-        }
+        shape = animateDpAsState(
+            when (presentation) {
+                Timeline.Presentation.TextAndEmbed -> 8.dp
+                Timeline.Presentation.CondensedMedia -> 8.dp
+                Timeline.Presentation.ExpandedMedia -> 0.dp
+            }
+        ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
     )
     Box(
         modifier = Modifier
@@ -125,7 +129,7 @@ internal fun PostVideo(
             videoPlayerController = videoPlayerController,
         )
 
-        if (presentation == Timeline.Presentation.TextAndEmbed) PlayButton(
+        if (presentation != Timeline.Presentation.CondensedMedia) PlayButton(
             modifier = Modifier
                 .align(Alignment.Center),
             videoPlayerState = videoPlayerState,
@@ -168,8 +172,8 @@ private fun PlayerInfo(
                             .padding(2.dp),
                         contentDescription = "",
                         imageVector =
-                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeUp
-                        else Icons.AutoMirrored.Rounded.VolumeOff,
+                            if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeUp
+                            else Icons.AutoMirrored.Rounded.VolumeOff,
                     )
                 }
             )

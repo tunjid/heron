@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.home
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -46,6 +48,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -56,6 +59,7 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAc
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
@@ -76,6 +80,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
+import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -83,6 +88,10 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -104,12 +113,23 @@ internal fun HomeScreen(
 
     Box(
         modifier = modifier
-            .padding(horizontal = 8.dp)
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
             minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
         )
+        val currentPresentation by produceState(
+            initialValue = Timeline.Presentation.TextAndEmbed,
+        ) {
+            snapshotFlow { pagerState.currentPage }
+                .flatMapLatest {
+                    updatedTimelineStateHolders.stateHolderAtOrNull(it)?.state ?: emptyFlow()
+                }
+                .map { it.timeline.presentation }
+                .distinctUntilChanged()
+                .collect { value = it }
+
+        }
         HorizontalPager(
             modifier = Modifier
                 .nestedScroll(tabsOffsetNestedScrollConnection)
@@ -119,6 +139,11 @@ internal fun HomeScreen(
                         y = UiTokens.tabsHeight.roundToPx(),
                     )
                 }
+                .padding(
+                    horizontal = animateDpAsState(
+                        currentPresentation.timelineHorizontalPadding
+                    ).value
+                )
                 .paneClip(),
             state = pagerState,
             key = { page -> updatedTimelineStateHolders.keyAt(page) },
@@ -216,103 +241,106 @@ private fun HomeTimeline(
         onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
     ) {
         val presentation = timelineState.timeline.presentation
-        LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged {
-                    val itemWidth = with(density) {
-                        presentation.cardSize.toPx()
-                    }
-                    timelineStateHolder.accept(
-                        TimelineLoadAction.Fetch.GridSize(
-                            floor(it.width / itemWidth).roundToInt()
+        LookaheadScope {
+            LazyVerticalStaggeredGrid(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged {
+                        val itemWidth = with(density) {
+                            presentation.cardSize.toPx()
+                        }
+                        timelineStateHolder.accept(
+                            TimelineLoadAction.Fetch.GridSize(
+                                floor(it.width / itemWidth).roundToInt()
+                            )
                         )
-                    )
-                },
-            state = gridState,
-            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            verticalItemSpacing = 8.dp,
-            contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !panedSharedElementScope.isTransitionActive,
-        ) {
-            items(
-                items = items,
-                key = TimelineItem::id,
-                itemContent = { item ->
-                    TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item)
-                            ),
-                        panedSharedElementScope = panedSharedElementScope,
-                        now = remember { Clock.System.now() },
-                        item = item,
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                        presentation = presentation,
-                        postActions = rememberPostActions(
-                            onPostClicked = { post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToPost(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
-                                            post = post,
-                                        )
-                                    )
-                                )
-                            },
-                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToProfile(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            profile = profile,
-                                            avatarSharedElementKey = post
-                                                .avatarSharedElementKey(
-                                                    prefix = timelineState.timeline.sharedElementPrefix,
+                    },
+                state = gridState,
+                columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+                verticalItemSpacing = 8.dp,
+                contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+            ) {
+                items(
+                    items = items,
+                    key = TimelineItem::id,
+                    itemContent = { item ->
+                        TimelineItem(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem()
+                                .threadedVideoPosition(
+                                    state = videoStates.getOrCreateStateFor(item)
+                                ),
+                            panedSharedElementScope = panedSharedElementScope,
+                            presentationLookaheadScope = this@LookaheadScope,
+                            now = remember { Clock.System.now() },
+                            item = item,
+                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            presentation = presentation,
+                            postActions = rememberPostActions(
+                                onPostClicked = { post: Post, quotingPostId: Id? ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToPost(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                     quotingPostId = quotingPostId,
-                                                )
-                                                .takeIf { post.author.did == profile.did }
+                                                ),
+                                                post = post,
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToMedia(
-                                            post = post,
-                                            media = media,
-                                            startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
+                                },
+                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToProfile(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                profile = profile,
+                                                avatarSharedElementKey = post
+                                                    .avatarSharedElementKey(
+                                                        prefix = timelineState.timeline.sharedElementPrefix,
+                                                        quotingPostId = quotingPostId,
+                                                    )
+                                                    .takeIf { post.author.did == profile.did }
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onReplyToPost = { post: Post ->
-                                actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ComposePost(
-                                            type = Post.Create.Reply(
-                                                parent = post,
-                                            ),
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                },
+                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ToMedia(
+                                                post = post,
+                                                media = media,
+                                                startIndex = index,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                    quotingPostId = quotingPostId,
+                                                ),
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onPostInteraction = postInteractionState::onInteraction,
-                        ),
-                    )
-                }
-            )
+                                },
+                                onReplyToPost = { post: Post ->
+                                    actions(
+                                        Action.Navigate.DelegateTo(
+                                            NavigationAction.Common.ComposePost(
+                                                type = Post.Create.Reply(
+                                                    parent = post,
+                                                ),
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                            )
+                                        )
+                                    )
+                                },
+                                onPostInteraction = postInteractionState::onInteraction,
+                            ),
+                        )
+                    }
+                )
+            }
         }
     }
 

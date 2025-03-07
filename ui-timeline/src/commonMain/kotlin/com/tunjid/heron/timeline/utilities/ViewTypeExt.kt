@@ -37,4 +37,5 @@ internal fun Modifier.presentationPadding(
     )
 
     Timeline.Presentation.CondensedMedia -> this
+    Timeline.Presentation.ExpandedMedia -> this
 }

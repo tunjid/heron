@@ -27,9 +27,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +46,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.timeline.utilities.icon
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.condensed_media
+import heron.ui_timeline.generated.resources.expanded_media
 import heron.ui_timeline.generated.resources.text_and_embeds
 import org.jetbrains.compose.resources.stringResource
 
@@ -78,7 +76,7 @@ fun TimelinePresentationSelector(
                 ),
                 horizontalArrangement = Arrangement.aligned(Alignment.End)
             ) {
-                if (available.size > 1) Timeline.Presentation.entries.forEach { presentation ->
+                if (available.size > 1) available.forEach { presentation ->
                     val isSelected = selected == presentation
                     key(presentation.key) {
                         AnimatedVisibility(
@@ -106,6 +104,7 @@ fun TimelinePresentationSelector(
                                             when (presentation) {
                                                 Timeline.Presentation.TextAndEmbed -> Res.string.text_and_embeds
                                                 Timeline.Presentation.CondensedMedia -> Res.string.condensed_media
+                                                Timeline.Presentation.ExpandedMedia -> Res.string.expanded_media
                                             }
                                         ),
                                         tint =

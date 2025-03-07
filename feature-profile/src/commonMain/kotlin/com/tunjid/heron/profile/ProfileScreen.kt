@@ -19,6 +19,7 @@ package com.tunjid.heron.profile
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -64,11 +65,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -115,6 +118,7 @@ import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
+import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PanedSharedElementScope
 import com.tunjid.heron.ui.Tab
@@ -130,6 +134,10 @@ import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -241,12 +249,27 @@ internal fun ProfileScreen(
         },
         body = {
             Box(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp),
+                modifier = Modifier,
             ) {
+                val currentPresentation by produceState(
+                    initialValue = Timeline.Presentation.TextAndEmbed,
+                ) {
+                    snapshotFlow { pagerState.currentPage }
+                        .flatMapLatest {
+                            updatedTimelineStateHolders.stateHolderAtOrNull(it)?.state ?: emptyFlow()
+                        }
+                        .map { it.timeline.presentation }
+                        .distinctUntilChanged()
+                        .collect { value = it }
+
+                }
                 HorizontalPager(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp)
+                        .padding(
+                            horizontal = animateDpAsState(
+                                currentPresentation.timelineHorizontalPadding
+                            ).value
+                        )
                         .paneClip(),
                     state = pagerState,
                     key = { page -> page },
@@ -313,7 +336,7 @@ private fun ProfileHeader(
                             )
                         }
                     )
-                    .padding(start = headerState.sizeToken, end = headerState.sizeToken)
+                    .padding(horizontal = 16.dp)
                     .graphicsLayer {
                         alpha = headerState.bioAlpha
                     },
@@ -625,101 +648,104 @@ private fun ProfileTimeline(
     val postInteractionState = rememberPostInteractionState()
 
     val presentation = timelineState.timeline.presentation
-    LazyVerticalStaggeredGrid(
-        modifier = Modifier
-            .fillMaxSize()
-            .onSizeChanged {
-                val itemWidth = with(density) {
-                    presentation.cardSize.toPx()
-                }
-                timelineStateHolder.accept(
-                    TimelineLoadAction.Fetch.GridSize(
-                        floor(it.width / itemWidth).roundToInt()
+    LookaheadScope {
+        LazyVerticalStaggeredGrid(
+            modifier = Modifier
+                .fillMaxSize()
+                .onSizeChanged {
+                    val itemWidth = with(density) {
+                        presentation.cardSize.toPx()
+                    }
+                    timelineStateHolder.accept(
+                        TimelineLoadAction.Fetch.GridSize(
+                            floor(it.width / itemWidth).roundToInt()
+                        )
                     )
-                )
-            },
-        state = gridState,
-        columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-        verticalItemSpacing = 8.dp,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(
-            items = items,
-            key = TimelineItem::id,
-            itemContent = { item ->
-                TimelineItem(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item)
-                        ),
-                    panedSharedElementScope = panedSharedElementScope,
-                    now = remember { Clock.System.now() },
-                    item = item,
-                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    presentation = presentation,
-                    postActions = rememberPostActions(
-                        onPostClicked = { post: Post, quotingPostId: Id? ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToPost(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                            quotingPostId = quotingPostId,
-                                        ),
-                                        post = post,
-                                    )
-                                )
-                            )
-                        },
-                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = post
-                                            .avatarSharedElementKey(
-                                                prefix = timelineState.timeline.sourceId,
+                },
+            state = gridState,
+            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+            verticalItemSpacing = 8.dp,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = items,
+                key = TimelineItem::id,
+                itemContent = { item ->
+                    TimelineItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .threadedVideoPosition(
+                                state = videoStates.getOrCreateStateFor(item)
+                            ),
+                        panedSharedElementScope = panedSharedElementScope,
+                        presentationLookaheadScope = this@LookaheadScope,
+                        now = remember { Clock.System.now() },
+                        item = item,
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        presentation = presentation,
+                        postActions = rememberPostActions(
+                            onPostClicked = { post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
-                                            )
-                                            .takeIf { post.author.did == profile.did }
+                                            ),
+                                            post = post,
+                                        )
                                     )
                                 )
-                            )
-                        },
-                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToMedia(
-                                        post = post,
-                                        media = media,
-                                        startIndex = index,
-                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                            quotingPostId = quotingPostId,
-                                        ),
+                            },
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToProfile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = post
+                                                .avatarSharedElementKey(
+                                                    prefix = timelineState.timeline.sourceId,
+                                                    quotingPostId = quotingPostId,
+                                                )
+                                                .takeIf { post.author.did == profile.did }
+                                        )
                                     )
                                 )
-                            )
-                        },
-                        onReplyToPost = { post: Post ->
-                            actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ComposePost(
-                                        type = Post.Create.Reply(
-                                            parent = post,
-                                        ),
-                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            },
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToMedia(
+                                            post = post,
+                                            media = media,
+                                            startIndex = index,
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                        )
                                     )
                                 )
-                            )
-                        },
-                        onPostInteraction = postInteractionState::onInteraction,
-                    ),
-                )
-            }
-        )
+                            },
+                            onReplyToPost = { post: Post ->
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ComposePost(
+                                            type = Post.Create.Reply(
+                                                parent = post,
+                                            ),
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                        )
+                                    )
+                                )
+                            },
+                            onPostInteraction = postInteractionState::onInteraction,
+                        ),
+                    )
+                }
+            )
+        }
     }
 
     PostInteractions(

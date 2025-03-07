@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
@@ -65,6 +68,7 @@ import org.jetbrains.compose.resources.stringResource
 fun TimelineItem(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
+    presentationLookaheadScope: LookaheadScope,
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
@@ -74,6 +78,7 @@ fun TimelineItem(
     TimelineCard(
         item = item,
         modifier = modifier,
+        presentation = presentation,
         onPostClicked = { post ->
             postActions.onPostClicked(
                 post = post,
@@ -90,8 +95,6 @@ fun TimelineItem(
                         else 16.dp,
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
                         else 8.dp,
-                        start = 16.dp,
-                        end = 16.dp
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
@@ -114,6 +117,7 @@ fun TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
                     now = now,
@@ -124,9 +128,9 @@ fun TimelineItem(
                         .fillMaxWidth()
                         .childThreadNode(videoId = item.post.videoId),
                     panedSharedElementScope = panedSharedElementScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
                     now = now,
                     post = item.post,
-                    embed = item.post.embed,
                     isAnchoredInTimeline = false,
                     avatarShape = RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
@@ -143,6 +147,7 @@ fun TimelineItem(
 private fun ThreadedPost(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
+    presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
@@ -158,26 +163,26 @@ private fun ThreadedPost(
                     modifier = Modifier
                         .childThreadNode(videoId = post.videoId),
                     panedSharedElementScope = panedSharedElementScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
                     now = now,
                     post = post,
-                    embed = post.embed,
                     isAnchoredInTimeline = item.generation == 0L,
                     avatarShape =
-                    when {
-                        item.isThreadedAnchor -> RoundedPolygonShape.Circle
-                        item.isThreadedAncestor ->
-                            if (item.posts.size == 1) ReplyThreadStartImageShape
-                            else ReplyThreadImageShape
+                        when {
+                            item.isThreadedAnchor -> RoundedPolygonShape.Circle
+                            item.isThreadedAncestor ->
+                                if (item.posts.size == 1) ReplyThreadStartImageShape
+                                else ReplyThreadImageShape
 
-                        else -> when (index) {
-                            0 ->
-                                if (item.posts.size == 1) RoundedPolygonShape.Circle
-                                else ReplyThreadStartImageShape
+                            else -> when (index) {
+                                0 ->
+                                    if (item.posts.size == 1) RoundedPolygonShape.Circle
+                                    else ReplyThreadStartImageShape
 
-                            item.posts.lastIndex -> ReplyThreadEndImageShape
-                            else -> ReplyThreadImageShape
-                        }
-                    },
+                                item.posts.lastIndex -> ReplyThreadEndImageShape
+                                else -> ReplyThreadImageShape
+                            }
+                        },
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = post.createdAt,
                     presentation = presentation,
@@ -203,6 +208,7 @@ private fun ThreadedPost(
                     )
                     else Timeline(
                         modifier = Modifier
+                            .padding(start = 8.dp)
                             .height(
                                 if (index == 0) 16.dp
                                 else 12.dp
@@ -296,16 +302,25 @@ private fun BrokenTimeline(
 fun TimelineCard(
     item: TimelineItem,
     modifier: Modifier = Modifier,
+    presentation: Timeline.Presentation,
     onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
     if (item.isThreadedAncestorOrAnchor) Surface(
         modifier = modifier,
+        shape = RectangleShape,
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )
     else ElevatedCard(
         modifier = modifier,
+        shape = animateDpAsState(
+            when (presentation) {
+                Timeline.Presentation.TextAndEmbed -> 8.dp
+                Timeline.Presentation.CondensedMedia -> 8.dp
+                Timeline.Presentation.ExpandedMedia -> 0.dp
+            }
+        ).value.let(::RoundedCornerShape),
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )
