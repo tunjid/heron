@@ -852,11 +852,11 @@ class OfflineTimelineRepository(
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = listOfNotNull(
                             Timeline.Presentation.TextAndEmbed,
-                            Timeline.Presentation.CondensedMedia.takeIf {
-                                feedGeneratorEntity.isMediaOnly()
-                            },
                             Timeline.Presentation.ExpandedMedia.takeIf {
-                                feedGeneratorEntity.isMediaOnly()
+                                feedGeneratorEntity.supportsMediaPresentation()
+                            },
+                            Timeline.Presentation.CondensedMedia.takeIf {
+                                feedGeneratorEntity.supportsMediaPresentation()
                             },
                         ),
                     )
@@ -958,7 +958,7 @@ private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
 
-private fun FeedGeneratorEntity.isMediaOnly() =
+private fun FeedGeneratorEntity.supportsMediaPresentation() =
     when (contentMode) {
         Token.ContentModeVideo.value,
         "app.bsky.feed.defs#contentModeVideo",

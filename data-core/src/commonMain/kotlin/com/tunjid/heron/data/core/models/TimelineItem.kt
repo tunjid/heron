@@ -104,17 +104,9 @@ sealed class Timeline {
                 Type.Posts -> TextAndEmbedOnlyPresentation
                 Type.Replies -> TextAndEmbedOnlyPresentation
                 Type.Likes -> TextAndEmbedOnlyPresentation
-                Type.Media -> listOf(
-                    Presentation.TextAndEmbed,
-                    Presentation.CondensedMedia,
-                    Presentation.ExpandedMedia,
-                )
+                Type.Media -> Presentation.entries
 
-                Type.Videos -> listOf(
-                    Presentation.TextAndEmbed,
-                    Presentation.CondensedMedia,
-                    Presentation.ExpandedMedia,
-                )
+                Type.Videos -> Presentation.entries
             }
 
         enum class Type(
