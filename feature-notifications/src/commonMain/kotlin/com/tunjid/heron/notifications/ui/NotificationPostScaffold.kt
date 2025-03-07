@@ -41,6 +41,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -129,10 +130,10 @@ internal fun NotificationPostScaffold(
                     likeCount = format(notification.associatedPost.likeCount),
                     repostUri = notification.associatedPost.viewerStats?.repostUri,
                     likeUri = notification.associatedPost.viewerStats?.likeUri,
-                    iconSize = 16.dp,
                     postId = notification.associatedPost.cid,
                     postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
+                    presentation = Timeline.Presentation.TextAndEmbed,
                     panedSharedElementScope = panedSharedElementScope,
                     onReplyToPost = {
                         onReplyToPost(notification)

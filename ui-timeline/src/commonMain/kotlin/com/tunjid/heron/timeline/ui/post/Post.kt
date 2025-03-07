@@ -166,11 +166,11 @@ fun Post(
                         postData,
                     )
                     Spacer(Modifier.height(8.dp))
-                    textContent(
+                    actionsContent(
                         postData,
                     )
                     Spacer(Modifier.height(8.dp))
-                    actionsContent(
+                    textContent(
                         postData,
                     )
                     Spacer(Modifier.height(8.dp))
@@ -358,9 +358,9 @@ private fun PanedSharedElementScope.ActionsContent(
         likeCount = format(data.post.likeCount),
         repostUri = data.post.viewerStats?.repostUri,
         likeUri = data.post.viewerStats?.likeUri,
-        iconSize = 16.dp,
         postId = data.post.cid,
         postUri = data.post.uri,
+        presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         panedSharedElementScope = this,
         onReplyToPost = {

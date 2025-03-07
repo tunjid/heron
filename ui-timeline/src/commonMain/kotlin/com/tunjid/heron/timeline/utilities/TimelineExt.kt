@@ -63,6 +63,13 @@ val Timeline.Presentation.timelineHorizontalPadding
         Timeline.Presentation.ExpandedMedia -> 0.dp
     }
 
+val Timeline.Presentation.actionIconSize
+    get() = when (this) {
+        Timeline.Presentation.TextAndEmbed -> 20.dp
+        Timeline.Presentation.CondensedMedia -> 0.dp
+        Timeline.Presentation.ExpandedMedia -> 24.dp
+    }
+
 internal val Timeline.Presentation.icon
     get() = when (this) {
         Timeline.Presentation.TextAndEmbed -> Icons.AutoMirrored.Rounded.Article
