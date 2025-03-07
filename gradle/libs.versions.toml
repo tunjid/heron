@@ -35,7 +35,7 @@ tunjid-tiler = "1.1.0"
 tunjid-tree-nav = "0.0.21"
 tunjid-composables = "0.0.14"
 jetbrainsKotlinJvm = "2.1.0"
-vinceglb-filekit = "0.8.8"
+vinceglb-filekit = "0.10.0-beta01"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -85,8 +85,9 @@ compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-to
 compose-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 compose-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
 codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.9.0" }
-filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "vinceglb-filekit" }
-filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "vinceglb-filekit" }
+filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "vinceglb-filekit" }
+filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "vinceglb-filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
 lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }

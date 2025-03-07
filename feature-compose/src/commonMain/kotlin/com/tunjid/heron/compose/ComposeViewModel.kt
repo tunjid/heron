@@ -191,7 +191,8 @@ private fun Flow<Action.EditMedia>.editMediaMutations(
                 )
 
                 is Action.EditMedia.AddVideo -> copy(
-                    video = media.filterIsInstance<MediaItem.Video>().firstOrNull()
+                    photos = emptyList(),
+                    video = media.filterIsInstance<MediaItem.Video>().firstOrNull(),
                 )
 
                 is Action.EditMedia.RemoveMedia -> copy(

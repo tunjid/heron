@@ -37,35 +37,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.tunjid.heron.compose.Action
+import com.tunjid.heron.compose.MediaItem
 import de.cketti.codepoints.codePointCount
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import kotlin.math.max
+
 import kotlin.math.min
 
 @Composable
 internal fun ComposePostBottomBar(
     postText: TextFieldValue,
     modifier: Modifier = Modifier,
+    photos: List<MediaItem.Photo>,
     onMediaEdited: (Action.EditMedia) -> Unit,
 ) {
     Row(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(
-            ),
+            .fillMaxWidth(),
         horizontalArrangement = spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val imagePickerLauncher = rememberFilePickerLauncher(
-            type = PickerType.Image,
-            mode = PickerMode.Multiple(maxItems = 4)
+            type = FileKitType.Image,
+            mode = FileKitMode.Multiple(
+                maxItems = max(
+                    a = 0,
+                    b = PhotoUploadLimit - photos.size,
+                ).takeUnless(0::equals)
+            )
         ) { images ->
             images
                 ?.let(Action.EditMedia::AddPhotos)
@@ -73,8 +81,8 @@ internal fun ComposePostBottomBar(
         }
 
         val videoPickerLauncher = rememberFilePickerLauncher(
-            type = PickerType.Video,
-            mode = PickerMode.Single
+            type = FileKitType.Video,
+            mode = FileKitMode.Single
         ) { video ->
             video
                 ?.let(Action.EditMedia::AddVideo)
@@ -85,12 +93,19 @@ internal fun ComposePostBottomBar(
             IconButton(
                 onClick = {
                     when (index) {
-                        0 -> imagePickerLauncher.launch()
+                        0 -> if (photos.size < PhotoUploadLimit) imagePickerLauncher.launch()
                         1 -> videoPickerLauncher.launch()
                     }
                 },
                 content = {
                     Icon(
+                        modifier = Modifier
+                            .graphicsLayer {
+                                alpha = when (index) {
+                                    0 -> if (photos.size < PhotoUploadLimit) 1f else 0.6f
+                                    else -> 1f
+                                }
+                            },
                         imageVector = imageVector,
                         contentDescription = null,
                         tint = FloatingActionButtonDefaults.containerColor
@@ -146,6 +161,7 @@ fun PostTextLimit(
 }
 
 private const val PostTextLimit = 300
+private const val PhotoUploadLimit = 4
 
 private val TabIcons = listOf(
     Icons.Rounded.Photo,
