@@ -18,6 +18,7 @@ package com.tunjid.heron.timeline.ui.post
 
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,6 +74,7 @@ fun PostActions(
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     panedSharedElementScope: PanedSharedElementScope,
+    presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -87,6 +90,7 @@ fun PostActions(
     ) {
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = postActionSharedElementKey(
                         prefix = sharedElementPrefix,
@@ -102,6 +106,7 @@ fun PostActions(
         )
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = rememberSharedContentState(
                         postActionSharedElementKey(
@@ -138,6 +143,7 @@ fun PostActions(
         )
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = rememberSharedContentState(
                         postActionSharedElementKey(

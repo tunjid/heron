@@ -135,6 +135,7 @@ internal fun NotificationPostScaffold(
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.TextAndEmbed,
                     panedSharedElementScope = panedSharedElementScope,
+                    presentationLookaheadScope = panedSharedElementScope,
                     onReplyToPost = {
                         onReplyToPost(notification)
                     },

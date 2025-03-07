@@ -347,6 +347,7 @@ private fun PanedSharedElementScope.ActionsContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         panedSharedElementScope = this,
+        presentationLookaheadScope = data.presentationLookaheadScope,
         onReplyToPost = {
             data.postActions.onReplyToPost(data.post)
         },
