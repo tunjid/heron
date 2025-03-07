@@ -54,19 +54,26 @@ internal fun PostImages(
             .fillMaxWidth(),
         horizontalArrangement = spacedBy(8.dp),
     ) {
+        val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
         itemsIndexed(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
                 panedSharedElementScope.updatedMovableSharedElementOf(
-                    modifier = when (feature.images.size) {
-                        1 -> Modifier
-                            .fillParentMaxWidth()
-                            .aspectRatio(image.aspectRatioOrSquare)
+                    modifier = when (presentation) {
+                        Timeline.Presentation.TextAndEmbed -> when (feature.images.size) {
+                            1 -> Modifier
+                                .fillParentMaxWidth()
+                                .aspectRatio(image.aspectRatioOrSquare)
 
-                        else -> Modifier
-                            .height(200.dp)
-                            .aspectRatio(image.aspectRatioOrSquare)
+                            else -> Modifier
+                                .height(200.dp)
+                                .aspectRatio(image.aspectRatioOrSquare)
+                        }
+                        Timeline.Presentation.CondensedMedia,
+                        Timeline.Presentation.ExpandedMedia -> Modifier
+                            .fillParentMaxWidth()
+                            .aspectRatio(tallestAspectRatio)
                     }
                         .clickable { onImageClicked(index) },
                     key = image.sharedElementKey(
@@ -75,7 +82,9 @@ internal fun PostImages(
                     state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
-                        contentScale = ContentScale.Fit,
+                        contentScale =
+                            if (presentation == Timeline.Presentation.ExpandedMedia)
+                                ContentScale.Crop else ContentScale.Fit,
                         shape = animateDpAsState(
                             when (presentation) {
                                 Timeline.Presentation.TextAndEmbed -> 16.dp
