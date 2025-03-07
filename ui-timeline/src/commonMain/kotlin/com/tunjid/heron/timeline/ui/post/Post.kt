@@ -355,6 +355,7 @@ private fun rememberUpdatedPostData(
     }.also {
         it.postActions = postActions
         it.presentationLookaheadScope = presentationLookaheadScope
+        it.post = post
         it.presentation = presentation
         it.sharedElementPrefix = sharedElementPrefix
         it.avatarShape = avatarShape
