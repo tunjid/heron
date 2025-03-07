@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
@@ -135,8 +136,8 @@ fun Post(
                         modifier = Modifier
                             .padding(horizontal = 24.dp)
                             .padding(
-                            vertical = 4.dp,
-                        ),
+                                vertical = 4.dp,
+                            ),
                         time = post.createdAt,
                         postId = post.cid,
                         profileId = post.author.did,
@@ -156,6 +157,7 @@ fun Post(
                         postData,
                     )
                 }
+
                 Timeline.Presentation.ExpandedMedia -> {
                     Spacer(Modifier.height(8.dp))
                     attributionContent(
@@ -180,6 +182,7 @@ fun Post(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PanedSharedElementScope.AttributionContent(
     data: PostData,
@@ -191,73 +194,50 @@ private fun PanedSharedElementScope.AttributionContent(
                 presentation = data.presentation,
             )
     ) {
-        PostAttribution(
-            panedSharedElementScope = this@AttributionContent,
-            avatarShape = data.avatarShape,
-            onProfileClicked = { post, profile ->
-                data.postActions.onProfileClicked(
-                    profile = profile,
-                    post = post,
-                    quotingPostId = null,
+        AttributionLayout(
+            avatar = {
+                updatedMovableSharedElementOf(
+                    modifier = Modifier
+                        .size(UiTokens.avatarSize)
+                        .clip(data.avatarShape)
+                        .clickable {
+                            data.postActions.onProfileClicked(
+                                profile = data.post.author,
+                                post = data.post,
+                                quotingPostId = null,
+                            )
+                        },
+                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    state = remember(data.post.author.avatar) {
+                        ImageArgs(
+                            url = data.post.author.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = data.post.author.displayName
+                                ?: data.post.author.handle.id,
+                            shape = data.avatarShape,
+                        )
+                    },
+                    sharedElement = { state, modifier ->
+                        AsyncImage(state, modifier)
+                    }
                 )
             },
-            post = data.post,
-            sharedElementPrefix = data.sharedElementPrefix,
-            now = data.now,
-            createdAt = data.createdAt,
+            label = {
+                PostHeadline(
+                    now = data.now,
+                    createdAt = data.createdAt,
+                    author = data.post.author,
+                    postId = data.post.cid,
+                    sharedElementPrefix = data.sharedElementPrefix,
+                    panedSharedElementScope = this@AttributionContent,
+                )
+            }
         )
-    }
-}
-
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun PostAttribution(
-    panedSharedElementScope: PanedSharedElementScope,
-    avatarShape: RoundedPolygonShape,
-    onProfileClicked: (Post, Profile) -> Unit,
-    post: Post,
-    sharedElementPrefix: String,
-    now: Instant,
-    createdAt: Instant,
-) = with(panedSharedElementScope) {
-    AttributionLayout(
-        avatar = {
-            updatedMovableSharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clip(avatarShape)
-                    .clickable { onProfileClicked(post, post.author) },
-                key = post.avatarSharedElementKey(sharedElementPrefix),
-                state = remember(post.author.avatar) {
-                    ImageArgs(
-                        url = post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = post.author.displayName ?: post.author.handle.id,
-                        shape = avatarShape,
-                    )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                }
-            )
-        },
-        label = {
-            PostHeadline(
-                now = now,
-                createdAt = createdAt,
-                author = post.author,
-                postId = post.cid,
-                sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = panedSharedElementScope,
-            )
-        }
-    )
-    //                if (item is TimelineItem.Reply) {
+        //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
+    }
 }
-
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -269,6 +249,7 @@ private fun PanedSharedElementScope.TextContent(
         sharedElementPrefix = data.sharedElementPrefix,
         panedSharedElementScope = this,
         modifier = Modifier
+            .zIndex(TextContentZIndex)
             .contentPresentationPadding(
                 content = PostContent.Text,
                 presentation = data.presentation,
@@ -306,6 +287,7 @@ private fun PanedSharedElementScope.EmbedContent(
 ) {
     PostEmbed(
         modifier = Modifier
+            .zIndex(EmbedContentZIndex)
             .contentPresentationPadding(
                 content = data.post.embed.asPostContent(),
                 presentation = data.presentation,
@@ -343,6 +325,7 @@ private fun PanedSharedElementScope.EmbedContent(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PanedSharedElementScope.ActionsContent(
     data: PostData,
@@ -352,7 +335,8 @@ private fun PanedSharedElementScope.ActionsContent(
             .contentPresentationPadding(
                 content = PostContent.Actions,
                 presentation = data.presentation,
-            ),
+            )
+            .animateBounds(data.presentationLookaheadScope),
         replyCount = format(data.post.replyCount),
         repostCount = format(data.post.repostCount),
         likeCount = format(data.post.likeCount),
@@ -369,6 +353,7 @@ private fun PanedSharedElementScope.ActionsContent(
         onPostInteraction = data.postActions::onPostInteraction,
     )
 }
+
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
@@ -412,6 +397,7 @@ private fun Modifier.contentPresentationPadding(
             Timeline.Presentation.ExpandedMedia -> 8.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
+
         PostContent.Attribution -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 8.dp
             Timeline.Presentation.ExpandedMedia -> 8.dp
@@ -440,6 +426,7 @@ private fun Modifier.contentPresentationPadding(
             Timeline.Presentation.ExpandedMedia -> 8.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
+
         PostContent.Attribution -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 8.dp
             Timeline.Presentation.ExpandedMedia -> 8.dp
@@ -464,12 +451,15 @@ private fun Modifier.contentPresentationPadding(
     }
 )
 
-private fun Embed?.asPostContent() = when(this) {
+private fun Embed?.asPostContent() = when (this) {
     is ImageList,
-    is Video -> PostContent.Embed.Media
+    is Video,
+        -> PostContent.Embed.Media
+
     null,
     UnknownEmbed,
-    is ExternalEmbed -> PostContent.Embed.Link
+    is ExternalEmbed,
+        -> PostContent.Embed.Link
 }
 
 @Stable
@@ -503,3 +493,6 @@ private sealed class PostContent {
 
     data object Actions : PostContent()
 }
+
+private const val EmbedContentZIndex = 2f
+private const val TextContentZIndex = 1f
