@@ -198,6 +198,7 @@ private fun ThreadedPost(
                 if (index != item.posts.lastIndex)
                     if (index == 0 && item.hasBreak) BrokenTimeline(
                         modifier = Modifier
+                            .padding(start = 8.dp)
                             .childThreadNode(videoId = null),
                         onClick = {
                             postActions.onPostClicked(
