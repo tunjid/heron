@@ -187,56 +187,53 @@ fun Post(
 private fun PanedSharedElementScope.AttributionContent(
     data: PostData,
 ) {
-    Box(
+    AttributionLayout(
         modifier = Modifier
             .contentPresentationPadding(
                 content = PostContent.Attribution,
                 presentation = data.presentation,
-            )
-    ) {
-        AttributionLayout(
-            avatar = {
-                updatedMovableSharedElementOf(
-                    modifier = Modifier
-                        .size(UiTokens.avatarSize)
-                        .clip(data.avatarShape)
-                        .clickable {
-                            data.postActions.onProfileClicked(
-                                profile = data.post.author,
-                                post = data.post,
-                                quotingPostId = null,
-                            )
-                        },
-                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
-                    state = remember(data.post.author.avatar) {
-                        ImageArgs(
-                            url = data.post.author.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = data.post.author.displayName
-                                ?: data.post.author.handle.id,
-                            shape = data.avatarShape,
+            ),
+        avatar = {
+            updatedMovableSharedElementOf(
+                modifier = Modifier
+                    .size(UiTokens.avatarSize)
+                    .clip(data.avatarShape)
+                    .clickable {
+                        data.postActions.onProfileClicked(
+                            profile = data.post.author,
+                            post = data.post,
+                            quotingPostId = null,
                         )
                     },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
-                    }
-                )
-            },
-            label = {
-                PostHeadline(
-                    now = data.now,
-                    createdAt = data.createdAt,
-                    author = data.post.author,
-                    postId = data.post.cid,
-                    sharedElementPrefix = data.sharedElementPrefix,
-                    panedSharedElementScope = this@AttributionContent,
-                )
-            }
-        )
-        //                if (item is TimelineItem.Reply) {
+                key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                state = remember(data.post.author.avatar) {
+                    ImageArgs(
+                        url = data.post.author.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = data.post.author.displayName
+                            ?: data.post.author.handle.id,
+                        shape = data.avatarShape,
+                    )
+                },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                }
+            )
+        },
+        label = {
+            PostHeadline(
+                now = data.now,
+                createdAt = data.createdAt,
+                author = data.post.author,
+                postId = data.post.cid,
+                sharedElementPrefix = data.sharedElementPrefix,
+                panedSharedElementScope = this@AttributionContent,
+            )
+        }
+    )
+    //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
-    }
 }
 
 @Composable
