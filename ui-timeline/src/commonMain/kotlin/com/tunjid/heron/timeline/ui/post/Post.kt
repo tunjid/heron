@@ -29,7 +29,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.movableContentWithReceiverOf
+import androidx.compose.runtime.key
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -73,17 +74,17 @@ fun Post(
     presentation: Timeline.Presentation,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
-) = with(panedSharedElementScope) {
+) {
     Box(modifier = modifier) {
         if (presentation == Timeline.Presentation.TextAndEmbed) Box(
             modifier = Modifier
                 .matchParentSize()
-                .padding(horizontal = 8.dp)
-        ) {
-            timeline()
-        }
+                .padding(horizontal = 8.dp),
+            content = timeline,
+        )
         val postData = rememberUpdatedPostData(
             postActions = postActions,
+            panedSharedElementScope = panedSharedElementScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
@@ -93,22 +94,22 @@ fun Post(
             createdAt = createdAt
         )
         val attributionContent = remember {
-            movableContentWithReceiverOf<PanedSharedElementScope, PostData> { data ->
+            movableContentOf<PostData> { data ->
                 AttributionContent(data)
             }
         }
         val textContent = remember {
-            movableContentWithReceiverOf<PanedSharedElementScope, PostData> { data ->
+            movableContentOf<PostData> { data ->
                 TextContent(data)
             }
         }
         val embedContent = remember {
-            movableContentWithReceiverOf<PanedSharedElementScope, PostData> { data ->
+            movableContentOf<PostData> { data ->
                 EmbedContent(data)
             }
         }
         val actionsContent = remember {
-            movableContentWithReceiverOf<PanedSharedElementScope, PostData> { data ->
+            movableContentOf<PostData> { data ->
                 ActionsContent(data)
             }
         }
@@ -125,9 +126,15 @@ fun Post(
         ) {
             when (presentation) {
                 Timeline.Presentation.TextAndEmbed -> {
-                    attributionContent(postData)
-                    textContent(postData)
-                    embedContent(postData)
+                    key(PostContent.Attribution.key) {
+                        attributionContent(postData)
+                    }
+                    key(PostContent.Text.key) {
+                        textContent(postData)
+                    }
+                    key(PostContent.Embed.Media.key) {
+                        embedContent(postData)
+                    }
                     if (isAnchoredInTimeline) PostMetadata(
                         modifier = Modifier
                             .padding(
@@ -142,18 +149,30 @@ fun Post(
                         likes = post.likeCount,
                         onMetadataClicked = postActions::onPostMetadataClicked,
                     )
-                    actionsContent(postData)
+                    key(PostContent.Actions.key) {
+                        actionsContent(postData)
+                    }
                 }
 
                 Timeline.Presentation.CondensedMedia -> {
-                    embedContent(postData)
+                    key(PostContent.Embed.Media.key) {
+                        embedContent(postData)
+                    }
                 }
 
                 Timeline.Presentation.ExpandedMedia -> {
-                    attributionContent(postData)
-                    embedContent(postData)
-                    actionsContent(postData)
-                    textContent(postData)
+                    key(PostContent.Attribution.key) {
+                        attributionContent(postData)
+                    }
+                    key(PostContent.Embed.Media.key) {
+                        embedContent(postData)
+                    }
+                    key(PostContent.Actions.key) {
+                        actionsContent(postData)
+                    }
+                    key(PostContent.Text.key) {
+                        textContent(postData)
+                    }
                 }
             }
         }
@@ -162,9 +181,9 @@ fun Post(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PanedSharedElementScope.AttributionContent(
+private fun AttributionContent(
     data: PostData,
-) {
+) = with(data.panedSharedElementScope) {
     AttributionLayout(
         modifier = Modifier
             .contentPresentationPadding(
@@ -205,7 +224,7 @@ private fun PanedSharedElementScope.AttributionContent(
                 author = data.post.author,
                 postId = data.post.cid,
                 sharedElementPrefix = data.sharedElementPrefix,
-                panedSharedElementScope = this@AttributionContent,
+                panedSharedElementScope = this,
             )
         }
     )
@@ -216,9 +235,9 @@ private fun PanedSharedElementScope.AttributionContent(
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
-private fun PanedSharedElementScope.TextContent(
+private fun TextContent(
     data: PostData,
-) {
+) = with(data.panedSharedElementScope) {
     PostText(
         post = data.post,
         sharedElementPrefix = data.sharedElementPrefix,
@@ -257,7 +276,7 @@ private fun PanedSharedElementScope.TextContent(
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
-private fun PanedSharedElementScope.EmbedContent(
+private fun EmbedContent(
     data: PostData,
 ) {
     PostEmbed(
@@ -275,7 +294,7 @@ private fun PanedSharedElementScope.EmbedContent(
         postId = data.post.cid,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
-        panedSharedElementScope = this,
+        panedSharedElementScope = data.panedSharedElementScope,
         onPostMediaClicked = { media, index, quotingPostId ->
             data.postActions.onPostMediaClicked(
                 media = media,
@@ -302,7 +321,7 @@ private fun PanedSharedElementScope.EmbedContent(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PanedSharedElementScope.ActionsContent(
+private fun ActionsContent(
     data: PostData,
 ) {
     PostActions(
@@ -321,47 +340,13 @@ private fun PanedSharedElementScope.ActionsContent(
         postUri = data.post.uri,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
-        panedSharedElementScope = this,
+        panedSharedElementScope = data.panedSharedElementScope,
         presentationLookaheadScope = data.presentationLookaheadScope,
         onReplyToPost = {
             data.postActions.onReplyToPost(data.post)
         },
         onPostInteraction = data.postActions::onPostInteraction,
     )
-}
-
-@Composable
-private fun rememberUpdatedPostData(
-    postActions: PostActions,
-    presentationLookaheadScope: LookaheadScope,
-    post: Post,
-    presentation: Timeline.Presentation,
-    sharedElementPrefix: String,
-    avatarShape: RoundedPolygonShape,
-    now: Instant,
-    createdAt: Instant,
-): PostData {
-    return remember {
-        PostData(
-            postActions = postActions,
-            presentationLookaheadScope = presentationLookaheadScope,
-            post = post,
-            presentation = presentation,
-            sharedElementPrefix = sharedElementPrefix,
-            avatarShape = avatarShape,
-            now = now,
-            created = createdAt
-        )
-    }.also {
-        it.postActions = postActions
-        it.presentationLookaheadScope = presentationLookaheadScope
-        it.post = post
-        it.presentation = presentation
-        it.sharedElementPrefix = sharedElementPrefix
-        it.avatarShape = avatarShape
-        it.now = now
-        it.createdAt = createdAt
-    }
 }
 
 private fun Modifier.contentPresentationPadding(
@@ -439,9 +424,47 @@ private fun Embed?.asPostContent() = when (this) {
         -> PostContent.Embed.Link
 }
 
+@Composable
+private fun rememberUpdatedPostData(
+    postActions: PostActions,
+    panedSharedElementScope: PanedSharedElementScope,
+    presentationLookaheadScope: LookaheadScope,
+    post: Post,
+    presentation: Timeline.Presentation,
+    sharedElementPrefix: String,
+    avatarShape: RoundedPolygonShape,
+    now: Instant,
+    createdAt: Instant,
+): PostData {
+    return remember {
+        PostData(
+            postActions = postActions,
+            panedSharedElementScope = panedSharedElementScope,
+            presentationLookaheadScope = presentationLookaheadScope,
+            post = post,
+            presentation = presentation,
+            sharedElementPrefix = sharedElementPrefix,
+            avatarShape = avatarShape,
+            now = now,
+            created = createdAt
+        )
+    }.also {
+        it.postActions = postActions
+        it.panedSharedElementScope = panedSharedElementScope
+        it.presentationLookaheadScope = presentationLookaheadScope
+        it.post = post
+        it.presentation = presentation
+        it.sharedElementPrefix = sharedElementPrefix
+        it.avatarShape = avatarShape
+        it.now = now
+        it.createdAt = createdAt
+    }
+}
+
 @Stable
 private class PostData(
     postActions: PostActions,
+    panedSharedElementScope: PanedSharedElementScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
@@ -451,6 +474,7 @@ private class PostData(
     created: Instant,
 ) {
     var postActions by mutableStateOf(postActions)
+    var panedSharedElementScope by mutableStateOf(panedSharedElementScope)
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)
@@ -460,15 +484,15 @@ private class PostData(
     var createdAt by mutableStateOf(created)
 }
 
-private sealed class PostContent {
-    data object Attribution : PostContent()
-    data object Text : PostContent()
-    sealed class Embed : PostContent() {
+private sealed class PostContent(val key: String) {
+    data object Attribution : PostContent(key = "Attribution")
+    data object Text : PostContent(key = "Text")
+    sealed class Embed : PostContent(key = "Embed") {
         data object Link : Embed()
         data object Media : Embed()
     }
 
-    data object Actions : PostContent()
+    data object Actions : PostContent(key = "Actions")
 }
 
 private const val EmbedContentZIndex = 2f
