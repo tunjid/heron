@@ -65,7 +65,7 @@ val Timeline.Presentation.timelineHorizontalPadding
 
 val Timeline.Presentation.actionIconSize
     get() = when (this) {
-        Timeline.Presentation.TextAndEmbed -> 20.dp
+        Timeline.Presentation.TextAndEmbed -> 16.dp
         Timeline.Presentation.CondensedMedia -> 0.dp
         Timeline.Presentation.ExpandedMedia -> 24.dp
     }
