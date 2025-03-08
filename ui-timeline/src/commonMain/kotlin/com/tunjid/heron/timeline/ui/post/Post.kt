@@ -154,12 +154,6 @@ fun Post(
                     }
                 }
 
-                Timeline.Presentation.CondensedMedia -> {
-                    key(PostContent.Embed.Media.key) {
-                        embedContent(postData)
-                    }
-                }
-
                 Timeline.Presentation.ExpandedMedia -> {
                     key(PostContent.Attribution.key) {
                         attributionContent(postData)
@@ -174,6 +168,22 @@ fun Post(
                         textContent(postData)
                     }
                 }
+
+                Timeline.Presentation.CondensedMedia -> {
+                    key(PostContent.Embed.Media.key) {
+                        embedContent(postData)
+                    }
+                    // These do not emit UI
+                    key(PostContent.Attribution.key) {
+                        attributionContent(postData)
+                    }
+                    key(PostContent.Text.key) {
+                        textContent(postData)
+                    }
+                    key(PostContent.Actions.key) {
+                        actionsContent(postData)
+                    }
+                }
             }
         }
     }
@@ -184,50 +194,56 @@ fun Post(
 private fun AttributionContent(
     data: PostData,
 ) = with(data.panedSharedElementScope) {
-    AttributionLayout(
-        modifier = Modifier
-            .contentPresentationPadding(
-                content = PostContent.Attribution,
-                presentation = data.presentation,
-            ),
-        avatar = {
-            updatedMovableSharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clip(data.avatarShape)
-                    .clickable {
-                        data.postActions.onProfileClicked(
-                            profile = data.post.author,
-                            post = data.post,
-                            quotingPostId = null,
+    when (data.presentation) {
+        Timeline.Presentation.TextAndEmbed,
+        Timeline.Presentation.ExpandedMedia,
+            -> AttributionLayout(
+            modifier = Modifier
+                .contentPresentationPadding(
+                    content = PostContent.Attribution,
+                    presentation = data.presentation,
+                ),
+            avatar = {
+                updatedMovableSharedElementOf(
+                    modifier = Modifier
+                        .size(UiTokens.avatarSize)
+                        .clip(data.avatarShape)
+                        .clickable {
+                            data.postActions.onProfileClicked(
+                                profile = data.post.author,
+                                post = data.post,
+                                quotingPostId = null,
+                            )
+                        },
+                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    state = remember(data.post.author.avatar) {
+                        ImageArgs(
+                            url = data.post.author.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = data.post.author.displayName
+                                ?: data.post.author.handle.id,
+                            shape = data.avatarShape,
                         )
                     },
-                key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
-                state = remember(data.post.author.avatar) {
-                    ImageArgs(
-                        url = data.post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = data.post.author.displayName
-                            ?: data.post.author.handle.id,
-                        shape = data.avatarShape,
-                    )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                }
-            )
-        },
-        label = {
-            PostHeadline(
-                now = data.now,
-                createdAt = data.createdAt,
-                author = data.post.author,
-                postId = data.post.cid,
-                sharedElementPrefix = data.sharedElementPrefix,
-                panedSharedElementScope = this,
-            )
-        }
-    )
+                    sharedElement = { state, modifier ->
+                        AsyncImage(state, modifier)
+                    }
+                )
+            },
+            label = {
+                PostHeadline(
+                    now = data.now,
+                    createdAt = data.createdAt,
+                    author = data.post.author,
+                    postId = data.post.cid,
+                    sharedElementPrefix = data.sharedElementPrefix,
+                    panedSharedElementScope = this,
+                )
+            }
+        )
+
+        Timeline.Presentation.CondensedMedia -> Unit
+    }
     //                if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
@@ -238,40 +254,46 @@ private fun AttributionContent(
 private fun TextContent(
     data: PostData,
 ) = with(data.panedSharedElementScope) {
-    PostText(
-        post = data.post,
-        sharedElementPrefix = data.sharedElementPrefix,
-        panedSharedElementScope = this,
-        modifier = Modifier
-            .zIndex(TextContentZIndex)
-            .contentPresentationPadding(
-                content = PostContent.Text,
-                presentation = data.presentation,
-            )
-            .animateBounds(data.presentationLookaheadScope)
-            .fillMaxWidth(),
-        maxLines = when (data.presentation) {
-            Timeline.Presentation.TextAndEmbed -> Int.MAX_VALUE
-            Timeline.Presentation.CondensedMedia -> throw IllegalArgumentException(
-                "Condensed media should not show text"
-            )
+    when (data.presentation) {
+        Timeline.Presentation.TextAndEmbed,
+        Timeline.Presentation.ExpandedMedia,
+            -> PostText(
+            post = data.post,
+            sharedElementPrefix = data.sharedElementPrefix,
+            panedSharedElementScope = this,
+            modifier = Modifier
+                .zIndex(TextContentZIndex)
+                .contentPresentationPadding(
+                    content = PostContent.Text,
+                    presentation = data.presentation,
+                )
+                .animateBounds(data.presentationLookaheadScope)
+                .fillMaxWidth(),
+            maxLines = when (data.presentation) {
+                Timeline.Presentation.TextAndEmbed -> Int.MAX_VALUE
+                Timeline.Presentation.CondensedMedia -> throw IllegalArgumentException(
+                    "Condensed media should not show text"
+                )
 
-            Timeline.Presentation.ExpandedMedia -> 2
-        },
-        onClick = {
-            data.postActions.onPostClicked(
-                post = data.post,
-                quotingPostId = null,
-            )
-        },
-        onProfileClicked = { post, profile ->
-            data.postActions.onProfileClicked(
-                profile = profile,
-                post = post,
-                quotingPostId = null
-            )
-        }
-    )
+                Timeline.Presentation.ExpandedMedia -> 2
+            },
+            onClick = {
+                data.postActions.onPostClicked(
+                    post = data.post,
+                    quotingPostId = null,
+                )
+            },
+            onProfileClicked = { post, profile ->
+                data.postActions.onProfileClicked(
+                    profile = profile,
+                    post = post,
+                    quotingPostId = null
+                )
+            }
+        )
+
+        Timeline.Presentation.CondensedMedia -> Unit
+    }
 }
 
 @Composable
@@ -324,29 +346,35 @@ private fun EmbedContent(
 private fun ActionsContent(
     data: PostData,
 ) {
-    PostActions(
-        modifier = Modifier
-            .contentPresentationPadding(
-                content = PostContent.Actions,
-                presentation = data.presentation,
-            )
-            .animateBounds(data.presentationLookaheadScope),
-        replyCount = format(data.post.replyCount),
-        repostCount = format(data.post.repostCount),
-        likeCount = format(data.post.likeCount),
-        repostUri = data.post.viewerStats?.repostUri,
-        likeUri = data.post.viewerStats?.likeUri,
-        postId = data.post.cid,
-        postUri = data.post.uri,
-        presentation = data.presentation,
-        sharedElementPrefix = data.sharedElementPrefix,
-        panedSharedElementScope = data.panedSharedElementScope,
-        presentationLookaheadScope = data.presentationLookaheadScope,
-        onReplyToPost = {
-            data.postActions.onReplyToPost(data.post)
-        },
-        onPostInteraction = data.postActions::onPostInteraction,
-    )
+    when (data.presentation) {
+        Timeline.Presentation.TextAndEmbed,
+        Timeline.Presentation.ExpandedMedia,
+            -> PostActions(
+            modifier = Modifier
+                .contentPresentationPadding(
+                    content = PostContent.Actions,
+                    presentation = data.presentation,
+                )
+                .animateBounds(data.presentationLookaheadScope),
+            replyCount = format(data.post.replyCount),
+            repostCount = format(data.post.repostCount),
+            likeCount = format(data.post.likeCount),
+            repostUri = data.post.viewerStats?.repostUri,
+            likeUri = data.post.viewerStats?.likeUri,
+            postId = data.post.cid,
+            postUri = data.post.uri,
+            presentation = data.presentation,
+            sharedElementPrefix = data.sharedElementPrefix,
+            panedSharedElementScope = data.panedSharedElementScope,
+            presentationLookaheadScope = data.presentationLookaheadScope,
+            onReplyToPost = {
+                data.postActions.onReplyToPost(data.post)
+            },
+            onPostInteraction = data.postActions::onPostInteraction,
+        )
+
+        Timeline.Presentation.CondensedMedia -> Unit
+    }
 }
 
 private fun Modifier.contentPresentationPadding(
