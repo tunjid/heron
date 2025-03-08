@@ -21,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.stubProfile
@@ -45,70 +47,82 @@ fun formatTextPost(
     text: String,
     textLinks: List<Post.Link>,
     onProfileClicked: (Profile) -> Unit,
-): AnnotatedString {
-    return buildAnnotatedString {
-        append(text)
+): AnnotatedString = buildAnnotatedString {
+    append(text)
 
-        val byteOffsets = text.byteOffsets()
-        textLinks.forEach { link ->
-            if (link.start < byteOffsets.size && link.end < byteOffsets.size) {
-                val start = byteOffsets[link.start]
-                val end = byteOffsets[link.end]
+    val newlineIndices = text.indices.filter { text[it] == '\n' }
+    newlineIndices.forEach { index ->
+        addStyle(
+            style = ParagraphStyle(lineHeight = 0.1.em),
+            start = index,
+            end = index + 1,
+        )
+        addStyle(
+            style = SpanStyle(fontSize = 0.1.em),
+            start = index,
+            end = index + 1,
+        )
+    }
 
-                addStyle(
-                    style = SpanStyle(color = Color(0xFF3B62FF)),
-                    start = start,
-                    end = end,
-                )
+    val byteOffsets = text.byteOffsets()
+    textLinks.forEach { link ->
+        if (link.start < byteOffsets.size && link.end < byteOffsets.size) {
+            val start = byteOffsets[link.start]
+            val end = byteOffsets[link.end]
 
-                when (val target = link.target) {
-                    is Post.LinkTarget.ExternalLink -> {
-                        addLink(
-                            url = LinkAnnotation.Url(target.uri.uri),
-                            start = start,
-                            end = end,
-                        )
-                    }
+            addStyle(
+                style = SpanStyle(color = Color(0xFF3B62FF)),
+                start = start,
+                end = end,
+            )
 
-                    is Post.LinkTarget.Hashtag -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.tag) {
+            when (val target = link.target) {
+                is Post.LinkTarget.ExternalLink -> {
+                    addLink(
+                        url = LinkAnnotation.Url(target.uri.uri),
+                        start = start,
+                        end = end,
+                    )
+                }
 
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
+                is Post.LinkTarget.Hashtag -> {
+                    addLink(
+                        clickable = LinkAnnotation.Clickable(target.tag) {
 
-                    is Post.LinkTarget.UserDidMention -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.did.id) {
-                                onProfileClicked(
-                                    stubProfile(
-                                        did = target.did,
-                                        handle = target.did,
-                                    )
+                        },
+                        start = start,
+                        end = end,
+                    )
+                }
+
+                is Post.LinkTarget.UserDidMention -> {
+                    addLink(
+                        clickable = LinkAnnotation.Clickable(target.did.id) {
+                            onProfileClicked(
+                                stubProfile(
+                                    did = target.did,
+                                    handle = target.did,
                                 )
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
+                            )
+                        },
+                        start = start,
+                        end = end,
+                    )
+                }
 
-                    is Post.LinkTarget.UserHandleMention -> {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(target.handle.id) {
-                                onProfileClicked(
-                                    stubProfile(
-                                        did = target.handle,
-                                        handle = target.handle,
-                                    )
+                is Post.LinkTarget.UserHandleMention -> {
+                    addLink(
+                        clickable = LinkAnnotation.Clickable(target.handle.id) {
+                            onProfileClicked(
+                                stubProfile(
+                                    did = target.handle,
+                                    handle = target.handle,
                                 )
-                            },
-                            start = start,
-                            end = end,
-                        )
-                    }
+                            )
+                        },
+                        start = start,
+                        end = end,
+                    )
                 }
             }
         }
