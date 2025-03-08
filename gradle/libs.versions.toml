@@ -18,7 +18,9 @@ lifecycle = "2.8.4"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 coil = "3.1.0"
-compose-multiplatform = "1.8.0-alpha03"
+compose-multiplatform = "1.8.0-alpha04"
+# See https://github.com/JetBrains/compose-multiplatform-core/pull/1868
+compose-multiplatform-material3 = "1.8.0-alpha03"
 compose-material-icons = "1.7.3"
 junit = "4.13.2"
 kotlin-inject = "0.7.2"
@@ -26,7 +28,7 @@ kotlin = "2.1.10"
 kotlinx-coroutines = "1.10.1"
 kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.3"
-ksp = "2.1.10-1.0.30"
+ksp = "2.1.10-1.0.31"
 ktor = "3.0.3"
 okio = "3.10.2"
 ozone-bluesky = "0.3.2"
@@ -76,7 +78,7 @@ compose-foundation-layout = { group = "org.jetbrains.compose.foundation", name =
 compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
 compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-material-icons" }
 compose-material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform" }
+compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform-material3" }
 compose-gradlePlugin = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose-multiplatform" }
 compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
 compose-ui-test = { group = "org.jetbrains.compose.ui", name = "ui-test-junit4", version.ref = "compose-multiplatform" }
