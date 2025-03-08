@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -93,26 +92,6 @@ fun Post(
             now = now,
             createdAt = createdAt
         )
-        val attributionContent = remember {
-            movableContentOf<PostData> { data ->
-                AttributionContent(data)
-            }
-        }
-        val textContent = remember {
-            movableContentOf<PostData> { data ->
-                TextContent(data)
-            }
-        }
-        val embedContent = remember {
-            movableContentOf<PostData> { data ->
-                EmbedContent(data)
-            }
-        }
-        val actionsContent = remember {
-            movableContentOf<PostData> { data ->
-                ActionsContent(data)
-            }
-        }
         val verticalPadding = when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 4.dp
             Timeline.Presentation.ExpandedMedia -> 8.dp
@@ -122,66 +101,17 @@ fun Post(
             modifier = Modifier
                 .padding(vertical = verticalPadding)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(verticalPadding)
+            verticalArrangement = Arrangement.spacedBy(verticalPadding),
         ) {
-            when (presentation) {
-                Timeline.Presentation.TextAndEmbed -> {
-                    key(PostContent.Attribution.key) {
-                        attributionContent(postData)
-                    }
-                    key(PostContent.Text.key) {
-                        textContent(postData)
-                    }
-                    key(PostContent.Embed.Media.key) {
-                        embedContent(postData)
-                    }
-                    if (isAnchoredInTimeline) PostMetadata(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 24.dp,
-                                vertical = 4.dp,
-                            ),
-                        time = post.createdAt,
-                        postId = post.cid,
-                        profileId = post.author.did,
-                        reposts = post.repostCount,
-                        quotes = post.quoteCount,
-                        likes = post.likeCount,
-                        onMetadataClicked = postActions::onPostMetadataClicked,
-                    )
-                    key(PostContent.Actions.key) {
-                        actionsContent(postData)
-                    }
-                }
-
-                Timeline.Presentation.ExpandedMedia -> {
-                    key(PostContent.Attribution.key) {
-                        attributionContent(postData)
-                    }
-                    key(PostContent.Embed.Media.key) {
-                        embedContent(postData)
-                    }
-                    key(PostContent.Actions.key) {
-                        actionsContent(postData)
-                    }
-                    key(PostContent.Text.key) {
-                        textContent(postData)
-                    }
-                }
-
-                Timeline.Presentation.CondensedMedia -> {
-                    key(PostContent.Embed.Media.key) {
-                        embedContent(postData)
-                    }
-                    // These do not emit UI
-                    key(PostContent.Attribution.key) {
-                        attributionContent(postData)
-                    }
-                    key(PostContent.Text.key) {
-                        textContent(postData)
-                    }
-                    key(PostContent.Actions.key) {
-                        actionsContent(postData)
+            presentation.contentOrder.forEach { order ->
+                key(order.key) {
+                    when (order) {
+                        PostContent.Actions -> ActionsContent(postData)
+                        PostContent.Attribution -> AttributionContent(postData)
+                        PostContent.Embed.Link -> EmbedContent(postData)
+                        PostContent.Embed.Media -> EmbedContent(postData)
+                        PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(postData)
+                        PostContent.Text -> TextContent(postData)
                     }
                 }
             }
@@ -244,9 +174,6 @@ private fun AttributionContent(
 
         Timeline.Presentation.CondensedMedia -> Unit
     }
-    //                if (item is TimelineItem.Reply) {
-//                    PostReplyLine(item.parentPost.author, onProfileClicked)
-//                }
 }
 
 @Composable
@@ -377,6 +304,26 @@ private fun ActionsContent(
     }
 }
 
+@Composable
+private fun MetadataContent(
+    data: PostData,
+) {
+    PostMetadata(
+        modifier = Modifier
+            .padding(
+                horizontal = 24.dp,
+                vertical = 4.dp,
+            ),
+        time = data.post.createdAt,
+        postId = data.post.cid,
+        profileId = data.post.author.did,
+        reposts = data.post.repostCount,
+        quotes = data.post.quoteCount,
+        likes = data.post.likeCount,
+        onMetadataClicked = data.postActions::onPostMetadataClicked,
+    )
+}
+
 private fun Modifier.contentPresentationPadding(
     content: PostContent,
     presentation: Timeline.Presentation,
@@ -409,6 +356,8 @@ private fun Modifier.contentPresentationPadding(
             Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
+
+        PostContent.Metadata -> 0.dp
     },
     end = when (content) {
         PostContent.Actions -> when (presentation) {
@@ -438,6 +387,8 @@ private fun Modifier.contentPresentationPadding(
             Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
+
+        PostContent.Metadata -> 0.dp
     }
 )
 
@@ -520,8 +471,41 @@ private sealed class PostContent(val key: String) {
         data object Media : Embed()
     }
 
+    data object Metadata : PostContent(key = "Metadata")
     data object Actions : PostContent(key = "Actions")
 }
+
+@Stable
+private val Timeline.Presentation.contentOrder
+    get() = when (this) {
+        Timeline.Presentation.TextAndEmbed -> TextAndEmbedOrder
+        Timeline.Presentation.ExpandedMedia -> ExpandedMediaOrder
+        Timeline.Presentation.CondensedMedia -> CondensedMediaOrder
+    }
+
+private val TextAndEmbedOrder = listOf(
+    PostContent.Attribution,
+    PostContent.Text,
+    PostContent.Embed.Media,
+    PostContent.Metadata,
+    PostContent.Actions,
+)
+
+private val ExpandedMediaOrder = listOf(
+    PostContent.Attribution,
+    PostContent.Embed.Media,
+    PostContent.Text,
+    PostContent.Metadata,
+    PostContent.Actions,
+)
+
+private val CondensedMediaOrder = listOf(
+    PostContent.Attribution,
+    PostContent.Text,
+    PostContent.Embed.Media,
+    PostContent.Metadata,
+    PostContent.Actions,
+)
 
 private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
