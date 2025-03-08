@@ -384,7 +384,7 @@ private fun Modifier.contentPresentationPadding(
     start = when (content) {
         PostContent.Actions -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 24.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
+            Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
 
@@ -406,14 +406,14 @@ private fun Modifier.contentPresentationPadding(
 
         PostContent.Text -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 24.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
+            Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
     },
     end = when (content) {
         PostContent.Actions -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 16.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
+            Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
 
@@ -435,7 +435,7 @@ private fun Modifier.contentPresentationPadding(
 
         PostContent.Text -> when (presentation) {
             Timeline.Presentation.TextAndEmbed -> 16.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
+            Timeline.Presentation.ExpandedMedia -> 16.dp
             Timeline.Presentation.CondensedMedia -> 0.dp
         }
     }
