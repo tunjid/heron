@@ -71,7 +71,7 @@ sealed class RoundedPolygonShape : Shape {
         density: Density,
     ): RoundedPolygon = lastPolygon
         ?.takeIf {
-            size.hasSimilarAspectRatio(lastSize) && lastDensity == density
+            size.canReuse(lastSize) && lastDensity == density
         }
         ?: createPolygon(size, density).also { polygon ->
             lastPolygon = polygon
@@ -274,7 +274,6 @@ private class MorphingShape(
 ) : Shape {
     private val path = Path()
     private val matrix = Matrix()
-    private val outline = Outline.Generic(path)
 
     private var previousPolygon: RoundedPolygon? = null
     private var currentPolygon: RoundedPolygon? = null
@@ -323,7 +322,7 @@ private class MorphingShape(
         )
         path.transform(matrix)
 
-        return outline
+        return Outline.Generic(path)
     }
 }
 
@@ -370,5 +369,11 @@ private fun pathFromCubics(
     path.close()
 }
 
-private fun Size.hasSimilarAspectRatio(other: Size?) =
-    other != null && ((width / height) / (other.width / other.height)) in (0.8f..1.2f)
+private fun Size.canReuse(other: Size?): Boolean {
+    if (other == null) return false
+
+    val aspectRatio = width / height
+    val otherAspectRatio = other.width / other.height
+
+    return aspectRatio / otherAspectRatio in (0.9f..1.1f)
+}
