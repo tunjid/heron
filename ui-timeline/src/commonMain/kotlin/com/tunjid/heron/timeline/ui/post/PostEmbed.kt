@@ -75,6 +75,7 @@ internal fun PostEmbed(
                 feature = embed,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
+                presentation = presentation,
                 onImageClicked = { index ->
                     onPostMediaClicked(embed, index, null)
                 }

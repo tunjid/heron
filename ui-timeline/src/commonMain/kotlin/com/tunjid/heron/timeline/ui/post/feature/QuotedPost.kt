@@ -135,7 +135,9 @@ fun QuotedPost(
                     panedSharedElementScope = panedSharedElementScope,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index)
-                    }
+                    },
+                    // Quotes are exclusively in blog view types
+                    presentation = Timeline.Presentation.TextAndEmbed,
                 )
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})

@@ -123,9 +123,9 @@ internal fun PostSearchResult(
                         end = 16.dp
                     ),
                 panedSharedElementScope = panedSharedElementScope,
+                presentationLookaheadScope = panedSharedElementScope,
                 now = now,
                 post = result.post,
-                embed = result.post.embed,
                 isAnchoredInTimeline = false,
                 avatarShape = RoundedPolygonShape.Circle,
                 sharedElementPrefix = result.sharedElementPrefix(),

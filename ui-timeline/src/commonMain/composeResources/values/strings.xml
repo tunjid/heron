@@ -42,4 +42,5 @@
     <string name="videos">videos</string>
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>
+    <string name="expanded_media">expanded media</string>
 </resources>

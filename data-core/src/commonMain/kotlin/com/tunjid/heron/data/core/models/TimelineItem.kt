@@ -104,14 +104,9 @@ sealed class Timeline {
                 Type.Posts -> TextAndEmbedOnlyPresentation
                 Type.Replies -> TextAndEmbedOnlyPresentation
                 Type.Likes -> TextAndEmbedOnlyPresentation
-                Type.Media -> listOf(
-                    Presentation.TextAndEmbed,
-                    Presentation.CondensedMedia,
-                )
-                Type.Videos -> listOf(
-                    Presentation.TextAndEmbed,
-                    Presentation.CondensedMedia,
-                )
+                Type.Media -> Presentation.entries
+
+                Type.Videos -> Presentation.entries
             }
 
         enum class Type(
@@ -131,6 +126,7 @@ sealed class Timeline {
         val key: String,
     ) {
         TextAndEmbed(key = "presentation-text-and-embed"),
+        ExpandedMedia(key = "presentation-expanded-media"),
         CondensedMedia(key = "presentation-condensed-media"),
     }
 }

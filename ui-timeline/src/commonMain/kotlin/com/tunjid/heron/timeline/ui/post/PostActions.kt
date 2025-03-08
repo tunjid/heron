@@ -18,16 +18,18 @@ package com.tunjid.heron.timeline.ui.post
 
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
@@ -35,7 +37,6 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -44,11 +45,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.timeline.utilities.actionIconSize
 import com.tunjid.heron.ui.PanedSharedElementScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.liked
@@ -64,11 +69,12 @@ fun PostActions(
     likeCount: String?,
     repostUri: Uri?,
     likeUri: Uri?,
-    iconSize: Dp,
     postId: Id,
     postUri: Uri,
     sharedElementPrefix: String,
+    presentation: Timeline.Presentation,
     panedSharedElementScope: PanedSharedElementScope,
+    presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -76,10 +82,15 @@ fun PostActions(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = SpaceBetween,
+        horizontalArrangement = when (presentation) {
+            Timeline.Presentation.TextAndEmbed -> Arrangement.SpaceBetween
+            Timeline.Presentation.ExpandedMedia -> Arrangement.spacedBy(24.dp)
+            Timeline.Presentation.CondensedMedia -> Arrangement.SpaceBetween
+        },
     ) {
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = postActionSharedElementKey(
                         prefix = sharedElementPrefix,
@@ -88,13 +99,14 @@ fun PostActions(
                     ),
                 ),
             icon = Icons.Rounded.ChatBubbleOutline,
-            iconSize = iconSize,
+            iconSize = presentation.actionIconSize,
             contentDescription = stringResource(Res.string.reply),
             text = replyCount,
             onClick = onReplyToPost,
         )
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = rememberSharedContentState(
                         postActionSharedElementKey(
@@ -105,7 +117,7 @@ fun PostActions(
                     ),
                 ),
             icon = Icons.Rounded.Repeat,
-            iconSize = iconSize,
+            iconSize = presentation.actionIconSize,
             contentDescription = stringResource(Res.string.repost),
             text = repostCount,
             onClick = {
@@ -131,6 +143,7 @@ fun PostActions(
         )
         PostAction(
             modifier = Modifier
+                .animateBounds(presentationLookaheadScope)
                 .sharedElement(
                     key = rememberSharedContentState(
                         postActionSharedElementKey(
@@ -145,7 +158,7 @@ fun PostActions(
             } else {
                 Icons.Rounded.FavoriteBorder
             },
-            iconSize = iconSize,
+            iconSize = presentation.actionIconSize,
             contentDescription = stringResource(Res.string.liked),
             text = likeCount,
             onClick = {
@@ -195,7 +208,7 @@ private fun PostAction(
                 bottom = 2.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
             modifier = Modifier.size(iconSize),
@@ -205,10 +218,16 @@ private fun PostAction(
         )
 
         if (text != null) {
-            Text(
+            BasicText(
+                modifier = Modifier
+                    .padding(vertical = 1.dp),
                 text = text,
                 maxLines = 1,
-                style = MaterialTheme.typography.bodySmall.copy(color = tint),
+                color = { tint },
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 4.sp,
+                    maxFontSize = 16.sp,
+                ),
             )
         }
     }
