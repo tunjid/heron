@@ -113,7 +113,7 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread && presentation == Timeline.Presentation.TextAndEmbed) ThreadedPost(
+                if (item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed) ThreadedPost(
                     modifier = Modifier
                         .fillMaxWidth(),
                     panedSharedElementScope = panedSharedElementScope,
@@ -317,9 +317,9 @@ fun TimelineCard(
         modifier = modifier,
         shape = animateDpAsState(
             when (presentation) {
-                Timeline.Presentation.TextAndEmbed -> 8.dp
-                Timeline.Presentation.CondensedMedia -> 8.dp
-                Timeline.Presentation.ExpandedMedia -> 0.dp
+                Timeline.Presentation.Text.WithEmbed -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 8.dp
+                Timeline.Presentation.Media.Expanded -> 0.dp
             }
         ).value.let(::RoundedCornerShape),
         onClick = { onPostClicked(item.post) },

@@ -100,7 +100,7 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
-                    presentation = Timeline.Presentation.TextAndEmbed,
+                    presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = rememberPostActions(
                         onPostClicked = { post: Post, quotingPostId: Id? ->
                             actions(

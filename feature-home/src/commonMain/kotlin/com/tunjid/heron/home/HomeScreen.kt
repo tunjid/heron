@@ -124,8 +124,8 @@ internal fun HomeScreen(
             maxOffset = { Offset.Zero },
             minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
         )
-        val currentPresentation by produceState(
-            initialValue = Timeline.Presentation.TextAndEmbed,
+        val currentPresentation by produceState<Timeline.Presentation>(
+            initialValue = Timeline.Presentation.Text.WithEmbed,
         ) {
             snapshotFlow { pagerState.currentPage }
                 .flatMapLatest {

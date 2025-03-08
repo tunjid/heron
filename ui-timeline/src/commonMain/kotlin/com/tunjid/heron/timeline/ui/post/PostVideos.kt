@@ -78,9 +78,9 @@ internal fun PostVideo(
         thumbnail = video.thumbnail?.uri,
         shape = animateDpAsState(
             when (presentation) {
-                Timeline.Presentation.TextAndEmbed -> 8.dp
-                Timeline.Presentation.CondensedMedia -> 8.dp
-                Timeline.Presentation.ExpandedMedia -> 0.dp
+                Timeline.Presentation.Text.WithEmbed -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 8.dp
+                Timeline.Presentation.Media.Expanded -> 0.dp
             }
         ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
     )
@@ -129,7 +129,7 @@ internal fun PostVideo(
             videoPlayerController = videoPlayerController,
         )
 
-        if (presentation != Timeline.Presentation.CondensedMedia) PlayButton(
+        if (presentation != Timeline.Presentation.Media.Condensed) PlayButton(
             modifier = Modifier
                 .align(Alignment.Center),
             videoPlayerState = videoPlayerState,

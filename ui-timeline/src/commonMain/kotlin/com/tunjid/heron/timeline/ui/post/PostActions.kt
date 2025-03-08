@@ -83,9 +83,9 @@ fun PostActions(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> Arrangement.SpaceBetween
-            Timeline.Presentation.ExpandedMedia -> Arrangement.spacedBy(24.dp)
-            Timeline.Presentation.CondensedMedia -> Arrangement.SpaceBetween
+            Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
+            Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
+            Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
         },
     ) {
         PostAction(

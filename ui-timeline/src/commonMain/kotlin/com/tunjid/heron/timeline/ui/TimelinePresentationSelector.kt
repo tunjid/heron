@@ -102,9 +102,9 @@ fun TimelinePresentationSelector(
                                         imageVector = presentation.icon,
                                         contentDescription = stringResource(
                                             when (presentation) {
-                                                Timeline.Presentation.TextAndEmbed -> Res.string.text_and_embeds
-                                                Timeline.Presentation.CondensedMedia -> Res.string.condensed_media
-                                                Timeline.Presentation.ExpandedMedia -> Res.string.expanded_media
+                                                Timeline.Presentation.Text.WithEmbed -> Res.string.text_and_embeds
+                                                Timeline.Presentation.Media.Condensed -> Res.string.condensed_media
+                                                Timeline.Presentation.Media.Expanded -> Res.string.expanded_media
                                             }
                                         ),
                                         tint =

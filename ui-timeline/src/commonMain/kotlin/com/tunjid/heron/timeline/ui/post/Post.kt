@@ -75,7 +75,7 @@ fun Post(
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(modifier = modifier) {
-        if (presentation == Timeline.Presentation.TextAndEmbed) Box(
+        if (presentation == Timeline.Presentation.Text.WithEmbed) Box(
             modifier = Modifier
                 .matchParentSize()
                 .padding(horizontal = 8.dp),
@@ -93,9 +93,9 @@ fun Post(
             createdAt = createdAt
         )
         val verticalPadding = when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 4.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 4.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
         Column(
             modifier = Modifier
@@ -125,8 +125,8 @@ private fun AttributionContent(
     data: PostData,
 ) = with(data.panedSharedElementScope) {
     when (data.presentation) {
-        Timeline.Presentation.TextAndEmbed,
-        Timeline.Presentation.ExpandedMedia,
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
             -> AttributionLayout(
             modifier = Modifier
                 .contentPresentationPadding(
@@ -172,7 +172,7 @@ private fun AttributionContent(
             }
         )
 
-        Timeline.Presentation.CondensedMedia -> Unit
+        Timeline.Presentation.Media.Condensed -> Unit
     }
 }
 
@@ -182,8 +182,8 @@ private fun TextContent(
     data: PostData,
 ) = with(data.panedSharedElementScope) {
     when (data.presentation) {
-        Timeline.Presentation.TextAndEmbed,
-        Timeline.Presentation.ExpandedMedia,
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
             -> PostText(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
@@ -197,12 +197,12 @@ private fun TextContent(
                 .animateBounds(data.presentationLookaheadScope)
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
-                Timeline.Presentation.TextAndEmbed -> Int.MAX_VALUE
-                Timeline.Presentation.CondensedMedia -> throw IllegalArgumentException(
+                Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
+                Timeline.Presentation.Media.Condensed -> throw IllegalArgumentException(
                     "Condensed media should not show text"
                 )
 
-                Timeline.Presentation.ExpandedMedia -> 2
+                Timeline.Presentation.Media.Expanded -> 2
             },
             onClick = {
                 data.postActions.onPostClicked(
@@ -219,7 +219,7 @@ private fun TextContent(
             }
         )
 
-        Timeline.Presentation.CondensedMedia -> Unit
+        Timeline.Presentation.Media.Condensed -> Unit
     }
 }
 
@@ -274,8 +274,8 @@ private fun ActionsContent(
     data: PostData,
 ) {
     when (data.presentation) {
-        Timeline.Presentation.TextAndEmbed,
-        Timeline.Presentation.ExpandedMedia,
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
             -> PostActions(
             modifier = Modifier
                 .contentPresentationPadding(
@@ -300,7 +300,7 @@ private fun ActionsContent(
             onPostInteraction = data.postActions::onPostInteraction,
         )
 
-        Timeline.Presentation.CondensedMedia -> Unit
+        Timeline.Presentation.Media.Condensed -> Unit
     }
 }
 
@@ -330,62 +330,62 @@ private fun Modifier.contentPresentationPadding(
 ) = padding(
     start = when (content) {
         PostContent.Actions -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 24.dp
-            Timeline.Presentation.ExpandedMedia -> 16.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 24.dp
+            Timeline.Presentation.Media.Expanded -> 16.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Attribution -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 8.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         is PostContent.Embed -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 24.dp
-            Timeline.Presentation.ExpandedMedia -> when (content) {
+            Timeline.Presentation.Text.WithEmbed -> 24.dp
+            Timeline.Presentation.Media.Expanded -> when (content) {
                 PostContent.Embed.Link -> 8.dp
                 PostContent.Embed.Media -> 0.dp
             }
 
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Text -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 24.dp
-            Timeline.Presentation.ExpandedMedia -> 16.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 24.dp
+            Timeline.Presentation.Media.Expanded -> 16.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Metadata -> 0.dp
     },
     end = when (content) {
         PostContent.Actions -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 16.dp
-            Timeline.Presentation.ExpandedMedia -> 16.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 16.dp
+            Timeline.Presentation.Media.Expanded -> 16.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Attribution -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 8.dp
-            Timeline.Presentation.ExpandedMedia -> 8.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         is PostContent.Embed -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 16.dp
-            Timeline.Presentation.ExpandedMedia -> when (content) {
+            Timeline.Presentation.Text.WithEmbed -> 16.dp
+            Timeline.Presentation.Media.Expanded -> when (content) {
                 PostContent.Embed.Link -> 8.dp
                 PostContent.Embed.Media -> 0.dp
             }
 
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Text -> when (presentation) {
-            Timeline.Presentation.TextAndEmbed -> 16.dp
-            Timeline.Presentation.ExpandedMedia -> 16.dp
-            Timeline.Presentation.CondensedMedia -> 0.dp
+            Timeline.Presentation.Text.WithEmbed -> 16.dp
+            Timeline.Presentation.Media.Expanded -> 16.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
         }
 
         PostContent.Metadata -> 0.dp
@@ -478,9 +478,9 @@ private sealed class PostContent(val key: String) {
 @Stable
 private val Timeline.Presentation.contentOrder
     get() = when (this) {
-        Timeline.Presentation.TextAndEmbed -> TextAndEmbedOrder
-        Timeline.Presentation.ExpandedMedia -> ExpandedMediaOrder
-        Timeline.Presentation.CondensedMedia -> CondensedMediaOrder
+        Timeline.Presentation.Text.WithEmbed -> TextAndEmbedOrder
+        Timeline.Presentation.Media.Expanded -> ExpandedMediaOrder
+        Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
     }
 
 private val TextAndEmbedOrder = listOf(

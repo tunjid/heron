@@ -123,7 +123,7 @@ fun QuotedPost(
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.TextAndEmbed,
+                    presentation = Timeline.Presentation.Text.WithEmbed,
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
                     },
@@ -137,7 +137,7 @@ fun QuotedPost(
                         onPostMediaClicked(embed, index)
                     },
                     // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.TextAndEmbed,
+                    presentation = Timeline.Presentation.Text.WithEmbed,
                 )
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
@@ -146,7 +146,7 @@ fun QuotedPost(
                     panedSharedElementScope = panedSharedElementScope,
                     sharedElementPrefix = sharedElementPrefix,
                     // Quote videos only show in text and embeds
-                    presentation = Timeline.Presentation.TextAndEmbed,
+                    presentation = Timeline.Presentation.Text.WithEmbed,
                     onClicked = {
                         onPostMediaClicked(embed, 0)
                     }
