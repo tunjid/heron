@@ -84,7 +84,7 @@ internal fun PostExternal(
                     ),
                 )
             }
-            if (presentation == Timeline.Presentation.TextAndEmbed) PostFeatureTextContent(
+            if (presentation == Timeline.Presentation.Text.WithEmbed) PostFeatureTextContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(

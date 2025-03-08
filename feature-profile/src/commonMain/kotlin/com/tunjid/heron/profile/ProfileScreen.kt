@@ -251,8 +251,8 @@ internal fun ProfileScreen(
             Box(
                 modifier = Modifier,
             ) {
-                val currentPresentation by produceState(
-                    initialValue = Timeline.Presentation.TextAndEmbed,
+                val currentPresentation by produceState<Timeline.Presentation>(
+                    initialValue = Timeline.Presentation.Text.WithEmbed,
                 ) {
                     snapshotFlow { pagerState.currentPage }
                         .flatMapLatest {

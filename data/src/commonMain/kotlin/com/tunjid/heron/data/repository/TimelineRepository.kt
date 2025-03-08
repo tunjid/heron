@@ -851,11 +851,11 @@ class OfflineTimelineRepository(
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = listOfNotNull(
-                            Timeline.Presentation.TextAndEmbed,
-                            Timeline.Presentation.ExpandedMedia.takeIf {
+                            Timeline.Presentation.Text.WithEmbed,
+                            Timeline.Presentation.Media.Expanded.takeIf {
                                 feedGeneratorEntity.supportsMediaPresentation()
                             },
-                            Timeline.Presentation.CondensedMedia.takeIf {
+                            Timeline.Presentation.Media.Condensed.takeIf {
                                 feedGeneratorEntity.supportsMediaPresentation()
                             },
                         ),
@@ -946,10 +946,10 @@ class OfflineTimelineRepository(
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
-        Timeline.Presentation.ExpandedMedia.key -> Timeline.Presentation.ExpandedMedia
-        Timeline.Presentation.CondensedMedia.key -> Timeline.Presentation.CondensedMedia
-        Timeline.Presentation.TextAndEmbed.key -> Timeline.Presentation.TextAndEmbed
-        else -> Timeline.Presentation.TextAndEmbed
+        Timeline.Presentation.Media.Expanded.key -> Timeline.Presentation.Media.Expanded
+        Timeline.Presentation.Media.Condensed.key -> Timeline.Presentation.Media.Condensed
+        Timeline.Presentation.Text.WithEmbed.key -> Timeline.Presentation.Text.WithEmbed
+        else -> Timeline.Presentation.Text.WithEmbed
     }
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {

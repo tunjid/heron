@@ -94,7 +94,7 @@ internal fun PostEmbed(
 
             null -> Unit
         }
-        if (presentation == Timeline.Presentation.TextAndEmbed) {
+        if (presentation == Timeline.Presentation.Text.WithEmbed) {
             if (quote != null) Spacer(Modifier.height(16.dp))
             when (quote?.cid) {
                 null -> Unit

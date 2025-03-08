@@ -29,13 +29,13 @@ internal fun Modifier.presentationPadding(
     end: Dp = 0.dp,
     bottom: Dp = 0.dp,
 ) = when (presentation) {
-    Timeline.Presentation.TextAndEmbed -> padding(
+    Timeline.Presentation.Text.WithEmbed -> padding(
         start = start,
         top = top,
         end = end,
         bottom = bottom,
     )
 
-    Timeline.Presentation.CondensedMedia -> this
-    Timeline.Presentation.ExpandedMedia -> this
+    Timeline.Presentation.Media.Condensed -> this
+    Timeline.Presentation.Media.Expanded -> this
 }

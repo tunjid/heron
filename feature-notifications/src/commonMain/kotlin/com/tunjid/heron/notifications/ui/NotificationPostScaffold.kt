@@ -18,7 +18,6 @@ package com.tunjid.heron.notifications.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -133,7 +132,7 @@ internal fun NotificationPostScaffold(
                     postId = notification.associatedPost.cid,
                     postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
-                    presentation = Timeline.Presentation.TextAndEmbed,
+                    presentation = Timeline.Presentation.Text.WithEmbed,
                     panedSharedElementScope = panedSharedElementScope,
                     presentationLookaheadScope = panedSharedElementScope,
                     onReplyToPost = {

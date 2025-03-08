@@ -61,7 +61,7 @@ internal fun PostImages(
             itemContent = { index, image ->
                 panedSharedElementScope.updatedMovableSharedElementOf(
                     modifier = when (presentation) {
-                        Timeline.Presentation.TextAndEmbed -> when (feature.images.size) {
+                        Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 -> Modifier
                                 .fillParentMaxWidth()
                                 .aspectRatio(image.aspectRatioOrSquare)
@@ -70,8 +70,9 @@ internal fun PostImages(
                                 .height(200.dp)
                                 .aspectRatio(image.aspectRatioOrSquare)
                         }
-                        Timeline.Presentation.CondensedMedia,
-                        Timeline.Presentation.ExpandedMedia -> Modifier
+                        Timeline.Presentation.Media.Condensed,
+                        Timeline.Presentation.Media.Expanded
+                            -> Modifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
                     }
@@ -83,13 +84,13 @@ internal fun PostImages(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
                         contentScale =
-                            if (presentation == Timeline.Presentation.ExpandedMedia)
+                            if (presentation == Timeline.Presentation.Media.Expanded)
                                 ContentScale.Crop else ContentScale.Fit,
                         shape = animateDpAsState(
                             when (presentation) {
-                                Timeline.Presentation.TextAndEmbed -> 16.dp
-                                Timeline.Presentation.CondensedMedia -> 8.dp
-                                Timeline.Presentation.ExpandedMedia -> 0.dp
+                                Timeline.Presentation.Text.WithEmbed -> 16.dp
+                                Timeline.Presentation.Media.Condensed -> 8.dp
+                                Timeline.Presentation.Media.Expanded -> 0.dp
                             }
                         ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
                     ),

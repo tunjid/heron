@@ -54,7 +54,7 @@ sealed class Timeline {
         ) : Home(
             source = Constants.timelineFeed,
         ) {
-            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
+            override val supportedPresentations get() = Presentation.TextWithEmbedOnly
         }
 
         @Serializable
@@ -69,7 +69,7 @@ sealed class Timeline {
             override val name: String
                 get() = feedList.name
 
-            override val supportedPresentations get() = TextAndEmbedOnlyPresentation
+            override val supportedPresentations get() = Presentation.TextWithEmbedOnly
         }
 
         @Serializable
@@ -101,12 +101,11 @@ sealed class Timeline {
 
         override val supportedPresentations: List<Presentation>
             get() = when (type) {
-                Type.Posts -> TextAndEmbedOnlyPresentation
-                Type.Replies -> TextAndEmbedOnlyPresentation
-                Type.Likes -> TextAndEmbedOnlyPresentation
-                Type.Media -> Presentation.entries
-
-                Type.Videos -> Presentation.entries
+                Type.Posts -> Presentation.TextWithEmbedOnly
+                Type.Replies -> Presentation.TextWithEmbedOnly
+                Type.Likes -> Presentation.TextWithEmbedOnly
+                Type.Media -> Presentation.All
+                Type.Videos -> Presentation.All
             }
 
         enum class Type(
@@ -122,18 +121,38 @@ sealed class Timeline {
         }
     }
 
-    enum class Presentation(
+    @Serializable
+    sealed class Presentation(
         val key: String,
     ) {
-        TextAndEmbed(key = "presentation-text-and-embed"),
-        ExpandedMedia(key = "presentation-expanded-media"),
-        CondensedMedia(key = "presentation-condensed-media"),
+        sealed class Text {
+            data object WithEmbed : Presentation(
+                key = "presentation-text-and-embed",
+            )
+        }
+
+        sealed class Media {
+            data object Expanded : Presentation(
+                key = "presentation-expanded-media",
+            )
+
+            data object Condensed : Presentation(
+                key = "presentation-condensed-media",
+            )
+        }
+
+        companion object {
+            internal val TextWithEmbedOnly = listOf(
+                Text.WithEmbed
+            )
+            internal val All = listOf(
+                Text.WithEmbed,
+                Media.Expanded,
+                Media.Condensed
+            )
+        }
     }
 }
-
-private val TextAndEmbedOnlyPresentation = listOf(
-    Timeline.Presentation.TextAndEmbed
-)
 
 sealed class TimelineItem {
 
