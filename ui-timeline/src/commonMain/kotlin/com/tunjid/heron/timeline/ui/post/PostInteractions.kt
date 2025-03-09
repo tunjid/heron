@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -56,13 +57,20 @@ import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.cancel
 import heron.ui_timeline.generated.resources.quote
 import heron.ui_timeline.generated.resources.repost
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 
 @Stable
-class PostInteractionState private constructor(){
+class PostActionsSheetState private constructor(
+    internal val sheetState: SheetState,
+    internal val scope: CoroutineScope,
+) {
     var currentInteraction by mutableStateOf<Post.Interaction?>(null)
+        internal set
+
+    var showBottomSheet by mutableStateOf(false)
         internal set
 
     fun onInteraction(interaction: Post.Interaction) {
@@ -71,26 +79,30 @@ class PostInteractionState private constructor(){
 
     companion object {
         @Composable
-        fun rememberPostInteractionState() = remember {
-            PostInteractionState()
+        fun rememberPostInteractionState(): PostActionsSheetState {
+            val sheetState = rememberModalBottomSheetState()
+            val scope = rememberCoroutineScope()
+
+            return remember {
+                PostActionsSheetState(
+                    sheetState = sheetState,
+                    scope = scope,
+                )
+            }
         }
     }
 }
 
 @Composable
-fun PostInteractions(
-    state: PostInteractionState,
+fun PostActionsBottomSheet(
+    state: PostActionsSheetState,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
-    var showBottomSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-
     val hideSheet = {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                showBottomSheet = false
+        state.scope.launch { state.sheetState.hide() }.invokeOnCompletion {
+            if (!state.sheetState.isVisible) {
+                state.showBottomSheet = false
                 state.currentInteraction = null
             }
         }
@@ -99,7 +111,7 @@ fun PostInteractions(
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
             null -> Unit
-            is Post.Interaction.Create.Repost -> showBottomSheet = true
+            is Post.Interaction.Create.Repost -> state.showBottomSheet = true
             is Post.Interaction.Create.Like,
             is Post.Interaction.Delete.RemoveRepost,
             is Post.Interaction.Delete.Unlike,
@@ -110,11 +122,11 @@ fun PostInteractions(
         }
     }
 
-    if (showBottomSheet) ModalBottomSheet(
+    if (state.showBottomSheet) ModalBottomSheet(
         onDismissRequest = {
-            showBottomSheet = false
+            state.showBottomSheet = false
         },
-        sheetState = sheetState,
+        sheetState = state.sheetState,
         content = {
             Column(
                 modifier = Modifier
