@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.pluralStringResource
+import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.singularStringResource
 import com.tunjid.heron.timeline.utilities.formatDate
 import com.tunjid.heron.timeline.utilities.formatTime
 import heron.ui_timeline.generated.resources.Res
@@ -64,70 +66,50 @@ internal fun PostMetadata(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            modifier = modifier,
+            modifier = Modifier,
             text = "${time.formatDate()} • ${time.formatTime()}",
             style = textStyle,
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            MetadataText(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false),
-                        onClick = {
-                            onMetadataClicked(
-                                Post.Metadata.Reposts(
-                                    profileId = profileId,
-                                    postId = postId
+            PostMetadataText.All.forEach { metadataText ->
+                MetadataText(
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(bounded = false),
+                            onClick = {
+                                onMetadataClicked(
+                                    when (metadataText) {
+                                        PostMetadataText.Likes -> Post.Metadata.Likes(
+                                            profileId = profileId,
+                                            postId = postId,
+                                        )
+
+                                        PostMetadataText.Quotes -> Post.Metadata.Quotes(
+                                            profileId = profileId,
+                                            postId = postId,
+                                        )
+
+                                        PostMetadataText.Reposts -> Post.Metadata.Reposts(
+                                            profileId = profileId,
+                                            postId = postId
+                                        )
+                                    }
                                 )
-                            )
-                        },
-                    ),
-                count = reposts,
-                singularResource = Res.string.repost,
-                pluralResource = Res.string.reposts,
-                textStyle = textStyle,
-            )
-            MetadataText(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false),
-                        onClick = {
-                            onMetadataClicked(
-                                Post.Metadata.Quotes(
-                                    profileId = profileId,
-                                    postId = postId,
-                                )
-                            )
-                        },
-                    ),
-                count = quotes,
-                singularResource = Res.string.quote,
-                pluralResource = Res.string.quotes,
-                textStyle = textStyle,
-            )
-            MetadataText(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false),
-                        onClick = {
-                            onMetadataClicked(
-                                Post.Metadata.Likes(
-                                    profileId = profileId,
-                                    postId = postId,
-                                )
-                            )
-                        },
-                    ),
-                count = likes,
-                singularResource = Res.string.like,
-                pluralResource = Res.string.likes,
-                textStyle = textStyle,
-            )
+                            },
+                        ),
+                    count = when (metadataText) {
+                        PostMetadataText.Likes -> likes
+                        PostMetadataText.Quotes -> quotes
+                        PostMetadataText.Reposts -> reposts
+                    },
+                    singularResource = metadataText.singularStringResource,
+                    pluralResource = metadataText.pluralStringResource,
+                    textStyle = textStyle,
+                )
+            }
         }
     }
 }
@@ -156,6 +138,36 @@ internal fun MetadataText(
                 else pluralResource
             ),
             style = textStyle,
+        )
+    }
+}
+
+private sealed class PostMetadataText {
+
+    data object Reposts : PostMetadataText()
+    data object Quotes : PostMetadataText()
+    data object Likes : PostMetadataText()
+
+    companion object {
+
+        val PostMetadataText.singularStringResource
+            get() = when (this) {
+                Reposts -> Res.string.repost
+                Quotes -> Res.string.quote
+                Likes -> Res.string.like
+            }
+
+        val PostMetadataText.pluralStringResource
+            get() = when (this) {
+                Reposts -> Res.string.reposts
+                Quotes -> Res.string.quotes
+                Likes -> Res.string.likes
+            }
+
+        val All = listOf(
+            Reposts,
+            Quotes,
+            Likes,
         )
     }
 }
