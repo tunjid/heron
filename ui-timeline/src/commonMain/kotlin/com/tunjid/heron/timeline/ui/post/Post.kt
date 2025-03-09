@@ -276,7 +276,7 @@ private fun ActionsContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-            -> PostActions(
+            -> PostInteractions(
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Actions,

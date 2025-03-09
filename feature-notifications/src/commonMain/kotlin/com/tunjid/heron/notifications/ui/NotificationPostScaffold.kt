@@ -44,7 +44,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.PostActions
+import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.utilities.format
@@ -123,7 +123,7 @@ internal fun NotificationPostScaffold(
 //                    onPostClicked = onPostClicked,
 //                )
 
-                PostActions(
+                PostInteractions(
                     replyCount = format(notification.associatedPost.replyCount),
                     repostCount = format(notification.associatedPost.repostCount),
                     likeCount = format(notification.associatedPost.likeCount),
