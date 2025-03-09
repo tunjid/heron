@@ -63,7 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 
 
 @Stable
-class PostActionsSheetState private constructor(
+class PostInteractionsSheetState private constructor(
     internal val sheetState: SheetState,
     internal val scope: CoroutineScope,
 ) {
@@ -79,12 +79,12 @@ class PostActionsSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberPostInteractionState(): PostActionsSheetState {
+        fun rememberPostInteractionState(): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
 
             return remember {
-                PostActionsSheetState(
+                PostInteractionsSheetState(
                     sheetState = sheetState,
                     scope = scope,
                 )
@@ -94,8 +94,8 @@ class PostActionsSheetState private constructor(
 }
 
 @Composable
-fun PostActionsBottomSheet(
-    state: PostActionsSheetState,
+fun PostInteractionsBottomSheet(
+    state: PostInteractionsSheetState,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {

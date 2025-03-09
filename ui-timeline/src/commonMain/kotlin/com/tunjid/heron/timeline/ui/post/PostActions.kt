@@ -33,7 +33,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +52,8 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.actionIconSize
 import com.tunjid.heron.ui.PanedSharedElementScope
 import heron.ui_timeline.generated.resources.Res
@@ -88,100 +89,73 @@ fun PostActions(
             Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
         },
     ) {
-        PostAction(
-            modifier = Modifier
-                .animateBounds(presentationLookaheadScope)
-                .sharedElement(
-                    key = postActionSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                        icon = Icons.Rounded.ChatBubbleOutline,
-                    ),
-                ),
-            icon = Icons.Rounded.ChatBubbleOutline,
-            iconSize = presentation.actionIconSize,
-            contentDescription = stringResource(Res.string.reply),
-            text = replyCount,
-            onClick = onReplyToPost,
-        )
-        PostAction(
-            modifier = Modifier
-                .animateBounds(presentationLookaheadScope)
-                .sharedElement(
-                    key = rememberSharedContentState(
-                        postActionSharedElementKey(
+        PostInteractionButton.All.forEach { button ->
+            PostAction(
+                modifier = Modifier
+                    .animateBounds(presentationLookaheadScope)
+                    .sharedElement(
+                        key = postActionSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
-                            icon = Icons.Rounded.Repeat,
-                        )
+                            icon = button.icon,
+                        ),
                     ),
-                ),
-            icon = Icons.Rounded.Repeat,
-            iconSize = presentation.actionIconSize,
-            contentDescription = stringResource(Res.string.repost),
-            text = repostCount,
-            onClick = {
-                onPostInteraction(
-                    when (repostUri) {
-                        null -> Post.Interaction.Create.Repost(
-                            postId = postId,
-                            postUri = postUri,
+                icon = button.icon,
+                iconSize = presentation.actionIconSize,
+                contentDescription = stringResource(button.stringResource),
+                text = when (button) {
+                    PostInteractionButton.Comment -> replyCount
+                    PostInteractionButton.Like -> likeCount
+                    PostInteractionButton.Repost -> repostCount
+                },
+                tint = when (button) {
+                    PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                    PostInteractionButton.Like -> if (likeUri != null) {
+                        Color.Green
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    }
+
+                    PostInteractionButton.Repost -> if (repostUri != null) {
+                        Color.Green
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    }
+                },
+                onClick = {
+                    when (button) {
+                        PostInteractionButton.Comment -> onReplyToPost()
+                        PostInteractionButton.Like -> onPostInteraction(
+                            when (likeUri) {
+                                null -> Post.Interaction.Create.Like(
+                                    postId = postId,
+                                    postUri = postUri,
+                                )
+
+                                else -> Post.Interaction.Delete.Unlike(
+                                    postId = postId,
+                                    likeUri = likeUri,
+                                )
+                            }
                         )
 
-                        else -> Post.Interaction.Delete.RemoveRepost(
-                            postId = postId,
-                            repostUri = repostUri,
-                        )
-                    }
-                )
-            },
-            tint = if (repostUri != null) {
-                Color.Green
-            } else {
-                MaterialTheme.colorScheme.outline
-            },
-        )
-        PostAction(
-            modifier = Modifier
-                .animateBounds(presentationLookaheadScope)
-                .sharedElement(
-                    key = rememberSharedContentState(
-                        postActionSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            icon = Icons.Rounded.Favorite,
-                        )
-                    ),
-                ),
-            icon = if (likeUri != null) {
-                Icons.Rounded.Favorite
-            } else {
-                Icons.Rounded.FavoriteBorder
-            },
-            iconSize = presentation.actionIconSize,
-            contentDescription = stringResource(Res.string.liked),
-            text = likeCount,
-            onClick = {
-                onPostInteraction(
-                    when (likeUri) {
-                        null -> Post.Interaction.Create.Like(
-                            postId = postId,
-                            postUri = postUri,
-                        )
+                        PostInteractionButton.Repost -> onPostInteraction(
+                            when (repostUri) {
+                                null -> Post.Interaction.Create.Repost(
+                                    postId = postId,
+                                    postUri = postUri,
+                                )
 
-                        else -> Post.Interaction.Delete.Unlike(
-                            postId = postId,
-                            likeUri = likeUri,
+                                else -> Post.Interaction.Delete.RemoveRepost(
+                                    postId = postId,
+                                    repostUri = repostUri,
+                                )
+                            }
                         )
                     }
-                )
-            },
-            tint = if (likeUri != null) {
-                Color.Red
-            } else {
-                MaterialTheme.colorScheme.outline
-            },
-        )
+                },
+            )
+        }
         Spacer(Modifier.width(0.dp))
     }
 }
@@ -238,3 +212,32 @@ private fun postActionSharedElementKey(
     postId: Id,
     icon: ImageVector,
 ): String = "$prefix-${postId.id}-${icon.hashCode()}"
+
+private sealed class PostInteractionButton {
+
+    data object Comment : PostInteractionButton()
+    data object Repost : PostInteractionButton()
+    data object Like : PostInteractionButton()
+
+    companion object {
+        val PostInteractionButton.icon
+            get() = when (this) {
+                Comment -> Icons.Rounded.ChatBubbleOutline
+                Like -> Icons.Rounded.Favorite
+                Repost -> Icons.Rounded.Repeat
+            }
+
+        val PostInteractionButton.stringResource
+            get() = when (this) {
+                Comment -> Res.string.reply
+                Like -> Res.string.liked
+                Repost -> Res.string.repost
+            }
+
+        val All = listOf(
+            Comment,
+            Repost,
+            Like,
+        )
+    }
+}
