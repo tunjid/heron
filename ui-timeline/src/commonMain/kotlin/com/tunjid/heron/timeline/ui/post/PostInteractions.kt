@@ -35,6 +35,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
@@ -114,17 +115,21 @@ fun PostInteractions(
         },
     ) {
         PostInteractionButton.All.forEach { button ->
-            PostAction(
+            PostInteraction(
                 modifier = Modifier
                     .animateBounds(presentationLookaheadScope)
                     .sharedElement(
                         key = postActionSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
-                            icon = button.icon,
+                            button = button,
                         ),
                     ),
-                icon = button.icon,
+                icon = when (button) {
+                    PostInteractionButton.Comment -> button.icon(isChecked = false)
+                    PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
+                    PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
+                },
                 iconSize = presentation.actionIconSize,
                 contentDescription = stringResource(button.stringResource),
                 text = when (button) {
@@ -185,7 +190,7 @@ fun PostInteractions(
 }
 
 @Composable
-private fun PostAction(
+private fun PostInteraction(
     icon: ImageVector,
     iconSize: Dp,
     contentDescription: String,
@@ -246,6 +251,15 @@ class PostInteractionsSheetState private constructor(
         currentInteraction = interaction
     }
 
+    fun hideSheet() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                showBottomSheet = false
+                currentInteraction = null
+            }
+        }
+    }
+
     companion object {
         @Composable
         fun rememberPostInteractionState(): PostInteractionsSheetState {
@@ -268,14 +282,6 @@ fun PostInteractionsBottomSheet(
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
-    val hideSheet = {
-        state.scope.launch { state.sheetState.hide() }.invokeOnCompletion {
-            if (!state.sheetState.isVisible) {
-                state.showBottomSheet = false
-                state.currentInteraction = null
-            }
-        }
-    }
 
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -317,7 +323,7 @@ fun PostInteractionsBottomSheet(
                                     ?.let(onInteractionConfirmed)
                                 else (state.currentInteraction as? Post.Interaction.Create.Repost)
                                     ?.let(onQuotePostClicked)
-                                hideSheet()
+                                state.hideSheet()
                             }
                             .padding(
                                 horizontal = 8.dp,
@@ -349,7 +355,7 @@ fun PostInteractionsBottomSheet(
                 OutlinedButton(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { hideSheet() },
+                    onClick = state::hideSheet,
                     content = {
                         Text(
                             text = stringResource(Res.string.cancel)
@@ -369,8 +375,8 @@ fun PostInteractionsBottomSheet(
 private fun postActionSharedElementKey(
     prefix: String,
     postId: Id,
-    icon: ImageVector,
-): String = "$prefix-${postId.id}-${icon.hashCode()}"
+    button: PostInteractionButton,
+): String = "$prefix-${postId.id}-${button.hashCode()}"
 
 private sealed class PostInteractionButton {
 
@@ -379,12 +385,13 @@ private sealed class PostInteractionButton {
     data object Like : PostInteractionButton()
 
     companion object {
-        val PostInteractionButton.icon
-            get() = when (this) {
-                Comment -> Icons.Rounded.ChatBubbleOutline
-                Like -> Icons.Rounded.Favorite
-                Repost -> Icons.Rounded.Repeat
-            }
+        fun PostInteractionButton.icon(
+            isChecked: Boolean,
+        ) = when (this) {
+            Comment -> Icons.Rounded.ChatBubbleOutline
+            Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
+            Repost -> Icons.Rounded.Repeat
+        }
 
         val PostInteractionButton.stringResource
             get() = when (this) {
