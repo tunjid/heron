@@ -17,7 +17,7 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +60,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
@@ -85,6 +84,7 @@ import heron.ui_timeline.generated.resources.repost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import com.tunjid.composables.ui.animate
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -100,24 +100,24 @@ fun PostInteractions(
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     panedSharedElementScope: PanedSharedElementScope,
-    presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(panedSharedElementScope) {
+    val arrangement: Arrangement.Horizontal = when (presentation) {
+        Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
+        Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
+        Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
+    }
+    val iconSize = animateDpAsState(presentation.actionIconSize).value
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = when (presentation) {
-            Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
-            Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
-            Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
-        },
+        horizontalArrangement = arrangement.animate(),
     ) {
         PostInteractionButton.All.forEach { button ->
             PostInteraction(
                 modifier = Modifier
-                    .animateBounds(presentationLookaheadScope)
                     .sharedElement(
                         key = postActionSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -130,7 +130,7 @@ fun PostInteractions(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                 },
-                iconSize = presentation.actionIconSize,
+                iconSize = iconSize,
                 contentDescription = stringResource(button.stringResource),
                 text = when (button) {
                     PostInteractionButton.Comment -> replyCount

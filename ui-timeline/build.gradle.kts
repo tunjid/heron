@@ -52,6 +52,7 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
 
+                implementation(libs.tunjid.composables)
                 implementation(libs.tunjid.treenav.compose.common)
             }
         }
