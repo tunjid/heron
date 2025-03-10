@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
+import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -54,7 +56,7 @@ sealed class Timeline {
         ) : Home(
             source = Constants.timelineFeed,
         ) {
-            override val supportedPresentations get() = Presentation.TextWithEmbedOnly
+            override val supportedPresentations get() = TextOnlyPresentations
         }
 
         @Serializable
@@ -69,7 +71,7 @@ sealed class Timeline {
             override val name: String
                 get() = feedList.name
 
-            override val supportedPresentations get() = Presentation.TextWithEmbedOnly
+            override val supportedPresentations get() = TextOnlyPresentations
         }
 
         @Serializable
@@ -101,11 +103,11 @@ sealed class Timeline {
 
         override val supportedPresentations: List<Presentation>
             get() = when (type) {
-                Type.Posts -> Presentation.TextWithEmbedOnly
-                Type.Replies -> Presentation.TextWithEmbedOnly
-                Type.Likes -> Presentation.TextWithEmbedOnly
-                Type.Media -> Presentation.All
-                Type.Videos -> Presentation.All
+                Type.Posts -> TextOnlyPresentations
+                Type.Replies -> TextOnlyPresentations
+                Type.Likes -> TextOnlyPresentations
+                Type.Media -> AllPresentations
+                Type.Videos -> AllPresentations
             }
 
         enum class Type(
@@ -138,17 +140,6 @@ sealed class Timeline {
 
             data object Condensed : Presentation(
                 key = "presentation-condensed-media",
-            )
-        }
-
-        companion object {
-            internal val TextWithEmbedOnly = listOf(
-                Text.WithEmbed
-            )
-            internal val All = listOf(
-                Text.WithEmbed,
-                Media.Expanded,
-                Media.Condensed
             )
         }
     }
@@ -197,3 +188,13 @@ sealed class TimelineItem {
         override val post: Post,
     ) : TimelineItem()
 }
+
+private val TextOnlyPresentations = listOf(
+    Text.WithEmbed
+)
+
+private val AllPresentations = listOf(
+    Text.WithEmbed,
+    Media.Expanded,
+    Media.Condensed
+)

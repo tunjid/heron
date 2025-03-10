@@ -16,8 +16,12 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
@@ -58,6 +63,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
+import kotlin.math.abs
 
 @Composable
 fun Post(
@@ -194,7 +200,10 @@ private fun TextContent(
                     content = PostContent.Text,
                     presentation = data.presentation,
                 )
-                .animateBounds(data.presentationLookaheadScope)
+                .animateBounds(
+                    lookaheadScope = data.presentationLookaheadScope,
+                    boundsTransform = PresentationBoundsTransform,
+                )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
                 Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
@@ -235,7 +244,10 @@ private fun EmbedContent(
                 content = data.post.embed.asPostContent(),
                 presentation = data.presentation,
             )
-            .animateBounds(data.presentationLookaheadScope)
+            .animateBounds(
+                lookaheadScope = data.presentationLookaheadScope,
+                boundsTransform = PresentationBoundsTransform,
+            )
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
@@ -282,7 +294,10 @@ private fun ActionsContent(
                     content = PostContent.Actions,
                     presentation = data.presentation,
                 )
-                .animateBounds(data.presentationLookaheadScope),
+                .animateBounds(
+                    lookaheadScope = data.presentationLookaheadScope,
+                    boundsTransform = PresentationBoundsTransform,
+                ),
             replyCount = format(data.post.replyCount),
             repostCount = format(data.post.repostCount),
             likeCount = format(data.post.likeCount),
@@ -402,6 +417,14 @@ private fun Embed?.asPostContent() = when (this) {
         -> PostContent.Embed.Link
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
+private val PresentationBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
+    val distance = initialBounds.topLeft - targetBounds.topLeft
+    // TODO: Define this better. The idea is to not animate small delta changes
+    if (abs(distance.y) < 100 && abs(distance.y) < 100) SnapSpec
+    else SpringSpec
+}
+
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
@@ -481,6 +504,11 @@ private val Timeline.Presentation.contentOrder
         Timeline.Presentation.Media.Expanded -> ExpandedMediaOrder
         Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
     }
+
+private val SnapSpec = snap<Rect>()
+private val SpringSpec = spring<Rect>(
+    stiffness = Spring.StiffnessMediumLow
+)
 
 private val TextAndEmbedOrder = listOf(
     PostContent.Attribution,
