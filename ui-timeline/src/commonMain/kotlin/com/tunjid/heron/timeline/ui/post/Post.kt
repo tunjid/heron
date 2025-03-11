@@ -521,9 +521,9 @@ private val TextAndEmbedOrder = listOf(
 private val ExpandedMediaOrder = listOf(
     PostContent.Attribution,
     PostContent.Embed.Media,
+    PostContent.Actions,
     PostContent.Text,
     PostContent.Metadata,
-    PostContent.Actions,
 )
 
 private val CondensedMediaOrder = listOf(
