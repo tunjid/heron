@@ -168,9 +168,17 @@ interface NavigationAction {
 
         data class ToRawUrl(
             val path: String,
+            val referringRouteOption: ReferringRouteOption,
         ) : Common() {
             override val navigationMutation: NavigationMutation = {
-                navState.push(path.toRoute)
+                navState.push(
+                    routeString(
+                        path = path,
+                        queryParams = mapOf(
+                            referringRouteQueryParams(referringRouteOption),
+                        )
+                    ).toRoute
+                )
             }
         }
 

@@ -32,12 +32,15 @@ import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedViewModelCreator
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -54,6 +57,9 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    ),
 )
 
 internal val Route.feedLookup
@@ -97,7 +103,13 @@ abstract class FeedComponent(
     fun routeAdaptiveConfiguration(
         routeParser: RouteParser,
         creator: FeedViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to threePaneEntry<Route>(
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualFeedViewModel> {
@@ -146,6 +158,11 @@ abstract class FeedComponent(
                             ),
                         state = state,
                         actions = viewModel.accept,
+                    )
+                    SecondaryPaneCloseBackHandler(
+                        enabled = paneState.pane == ThreePane.Primary
+                                && route.children.isNotEmpty()
+                                && isMediumScreenWidthOrWider
                     )
                 }
             )
