@@ -162,7 +162,10 @@ internal fun SearchScreen(
                     onTrendClicked = { trend ->
                         actions(
                             Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToRawUrl(trend.link)
+                                NavigationAction.Common.ToRawUrl(
+                                    path = trend.link,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                )
                             )
                         )
                     },

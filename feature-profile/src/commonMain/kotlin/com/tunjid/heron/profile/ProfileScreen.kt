@@ -689,7 +689,7 @@ private fun ProfileTimeline(
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToPost(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
                                             ),
@@ -702,7 +702,7 @@ private fun ProfileTimeline(
                                 actions(
                                     Action.Navigate.DelegateTo(
                                         NavigationAction.Common.ToProfile(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                             profile = profile,
                                             avatarSharedElementKey = post
                                                 .avatarSharedElementKey(
