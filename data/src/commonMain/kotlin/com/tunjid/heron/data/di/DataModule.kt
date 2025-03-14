@@ -123,13 +123,11 @@ abstract class DataComponent(
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
-        //  TODO: Rewrite this when https://issuetracker.google.com/issues/340606803 is fixed
         database.useWriterConnection { transactor ->
             transactor.immediateTransaction {
                 block()
             }
         }
-        database.invalidationTracker.refreshAsync()
     }
 
     @DataScope
