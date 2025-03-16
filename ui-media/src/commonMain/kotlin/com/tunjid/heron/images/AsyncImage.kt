@@ -73,6 +73,14 @@ class ImageState(
     }
 }
 
+@Composable
+fun rememberUpdatedImageState(
+    args: ImageArgs,
+): ImageState =
+    remember { ImageState(args) }
+        .also { it.args = args }
+
+
 fun ImageArgs(
     url: String?,
     thumbnailUrl: String? = null,
@@ -112,11 +120,8 @@ fun AsyncImage(
     args: ImageArgs,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { ImageState(args) }
-        .also { it.args = args }
-
     AsyncImage(
-        state = state,
+        state = rememberUpdatedImageState(args),
         modifier = modifier,
     )
 }
