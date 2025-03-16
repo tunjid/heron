@@ -18,6 +18,7 @@ package com.tunjid.heron.images
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntSize
+import coil3.compose.AsyncImagePainter
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
@@ -37,11 +40,11 @@ sealed class ImageRequest {
     data class Network(
         val url: String?,
         val thumbnailUrl: String? = null,
-    ): ImageRequest()
+    ) : ImageRequest()
 
     data class Local(
         val file: PlatformFile,
-    ): ImageRequest()
+    ) : ImageRequest()
 }
 
 data class ImageArgs(
@@ -51,6 +54,24 @@ data class ImageArgs(
     val alignment: Alignment = Alignment.Center,
     val shape: RoundedPolygonShape,
 )
+
+@Stable
+class ImageState(
+    args: ImageArgs,
+) {
+    var args by mutableStateOf(args)
+    var imageSize by mutableStateOf(IntSize.Zero)
+        private set
+
+    internal fun updateFromSuccess(
+        success: AsyncImagePainter.State.Success,
+    ) {
+        imageSize = IntSize(
+            width = success.result.image.width,
+            height = success.result.image.height,
+        )
+    }
+}
 
 fun ImageArgs(
     url: String?,
@@ -91,21 +112,46 @@ fun AsyncImage(
     args: ImageArgs,
     modifier: Modifier = Modifier,
 ) {
+    val state = remember { ImageState(args) }
+        .also { it.args = args }
+
+    AsyncImage(
+        state = state,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun AsyncImage(
+    state: ImageState,
+    modifier: Modifier = Modifier,
+) {
+    val initialState = remember { state }
+    check(state == initialState) {
+        """
+            ImageState must not change throughout the composition of AsyncImage, rather its
+            mutable properties should be updated.
+        """.trimIndent()
+    }
+
+    val args = state.args
     Box(
         modifier = modifier
             .clip(args.shape.animate())
     ) {
         val contentScale = args.contentScale.animate()
 
-        when(val request = args.request) {
+        when (val request = args.request) {
             is ImageRequest.Local -> {
                 FileAsyncImage(
                     modifier = Modifier.matchParentSize(),
                     file = request.file,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
+                    onSuccess = state::updateFromSuccess,
                 )
             }
+
             is ImageRequest.Network -> {
                 var thumbnailVisible by remember(request.thumbnailUrl) {
                     mutableStateOf(request.thumbnailUrl != null)
@@ -122,6 +168,7 @@ fun AsyncImage(
                     model = request.thumbnailUrl,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
+                    onSuccess = state::updateFromSuccess,
                 )
             }
         }
