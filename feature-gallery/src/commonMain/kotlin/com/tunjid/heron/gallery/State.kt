@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -28,6 +29,7 @@ import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 @Serializable
 data class State(
     val startIndex: Int,
+    val postId: Id,
     val sharedElementPrefix: String,
     @Transient
     val items: List<GalleryItem> = emptyList(),

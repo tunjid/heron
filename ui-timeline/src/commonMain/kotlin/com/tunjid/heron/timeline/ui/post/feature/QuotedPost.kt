@@ -131,6 +131,7 @@ fun QuotedPost(
 
                 is ImageList -> PostImages(
                     feature = embed,
+                    postId = post.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     onImageClicked = { index ->
@@ -143,6 +144,7 @@ fun QuotedPost(
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
                     video = embed,
+                    postId = post.cid,
                     panedSharedElementScope = panedSharedElementScope,
                     sharedElementPrefix = sharedElementPrefix,
                     // Quote videos only show in text and embeds

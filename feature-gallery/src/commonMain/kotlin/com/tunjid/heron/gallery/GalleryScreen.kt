@@ -42,6 +42,7 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoom
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -122,7 +123,8 @@ internal fun GalleryScreen(
                                     ),
                                 panedSharedElementScope = paneScaffoldState,
                                 item = item,
-                                sharedElementPrefix = state.sharedElementPrefix
+                                sharedElementPrefix = state.sharedElementPrefix,
+                                postId = state.postId,
                             )
                         }
 
@@ -135,7 +137,8 @@ internal fun GalleryScreen(
                                 ),
                             panedSharedElementScope = paneScaffoldState,
                             item = item,
-                            sharedElementPrefix = state.sharedElementPrefix
+                            sharedElementPrefix = state.sharedElementPrefix,
+                            postId = state.postId,
                         )
                     }
                 }
@@ -190,12 +193,14 @@ private fun GalleryImage(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     item: GalleryItem.Photo,
+    postId: Id,
     sharedElementPrefix: String,
 ) {
     panedSharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.image.sharedElementKey(
-            prefix = sharedElementPrefix
+            prefix = sharedElementPrefix,
+            postId = postId,
         ),
         state = remember(item.image) {
             ImageArgs(
@@ -221,6 +226,7 @@ private fun GalleryVideo(
     modifier: Modifier = Modifier,
     panedSharedElementScope: PanedSharedElementScope,
     item: GalleryItem.Video,
+    postId: Id,
     sharedElementPrefix: String,
 ) {
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
@@ -235,7 +241,8 @@ private fun GalleryVideo(
     else panedSharedElementScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.video.sharedElementKey(
-            prefix = sharedElementPrefix
+            prefix = sharedElementPrefix,
+            postId = postId,
         ),
         state = videoPlayerState,
         alternateOutgoingSharedElement = { state, innerModifier ->

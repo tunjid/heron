@@ -73,6 +73,7 @@ internal fun PostEmbed(
 
             is ImageList -> PostImages(
                 feature = embed,
+                postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
                 presentation = presentation,
@@ -84,6 +85,7 @@ internal fun PostEmbed(
             UnknownEmbed -> UnknownPostPost(onClick = {})
             is Video -> PostVideo(
                 video = embed,
+                postId = postId,
                 panedSharedElementScope = panedSharedElementScope,
                 sharedElementPrefix = sharedElementPrefix,
                 presentation = presentation,

@@ -26,7 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
@@ -60,7 +60,7 @@ internal val Route.media
     get(): Embed.Media? = routeParams.queryParams["media"]?.firstOrNull()?.fromBase64EncodedUrl()
 
 internal val Route.postId
-    get() = Uri(routeParams.pathArgs.getValue("postId"))
+    get() = Id(routeParams.pathArgs.getValue("postId"))
 
 internal val Route.startIndex
     get() = routeParams.queryParams["startIndex"]?.firstOrNull()?.toIntOrNull() ?: 0

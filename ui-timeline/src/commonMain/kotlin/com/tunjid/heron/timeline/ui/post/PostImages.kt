@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.PanedSharedElementScope
@@ -44,6 +45,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 @Composable
 internal fun PostImages(
     feature: ImageList,
+    postId: Id,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
     onImageClicked: (Int) -> Unit,
@@ -70,15 +72,17 @@ internal fun PostImages(
                                 .height(200.dp)
                                 .aspectRatio(image.aspectRatioOrSquare)
                         }
+
                         Timeline.Presentation.Media.Condensed,
-                        Timeline.Presentation.Media.Expanded
+                        Timeline.Presentation.Media.Expanded,
                             -> Modifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
                     }
                         .clickable { onImageClicked(index) },
                     key = image.sharedElementKey(
-                        prefix = sharedElementPrefix
+                        prefix = sharedElementPrefix,
+                        postId = postId,
                     ),
                     state = ImageArgs(
                         url = image.thumb.uri,
@@ -108,4 +112,5 @@ internal fun PostImages(
 
 fun Image.sharedElementKey(
     prefix: String,
-) = "$prefix-${thumb.uri}"
+    postId: Id,
+) = "$prefix-$postId-${thumb.uri}"
