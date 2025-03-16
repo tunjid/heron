@@ -19,9 +19,11 @@ package com.tunjid.heron.compose.di
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
@@ -173,11 +175,8 @@ abstract class ComposeComponent(
                                 )
                             }
                             .padding(horizontal = 8.dp)
-                            .padding(
-                                imePadding.takeIf {
-                                    imeShowing
-                                } ?: navBarPadding
-                            ),
+                            .imePadding()
+                            .windowInsetsPadding(WindowInsets.navigationBars),
                         postText = state.postText,
                         photos = state.photos,
                         onMediaEdited = viewModel.accept,
