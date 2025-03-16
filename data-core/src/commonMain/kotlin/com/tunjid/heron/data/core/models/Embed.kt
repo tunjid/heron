@@ -23,6 +23,31 @@ sealed interface Embed {
     sealed interface Media : Embed, ByteSerializable
 }
 
+@Serializable
+sealed class MediaFile : ByteSerializable {
+    abstract val data: ByteArray
+    abstract val width: Long
+    abstract val height: Long
+
+    @Serializable
+    class Photo(
+        override val data: ByteArray,
+        override val width: Long,
+        override val height: Long,
+    ) : MediaFile()
+
+    @Serializable
+    class Video(
+        override val data: ByteArray,
+        override val width: Long,
+        override val height: Long,
+    ) : MediaFile()
+}
+
+/**
+ * Provides the width and height of an item if available.
+ *
+ */
 sealed interface AspectRatio {
     val width: Long?
     val height: Long?

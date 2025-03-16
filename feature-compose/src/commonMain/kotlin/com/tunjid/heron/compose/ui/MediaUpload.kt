@@ -33,8 +33,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DoNotDisturbOn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.MediaItem
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.rememberUpdatedImageState
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
 
@@ -55,6 +58,7 @@ internal fun MediaUploadItems(
     photos: List<MediaItem.Photo>,
     video: MediaItem.Video?,
     removeMediaItem: (MediaItem) -> Unit,
+    onMediaItemUpdated: (MediaItem) -> Unit,
 ) = LookaheadScope {
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
@@ -64,13 +68,9 @@ internal fun MediaUploadItems(
                 .fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
             horizontalArrangement = spacedBy(8.dp),
         ) {
-            val shape = remember {
-                RoundedCornerShape(8.dp).toRoundedPolygonShape()
-            }
-
-            (photos + listOfNotNull(video)).forEach {
+            photos.forEach {
                 key(it.path) {
-                    Box(
+                    ImageUpload(
                         modifier = Modifier
                             .animateBounds(this@LookaheadScope)
                             .weight(1f)
@@ -78,34 +78,64 @@ internal fun MediaUploadItems(
                                 ratio = 1f,
                                 matchHeightConstraintsFirst = true
                             ),
-                    ) {
-                        AsyncImage(
-                            modifier = Modifier
-                                .matchParentSize(),
-                            args = ImageArgs(
-                                file = it.file,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                shape = shape,
-                            )
-                        )
-                        Icon(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.6f),
-                                    shape = CircleShape,
-                                )
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .clickable { removeMediaItem(it) },
-                            imageVector = Icons.Rounded.DoNotDisturbOn,
-                            contentDescription = null,
-                        )
-                    }
+                        photo = it,
+                        removeMediaItem = removeMediaItem,
+                        onMediaItemUpdated = onMediaItemUpdated,
+                    )
                 }
             }
         }
     }
 }
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun ImageUpload(
+    modifier: Modifier = Modifier,
+    photo: MediaItem.Photo,
+    removeMediaItem: (MediaItem) -> Unit,
+    onMediaItemUpdated: (MediaItem) -> Unit,
+    ) {
+    Box(
+        modifier = modifier,
+    ) {
+        val state = rememberUpdatedImageState(
+            args = ImageArgs(
+                file = photo.file,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                shape = MediaUploadItemShape,
+            )
+        )
+        AsyncImage(
+            modifier = Modifier
+                .matchParentSize(),
+            state = state,
+        )
+        Icon(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = CircleShape,
+                )
+                .size(32.dp)
+                .clip(CircleShape)
+                .clickable { removeMediaItem(photo) },
+            imageVector = Icons.Rounded.DoNotDisturbOn,
+            contentDescription = null,
+        )
+
+        LaunchedEffect(state) {
+            snapshotFlow { state.imageSize }
+                .collect{ size ->
+                    onMediaItemUpdated(
+                        photo.updateSize(size)
+                    )
+                }
+        }
+    }
+}
+
+private val MediaUploadItemShape = RoundedCornerShape(8.dp).toRoundedPolygonShape()

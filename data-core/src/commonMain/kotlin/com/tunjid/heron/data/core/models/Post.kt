@@ -102,8 +102,7 @@ data class Post(
         data class Metadata(
             val quote: Quote? = null,
             val reply: Reply? = null,
-            val imageList: ImageList? = null,
-            val video: Video? = null,
+            val mediaFiles: List<MediaFile> = emptyList(),
         )
 
         @Serializable
