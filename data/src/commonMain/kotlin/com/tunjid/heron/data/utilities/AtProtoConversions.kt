@@ -31,15 +31,29 @@ import sh.christian.ozone.api.model.Blob
 import app.bsky.embed.Images as BskyImages
 import app.bsky.embed.Video as BskyVideo
 
-internal data class MediaBlob(
-    val file: MediaFile,
-    val blob: Blob,
-)
+internal sealed class MediaBlob {
+    data class Image(
+        val file: MediaFile.Photo,
+        val blob: Blob,
+    ) : MediaBlob()
 
-internal fun MediaFile.with(blob: Blob) = MediaBlob(
-    file = this,
-    blob = blob,
-)
+    data class Video(
+        val file: MediaFile.Video,
+        val blob: Blob,
+    ) : MediaBlob()
+}
+
+internal fun MediaFile.with(blob: Blob) = when (this) {
+    is MediaFile.Photo -> MediaBlob.Image(
+        file = this,
+        blob = blob,
+    )
+
+    is MediaFile.Video -> MediaBlob.Video(
+        file = this,
+        blob = blob,
+    )
+}
 
 internal fun postEmbedUnion(
     repost: Post.Interaction.Create.Repost?,
@@ -79,10 +93,12 @@ private fun Post.Interaction.Create.Repost.toRecord(): Record =
     )
 
 private fun List<MediaBlob>.video(): BskyVideo? =
-    firstOrNull { it.file is MediaFile.Video }
+    filterIsInstance<MediaBlob.Video>()
+        .firstOrNull()
         ?.let { videoFile ->
             BskyVideo(
                 video = videoFile.blob,
+                alt = videoFile.file.altText,
                 aspectRatio = AspectRatio(
                     videoFile.file.width,
                     videoFile.file.height
@@ -91,11 +107,11 @@ private fun List<MediaBlob>.video(): BskyVideo? =
         }
 
 private fun List<MediaBlob>.images(): BskyImages? =
-    filter { it.file is MediaFile.Photo }
+    filterIsInstance<MediaBlob.Image>()
         .map { photoFile ->
             ImagesImage(
                 image = photoFile.blob,
-                alt = "ball",
+                alt = photoFile.file.altText,
                 aspectRatio = AspectRatio(
                     photoFile.file.width,
                     photoFile.file.height

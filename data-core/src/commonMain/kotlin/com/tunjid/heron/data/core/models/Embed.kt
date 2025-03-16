@@ -29,11 +29,13 @@ sealed class MediaFile : ByteSerializable {
     abstract val width: Long
     abstract val height: Long
 
+
     @Serializable
     class Photo(
         override val data: ByteArray,
         override val width: Long,
         override val height: Long,
+        val altText: String = "",
     ) : MediaFile()
 
     @Serializable
@@ -41,6 +43,7 @@ sealed class MediaFile : ByteSerializable {
         override val data: ByteArray,
         override val width: Long,
         override val height: Long,
+        val altText: String? = null,
     ) : MediaFile()
 }
 
