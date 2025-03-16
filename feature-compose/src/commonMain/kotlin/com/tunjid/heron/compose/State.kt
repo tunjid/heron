@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
@@ -63,14 +64,31 @@ sealed class MediaItem(
 ) {
 
     abstract val file: PlatformFile
+    abstract val size: IntSize
 
     class Photo(
         override val file: PlatformFile,
+        override val size: IntSize = IntSize.Zero,
     ) : MediaItem(file.path)
 
     class Video(
         override val file: PlatformFile,
+        override val size: IntSize = IntSize.Zero,
     ) : MediaItem(file.path)
+
+    fun updateSize(
+        size: IntSize,
+    ) = when (this) {
+        is Photo -> Photo(
+            file = file,
+            size = size
+        )
+
+        is Video -> Video(
+            file = file,
+            size = size
+        )
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -78,11 +96,16 @@ sealed class MediaItem(
 
         other as MediaItem
 
-        return path == other.path
+        if (path != other.path) return false
+        if (size != other.size) return false
+
+        return true
     }
 
     override fun hashCode(): Int {
-        return path?.hashCode() ?: 0
+        var result = path?.hashCode() ?: 0
+        result = 31 * result + size.hashCode()
+        return result
     }
 }
 
@@ -97,6 +120,7 @@ sealed class Action(val key: String) {
         val authorId: Id,
         val text: String,
         val links: List<Post.Link>,
+        val media: List<MediaItem>,
     ) : Action("CreatePost")
 
     data class SetFabExpanded(
@@ -113,6 +137,10 @@ sealed class Action(val key: String) {
         ) : EditMedia()
 
         data class RemoveMedia(
+            val media: MediaItem?,
+        ) : EditMedia()
+
+        data class UpdateMedia(
             val media: MediaItem?,
         ) : EditMedia()
     }

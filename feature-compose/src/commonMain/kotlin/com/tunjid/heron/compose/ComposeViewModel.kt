@@ -19,9 +19,11 @@ package com.tunjid.heron.compose
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
+import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -40,6 +42,7 @@ import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
+import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -179,8 +182,9 @@ private fun Flow<Action.EditMedia>.editMediaMutations(
         withContext(Dispatchers.IO) {
             action to when (action) {
                 is Action.EditMedia.AddPhotos -> action.photos.map(MediaItem::Photo)
-                is Action.EditMedia.AddVideo -> listOf(action.video?.let(MediaItem::Video))
+                is Action.EditMedia.AddVideo -> listOfNotNull(action.video?.let(MediaItem::Video))
                 is Action.EditMedia.RemoveMedia -> emptyList()
+                is Action.EditMedia.UpdateMedia -> listOfNotNull(action.media)
             }
         }
     }
@@ -199,6 +203,19 @@ private fun Flow<Action.EditMedia>.editMediaMutations(
                     photos = photos.filter { it != action.media },
                     video = video?.takeIf { it != action.media }
                 )
+
+                is Action.EditMedia.UpdateMedia -> when (val item = media.first()) {
+                    is MediaItem.Photo -> copy(
+                        photos = photos.map { photo ->
+                            if (photo.path == item.path) item
+                            else photo
+                        },
+                    )
+
+                    is MediaItem.Video -> copy(
+                        video = item,
+                    )
+                }
             }
         }
 
@@ -207,17 +224,35 @@ private fun Flow<Action.CreatePost>.createPostMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        val postWrite = Writable.Create(
-            request = Post.Create.Request(
-                authorId = action.authorId,
-                text = action.text,
-                links = action.links,
-                metadata = Post.Create.Metadata(
-                    reply = action.postType as? Post.Create.Reply,
-                    quote = action.postType as? Post.Create.Quote,
+        val postWrite = withContext(Dispatchers.IO) {
+            Writable.Create(
+                request = Post.Create.Request(
+                    authorId = action.authorId,
+                    text = action.text,
+                    links = action.links,
+                    metadata = Post.Create.Metadata(
+                        reply = action.postType as? Post.Create.Reply,
+                        quote = action.postType as? Post.Create.Quote,
+                        mediaFiles = action.media.mapNotNull { item ->
+                            when (item) {
+                                is MediaItem.Photo -> if (item.size != IntSize.Zero) MediaFile.Photo(
+                                    data = item.file.readBytes(),
+                                    width = item.size.width.toLong(),
+                                    height = item.size.height.toLong(),
+                                )
+                                else null
+
+                                is MediaItem.Video -> MediaFile.Video(
+                                    data = item.file.readBytes(),
+                                    width = item.size.width.toLong(),
+                                    height = item.size.height.toLong(),
+                                )
+                            }
+                        }
+                    ),
                 ),
-            ),
-        )
+            )
+        }
 
         writeQueue.enqueue(postWrite)
         writeQueue.awaitDequeue(postWrite)

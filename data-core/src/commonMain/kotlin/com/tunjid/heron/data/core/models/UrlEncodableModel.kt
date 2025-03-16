@@ -80,6 +80,10 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(Post.Create.Quote::class)
             subclass(Post.Create.Timeline::class)
         }
+        polymorphic(MediaFile::class) {
+            subclass(MediaFile.Photo::class)
+            subclass(MediaFile.Video::class)
+        }
     }
 }
 

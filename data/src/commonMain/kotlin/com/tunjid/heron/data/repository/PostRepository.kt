@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.embed.Record
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetQuotesQueryParams
@@ -24,7 +23,6 @@ import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
-import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.richtext.Facet
@@ -35,12 +33,15 @@ import app.bsky.richtext.FacetFeatureUnion.Tag
 import app.bsky.richtext.FacetLink
 import app.bsky.richtext.FacetMention
 import app.bsky.richtext.FacetTag
+import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.StrongRef
+import com.atproto.repo.UploadBlobResponse
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
@@ -58,14 +59,18 @@ import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.with
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -78,10 +83,13 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.model.Blob
+import sh.christian.ozone.api.response.AtpResponse
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
@@ -300,23 +308,37 @@ class OfflinePostRepository @Inject constructor(
                 )
             }
         }
-        val embed = request.metadata.quote?.interaction?.let { interaction ->
-            PostEmbedUnion.Record(
-                value = Record(
-                    record = StrongRef(
-                        uri = AtUri(interaction.postUri.uri),
-                        cid = Cid(interaction.postId.id),
-                    )
-                )
-            )
+        val blobs = if (request.metadata.mediaFiles.isNotEmpty()) coroutineScope {
+            request.metadata.mediaFiles.map { file ->
+                async {
+                    runCatchingWithNetworkRetry {
+                        when (file) {
+                            is MediaFile.Photo -> networkService.api
+                                .uploadBlob(file.data)
+                                .map(UploadBlobResponse::blob)
+
+                            is MediaFile.Video -> networkService.api
+                                .uploadVideoBlob(file.data)
+                        }
+                    }
+                        .map(file::with)
+                }
+            }
+                .awaitAll()
+                .mapNotNull(Result<MediaBlob>::getOrNull)
         }
+        else emptyList()
+
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
             record = BskyPost(
                 text = request.text,
                 reply = reply,
-                embed = embed,
+                embed = postEmbedUnion(
+                    repost = request.metadata.quote?.interaction,
+                    mediaBlobs = blobs,
+                ),
                 facets = resolvedLinks.map { link ->
                     Facet(
                         index = FacetByteSlice(
@@ -484,3 +506,34 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
             viewerState = it.relationship?.asExternalModel(),
         )
     }
+
+private suspend fun BlueskyApi.uploadVideoBlob(
+    data: ByteArray,
+): AtpResponse<Blob> {
+    val uploadResponse = uploadVideo(data)
+    val status = uploadResponse.requireResponse().jobStatus
+
+    // Fail fast here if the upload failed
+    uploadResponse.requireResponse()
+        .jobStatus
+        .blob
+        ?.let { processedBlob ->
+            return@uploadVideoBlob uploadResponse.map { processedBlob }
+        }
+
+    repeat(20) {
+        val statusResponse = runCatchingWithNetworkRetry {
+            getJobStatus(GetJobStatusQueryParams(status.jobId))
+        }
+        statusResponse
+            .getOrNull()
+            ?.jobStatus
+            ?.blob
+            ?.let { processedBlob ->
+                return@uploadVideoBlob uploadResponse.map { processedBlob }
+            }
+        delay(2_000)
+    }
+
+    throw Exception("Video upload timed out")
+}
