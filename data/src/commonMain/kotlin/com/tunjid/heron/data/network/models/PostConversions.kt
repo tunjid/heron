@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.network.models
 
+import app.bsky.embed.RecordWithMediaViewMediaUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
@@ -153,7 +154,36 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
         }
 
         is PostViewEmbedUnion.RecordView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> emptyList()
+        is PostViewEmbedUnion.RecordWithMediaView -> when(val mediaEmbed = embed.value.media) {
+            is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
+                ExternalEmbedEntity(
+                    uri = Uri(mediaEmbed.value.external.uri.uri),
+                    title = mediaEmbed.value.external.title,
+                    description = mediaEmbed.value.external.description,
+                    thumb = mediaEmbed.value.external.thumb?.uri?.let(::Uri),
+                )
+            )
+            is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
+                ImageEntity(
+                    fullSize = Uri(it.fullsize.uri),
+                    thumb = Uri(it.thumb.uri),
+                    alt = it.alt,
+                    width = it.aspectRatio?.width,
+                    height = it.aspectRatio?.height,
+                )
+            }
+            is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
+            is RecordWithMediaViewMediaUnion.VideoView -> listOf(
+                VideoEntity(
+                    cid = Id(mediaEmbed.value.cid.cid),
+                    playlist = Uri(mediaEmbed.value.playlist.uri),
+                    thumbnail = mediaEmbed.value.thumbnail?.uri?.let(::Uri),
+                    alt = mediaEmbed.value.alt,
+                    width = mediaEmbed.value.aspectRatio?.width,
+                    height = mediaEmbed.value.aspectRatio?.height,
+                )
+            )
+        }
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
             VideoEntity(
