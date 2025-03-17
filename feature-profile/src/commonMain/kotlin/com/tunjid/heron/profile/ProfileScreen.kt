@@ -65,7 +65,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,8 +105,8 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
@@ -134,10 +133,6 @@ import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -251,25 +246,8 @@ internal fun ProfileScreen(
             Box(
                 modifier = Modifier,
             ) {
-                val currentPresentation by produceState<Timeline.Presentation>(
-                    initialValue = Timeline.Presentation.Text.WithEmbed,
-                ) {
-                    snapshotFlow { pagerState.currentPage }
-                        .flatMapLatest {
-                            updatedTimelineStateHolders.stateHolderAtOrNull(it)?.state ?: emptyFlow()
-                        }
-                        .map { it.timeline.presentation }
-                        .distinctUntilChanged()
-                        .collect { value = it }
-
-                }
                 HorizontalPager(
                     modifier = Modifier
-                        .padding(
-                            horizontal = animateDpAsState(
-                                currentPresentation.timelineHorizontalPadding
-                            ).value
-                        )
                         .paneClip(),
                     state = pagerState,
                     key = { page -> page },
@@ -646,11 +624,16 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
     val postInteractionState = rememberPostInteractionState()
-
     val presentation = timelineState.timeline.presentation
+
     LookaheadScope {
         LazyVerticalStaggeredGrid(
             modifier = Modifier
+                .padding(
+                    horizontal = animateDpAsState(
+                        presentation.timelineHorizontalPadding
+                    ).value
+                )
                 .fillMaxSize()
                 .onSizeChanged {
                     val itemWidth = with(density) {

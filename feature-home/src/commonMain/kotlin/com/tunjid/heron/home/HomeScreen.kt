@@ -43,7 +43,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -79,8 +78,8 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
@@ -94,10 +93,6 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -124,18 +119,6 @@ internal fun HomeScreen(
             maxOffset = { Offset.Zero },
             minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
         )
-        val currentPresentation by produceState<Timeline.Presentation>(
-            initialValue = Timeline.Presentation.Text.WithEmbed,
-        ) {
-            snapshotFlow { pagerState.currentPage }
-                .flatMapLatest {
-                    updatedTimelineStateHolders.stateHolderAtOrNull(it)?.state ?: emptyFlow()
-                }
-                .map { it.timeline.presentation }
-                .distinctUntilChanged()
-                .collect { value = it }
-
-        }
         HorizontalPager(
             modifier = Modifier
                 .nestedScroll(tabsOffsetNestedScrollConnection)
@@ -145,11 +128,6 @@ internal fun HomeScreen(
                         y = UiTokens.tabsHeight.roundToPx(),
                     )
                 }
-                .padding(
-                    horizontal = animateDpAsState(
-                        currentPresentation.timelineHorizontalPadding
-                    ).value
-                )
                 .paneClip(),
             state = pagerState,
             key = { page -> updatedTimelineStateHolders.keyAt(page) },
@@ -224,7 +202,8 @@ private fun HomeTabs(
         Tabs(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
-                .weight(1f),
+                .weight(1f)
+                .clip(CircleShape),
             tabs = tabs,
             selectedTabIndex = pagerState.tabIndex,
             onTabSelected = {
@@ -256,15 +235,20 @@ private fun HomeTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
     val postInteractionState = rememberPostInteractionState()
+    val presentation = timelineState.timeline.presentation
 
     PullToRefreshBox(
         modifier = Modifier
+            .padding(
+                horizontal = animateDpAsState(
+                    presentation.timelineHorizontalPadding
+                ).value
+            )
             .fillMaxSize(),
         isRefreshing = timelineState.status is TimelineStatus.Refreshing,
         state = rememberPullToRefreshState(),
         onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
     ) {
-        val presentation = timelineState.timeline.presentation
         LookaheadScope {
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
