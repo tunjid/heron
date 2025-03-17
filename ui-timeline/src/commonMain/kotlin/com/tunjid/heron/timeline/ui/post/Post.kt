@@ -20,7 +20,6 @@ import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
@@ -63,7 +63,6 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
-import kotlin.math.abs
 
 @Composable
 fun Post(
@@ -202,7 +201,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = PresentationBoundsTransform,
+                    boundsTransform = data.boundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -246,7 +245,7 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = PresentationBoundsTransform,
+                boundsTransform = data.boundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -296,7 +295,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = PresentationBoundsTransform,
+                    boundsTransform = data.boundsTransform,
                 ),
             replyCount = format(data.post.replyCount),
             repostCount = format(data.post.repostCount),
@@ -417,14 +416,6 @@ private fun Embed?.asPostContent() = when (this) {
         -> PostContent.Embed.Link
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-private val PresentationBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
-    val distance = initialBounds.topLeft - targetBounds.topLeft
-    // TODO: Define this better. The idea is to not animate small delta changes
-    if (abs(distance.y) < 100 && abs(distance.y) < 100) SnapSpec
-    else SpringSpec
-}
-
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
@@ -450,6 +441,7 @@ private fun rememberUpdatedPostData(
             created = createdAt
         )
     }.also {
+        if (it.presentation != presentation) it.presentationChanged = true
         it.postActions = postActions
         it.panedSharedElementScope = panedSharedElementScope
         it.presentationLookaheadScope = presentationLookaheadScope
@@ -483,6 +475,13 @@ private class PostData(
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
     var createdAt by mutableStateOf(created)
+
+    var presentationChanged by mutableStateOf(false)
+
+    @OptIn(ExperimentalSharedTransitionApi::class)
+    val boundsTransform = BoundsTransform { _, _ ->
+        SpringSpec.skipIf { !presentationChanged }
+    }
 }
 
 private sealed class PostContent(val key: String) {
@@ -505,7 +504,6 @@ private val Timeline.Presentation.contentOrder
         Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
     }
 
-private val SnapSpec = snap<Rect>()
 private val SpringSpec = spring<Rect>(
     stiffness = Spring.StiffnessMediumLow
 )

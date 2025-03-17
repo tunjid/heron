@@ -102,9 +102,9 @@ private fun FeedTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.items)
 
-    val presentation = timelineState.timeline.presentation
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
+    val presentation = timelineState.timeline.presentation
 
     PullToRefreshBox(
         modifier = Modifier
