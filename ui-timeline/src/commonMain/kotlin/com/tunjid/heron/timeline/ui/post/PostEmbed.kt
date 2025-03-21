@@ -50,7 +50,7 @@ internal fun PostEmbed(
     postId: Id,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
-    onPostMediaClicked: (media: Embed.Media, index: Int, quotingPostId: Id?) -> Unit,
+    onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
     presentation: Timeline.Presentation,
@@ -105,15 +105,13 @@ internal fun PostEmbed(
                 Constants.unknownPostId -> UnknownPostPost(onClick = {})
                 else -> QuotedPost(
                     now = now,
-                    post = quote,
+                    quotedPost = quote,
                     sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
                         quotingPostId = postId,
                     ),
                     panedSharedElementScope = panedSharedElementScope,
                     onProfileClicked = onQuotedProfileClicked,
-                    onPostMediaClicked = { media, index ->
-                        onPostMediaClicked(media, index, postId)
-                    },
+                    onPostMediaClicked = onPostMediaClicked,
                     onClick = {
                         onQuotedPostClicked(quote)
                     }

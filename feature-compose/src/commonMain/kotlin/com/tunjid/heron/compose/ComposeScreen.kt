@@ -177,12 +177,12 @@ private fun Post(
                 horizontal = 24.dp,
             ),
             now = remember { Clock.System.now() },
-            post = quotedPost,
+            quotedPost = quotedPost,
             sharedElementPrefix = NeverMatchedSharedElementPrefix,
             panedSharedElementScope = panedSharedElementScope,
             onClick = {},
             onProfileClicked = { _, _ -> },
-            onPostMediaClicked = { _, _ -> },
+            onPostMediaClicked = { _, _, _ -> },
         )
     }
 }
