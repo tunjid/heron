@@ -58,14 +58,14 @@ import kotlinx.datetime.Instant
 fun QuotedPost(
     modifier: Modifier = Modifier,
     now: Instant,
-    post: Post,
+    quotedPost: Post,
     sharedElementPrefix: String,
     panedSharedElementScope: PanedSharedElementScope,
     onClick: () -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
-    onPostMediaClicked: (Embed.Media, Int) -> Unit,
+    onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
 ) = with(panedSharedElementScope) {
-    val author = post.author
+    val author = quotedPost.author
     Box(
         modifier = modifier,
     ) {
@@ -81,10 +81,10 @@ fun QuotedPost(
                         .size(24.dp)
                         .align(Alignment.CenterVertically)
                         .sharedElement(
-                            key = post.avatarSharedElementKey(sharedElementPrefix)
+                            key = quotedPost.avatarSharedElementKey(sharedElementPrefix)
                         )
                         .clickable {
-                            onProfileClicked(post, author)
+                            onProfileClicked(quotedPost, author)
                         },
                     args = ImageArgs(
                         url = author.avatar?.uri,
@@ -95,16 +95,16 @@ fun QuotedPost(
                 )
                 PostHeadline(
                     now = now,
-                    createdAt = post.record?.createdAt ?: remember { Clock.System.now() },
+                    createdAt = quotedPost.record?.createdAt ?: remember { Clock.System.now() },
                     author = author,
-                    postId = post.cid,
+                    postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                 )
             }
             Spacer(Modifier.height(2.dp))
             PostText(
-                post = post,
+                post = quotedPost,
                 sharedElementPrefix = sharedElementPrefix,
                 panedSharedElementScope = panedSharedElementScope,
                 maxLines = 3,
@@ -116,10 +116,10 @@ fun QuotedPost(
             Spacer(Modifier.height(8.dp))
 
             val uriHandler = LocalUriHandler.current
-            when (val embed = post.embed) {
+            when (val embed = quotedPost.embed) {
                 is ExternalEmbed -> PostExternal(
                     feature = embed,
-                    postId = post.cid,
+                    postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     // Quotes are exclusively in blog view types
@@ -131,11 +131,11 @@ fun QuotedPost(
 
                 is ImageList -> PostImages(
                     feature = embed,
-                    postId = post.cid,
+                    postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     panedSharedElementScope = panedSharedElementScope,
                     onImageClicked = { index ->
-                        onPostMediaClicked(embed, index)
+                        onPostMediaClicked(embed, index, quotedPost)
                     },
                     // Quotes are exclusively in blog view types
                     presentation = Timeline.Presentation.Text.WithEmbed,
@@ -144,13 +144,13 @@ fun QuotedPost(
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
                     video = embed,
-                    postId = post.cid,
+                    postId = quotedPost.cid,
                     panedSharedElementScope = panedSharedElementScope,
                     sharedElementPrefix = sharedElementPrefix,
                     // Quote videos only show in text and embeds
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     onClicked = {
-                        onPostMediaClicked(embed, 0)
+                        onPostMediaClicked(embed, 0, quotedPost)
                     }
                 )
 

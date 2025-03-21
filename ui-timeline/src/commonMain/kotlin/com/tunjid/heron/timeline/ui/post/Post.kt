@@ -255,12 +255,12 @@ private fun EmbedContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         panedSharedElementScope = data.panedSharedElementScope,
-        onPostMediaClicked = { media, index, quotingPostId ->
+        onPostMediaClicked = { media, index, quote ->
             data.postActions.onPostMediaClicked(
                 media = media,
                 index = index,
-                post = data.post,
-                quotingPostId = quotingPostId,
+                post = quote ?: data.post,
+                quotingPostId = data.post.cid.takeIf { quote != null },
             )
         },
         onQuotedPostClicked = { quotedPost ->
