@@ -87,12 +87,12 @@ class OfflineNotificationsRepository @Inject constructor(
                 }
                     .getOrNull()?.count ?: 0
                 emit(unreadCount)
-                kotlinx.coroutines.delay(10_000)
+                kotlinx.coroutines.delay(30_000)
             }
         }
         .stateIn(
             scope = appScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.WhileSubscribed(5_000),
             initialValue = 0,
         )
 
