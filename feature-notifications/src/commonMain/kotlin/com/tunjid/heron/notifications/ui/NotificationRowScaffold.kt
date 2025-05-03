@@ -201,7 +201,7 @@ private fun PanedSharedElementScope.ExpandableProfiles(
             AsyncImage(
                 modifier = Modifier
                     .size(32.dp)
-                    .sharedElement(
+                    .paneSharedElement(
                         key = notification.avatarSharedElementKey(profile)
                     )
                     .clickable { onProfileClicked(notification, profile) },

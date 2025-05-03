@@ -80,7 +80,7 @@ fun QuotedPost(
                     modifier = Modifier
                         .size(24.dp)
                         .align(Alignment.CenterVertically)
-                        .sharedElement(
+                        .paneSharedElement(
                             key = quotedPost.avatarSharedElementKey(sharedElementPrefix)
                         )
                         .clickable {

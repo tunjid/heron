@@ -46,7 +46,7 @@ import com.tunjid.treenav.strings.Route
 interface PanedSharedElementScope :
     SharedTransitionScope, PaneScope<ThreePane, Route>, MovableSharedElementScope {
 
-    fun Modifier.sharedElement(
+    fun Modifier.paneSharedElement(
         key: Any,
         boundsTransform: BoundsTransform = DefaultBoundsTransform,
         placeHolderSize: PlaceHolderSize = contentSize,
@@ -69,7 +69,7 @@ private class DelegatingPanedSharedElementScope(
     MovableSharedElementScope by movableSharedElementScope {
 
     @OptIn(ExperimentalSharedTransitionApi::class)
-    override fun Modifier.sharedElement(
+    override fun Modifier.paneSharedElement(
         key: Any,
         boundsTransform: BoundsTransform,
         placeHolderSize: PlaceHolderSize,

@@ -118,7 +118,7 @@ fun PostInteractions(
         PostInteractionButton.All.forEach { button ->
             PostInteraction(
                 modifier = Modifier
-                    .sharedElement(
+                    .paneSharedElement(
                         key = postActionSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,

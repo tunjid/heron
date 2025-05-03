@@ -54,7 +54,7 @@ internal fun PostExternal(
     onClick: () -> Unit,
 ) = with(panedSharedElementScope) {
     FeatureContainer(
-        modifier = Modifier.sharedElement(
+        modifier = Modifier.paneSharedElement(
             key = embedSharedElementKey(
                 prefix = sharedElementPrefix,
                 postId = postId,
@@ -69,7 +69,7 @@ internal fun PostExternal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
-                        .sharedElement(
+                        .paneSharedElement(
                             key = embedSharedElementKey(
                                 prefix = sharedElementPrefix,
                                 postId = postId,
@@ -90,7 +90,7 @@ internal fun PostExternal(
                     .padding(
                         horizontal = 16.dp,
                     )
-                    .sharedElement(
+                    .paneSharedElement(
                         key = embedSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
