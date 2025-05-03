@@ -173,6 +173,7 @@ class AuthTokenRepository(
             is PreferencesUnion.ThreadViewPref -> Unit
             is PreferencesUnion.Unknown -> Unit
             is PreferencesUnion.PostInteractionSettingsPref -> Unit
+            is PreferencesUnion.VerificationPrefs -> Unit
         }
     }
 

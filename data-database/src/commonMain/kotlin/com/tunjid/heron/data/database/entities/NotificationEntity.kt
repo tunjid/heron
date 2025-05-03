@@ -148,6 +148,23 @@ fun PopulatedNotificationEntity.asExternalModel(
         reasonSubject = entity.uri,
         isRead = entity.isRead,
     )
+
+    Notification.Reason.Verified -> Notification.Verified(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )
+    Notification.Reason.Unverified -> Notification.Unverified(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.uri,
+        isRead = entity.isRead,
+    )
 }
 
 private fun PopulatedNotificationEntity.unknown() =
