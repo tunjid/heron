@@ -44,6 +44,7 @@ import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
 import com.tunjid.heron.notifications.ui.MentionRow
+import com.tunjid.heron.notifications.ui.ProfileVerificationRow
 import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
@@ -237,6 +238,24 @@ internal fun NotificationsScreen(
                         )
 
                         is Notification.Unknown -> Unit
+                        is Notification.Unverified -> ProfileVerificationRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            isRead = item.isRead,
+                            isVerified = false,
+                            notification = notification,
+                            onProfileClicked = onAggregatedProfileClicked,
+                        )
+                        is Notification.Verified -> ProfileVerificationRow(
+                            modifier = itemModifier,
+                            panedSharedElementScope = paneScaffoldState,
+                            now = now,
+                            isRead = item.isRead,
+                            isVerified = true,
+                            notification = notification,
+                            onProfileClicked = onAggregatedProfileClicked,
+                        )
                     }
                 }
             )

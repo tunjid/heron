@@ -60,6 +60,8 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsReason.Repost -> Notification.Reason.Repost
                     ListNotificationsReason.StarterpackJoined -> Notification.Reason.JoinedStarterPack
                     is ListNotificationsReason.Unknown -> Notification.Reason.Unknown
+                    ListNotificationsReason.Verified -> Notification.Reason.Verified
+                    ListNotificationsReason.Unverified -> Notification.Reason.Unverified
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::Uri),
                 associatedPostId = notification.associatedPostUri()
@@ -83,4 +85,6 @@ internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (r
     is ListNotificationsReason.Quote -> uri
     is ListNotificationsReason.Follow -> null
     is ListNotificationsReason.StarterpackJoined -> null
+    ListNotificationsReason.Unverified -> null
+    ListNotificationsReason.Verified -> null
 }

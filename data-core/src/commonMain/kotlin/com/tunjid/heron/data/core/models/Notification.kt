@@ -113,6 +113,24 @@ sealed class Notification {
         override val indexedAt: Instant,
     ) : Notification()
 
+    data class Verified(
+        override val uri: Uri,
+        override val cid: Id,
+        override val author: Profile,
+        override val reasonSubject: Uri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+    ) : Notification()
+
+    data class Unverified(
+        override val uri: Uri,
+        override val cid: Id,
+        override val author: Profile,
+        override val reasonSubject: Uri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+    ) : Notification()
+
 
     enum class Reason {
         Unknown,
@@ -123,6 +141,8 @@ sealed class Notification {
         Reply,
         Quote,
         JoinedStarterPack,
+        Verified,
+        Unverified,
     }
 }
 
@@ -136,4 +156,6 @@ val Notification.associatedPostUri
         is Notification.RepliedTo -> null
         is Notification.Reposted -> associatedPost.uri
         is Notification.Unknown -> null
+        is Notification.Unverified -> null
+        is Notification.Verified -> null
     }
