@@ -60,6 +60,9 @@ kotlin {
 
                 implementation(libs.okio)
 
+                implementation(libs.savedstate.compose)
+                implementation(libs.savedstate.savedstate)
+
                 implementation(libs.tunjid.composables)
 
                 implementation(libs.tunjid.mutator.core.common)

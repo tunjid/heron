@@ -51,6 +51,9 @@ fun org.gradle.api.Project.configureUiModule(
 
                 api(libs.findLibrary("kotlinx-coroutines-core").get())
 
+                api(libs.findLibrary("savedstate-savedstate").get())
+                api(libs.findLibrary("savedstate-compose").get())
+
                 api(libs.findLibrary("tunjid-mutator-core-common").get())
                 api(libs.findLibrary("tunjid-mutator-coroutines-common").get())
 

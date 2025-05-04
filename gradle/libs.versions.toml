@@ -15,7 +15,7 @@ androidx-room = "2.7.1"
 androidx-sqlite = "2.5.0"
 androidx-espresso-core = "3.6.1"
 javaDiffUtils = "4.15"
-lifecycle = "2.8.4"
+lifecycle = "2.9.0-alpha07"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 coil = "3.1.0"
@@ -33,12 +33,13 @@ ksp = "2.1.20-1.0.32"
 ktor = "3.1.2"
 okio = "3.10.2"
 ozone-bluesky = "0.3.3"
+saved-state = "1.3.0-alpha07"
 tunjid-state-holder = "1.1.0"
 tunjid-tiler = "1.2.0-rc01"
 tunjid-tree-nav = "0.0.21"
 tunjid-composables = "0.0.16"
 jetbrainsKotlinJvm = "2.1.20"
-vinceglb-filekit = "0.10.0-beta01"
+vinceglb-filekit = "0.10.0-beta03"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -96,6 +97,8 @@ lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "life
 lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+savedstate-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "saved-state" }
+savedstate-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "saved-state" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 java-diff-utils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "javaDiffUtils" }
 kotlin-inject-compiler = { group = "me.tatarka.inject", name = "kotlin-inject-compiler-ksp", version.ref = "kotlin-inject" }
