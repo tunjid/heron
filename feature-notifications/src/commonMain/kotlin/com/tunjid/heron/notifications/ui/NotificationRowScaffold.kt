@@ -57,7 +57,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import org.jetbrains.compose.resources.StringResource
@@ -66,7 +66,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NotificationAggregateScaffold(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     modifier: Modifier = Modifier,
     isRead: Boolean,
     notification: Notification,
@@ -104,7 +104,7 @@ fun NotificationAggregateScaffold(
                 }
             }
             val expandButton = remember {
-                movableContentWithReceiverOf<PanedSharedElementScope, Boolean> { expanded ->
+                movableContentWithReceiverOf<PaneMovableElementSharedTransitionScope<*>, Boolean> { expanded ->
                     ExpandButton(
                         isExpanded = expanded,
                         onExpansionToggled = { isExpanded = it }
@@ -113,7 +113,7 @@ fun NotificationAggregateScaffold(
             }
             val items = remember {
                 movableContentWithReceiverOf<
-                        PanedSharedElementScope,
+                        PaneMovableElementSharedTransitionScope<*>,
                         Boolean,
                         Notification,
                         List<Profile>,
@@ -127,7 +127,7 @@ fun NotificationAggregateScaffold(
                     )
                 }
             }
-            with(panedSharedElementScope) {
+            with(paneMovableElementSharedTransitionScope) {
                 if (isExpanded) Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -149,7 +149,7 @@ fun NotificationAggregateScaffold(
             }
             Box(
                 modifier = Modifier.animateBounds(
-                    lookaheadScope = panedSharedElementScope
+                    lookaheadScope = paneMovableElementSharedTransitionScope
                 )
             ) {
                 content()
@@ -160,7 +160,7 @@ fun NotificationAggregateScaffold(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PanedSharedElementScope.ExpandButton(
+private fun PaneMovableElementSharedTransitionScope<*>.ExpandButton(
     isExpanded: Boolean,
     onExpansionToggled: (Boolean) -> Unit,
 ) {
@@ -185,7 +185,7 @@ private fun PanedSharedElementScope.ExpandButton(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PanedSharedElementScope.ExpandableProfiles(
+private fun PaneMovableElementSharedTransitionScope<*>.ExpandableProfiles(
     isExpanded: Boolean,
     notification: Notification,
     renderedProfiles: List<Profile>,

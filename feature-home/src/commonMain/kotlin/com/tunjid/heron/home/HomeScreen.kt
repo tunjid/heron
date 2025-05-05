@@ -86,7 +86,7 @@ import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens
@@ -136,7 +136,7 @@ internal fun HomeScreen(
                     updatedTimelineStateHolders.stateHolderAt(page)
                 }
                 HomeTimeline(
-                    panedSharedElementScope = paneScaffoldState,
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
                     timelineStateHolder = timelineStateHolder,
                     actions = actions,
                 )
@@ -223,7 +223,7 @@ private fun HomeTabs(
 
 @Composable
 private fun HomeTimeline(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -268,7 +268,7 @@ private fun HomeTimeline(
                 verticalItemSpacing = 8.dp,
                 contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = !panedSharedElementScope.isTransitionActive,
+                userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
             ) {
                 items(
                     items = items,
@@ -281,7 +281,7 @@ private fun HomeTimeline(
                                 .threadedVideoPosition(
                                     state = videoStates.getOrCreateStateFor(item)
                                 ),
-                            panedSharedElementScope = panedSharedElementScope,
+                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = remember { Clock.System.now() },
                             item = item,
@@ -370,7 +370,7 @@ private fun HomeTimeline(
             )
         }
     )
-    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+    if (paneMovableElementSharedTransitionScope.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

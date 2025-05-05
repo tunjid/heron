@@ -37,7 +37,7 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
@@ -47,7 +47,7 @@ internal fun PostImages(
     feature: ImageList,
     postId: Id,
     sharedElementPrefix: String,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
@@ -61,7 +61,7 @@ internal fun PostImages(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
-                panedSharedElementScope.updatedMovableSharedElementOf(
+                paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
                     modifier = when (presentation) {
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 -> Modifier

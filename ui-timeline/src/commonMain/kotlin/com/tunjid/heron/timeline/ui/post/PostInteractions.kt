@@ -74,7 +74,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.actionIconSize
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.cancel
 import heron.ui_timeline.generated.resources.liked
@@ -99,11 +99,11 @@ fun PostInteractions(
     postUri: Uri,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-) = with(panedSharedElementScope) {
+) = with(paneMovableElementSharedTransitionScope) {
     val arrangement: Arrangement.Horizontal = when (presentation) {
         Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
         Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)

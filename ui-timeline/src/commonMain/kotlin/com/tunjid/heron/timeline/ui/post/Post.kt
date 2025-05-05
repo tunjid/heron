@@ -58,7 +58,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -66,7 +66,7 @@ import kotlinx.datetime.Instant
 
 @Composable
 fun Post(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     now: Instant,
@@ -88,7 +88,7 @@ fun Post(
         )
         val postData = rememberUpdatedPostData(
             postActions = postActions,
-            panedSharedElementScope = panedSharedElementScope,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
@@ -128,7 +128,7 @@ fun Post(
 @Composable
 private fun AttributionContent(
     data: PostData,
-) = with(data.panedSharedElementScope) {
+) = with(data.paneMovableElementSharedTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
@@ -172,7 +172,7 @@ private fun AttributionContent(
                     author = data.post.author,
                     postId = data.post.cid,
                     sharedElementPrefix = data.sharedElementPrefix,
-                    panedSharedElementScope = this,
+                    paneMovableElementSharedTransitionScope = this,
                 )
             }
         )
@@ -185,14 +185,14 @@ private fun AttributionContent(
 @OptIn(ExperimentalSharedTransitionApi::class)
 private fun TextContent(
     data: PostData,
-) = with(data.panedSharedElementScope) {
+) = with(data.paneMovableElementSharedTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
             -> PostText(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
-            panedSharedElementScope = this,
+            paneMovableElementSharedTransitionScope = this,
             modifier = Modifier
                 .zIndex(TextContentZIndex)
                 .contentPresentationPadding(
@@ -254,7 +254,7 @@ private fun EmbedContent(
         postId = data.post.cid,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
-        panedSharedElementScope = data.panedSharedElementScope,
+        paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
         onPostMediaClicked = { media, index, quote ->
             data.postActions.onPostMediaClicked(
                 media = media,
@@ -306,7 +306,7 @@ private fun ActionsContent(
             postUri = data.post.uri,
             presentation = data.presentation,
             sharedElementPrefix = data.sharedElementPrefix,
-            panedSharedElementScope = data.panedSharedElementScope,
+            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
             onReplyToPost = {
                 data.postActions.onReplyToPost(data.post)
             },
@@ -419,7 +419,7 @@ private fun Embed?.asPostContent() = when (this) {
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
@@ -431,7 +431,7 @@ private fun rememberUpdatedPostData(
     return remember {
         PostData(
             postActions = postActions,
-            panedSharedElementScope = panedSharedElementScope,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
@@ -443,7 +443,7 @@ private fun rememberUpdatedPostData(
     }.also {
         if (it.presentation != presentation) it.presentationChanged = true
         it.postActions = postActions
-        it.panedSharedElementScope = panedSharedElementScope
+        it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.presentation = presentation
@@ -457,7 +457,7 @@ private fun rememberUpdatedPostData(
 @Stable
 private class PostData(
     postActions: PostActions,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
@@ -467,7 +467,7 @@ private class PostData(
     created: Instant,
 ) {
     var postActions by mutableStateOf(postActions)
-    var panedSharedElementScope by mutableStateOf(panedSharedElementScope)
+    var paneMovableElementSharedTransitionScope by mutableStateOf(paneMovableElementSharedTransitionScope)
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)

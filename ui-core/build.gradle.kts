@@ -48,9 +48,10 @@ kotlin {
 
                 implementation(libs.tunjid.composables)
 
-                implementation(libs.tunjid.treenav.compose.common)
-                implementation(libs.tunjid.treenav.core.common)
-                implementation(libs.tunjid.treenav.strings.common)
+                implementation(libs.tunjid.treenav.compose)
+                implementation(libs.tunjid.treenav.compose.threepane)
+                implementation(libs.tunjid.treenav.core)
+                implementation(libs.tunjid.treenav.strings)
             }
         }
         named("androidMain") {

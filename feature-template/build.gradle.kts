@@ -40,8 +40,8 @@ kotlin {
 
                 api(libs.kotlinx.serialization.protobuf)
 
-                api(libs.tunjid.treenav.core.common)
-                api(libs.tunjid.treenav.strings.common)
+                api(libs.tunjid.treenav.core)
+                api(libs.tunjid.treenav.strings)
             }
         }
         named("androidMain") {

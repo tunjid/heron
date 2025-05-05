@@ -73,7 +73,7 @@ import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens
@@ -175,7 +175,7 @@ internal fun SearchScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
-                    panedSharedElementScope = paneScaffoldState,
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
                     results = state.autoCompletedProfiles,
                     onProfileClicked = onProfileSearchResultClicked,
                 )
@@ -186,7 +186,7 @@ internal fun SearchScreen(
                         .padding(horizontal = 8.dp),
                     pagerState = pagerState,
                     state = state,
-                    panedSharedElementScope = paneScaffoldState,
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
                     onProfileClicked = onProfileSearchResultClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
@@ -324,7 +324,7 @@ private fun TrendChips(
 
 @Composable
 private fun AutoCompleteProfileSearchResults(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     modifier: Modifier = Modifier,
     results: List<SearchResult.Profile>,
     onProfileClicked: (SearchResult.Profile) -> Unit,
@@ -341,7 +341,7 @@ private fun AutoCompleteProfileSearchResults(
             key = { it.profileWithViewerState.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     result = result,
                     onProfileClicked = onProfileClicked
                 )
@@ -355,7 +355,7 @@ private fun TabbedSearchResults(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     state: State,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
@@ -402,7 +402,7 @@ private fun TabbedSearchResults(
             pageContent = { page ->
                 val searchResultStateHolder = remember { state.searchStateHolders[page] }
                 SearchResults(
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     searchResultStateHolder = searchResultStateHolder,
                     onProfileClicked = onProfileClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
@@ -417,7 +417,7 @@ private fun TabbedSearchResults(
 @Composable
 private fun SearchResults(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
@@ -440,7 +440,7 @@ private fun SearchResults(
                     key = { it.post.cid.id },
                     itemContent = { result ->
                         PostSearchResult(
-                            panedSharedElementScope = panedSharedElementScope,
+                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                             now = now,
                             result = result,
                             onProfileClicked = onPostSearchResultProfileClicked,
@@ -472,7 +472,7 @@ private fun SearchResults(
                     key = { it.profileWithViewerState.profile.did.id },
                     itemContent = { result ->
                         ProfileSearchResult(
-                            panedSharedElementScope = panedSharedElementScope,
+                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                             result = result,
                             onProfileClicked = onProfileClicked
                         )

@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.joined_from_your_started_pack_description
@@ -43,7 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun JoinedStarterPackRow(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     now: Instant,
     isRead: Boolean,
     notification: Notification.JoinedStarterPack,
@@ -51,7 +51,7 @@ fun JoinedStarterPackRow(
     onProfileClicked: (Notification, Profile) -> Unit,
 ) {
     NotificationAggregateScaffold(
-        panedSharedElementScope = panedSharedElementScope,
+        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         modifier = modifier
             .clickable {
                 onProfileClicked(notification, notification.author)

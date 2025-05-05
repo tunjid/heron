@@ -39,7 +39,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
@@ -47,12 +47,12 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 @Composable
 fun ProfileWithRelationship(
     modifier: Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     profileWithViewerState: ProfileWithViewerState,
     signedInProfileId: Id?,
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-) = with(panedSharedElementScope) {
+) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = modifier,
         avatar = {

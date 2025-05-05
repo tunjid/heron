@@ -95,7 +95,7 @@ internal fun PostDetailScreen(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item)
                         ),
-                    panedSharedElementScope = paneScaffoldState,
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
                     now = remember { Clock.System.now() },
                     item = item,

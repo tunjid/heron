@@ -59,9 +59,10 @@ fun org.gradle.api.Project.configureUiModule(
 
                 api(libs.findLibrary("tunjid-composables").get())
 
-                api(libs.findLibrary("tunjid-treenav-compose-common").get())
-                api(libs.findLibrary("tunjid-treenav-core-common").get())
-                api(libs.findLibrary("tunjid-treenav-strings-common").get())
+                api(libs.findLibrary("tunjid-treenav-compose").get())
+                api(libs.findLibrary("tunjid-treenav-compose-threepane").get())
+                api(libs.findLibrary("tunjid-treenav-core").get())
+                api(libs.findLibrary("tunjid-treenav-strings").get())
             }
         }
         named("androidMain") {

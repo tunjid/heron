@@ -55,10 +55,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
-import com.tunjid.heron.ui.PanedSharedElementScope
-import com.tunjid.heron.ui.requirePanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.compose.threepane.rememberPaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
@@ -67,8 +67,8 @@ import kotlin.math.abs
 class PaneScaffoldState internal constructor(
     internal val density: Density,
     private val appState: AppState,
-    panedSharedElementScope: PanedSharedElementScope,
-) : PanedSharedElementScope by panedSharedElementScope {
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<Route>,
+) : PaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
 
     internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
@@ -112,11 +112,11 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
     val density = LocalDensity.current
     val appState = LocalAppState.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val panedSharedElementScope = requirePanedSharedElementScope()
-    val paneScaffoldState = remember(appState, panedSharedElementScope, density) {
+    val paneMovableElementSharedTransitionScope = rememberPaneMovableElementSharedTransitionScope()
+    val paneScaffoldState = remember(appState, paneMovableElementSharedTransitionScope, density) {
         PaneScaffoldState(
             appState = appState,
-            panedSharedElementScope = panedSharedElementScope,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             density = density,
         )
     }
@@ -135,7 +135,7 @@ fun PaneScope<ThreePane, Route>.PaneScaffold(
             Scaffold(
                 modifier = Modifier
                     .animateBounds(
-                        lookaheadScope = panedSharedElementScope,
+                        lookaheadScope = paneMovableElementSharedTransitionScope,
                         boundsTransform = remember {
                             scaffoldBoundsTransform(
                                 appState = appState,

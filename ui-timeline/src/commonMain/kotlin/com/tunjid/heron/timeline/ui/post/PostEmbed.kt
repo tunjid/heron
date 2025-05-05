@@ -38,7 +38,7 @@ import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @Composable
@@ -49,7 +49,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: Id,
     sharedElementPrefix: String,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
@@ -65,7 +65,7 @@ internal fun PostEmbed(
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
                 presentation = presentation,
-                panedSharedElementScope = panedSharedElementScope,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 onClick = {
                     uriHandler.openUri(embed.uri.uri)
                 },
@@ -75,7 +75,7 @@ internal fun PostEmbed(
                 feature = embed,
                 postId = postId,
                 sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = panedSharedElementScope,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 presentation = presentation,
                 onImageClicked = { index ->
                     onPostMediaClicked(embed, index, null)
@@ -86,7 +86,7 @@ internal fun PostEmbed(
             is Video -> PostVideo(
                 video = embed,
                 postId = postId,
-                panedSharedElementScope = panedSharedElementScope,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 sharedElementPrefix = sharedElementPrefix,
                 presentation = presentation,
                 onClicked = {
@@ -109,7 +109,7 @@ internal fun PostEmbed(
                     sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
                         quotingPostId = postId,
                     ),
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onProfileClicked = onQuotedProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
                     onClick = {

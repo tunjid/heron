@@ -29,7 +29,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.TimeDelta
 import kotlinx.datetime.Instant
 
@@ -41,8 +41,8 @@ fun PostHeadline(
     author: Profile,
     postId: Id,
     sharedElementPrefix: String,
-    panedSharedElementScope: PanedSharedElementScope,
-) = with(panedSharedElementScope) {
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+) = with(paneMovableElementSharedTransitionScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id
         val secondaryText = author.handle.id.takeUnless { it == primaryText }
