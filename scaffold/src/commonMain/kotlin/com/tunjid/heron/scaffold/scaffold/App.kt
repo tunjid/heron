@@ -77,43 +77,45 @@ fun App(
                         MultiPaneDisplay(
                             modifier = Modifier.fillMaxSize(),
                             state = appState.rememberMultiPaneDisplayState(
-                                transforms = listOf(
-                                    threePanedAdaptiveTransform(
-                                        secondaryPaneBreakPoint = mutableStateOf(
-                                            SecondaryPaneMinWidthBreakpointDp
-                                        ),
-                                        tertiaryPaneBreakPoint = mutableStateOf(
-                                            TertiaryPaneMinWidthBreakpointDp
-                                        ),
-                                        windowWidthState = derivedStateOf {
-                                            appState.splitLayoutState.size
-                                        }
-                                    ),
-                                    backPreviewTransform(
-                                        isPreviewingBack = derivedStateOf {
-                                            appState.isPreviewingBack
-                                        },
-                                        navigationStateBackTransform = MultiStackNav::pop,
-                                    ),
-                                    threePanedMovableSharedElementTransform(
-                                        movableSharedElementHostState
-                                    ),
-                                    paneModifierTransform {
-                                        Modifier
-                                            .fillMaxSize()
-                                            .constrainedSizePlacement(
-                                                orientation = Orientation.Horizontal,
-                                                minSize = 180.dp,
-                                                atStart = paneState.pane == ThreePane.Secondary,
-                                            )
-                                            .run {
-                                                if (paneState.pane == ThreePane.TransientPrimary) backPreview(
-                                                    appState.backPreviewState
-                                                )
-                                                else this
+                                transforms = remember {
+                                    listOf(
+                                        threePanedAdaptiveTransform(
+                                            secondaryPaneBreakPoint = mutableStateOf(
+                                                SecondaryPaneMinWidthBreakpointDp
+                                            ),
+                                            tertiaryPaneBreakPoint = mutableStateOf(
+                                                TertiaryPaneMinWidthBreakpointDp
+                                            ),
+                                            windowWidthState = derivedStateOf {
+                                                appState.splitLayoutState.size
                                             }
-                                    },
-                                )
+                                        ),
+                                        backPreviewTransform(
+                                            isPreviewingBack = derivedStateOf {
+                                                appState.isPreviewingBack
+                                            },
+                                            navigationStateBackTransform = MultiStackNav::pop,
+                                        ),
+                                        threePanedMovableSharedElementTransform(
+                                            movableSharedElementHostState
+                                        ),
+                                        paneModifierTransform {
+                                            Modifier
+                                                .fillMaxSize()
+                                                .constrainedSizePlacement(
+                                                    orientation = Orientation.Horizontal,
+                                                    minSize = 180.dp,
+                                                    atStart = paneState.pane == ThreePane.Secondary,
+                                                )
+                                                .run {
+                                                    if (paneState.pane == ThreePane.TransientPrimary) backPreview(
+                                                        appState.backPreviewState
+                                                    )
+                                                    else this
+                                                }
+                                        },
+                                    )
+                                }
                             ),
                         ) {
                             appState.displayScope = this
