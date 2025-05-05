@@ -21,13 +21,13 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @Composable
 fun QuoteRow(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     now: Instant,
     isRead: Boolean,
     notification: Notification.Quoted,
@@ -37,7 +37,7 @@ fun QuoteRow(
 ) {
     NotificationPostScaffold(
         modifier = modifier,
-        panedSharedElementScope = panedSharedElementScope,
+        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         now = now,
         isRead = isRead,
         notification = notification,

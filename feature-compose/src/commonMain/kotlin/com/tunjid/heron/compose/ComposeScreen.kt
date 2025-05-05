@@ -59,7 +59,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AvatarSize
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
@@ -84,7 +84,7 @@ internal fun ComposeScreen(
     ) {
         val postText = state.postText
         ReplyingTo(
-            panedSharedElementScope = paneScaffoldState,
+            paneMovableElementSharedTransitionScope = paneScaffoldState,
             type = state.postType,
             sharedElementPrefix = state.sharedElementPrefix
         )
@@ -92,7 +92,7 @@ internal fun ComposeScreen(
             signedInProfile = state.signedInProfile,
             postText = postText,
             quotedPost = state.quotedPost,
-            panedSharedElementScope = paneScaffoldState,
+            paneMovableElementSharedTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onCreatePost = onCreatePost@{
                 val authorId = state.signedInProfile?.did ?: return@onCreatePost
@@ -136,7 +136,7 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     quotedPost: Post?,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
 ) {
@@ -179,7 +179,7 @@ private fun Post(
             now = remember { Clock.System.now() },
             quotedPost = quotedPost,
             sharedElementPrefix = NeverMatchedSharedElementPrefix,
-            panedSharedElementScope = panedSharedElementScope,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onClick = {},
             onProfileClicked = { _, _ -> },
             onPostMediaClicked = { _, _, _ -> },
@@ -191,7 +191,7 @@ private fun Post(
 @Composable
 private fun ReplyingTo(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     type: Post.Create?,
     sharedElementPrefix: String?,
 ) {
@@ -200,7 +200,7 @@ private fun ReplyingTo(
         is Post.Create.Reply -> AuthorAndPost(
             modifier = modifier,
             avatar = {
-                panedSharedElementScope.updatedMovableSharedElementOf(
+                paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
                     modifier = Modifier
                         .size(AvatarSize),
                     key = type.parent.avatarSharedElementKey(sharedElementPrefix),

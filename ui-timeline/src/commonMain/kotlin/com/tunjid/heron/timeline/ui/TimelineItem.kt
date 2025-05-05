@@ -56,7 +56,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.presentationPadding
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import heron.ui_timeline.generated.resources.Res
@@ -67,7 +67,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TimelineItem(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     presentationLookaheadScope: LookaheadScope,
     now: Instant,
     item: TimelineItem,
@@ -116,7 +116,7 @@ fun TimelineItem(
                 if (item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed) ThreadedPost(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
                     item = item,
                     sharedElementPrefix = sharedElementPrefix,
@@ -127,7 +127,7 @@ fun TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .childThreadNode(videoId = item.post.videoId),
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
                     now = now,
                     post = item.post,
@@ -146,7 +146,7 @@ fun TimelineItem(
 @Composable
 private fun ThreadedPost(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
@@ -162,7 +162,7 @@ private fun ThreadedPost(
                 Post(
                     modifier = Modifier
                         .childThreadNode(videoId = post.videoId),
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
                     now = now,
                     post = post,

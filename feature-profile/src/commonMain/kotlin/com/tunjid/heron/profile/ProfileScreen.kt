@@ -119,7 +119,7 @@ import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens
@@ -257,7 +257,7 @@ internal fun ProfileScreen(
                             updatedTimelineStateHolders.stateHolderAt(page)
                         }
                         ProfileTimeline(
-                            panedSharedElementScope = paneScaffoldState,
+                            paneMovableElementSharedTransitionScope = paneScaffoldState,
                             timelineStateHolder = timelineStateHolder,
                             actions = actions,
                         )
@@ -613,7 +613,7 @@ private fun ProfileTabs(
 
 @Composable
 private fun ProfileTimeline(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -661,7 +661,7 @@ private fun ProfileTimeline(
                             .threadedVideoPosition(
                                 state = videoStates.getOrCreateStateFor(item)
                             ),
-                        panedSharedElementScope = panedSharedElementScope,
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = remember { Clock.System.now() },
                         item = item,
@@ -749,7 +749,7 @@ private fun ProfileTimeline(
             )
         }
     )
-    if (panedSharedElementScope.paneState.pane == ThreePane.Primary) {
+    if (paneMovableElementSharedTransitionScope.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

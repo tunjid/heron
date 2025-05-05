@@ -41,7 +41,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -51,10 +51,10 @@ import kotlinx.datetime.Instant
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileSearchResult(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     result: SearchResult.Profile,
     onProfileClicked: (SearchResult.Profile) -> Unit,
-) = with(panedSharedElementScope) {
+) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = Modifier
             .clickable { onProfileClicked(result) },
@@ -101,7 +101,7 @@ fun ProfileSearchResult(
 
 @Composable
 internal fun PostSearchResult(
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     now: Instant,
     result: SearchResult.Post,
     onProfileClicked: (SearchResult.Post) -> Unit,
@@ -122,8 +122,8 @@ internal fun PostSearchResult(
                         start = 16.dp,
                         end = 16.dp
                     ),
-                panedSharedElementScope = panedSharedElementScope,
-                presentationLookaheadScope = panedSharedElementScope,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = paneMovableElementSharedTransitionScope,
                 now = now,
                 post = result.post,
                 isAnchoredInTimeline = false,

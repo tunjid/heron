@@ -51,14 +51,18 @@ fun org.gradle.api.Project.configureUiModule(
 
                 api(libs.findLibrary("kotlinx-coroutines-core").get())
 
+                api(libs.findLibrary("savedstate-savedstate").get())
+                api(libs.findLibrary("savedstate-compose").get())
+
                 api(libs.findLibrary("tunjid-mutator-core-common").get())
                 api(libs.findLibrary("tunjid-mutator-coroutines-common").get())
 
                 api(libs.findLibrary("tunjid-composables").get())
 
-                api(libs.findLibrary("tunjid-treenav-compose-common").get())
-                api(libs.findLibrary("tunjid-treenav-core-common").get())
-                api(libs.findLibrary("tunjid-treenav-strings-common").get())
+                api(libs.findLibrary("tunjid-treenav-compose").get())
+                api(libs.findLibrary("tunjid-treenav-compose-threepane").get())
+                api(libs.findLibrary("tunjid-treenav-core").get())
+                api(libs.findLibrary("tunjid-treenav-strings").get())
             }
         }
         named("androidMain") {

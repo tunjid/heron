@@ -48,7 +48,7 @@ import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostImages
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.PostVideo
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -60,11 +60,11 @@ fun QuotedPost(
     now: Instant,
     quotedPost: Post,
     sharedElementPrefix: String,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     onClick: () -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
-) = with(panedSharedElementScope) {
+) = with(paneMovableElementSharedTransitionScope) {
     val author = quotedPost.author
     Box(
         modifier = modifier,
@@ -99,14 +99,14 @@ fun QuotedPost(
                     author = author,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 )
             }
             Spacer(Modifier.height(2.dp))
             PostText(
                 post = quotedPost,
                 sharedElementPrefix = sharedElementPrefix,
-                panedSharedElementScope = panedSharedElementScope,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 maxLines = 3,
                 modifier = Modifier,
                 onClick = onClick,
@@ -121,7 +121,7 @@ fun QuotedPost(
                     feature = embed,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     // Quotes are exclusively in blog view types
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     onClick = {
@@ -133,7 +133,7 @@ fun QuotedPost(
                     feature = embed,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, quotedPost)
                     },
@@ -145,7 +145,7 @@ fun QuotedPost(
                 is Video -> PostVideo(
                     video = embed,
                     postId = quotedPost.cid,
-                    panedSharedElementScope = panedSharedElementScope,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     // Quote videos only show in text and embeds
                     presentation = Timeline.Presentation.Text.WithEmbed,

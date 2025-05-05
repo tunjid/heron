@@ -55,7 +55,7 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
-import com.tunjid.heron.ui.PanedSharedElementScope
+import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -121,7 +121,7 @@ internal fun GalleryScreen(
                                             }
                                         }
                                     ),
-                                panedSharedElementScope = paneScaffoldState,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 item = item,
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 postId = state.postId,
@@ -135,7 +135,7 @@ internal fun GalleryScreen(
                                     windowSize = windowSize,
                                     aspectRatio = item.video,
                                 ),
-                            panedSharedElementScope = paneScaffoldState,
+                            paneMovableElementSharedTransitionScope = paneScaffoldState,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix,
                             postId = state.postId,
@@ -191,12 +191,12 @@ internal fun GalleryScreen(
 @Composable
 private fun GalleryImage(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     item: GalleryItem.Photo,
     postId: Id,
     sharedElementPrefix: String,
 ) {
-    panedSharedElementScope.updatedMovableSharedElementOf(
+    paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.image.sharedElementKey(
             prefix = sharedElementPrefix,
@@ -224,7 +224,7 @@ private fun GalleryImage(
 @Composable
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
-    panedSharedElementScope: PanedSharedElementScope,
+    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
     item: GalleryItem.Video,
     postId: Id,
     sharedElementPrefix: String,
@@ -234,11 +234,11 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (!panedSharedElementScope.isPrimaryOrPreview) VideoStill(
+    if (!paneMovableElementSharedTransitionScope.isPrimaryOrPreview) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else panedSharedElementScope.updatedMovableSharedElementOf(
+    else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.video.sharedElementKey(
             prefix = sharedElementPrefix,

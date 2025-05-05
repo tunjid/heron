@@ -125,7 +125,7 @@ class AppState @Inject constructor(
                         placeChildrenBeforeParent = true,
                     )
                         .filterIsInstance<Route>()
-                        .toList()
+                        .distinct()
                 },
                 destinationTransform = { multiStackNav ->
                     multiStackNav.current as? Route ?: unknownRoute("")
