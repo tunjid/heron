@@ -102,6 +102,12 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
+    fun provideListDao(
+        database: AppDatabase,
+    ) = database.listDao()
+
+    @DataScope
+    @Provides
     fun provideEmbedDao(
         database: AppDatabase,
     ) = database.embedDao()

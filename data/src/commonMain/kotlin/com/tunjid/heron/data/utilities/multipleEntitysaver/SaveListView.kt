@@ -16,11 +16,15 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import app.bsky.actor.ProfileView
+import app.bsky.actor.ProfileViewBasic
 import app.bsky.graph.ListView
+import app.bsky.graph.ListViewBasic
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import kotlinx.datetime.Instant
 
 internal fun MultipleEntitySaver.add(
     listView: ListView,
@@ -37,6 +41,26 @@ internal fun MultipleEntitySaver.add(
             listItemCount = listView.listItemCount,
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt,
+        )
+    )
+}
+
+internal fun MultipleEntitySaver.add(
+    creator: ProfileViewBasic,
+    listView: ListViewBasic,
+) {
+    creator.profileEntity().let(::add)
+    add(
+        ListEntity(
+            cid = listView.cid.cid.let(::Id),
+            uri = listView.uri.atUri.let(::Uri),
+            creatorId = creator.did.did.let(::Id),
+            name = listView.name,
+            description = "",
+            avatar = listView.avatar?.uri?.let(::Uri),
+            listItemCount = listView.listItemCount,
+            purpose = listView.purpose.value,
+            indexedAt = listView.indexedAt ?: Instant.DISTANT_PAST,
         )
     )
 }

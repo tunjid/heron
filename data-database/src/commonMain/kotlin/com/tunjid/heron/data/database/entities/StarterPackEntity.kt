@@ -16,18 +16,20 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.FeedList
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "lists",
+    tableName = "starterPacks",
     foreignKeys = [
         ForeignKey(
             entity = ProfileEntity::class,
@@ -38,53 +40,44 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["indexedAt"]),
-        Index(value = ["uri"], unique = true),
     ],
 )
-data class ListEntity(
+data class StarterPackEntity(
     @PrimaryKey
     val cid: Id,
     val uri: Uri,
     val creatorId: Id,
+    val listUri: Uri?,
     val name: String,
-    val description: String?,
-    val avatar: Uri?,
-    val listItemCount: Long?,
-    val purpose: String,
+    val joinedWeekCount: Long?,
+    val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
-) {
-    data class Partial(
-        val cid: Id,
-        val uri: Uri,
-        val creatorId: Id,
-        val name: String,
-        val avatar: Uri?,
-        val listItemCount: Long?,
-        val purpose: String,
-    )
-}
+    val createdAt: Instant,
+)
 
-fun ListEntity.partial() =
-    ListEntity.Partial(
-        cid = cid,
-        uri = uri,
-        creatorId = creatorId,
-        name = name,
-        avatar = avatar,
-        listItemCount = listItemCount,
-        purpose = purpose,
-    )
 
-fun ListEntity.asExternalModel() =
-    FeedList(
-        cid = cid,
-        uri = uri,
-        creatorId = creatorId,
-        name = name,
-        description = description,
-        avatar = avatar,
-        listItemCount = listItemCount,
-        purpose = purpose,
-        indexedAt = indexedAt,
+data class PopulatedStarterPackEntity(
+    @Embedded
+    val entity: StarterPackEntity,
+    @Relation(
+        parentColumn = "creatorId",
+        entityColumn = "did"
+    )
+    val creator: ProfileEntity?,
+    @Relation(
+        parentColumn = "listUri",
+        entityColumn = "uri",
+    )
+    val list: ListEntity?,
+)
+
+fun PopulatedStarterPackEntity.asExternalModel() =
+    StarterPack(
+        cid = entity.cid,
+        uri = entity.uri,
+        name = entity.name,
+        creator = creator.asExternalModel(),
+        list = list?.asExternalModel(),
+        indexedAt = entity.indexedAt,
     )
 

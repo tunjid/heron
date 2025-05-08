@@ -16,75 +16,62 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.FeedList
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
 
 @Entity(
-    tableName = "lists",
+    tableName = "listMembers",
     foreignKeys = [
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["creatorId"],
+            childColumns = ["subjectId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ListEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["listUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
-        Index(value = ["indexedAt"]),
-        Index(value = ["uri"], unique = true),
+        Index(value = ["createdAt"]),
     ],
 )
-data class ListEntity(
+data class ListMemberEntity(
     @PrimaryKey
-    val cid: Id,
     val uri: Uri,
-    val creatorId: Id,
-    val name: String,
-    val description: String?,
-    val avatar: Uri?,
-    val listItemCount: Long?,
-    val purpose: String,
-    val indexedAt: Instant,
-) {
-    data class Partial(
-        val cid: Id,
-        val uri: Uri,
-        val creatorId: Id,
-        val name: String,
-        val avatar: Uri?,
-        val listItemCount: Long?,
-        val purpose: String,
-    )
-}
+    val listUri: Uri,
+    val subjectId: Id,
+    val createdAt: Instant,
+)
 
-fun ListEntity.partial() =
-    ListEntity.Partial(
-        cid = cid,
-        uri = uri,
-        creatorId = creatorId,
-        name = name,
-        avatar = avatar,
-        listItemCount = listItemCount,
-        purpose = purpose,
-    )
 
-fun ListEntity.asExternalModel() =
-    FeedList(
-        cid = cid,
-        uri = uri,
-        creatorId = creatorId,
-        name = name,
-        description = description,
-        avatar = avatar,
-        listItemCount = listItemCount,
-        purpose = purpose,
-        indexedAt = indexedAt,
+data class PopulatedListMemberEntity(
+    @Embedded
+    val entity: ListMemberEntity,
+    @Relation(
+        parentColumn = "subjectId",
+        entityColumn = "did"
+    )
+    val subject: ProfileEntity?,
+)
+
+fun PopulatedListMemberEntity.asExternalModel() =
+    ListMember(
+        uri = entity.uri,
+        subject = subject.asExternalModel(),
+        listUri = entity.listUri,
+        createdAt = entity.createdAt,
     )
 

@@ -59,24 +59,41 @@ fun ProfileEntity.partial() = ProfileEntity.Partial(
     avatar = avatar
 )
 
-fun ProfileEntity.asExternalModel() = Profile(
-    did = did,
-    handle = handle,
-    displayName = displayName,
-    description = description,
-    avatar = avatar,
-    banner = banner,
-    followersCount = followersCount,
-    followsCount = followsCount,
-    postsCount = postsCount,
-    joinedViaStarterPack = joinedViaStarterPack,
-    indexedAt = indexedAt,
-    createdAt = createdAt,
-)
+fun ProfileEntity?.asExternalModel() =
+    if (this == null) emptyProfile()
+    else Profile(
+        did = did,
+        handle = handle,
+        displayName = displayName,
+        description = description,
+        avatar = avatar,
+        banner = banner,
+        followersCount = followersCount,
+        followsCount = followsCount,
+        postsCount = postsCount,
+        joinedViaStarterPack = joinedViaStarterPack,
+        indexedAt = indexedAt,
+        createdAt = createdAt,
+    )
 
 data class PopulatedProfileEntity(
     @Embedded
     val profileEntity: ProfileEntity,
     @Embedded
     val relationship: ProfileViewerStateEntity?,
+)
+
+private fun emptyProfile() = Profile(
+    did = Id(""),
+    handle = Id(""),
+    displayName = null,
+    description = null,
+    avatar = null,
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = null,
 )

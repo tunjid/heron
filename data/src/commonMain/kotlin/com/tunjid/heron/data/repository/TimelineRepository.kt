@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -142,6 +143,7 @@ interface TimelineRepository {
 @Inject
 class OfflineTimelineRepository(
     private val postDao: PostDao,
+    private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -880,7 +882,7 @@ class OfflineTimelineRepository(
     private fun listTimeline(
         atUri: AtUri,
         position: Int,
-    ) = timelineDao.list(atUri.atUri)
+    ) = listDao.list(atUri.atUri)
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest {
