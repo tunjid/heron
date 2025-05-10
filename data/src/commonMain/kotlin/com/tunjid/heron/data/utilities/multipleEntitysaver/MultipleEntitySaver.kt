@@ -18,17 +18,20 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
+import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
@@ -43,10 +46,12 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import kotlinx.datetime.Instant
 import me.tatarka.inject.annotations.Inject
 
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
+    private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
@@ -57,6 +62,7 @@ class MultipleEntitySaverProvider @Inject constructor(
         block: suspend MultipleEntitySaver.() -> Unit,
     ) = MultipleEntitySaver(
         postDao = postDao,
+        listDao = listDao,
         embedDao = embedDao,
         profileDao = profileDao,
         timelineDao = timelineDao,
@@ -73,6 +79,7 @@ class MultipleEntitySaverProvider @Inject constructor(
  */
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
+    private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
@@ -129,6 +136,12 @@ internal class MultipleEntitySaver(
     private val notificationEntities =
         mutableListOf<NotificationEntity>()
 
+    private val starterPackEntities =
+        mutableListOf<StarterPackEntity>()
+
+    private val listItemEntities =
+        mutableListOf<ListMemberEntity>()
+
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
@@ -163,7 +176,16 @@ internal class MultipleEntitySaver(
 
         notificationsDao.upsertNotifications(notificationEntities)
 
-        timelineDao.upsertLists(listEntities)
+        // Order matters to satisfy foreign key constraints
+        val (fullListEntities, partialListEntities) = listEntities.partition {
+            it.description != null && it.indexedAt != Instant.DISTANT_PAST
+        }
+        listDao.upsertLists(fullListEntities)
+        listDao.insertOrPartiallyUpdateLists(partialListEntities)
+
+        listDao.upsertListItems(listItemEntities)
+        listDao.upsertStarterPacks(starterPackEntities)
+
         timelineDao.upsertFeedGenerators(feedGeneratorEntities)
 
         timelineDao.upsertTimelineItems(timelineItemEntities)
@@ -213,6 +235,10 @@ internal class MultipleEntitySaver(
     fun add(entity: FeedGeneratorEntity) = feedGeneratorEntities.add(entity)
 
     fun add(entity: NotificationEntity) = notificationEntities.add(entity)
+
+    fun add(entity: StarterPackEntity) = starterPackEntities.add(entity)
+
+    fun add(entity: ListMemberEntity) = listItemEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 

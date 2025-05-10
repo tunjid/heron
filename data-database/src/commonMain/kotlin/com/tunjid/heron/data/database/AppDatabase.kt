@@ -24,12 +24,14 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
+import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -37,6 +39,7 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
@@ -52,7 +55,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 10,
+    version = 11,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -70,10 +73,12 @@ import kotlinx.coroutines.IO
         PostLikeEntity::class,
         PostRepostEntity::class,
         ListEntity::class,
+        ListMemberEntity::class,
         FeedGeneratorEntity::class,
         NotificationEntity::class,
         TimelineItemEntity::class,
         TimelinePreferencesEntity::class,
+        StarterPackEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -103,6 +108,8 @@ import kotlinx.coroutines.IO
             to = 10,
             spec = TimelineItemEntityAutoMigration::class,
         ),
+        // Add StarterPackEntity and ListItemEntity
+        AutoMigration(from = 10, to = 11),
     ],
     exportSchema = true,
 )
@@ -114,6 +121,7 @@ import kotlinx.coroutines.IO
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
+    abstract fun listDao(): ListDao
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
     abstract fun feedDao(): TimelineDao

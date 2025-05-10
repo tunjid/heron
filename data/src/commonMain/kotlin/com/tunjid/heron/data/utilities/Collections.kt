@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.types.Uri
+import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import sh.christian.ozone.BlueskyJson
 import sh.christian.ozone.api.RKey
@@ -35,8 +36,44 @@ internal object Collections {
 
 val Uri.recordKey get() = uri.split("/").last()
 
+val Uri.tidInstant: Instant?
+    get() = try {
+        Instant.fromEpochMilliseconds(tidTimestampFromBase32(recordKey))
+    } catch (e: IllegalArgumentException) {
+        null
+    }
+
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
 ): JsonContent = BlueskyJson.decodeFromString(
     BlueskyJson.encodeToString(serializer, this)
 )
+
+private fun tidTimestampFromBase32(base32Tid: String): Long {
+    val tidLong = base32ToLong(base32Tid)
+    return extractTimestampFromTid(tidLong)
+}
+
+private fun base32ToLong(base32String: String): Long {
+    if (base32String.length != 13) {
+        throw IllegalArgumentException("Base32 string must be 13 characters long.")
+    }
+
+    var result: Long = 0
+    for (char in base32String) {
+        val value = Alphabet.indexOf(char)
+        if (value == -1) {
+            throw IllegalArgumentException("Invalid base32 character: $char")
+        }
+        result = (result shl 5) or value.toLong()
+    }
+
+    return result
+}
+
+private fun extractTimestampFromTid(tid: Long): Long {
+    // Shift to remove the clock identifier (10 bits)
+    return tid shr 10
+}
+
+private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"

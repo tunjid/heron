@@ -108,21 +108,6 @@ interface TimelineDao {
 
     @Query(
         """
-            SELECT * FROM lists
-            WHERE uri = :listUri
-        """
-    )
-    fun list(
-        listUri: String,
-    ): Flow<ListEntity?>
-
-    @Upsert
-    suspend fun upsertLists(
-        entities: List<ListEntity>,
-    )
-
-    @Query(
-        """
             SELECT * FROM feedGenerators
             WHERE uri = :feedUri
         """

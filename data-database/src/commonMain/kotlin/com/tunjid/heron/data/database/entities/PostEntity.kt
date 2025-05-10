@@ -151,7 +151,7 @@ fun PopulatedPostEntity.asExternalModel(
     likeCount = entity.likeCount.orZero(),
     quoteCount = entity.quoteCount.orZero(),
     indexedAt = entity.indexedAt,
-    author = author?.asExternalModel() ?: emptyProfile(),
+    author = author.asExternalModel(),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()
@@ -179,20 +179,5 @@ fun PostViewerStatisticsEntity.asExternalModel() =
 fun PostEntity.RecordData.asExternalModel(): Post.Record? =
     base64EncodedRecord
         ?.fromBase64EncodedUrl<Post.Record>()
-
-private fun emptyProfile() = Profile(
-    did = Id(""),
-    handle = Id(""),
-    displayName = null,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-)
 
 private fun Long?.orZero() = this ?: 0L
