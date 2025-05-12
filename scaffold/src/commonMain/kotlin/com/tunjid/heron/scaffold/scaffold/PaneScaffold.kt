@@ -106,6 +106,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
             density = density,
         )
     }
+        .also { it.density = density }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
