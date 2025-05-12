@@ -188,7 +188,7 @@ fun PaneScaffoldState.PaneScaffold(
 }
 
 @Composable
-private inline fun PaneScaffoldState.PaneNavigationRailScaffold(
+private inline fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
@@ -196,13 +196,14 @@ private inline fun PaneScaffoldState.PaneNavigationRailScaffold(
     Row(
         modifier = modifier,
         content = {
-            if (canShowNavRail) Box(
+            Box(
                 modifier = Modifier
                     .widthIn(max = 80.dp)
                     .zIndex(2f),
-            ) {
-                navigationRail()
-            }
+                content = {
+                    navigationRail()
+                },
+            )
             Box(
                 modifier = Modifier
                     .fillMaxSize()

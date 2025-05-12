@@ -20,7 +20,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -86,8 +88,8 @@ fun PaneScaffoldState.PaneBottomAppBar(
 @Composable
 fun PaneScaffoldState.PaneNavigationRail(
     modifier: Modifier = Modifier,
-    enterTransition: EnterTransition = slideInVertically(initialOffsetY = { it }),
-    exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
+    enterTransition: EnterTransition = slideInHorizontally(initialOffsetX = { -it }),
+    exitTransition: ExitTransition = slideOutHorizontally(targetOffsetX = { -it }),
     onNavItemReselected: () -> Boolean = { false },
     badge: @Composable (AppStack) -> Unit = {},
 ) {
