@@ -42,6 +42,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.SignInScreen
@@ -114,7 +115,7 @@ abstract class SignInComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            PaneScaffold(
+            rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = false,

@@ -48,6 +48,7 @@ import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.PathPattern
@@ -207,7 +208,7 @@ abstract class ProfilesComponent(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            PaneScaffold(
+            rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
