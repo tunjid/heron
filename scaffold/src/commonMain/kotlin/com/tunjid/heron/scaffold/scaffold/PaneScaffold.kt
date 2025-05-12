@@ -66,15 +66,16 @@ class PaneScaffoldState internal constructor(
     internal val appState: AppState,
     paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<Route>,
 ) : PaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
+
+    internal var density by mutableStateOf(density)
 
     internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
 
     internal val canShowNavRail
         get() = appState.filteredPaneOrder.firstOrNull() == paneState.pane
                 && appState.isMediumScreenWidthOrWider
-
-    internal var density by mutableStateOf(density)
 
     internal val canShowFab
         get() = when (paneState.pane) {
