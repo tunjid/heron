@@ -41,6 +41,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
@@ -106,7 +107,7 @@ abstract class MessagesComponent(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
-            PaneScaffold(
+            rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),

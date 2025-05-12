@@ -57,6 +57,7 @@ import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -148,7 +149,7 @@ abstract class ProfileComponent(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
-            PaneScaffold(
+            rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),

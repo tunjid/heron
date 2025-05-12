@@ -17,6 +17,9 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
@@ -27,6 +30,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -70,42 +75,51 @@ import kotlin.math.roundToInt
 @Composable
 fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
+    enterTransition: EnterTransition = slideInVertically(initialOffsetY = { it }),
+    exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
     text: String,
     icon: ImageVector?,
     expanded: Boolean,
     visible: Boolean? = null,
     onClick: () -> Unit,
 ) {
-    // The material3 ExtendedFloatingActionButton does not allow for placing
-    // Modifier.animateContentSize() on its row.
-    FloatingActionButton(
-        modifier = modifier
-            .animateFabSize()
-            .paneSharedElement(
-                key = FabSharedElementKey,
-                visible = visible,
-                zIndexInOverlay = FabSharedElementZIndex,
-            ),
-        onClick = onClick,
-        shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+    AnimatedVisibility(
+        visible = canShowFab,
+        enter = enterTransition,
+        exit = exitTransition,
         content = {
-            Row(
-                modifier = Modifier
+            // The material3 ExtendedFloatingActionButton does not allow for placing
+            // Modifier.animateContentSize() on its row.
+            FloatingActionButton(
+                modifier = modifier
                     .animateFabSize()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (icon != null) FabIcon(icon)
-                if (icon == null || expanded) {
-                    if (icon != null) Spacer(modifier = Modifier.width(8.dp))
-                    AnimatedContent(targetState = text) { text ->
-                        Text(
-                            text = text,
-                            maxLines = 1,
-                        )
+                    .paneSharedElement(
+                        key = FabSharedElementKey,
+                        visible = visible,
+                        zIndexInOverlay = FabSharedElementZIndex,
+                    ),
+                onClick = onClick,
+                shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+                content = {
+                    Row(
+                        modifier = Modifier
+                            .animateFabSize()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (icon != null) FabIcon(icon)
+                        if (icon == null || expanded) {
+                            if (icon != null) Spacer(modifier = Modifier.width(8.dp))
+                            AnimatedContent(targetState = text) { text ->
+                                Text(
+                                    text = text,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
                     }
                 }
-            }
+            )
         }
     )
 }
