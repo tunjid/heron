@@ -38,7 +38,7 @@ import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @Composable
@@ -49,7 +49,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: Id,
     sharedElementPrefix: String,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,

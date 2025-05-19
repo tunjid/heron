@@ -59,10 +59,10 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AvatarSize
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -136,7 +136,7 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     quotedPost: Post?,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
 ) {
@@ -191,7 +191,7 @@ private fun Post(
 @Composable
 private fun ReplyingTo(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     type: Post.Create?,
     sharedElementPrefix: String?,
 ) {

@@ -21,13 +21,13 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @Composable
 fun MentionRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     isRead: Boolean,
     notification: Notification.Mentioned,

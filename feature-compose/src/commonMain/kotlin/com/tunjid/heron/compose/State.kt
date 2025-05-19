@@ -36,7 +36,6 @@ data class State(
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
-    val unreadNotificationCount: Long = 0,
     val quotedPost: Post? = null,
     @Transient // TODO: Write a custom serializer for this
     val postText: TextFieldValue = TextFieldValue(),

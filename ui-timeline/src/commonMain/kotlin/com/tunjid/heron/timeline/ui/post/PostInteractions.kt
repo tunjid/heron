@@ -74,7 +74,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.actionIconSize
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.cancel
 import heron.ui_timeline.generated.resources.liked
@@ -99,7 +99,7 @@ fun PostInteractions(
     postUri: Uri,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,

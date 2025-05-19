@@ -41,9 +41,9 @@ import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
@@ -51,7 +51,7 @@ import kotlinx.datetime.Instant
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileSearchResult(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     result: SearchResult.Profile,
     onProfileClicked: (SearchResult.Profile) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
@@ -101,7 +101,7 @@ fun ProfileSearchResult(
 
 @Composable
 internal fun PostSearchResult(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     result: SearchResult.Post,
     onProfileClicked: (SearchResult.Post) -> Unit,

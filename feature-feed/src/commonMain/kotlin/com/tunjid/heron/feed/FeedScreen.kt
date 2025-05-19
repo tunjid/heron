@@ -63,8 +63,8 @@ import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -94,7 +94,7 @@ internal fun FeedScreen(
 
 @Composable
 private fun FeedTimeline(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {

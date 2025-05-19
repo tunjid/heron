@@ -49,7 +49,7 @@ import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -58,7 +58,7 @@ import kotlinx.datetime.Instant
 @Composable
 internal fun NotificationPostScaffold(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     isRead: Boolean,
     notification: Notification.PostAssociated,
@@ -147,7 +147,7 @@ internal fun NotificationPostScaffold(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PostAttribution(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     avatarShape: RoundedPolygonShape,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,

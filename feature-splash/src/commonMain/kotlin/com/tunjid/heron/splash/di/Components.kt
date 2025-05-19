@@ -28,7 +28,7 @@ import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashViewModelCreator
-import com.tunjid.treenav.compose.threepane.rememberPaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -91,7 +91,7 @@ abstract class SplashComponent(
             viewModel.state.collectAsStateWithLifecycle()
 
             SplashScreen(
-                paneMovableElementSharedTransitionScope = rememberPaneMovableElementSharedTransitionScope(),
+                paneMovableElementSharedTransitionScope = rememberThreePaneMovableElementSharedTransitionScope(),
                 modifier = Modifier,
             )
         }

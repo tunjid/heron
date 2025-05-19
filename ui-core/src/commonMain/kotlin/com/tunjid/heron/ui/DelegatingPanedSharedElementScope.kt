@@ -16,10 +16,10 @@
 
 package com.tunjid.heron.ui
 
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 
 
-val PaneMovableElementSharedTransitionScope<*>.isPrimaryOrPreview
+val MovableElementSharedTransitionScope.isPrimaryOrPreview
     get() =
         paneState.pane == ThreePane.Primary || paneState.pane == ThreePane.TransientPrimary

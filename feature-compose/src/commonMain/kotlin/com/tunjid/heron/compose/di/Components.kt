@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
@@ -49,7 +47,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -190,13 +187,7 @@ abstract class ComposeComponent(
                     }
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
-                    )
+                    PaneNavigationRail()
                 },
                 content = { paddingValues ->
                     ComposeScreen(

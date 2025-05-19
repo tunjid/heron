@@ -31,12 +31,11 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
-import com.tunjid.treenav.strings.Route
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PaneMovableElementSharedTransitionScope<*>.AppLogo(
+fun MovableElementSharedTransitionScope.AppLogo(
     modifier: Modifier,
 ) {
     Icon(

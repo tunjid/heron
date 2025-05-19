@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.TimeDelta
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.account_unverified
@@ -43,7 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ProfileVerificationRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     isRead: Boolean,
     isVerified: Boolean,

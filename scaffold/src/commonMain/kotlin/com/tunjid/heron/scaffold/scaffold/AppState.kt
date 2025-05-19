@@ -62,8 +62,8 @@ import me.tatarka.inject.annotations.Inject
 
 @Stable
 class AppState @Inject constructor(
-    private val notificationsRepository: NotificationsRepository,
     private val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>,
+    private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
