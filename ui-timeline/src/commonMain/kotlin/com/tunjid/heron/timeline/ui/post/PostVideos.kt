@@ -59,9 +59,9 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -71,7 +71,7 @@ internal fun PostVideo(
     postId: Id,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current

@@ -24,9 +24,9 @@ data class Image(
     val thumb: Uri,
     val fullsize: Uri,
     val alt: String,
-   override val width: Long?,
-   override val height: Long?,
-): AspectRatio
+    override val width: Long?,
+    override val height: Long?,
+) : AspectRatio
 
 @Serializable
 data class ImageList(

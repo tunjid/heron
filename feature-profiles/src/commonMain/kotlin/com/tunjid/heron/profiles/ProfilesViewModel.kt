@@ -115,9 +115,11 @@ class ActualProfilesViewModel(
                     stateHolder = this@transform,
                     postRepository = postRepository,
                 )
+
                 is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                     writeQueue = writeQueue,
                 )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )

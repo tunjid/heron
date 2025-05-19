@@ -58,15 +58,15 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
 fun Post(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     now: Instant,
@@ -419,7 +419,7 @@ private fun Embed?.asPostContent() = when (this) {
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
@@ -457,7 +457,7 @@ private fun rememberUpdatedPostData(
 @Stable
 private class PostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
@@ -467,7 +467,9 @@ private class PostData(
     created: Instant,
 ) {
     var postActions by mutableStateOf(postActions)
-    var paneMovableElementSharedTransitionScope by mutableStateOf(paneMovableElementSharedTransitionScope)
+    var paneMovableElementSharedTransitionScope by mutableStateOf(
+        paneMovableElementSharedTransitionScope
+    )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)

@@ -17,12 +17,9 @@
 package com.tunjid.heron.search.di
 
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Badge
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,11 +27,10 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.PaneBottomAppBar
+import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
@@ -151,26 +147,15 @@ abstract class SearchComponent(
                     )
                 },
                 navigationBar = {
-                    PaneBottomAppBar(
+                    PaneNavigationBar(
                         modifier = Modifier
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
-                    )
+                    PaneNavigationRail()
                 },
                 content = {
                     SearchScreen(

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.IntSize
 import coil3.compose.AsyncImagePainter
 import com.tunjid.composables.ui.animate
@@ -149,7 +150,7 @@ fun AsyncImage(
         when (val request = args.request) {
             is ImageRequest.Local -> {
                 FileAsyncImage(
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxConstraints(),
                     file = request.file,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
@@ -162,14 +163,14 @@ fun AsyncImage(
                     mutableStateOf(request.thumbnailUrl != null)
                 }
                 CoilAsyncImage(
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxConstraints(),
                     model = request.url,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
                     onSuccess = { thumbnailVisible = false }
                 )
                 if (thumbnailVisible) CoilAsyncImage(
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxConstraints(),
                     model = request.thumbnailUrl,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
@@ -179,3 +180,19 @@ fun AsyncImage(
         }
     }
 }
+
+private fun Modifier.fillMaxConstraints() =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(
+            constraints.copy(
+                minWidth = constraints.maxWidth,
+                maxHeight = constraints.maxHeight
+            )
+        )
+        layout(
+            width = placeable.width,
+            height = placeable.height
+        ) {
+            placeable.place(0, 0)
+        }
+    }

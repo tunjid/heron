@@ -40,8 +40,8 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -50,7 +50,7 @@ internal fun PostExternal(
     postId: Id,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClick: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     FeatureContainer(

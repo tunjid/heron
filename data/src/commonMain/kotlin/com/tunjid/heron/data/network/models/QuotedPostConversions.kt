@@ -55,30 +55,31 @@ internal fun PostView.quotedPostProfileEntity(): ProfileEntity? =
     }
 
 private fun RecordViewRecordUnion.profileEntity() =
-   when(this) {
-       is RecordViewRecordUnion.FeedGeneratorView,
-       is RecordViewRecordUnion.GraphListView,
-       is RecordViewRecordUnion.GraphStarterPackViewBasic,
-       is RecordViewRecordUnion.LabelerLabelerView,
-       is RecordViewRecordUnion.Unknown,
-       is RecordViewRecordUnion.ViewBlocked,
-       is RecordViewRecordUnion.ViewDetached,
-       is RecordViewRecordUnion.ViewNotFound -> null
-       is RecordViewRecordUnion.ViewRecord ->  ProfileEntity(
-           did = Id(value.author.did.did),
-           handle = Id(value.author.handle.handle),
-           displayName = value.author.displayName,
-           description = null,
-           avatar = value.author.avatar?.uri?.let(::Uri),
-           banner = null,
-           followersCount = 0,
-           followsCount = 0,
-           postsCount = 0,
-           joinedViaStarterPack = null,
-           indexedAt = null,
-           createdAt = value.author.createdAt,
-       )
-   }
+    when (this) {
+        is RecordViewRecordUnion.FeedGeneratorView,
+        is RecordViewRecordUnion.GraphListView,
+        is RecordViewRecordUnion.GraphStarterPackViewBasic,
+        is RecordViewRecordUnion.LabelerLabelerView,
+        is RecordViewRecordUnion.Unknown,
+        is RecordViewRecordUnion.ViewBlocked,
+        is RecordViewRecordUnion.ViewDetached,
+        is RecordViewRecordUnion.ViewNotFound -> null
+
+        is RecordViewRecordUnion.ViewRecord -> ProfileEntity(
+            did = Id(value.author.did.did),
+            handle = Id(value.author.handle.handle),
+            displayName = value.author.displayName,
+            description = null,
+            avatar = value.author.avatar?.uri?.let(::Uri),
+            banner = null,
+            followersCount = 0,
+            followsCount = 0,
+            postsCount = 0,
+            joinedViaStarterPack = null,
+            indexedAt = null,
+            createdAt = value.author.createdAt,
+        )
+    }
 
 internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
     when (val embed = embed) {
@@ -89,6 +90,7 @@ internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
             .record
             .record
             .embedEntities()
+
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> emptyList()
         is PostViewEmbedUnion.RecordView -> embed
@@ -151,7 +153,7 @@ private fun RecordViewRecordUnion.embedEntities() =
     }.flatten()
 
 private fun RecordViewRecordUnion.postEntity() =
-    when(this) {
+    when (this) {
         is RecordViewRecordUnion.FeedGeneratorView,
         is RecordViewRecordUnion.GraphListView,
         is RecordViewRecordUnion.GraphStarterPackViewBasic,

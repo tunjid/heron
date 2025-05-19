@@ -57,16 +57,16 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NotificationAggregateScaffold(
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
     isRead: Boolean,
     notification: Notification,
@@ -104,7 +104,7 @@ fun NotificationAggregateScaffold(
                 }
             }
             val expandButton = remember {
-                movableContentWithReceiverOf<PaneMovableElementSharedTransitionScope<*>, Boolean> { expanded ->
+                movableContentWithReceiverOf<MovableElementSharedTransitionScope, Boolean> { expanded ->
                     ExpandButton(
                         isExpanded = expanded,
                         onExpansionToggled = { isExpanded = it }
@@ -113,7 +113,7 @@ fun NotificationAggregateScaffold(
             }
             val items = remember {
                 movableContentWithReceiverOf<
-                        PaneMovableElementSharedTransitionScope<*>,
+                        MovableElementSharedTransitionScope,
                         Boolean,
                         Notification,
                         List<Profile>,
@@ -160,7 +160,7 @@ fun NotificationAggregateScaffold(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PaneMovableElementSharedTransitionScope<*>.ExpandButton(
+private fun MovableElementSharedTransitionScope.ExpandButton(
     isExpanded: Boolean,
     onExpansionToggled: (Boolean) -> Unit,
 ) {
@@ -185,7 +185,7 @@ private fun PaneMovableElementSharedTransitionScope<*>.ExpandButton(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PaneMovableElementSharedTransitionScope<*>.ExpandableProfiles(
+private fun MovableElementSharedTransitionScope.ExpandableProfiles(
     isExpanded: Boolean,
     notification: Notification,
     renderedProfiles: List<Profile>,

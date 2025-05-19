@@ -29,8 +29,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.TimeDelta
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -41,7 +41,7 @@ fun PostHeadline(
     author: Profile,
     postId: Id,
     sharedElementPrefix: String,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
 ) = with(paneMovableElementSharedTransitionScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id

@@ -59,7 +59,6 @@ data class State(
     val layout: ScreenLayout = ScreenLayout.Trends,
     val signedInProfile: Profile? = null,
     val trends: Trends = Trends(),
-    val unreadNotificationCount: Long = 0,
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient

@@ -129,7 +129,7 @@ class OfflineProfileRepository @Inject constructor(
                     )
                 }
 
-            is Profile.Connection.Unfollow  -> runCatchingWithNetworkRetry {
+            is Profile.Connection.Unfollow -> runCatchingWithNetworkRetry {
                 networkService.api.deleteRecord(
                     DeleteRecordRequest(
                         repo = connection.signedInProfileId.id.let(::Did),

@@ -181,10 +181,10 @@ class OfflineSearchRepository @Inject constructor(
                         profileWithViewerState = ProfileWithViewerState(
                             profile = profileView.profile(),
                             viewerState =
-                            if (authProfileId == null) null
-                            else profileView.profileViewerStateEntities(
-                                viewingProfileId = authProfileId
-                            ).first().asExternalModel(),
+                                if (authProfileId == null) null
+                                else profileView.profileViewerStateEntities(
+                                    viewingProfileId = authProfileId
+                                ).first().asExternalModel(),
                         )
                     )
                 }
@@ -226,10 +226,10 @@ class OfflineSearchRepository @Inject constructor(
                         profileWithViewerState = ProfileWithViewerState(
                             profile = profileView.profile(),
                             viewerState =
-                            if (authProfileId == null) null
-                            else profileView.profileViewerStateEntities(
-                                viewingProfileId = authProfileId
-                            ).first().asExternalModel(),
+                                if (authProfileId == null) null
+                                else profileView.profileViewerStateEntities(
+                                    viewingProfileId = authProfileId
+                                ).first().asExternalModel(),
                         )
                     )
                 }

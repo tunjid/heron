@@ -54,8 +54,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.Clock
@@ -247,6 +247,7 @@ internal fun NotificationsScreen(
                             notification = notification,
                             onProfileClicked = onAggregatedProfileClicked,
                         )
+
                         is Notification.Verified -> ProfileVerificationRow(
                             modifier = itemModifier,
                             paneMovableElementSharedTransitionScope = paneScaffoldState,

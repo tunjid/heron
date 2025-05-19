@@ -23,21 +23,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.navigation.navItems
-import com.tunjid.heron.scaffold.navigation.unknownRoute
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.compose.MultiPaneDisplayScope
@@ -47,7 +50,6 @@ import com.tunjid.treenav.compose.multiPaneDisplayBackstack
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.compose.transforms.Transform
-import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
@@ -61,12 +63,15 @@ import me.tatarka.inject.annotations.Inject
 @Stable
 class AppState @Inject constructor(
     private val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>,
+    private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
 ) {
 
     private var density = Density(1f)
+    private var hasNotifications by mutableStateOf(false)
+
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
     private val paneRenderOrder = listOf(
         ThreePane.Tertiary,
@@ -75,7 +80,11 @@ class AppState @Inject constructor(
     )
 
     internal var showNavigation by mutableStateOf(false)
-    internal val navItems by derivedStateOf { multiStackNavState.value.navItems }
+    internal val navItems by derivedStateOf {
+        multiStackNavState.value.navItems { stack ->
+            stack == AppStack.Notifications && hasNotifications
+        }
+    }
     internal val navigation by multiStackNavState
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
@@ -100,6 +109,22 @@ class AppState @Inject constructor(
     internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
     internal var displayScope by mutableStateOf<MultiPaneDisplayScope<ThreePane, Route>?>(null)
+
+    internal val movableNavigationBar =
+        movableContentOf<Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            PaneNavigationBar(
+                modifier = modifier,
+                onNavItemReselected = onNavItemReselected,
+            )
+        }
+
+    internal val movableNavigationRail =
+        movableContentOf<Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            PaneNavigationRail(
+                modifier = modifier,
+                onNavItemReselected = onNavItemReselected,
+            )
+        }
 
     internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
         paneRenderOrder.filter { displayScope?.destinationIn(it) != null }
@@ -142,6 +167,11 @@ class AppState @Inject constructor(
         // TODO: Figure out a way to do this in the background with KMP
         LaunchedEffect(Unit) {
             writeQueue.drain()
+        }
+        LaunchedEffect(Unit) {
+            notificationsRepository.unreadCount.collect { count ->
+                hasNotifications = count != 0L
+            }
         }
 
         return displayState

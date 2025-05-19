@@ -87,9 +87,6 @@ class ActualNotificationsViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-        unreadCountMutations(
-            notificationsRepository
-        ),
         lastRefreshedMutations(
             notificationsRepository
         ),
@@ -130,13 +127,6 @@ private fun loadProfileMutations(
         copy(signedInProfile = it)
     }
 
-fun unreadCountMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    notificationsRepository.unreadCount.mapToMutation {
-        copy(unreadNotificationCount = it)
-    }
-
 fun lastRefreshedMutations(
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<State>> =
@@ -144,8 +134,8 @@ fun lastRefreshedMutations(
         copy(
             lastRefreshed = refreshedAt,
             isRefreshing =
-            if (isRefreshing) refreshedAt == null || refreshedAt < currentQuery.data.cursorAnchor
-            else isRefreshing
+                if (isRefreshing) refreshedAt == null || refreshedAt < currentQuery.data.cursorAnchor
+                else isRefreshing
         )
     }
 

@@ -57,9 +57,9 @@ fun ProfileViewerState(
         leadingIcon = {
             Icon(
                 imageVector =
-                if (isSignedInProfile) Icons.Rounded.Edit
-                else if (follows) Icons.Rounded.Check
-                else Icons.Rounded.Add,
+                    if (isSignedInProfile) Icons.Rounded.Edit
+                    else if (follows) Icons.Rounded.Check
+                    else Icons.Rounded.Add,
                 contentDescription = followStatusText,
             )
         },

@@ -123,8 +123,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                     ) {
                         Icon(
                             imageVector =
-                            if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
-                            else Icons.Rounded.Close,
+                                if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
+                                else Icons.Rounded.Close,
                             contentDescription = stringResource(Res.string.go_back),
                         )
                     }

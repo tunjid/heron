@@ -47,7 +47,6 @@ import com.tunjid.heron.compose.MediaItem
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
 
@@ -95,7 +94,7 @@ private fun ImageUpload(
     photo: MediaItem.Photo,
     removeMediaItem: (MediaItem) -> Unit,
     onMediaItemUpdated: (MediaItem) -> Unit,
-    ) {
+) {
     Box(
         modifier = modifier,
     ) {
@@ -129,7 +128,7 @@ private fun ImageUpload(
 
         LaunchedEffect(state) {
             snapshotFlow { state.imageSize }
-                .collect{ size ->
+                .collect { size ->
                     onMediaItemUpdated(
                         photo.updateSize(size)
                     )

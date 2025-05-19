@@ -55,7 +55,6 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
 import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
@@ -121,7 +120,7 @@ internal fun GalleryScreen(
                                             }
                                         }
                                     ),
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                scaffoldState = paneScaffoldState,
                                 item = item,
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 postId = state.postId,
@@ -191,12 +190,12 @@ internal fun GalleryScreen(
 @Composable
 private fun GalleryImage(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    scaffoldState: PaneScaffoldState,
     item: GalleryItem.Photo,
     postId: Id,
     sharedElementPrefix: String,
 ) {
-    paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
+    scaffoldState.updatedMovableSharedElementOf(
         modifier = modifier,
         key = item.image.sharedElementKey(
             prefix = sharedElementPrefix,
@@ -224,7 +223,7 @@ private fun GalleryImage(
 @Composable
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<*>,
+    paneMovableElementSharedTransitionScope: PaneScaffoldState,
     item: GalleryItem.Video,
     postId: Id,
     sharedElementPrefix: String,
