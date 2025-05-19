@@ -53,9 +53,9 @@ import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.treenav.compose.PaneScope
-import com.tunjid.treenav.compose.threepane.PaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.rememberPaneMovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
@@ -64,18 +64,28 @@ import kotlin.math.abs
 class PaneScaffoldState internal constructor(
     density: Density,
     internal val appState: AppState,
-    paneMovableElementSharedTransitionScope: PaneMovableElementSharedTransitionScope<Route>,
-) : PaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+    paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
+) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
 
     internal var density by mutableStateOf(density)
 
-    internal val canShowBottomNavigation get() = !appState.isMediumScreenWidthOrWider
+    internal val canShowNavigationBar get() = !isMediumScreenWidthOrWider
 
-    internal val canShowNavRail
+    internal val canUseMovableNavigationBar
+        get() = canShowNavigationBar && when {
+            isActive && isPreviewingBack && paneState.pane == ThreePane.TransientPrimary -> true
+            isActive && !isPreviewingBack && paneState.pane == ThreePane.Primary -> true
+            else -> false
+        }
+
+    internal val canShowNavigationRail
         get() = appState.filteredPaneOrder.firstOrNull() == paneState.pane
-                && appState.isMediumScreenWidthOrWider
+                && isMediumScreenWidthOrWider
+
+    internal val canUseMovableNavigationRail
+        get() = isActive && canShowNavigationRail
 
     internal val canShowFab
         get() = when (paneState.pane) {
@@ -93,13 +103,16 @@ class PaneScaffoldState internal constructor(
     internal fun hasMatchedSize(): Boolean =
         abs(scaffoldCurrentSize.width - scaffoldTargetSize.width) <= 2
                 && abs(scaffoldCurrentSize.height - scaffoldTargetSize.height) <= 2
+
+    private val isPreviewingBack: Boolean
+        get() = paneState.adaptations.contains(ThreePane.PrimaryToTransient)
 }
 
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val density = LocalDensity.current
     val appState = LocalAppState.current
-    val paneMovableElementSharedTransitionScope = rememberPaneMovableElementSharedTransitionScope()
+    val paneMovableElementSharedTransitionScope = rememberThreePaneMovableElementSharedTransitionScope()
     return remember(appState) {
         PaneScaffoldState(
             appState = appState,
