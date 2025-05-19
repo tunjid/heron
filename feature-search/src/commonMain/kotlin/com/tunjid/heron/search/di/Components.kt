@@ -156,21 +156,10 @@ abstract class SearchComponent(
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
-                    )
+                    PaneNavigationRail()
                 },
                 content = {
                     SearchScreen(

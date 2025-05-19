@@ -28,6 +28,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -35,12 +37,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.scaffold.navigation.AppStack
+import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -120,6 +118,7 @@ internal fun AppState.PaneNavigationBar(
                 icon = {
                     BadgedBox(
                         badge = {
+                            if (item.hasBadge) Badge(Modifier.size(4.dp))
                         },
                         content = {
                             Icon(
@@ -153,6 +152,7 @@ internal fun AppState.PaneNavigationRail(
                 icon = {
                     BadgedBox(
                         badge = {
+                            if (item.hasBadge) Badge(Modifier.size(4.dp))
                         },
                         content = {
                             Icon(

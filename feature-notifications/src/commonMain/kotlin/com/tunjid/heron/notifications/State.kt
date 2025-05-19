@@ -42,7 +42,6 @@ data class State(
     ),
     val isRefreshing: Boolean = false,
     val lastRefreshed: Instant? = null,
-    val unreadNotificationCount: Long = 0,
     @Transient
     val signedInProfile: Profile? = null,
     @Transient

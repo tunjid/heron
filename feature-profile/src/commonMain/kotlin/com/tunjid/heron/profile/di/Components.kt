@@ -17,12 +17,10 @@
 package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.Badge
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,14 +40,13 @@ import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routeAndMatcher
 import com.tunjid.heron.scaffold.navigation.routeOf
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneFab
+import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -194,21 +191,10 @@ abstract class ProfileComponent(
                         modifier = Modifier.offset {
                             bottomNavigationNestedScrollConnection.offset.round()
                         },
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        badge = { stack ->
-                            if (stack == AppStack.Notifications && state.unreadNotificationCount != 0L) {
-                                Badge(Modifier.size(4.dp))
-                            }
-                        },
-                    )
+                    PaneNavigationRail()
                 },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

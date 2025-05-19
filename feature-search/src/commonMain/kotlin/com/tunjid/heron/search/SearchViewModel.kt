@@ -22,7 +22,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.AuthTokenRepository
-import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -79,7 +78,6 @@ class SearchViewModelCreator(
 class ActualSearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
-    notificationsRepository: NotificationsRepository,
     searchRepository: SearchRepository,
     writeQueue: WriteQueue,
     @Assisted
@@ -96,7 +94,6 @@ class ActualSearchViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-        unreadCountMutations(notificationsRepository),
         loadProfileMutations(authTokenRepository),
         trendsMutations(searchRepository),
     ),
@@ -121,14 +118,6 @@ class ActualSearchViewModel(
         }
     }
 )
-
-
-fun unreadCountMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    notificationsRepository.unreadCount.mapToMutation {
-        copy(unreadNotificationCount = it)
-    }
 
 private fun loadProfileMutations(
     authTokenRepository: AuthTokenRepository,
