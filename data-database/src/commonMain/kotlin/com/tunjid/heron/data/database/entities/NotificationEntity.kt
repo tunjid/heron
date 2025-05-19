@@ -157,6 +157,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         reasonSubject = entity.uri,
         isRead = entity.isRead,
     )
+
     Notification.Reason.Unverified -> Notification.Unverified(
         cid = entity.cid,
         uri = entity.uri,

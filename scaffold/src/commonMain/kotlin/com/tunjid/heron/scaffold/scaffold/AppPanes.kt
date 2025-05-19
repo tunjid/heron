@@ -199,15 +199,15 @@ internal class PaneAnchorState(
             val thumbWidth by animateDpAsState(
                 label = "App Pane Draggable thumb",
                 targetValue =
-                if (active) DraggableDividerSizeDp
-                else when (paneAnchorState.targetPaneAnchor) {
-                    PaneAnchor.Zero -> DraggableDividerSizeDp
-                    PaneAnchor.OneThirds,
-                    PaneAnchor.Half,
-                    PaneAnchor.TwoThirds,
-                    PaneAnchor.Full,
-                        -> 2.dp
-                }
+                    if (active) DraggableDividerSizeDp
+                    else when (paneAnchorState.targetPaneAnchor) {
+                        PaneAnchor.Zero -> DraggableDividerSizeDp
+                        PaneAnchor.OneThirds,
+                        PaneAnchor.Half,
+                        PaneAnchor.TwoThirds,
+                        PaneAnchor.Full,
+                            -> 2.dp
+                    }
             )
             Box(
                 modifier = Modifier

@@ -169,16 +169,16 @@ abstract class ProfileComponent(
                             else Res.string.mention
                         ),
                         icon =
-                        if (state.isSignedInProfile) Icons.Rounded.Edit
-                        else Icons.Rounded.AlternateEmail,
+                            if (state.isSignedInProfile) Icons.Rounded.Edit
+                            else Icons.Rounded.AlternateEmail,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
                                         type =
-                                        if (state.isSignedInProfile) Post.Create.Timeline
-                                        else Post.Create.Mention(state.profile),
+                                            if (state.isSignedInProfile) Post.Create.Timeline
+                                            else Post.Create.Mention(state.profile),
                                         sharedElementPrefix = null,
                                     )
                                 )

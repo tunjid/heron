@@ -135,7 +135,7 @@ abstract class FeedComponent(
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
                                 hasUpdates = state.timelineState?.hasUpdates == true,
-                                onPresentationSelected = {timeline, presentation ->
+                                onPresentationSelected = { timeline, presentation ->
                                     state.timelineStateHolder
                                         ?.accept
                                         ?.invoke(

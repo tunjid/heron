@@ -56,9 +56,9 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.presentationPadding
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.see_more_posts
 import kotlinx.datetime.Instant

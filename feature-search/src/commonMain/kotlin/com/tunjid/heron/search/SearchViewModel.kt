@@ -149,8 +149,8 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     is Action.Search.OnSearchQueryChanged -> copy(
                         currentQuery = action.query,
                         layout =
-                        if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                        else ScreenLayout.Trends,
+                            if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
+                            else ScreenLayout.Trends,
                     )
 
                     is Action.Search.OnSearchQueryConfirmed -> {

@@ -16,7 +16,6 @@
 
 
 import ext.libs
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun org.gradle.api.Project.configureUiModule(

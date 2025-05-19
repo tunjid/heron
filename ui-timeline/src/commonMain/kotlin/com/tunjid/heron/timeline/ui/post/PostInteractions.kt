@@ -67,6 +67,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
@@ -84,7 +85,6 @@ import heron.ui_timeline.generated.resources.repost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import com.tunjid.composables.ui.animate
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)

@@ -40,8 +40,8 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

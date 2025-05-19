@@ -61,8 +61,8 @@ import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.isPrimaryOrPreview
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

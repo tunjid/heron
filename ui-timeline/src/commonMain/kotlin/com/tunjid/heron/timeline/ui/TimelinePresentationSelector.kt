@@ -108,8 +108,8 @@ fun TimelinePresentationSelector(
                                             }
                                         ),
                                         tint =
-                                        if (presentation == selected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface
+                                            if (presentation == selected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurface
                                     )
                                 },
                             )

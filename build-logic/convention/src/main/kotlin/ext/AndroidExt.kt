@@ -17,7 +17,6 @@
 import com.android.build.api.dsl.CommonExtension
 import ext.ProjectJavaVersion
 import ext.configureKotlinJvm
-import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.dependencies
 

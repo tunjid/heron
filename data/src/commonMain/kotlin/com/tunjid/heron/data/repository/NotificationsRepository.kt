@@ -90,11 +90,11 @@ class OfflineNotificationsRepository @Inject constructor(
                 kotlinx.coroutines.delay(30_000)
             }
         }
-        .stateIn(
-            scope = appScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = 0,
-        )
+            .stateIn(
+                scope = appScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = 0,
+            )
 
     override val lastRefreshed: Flow<Instant?> = savedStateRepository.savedState
         .map { it.notifications?.lastRefreshed }

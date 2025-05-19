@@ -71,8 +71,8 @@ import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens

@@ -154,7 +154,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
         }
 
         is PostViewEmbedUnion.RecordView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> when(val mediaEmbed = embed.value.media) {
+        is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
             is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
                 ExternalEmbedEntity(
                     uri = Uri(mediaEmbed.value.external.uri.uri),
@@ -163,6 +163,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                     thumb = mediaEmbed.value.external.thumb?.uri?.let(::Uri),
                 )
             )
+
             is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
                 ImageEntity(
                     fullSize = Uri(it.fullsize.uri),
@@ -172,6 +173,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                     height = it.aspectRatio?.height,
                 )
             }
+
             is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
             is RecordWithMediaViewMediaUnion.VideoView -> listOf(
                 VideoEntity(
@@ -184,6 +186,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                 )
             )
         }
+
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
             VideoEntity(

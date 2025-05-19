@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

@@ -467,7 +467,9 @@ private class PostData(
     created: Instant,
 ) {
     var postActions by mutableStateOf(postActions)
-    var paneMovableElementSharedTransitionScope by mutableStateOf(paneMovableElementSharedTransitionScope)
+    var paneMovableElementSharedTransitionScope by mutableStateOf(
+        paneMovableElementSharedTransitionScope
+    )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)

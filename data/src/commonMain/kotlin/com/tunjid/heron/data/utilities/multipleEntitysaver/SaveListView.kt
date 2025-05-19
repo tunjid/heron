@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.graph.ListView
 import app.bsky.graph.ListViewBasic

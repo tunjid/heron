@@ -40,17 +40,18 @@ data class State(
 sealed class GalleryItem {
     data class Photo(
         val image: EmbeddedImage,
-    ): GalleryItem()
+    ) : GalleryItem()
 
     data class Video(
         val video: EmbeddedVideo,
     ) : GalleryItem()
 }
 
-val GalleryItem.key get() = when(this) {
-    is GalleryItem.Photo -> image.thumb.uri
-    is GalleryItem.Video -> video.playlist.uri
-}
+val GalleryItem.key
+    get() = when (this) {
+        is GalleryItem.Photo -> image.thumb.uri
+        is GalleryItem.Video -> video.playlist.uri
+    }
 
 sealed class Action(val key: String) {
 

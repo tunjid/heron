@@ -134,8 +134,8 @@ fun lastRefreshedMutations(
         copy(
             lastRefreshed = refreshedAt,
             isRefreshing =
-            if (isRefreshing) refreshedAt == null || refreshedAt < currentQuery.data.cursorAnchor
-            else isRefreshing
+                if (isRefreshing) refreshedAt == null || refreshedAt < currentQuery.data.cursorAnchor
+                else isRefreshing
         )
     }
 

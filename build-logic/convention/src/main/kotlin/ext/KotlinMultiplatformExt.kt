@@ -17,7 +17,6 @@
 import ext.configureKotlinJvm
 import ext.libs
 import org.gradle.api.Project
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.configureKotlinMultiplatform(

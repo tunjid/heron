@@ -29,8 +29,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.heron.ui.TimeDelta
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)

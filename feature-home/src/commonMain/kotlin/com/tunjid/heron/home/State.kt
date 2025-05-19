@@ -54,9 +54,9 @@ sealed class Action(val key: String) {
 
     data class SetCurrentTab(
         val sourceId: String,
-    ): Action(key = "SetCurrentTab")
+    ) : Action(key = "SetCurrentTab")
 
-    data object RefreshCurrentTab: Action(key = "RefreshCurrentTab")
+    data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

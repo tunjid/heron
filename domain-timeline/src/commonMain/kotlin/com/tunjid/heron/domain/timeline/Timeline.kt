@@ -266,10 +266,10 @@ private fun queryMutations(queries: MutableStateFlow<TimelineQuery>) =
         copy(
             currentQuery = newQuery,
             status =
-            if (currentQuery.hasDifferentAnchor(newQuery)) TimelineStatus.Refreshing(
-                cursorAnchor = newQuery.data.cursorAnchor,
-            )
-            else status
+                if (currentQuery.hasDifferentAnchor(newQuery)) TimelineStatus.Refreshing(
+                    cursorAnchor = newQuery.data.cursorAnchor,
+                )
+                else status
         )
     }
 
