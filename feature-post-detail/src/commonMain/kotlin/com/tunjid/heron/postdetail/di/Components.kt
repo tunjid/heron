@@ -40,8 +40,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -59,6 +58,10 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRouteQuery
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routeQuery
 import heron.feature_post_detail.generated.resources.Res
 import heron.feature_post_detail.generated.resources.reply
 import me.tatarka.inject.annotations.Component
@@ -78,14 +81,15 @@ private fun createRoute(
     )
 )
 
-internal val Route.post
-    get(): Post? = routeParams.queryParams["post"]?.firstOrNull()?.fromBase64EncodedUrl()
+internal val Route.post: Post? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl
+)
 
-internal val Route.postUri
-    get() = Uri(routeParams.queryParams.getValue("postUri").first())
+internal val Route.postUri by mappedRouteQuery(
+    mapper = ::Uri
+)
 
-internal val Route.sharedElementPrefix
-    get() = routeParams.queryParams.getValue("sharedElementPrefix").first()
+internal val Route.sharedElementPrefix by routeQuery()
 
 @KmpComponentCreate
 expect fun PostDetailNavigationComponent.Companion.create(): PostDetailNavigationComponent
@@ -103,7 +107,7 @@ abstract class PostDetailNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

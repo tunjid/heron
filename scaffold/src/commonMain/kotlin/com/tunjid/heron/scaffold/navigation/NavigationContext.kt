@@ -21,6 +21,7 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.current
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.routeOf
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**

@@ -185,8 +185,14 @@ private fun Modifier.fillMaxConstraints() =
     layout { measurable, constraints ->
         val placeable = measurable.measure(
             constraints.copy(
-                minWidth = constraints.maxWidth,
-                maxHeight = constraints.maxHeight
+                minWidth = when {
+                    constraints.hasBoundedWidth -> constraints.maxWidth
+                    else -> constraints.minWidth
+                },
+                minHeight = when {
+                    constraints.hasBoundedHeight -> constraints.maxHeight
+                    else -> constraints.minHeight
+                }
             )
         )
         layout(

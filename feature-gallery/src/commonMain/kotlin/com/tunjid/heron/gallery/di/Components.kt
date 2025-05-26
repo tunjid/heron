@@ -24,7 +24,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.di.DataComponent
@@ -32,8 +31,7 @@ import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.GalleryViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -41,6 +39,11 @@ import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.mappedRouteQuery
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routeQuery
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
@@ -54,20 +57,22 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.post
-    get(): Post? = routeParams.queryParams["post"]?.firstOrNull()?.fromBase64EncodedUrl()
+internal val Route.media: Embed.Media? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl
+)
 
-internal val Route.media
-    get(): Embed.Media? = routeParams.queryParams["media"]?.firstOrNull()?.fromBase64EncodedUrl()
+internal val Route.postId by mappedRoutePath(
+    mapper = ::Id,
+)
 
-internal val Route.postId
-    get() = Id(routeParams.pathArgs.getValue("postId"))
+internal val Route.startIndex by mappedRouteQuery(
+    default = 0,
+    mapper = String::toInt,
+)
 
-internal val Route.startIndex
-    get() = routeParams.queryParams["startIndex"]?.firstOrNull()?.toIntOrNull() ?: 0
-
-internal val Route.sharedElementPrefix
-    get() = routeParams.queryParams["sharedElementPrefix"]?.firstOrNull() ?: ""
+internal val Route.sharedElementPrefix by routeQuery(
+    default = ""
+)
 
 @KmpComponentCreate
 expect fun GalleryNavigationComponent.Companion.create(): GalleryNavigationComponent
@@ -85,7 +90,7 @@ abstract class GalleryNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

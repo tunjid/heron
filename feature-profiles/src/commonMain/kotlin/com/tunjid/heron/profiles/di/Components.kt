@@ -44,8 +44,7 @@ import com.tunjid.heron.profiles.ProfilesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -57,6 +56,8 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.RouteTrie
+import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.routeOf
 import heron.feature_profiles.generated.resources.Res
 import heron.feature_profiles.generated.resources.back
 import me.tatarka.inject.annotations.Component
@@ -80,11 +81,13 @@ private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
 internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
-private val Route.profileId
-    get() = Id(routeParams.pathArgs.getValue("profileId"))
+private val Route.profileId by mappedRoutePath(
+    mapper = ::Id
+)
 
-private val Route.postId
-    get() = Id(routeParams.pathArgs.getValue("postId"))
+private val Route.postId by mappedRoutePath(
+    mapper = ::Id
+)
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -111,7 +114,7 @@ abstract class ProfilesNavigationComponent {
     @IntoMap
     @Provides
     fun postLikesRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = PostLikesPattern,
             routeMapper = ::createRoute,
         )
@@ -119,7 +122,7 @@ abstract class ProfilesNavigationComponent {
     @IntoMap
     @Provides
     fun postRepostsRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = PostRepostsPattern,
             routeMapper = ::createRoute,
         )
@@ -127,7 +130,7 @@ abstract class ProfilesNavigationComponent {
     @IntoMap
     @Provides
     fun profileFollowersRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = ProfileFollowersPattern,
             routeMapper = ::createRoute,
         )
@@ -135,7 +138,7 @@ abstract class ProfilesNavigationComponent {
     @IntoMap
     @Provides
     fun profileFollowingRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = ProfileFollowingPattern,
             routeMapper = ::createRoute,
         )

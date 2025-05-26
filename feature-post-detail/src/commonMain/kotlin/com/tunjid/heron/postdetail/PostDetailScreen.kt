@@ -119,7 +119,7 @@ internal fun PostDetailScreen(
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                         profile = profile,
                                         avatarSharedElementKey = post.avatarSharedElementKey(
                                             prefix = state.sharedElementPrefix,
