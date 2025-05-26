@@ -47,8 +47,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -58,6 +57,9 @@ import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
+import com.tunjid.treenav.strings.routeOf
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
@@ -71,11 +73,11 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.creationType
-    get(): Post.Create? = routeParams.queryParams["type"]?.firstOrNull()?.fromBase64EncodedUrl()
+internal val Route.creationType: Post.Create? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl
+)
 
-internal val Route.sharedElementPrefix
-    get() = routeParams.queryParams["sharedElementPrefix"]?.firstOrNull()
+internal val Route.sharedElementPrefix by optionalRouteQuery()
 
 @KmpComponentCreate
 expect fun ComposeNavigationComponent.Companion.create(): ComposeNavigationComponent
@@ -93,7 +95,7 @@ abstract class ComposeNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

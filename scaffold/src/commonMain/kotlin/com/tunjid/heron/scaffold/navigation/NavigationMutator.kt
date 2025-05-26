@@ -47,6 +47,7 @@ import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeString
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.auth
@@ -137,7 +138,7 @@ interface NavigationAction {
                     routeString(
                         path = "/compose",
                         queryParams = mapOf(
-                            "type" to listOf(type.toUrlEncodedBase64()),
+                            "creationType" to listOf(type.toUrlEncodedBase64()),
                             "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         )
                     ).toRoute

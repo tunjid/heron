@@ -34,8 +34,8 @@ import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.treenav.strings.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -85,7 +85,7 @@ abstract class FeedNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

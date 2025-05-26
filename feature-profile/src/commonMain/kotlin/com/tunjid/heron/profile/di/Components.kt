@@ -43,8 +43,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -62,6 +61,10 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
+import com.tunjid.treenav.strings.routeOf
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.mention
 import heron.feature_profile.generated.resources.post
@@ -82,14 +85,15 @@ private fun createRoute(
     )
 )
 
-internal val Route.profileId
-    get() = Id(routeParams.pathArgs.getValue("profileId"))
+internal val Route.profileId by mappedRoutePath(
+    mapper = ::Id
+)
 
-internal val Route.avatarSharedElementKey
-    get() = routeParams.queryParams["avatarSharedElementKey"]?.firstOrNull()
+internal val Route.avatarSharedElementKey by optionalRouteQuery()
 
-internal val Route.profile
-    get():Profile? = routeParams.queryParams["profile"]?.firstOrNull()?.fromBase64EncodedUrl()
+internal val Route.profile: Profile? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl,
+)
 
 @KmpComponentCreate
 expect fun ProfileNavigationComponent.Companion.create(): ProfileNavigationComponent
@@ -107,7 +111,7 @@ abstract class ProfileNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

@@ -31,8 +31,8 @@ import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
 import com.tunjid.heron.messages.MessagesViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.treenav.strings.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -71,7 +71,7 @@ abstract class MessagesNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )

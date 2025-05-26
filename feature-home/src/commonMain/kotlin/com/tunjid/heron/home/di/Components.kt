@@ -43,8 +43,8 @@ import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.routeAndMatcher
-import com.tunjid.heron.scaffold.navigation.routeOf
+import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.treenav.strings.routeOf
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -91,7 +91,7 @@ abstract class HomeNavigationComponent {
     @IntoMap
     @Provides
     fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routeAndMatcher(
+        routePatternAndMatcher(
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )
