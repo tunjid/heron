@@ -54,7 +54,6 @@ import com.tunjid.treenav.pop
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
-import com.tunjid.treenav.strings.RouteTrie
 import com.tunjid.treenav.strings.toRouteTrie
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +130,7 @@ class AppState @Inject constructor(
         paneRenderOrder.filter { displayScope?.destinationIn(it) != null }
     }
 
-    private val entryTrie =  entryMap
+    private val entryTrie = entryMap
         .mapKeys { (template) -> PathPattern(template) }
         .toRouteTrie()
 
