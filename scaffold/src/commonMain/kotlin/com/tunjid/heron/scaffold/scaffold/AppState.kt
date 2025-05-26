@@ -55,6 +55,7 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteTrie
+import com.tunjid.treenav.strings.toRouteTrie
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,7 +63,7 @@ import me.tatarka.inject.annotations.Inject
 
 @Stable
 class AppState @Inject constructor(
-    private val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>,
+    entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
     internal val videoPlayerController: VideoPlayerController,
@@ -130,11 +131,9 @@ class AppState @Inject constructor(
         paneRenderOrder.filter { displayScope?.destinationIn(it) != null }
     }
 
-    private val configurationTrie = RouteTrie<PaneEntry<ThreePane, Route>>().apply {
-        routeConfigurationMap
-            .mapKeys { (template) -> PathPattern(template) }
-            .forEach { set(it.key, it.value) }
-    }
+    private val entryTrie =  entryMap
+        .mapKeys { (template) -> PathPattern(template) }
+        .toRouteTrie()
 
     @Composable
     internal fun rememberMultiPaneDisplayState(
@@ -148,7 +147,7 @@ class AppState @Inject constructor(
                 backStackTransform = MultiStackNav::multiPaneDisplayBackstack,
                 destinationTransform = MultiStackNav::requireCurrent,
                 entryProvider = { node ->
-                    configurationTrie[node] ?: threePaneEntry(
+                    entryTrie[node] ?: threePaneEntry(
                         render = { },
                     )
                 },

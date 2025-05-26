@@ -78,7 +78,7 @@ abstract class AppComponent(
     @Component val splashComponent: SplashComponent,
 ) {
 
-    abstract val routeConfigurationMap: Map<String, PaneEntry<ThreePane, Route>>
+    abstract val entryMap: Map<String, PaneEntry<ThreePane, Route>>
 
     @Provides
     fun appState(
@@ -87,7 +87,7 @@ abstract class AppComponent(
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
     ): AppState = AppState(
-        routeConfigurationMap = routeConfigurationMap,
+        entryMap = entryMap,
         notificationsRepository = notificationsRepository,
         navigationStateHolder = navigationStateHolder,
         videoPlayerController = videoPlayerController,
