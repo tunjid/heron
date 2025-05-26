@@ -25,9 +25,8 @@ import kotlinx.serialization.Serializable
 /**
  * Basic route definition
  */
-@Serializable
 private class BasicRoute(
-    override val routeParams: SerializedRouteParams,
+    override val routeParams: RouteParams,
     override val children: List<Node> = emptyList(),
 ) : Route {
 

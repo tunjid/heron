@@ -68,13 +68,14 @@ abstract class ScaffoldComponent(
         module.videoPlayerController
 
     @Provides
-    fun navActions(): (NavigationMutation) -> Unit = navStateHolder.accept
+    fun navActions(
+        navStateHolder: NavigationStateHolder,
+    ): (NavigationMutation) -> Unit = navStateHolder.accept
 
     val PersistedNavigationStateHolder.bind: NavigationStateHolder
         @ScaffoldScope
         @Provides get() = this
 
-    abstract val navStateHolder: NavigationStateHolder
 
     companion object
 }
