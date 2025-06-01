@@ -16,17 +16,17 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
-import app.bsky.unspecced.GetTrendingTopicsQueryParams
-import app.bsky.unspecced.TrendingTopic
+import app.bsky.unspecced.GetTrendsQueryParams
+import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
@@ -94,7 +94,7 @@ interface SearchRepository {
         cursor: Cursor,
     ): Flow<List<SearchResult.Profile>>
 
-    fun trends(): Flow<Trends>
+    fun trends(): Flow<List<Trend>>
 }
 
 class OfflineSearchRepository @Inject constructor(
@@ -241,19 +241,16 @@ class OfflineSearchRepository @Inject constructor(
         }
     }
 
-    override fun trends(): Flow<Trends> = flow {
+    override fun trends(): Flow<List<Trend>> = flow {
+
         runCatchingWithNetworkRetry {
-            networkService.api.getTrendingTopicsUnspecced(
-                GetTrendingTopicsQueryParams()
+            networkService.api.getTrendsUnspecced(
+                GetTrendsQueryParams()
             )
         }
             .getOrNull()
-            ?.let {
-                Trends(
-                    topics = it.topics.map(TrendingTopic::trend),
-                    suggested = it.suggested.map(TrendingTopic::trend)
-                )
-            }
+            ?.trends
+            ?.map(TrendView::trend)
             ?.let {
                 emit(it)
             }
@@ -261,6 +258,12 @@ class OfflineSearchRepository @Inject constructor(
 }
 
 
-private fun TrendingTopic.trend() = Trend(
-    topic, displayName, description, link
+private fun TrendView.trend() = Trend(
+    topic = topic,
+    displayName = displayName,
+    link = link,
+    startedAt = startedAt,
+    postCount = postCount,
+    category = category,
+    actors = actors.map(ProfileViewBasic::profile),
 )

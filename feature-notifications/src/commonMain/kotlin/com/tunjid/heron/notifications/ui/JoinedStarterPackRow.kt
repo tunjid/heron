@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.ui.TimeDelta
+import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_notifications.generated.resources.Res
 import heron.feature_notifications.generated.resources.joined_from_your_started_pack_description

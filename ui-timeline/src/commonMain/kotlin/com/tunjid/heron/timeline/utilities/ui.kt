@@ -16,9 +16,23 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import kotlin.time.Duration
+
 //fun Handle.color(): Color {
 //  return Color(0xFF000000 or (hashCode().toLong() and 0x00FFFFFF))
 //}
+
+fun Duration.roundComponent() =
+    toComponents { days, hours, minutes, seconds, _ ->
+        when {
+            days > 0 -> "${days}d"
+            hours > 0 -> "${hours}h"
+            minutes > 0 -> "${minutes}m"
+            seconds > 0 -> "${seconds}s"
+            seconds < 0 || minutes < 0 || hours < 0 || days < 0 -> "The Future"
+            else -> "Now"
+        }
+    }
 
 fun format(value: Long): String {
     return when (value) {

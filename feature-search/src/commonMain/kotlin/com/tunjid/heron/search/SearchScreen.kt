@@ -19,8 +19,6 @@ package com.tunjid.heron.search
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,11 +33,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ShowChart
@@ -47,7 +45,6 @@ import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,11 +60,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
+import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -218,40 +215,42 @@ internal fun SearchScreen(
 @Composable
 private fun Trends(
     modifier: Modifier = Modifier,
-    trends: Trends,
+    trends: List<Trend>,
     onTrendClicked: (Trend) -> Unit,
 ) {
+    val now = remember { Clock.System.now() }
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(
-            horizontal = 24.dp,
-        )
     ) {
         item {
             TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
                 description = stringResource(Res.string.trending_description),
             )
         }
-        item {
-            TrendChips(
-                trendList = trends.topics,
-                onTrendClicked = onTrendClicked,
-            )
-        }
+        itemsIndexed(
+            items = trends.take(5),
+            key = { _, trend -> trend.link },
+            itemContent = { index, trend ->
+                Trend(
+                    index = index,
+                    now = now,
+                    trend = trend,
+                    onTrendClicked = onTrendClicked,
+                )
+            }
+        )
         item {
             TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
                 icon = Icons.Rounded.Tag,
                 title = stringResource(Res.string.recommended_title),
                 description = stringResource(Res.string.recommended_description),
-            )
-        }
-        item {
-            TrendChips(
-                trendList = trends.suggested,
-                onTrendClicked = onTrendClicked,
             )
         }
         item {
@@ -267,12 +266,13 @@ private fun Trends(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TrendTitle(
+    modifier: Modifier = Modifier,
     icon: ImageVector,
     title: String,
     description: String?,
 ) {
     Column(
-        modifier = Modifier.padding(
+        modifier = modifier.padding(
             vertical = 4.dp,
         )
     ) {
@@ -300,26 +300,6 @@ private fun TrendTitle(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun TrendChips(
-    trendList: List<Trend>,
-    onTrendClicked: (Trend) -> Unit,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        trendList.forEach { trend ->
-            SuggestionChip(
-                shape = CircleShape,
-                onClick = { onTrendClicked(trend) },
-                label = {
-                    Text(text = trend.topic)
-                },
-            )
-        }
-    }
-}
 
 @Composable
 private fun AutoCompleteProfileSearchResults(

@@ -24,4 +24,6 @@
     <string name="recommended_title">Recommended</string>
     <string name="recommended_description">Feeds we think you might like.</string>
     <string name="clear_search">Clear search</string>
+    <string name="post_count">%1$s posts</string>
+    <string name="trend_started">%1$s ago</string>
 </resources>

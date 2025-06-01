@@ -19,7 +19,7 @@ package com.tunjid.heron.search
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
-import com.tunjid.heron.data.core.models.Trends
+import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.mutator.ActionStateMutator
@@ -58,7 +58,7 @@ data class State(
     val currentQuery: String = "",
     val layout: ScreenLayout = ScreenLayout.Trends,
     val signedInProfile: Profile? = null,
-    val trends: Trends = Trends(),
+    val trends: List<Trend> = emptyList(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
