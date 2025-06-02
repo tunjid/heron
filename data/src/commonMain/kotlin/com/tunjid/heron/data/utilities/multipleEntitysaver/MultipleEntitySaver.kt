@@ -22,6 +22,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
@@ -56,6 +57,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val notificationsDao: NotificationsDao,
+    private val starterPackDao: StarterPackDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -67,6 +69,7 @@ class MultipleEntitySaverProvider @Inject constructor(
         profileDao = profileDao,
         timelineDao = timelineDao,
         notificationsDao = notificationsDao,
+        starterPackDao = starterPackDao,
         transactionWriter = transactionWriter,
     ).apply {
         block()
@@ -84,6 +87,7 @@ internal class MultipleEntitySaver(
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val notificationsDao: NotificationsDao,
+    private val starterPackDao: StarterPackDao,
     private val transactionWriter: TransactionWriter,
 ) {
     private val timelineItemEntities = mutableListOf<TimelineItemEntity>()
@@ -184,7 +188,7 @@ internal class MultipleEntitySaver(
         listDao.insertOrPartiallyUpdateLists(partialListEntities)
 
         listDao.upsertListItems(listItemEntities)
-        listDao.upsertStarterPacks(starterPackEntities)
+        starterPackDao.upsertStarterPacks(starterPackEntities)
 
         timelineDao.upsertFeedGenerators(feedGeneratorEntities)
 

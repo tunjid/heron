@@ -91,10 +91,4 @@ interface ListDao {
     suspend fun upsertListItems(
         entities: List<ListMemberEntity>,
     )
-
-    @Upsert
-    suspend fun upsertStarterPacks(
-        entities: List<StarterPackEntity>,
-    )
-
 }

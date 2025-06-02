@@ -20,6 +20,7 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetTrendsQueryParams
 import app.bsky.unspecced.TrendView
@@ -27,10 +28,14 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
+import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
@@ -106,6 +111,8 @@ interface SearchRepository {
         category: String? = null
     ): Flow<List<ProfileWithViewerState>>
 
+    fun suggestedStarterPacks(
+    ): Flow<List<StarterPack>>
 }
 
 class OfflineSearchRepository @Inject constructor(
@@ -113,6 +120,7 @@ class OfflineSearchRepository @Inject constructor(
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
     private val profileDao: ProfileDao,
+    private val starterPackDao: StarterPackDao,
 ) : SearchRepository {
 
     override fun postSearch(
@@ -315,8 +323,31 @@ class OfflineSearchRepository @Inject constructor(
         )
     }
 
+    override fun suggestedStarterPacks(): Flow<List<StarterPack>> = flow {
+        runCatchingWithNetworkRetry {
+            networkService.api.getSuggestedStarterPacksUnspecced(
+                GetSuggestedStarterPacksQueryParams()
+            )
+        }
+            .getOrNull()
+            ?.starterPacks
+            ?.let { starterPackViews ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    starterPackViews.forEach { starterPack ->
+                        add(starterPack = starterPack)
+                    }
+                }
+                emitAll(
+                    starterPackDao.starterPacks(
+                        starterPackViews.map { it.cid.cid.let(::Id) }
+                    )
+                        .map { populatedStarterPackEntities ->
+                            populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                        }
+                )
+            }
+    }
 }
-
 
 private fun TrendView.trend() = Trend(
     topic = topic,

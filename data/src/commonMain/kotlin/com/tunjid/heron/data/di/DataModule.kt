@@ -126,6 +126,12 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
+    fun provideStarterPackDao(
+        database: AppDatabase,
+    ) = database.starterPackDao()
+
+    @DataScope
+    @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
