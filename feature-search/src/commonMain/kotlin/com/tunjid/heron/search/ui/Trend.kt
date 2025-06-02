@@ -27,7 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +48,7 @@ import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature_search.generated.resources.Res
+import heron.feature_search.generated.resources.hot
 import heron.feature_search.generated.resources.post_count
 import heron.feature_search.generated.resources.trend_started
 import kotlinx.datetime.Instant
@@ -83,7 +87,7 @@ internal fun Trend(
                         .width(8.dp)
                 )
                 TrendAvatars(
-                    trend
+                    trend = trend
                 )
                 Text(
                     text = trendDetails(trend),
@@ -99,12 +103,29 @@ internal fun Trend(
             selected = false,
             shape = CircleShape,
             onClick = { onTrendClicked(trend) },
+            leadingIcon = {
+                when (trend.status) {
+                    Trend.Status.Hot -> Icon(
+                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.Outlined.LocalFireDepartment,
+                        contentDescription = "",
+                    )
+
+                    null -> Unit
+                }
+            },
             label = {
                 Text(
-                    text = stringResource(
-                        Res.string.trend_started,
-                        remember(now, trend.startedAt) { now - trend.startedAt }.roundComponent(),
-                    ),
+                    text = when (trend.status) {
+                        Trend.Status.Hot -> stringResource(Res.string.hot)
+                        null -> stringResource(
+                            Res.string.trend_started,
+                            remember(
+                                now,
+                                trend.startedAt
+                            ) { now - trend.startedAt }.roundComponent(),
+                        )
+                    },
                     style = MaterialTheme.typography.bodySmall,
                 )
             },

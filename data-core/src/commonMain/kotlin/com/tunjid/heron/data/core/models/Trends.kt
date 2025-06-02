@@ -22,11 +22,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Trend(
     val topic: String,
+    val status: Status?,
     val displayName: String?,
     val link: String,
     val startedAt: Instant,
     val postCount: Long,
     val category: String? = null,
     val actors: List<Profile>,
-)
+) {
+    enum class Status {
+        Hot
+    }
+}
 
