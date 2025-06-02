@@ -42,6 +42,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.JoinFull
+import androidx.compose.material.icons.rounded.JoinInner
 import androidx.compose.material.icons.rounded.WavingHand
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -342,7 +344,7 @@ private fun SuggestedContent(
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 24.dp),
-                icon = Icons.Rounded.WavingHand,
+                icon = Icons.Rounded.JoinFull,
                 title = stringResource(Res.string.starter_packs),
             )
         }
