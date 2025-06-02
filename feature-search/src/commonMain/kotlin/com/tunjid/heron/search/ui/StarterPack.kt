@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.search.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -46,6 +48,8 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
@@ -55,11 +59,14 @@ data class StarterPackWithMembers(
     val members: List<ListMember>,
 )
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StarterPackWithMembers(
     modifier: Modifier = Modifier,
-    starterPackWithMembers: StarterPackWithMembers
-) {
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    starterPackWithMembers: StarterPackWithMembers,
+    onListMemberClicked: (ListMember) -> Unit,
+) = with(movableElementSharedTransitionScope) {
     OutlinedCard(
         modifier = modifier,
         content = {
@@ -81,16 +88,23 @@ fun StarterPackWithMembers(
                 }
                 else starterPackWithMembers.members.take(count)
                     .forEachIndexed { index, listMember ->
-                        AsyncImage(
+                        updatedMovableSharedElementOf(
                             modifier = Modifier
                                 .zIndex((MaxAvatars - index).toFloat())
                                 .fillMaxWidth()
-                                .aspectRatio(1f),
-                            args = ImageArgs(
-                                url = listMember.subject.avatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                shape = RoundedPolygonShape.Circle,
-                            )
+                                .aspectRatio(1f)
+                                .clickable { onListMemberClicked(listMember) },
+                            key = listMember.avatarSharedElementKey(),
+                            state = remember(listMember.subject.avatar) {
+                                ImageArgs(
+                                    url = listMember.subject.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                            sharedElement = { state, modifier ->
+                                AsyncImage(state, modifier)
+                            }
                         )
                     }
                 starterPackWithMembers.starterPack.list?.listItemCount?.let { joined ->
@@ -179,6 +193,9 @@ private fun OverlappingAvatarRow(
         }
     }
 }
+
+internal fun ListMember.avatarSharedElementKey(): String =
+    "suggested-list-member-${subject.did.id}"
 
 private fun profilesLeftInStarterPack(itemsLeft: Long) = "+${format(itemsLeft)}"
 

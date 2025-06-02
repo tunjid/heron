@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
@@ -164,6 +165,19 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onListMemberClicked = remember {
+            { listMember: ListMember ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            profile = listMember.subject,
+                            avatarSharedElementKey = listMember.avatarSharedElementKey()
+                        )
+                    )
+                )
+            }
+        }
         val onPostSearchResultClicked = remember {
             { result: SearchResult.Post ->
                 actions(
@@ -194,6 +208,7 @@ internal fun SearchScreen(
                     starterPacksWithMembers = state.starterPacksWithMembers,
                     onProfileClicked = onProfileClicked,
                     onViewerStateClicked = onViewerStateClicked,
+                    onListMemberClicked = onListMemberClicked,
                     onTrendClicked = { trend ->
                         actions(
                             Action.Navigate.DelegateTo(
@@ -272,6 +287,7 @@ private fun SuggestedContent(
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
+    onListMemberClicked: (ListMember) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
@@ -338,7 +354,9 @@ private fun SuggestedContent(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .padding(horizontal = 24.dp),
+                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     starterPackWithMembers = starterPackWithMember,
+                    onListMemberClicked = onListMemberClicked,
                 )
             }
         )
