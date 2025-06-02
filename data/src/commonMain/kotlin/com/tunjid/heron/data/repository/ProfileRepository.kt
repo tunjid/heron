@@ -43,6 +43,7 @@ import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
@@ -130,7 +131,7 @@ class OfflineProfileRepository @Inject constructor(
         combine(
             listDao.listMembers(
                 listUri = query.listUri.uri,
-                offset = query.data.page * query.data.limit,
+                offset = query.data.offset,
                 limit = query.data.limit,
             )
                 .map {

@@ -64,6 +64,7 @@ import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.with
@@ -147,7 +148,7 @@ class OfflinePostRepository @Inject constructor(
             postDao.likedBy(
                 postId = query.postId.id,
                 viewingProfileId = savedStateRepository.signedInProfileId?.id,
-                offset = query.data.page * query.data.limit,
+                offset = query.data.offset,
                 limit = query.data.limit,
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),
@@ -188,7 +189,7 @@ class OfflinePostRepository @Inject constructor(
             postDao.repostedBy(
                 postId = query.postId.id,
                 viewingProfileId = savedStateRepository.signedInProfileId?.id,
-                offset = query.data.page * query.data.limit,
+                offset = query.data.offset,
                 limit = query.data.limit,
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),

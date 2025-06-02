@@ -59,6 +59,7 @@ import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.lookupUri
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
@@ -727,7 +728,7 @@ class OfflineTimelineRepository(
         timelineDao.feedItems(
             sourceId = query.timeline.sourceId,
             before = query.data.cursorAnchor,
-            offset = query.data.page * query.data.limit,
+            offset = query.data.offset,
             limit = query.data.limit,
         )
             .flatMapLatest { itemEntities ->

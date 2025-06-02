@@ -60,6 +60,8 @@ interface CursorQuery {
     )
 }
 
+val CursorQuery.Data.offset get() = page * limit
+
 fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
     data.cursorAnchor != newQuery.data.cursorAnchor
 
