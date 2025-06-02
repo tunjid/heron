@@ -54,6 +54,7 @@ fun ProfileSearchResult(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     result: SearchResult.Profile,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (SearchResult.Profile) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = Modifier
@@ -93,7 +94,7 @@ fun ProfileSearchResult(
             ProfileViewerState(
                 viewerState = result.profileWithViewerState.viewerState,
                 isSignedInProfile = false,
-                onClick = {}
+                onClick = { onViewerStateClicked(result) }
             )
         }
     )

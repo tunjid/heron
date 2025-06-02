@@ -121,20 +121,21 @@ internal fun SearchScreen(
                 )
             }
         }
-        val onViewerStateClicked: (ProfileWithViewerState) -> Unit = remember(state.signedInProfile?.did) {
-            { profileWithViewerState ->
-                state.signedInProfile?.did?.let {
-                    actions(
-                        Action.ToggleViewerState(
-                            signedInProfileId = it,
-                            viewedProfileId = profileWithViewerState.profile.did,
-                            following = profileWithViewerState.viewerState?.following,
-                            followedBy = profileWithViewerState.viewerState?.followedBy,
+        val onViewerStateClicked: (ProfileWithViewerState) -> Unit =
+            remember(state.signedInProfile?.did) {
+                { profileWithViewerState ->
+                    state.signedInProfile?.did?.let {
+                        actions(
+                            Action.ToggleViewerState(
+                                signedInProfileId = it,
+                                viewedProfileId = profileWithViewerState.profile.did,
+                                following = profileWithViewerState.viewerState?.following,
+                                followedBy = profileWithViewerState.viewerState?.followedBy,
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
         val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
             { profileSearchResult ->
                 actions(
@@ -212,6 +213,7 @@ internal fun SearchScreen(
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     results = state.autoCompletedProfiles,
                     onProfileClicked = onProfileSearchResultClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                 )
 
                 ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
@@ -222,6 +224,7 @@ internal fun SearchScreen(
                     state = state,
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     onProfileClicked = onProfileSearchResultClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
@@ -388,6 +391,7 @@ private fun AutoCompleteProfileSearchResults(
     modifier: Modifier = Modifier,
     results: List<SearchResult.Profile>,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -403,7 +407,8 @@ private fun AutoCompleteProfileSearchResults(
                 ProfileSearchResult(
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     result = result,
-                    onProfileClicked = onProfileClicked
+                    onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
                 )
             }
         )
@@ -417,6 +422,7 @@ private fun TabbedSearchResults(
     state: State,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -468,6 +474,7 @@ private fun TabbedSearchResults(
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
                 )
             }
         )
@@ -480,6 +487,7 @@ private fun SearchResults(
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -534,7 +542,8 @@ private fun SearchResults(
                         ProfileSearchResult(
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             result = result,
-                            onProfileClicked = onProfileClicked
+                            onProfileClicked = onProfileClicked,
+                            onViewerStateClicked = onViewerStateClicked,
                         )
                     }
                 )
