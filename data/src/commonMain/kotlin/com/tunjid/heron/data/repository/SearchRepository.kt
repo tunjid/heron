@@ -265,6 +265,7 @@ class OfflineSearchRepository @Inject constructor(
                     profileId = signedInProfileId.id,
                     otherProfileIds = profileViews.mapTo(mutableSetOf()) { it.did.did.let(::Id) }
                 )
+                    .distinctUntilChanged()
                     .map { viewerStates ->
                         val profileIdsToViewerStates = viewerStates.associateBy(
                             ProfileViewerStateEntity::otherProfileId
@@ -335,6 +336,7 @@ class OfflineSearchRepository @Inject constructor(
                     profileId = signedInProfileId.id,
                     otherProfileIds = profileViews.mapTo(mutableSetOf()) { Id(it.did.did) }
                 )
+                    .distinctUntilChanged()
                     .map { profileViewerStates ->
                         val profileIdsToProfileViewerStateEntity = profileViewerStates.associateBy(
                             ProfileViewerStateEntity::profileId
@@ -352,29 +354,30 @@ class OfflineSearchRepository @Inject constructor(
     }
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> = flow {
-        runCatchingWithNetworkRetry {
+        val starterPackViews = runCatchingWithNetworkRetry {
             networkService.api.getSuggestedStarterPacksUnspecced(
                 GetSuggestedStarterPacksQueryParams()
             )
         }
             .getOrNull()
             ?.starterPacks
-            ?.let { starterPackViews ->
-                multipleEntitySaverProvider.saveInTransaction {
-                    starterPackViews.forEach { starterPack ->
-                        add(starterPack = starterPack)
-                    }
-                }
-                emitAll(
-                    starterPackDao.starterPacks(
-                        starterPackViews.map { it.cid.cid.let(::Id) }
-                    )
-                        .map { populatedStarterPackEntities ->
-                            populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
-                        }
-                        .distinctUntilChanged()
-                )
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            starterPackViews.forEach { starterPack ->
+                add(starterPack = starterPack)
             }
+        }
+
+        emitAll(
+            starterPackDao.starterPacks(
+                starterPackViews.map { it.cid.cid.let(::Id) }
+            )
+                .map { populatedStarterPackEntities ->
+                    populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        )
     }
 }
 
