@@ -168,7 +168,7 @@ internal fun SearchScreen(
             targetState = state.layout
         ) { targetLayout ->
             when (targetLayout) {
-                ScreenLayout.Trends -> Trends(
+                ScreenLayout.Suggested -> SuggestedContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
@@ -245,7 +245,7 @@ internal fun SearchScreen(
 }
 
 @Composable
-private fun Trends(
+private fun SuggestedContent(
     modifier: Modifier = Modifier,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     trends: List<Trend>,

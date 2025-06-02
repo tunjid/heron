@@ -32,7 +32,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 enum class ScreenLayout {
-    Trends,
+    Suggested,
     AutoCompleteProfiles,
     GeneralSearchResults
 }
@@ -58,7 +58,7 @@ sealed class SearchState {
 @Serializable
 data class State(
     val currentQuery: String = "",
-    val layout: ScreenLayout = ScreenLayout.Trends,
+    val layout: ScreenLayout = ScreenLayout.Suggested,
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,

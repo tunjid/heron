@@ -224,7 +224,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                         currentQuery = action.query,
                         layout =
                             if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                            else ScreenLayout.Trends,
+                            else ScreenLayout.Suggested,
                     )
 
                     is Action.Search.OnSearchQueryConfirmed -> {
