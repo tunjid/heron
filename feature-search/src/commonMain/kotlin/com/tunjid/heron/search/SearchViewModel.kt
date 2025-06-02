@@ -20,6 +20,7 @@ package com.tunjid.heron.search
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -122,6 +123,10 @@ class ActualSearchViewModel(
                 )
 
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
+
+                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                     writeQueue = writeQueue,
                 )
 
@@ -276,6 +281,30 @@ private fun Flow<Action.Search>.searchQueryMutations(
             }
     )
 }
+
+private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.Connection(
+                when (val following = action.following) {
+                    null -> Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
+
+                    else -> Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+                }
+            )
+        )
+    }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

@@ -121,6 +121,20 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onViewerStateClicked: (ProfileWithViewerState) -> Unit = remember(state.signedInProfile?.did) {
+            { profileWithViewerState ->
+                state.signedInProfile?.did?.let {
+                    actions(
+                        Action.ToggleViewerState(
+                            signedInProfileId = it,
+                            viewedProfileId = profileWithViewerState.profile.did,
+                            following = profileWithViewerState.viewerState?.following,
+                            followedBy = profileWithViewerState.viewerState?.followedBy,
+                        )
+                    )
+                }
+            }
+        }
         val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
             { profileSearchResult ->
                 actions(
@@ -178,6 +192,7 @@ internal fun SearchScreen(
                         ?: emptyList(),
                     starterPacksWithMembers = state.starterPacksWithMembers,
                     onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                     onTrendClicked = { trend ->
                         actions(
                             Action.Navigate.DelegateTo(
@@ -253,6 +268,7 @@ private fun SuggestedContent(
     starterPacksWithMembers: List<StarterPackWithMembers>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
@@ -299,6 +315,7 @@ private fun SuggestedContent(
                     paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     profileWithViewerState = suggestedProfile,
                     onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                 )
             }
         )

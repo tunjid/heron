@@ -21,6 +21,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.StarterPackWithMembers
@@ -93,6 +95,13 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class ToggleViewerState(
+        val signedInProfileId: Id,
+        val viewedProfileId: Id,
+        val following: Uri?,
+        val followedBy: Uri?,
+    ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

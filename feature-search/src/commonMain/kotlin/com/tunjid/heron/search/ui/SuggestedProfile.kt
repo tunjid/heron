@@ -44,6 +44,7 @@ fun SuggestedProfile(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     profileWithViewerState: ProfileWithViewerState,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit
 ) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = modifier
@@ -84,7 +85,9 @@ fun SuggestedProfile(
             ProfileViewerState(
                 viewerState = profileWithViewerState.viewerState,
                 isSignedInProfile = false,
-                onClick = {}
+                onClick = {
+                    onViewerStateClicked(profileWithViewerState)
+                }
             )
         }
     )
