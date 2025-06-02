@@ -46,6 +46,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -344,6 +345,7 @@ class OfflineSearchRepository @Inject constructor(
                         .map { populatedStarterPackEntities ->
                             populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                         }
+                        .distinctUntilChanged()
                 )
             }
     }

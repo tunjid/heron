@@ -41,7 +41,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ShowChart
-import androidx.compose.material.icons.rounded.Tag
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.WavingHand
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +67,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
+import com.tunjid.heron.search.ui.StarterPackWithMembers
 import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
@@ -82,10 +84,9 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
-import heron.feature_search.generated.resources.recommended_description
-import heron.feature_search.generated.resources.recommended_title
+import heron.feature_search.generated.resources.starter_packs
+import heron.feature_search.generated.resources.suggested_accounts
 import heron.feature_search.generated.resources.top
-import heron.feature_search.generated.resources.trending_description
 import heron.feature_search.generated.resources.trending_title
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -175,6 +176,7 @@ internal fun SearchScreen(
                     trends = state.trends,
                     suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
                         ?: emptyList(),
+                    starterPacksWithMembers = state.starterPacksWithMembers,
                     onProfileClicked = onProfileClicked,
                     onTrendClicked = { trend ->
                         actions(
@@ -248,6 +250,7 @@ private fun Trends(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
+    starterPacksWithMembers: List<StarterPackWithMembers>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
 ) {
@@ -262,7 +265,6 @@ private fun Trends(
                     .padding(horizontal = 24.dp),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
-                description = stringResource(Res.string.trending_description),
             )
         }
         itemsIndexed(
@@ -270,6 +272,8 @@ private fun Trends(
             key = { _, trend -> trend.link },
             itemContent = { index, trend ->
                 Trend(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
                     index = index,
                     now = now,
                     trend = trend,
@@ -281,9 +285,8 @@ private fun Trends(
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 24.dp),
-                icon = Icons.Rounded.Tag,
-                title = stringResource(Res.string.recommended_title),
-                description = stringResource(Res.string.recommended_description),
+                icon = Icons.Rounded.AccountCircle,
+                title = stringResource(Res.string.suggested_accounts),
             )
         }
         items(
@@ -291,9 +294,31 @@ private fun Trends(
             key = { suggestedProfile -> suggestedProfile.profile.did.id },
             itemContent = { suggestedProfile ->
                 SuggestedProfile(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
                     paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     profileWithViewerState = suggestedProfile,
                     onProfileClicked = onProfileClicked,
+                )
+            }
+        )
+        item {
+            TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                icon = Icons.Rounded.WavingHand,
+                title = stringResource(Res.string.starter_packs),
+            )
+        }
+        items(
+            items = starterPacksWithMembers.take(5),
+            key = { starterPackWithMember -> starterPackWithMember.starterPack.cid.id },
+            itemContent = { starterPackWithMember ->
+                StarterPackWithMembers(
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    starterPackWithMembers = starterPackWithMember,
                 )
             }
         )
@@ -313,11 +338,10 @@ private fun TrendTitle(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     title: String,
-    description: String?,
 ) {
     Column(
         modifier = modifier.padding(
-            vertical = 4.dp,
+            vertical = 8.dp,
         )
     ) {
         Row(
@@ -337,10 +361,6 @@ private fun TrendTitle(
             )
         }
         Spacer(Modifier.height(8.dp))
-        if (description != null) Text(
-            text = description,
-            style = MaterialTheme.typography.labelSmall
-        )
     }
 }
 

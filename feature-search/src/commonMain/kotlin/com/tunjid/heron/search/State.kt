@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.search.ui.StarterPackWithMembers
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
@@ -61,7 +62,10 @@ data class State(
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
+    @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
+    @Transient
+    val starterPacksWithMembers: List<StarterPackWithMembers> = emptyList(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
