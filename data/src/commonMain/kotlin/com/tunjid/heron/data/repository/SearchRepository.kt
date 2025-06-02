@@ -19,6 +19,7 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
+import app.bsky.feed.GetSuggestedFeedsQueryParams
 import app.bsky.feed.SearchPostsQueryParams
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
@@ -27,14 +28,18 @@ import app.bsky.unspecced.Status
 import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -116,6 +121,9 @@ interface SearchRepository {
 
     fun suggestedStarterPacks(
     ): Flow<List<StarterPack>>
+
+    fun suggestedFeeds(
+    ): Flow<List<FeedGenerator>>
 }
 
 class OfflineSearchRepository @Inject constructor(
@@ -124,6 +132,7 @@ class OfflineSearchRepository @Inject constructor(
     private val savedStateRepository: SavedStateRepository,
     private val profileDao: ProfileDao,
     private val starterPackDao: StarterPackDao,
+    private val feedGeneratorDao: FeedGeneratorDao,
 ) : SearchRepository {
 
     override fun postSearch(
@@ -375,6 +384,33 @@ class OfflineSearchRepository @Inject constructor(
             )
                 .map { populatedStarterPackEntities ->
                     populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        )
+    }
+
+    override fun suggestedFeeds(): Flow<List<FeedGenerator>> = flow {
+        val generatorViews = runCatchingWithNetworkRetry {
+            networkService.api.getSuggestedFeeds(
+                GetSuggestedFeedsQueryParams()
+            )
+        }
+            .getOrNull()
+            ?.feeds
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            generatorViews.forEach { generatorView ->
+                add(feedGeneratorView = generatorView)
+            }
+        }
+
+        emitAll(
+            feedGeneratorDao.feedGenerator(
+                generatorViews.map { it.uri.atUri.let(::Uri) }
+            )
+                .map {
+                    it.map(PopulatedFeedGeneratorEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
         )

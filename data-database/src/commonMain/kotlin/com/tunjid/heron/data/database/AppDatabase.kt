@@ -24,6 +24,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -125,7 +126,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun listDao(): ListDao
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
-    abstract fun feedDao(): TimelineDao
+    abstract fun timelineDao(): TimelineDao
+    abstract fun feedGeneratorDao(): FeedGeneratorDao
     abstract fun notificationsDao(): NotificationsDao
     abstract fun starterPackDao(): StarterPackDao
 }

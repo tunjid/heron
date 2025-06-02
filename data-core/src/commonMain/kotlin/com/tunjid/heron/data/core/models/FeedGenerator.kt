@@ -28,7 +28,7 @@ data class FeedGenerator(
     val uri: Uri,
     val avatar: Uri?,
     val likeCount: Long?,
-    val creatorId: Id,
+    val creator: Profile,
     val displayName: String,
     val description: String?,
     val contentMode: String?,

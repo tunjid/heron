@@ -174,7 +174,7 @@ private fun timelineUpdateMutations(
     timelineRepository.lookupTimeline(
         when (timeline) {
             is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
-                profileHandleOrDid = timeline.feedGenerator.creatorId.id,
+                profileHandleOrDid = timeline.feedGenerator.creator.did.id,
                 feedUriSuffix = timeline.feedGenerator.uri.recordKey,
             )
 
