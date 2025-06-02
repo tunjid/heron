@@ -18,6 +18,7 @@ package com.tunjid.heron.search
 
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.repository.SearchQuery
@@ -59,6 +60,8 @@ data class State(
     val layout: ScreenLayout = ScreenLayout.Trends,
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
+    val suggestedProfileCategory: String? = null,
+    val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
@@ -78,6 +81,10 @@ sealed class Action(val key: String) {
             val isLocalOnly: Boolean,
         ) : Search()
     }
+
+    data class FetchSuggestedProfiles(
+        val category: String? = null,
+    ) : Action(key = "FetchSuggestedProfiles")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

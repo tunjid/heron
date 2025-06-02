@@ -56,14 +56,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
+import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
@@ -75,6 +78,7 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
@@ -102,6 +106,19 @@ internal fun SearchScreen(
         Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
         val pagerState = rememberPagerState {
             3
+        }
+        val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
+            { profileWithViewerState ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            profile = profileWithViewerState.profile,
+                            avatarSharedElementKey = profileWithViewerState.avatarSharedElementKey(),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
+                        )
+                    )
+                )
+            }
         }
         val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
             { profileSearchResult ->
@@ -154,7 +171,11 @@ internal fun SearchScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     trends = state.trends,
+                    suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
+                        ?: emptyList(),
+                    onProfileClicked = onProfileClicked,
                     onTrendClicked = { trend ->
                         actions(
                             Action.Navigate.DelegateTo(
@@ -210,13 +231,25 @@ internal fun SearchScreen(
             )
         }
     )
+
+    LifecycleStartEffect(Unit) {
+        actions(
+            Action.FetchSuggestedProfiles(
+                category = state.suggestedProfileCategory
+            )
+        )
+        onStopOrDispose { }
+    }
 }
 
 @Composable
 private fun Trends(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     trends: List<Trend>,
+    suggestedProfiles: List<ProfileWithViewerState>,
     onTrendClicked: (Trend) -> Unit,
+    onProfileClicked: (ProfileWithViewerState) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
@@ -253,6 +286,17 @@ private fun Trends(
                 description = stringResource(Res.string.recommended_description),
             )
         }
+        items(
+            items = suggestedProfiles.take(5),
+            key = { suggestedProfile -> suggestedProfile.profile.did.id },
+            itemContent = { suggestedProfile ->
+                SuggestedProfile(
+                    paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    profileWithViewerState = suggestedProfile,
+                    onProfileClicked = onProfileClicked,
+                )
+            }
+        )
         item {
             Spacer(
                 Modifier

@@ -20,6 +20,7 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetTrendsQueryParams
 import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
@@ -28,6 +29,8 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
@@ -38,7 +41,10 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 
@@ -95,12 +101,18 @@ interface SearchRepository {
     ): Flow<List<SearchResult.Profile>>
 
     fun trends(): Flow<List<Trend>>
+
+    fun suggestedProfiles(
+        category: String? = null
+    ): Flow<List<ProfileWithViewerState>>
+
 }
 
 class OfflineSearchRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
+    private val profileDao: ProfileDao,
 ) : SearchRepository {
 
     override fun postSearch(
@@ -242,7 +254,6 @@ class OfflineSearchRepository @Inject constructor(
     }
 
     override fun trends(): Flow<List<Trend>> = flow {
-
         runCatchingWithNetworkRetry {
             networkService.api.getTrendsUnspecced(
                 GetTrendsQueryParams()
@@ -255,6 +266,55 @@ class OfflineSearchRepository @Inject constructor(
                 emit(it)
             }
     }
+
+    override fun suggestedProfiles(
+        category: String?,
+    ): Flow<List<ProfileWithViewerState>> = flow {
+        emitAll(
+            runCatchingWithNetworkRetry {
+                networkService.api.getSuggestedUsersUnspecced(
+                    GetSuggestedUsersQueryParams(
+                        category = category
+                    )
+                )
+            }
+                .getOrNull()
+                ?.actors
+                ?.let { profileViews ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        profileViews.forEach { profileView ->
+                            add(
+                                viewingProfileId = savedStateRepository.signedInProfileId,
+                                profileView = profileView,
+                            )
+                        }
+                    }
+
+                    val signedInProfileId = savedStateRepository.signedInProfileId
+                        ?: return@let null
+
+                    val profileIds = profileViews.map { Id(it.did.did) }
+
+                    profileDao.viewerState(
+                        profileId = signedInProfileId.id,
+                        otherProfileIds = profileIds.toSet()
+                    )
+                        .map { profileViewerStates ->
+                            val profileIdsToProfileViewerStateEntity =
+                                profileViewerStates.associateBy { it.profileId }
+                            profileViews.map { profileView ->
+                                val profile = profileView.profile()
+                                ProfileWithViewerState(
+                                    profile = profile,
+                                    viewerState = profileIdsToProfileViewerStateEntity[profile.did]?.asExternalModel()
+                                )
+                            }
+                        }
+                }
+                ?: flowOf(emptyList())
+        )
+    }
+
 }
 
 

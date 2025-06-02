@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
@@ -107,6 +108,10 @@ class ActualSearchViewModel(
                     searchRepository = searchRepository,
                 )
 
+                is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
+                    searchRepository = searchRepository,
+                )
+
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                     writeQueue = writeQueue,
                 )
@@ -132,6 +137,24 @@ private fun trendsMutations(
     searchRepository.trends().mapToMutation {
         copy(trends = it)
     }
+
+private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest { action ->
+        searchRepository.suggestedProfiles(
+            category = action.category
+        )
+            .mapLatest { suggestedProfiles ->
+                action.category to suggestedProfiles
+            }
+            .mapToMutation { categoryToProfiles ->
+                copy(
+                    categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles
+                )
+            }
+    }
+
 
 private fun Flow<Action.Search>.searchQueryMutations(
     coroutineScope: CoroutineScope,
