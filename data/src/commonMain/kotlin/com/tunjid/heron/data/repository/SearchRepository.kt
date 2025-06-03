@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
@@ -29,6 +30,7 @@ import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.StarterPack
@@ -153,33 +155,36 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?: return@flow
 
-        response?.posts?.let {
-            multipleEntitySaverProvider.saveInTransaction {
-                val authProfileId = savedStateRepository.signedInProfileId
-                val posts = it.map { postView ->
-                    add(
-                        viewingProfileId = authProfileId,
-                        postView = postView
-                    )
-                    when (query) {
-                        is SearchQuery.Post.Latest -> SearchResult.Post.Top(
-                            post = postView.post(),
-                        )
+        val authProfileId = savedStateRepository.signedInProfileId
 
-                        is SearchQuery.Post.Top -> SearchResult.Post.Latest(
-                            post = postView.post(),
-                        )
-                    }
-                }
-                emit(
-                    CursorList(
-                        items = posts,
-                        nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-                    )
+        multipleEntitySaverProvider.saveInTransaction {
+            response.posts.forEach { postView ->
+                add(
+                    viewingProfileId = authProfileId,
+                    postView = postView
                 )
             }
         }
+
+        val posts = response.posts.map { postView ->
+            when (query) {
+                is SearchQuery.Post.Latest -> SearchResult.Post.Top(
+                    post = postView.post(),
+                )
+
+                is SearchQuery.Post.Top -> SearchResult.Post.Latest(
+                    post = postView.post(),
+                )
+            }
+        }
+        emit(
+            CursorList(
+                items = posts,
+                nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            )
+        )
     }
 
     override fun profileSearch(
@@ -200,36 +205,48 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?: return@flow
+
+        val signedInProfileId = savedStateRepository.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
-            val authProfileId = savedStateRepository.signedInProfileId
-            response?.actors
-                ?.map { profileView ->
+            response.actors
+                .forEach { profileView ->
                     add(
-                        viewingProfileId = authProfileId,
+                        viewingProfileId = signedInProfileId,
                         profileView = profileView,
-                    )
-                    SearchResult.Profile(
-                        profileWithViewerState = ProfileWithViewerState(
-                            profile = profileView.profile(),
-                            viewerState =
-                                if (authProfileId == null) null
-                                else profileView.profileViewerStateEntities(
-                                    viewingProfileId = authProfileId
-                                ).first().asExternalModel(),
-                        )
-                    )
-                }
-                ?.let { profiles ->
-                    emit(
-                        CursorList(
-                            items = profiles,
-                            nextCursor = response.cursor?.let(Cursor::Next)
-                                ?: Cursor.Pending
-                        )
                     )
                 }
         }
+
+        val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+        // Emit network results immediately for minimal latency during search
+        emit(
+            CursorList(
+                items = response.actors.toProfileWithViewerStates(
+                    signedInProfileId = signedInProfileId,
+                    profileMapper = ProfileView::profile,
+                    profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                )
+                    .map(SearchResult::Profile),
+                nextCursor = nextCursor,
+            )
+        )
+
+        emitAll(
+            response.actors.observeProfileWithViewerStates(
+                signedInProfileId = signedInProfileId,
+                profileMapper = ProfileView::profile,
+                idMapper = { did.did.let(::Id) },
+            )
+                .map { profileWithViewerStates ->
+                    CursorList(
+                        items = profileWithViewerStates.map(SearchResult::Profile),
+                        nextCursor = nextCursor,
+                    )
+                }
+        )
     }
 
     override fun autoCompleteProfileSearch(
@@ -247,50 +264,36 @@ class OfflineSearchRepository @Inject constructor(
             .getOrNull()
             ?.actors ?: return@flow
 
+        val signedInProfileId = savedStateRepository.signedInProfileId
+
         multipleEntitySaverProvider.saveInTransaction {
-            val authProfileId = savedStateRepository.signedInProfileId
             profileViews.forEach { profileView ->
                 add(
-                    viewingProfileId = authProfileId,
+                    viewingProfileId = signedInProfileId,
                     profileView = profileView,
                 )
             }
         }
 
+        // Emit network results immediately for minimal latency during search
+        emit(
+            profileViews.toProfileWithViewerStates(
+                signedInProfileId = signedInProfileId,
+                profileMapper = ProfileViewBasic::profile,
+                profileViewerStateEntities = ProfileViewBasic::profileViewerStateEntities,
+            )
+                .map(SearchResult::Profile)
+        )
+
         emitAll(
-            when (val signedInProfileId = savedStateRepository.signedInProfileId) {
-                null -> flowOf(
-                    profileViews.map { profileView ->
-                        SearchResult.Profile(
-                            profileWithViewerState = ProfileWithViewerState(
-                                profile = profileView.profile(),
-                                viewerState = null
-                            )
-                        )
-                    }
-                )
-
-                else -> profileDao.viewerState(
-                    profileId = signedInProfileId.id,
-                    otherProfileIds = profileViews.mapTo(mutableSetOf()) { it.did.did.let(::Id) }
-                )
-                    .distinctUntilChanged()
-                    .map { viewerStates ->
-                        val profileIdsToViewerStates = viewerStates.associateBy(
-                            ProfileViewerStateEntity::otherProfileId
-                        )
-
-                        profileViews.map { profileViewBasic ->
-                            val profile = profileViewBasic.profile()
-                            SearchResult.Profile(
-                                profileWithViewerState = ProfileWithViewerState(
-                                    profile = profile,
-                                    viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
-                                )
-                            )
-                        }
-                    }
-            }
+            profileViews.observeProfileWithViewerStates(
+                signedInProfileId = signedInProfileId,
+                profileMapper = ProfileViewBasic::profile,
+                idMapper = { did.did.let(::Id) },
+            )
+                .map { profileWithViewerStates ->
+                    profileWithViewerStates.map(SearchResult::Profile)
+                }
         )
     }
 
@@ -319,46 +322,26 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
-            ?.actors ?: return@flow
+            ?.actors
+            ?: return@flow
+
+        val signedInProfileId = savedStateRepository.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             profileViews.forEach { profileView ->
                 add(
-                    viewingProfileId = savedStateRepository.signedInProfileId,
+                    viewingProfileId = signedInProfileId,
                     profileView = profileView,
                 )
             }
         }
 
         emitAll(
-            when (val signedInProfileId = savedStateRepository.signedInProfileId) {
-                null -> flowOf(
-                    profileViews.map { profileView ->
-                        ProfileWithViewerState(
-                            profile = profileView.profile(),
-                            viewerState = null
-                        )
-                    }
-                )
-
-                else -> profileDao.viewerState(
-                    profileId = signedInProfileId.id,
-                    otherProfileIds = profileViews.mapTo(mutableSetOf()) { Id(it.did.did) }
-                )
-                    .distinctUntilChanged()
-                    .map { profileViewerStates ->
-                        val profileIdsToProfileViewerStateEntity = profileViewerStates.associateBy(
-                            ProfileViewerStateEntity::profileId
-                        )
-                        profileViews.map { profileView ->
-                            val profile = profileView.profile()
-                            ProfileWithViewerState(
-                                profile = profile,
-                                viewerState = profileIdsToProfileViewerStateEntity[profile.did]?.asExternalModel()
-                            )
-                        }
-                    }
-            }
+            profileViews.observeProfileWithViewerStates(
+                signedInProfileId = signedInProfileId,
+                profileMapper = ProfileView::profile,
+                idMapper = { did.did.let(::Id) },
+            )
         )
     }
 
@@ -409,11 +392,70 @@ class OfflineSearchRepository @Inject constructor(
             feedGeneratorDao.feedGenerator(
                 generatorViews.map { it.uri.atUri.let(::Uri) }
             )
-                .map {
-                    it.map(PopulatedFeedGeneratorEntity::asExternalModel)
+                .map { populatedFeedGeneratorEntities ->
+                    populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
         )
+    }
+
+    private fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
+        signedInProfileId: Id?,
+        profileMapper: ProfileViewType.() -> Profile,
+        profileViewerStateEntities: ProfileViewType.(Id) -> List<ProfileViewerStateEntity>,
+    ): List<ProfileWithViewerState> {
+        return map { profileView ->
+            ProfileWithViewerState(
+                profile = profileView.profileMapper(),
+                viewerState =
+                    if (signedInProfileId == null) null
+                    else profileView.profileViewerStateEntities(
+                        signedInProfileId
+                    )
+                        .first()
+                        .asExternalModel(),
+            )
+        }
+    }
+
+    private fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
+        signedInProfileId: Id?,
+        profileMapper: ProfileViewType.() -> Profile,
+        idMapper: ProfileViewType.() -> Id,
+    ): Flow<List<ProfileWithViewerState>> {
+        val profileViews = this
+        return when (signedInProfileId) {
+            null -> flowOf(
+                map { profileView ->
+                    ProfileWithViewerState(
+                        profile = profileView.profileMapper(),
+                        viewerState = null
+                    )
+                }
+            )
+
+            else -> profileDao.viewerState(
+                profileId = signedInProfileId.id,
+                otherProfileIds = mapTo(
+                    destination = mutableSetOf(),
+                    transform = idMapper,
+                )
+            )
+                .distinctUntilChanged()
+                .map { viewerStates ->
+                    val profileIdsToViewerStates = viewerStates.associateBy(
+                        ProfileViewerStateEntity::otherProfileId
+                    )
+
+                    profileViews.map { profileViewBasic ->
+                        val profile = profileViewBasic.profileMapper()
+                        ProfileWithViewerState(
+                            profile = profile,
+                            viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
+                        )
+                    }
+                }
+        }
     }
 }
 
