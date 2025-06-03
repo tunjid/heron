@@ -20,8 +20,11 @@ package com.tunjid.heron.search
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -35,6 +38,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.search.ui.StarterPackWithMembers
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -55,7 +59,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
 import me.tatarka.inject.annotations.Assisted
@@ -79,6 +85,7 @@ class ActualSearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authTokenRepository: AuthTokenRepository,
     searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -96,6 +103,13 @@ class ActualSearchViewModel(
     inputs = listOf(
         loadProfileMutations(authTokenRepository),
         trendsMutations(searchRepository),
+        suggestedStarterPackMutations(
+            searchRepository = searchRepository,
+            profileRepository = profileRepository,
+        ),
+        suggestedFeedGeneratorMutations(
+            searchRepository = searchRepository
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -107,7 +121,15 @@ class ActualSearchViewModel(
                     searchRepository = searchRepository,
                 )
 
+                is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
+                    searchRepository = searchRepository,
+                )
+
                 is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
+
+                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                     writeQueue = writeQueue,
                 )
 
@@ -133,6 +155,73 @@ private fun trendsMutations(
         copy(trends = it)
     }
 
+private fun suggestedStarterPackMutations(
+    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    searchRepository.suggestedStarterPacks()
+        .flatMapLatest { starterPacks ->
+            val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
+            val listMembersFlow = starterPackListUris.map { listUri ->
+                profileRepository.listMembers(
+                    query = ListMemberQuery(
+                        listUri = listUri,
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                            limit = 10
+                        )
+                    ),
+                    cursor = Cursor.Initial
+                )
+            }
+
+            val starterPackWithMembersList = starterPacks.map { starterPack ->
+                StarterPackWithMembers(
+                    starterPack = starterPack,
+                    members = emptyList()
+                )
+            }
+
+            listMembersFlow
+                .merge()
+                .scan(starterPackWithMembersList) { list, fetchedMembers ->
+                    val listUri = fetchedMembers.firstOrNull()?.listUri ?: return@scan list
+                    list.map { packWithMembers ->
+                        if (packWithMembers.starterPack.list?.uri == listUri) packWithMembers.copy(
+                            members = fetchedMembers
+                        )
+                        else packWithMembers
+                    }
+                }
+                .mapToMutation { copy(starterPacksWithMembers = it) }
+        }
+
+private fun suggestedFeedGeneratorMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    searchRepository.suggestedFeeds()
+        .mapToMutation { copy(feedGenerators = it) }
+
+
+private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest { action ->
+        searchRepository.suggestedProfiles(
+            category = action.category
+        )
+            .mapLatest { suggestedProfiles ->
+                action.category to suggestedProfiles
+            }
+            .mapToMutation { categoryToProfiles ->
+                copy(
+                    categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles
+                )
+            }
+    }
+
+
 private fun Flow<Action.Search>.searchQueryMutations(
     coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
@@ -150,7 +239,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                         currentQuery = action.query,
                         layout =
                             if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                            else ScreenLayout.Trends,
+                            else ScreenLayout.Suggested,
                     )
 
                     is Action.Search.OnSearchQueryConfirmed -> {
@@ -202,6 +291,30 @@ private fun Flow<Action.Search>.searchQueryMutations(
             }
     )
 }
+
+private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.Connection(
+                when (val following = action.following) {
+                    null -> Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
+
+                    else -> Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+                }
+            )
+        )
+    }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

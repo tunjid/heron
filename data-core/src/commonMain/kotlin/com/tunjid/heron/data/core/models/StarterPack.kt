@@ -28,5 +28,7 @@ data class StarterPack(
     val name: String,
     val creator: Profile,
     val list: FeedList?,
+    val joinedWeekCount: Long?,
+    val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
 )

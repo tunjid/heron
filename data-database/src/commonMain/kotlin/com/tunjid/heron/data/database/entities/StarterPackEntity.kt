@@ -78,6 +78,8 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         name = entity.name,
         creator = creator.asExternalModel(),
         list = list?.asExternalModel(),
+        joinedWeekCount = entity.joinedWeekCount,
+        joinedAllTimeCount = entity.joinedAllTimeCount,
         indexedAt = entity.indexedAt,
     )
 

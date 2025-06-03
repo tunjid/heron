@@ -17,35 +17,55 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.GetProfileQueryParams
+import app.bsky.graph.GetListQueryParams
+import app.bsky.graph.GetListResponse
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
+import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import app.bsky.graph.Follow as BskyFollow
+
+@Serializable
+data class ListMemberQuery(
+    val listUri: Uri,
+    override val data: CursorQuery.Data,
+) : CursorQuery
 
 interface ProfileRepository {
 
@@ -57,6 +77,11 @@ interface ProfileRepository {
         profileIds: Set<Id>,
     ): Flow<List<ProfileViewerState>>
 
+    fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>>
+
     suspend fun sendConnection(
         connection: Profile.Connection,
     )
@@ -64,6 +89,7 @@ interface ProfileRepository {
 
 class OfflineProfileRepository @Inject constructor(
     private val profileDao: ProfileDao,
+    private val listDao: ListDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
@@ -97,6 +123,48 @@ class OfflineProfileRepository @Inject constructor(
                 viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
             }
             .distinctUntilChanged()
+
+    override fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor
+    ): Flow<CursorList<ListMember>> =
+        combine(
+            listDao.listMembers(
+                listUri = query.listUri.uri,
+                offset = query.data.offset,
+                limit = query.data.limit,
+            )
+                .map {
+                    it.map(PopulatedListMemberEntity::asExternalModel)
+                },
+            nextCursorFlow(
+                currentCursor = cursor,
+                currentRequestWithNextCursor = {
+                    networkService.api.getList(
+                        GetListQueryParams(
+                            list = query.listUri.uri.let(::AtUri),
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        )
+                    )
+                },
+                nextCursor = GetListResponse::cursor,
+                onResponse = {
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(list)
+                        items.forEach { listItemView ->
+                            add(
+                                listUri = list.uri.atUri.let(::Uri),
+                                listItemView = listItemView,
+                            )
+                        }
+                    }
+                },
+            ),
+            ::CursorList
+        )
+            .distinctUntilChanged()
+
 
     override suspend fun sendConnection(
         connection: Profile.Connection,

@@ -34,6 +34,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -203,7 +204,7 @@ class OfflineNotificationsRepository @Inject constructor(
     ): Flow<List<Notification>> =
         notificationsDao.notifications(
             before = query.data.cursorAnchor,
-            offset = query.data.page * query.data.limit,
+            offset = query.data.offset,
             limit = query.data.limit,
         )
             .flatMapLatest { populatedNotificationEntities ->

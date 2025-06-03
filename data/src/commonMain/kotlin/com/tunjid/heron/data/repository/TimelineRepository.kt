@@ -44,11 +44,13 @@ import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
@@ -59,6 +61,7 @@ import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.lookupUri
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.offset
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
@@ -146,6 +149,7 @@ class OfflineTimelineRepository(
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
+    private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
@@ -727,7 +731,7 @@ class OfflineTimelineRepository(
         timelineDao.feedItems(
             sourceId = query.timeline.sourceId,
             before = query.data.cursorAnchor,
-            offset = query.data.page * query.data.limit,
+            offset = query.data.offset,
             limit = query.data.limit,
         )
             .flatMapLatest { itemEntities ->
@@ -840,25 +844,26 @@ class OfflineTimelineRepository(
     private fun feedGeneratorTimeline(
         atUri: AtUri,
         position: Int,
-    ) = timelineDao.feedGenerator(atUri.atUri)
+    ) = feedGeneratorDao.feedGenerator(listOf(atUri.atUri.let(::Uri)))
+        .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
         .distinctUntilChanged()
-        .flatMapLatest { feedGeneratorEntity ->
-            timelineDao.lastFetchKey(feedGeneratorEntity.uri.uri)
+        .flatMapLatest { populatedFeedGeneratorEntity ->
+            timelineDao.lastFetchKey(populatedFeedGeneratorEntity.entity.uri.uri)
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
                         position = position,
-                        feedGenerator = feedGeneratorEntity.asExternalModel(),
+                        feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = listOfNotNull(
                             Timeline.Presentation.Text.WithEmbed,
                             Timeline.Presentation.Media.Expanded.takeIf {
-                                feedGeneratorEntity.supportsMediaPresentation()
+                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
                             },
                             Timeline.Presentation.Media.Condensed.takeIf {
-                                feedGeneratorEntity.supportsMediaPresentation()
+                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
                             },
                         ),
                     )

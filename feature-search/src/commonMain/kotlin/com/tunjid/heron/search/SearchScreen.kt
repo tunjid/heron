@@ -19,8 +19,6 @@ package com.tunjid.heron.search
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,19 +33,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ShowChart
-import androidx.compose.material.icons.rounded.Tag
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.JoinFull
+import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,15 +58,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.search.ui.FeedGenerator
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
+import com.tunjid.heron.search.ui.StarterPackWithMembers
+import com.tunjid.heron.search.ui.SuggestedProfile
+import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -78,13 +84,14 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
+import heron.feature_search.generated.resources.discover_feeds
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
-import heron.feature_search.generated.resources.recommended_description
-import heron.feature_search.generated.resources.recommended_title
+import heron.feature_search.generated.resources.starter_packs
+import heron.feature_search.generated.resources.suggested_accounts
 import heron.feature_search.generated.resources.top
-import heron.feature_search.generated.resources.trending_description
 import heron.feature_search.generated.resources.trending_title
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -106,6 +113,34 @@ internal fun SearchScreen(
         val pagerState = rememberPagerState {
             3
         }
+        val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
+            { profileWithViewerState ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            profile = profileWithViewerState.profile,
+                            avatarSharedElementKey = profileWithViewerState.avatarSharedElementKey(),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
+                        )
+                    )
+                )
+            }
+        }
+        val onViewerStateClicked: (ProfileWithViewerState) -> Unit =
+            remember(state.signedInProfile?.did) {
+                { profileWithViewerState ->
+                    state.signedInProfile?.did?.let {
+                        actions(
+                            Action.ToggleViewerState(
+                                signedInProfileId = it,
+                                viewedProfileId = profileWithViewerState.profile.did,
+                                following = profileWithViewerState.viewerState?.following,
+                                followedBy = profileWithViewerState.viewerState?.followedBy,
+                            )
+                        )
+                    }
+                }
+            }
         val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
             { profileSearchResult ->
                 actions(
@@ -134,6 +169,19 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onListMemberClicked = remember {
+            { listMember: ListMember ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToProfile(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            profile = listMember.subject,
+                            avatarSharedElementKey = listMember.avatarSharedElementKey()
+                        )
+                    )
+                )
+            }
+        }
         val onPostSearchResultClicked = remember {
             { result: SearchResult.Post ->
                 actions(
@@ -153,11 +201,19 @@ internal fun SearchScreen(
             targetState = state.layout
         ) { targetLayout ->
             when (targetLayout) {
-                ScreenLayout.Trends -> Trends(
+                ScreenLayout.Suggested -> SuggestedContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 16.dp),
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     trends = state.trends,
+                    suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
+                        ?: emptyList(),
+                    starterPacksWithMembers = state.starterPacksWithMembers,
+                    feedGenerators = state.feedGenerators,
+                    onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = onViewerStateClicked,
+                    onListMemberClicked = onListMemberClicked,
                     onTrendClicked = { trend ->
                         actions(
                             Action.Navigate.DelegateTo(
@@ -177,6 +233,7 @@ internal fun SearchScreen(
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     results = state.autoCompletedProfiles,
                     onProfileClicked = onProfileSearchResultClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                 )
 
                 ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
@@ -187,6 +244,7 @@ internal fun SearchScreen(
                     state = state,
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     onProfileClicked = onProfileSearchResultClicked,
+                    onViewerStateClicked = onViewerStateClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
@@ -213,47 +271,120 @@ internal fun SearchScreen(
             )
         }
     )
+
+    LifecycleStartEffect(Unit) {
+        actions(
+            Action.FetchSuggestedProfiles(
+                category = state.suggestedProfileCategory
+            )
+        )
+        onStopOrDispose { }
+    }
 }
 
 @Composable
-private fun Trends(
+private fun SuggestedContent(
     modifier: Modifier = Modifier,
-    trends: Trends,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    trends: List<Trend>,
+    suggestedProfiles: List<ProfileWithViewerState>,
+    starterPacksWithMembers: List<StarterPackWithMembers>,
+    feedGenerators: List<FeedGenerator>,
     onTrendClicked: (Trend) -> Unit,
+    onProfileClicked: (ProfileWithViewerState) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
+    onListMemberClicked: (ListMember) -> Unit,
 ) {
+    val now = remember { Clock.System.now() }
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(
-            horizontal = 24.dp,
-        )
     ) {
         item {
             TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
-                description = stringResource(Res.string.trending_description),
             )
         }
-        item {
-            TrendChips(
-                trendList = trends.topics,
-                onTrendClicked = onTrendClicked,
-            )
-        }
+        itemsIndexed(
+            items = trends.take(5),
+            key = { _, trend -> trend.link },
+            itemContent = { index, trend ->
+                Trend(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
+                    index = index,
+                    now = now,
+                    trend = trend,
+                    onTrendClicked = onTrendClicked,
+                )
+            }
+        )
         item {
             TrendTitle(
-                icon = Icons.Rounded.Tag,
-                title = stringResource(Res.string.recommended_title),
-                description = stringResource(Res.string.recommended_description),
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                icon = Icons.Rounded.AccountCircle,
+                title = stringResource(Res.string.suggested_accounts),
             )
         }
+        items(
+            items = suggestedProfiles.take(5),
+            key = { suggestedProfile -> suggestedProfile.profile.did.id },
+            itemContent = { suggestedProfile ->
+                SuggestedProfile(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
+                    paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    profileWithViewerState = suggestedProfile,
+                    onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = onViewerStateClicked,
+                )
+            }
+        )
         item {
-            TrendChips(
-                trendList = trends.suggested,
-                onTrendClicked = onTrendClicked,
+            TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                icon = Icons.Rounded.JoinFull,
+                title = stringResource(Res.string.starter_packs),
             )
         }
+        items(
+            items = starterPacksWithMembers.take(5),
+            key = { starterPackWithMember -> starterPackWithMember.starterPack.cid.id },
+            itemContent = { starterPackWithMember ->
+                StarterPackWithMembers(
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    starterPackWithMembers = starterPackWithMember,
+                    onListMemberClicked = onListMemberClicked,
+                )
+            }
+        )
+        item {
+            TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                icon = Icons.Rounded.RssFeed,
+                title = stringResource(Res.string.discover_feeds),
+            )
+        }
+        items(
+            items = feedGenerators.take(5),
+            key = { feedGenerator -> feedGenerator.cid.id },
+            itemContent = { feedGenerator ->
+                FeedGenerator(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
+                    feedGenerator = feedGenerator,
+                )
+            }
+        )
         item {
             Spacer(
                 Modifier
@@ -267,13 +398,13 @@ private fun Trends(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TrendTitle(
+    modifier: Modifier = Modifier,
     icon: ImageVector,
     title: String,
-    description: String?,
 ) {
     Column(
-        modifier = Modifier.padding(
-            vertical = 4.dp,
+        modifier = modifier.padding(
+            vertical = 8.dp,
         )
     ) {
         Row(
@@ -293,33 +424,9 @@ private fun TrendTitle(
             )
         }
         Spacer(Modifier.height(8.dp))
-        if (description != null) Text(
-            text = description,
-            style = MaterialTheme.typography.labelSmall
-        )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun TrendChips(
-    trendList: List<Trend>,
-    onTrendClicked: (Trend) -> Unit,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        trendList.forEach { trend ->
-            SuggestionChip(
-                shape = CircleShape,
-                onClick = { onTrendClicked(trend) },
-                label = {
-                    Text(text = trend.topic)
-                },
-            )
-        }
-    }
-}
 
 @Composable
 private fun AutoCompleteProfileSearchResults(
@@ -327,6 +434,7 @@ private fun AutoCompleteProfileSearchResults(
     modifier: Modifier = Modifier,
     results: List<SearchResult.Profile>,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -342,7 +450,8 @@ private fun AutoCompleteProfileSearchResults(
                 ProfileSearchResult(
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     result = result,
-                    onProfileClicked = onProfileClicked
+                    onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
                 )
             }
         )
@@ -356,6 +465,7 @@ private fun TabbedSearchResults(
     state: State,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -407,6 +517,7 @@ private fun TabbedSearchResults(
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
                 )
             }
         )
@@ -419,6 +530,7 @@ private fun SearchResults(
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.Profile) -> Unit,
+    onViewerStateClicked: (SearchResult.Profile) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
     onPostSearchResultClicked: (SearchResult.Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -473,7 +585,8 @@ private fun SearchResults(
                         ProfileSearchResult(
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             result = result,
-                            onProfileClicked = onProfileClicked
+                            onProfileClicked = onProfileClicked,
+                            onViewerStateClicked = onViewerStateClicked,
                         )
                     }
                 )

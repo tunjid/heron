@@ -16,18 +16,33 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
+import app.bsky.feed.GetSuggestedFeedsQueryParams
 import app.bsky.feed.SearchPostsQueryParams
-import app.bsky.unspecced.GetTrendingTopicsQueryParams
-import app.bsky.unspecced.TrendingTopic
+import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
+import app.bsky.unspecced.GetSuggestedUsersQueryParams
+import app.bsky.unspecced.GetTrendsQueryParams
+import app.bsky.unspecced.Status
+import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.Trends
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
+import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
@@ -38,7 +53,11 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
 
@@ -94,13 +113,26 @@ interface SearchRepository {
         cursor: Cursor,
     ): Flow<List<SearchResult.Profile>>
 
-    fun trends(): Flow<Trends>
+    fun trends(): Flow<List<Trend>>
+
+    fun suggestedProfiles(
+        category: String? = null
+    ): Flow<List<ProfileWithViewerState>>
+
+    fun suggestedStarterPacks(
+    ): Flow<List<StarterPack>>
+
+    fun suggestedFeeds(
+    ): Flow<List<FeedGenerator>>
 }
 
 class OfflineSearchRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
+    private val profileDao: ProfileDao,
+    private val starterPackDao: StarterPackDao,
+    private val feedGeneratorDao: FeedGeneratorDao,
 ) : SearchRepository {
 
     override fun postSearch(
@@ -204,7 +236,7 @@ class OfflineSearchRepository @Inject constructor(
         query: SearchQuery.Profile,
         cursor: Cursor,
     ): Flow<List<SearchResult.Profile>> = flow {
-        val response = runCatchingWithNetworkRetry {
+        val profileViews = runCatchingWithNetworkRetry {
             networkService.api.searchActorsTypeahead(
                 params = SearchActorsTypeaheadQueryParams(
                     q = query.query,
@@ -213,54 +245,189 @@ class OfflineSearchRepository @Inject constructor(
             )
         }
             .getOrNull()
+            ?.actors ?: return@flow
 
         multipleEntitySaverProvider.saveInTransaction {
             val authProfileId = savedStateRepository.signedInProfileId
-            response?.actors
-                ?.map { profileView ->
-                    add(
-                        viewingProfileId = authProfileId,
-                        profileView = profileView,
-                    )
-                    SearchResult.Profile(
-                        profileWithViewerState = ProfileWithViewerState(
-                            profile = profileView.profile(),
-                            viewerState =
-                                if (authProfileId == null) null
-                                else profileView.profileViewerStateEntities(
-                                    viewingProfileId = authProfileId
-                                ).first().asExternalModel(),
-                        )
-                    )
-                }
-                ?.let { profiles ->
-                    emit(
-                        profiles
-                    )
-                }
+            profileViews.forEach { profileView ->
+                add(
+                    viewingProfileId = authProfileId,
+                    profileView = profileView,
+                )
+            }
         }
+
+        emitAll(
+            when (val signedInProfileId = savedStateRepository.signedInProfileId) {
+                null -> flowOf(
+                    profileViews.map { profileView ->
+                        SearchResult.Profile(
+                            profileWithViewerState = ProfileWithViewerState(
+                                profile = profileView.profile(),
+                                viewerState = null
+                            )
+                        )
+                    }
+                )
+
+                else -> profileDao.viewerState(
+                    profileId = signedInProfileId.id,
+                    otherProfileIds = profileViews.mapTo(mutableSetOf()) { it.did.did.let(::Id) }
+                )
+                    .distinctUntilChanged()
+                    .map { viewerStates ->
+                        val profileIdsToViewerStates = viewerStates.associateBy(
+                            ProfileViewerStateEntity::otherProfileId
+                        )
+
+                        profileViews.map { profileViewBasic ->
+                            val profile = profileViewBasic.profile()
+                            SearchResult.Profile(
+                                profileWithViewerState = ProfileWithViewerState(
+                                    profile = profile,
+                                    viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
+                                )
+                            )
+                        }
+                    }
+            }
+        )
     }
 
-    override fun trends(): Flow<Trends> = flow {
+    override fun trends(): Flow<List<Trend>> = flow {
         runCatchingWithNetworkRetry {
-            networkService.api.getTrendingTopicsUnspecced(
-                GetTrendingTopicsQueryParams()
+            networkService.api.getTrendsUnspecced(
+                GetTrendsQueryParams()
             )
         }
             .getOrNull()
-            ?.let {
-                Trends(
-                    topics = it.topics.map(TrendingTopic::trend),
-                    suggested = it.suggested.map(TrendingTopic::trend)
-                )
-            }
+            ?.trends
+            ?.map(TrendView::trend)
             ?.let {
                 emit(it)
             }
     }
+
+    override fun suggestedProfiles(
+        category: String?,
+    ): Flow<List<ProfileWithViewerState>> = flow {
+        val profileViews = runCatchingWithNetworkRetry {
+            networkService.api.getSuggestedUsersUnspecced(
+                GetSuggestedUsersQueryParams(
+                    category = category
+                )
+            )
+        }
+            .getOrNull()
+            ?.actors ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            profileViews.forEach { profileView ->
+                add(
+                    viewingProfileId = savedStateRepository.signedInProfileId,
+                    profileView = profileView,
+                )
+            }
+        }
+
+        emitAll(
+            when (val signedInProfileId = savedStateRepository.signedInProfileId) {
+                null -> flowOf(
+                    profileViews.map { profileView ->
+                        ProfileWithViewerState(
+                            profile = profileView.profile(),
+                            viewerState = null
+                        )
+                    }
+                )
+
+                else -> profileDao.viewerState(
+                    profileId = signedInProfileId.id,
+                    otherProfileIds = profileViews.mapTo(mutableSetOf()) { Id(it.did.did) }
+                )
+                    .distinctUntilChanged()
+                    .map { profileViewerStates ->
+                        val profileIdsToProfileViewerStateEntity = profileViewerStates.associateBy(
+                            ProfileViewerStateEntity::profileId
+                        )
+                        profileViews.map { profileView ->
+                            val profile = profileView.profile()
+                            ProfileWithViewerState(
+                                profile = profile,
+                                viewerState = profileIdsToProfileViewerStateEntity[profile.did]?.asExternalModel()
+                            )
+                        }
+                    }
+            }
+        )
+    }
+
+    override fun suggestedStarterPacks(): Flow<List<StarterPack>> = flow {
+        val starterPackViews = runCatchingWithNetworkRetry {
+            networkService.api.getSuggestedStarterPacksUnspecced(
+                GetSuggestedStarterPacksQueryParams()
+            )
+        }
+            .getOrNull()
+            ?.starterPacks
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            starterPackViews.forEach { starterPack ->
+                add(starterPack = starterPack)
+            }
+        }
+
+        emitAll(
+            starterPackDao.starterPacks(
+                starterPackViews.map { it.cid.cid.let(::Id) }
+            )
+                .map { populatedStarterPackEntities ->
+                    populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        )
+    }
+
+    override fun suggestedFeeds(): Flow<List<FeedGenerator>> = flow {
+        val generatorViews = runCatchingWithNetworkRetry {
+            networkService.api.getSuggestedFeeds(
+                GetSuggestedFeedsQueryParams()
+            )
+        }
+            .getOrNull()
+            ?.feeds
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            generatorViews.forEach { generatorView ->
+                add(feedGeneratorView = generatorView)
+            }
+        }
+
+        emitAll(
+            feedGeneratorDao.feedGenerator(
+                generatorViews.map { it.uri.atUri.let(::Uri) }
+            )
+                .map {
+                    it.map(PopulatedFeedGeneratorEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        )
+    }
 }
 
-
-private fun TrendingTopic.trend() = Trend(
-    topic, displayName, description, link
+private fun TrendView.trend() = Trend(
+    topic = topic,
+    status = when (status) {
+        Status.Hot -> Trend.Status.Hot
+        is Status.Unknown,
+        null -> null
+    },
+    displayName = displayName,
+    link = link,
+    startedAt = startedAt,
+    postCount = postCount,
+    category = category,
+    actors = actors.map(ProfileViewBasic::profile),
 )

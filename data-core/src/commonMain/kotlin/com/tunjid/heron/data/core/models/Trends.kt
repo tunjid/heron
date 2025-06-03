@@ -16,18 +16,22 @@
 
 package com.tunjid.heron.data.core.models
 
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Trend(
     val topic: String,
+    val status: Status?,
     val displayName: String?,
-    val description: String?,
     val link: String,
-)
+    val startedAt: Instant,
+    val postCount: Long,
+    val category: String? = null,
+    val actors: List<Profile>,
+) {
+    enum class Status {
+        Hot
+    }
+}
 
-@Serializable
-data class Trends(
-    val topics: List<Trend> = emptyList(),
-    val suggested: List<Trend> = emptyList(),
-)

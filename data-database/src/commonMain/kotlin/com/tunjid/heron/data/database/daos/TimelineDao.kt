@@ -104,19 +104,4 @@ interface TimelineDao {
     suspend fun updatePreferredTimelinePresentation(
         partial: TimelinePreferencesEntity.Partial.PreferredPresentation,
     )
-
-    @Query(
-        """
-            SELECT * FROM feedGenerators
-            WHERE uri = :feedUri
-        """
-    )
-    fun feedGenerator(
-        feedUri: String,
-    ): Flow<FeedGeneratorEntity?>
-
-    @Upsert
-    suspend fun upsertFeedGenerators(
-        entities: List<FeedGeneratorEntity>,
-    )
 }

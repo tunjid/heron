@@ -16,12 +16,17 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
-import com.tunjid.heron.data.core.models.Trends
+import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.search.ui.StarterPackWithMembers
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
@@ -30,7 +35,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 enum class ScreenLayout {
-    Trends,
+    Suggested,
     AutoCompleteProfiles,
     GeneralSearchResults
 }
@@ -56,9 +61,16 @@ sealed class SearchState {
 @Serializable
 data class State(
     val currentQuery: String = "",
-    val layout: ScreenLayout = ScreenLayout.Trends,
+    val layout: ScreenLayout = ScreenLayout.Suggested,
     val signedInProfile: Profile? = null,
-    val trends: Trends = Trends(),
+    val trends: List<Trend> = emptyList(),
+    val suggestedProfileCategory: String? = null,
+    @Transient
+    val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
+    @Transient
+    val starterPacksWithMembers: List<StarterPackWithMembers> = emptyList(),
+    @Transient
+    val feedGenerators: List<FeedGenerator> = emptyList(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
@@ -79,9 +91,20 @@ sealed class Action(val key: String) {
         ) : Search()
     }
 
+    data class FetchSuggestedProfiles(
+        val category: String? = null,
+    ) : Action(key = "FetchSuggestedProfiles")
+
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class ToggleViewerState(
+        val signedInProfileId: Id,
+        val viewedProfileId: Id,
+        val following: Uri?,
+        val followedBy: Uri?,
+    ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 

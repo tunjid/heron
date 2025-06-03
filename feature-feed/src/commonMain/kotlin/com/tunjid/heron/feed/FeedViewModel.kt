@@ -153,7 +153,7 @@ private fun timelineCreatorMutations(
 ): Flow<Mutation<State>> =
     when (timeline) {
         is Timeline.Home.Feed -> profileRepository.profile(
-            profileId = timeline.feedGenerator.creatorId
+            profileId = timeline.feedGenerator.creator.did
         )
 
         is Timeline.Home.Following -> emptyFlow()

@@ -16,10 +16,12 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
@@ -55,18 +57,27 @@ data class FeedGeneratorEntity(
     val indexedAt: Instant,
 )
 
-fun FeedGeneratorEntity.asExternalModel() =
-    FeedGenerator(
-        cid = cid,
-        did = did,
-        uri = uri,
-        avatar = avatar,
-        likeCount = likeCount,
-        creatorId = creatorId,
-        displayName = displayName,
-        description = description,
-        acceptsInteractions = acceptsInteractions,
-        contentMode = contentMode,
-        indexedAt = indexedAt,
+data class PopulatedFeedGeneratorEntity(
+    @Embedded
+    val entity: FeedGeneratorEntity,
+    @Relation(
+        parentColumn = "creatorId",
+        entityColumn = "did"
     )
+    val creator: ProfileEntity?,
+)
 
+fun PopulatedFeedGeneratorEntity.asExternalModel() =
+    FeedGenerator(
+        cid = entity.cid,
+        did = entity.did,
+        uri = entity.uri,
+        avatar = entity.avatar,
+        likeCount = entity.likeCount,
+        creator = creator.asExternalModel(),
+        displayName = entity.displayName,
+        description = entity.description,
+        acceptsInteractions = entity.acceptsInteractions,
+        contentMode = entity.contentMode,
+        indexedAt = entity.indexedAt,
+    )

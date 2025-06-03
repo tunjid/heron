@@ -114,15 +114,27 @@ abstract class DataComponent(
 
     @DataScope
     @Provides
-    fun provideFeedDao(
+    fun provideTimelineDao(
         database: AppDatabase,
-    ) = database.feedDao()
+    ) = database.timelineDao()
+
+    @DataScope
+    @Provides
+    fun provideFeedGeneratorDao(
+        database: AppDatabase,
+    ) = database.feedGeneratorDao()
 
     @DataScope
     @Provides
     fun provideNotificationsDao(
         database: AppDatabase,
     ) = database.notificationsDao()
+
+    @DataScope
+    @Provides
+    fun provideStarterPackDao(
+        database: AppDatabase,
+    ) = database.starterPackDao()
 
     @DataScope
     @Provides
