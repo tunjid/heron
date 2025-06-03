@@ -106,7 +106,10 @@ class ActualSearchViewModel(
         suggestedStarterPackMutations(
             searchRepository = searchRepository,
             profileRepository = profileRepository,
-        )
+        ),
+        suggestedFeedGeneratorMutations(
+            searchRepository = searchRepository
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -193,6 +196,13 @@ private fun suggestedStarterPackMutations(
                 }
                 .mapToMutation { copy(starterPacksWithMembers = it) }
         }
+
+private fun suggestedFeedGeneratorMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    searchRepository.suggestedFeeds()
+        .mapToMutation { copy(feedGenerators = it) }
+
 
 private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
     searchRepository: SearchRepository,

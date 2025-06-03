@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -68,6 +69,8 @@ data class State(
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
     val starterPacksWithMembers: List<StarterPackWithMembers> = emptyList(),
+    @Transient
+    val feedGenerators: List<FeedGenerator> = emptyList(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient

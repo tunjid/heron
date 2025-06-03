@@ -43,8 +43,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.JoinFull
-import androidx.compose.material.icons.rounded.JoinInner
-import androidx.compose.material.icons.rounded.WavingHand
+import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +60,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -68,6 +68,7 @@ import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.search.ui.FeedGenerator
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.StarterPackWithMembers
@@ -85,6 +86,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
+import heron.feature_search.generated.resources.discover_feeds
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
 import heron.feature_search.generated.resources.starter_packs
@@ -208,6 +210,7 @@ internal fun SearchScreen(
                     suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
                         ?: emptyList(),
                     starterPacksWithMembers = state.starterPacksWithMembers,
+                    feedGenerators = state.feedGenerators,
                     onProfileClicked = onProfileClicked,
                     onViewerStateClicked = onViewerStateClicked,
                     onListMemberClicked = onListMemberClicked,
@@ -286,6 +289,7 @@ private fun SuggestedContent(
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
     starterPacksWithMembers: List<StarterPackWithMembers>,
+    feedGenerators: List<FeedGenerator>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
@@ -359,6 +363,25 @@ private fun SuggestedContent(
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
+                )
+            }
+        )
+        item {
+            TrendTitle(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                icon = Icons.Rounded.RssFeed,
+                title = stringResource(Res.string.discover_feeds),
+            )
+        }
+        items(
+            items = feedGenerators.take(5),
+            key = { feedGenerator -> feedGenerator.cid.id },
+            itemContent = { feedGenerator ->
+                FeedGenerator(
+                    modifier = Modifier
+                        .fillParentMaxWidth(),
+                    feedGenerator = feedGenerator,
                 )
             }
         )

@@ -27,4 +27,7 @@
     <string name="by_creator">by %1$s</string>
     <string name="starter_packs">Starter Packs</string>
     <string name="hot">Hot</string>
+    <string name="liked_by">Liked by %1$s users</string>
+    <string name="feed_by">Feed by %1$s</string>
+    <string name="discover_feeds">Discover Feeds</string>
 </resources>
