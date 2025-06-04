@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
@@ -47,7 +47,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 @Composable
 internal fun PostExternal(
     feature: ExternalEmbed,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -147,6 +147,6 @@ fun PostFeatureTextContent(
 
 private fun embedSharedElementKey(
     prefix: String,
-    postId: Id,
+    postId: PostId,
     text: String?,
 ): String = "$prefix-${postId.id}-$text"

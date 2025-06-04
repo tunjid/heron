@@ -32,7 +32,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
@@ -47,7 +47,7 @@ internal fun PostEmbed(
     now: Instant,
     embed: Embed?,
     quote: Post?,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,

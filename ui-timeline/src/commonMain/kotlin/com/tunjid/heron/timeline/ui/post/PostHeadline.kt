@@ -26,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -39,7 +39,7 @@ fun PostHeadline(
     now: Instant,
     createdAt: Instant,
     author: Profile,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
 ) = with(paneMovableElementSharedTransitionScope) {
@@ -86,6 +86,6 @@ fun PostHeadline(
 
 private fun Profile.textSharedElementKey(
     prefix: String,
-    postId: Id,
+    postId: PostId,
     text: String,
 ): String = "$prefix-${postId.id}-${did.id}-$text"

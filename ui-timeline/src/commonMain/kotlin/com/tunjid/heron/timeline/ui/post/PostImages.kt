@@ -34,7 +34,7 @@ import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
@@ -45,7 +45,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 @Composable
 internal fun PostImages(
     feature: ImageList,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onImageClicked: (Int) -> Unit,
@@ -112,5 +112,5 @@ internal fun PostImages(
 
 fun Image.sharedElementKey(
     prefix: String,
-    postId: Id,
+    postId: PostId,
 ) = "$prefix-$postId-${thumb.uri}"
