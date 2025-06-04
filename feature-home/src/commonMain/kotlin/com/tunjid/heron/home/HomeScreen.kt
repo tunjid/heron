@@ -65,7 +65,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
@@ -288,7 +288,7 @@ private fun HomeTimeline(
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             presentation = presentation,
                             postActions = rememberPostActions(
-                                onPostClicked = { post: Post, quotingPostId: Id? ->
+                                onPostClicked = { post: Post, quotingPostId: PostId? ->
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToPost(
@@ -301,7 +301,7 @@ private fun HomeTimeline(
                                         )
                                     )
                                 },
-                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToProfile(
@@ -317,7 +317,7 @@ private fun HomeTimeline(
                                         )
                                     )
                                 },
-                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToMedia(

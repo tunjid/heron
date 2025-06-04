@@ -41,7 +41,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -102,7 +102,7 @@ internal fun PostDetailScreen(
                     sharedElementPrefix = state.sharedElementPrefix,
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = rememberPostActions(
-                        onPostClicked = { post: Post, quotingPostId: Id? ->
+                        onPostClicked = { post: Post, quotingPostId: PostId? ->
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
@@ -115,7 +115,7 @@ internal fun PostDetailScreen(
                                 )
                             )
                         },
-                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: Id? ->
+                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
@@ -129,7 +129,7 @@ internal fun PostDetailScreen(
                                 )
                             )
                         },
-                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: Id? ->
+                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToMedia(

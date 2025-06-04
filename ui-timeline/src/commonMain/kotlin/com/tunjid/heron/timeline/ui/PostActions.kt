@@ -22,13 +22,13 @@ import androidx.compose.runtime.remember
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 
 @Stable
 interface PostActions {
-    fun onProfileClicked(profile: Profile, post: Post, quotingPostId: Id?)
-    fun onPostClicked(post: Post, quotingPostId: Id?)
-    fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostId: Id?)
+    fun onProfileClicked(profile: Profile, post: Post, quotingPostId: PostId?)
+    fun onPostClicked(post: Post, quotingPostId: PostId?)
+    fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?)
     fun onReplyToPost(post: Post)
     fun onPostInteraction(interaction: Post.Interaction)
     fun onPostMetadataClicked(metadata: Post.Metadata)
@@ -36,9 +36,9 @@ interface PostActions {
 
 @Composable
 fun rememberPostActions(
-    onProfileClicked: (profile: Profile, post: Post, quotingPostId: Id?) -> Unit,
-    onPostClicked: (post: Post, quotingPostId: Id?) -> Unit,
-    onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostId: Id?) -> Unit,
+    onProfileClicked: (profile: Profile, post: Post, quotingPostId: PostId?) -> Unit,
+    onPostClicked: (post: Post, quotingPostId: PostId?) -> Unit,
+    onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
     onPostMetadataClicked: (metadata: Post.Metadata) -> Unit = {},
@@ -47,7 +47,7 @@ fun rememberPostActions(
         override fun onProfileClicked(
             profile: Profile,
             post: Post,
-            quotingPostId: Id?,
+            quotingPostId: PostId?,
         ) = onProfileClicked(
             profile,
             post,
@@ -56,7 +56,7 @@ fun rememberPostActions(
 
         override fun onPostClicked(
             post: Post,
-            quotingPostId: Id?,
+            quotingPostId: PostId?,
         ) = onPostClicked(
             post,
             quotingPostId
@@ -66,7 +66,7 @@ fun rememberPostActions(
             media: Embed.Media,
             index: Int,
             post: Post,
-            quotingPostId: Id?,
+            quotingPostId: PostId?,
         ) = onPostMediaClicked(
             media,
             index,
