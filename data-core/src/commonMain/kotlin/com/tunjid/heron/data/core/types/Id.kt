@@ -30,7 +30,8 @@ inline fun <reified T : Id> Id(id: String): T = when (T::class.qualifiedName) {
     PostId::class.qualifiedName -> PostId(id = id)
     ProfileId::class.qualifiedName -> ProfileId(id = id)
     ProfileHandle::class.qualifiedName -> ProfileHandle(id = id)
-    ProfileIdOrHandle::class.qualifiedName -> ProfileIdOrHandle(id = id)
+    ProfileHandleOrId::class.qualifiedName -> ProfileHandleOrId(id = id)
+    Id.Profile::class.qualifiedName -> ProfileHandleOrId(id = id)
     FeedGeneratorId::class.qualifiedName -> FeedGeneratorId(id = id)
     ListId::class.qualifiedName -> ListId(id = id)
     else -> GenericId(id = id)
@@ -63,7 +64,7 @@ value class ProfileHandle(
 
 @Serializable
 @JvmInline
-value class ProfileIdOrHandle(
+value class ProfileHandleOrId(
     override val id: String,
 ) : Id.Profile {
     override fun toString(): String = id
