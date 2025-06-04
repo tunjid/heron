@@ -42,14 +42,17 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
@@ -133,7 +136,7 @@ interface TimelineRepository {
     ): Flow<CursorList<TimelineItem>>
 
     fun postThreadedItems(
-        postUri: Uri,
+        postUri: PostUri,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -447,17 +450,17 @@ class OfflineTimelineRepository(
     }
 
     override fun postThreadedItems(
-        postUri: Uri,
+        postUri: PostUri,
     ): Flow<List<TimelineItem>> =
         postDao.postEntitiesByUri(postUris = setOf(postUri))
-            .mapNotNull { it.firstOrNull() }
+            .mapNotNull(List<PostEntity>::firstOrNull)
             .take(1)
             .flatMapLatest { postEntity ->
                 postDao.postThread(
                     postId = postEntity.cid.id
                 )
                     .flatMapLatest { postThread ->
-                        val postIds = postThread.map { it.postId }.toSet()
+                        val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
                         combine(
                             flow = postDao.posts(
                                 postIds = postIds
@@ -467,7 +470,9 @@ class OfflineTimelineRepository(
                             ),
                             transform = { posts, embeddedPosts ->
                                 val idsToPosts = posts.associateBy { it.entity.cid }
-                                val idsToEmbeddedPosts = embeddedPosts.associateBy { it.postId }
+                                val idsToEmbeddedPosts = embeddedPosts.associateBy(
+                                    EmbeddedPopulatedPostEntity::postId
+                                )
 
                                 postThread.fold(
                                     initial = emptyList<TimelineItem.Thread>(),

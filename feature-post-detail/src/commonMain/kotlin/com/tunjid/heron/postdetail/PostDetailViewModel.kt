@@ -18,7 +18,7 @@ package com.tunjid.heron.postdetail
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -94,7 +94,7 @@ class ActualPostDetailViewModel(
 )
 
 fun postThreadsMutations(
-    postUri: Uri,
+    postUri: PostUri,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     timelineRepository.postThreadedItems(postUri = postUri)

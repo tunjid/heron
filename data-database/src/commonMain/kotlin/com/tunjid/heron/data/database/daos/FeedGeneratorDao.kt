@@ -20,7 +20,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +36,7 @@ interface FeedGeneratorDao {
         """
     )
     fun feedGenerator(
-        feedUris: List<Uri>,
+        feedUris: List<FeedGeneratorUri>,
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 
     @Transaction

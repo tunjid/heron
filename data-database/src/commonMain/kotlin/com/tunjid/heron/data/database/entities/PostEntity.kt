@@ -24,7 +24,6 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -128,17 +127,17 @@ data class PopulatedPostEntity(
 data class EmbeddedPopulatedPostEntity(
     @Embedded
     val entity: PopulatedPostEntity,
-    val postId: Id,
-    val embeddedPostId: Id,
+    val postId: PostId,
+    val embeddedPostId: PostId,
 )
 
 data class ThreadedPostEntity(
     @Embedded
     val entity: PostEntity,
     val generation: Long,
-    val postId: Id,
-    val parentPostId: Id?,
-    val rootPostId: Id?,
+    val postId: PostId,
+    val parentPostId: PostId?,
+    val rootPostId: PostId?,
     val sort1: Long?,
 )
 
