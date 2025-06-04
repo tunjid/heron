@@ -23,6 +23,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -81,8 +83,8 @@ class ActualProfileViewModel(
     initialState = State(
         avatarSharedElementKey = route.avatarSharedElementKey ?: "",
         profile = route.profile ?: stubProfile(
-            did = Id(route.profileId.id),
-            handle = Id(route.profileId.id),
+            did = ProfileId(route.profileId.id),
+            handle = ProfileHandle(route.profileId.id),
             avatar = null,
         ),
     ),

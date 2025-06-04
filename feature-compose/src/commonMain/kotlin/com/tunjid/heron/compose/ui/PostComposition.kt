@@ -18,8 +18,8 @@ package com.tunjid.heron.compose.ui
 
 import androidx.compose.ui.text.AnnotatedString
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.timeline.utilities.byteOffsets
 
 
@@ -32,7 +32,7 @@ internal fun AnnotatedString.links(): List<Post.Link> {
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
                 // Ok this is actually a handle for now, but it is resolved to a Did later on.
-                target = Post.LinkTarget.UserHandleMention(Id(it.groupValues[3])),
+                target = Post.LinkTarget.UserHandleMention(ProfileHandle(it.groupValues[3])),
             )
         }
 
@@ -59,7 +59,7 @@ internal fun AnnotatedString.links(): List<Post.Link> {
             Post.Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
-                target = Post.LinkTarget.ExternalLink(Uri(url)),
+                target = Post.LinkTarget.ExternalLink(GenericUri(url)),
             )
         }
 
