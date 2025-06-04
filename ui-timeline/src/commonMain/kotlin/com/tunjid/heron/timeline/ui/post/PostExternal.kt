@@ -34,8 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -110,7 +110,7 @@ fun PostFeatureTextContent(
     modifier: Modifier = Modifier,
     title: String?,
     description: String?,
-    uri: Uri?,
+    uri: GenericUri?,
 ) {
     Column(
         modifier = modifier,
