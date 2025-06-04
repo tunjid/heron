@@ -23,8 +23,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -46,12 +48,12 @@ import kotlinx.datetime.Instant
 )
 data class NotificationEntity(
     @PrimaryKey
-    val cid: Id,
-    val uri: Uri,
-    val authorId: Id,
+    val cid: GenericId,
+    val uri: GenericUri,
+    val authorId: ProfileId,
     val reason: Notification.Reason,
-    val reasonSubject: Uri?,
-    val associatedPostId: Id?,
+    val reasonSubject: GenericUri?,
+    val associatedPostId: PostId?,
     val isRead: Boolean,
     val indexedAt: Instant,
 )

@@ -32,11 +32,11 @@ internal suspend fun lookupUri(
     profileDao: ProfileDao,
     uriLookup: UriLookup,
 ): AtUri? {
-    val profile = uriLookup.profileHandleOrDid
+    val profileHandleOrId = uriLookup.profileHandleOrDid.id
     val profileDid = when {
-        Did.Regex.matches(profile) -> Did(profile)
-        Handle.Regex.matches(profile) -> profileDao.profiles(
-            ids = listOf(Id(profile))
+        Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
+        Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
+            ids = listOf(Id(profileHandleOrId))
         )
             .first()
             .takeIf { it.isNotEmpty() }
@@ -47,7 +47,7 @@ internal suspend fun lookupUri(
             ?: runCatchingWithNetworkRetry {
                 networkService.api.resolveHandle(
                     params = ResolveHandleQueryParams(
-                        Handle(profile)
+                        Handle(profileHandleOrId)
                     )
                 )
             }

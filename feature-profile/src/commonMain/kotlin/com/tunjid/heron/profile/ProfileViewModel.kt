@@ -81,8 +81,8 @@ class ActualProfileViewModel(
     initialState = State(
         avatarSharedElementKey = route.avatarSharedElementKey ?: "",
         profile = route.profile ?: stubProfile(
-            did = route.profileId,
-            handle = route.profileId,
+            did = Id(route.profileId.id),
+            handle = Id(route.profileId.id),
             avatar = null,
         ),
     ),
@@ -126,7 +126,7 @@ class ActualProfileViewModel(
 )
 
 private fun loadProfileMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profile(profileId).mapToMutation {
@@ -134,7 +134,7 @@ private fun loadProfileMutations(
     }
 
 private fun loadSignedInProfileMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
@@ -156,7 +156,7 @@ private fun loadSignedInProfileMutations(
                     .map { type ->
                         timelineRepository.lookupTimeline(
                             UriLookup.Timeline.Profile(
-                                profileHandleOrDid = profileId.id,
+                                profileHandleOrDid = profileId,
                                 type = type
                             )
                         )
@@ -188,7 +188,7 @@ private fun loadSignedInProfileMutations(
     )
 
 private fun profileRelationshipMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {

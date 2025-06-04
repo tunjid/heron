@@ -26,7 +26,6 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
-import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.partial
 import kotlinx.coroutines.flow.Flow
 

@@ -34,7 +34,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
@@ -82,11 +83,11 @@ internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
 private val Route.profileId by mappedRoutePath(
-    mapper = ::Id
+    mapper = ::ProfileId
 )
 
 private val Route.postId by mappedRoutePath(
-    mapper = ::Id
+    mapper = ::PostId
 )
 
 private fun createRoute(

@@ -17,8 +17,9 @@
 package com.tunjid.heron.profiles
 
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -31,7 +32,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val signedInProfileId: Id? = null,
+    val signedInProfileId: ProfileId? = null,
     val currentQuery: CursorQuery,
     @Transient
     val profiles: TiledList<CursorQuery, ProfileWithViewerState> = emptyTiledList(),
@@ -41,26 +42,26 @@ data class State(
 
 sealed class Load {
     sealed class Post : Load() {
-        abstract val postId: Id
+        abstract val postId: PostId
 
         data class Likes(
-            override val postId: Id,
+            override val postId: PostId,
         ) : Post()
 
         data class Reposts(
-            override val postId: Id,
+            override val postId: PostId,
         ) : Post()
     }
 
     sealed class Profile : Load() {
-        abstract val profileId: Id
+        abstract val profileId: ProfileId
 
         data class Followers(
-            override val profileId: Id,
+            override val profileId: ProfileId,
         ) : Profile()
 
         data class Following(
-            override val profileId: Id,
+            override val profileId: ProfileId,
         ) : Profile()
     }
 
@@ -73,10 +74,10 @@ sealed class Action(val key: String) {
     ) : Action("LoadAround")
 
     data class ToggleViewerState(
-        val signedInProfileId: Id,
-        val viewedProfileId: Id,
-        val following: Uri?,
-        val followedBy: Uri?,
+        val signedInProfileId: ProfileId,
+        val viewedProfileId: ProfileId,
+        val following: GenericUri?,
+        val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {

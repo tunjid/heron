@@ -25,6 +25,7 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.em
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.stubProfile
@@ -101,7 +102,7 @@ fun formatTextPost(
                             onProfileClicked(
                                 stubProfile(
                                     did = target.did,
-                                    handle = target.did,
+                                    handle = Constants.unknownAuthorHandle,
                                 )
                             )
                         },
@@ -115,7 +116,7 @@ fun formatTextPost(
                         clickable = LinkAnnotation.Clickable(target.handle.id) {
                             onProfileClicked(
                                 stubProfile(
-                                    did = target.handle,
+                                    did = Constants.unknownAuthorId,
                                     handle = target.handle,
                                 )
                             )

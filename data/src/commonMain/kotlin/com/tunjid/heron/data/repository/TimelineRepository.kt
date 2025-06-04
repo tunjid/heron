@@ -42,7 +42,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -588,7 +587,7 @@ class OfflineTimelineRepository(
 
                 is UriLookup.Timeline.Profile -> {
                     profileDao.profiles(
-                        ids = listOf(Id(lookup.profileHandleOrDid))
+                        ids = listOf(lookup.profileHandleOrDid)
                     )
                         .mapNotNull(List<ProfileEntity>::firstOrNull)
                         .distinctUntilChangedBy(ProfileEntity::did)

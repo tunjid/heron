@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -98,7 +99,7 @@ import sh.christian.ozone.api.Uri as BskyUri
 
 @Serializable
 data class PostDataQuery(
-    val postId: Id,
+    val postId: PostId,
     override val data: CursorQuery.Data,
 ) : CursorQuery
 

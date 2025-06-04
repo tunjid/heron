@@ -37,6 +37,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -400,9 +401,9 @@ class OfflineSearchRepository @Inject constructor(
     }
 
     private fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
-        signedInProfileId: Id?,
+        signedInProfileId: ProfileId?,
         profileMapper: ProfileViewType.() -> Profile,
-        profileViewerStateEntities: ProfileViewType.(Id) -> List<ProfileViewerStateEntity>,
+        profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
     ): List<ProfileWithViewerState> {
         return map { profileView ->
             ProfileWithViewerState(
@@ -419,9 +420,9 @@ class OfflineSearchRepository @Inject constructor(
     }
 
     private fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
-        signedInProfileId: Id?,
+        signedInProfileId: ProfileId?,
         profileMapper: ProfileViewType.() -> Profile,
-        idMapper: ProfileViewType.() -> Id,
+        idMapper: ProfileViewType.() -> ProfileId,
     ): Flow<List<ProfileWithViewerState>> {
         val profileViews = this
         return when (signedInProfileId) {

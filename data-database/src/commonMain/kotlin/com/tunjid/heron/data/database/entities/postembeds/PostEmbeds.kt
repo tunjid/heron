@@ -20,7 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.database.entities.PostEntity
 
 sealed interface PostEmbed
@@ -51,6 +51,6 @@ sealed interface PostEmbed
     ],
 )
 data class PostPostEntity(
-    val postId: Id,
-    val embeddedPostId: Id,
+    val postId: PostId,
+    val embeddedPostId: PostId,
 )

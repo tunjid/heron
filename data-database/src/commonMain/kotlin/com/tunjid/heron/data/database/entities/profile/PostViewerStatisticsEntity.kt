@@ -20,8 +20,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.database.entities.PostEntity
 
 @Entity(
@@ -37,27 +37,27 @@ import com.tunjid.heron.data.database.entities.PostEntity
 )
 data class PostViewerStatisticsEntity(
     @PrimaryKey
-    val postId: Id,
+    val postId: PostId,
     @ColumnInfo(defaultValue = "NULL")
-    val likeUri: Uri?,
+    val likeUri: GenericUri?,
     @ColumnInfo(defaultValue = "NULL")
-    val repostUri: Uri?,
+    val repostUri: GenericUri?,
     val threadMuted: Boolean,
     val replyDisabled: Boolean,
     val embeddingDisabled: Boolean,
     val pinned: Boolean,
 ) {
     sealed class Partial {
-        abstract val postId: Id
+        abstract val postId: PostId
 
         data class Like(
-            override val postId: Id,
-            val likeUri: Uri?,
+            override val postId: PostId,
+            val likeUri: GenericUri?,
         ) : Partial()
 
         data class Repost(
-            override val postId: Id,
-            val repostUri: Uri?,
+            override val postId: PostId,
+            val repostUri: GenericUri?,
         ) : Partial()
 
         fun asFull() = PostViewerStatisticsEntity(

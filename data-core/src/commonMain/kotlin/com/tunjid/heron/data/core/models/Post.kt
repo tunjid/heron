@@ -16,15 +16,18 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Post(
-    val cid: Id,
-    val uri: Uri,
+    val cid: PostId,
+    val uri: PostUri,
     val author: Profile,
     val replyCount: Long,
     val repostCount: Long,
@@ -49,8 +52,8 @@ data class Post(
 
     @Serializable
     data class ViewerStats(
-        val likeUri: Uri?,
-        val repostUri: Uri?,
+        val likeUri: GenericUri?,
+        val repostUri: GenericUri?,
         val threadMuted: Boolean,
         val replyDisabled: Boolean,
         val embeddingDisabled: Boolean,
@@ -66,27 +69,27 @@ data class Post(
 
     @Serializable
     data class ReplyRef(
-        val rootCid: Id,
-        val rootUri: Uri,
-        val parentCid: Id,
-        val parentUri: Uri,
+        val rootCid: PostId,
+        val rootUri: PostUri,
+        val parentCid: PostId,
+        val parentUri: PostUri,
     )
 
     @Serializable
     sealed interface LinkTarget {
         @Serializable
         data class UserHandleMention(
-            val handle: Id,
+            val handle: ProfileHandle,
         ) : LinkTarget
 
         @Serializable
         data class UserDidMention(
-            val did: Id,
+            val did: ProfileId,
         ) : LinkTarget
 
         @Serializable
         data class ExternalLink(
-            val uri: Uri,
+            val uri: GenericUri,
         ) : LinkTarget
 
         @Serializable
@@ -125,7 +128,7 @@ data class Post(
 
         @Serializable
         data class Request(
-            val authorId: Id,
+            val authorId: ProfileId,
             val text: String,
             val links: List<Link>,
             val metadata: Metadata,
@@ -135,20 +138,20 @@ data class Post(
     @Serializable
     sealed class Interaction {
 
-        abstract val postId: Id
+        abstract val postId: PostId
 
         @Serializable
         sealed class Create : Interaction() {
             @Serializable
             data class Like(
-                override val postId: Id,
-                val postUri: Uri,
+                override val postId: PostId,
+                val postUri: PostUri,
             ) : Create()
 
             @Serializable
             data class Repost(
-                override val postId: Id,
-                val postUri: Uri,
+                override val postId: PostId,
+                val postUri: PostUri,
             ) : Create()
         }
 
@@ -157,14 +160,14 @@ data class Post(
 
             @Serializable
             data class Unlike(
-                override val postId: Id,
-                val likeUri: Uri,
+                override val postId: PostId,
+                val likeUri: GenericUri,
             ) : Delete()
 
             @Serializable
             data class RemoveRepost(
-                override val postId: Id,
-                val repostUri: Uri,
+                override val postId: PostId,
+                val repostUri: GenericUri,
             ) : Delete()
         }
     }
@@ -173,20 +176,20 @@ data class Post(
     sealed class Metadata {
         @Serializable
         data class Likes(
-            val profileId: Id,
-            val postId: Id,
+            val profileId: ProfileId,
+            val postId: PostId,
         ) : Metadata()
 
         @Serializable
         data class Reposts(
-            val profileId: Id,
-            val postId: Id,
+            val profileId: ProfileId,
+            val postId: PostId,
         ) : Metadata()
 
         @Serializable
         data class Quotes(
-            val profileId: Id,
-            val postId: Id,
+            val profileId: ProfileId,
+            val postId: PostId,
         ) : Metadata()
     }
 }

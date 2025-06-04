@@ -21,7 +21,8 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 
@@ -32,11 +33,11 @@ import kotlinx.datetime.Instant
     ],
 )
 data class TimelineItemEntity(
-    val postId: Id,
+    val postId: PostId,
     val sourceId: String,
     @Embedded
     val reply: FeedReplyEntity?,
-    val reposter: Id?,
+    val reposter: ProfileId?,
     @ColumnInfo(
         defaultValue = "false",
     )
@@ -49,7 +50,7 @@ data class TimelineItemEntity(
 )
 
 data class FeedReplyEntity(
-    val rootPostId: Id,
-    val parentPostId: Id,
-    val grandParentPostAuthorId: Id?,
+    val rootPostId: PostId,
+    val parentPostId: PostId,
+    val grandParentPostAuthorId: PostId?,
 )

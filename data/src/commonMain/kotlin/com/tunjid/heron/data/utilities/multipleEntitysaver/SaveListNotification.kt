@@ -20,19 +20,22 @@ import app.bsky.feed.PostView
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsReason
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import sh.christian.ozone.api.AtUri
 
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id?,
+    viewingProfileId: ProfileId?,
     listNotificationsNotification: List<ListNotificationsNotification>,
     associatedPosts: List<PostView>,
 ) {
 
-    val postUrisToPostIds = mutableMapOf<Uri, Id>()
+    val postUrisToPostIds = mutableMapOf<GenericUri, PostId>()
     associatedPosts.forEach {
         add(
             viewingProfileId = viewingProfileId,
@@ -66,7 +69,7 @@ internal fun MultipleEntitySaver.add(
                 reasonSubject = notification.reasonSubject?.atUri?.let(::Uri),
                 associatedPostId = notification.associatedPostUri()
                     ?.atUri
-                    ?.let(::Uri)
+                    ?.let(::GenericUri)
                     ?.let(postUrisToPostIds::get),
                 isRead = notification.isRead,
                 indexedAt = notification.indexedAt,

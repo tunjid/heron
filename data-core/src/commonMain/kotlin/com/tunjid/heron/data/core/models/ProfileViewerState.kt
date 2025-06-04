@@ -16,13 +16,13 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ProfileViewerState(
-    val following: Uri?,
-    val followedBy: Uri?,
+    val following: GenericUri?,
+    val followedBy: GenericUri?,
     // TODO: Add other fields when working on those features,
     //  they should already exist in the entity
 )

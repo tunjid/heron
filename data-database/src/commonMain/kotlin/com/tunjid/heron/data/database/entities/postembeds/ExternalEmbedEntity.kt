@@ -22,7 +22,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 
@@ -32,10 +34,10 @@ import com.tunjid.heron.data.database.entities.PostEntity
 )
 data class ExternalEmbedEntity(
     @PrimaryKey
-    val uri: Uri,
+    val uri: GenericUri,
     val title: String,
     val description: String,
-    val thumb: Uri?,
+    val thumb: ImageUri?,
 ) : PostEmbed
 
 /**

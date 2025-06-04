@@ -22,8 +22,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.database.entities.PostEntity
 
 
@@ -32,9 +34,9 @@ import com.tunjid.heron.data.database.entities.PostEntity
 )
 data class VideoEntity(
     @PrimaryKey
-    val cid: Id,
-    val playlist: Uri,
-    val thumbnail: Uri?,
+    val cid: GenericId,
+    val playlist: GenericUri,
+    val thumbnail: ImageUri?,
     val alt: String?,
     val width: Long?,
     val height: Long?,
@@ -66,8 +68,8 @@ data class VideoEntity(
     ],
 )
 data class PostVideoEntity(
-    val postId: Id,
-    val videoId: Id,
+    val postId: PostId,
+    val videoId: GenericId,
 )
 
 fun VideoEntity.asExternalModel() = Video(

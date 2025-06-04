@@ -23,6 +23,7 @@ import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 
@@ -31,8 +32,8 @@ import com.tunjid.heron.data.database.entities.PostEntity
 )
 data class ImageEntity(
     @PrimaryKey
-    val fullSize: Uri,
-    val thumb: Uri,
+    val fullSize: ImageUri,
+    val thumb: ImageUri,
     val alt: String,
     val width: Long?,
     val height: Long?,

@@ -25,7 +25,9 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -42,9 +44,9 @@ import kotlinx.datetime.Instant
 )
 data class PostEntity(
     @PrimaryKey
-    val cid: Id,
-    val uri: Uri,
-    val authorId: Id,
+    val cid: PostId,
+    val uri: PostUri,
+    val authorId: ProfileId,
     val replyCount: Long?,
     val repostCount: Long?,
     val likeCount: Long?,
@@ -63,9 +65,9 @@ data class PostEntity(
 }
 
 fun emptyPostEntity(
-    id: Id,
-    uri: Uri,
-    authorId: Id,
+    id: PostId,
+    uri: PostUri,
+    authorId: ProfileId,
 ) = PostEntity(
     cid = id,
     uri = uri,

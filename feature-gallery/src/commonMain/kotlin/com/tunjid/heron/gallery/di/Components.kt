@@ -25,7 +25,7 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
@@ -62,7 +62,7 @@ internal val Route.media: Embed.Media? by optionalMappedRouteQuery(
 )
 
 internal val Route.postId by mappedRoutePath(
-    mapper = ::Id,
+    mapper = ::PostId,
 )
 
 internal val Route.startIndex by mappedRouteQuery(

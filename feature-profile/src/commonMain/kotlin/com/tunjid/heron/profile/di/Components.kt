@@ -33,7 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileIdOrHandle
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.Action
 import com.tunjid.heron.profile.ActualProfileViewModel
@@ -86,7 +86,7 @@ private fun createRoute(
 )
 
 internal val Route.profileId by mappedRoutePath(
-    mapper = ::Id
+    mapper = ::ProfileIdOrHandle
 )
 
 internal val Route.avatarSharedElementKey by optionalRouteQuery()

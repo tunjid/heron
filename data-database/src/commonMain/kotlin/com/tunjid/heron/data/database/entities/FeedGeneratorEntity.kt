@@ -23,8 +23,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 
@@ -44,12 +46,12 @@ import kotlinx.datetime.Instant
 )
 data class FeedGeneratorEntity(
     @PrimaryKey
-    val cid: Id,
-    val did: Id,
-    val uri: Uri,
-    val avatar: Uri?,
+    val cid: FeedGeneratorId,
+    val did: FeedGeneratorId,
+    val uri: FeedGeneratorUri,
+    val avatar: ImageUri?,
     val likeCount: Long?,
-    val creatorId: Id,
+    val creatorId: ProfileId,
     val displayName: String,
     val description: String?,
     val acceptsInteractions: Boolean?,

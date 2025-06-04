@@ -19,7 +19,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 
 @Entity(
     tableName = "postThreads",
@@ -43,8 +43,8 @@ import com.tunjid.heron.data.core.types.Id
     ],
 )
 data class PostThreadEntity(
-    val parentPostId: Id,
-    val postId: Id,
+    val parentPostId: PostId,
+    val postId: PostId,
 )
 
 data class PostThreadAndGenerationEntity(

@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -29,104 +29,104 @@ sealed class Notification {
         abstract val associatedPost: Post
     }
 
-    abstract val uri: Uri
-    abstract val cid: Id
+    abstract val uri: GenericUri
+    abstract val cid: GenericId
     abstract val author: Profile
-    abstract val reasonSubject: Uri?
+    abstract val reasonSubject: GenericUri?
     abstract val isRead: Boolean
     abstract val indexedAt: Instant
 
     data class Liked(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
     ) : PostAssociated()
 
     data class Reposted(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
     ) : PostAssociated()
 
     data class Followed(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()
 
     data class Mentioned(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
     ) : PostAssociated()
 
     data class RepliedTo(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
     ) : PostAssociated()
 
     data class Quoted(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
     ) : PostAssociated()
 
     data class JoinedStarterPack(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()
 
     data class Unknown(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()
 
     data class Verified(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()
 
     data class Unverified(
-        override val uri: Uri,
-        override val cid: Id,
+        override val uri: GenericUri,
+        override val cid: GenericId,
         override val author: Profile,
-        override val reasonSubject: Uri?,
+        override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()

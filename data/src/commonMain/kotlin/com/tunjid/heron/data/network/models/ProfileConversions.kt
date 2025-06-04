@@ -22,6 +22,7 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -97,7 +98,7 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
     )
 
 internal fun ProfileViewBasic.profileViewerStateEntities(
-    viewingProfileId: Id,
+    viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
     listOf(
         ProfileViewerStateEntity(
@@ -114,7 +115,7 @@ internal fun ProfileViewBasic.profileViewerStateEntities(
     )
 
 internal fun ProfileView.profileViewerStateEntities(
-    viewingProfileId: Id,
+    viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
     listOf(
         ProfileViewerStateEntity(
@@ -131,7 +132,7 @@ internal fun ProfileView.profileViewerStateEntities(
     )
 
 internal fun ProfileViewDetailed.profileViewerStateEntities(
-    viewingProfileId: Id,
+    viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
     listOf(
         ProfileViewerStateEntity(
@@ -181,7 +182,7 @@ internal fun ProfileView.profile() = Profile(
 // TODO: Use this when known follower profiles are also saved
 @Suppress("unused")
 private fun KnownFollowers?.profileViewers(
-    viewingProfileId: Id,
+    viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> = when (this) {
     null -> emptyList()
     else -> followers.flatMap { profileViewBasic ->

@@ -27,9 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 

@@ -71,10 +71,10 @@ interface ProfileRepository {
 
     fun signedInProfile(): Flow<Profile>
 
-    fun profile(profileId: Id): Flow<Profile>
+    fun profile(profileId: Id.Profile): Flow<Profile>
 
     fun profileRelationships(
-        profileIds: Set<Id>,
+        profileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerState>>
 
     fun listMembers(
@@ -101,7 +101,7 @@ class OfflineProfileRepository @Inject constructor(
             .mapNotNull { it.firstOrNull()?.asExternalModel() }
 
     override fun profile(
-        profileId: Id,
+        profileId: Id.Profile,
     ): Flow<Profile> =
         profileDao.profiles(listOf(profileId))
             .map { it.firstOrNull()?.asExternalModel() }
@@ -110,7 +110,7 @@ class OfflineProfileRepository @Inject constructor(
             .distinctUntilChanged()
 
     override fun profileRelationships(
-        profileIds: Set<Id>,
+        profileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerState>> =
         signedInProfileId()
             .flatMapLatest {

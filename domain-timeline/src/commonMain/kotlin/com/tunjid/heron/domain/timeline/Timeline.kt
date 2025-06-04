@@ -174,21 +174,21 @@ private fun timelineUpdateMutations(
     timelineRepository.lookupTimeline(
         when (timeline) {
             is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
-                profileHandleOrDid = timeline.feedGenerator.creator.did.id,
+                profileHandleOrDid = timeline.feedGenerator.creator.did,
                 feedUriSuffix = timeline.feedGenerator.uri.recordKey,
             )
 
             is Timeline.Home.Following -> UriLookup.Timeline.Following(
-                profileHandleOrDid = timeline.signedInProfileId.id,
+                profileHandleOrDid = timeline.signedInProfileId,
             )
 
             is Timeline.Home.List -> UriLookup.Timeline.List(
-                profileHandleOrDid = timeline.feedList.creatorId.id,
+                profileHandleOrDid = timeline.feedList.creatorId,
                 listUriSuffix = timeline.feedList.uri.recordKey,
             )
 
             is Timeline.Profile -> UriLookup.Timeline.Profile(
-                profileHandleOrDid = timeline.profileId.id,
+                profileHandleOrDid = timeline.profileId,
                 type = timeline.type,
             )
         }

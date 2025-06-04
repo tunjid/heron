@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -204,7 +205,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
 
 
 internal fun ViewerState.postViewerStatisticsEntity(
-    postId: Id,
+    postId: PostId,
 ) = PostViewerStatisticsEntity(
     postId = postId,
     likeUri = like?.atUri?.let(::Uri),

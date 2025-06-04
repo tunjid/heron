@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop
@@ -116,7 +116,7 @@ sealed class Action(val key: String) {
 
     data class CreatePost(
         val postType: Post.Create?,
-        val authorId: Id,
+        val authorId: ProfileId,
         val text: String,
         val links: List<Post.Link>,
         val media: List<MediaItem>,

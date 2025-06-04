@@ -16,13 +16,14 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExternalEmbed(
-    val uri: Uri,
+    val uri: GenericUri,
     val title: String,
     val description: String,
-    val thumb: Uri?,
+    val thumb: ImageUri?,
 ) : Embed

@@ -16,50 +16,55 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 
 object Constants {
     const val UNKNOWN = "at://unknown"
 
-    val timelineFeed = Uri("at://self")
-    val blockedPostId = Id("at://blocked")
-    val notFoundPostId = Id("at://not_found")
-    val unknownPostId = Id(UNKNOWN)
-    val unknownPostUri = Uri(UNKNOWN)
-    val unknownAuthorId = Id(UNKNOWN)
+    val timelineFeed = GenericUri("at://self")
+    val blockedPostId = PostId("at://blocked")
+    val notFoundPostId = PostId("at://not_found")
+    val unknownPostId = PostId(UNKNOWN)
+    val unknownPostUri = PostUri(UNKNOWN)
+    val unknownAuthorId = ProfileId(UNKNOWN)
+    val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }
 
 sealed class UriLookup {
-    abstract val profileHandleOrDid: String
+    abstract val profileHandleOrDid: Id.Profile
 
     data class Profile(
-        override val profileHandleOrDid: String,
+        override val profileHandleOrDid: Id.Profile,
     ) : UriLookup()
 
     data class Post(
-        override val profileHandleOrDid: String,
+        override val profileHandleOrDid: Id.Profile,
         val postUriSuffix: String,
     ) : UriLookup()
 
     sealed class Timeline : UriLookup() {
 
         data class Following(
-            override val profileHandleOrDid: String,
+            override val profileHandleOrDid: Id.Profile,
         ) : Timeline()
 
         data class FeedGenerator(
-            override val profileHandleOrDid: String,
+            override val profileHandleOrDid: Id.Profile,
             val feedUriSuffix: String,
         ) : Timeline()
 
         data class List(
-            override val profileHandleOrDid: String,
+            override val profileHandleOrDid: Id.Profile,
             val listUriSuffix: String,
         ) : Timeline()
 
         data class Profile(
-            override val profileHandleOrDid: String,
+            override val profileHandleOrDid: Id.Profile,
             val type: com.tunjid.heron.data.core.models.Timeline.Profile.Type,
         ) : Timeline()
     }

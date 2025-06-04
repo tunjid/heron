@@ -16,17 +16,18 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class FeedGenerator(
-    val cid: Id,
-    val did: Id,
-    val uri: Uri,
-    val avatar: Uri?,
+    val cid: FeedGeneratorId,
+    val did: FeedGeneratorId,
+    val uri: FeedGeneratorUri,
+    val avatar: ImageUri?,
     val likeCount: Long?,
     val creator: Profile,
     val displayName: String,
