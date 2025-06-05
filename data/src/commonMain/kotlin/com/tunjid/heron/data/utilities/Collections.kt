@@ -28,6 +28,8 @@ internal object Collections {
     const val Repost = "app.bsky.feed.repost"
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
+    const val List = "app.bsky.graph.list"
+    const val FeedGenerator = "app.bsky.feed.generator"
 
     fun recordKey(uri: Uri) = RKey(
         rkey = uri.recordKey,

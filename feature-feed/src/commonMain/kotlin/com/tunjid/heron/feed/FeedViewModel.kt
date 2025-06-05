@@ -19,7 +19,7 @@ package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.UriLookup
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -101,7 +101,7 @@ class ActualFeedViewModel(
 )
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
-    lookup: UriLookup.Timeline,
+    lookup: TimelineRequest.OfFeed,
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,

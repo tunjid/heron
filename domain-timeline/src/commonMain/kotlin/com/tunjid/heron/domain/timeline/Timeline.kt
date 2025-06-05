@@ -20,7 +20,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.UriLookup
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -173,21 +173,19 @@ private fun timelineUpdateMutations(
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.lookupTimeline(
         when (timeline) {
-            is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
+            is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithProfile(
                 profileHandleOrDid = timeline.feedGenerator.creator.did,
                 feedUriSuffix = timeline.feedGenerator.uri.recordKey,
             )
 
-            is Timeline.Home.Following -> UriLookup.Timeline.Following(
-                profileHandleOrDid = timeline.signedInProfileId,
-            )
+            is Timeline.Home.Following -> TimelineRequest.Following
 
-            is Timeline.Home.List -> UriLookup.Timeline.List(
+            is Timeline.Home.List -> TimelineRequest.OfList.WithProfile(
                 profileHandleOrDid = timeline.feedList.creatorId,
                 listUriSuffix = timeline.feedList.uri.recordKey,
             )
 
-            is Timeline.Profile -> UriLookup.Timeline.Profile(
+            is Timeline.Profile -> TimelineRequest.OfProfile(
                 profileHandleOrDid = timeline.profileId,
                 type = timeline.type,
             )
