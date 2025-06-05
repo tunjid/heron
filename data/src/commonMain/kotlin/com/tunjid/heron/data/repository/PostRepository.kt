@@ -45,7 +45,7 @@ import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -98,7 +98,7 @@ import sh.christian.ozone.api.Uri as BskyUri
 
 @Serializable
 data class PostDataQuery(
-    val postId: Id,
+    val postId: PostId,
     override val data: CursorQuery.Data,
 ) : CursorQuery
 
@@ -120,7 +120,7 @@ interface PostRepository {
     ): Flow<CursorList<Post>>
 
     fun post(
-        id: Id,
+        id: PostId,
     ): Flow<Post>
 
     suspend fun sendInteraction(
@@ -256,7 +256,7 @@ class OfflinePostRepository @Inject constructor(
             .distinctUntilChanged()
 
     override fun post(
-        id: Id,
+        id: PostId,
     ): Flow<Post> =
         postDao.posts(setOf(id))
             .mapNotNull {
@@ -485,7 +485,7 @@ class OfflinePostRepository @Inject constructor(
     }
 
     private fun <T> withPostUri(
-        postId: Id,
+        postId: PostId,
         block: (AtUri) -> Flow<T>,
     ): Flow<T> = flow {
         postDao.posts(setOf(postId))

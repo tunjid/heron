@@ -23,8 +23,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -94,7 +94,7 @@ interface PostDao {
         """
     )
     fun posts(
-        postIds: Set<Id>,
+        postIds: Set<PostId>,
     ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
@@ -105,7 +105,7 @@ interface PostDao {
         """
     )
     fun postEntitiesByUri(
-        postUris: Set<Uri>,
+        postUris: Set<PostUri>,
     ): Flow<List<PostEntity>>
 
     @Transaction
@@ -118,7 +118,7 @@ interface PostDao {
         """
     )
     fun embeddedPosts(
-        postIds: Set<Id>,
+        postIds: Set<PostId>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
 
     @Transaction

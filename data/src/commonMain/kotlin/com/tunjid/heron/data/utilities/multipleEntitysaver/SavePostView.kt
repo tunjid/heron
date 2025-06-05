@@ -17,7 +17,7 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.PostView
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.postEntity
@@ -27,7 +27,7 @@ import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id?,
+    viewingProfileId: ProfileId?,
     postView: PostView,
 ) {
     val postEntity = postView.postEntity().also(::add)

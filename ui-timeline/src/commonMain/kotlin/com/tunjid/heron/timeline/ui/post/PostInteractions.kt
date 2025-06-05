@@ -70,8 +70,9 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.actionIconSize
@@ -93,10 +94,10 @@ fun PostInteractions(
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,
-    repostUri: Uri?,
-    likeUri: Uri?,
-    postId: Id,
-    postUri: Uri,
+    repostUri: GenericUri?,
+    likeUri: GenericUri?,
+    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -374,7 +375,7 @@ fun PostInteractionsBottomSheet(
 
 private fun postActionSharedElementKey(
     prefix: String,
-    postId: Id,
+    postId: PostId,
     button: PostInteractionButton,
 ): String = "$prefix-${postId.id}-${button.hashCode()}"
 

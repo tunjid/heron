@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.UriLookup
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
@@ -65,7 +66,7 @@ private fun createRoute(
 
 internal val Route.feedLookup
     get() = UriLookup.Timeline.FeedGenerator(
-        profileHandleOrDid = routeParams.pathArgs.getValue("profileId"),
+        profileHandleOrDid = routeParams.pathArgs.getValue("profileId").let(::ProfileId),
         feedUriSuffix = routeParams.pathArgs.getValue("feedId"),
     )
 

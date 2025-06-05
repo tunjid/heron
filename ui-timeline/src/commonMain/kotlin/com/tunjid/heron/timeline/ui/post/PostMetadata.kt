@@ -31,7 +31,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.pluralStringResource
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.singularStringResource
 import com.tunjid.heron.timeline.utilities.formatDate
@@ -51,8 +52,8 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
-    postId: Id,
-    profileId: Id,
+    postId: PostId,
+    profileId: ProfileId,
     reposts: Long,
     quotes: Long,
     likes: Long,

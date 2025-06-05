@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
@@ -49,7 +49,7 @@ fun ProfileWithRelationship(
     modifier: Modifier,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     profileWithViewerState: ProfileWithViewerState,
-    signedInProfileId: Id?,
+    signedInProfileId: ProfileId?,
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {

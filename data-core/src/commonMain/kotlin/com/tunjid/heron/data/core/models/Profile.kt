@@ -16,45 +16,48 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 
 @Serializable
 data class Profile(
-    val did: Id,
-    val handle: Id,
+    val did: ProfileId,
+    val handle: ProfileHandle,
     val displayName: String?,
     val description: String?,
-    val avatar: Uri?,
-    val banner: Uri?,
+    val avatar: ImageUri?,
+    val banner: ImageUri?,
     val followersCount: Long?,
     val followsCount: Long?,
     val postsCount: Long?,
-    val joinedViaStarterPack: Id?,
+    val joinedViaStarterPack: GenericId?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
 ) : ByteSerializable {
 
     @Serializable
     sealed class Connection {
-        abstract val signedInProfileId: Id
-        abstract val profileId: Id
-        abstract val followedBy: Uri?
+        abstract val signedInProfileId: ProfileId
+        abstract val profileId: ProfileId
+        abstract val followedBy: GenericUri?
 
         data class Follow(
-            override val signedInProfileId: Id,
-            override val profileId: Id,
-            override val followedBy: Uri?,
+            override val signedInProfileId: ProfileId,
+            override val profileId: ProfileId,
+            override val followedBy: GenericUri?,
         ) : Connection()
 
         data class Unfollow(
-            override val signedInProfileId: Id,
-            override val profileId: Id,
-            override val followedBy: Uri?,
-            val followUri: Uri,
+            override val signedInProfileId: ProfileId,
+            override val profileId: ProfileId,
+            override val followedBy: GenericUri?,
+            val followUri: GenericUri,
         ) : Connection()
     }
 }
@@ -68,10 +71,10 @@ data class ProfileWithViewerState(
 val Profile.contentDescription get() = displayName ?: handle.id
 
 fun stubProfile(
-    did: Id,
-    handle: Id,
+    did: ProfileId,
+    handle: ProfileHandle,
     displayName: String? = null,
-    avatar: Uri? = null,
+    avatar: ImageUri? = null,
 ) = Profile(
     did = did,
     handle = handle,

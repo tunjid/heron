@@ -23,8 +23,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ListMember
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ListMemberUri
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 
@@ -50,9 +51,9 @@ import kotlinx.datetime.Instant
 )
 data class ListMemberEntity(
     @PrimaryKey
-    val uri: Uri,
-    val listUri: Uri,
-    val subjectId: Id,
+    val uri: ListMemberUri,
+    val listUri: ListUri,
+    val subjectId: ProfileId,
     val createdAt: Instant,
 )
 

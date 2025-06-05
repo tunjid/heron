@@ -19,8 +19,8 @@ package com.tunjid.heron.profile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
@@ -30,7 +30,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val profile: Profile,
-    val signedInProfileId: Id? = null,
+    val signedInProfileId: ProfileId? = null,
     val isSignedInProfile: Boolean = false,
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
@@ -55,10 +55,10 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdatePageWithUpdates")
 
     data class ToggleViewerState(
-        val signedInProfileId: Id,
-        val viewedProfileId: Id,
-        val following: Uri?,
-        val followedBy: Uri?,
+        val signedInProfileId: ProfileId,
+        val viewedProfileId: ProfileId,
+        val following: GenericUri?,
+        val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.likes
@@ -80,7 +80,7 @@ internal val Timeline.Presentation.icon
 val Timeline.sharedElementPrefix get() = sourceId
 
 fun Timeline.sharedElementPrefix(
-    quotingPostId: Id?
+    quotingPostId: PostId?
 ) = sourceId.withQuotingPostIdPrefix(
     quotingPostId = quotingPostId
 )

@@ -19,7 +19,8 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -46,8 +47,8 @@ import kotlinx.datetime.Instant
     ],
 )
 data class PostLikeEntity(
-    val postId: Id,
-    val authorId: Id,
+    val postId: PostId,
+    val authorId: ProfileId,
     val createdAt: Instant,
     val indexedAt: Instant,
 )

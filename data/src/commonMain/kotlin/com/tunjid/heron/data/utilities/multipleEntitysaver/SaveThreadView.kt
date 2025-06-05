@@ -20,10 +20,11 @@ import app.bsky.feed.ThreadViewPost
 import app.bsky.feed.ThreadViewPostParentUnion
 import app.bsky.feed.ThreadViewPostReplieUnion
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: Id?,
+    viewingProfileId: ProfileId?,
     threadViewPost: ThreadViewPost,
 ) {
     add(
@@ -71,7 +72,7 @@ internal fun MultipleEntitySaver.add(
 }
 
 private fun MultipleEntitySaver.addThreadParent(
-    viewingProfileId: Id?,
+    viewingProfileId: ProfileId?,
     parentPost: ThreadViewPost,
     childPost: ThreadViewPost?,
 ) {
@@ -98,7 +99,7 @@ private fun MultipleEntitySaver.addThreadParent(
 }
 
 private fun MultipleEntitySaver.addThreadReply(
-    viewingProfileId: Id?,
+    viewingProfileId: ProfileId?,
     reply: ThreadViewPost,
     parent: ThreadViewPost,
 ) {

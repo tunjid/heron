@@ -22,7 +22,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 
@@ -43,22 +46,22 @@ import kotlinx.datetime.Instant
 )
 data class ListEntity(
     @PrimaryKey
-    val cid: Id,
-    val uri: Uri,
-    val creatorId: Id,
+    val cid: ListId,
+    val uri: ListUri,
+    val creatorId: ProfileId,
     val name: String,
     val description: String?,
-    val avatar: Uri?,
+    val avatar: ImageUri?,
     val listItemCount: Long?,
     val purpose: String,
     val indexedAt: Instant,
 ) {
     data class Partial(
         val cid: Id,
-        val uri: Uri,
-        val creatorId: Id,
+        val uri: ListUri,
+        val creatorId: ProfileId,
         val name: String,
-        val avatar: Uri?,
+        val avatar: ImageUri?,
         val listItemCount: Long?,
         val purpose: String,
     )

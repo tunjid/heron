@@ -22,7 +22,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +49,7 @@ data class SavedState(
 
     @Serializable
     data class AuthTokens(
-        val authProfileId: Id,
+        val authProfileId: ProfileId,
         val auth: String,
         val refresh: String,
     )

@@ -42,7 +42,7 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoom
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -192,7 +192,7 @@ private fun GalleryImage(
     modifier: Modifier = Modifier,
     scaffoldState: PaneScaffoldState,
     item: GalleryItem.Photo,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
 ) {
     scaffoldState.updatedMovableSharedElementOf(
@@ -225,7 +225,7 @@ private fun GalleryVideo(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     item: GalleryItem.Video,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
 ) {
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(

@@ -16,13 +16,13 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Image(
-    val thumb: Uri,
-    val fullsize: Uri,
+    val thumb: ImageUri,
+    val fullsize: ImageUri,
     val alt: String,
     override val width: Long?,
     override val height: Long?,

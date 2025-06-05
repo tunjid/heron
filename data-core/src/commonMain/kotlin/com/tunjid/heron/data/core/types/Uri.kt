@@ -1,0 +1,95 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.data.core.types
+
+import io.ktor.http.Url
+import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
+
+@Serializable
+sealed interface Uri {
+    val uri: String
+}
+
+inline fun <reified T : Uri> Uri(uri: String): T = when (T::class.qualifiedName) {
+    PostUri::class.qualifiedName -> PostUri(uri = uri)
+    ProfileUri::class.qualifiedName -> ProfileUri(uri = uri)
+    FeedGeneratorUri::class.qualifiedName -> FeedGeneratorUri(uri = uri)
+    ListUri::class.qualifiedName -> ListUri(uri = uri)
+    ListMemberUri::class.qualifiedName -> ListMemberUri(uri = uri)
+    ImageUri::class.qualifiedName -> ImageUri(uri = uri)
+    else -> GenericUri(uri = uri)
+} as T
+
+val Uri.domain get() = Url(uri).host.removePrefix("www.")
+
+@Serializable
+@JvmInline
+value class PostUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
+value class ProfileUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
+value class FeedGeneratorUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+
+@Serializable
+@JvmInline
+value class ListUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
+value class ListMemberUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
+value class ImageUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
+value class GenericUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}

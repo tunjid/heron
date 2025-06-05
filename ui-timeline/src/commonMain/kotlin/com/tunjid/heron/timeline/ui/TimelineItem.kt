@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
@@ -353,7 +353,7 @@ private val ReplyThreadEndImageShape =
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
-    quotingPostId: Id? = null,
+    quotingPostId: PostId? = null,
 ): String {
     val finalPrefix = quotingPostId
         ?.let { "$prefix-$it" }
@@ -362,7 +362,7 @@ fun Post.avatarSharedElementKey(
 }
 
 fun String.withQuotingPostIdPrefix(
-    quotingPostId: Id? = null,
+    quotingPostId: PostId? = null,
 ): String = quotingPostId
     ?.let { "$this-$it" }
     ?: this

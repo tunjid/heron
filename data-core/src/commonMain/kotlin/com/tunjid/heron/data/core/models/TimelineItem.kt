@@ -18,7 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -52,7 +52,7 @@ sealed class Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
-            val signedInProfileId: Id,
+            val signedInProfileId: ProfileId,
         ) : Home(
             source = Constants.timelineFeed,
         ) {
@@ -92,7 +92,7 @@ sealed class Timeline {
 
     @Serializable
     data class Profile(
-        val profileId: Id,
+        val profileId: ProfileId,
         val type: Type,
         override val lastRefreshed: Instant?,
         override val presentation: Presentation,
@@ -119,7 +119,7 @@ sealed class Timeline {
             Media(suffix = "media"),
             Videos(suffix = "videos");
 
-            fun sourceId(profileId: Id) = "${profileId.id}-$suffix"
+            fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
         }
     }
 

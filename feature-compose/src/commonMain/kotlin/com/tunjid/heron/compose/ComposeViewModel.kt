@@ -25,7 +25,7 @@ import com.tunjid.heron.compose.di.creationType
 import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -141,7 +141,7 @@ private fun loadSignedInProfileMutations(
     }
 
 private fun quotedPostMutations(
-    quotedPostId: Id?,
+    quotedPostId: PostId?,
     postRepository: PostRepository,
 ): Flow<Mutation<State>> =
     quotedPostId?.let { id ->

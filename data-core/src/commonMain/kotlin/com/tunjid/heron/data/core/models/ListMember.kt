@@ -16,14 +16,15 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ListMemberUri
+import com.tunjid.heron.data.core.types.ListUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ListMember(
-    val uri: Uri,
+    val uri: ListMemberUri,
     val subject: Profile,
-    val listUri: Uri,
+    val listUri: ListUri,
     val createdAt: Instant,
 )

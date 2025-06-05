@@ -20,10 +20,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 
 /**
- * Cross reference for many to many relationship between [Post] and [authorEntity]
+ * Cross reference for many to many relationship between [Post] and [ProfileEntity]
  */
 @Entity(
     tableName = "postAuthors",
@@ -48,6 +49,6 @@ import com.tunjid.heron.data.core.types.Id
     ],
 )
 data class PostAuthorsEntity(
-    val postId: Id,
-    val authorId: Id,
+    val postId: PostId,
+    val authorId: ProfileId,
 )

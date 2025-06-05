@@ -20,8 +20,11 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import kotlinx.datetime.Instant
 
@@ -31,24 +34,24 @@ import kotlinx.datetime.Instant
 )
 data class ProfileEntity(
     @PrimaryKey
-    val did: Id,
-    val handle: Id,
+    val did: ProfileId,
+    val handle: ProfileHandle,
     val displayName: String?,
     val description: String?,
-    val avatar: Uri?,
-    val banner: Uri?,
+    val avatar: ImageUri?,
+    val banner: ImageUri?,
     val followersCount: Long?,
     val followsCount: Long?,
     val postsCount: Long?,
-    val joinedViaStarterPack: Id?,
+    val joinedViaStarterPack: GenericId?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
 ) {
     data class Partial(
-        val did: Id,
-        val handle: Id,
+        val did: ProfileId,
+        val handle: ProfileHandle,
         val displayName: String?,
-        val avatar: Uri?,
+        val avatar: ImageUri?,
     )
 }
 

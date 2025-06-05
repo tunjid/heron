@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayer
@@ -68,7 +68,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElem
 @Composable
 internal fun PostVideo(
     video: Video,
-    postId: Id,
+    postId: PostId,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -243,5 +243,5 @@ private fun PlayerControlBackground(
 
 fun Video.sharedElementKey(
     prefix: String,
-    postId: Id,
+    postId: PostId,
 ) = "$prefix-$postId-${playlist.uri}"

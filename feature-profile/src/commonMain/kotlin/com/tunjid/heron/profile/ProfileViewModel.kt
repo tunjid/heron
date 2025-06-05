@@ -23,6 +23,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -81,8 +83,8 @@ class ActualProfileViewModel(
     initialState = State(
         avatarSharedElementKey = route.avatarSharedElementKey ?: "",
         profile = route.profile ?: stubProfile(
-            did = route.profileId,
-            handle = route.profileId,
+            did = ProfileId(route.profileId.id),
+            handle = ProfileHandle(route.profileId.id),
             avatar = null,
         ),
     ),
@@ -126,7 +128,7 @@ class ActualProfileViewModel(
 )
 
 private fun loadProfileMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profile(profileId).mapToMutation {
@@ -134,7 +136,7 @@ private fun loadProfileMutations(
     }
 
 private fun loadSignedInProfileMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
@@ -156,7 +158,7 @@ private fun loadSignedInProfileMutations(
                     .map { type ->
                         timelineRepository.lookupTimeline(
                             UriLookup.Timeline.Profile(
-                                profileHandleOrDid = profileId.id,
+                                profileHandleOrDid = profileId,
                                 type = type
                             )
                         )
@@ -188,7 +190,7 @@ private fun loadSignedInProfileMutations(
     )
 
 private fun profileRelationshipMutations(
-    profileId: Id,
+    profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {

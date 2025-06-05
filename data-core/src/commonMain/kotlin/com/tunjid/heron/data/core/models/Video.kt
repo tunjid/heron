@@ -16,15 +16,16 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Video(
-    val cid: Id,
-    val playlist: Uri,
-    val thumbnail: Uri? = null,
+    val cid: GenericId,
+    val playlist: GenericUri,
+    val thumbnail: ImageUri? = null,
     val alt: String? = null,
     override val width: Long?,
     override val height: Long?,

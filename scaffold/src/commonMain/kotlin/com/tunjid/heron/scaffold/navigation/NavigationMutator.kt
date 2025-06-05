@@ -30,7 +30,8 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -184,27 +185,27 @@ interface NavigationAction {
         }
 
         sealed class ToProfiles : Common() {
-            abstract val profileId: Id
+            abstract val profileId: ProfileId
 
             sealed class Post : ToProfiles() {
                 data class Likes(
-                    override val profileId: Id,
-                    val postId: Id,
+                    override val profileId: ProfileId,
+                    val postId: PostId,
                 ) : Post()
 
                 data class Repost(
-                    override val profileId: Id,
-                    val postId: Id,
+                    override val profileId: ProfileId,
+                    val postId: PostId,
                 ) : Post()
             }
 
             sealed class Profile : ToProfiles() {
                 data class Followers(
-                    override val profileId: Id,
+                    override val profileId: ProfileId,
                 ) : Profile()
 
                 data class Following(
-                    override val profileId: Id,
+                    override val profileId: ProfileId,
                 ) : Profile()
             }
 

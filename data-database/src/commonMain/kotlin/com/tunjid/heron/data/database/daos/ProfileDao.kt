@@ -41,7 +41,7 @@ interface ProfileDao {
         """
     )
     fun profiles(
-        ids: List<Id>,
+        ids: List<Id.Profile>,
     ): Flow<List<ProfileEntity>>
 
     @Query(
@@ -57,7 +57,7 @@ interface ProfileDao {
     )
     fun viewerState(
         profileId: String,
-        otherProfileIds: Set<Id>,
+        otherProfileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerStateEntity>>
 
     @Upsert

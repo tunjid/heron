@@ -16,6 +16,22 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ListMemberUri
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
@@ -57,6 +73,29 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
         polymorphic(ByteSerializable::class) {
             subclass(Profile::class)
             subclass(Post::class)
+        }
+        polymorphic(Id::class) {
+            subclass(PostId::class)
+            subclass(ProfileId::class)
+            subclass(ProfileHandle::class)
+            subclass(ProfileHandleOrId::class)
+            subclass(FeedGeneratorId::class)
+            subclass(ListId::class)
+            subclass(GenericId::class)
+        }
+        polymorphic(Id.Profile::class) {
+            subclass(ProfileId::class)
+            subclass(ProfileHandle::class)
+            subclass(ProfileHandleOrId::class)
+        }
+        polymorphic(Uri::class) {
+            subclass(PostUri::class)
+            subclass(ProfileUri::class)
+            subclass(FeedGeneratorUri::class)
+            subclass(ListUri::class)
+            subclass(ListMemberUri::class)
+            subclass(ImageUri::class)
+            subclass(GenericUri::class)
         }
         polymorphic(Embed::class) {
             subclass(ExternalEmbed::class)

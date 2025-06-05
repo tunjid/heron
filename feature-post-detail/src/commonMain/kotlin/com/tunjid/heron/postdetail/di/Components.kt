@@ -30,7 +30,7 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
@@ -86,7 +86,7 @@ internal val Route.post: Post? by optionalMappedRouteQuery(
 )
 
 internal val Route.postUri by mappedRouteQuery(
-    mapper = ::Uri
+    mapper = ::PostUri
 )
 
 internal val Route.sharedElementPrefix by routeQuery()

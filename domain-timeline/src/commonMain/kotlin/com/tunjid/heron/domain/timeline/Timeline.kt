@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UriLookup
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -174,21 +174,21 @@ private fun timelineUpdateMutations(
     timelineRepository.lookupTimeline(
         when (timeline) {
             is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
-                profileHandleOrDid = timeline.feedGenerator.creator.did.id,
+                profileHandleOrDid = timeline.feedGenerator.creator.did,
                 feedUriSuffix = timeline.feedGenerator.uri.recordKey,
             )
 
             is Timeline.Home.Following -> UriLookup.Timeline.Following(
-                profileHandleOrDid = timeline.signedInProfileId.id,
+                profileHandleOrDid = timeline.signedInProfileId,
             )
 
             is Timeline.Home.List -> UriLookup.Timeline.List(
-                profileHandleOrDid = timeline.feedList.creatorId.id,
+                profileHandleOrDid = timeline.feedList.creatorId,
                 listUriSuffix = timeline.feedList.uri.recordKey,
             )
 
             is Timeline.Profile -> UriLookup.Timeline.Profile(
-                profileHandleOrDid = timeline.profileId.id,
+                profileHandleOrDid = timeline.profileId,
                 type = timeline.type,
             )
         }
@@ -317,7 +317,7 @@ private fun itemMutations(
 }
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
-    val threadRootIds = mutableSetOf<Id>()
+    val threadRootIds = mutableSetOf<PostId>()
     return filter { item ->
         when (item) {
             is TimelineItem.Pinned -> true
