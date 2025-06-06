@@ -23,6 +23,11 @@ import kotlin.jvm.JvmInline
 @Serializable
 sealed interface Uri {
     val uri: String
+
+    enum class Host(val prefix: String) {
+        AtProto("at"),
+        Http("http"),
+    }
 }
 
 inline fun <reified T : Uri> Uri(uri: String): T = when (T::class.qualifiedName) {

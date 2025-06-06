@@ -45,6 +45,22 @@ val Uri.tidInstant: Instant?
         null
     }
 
+/**
+ * Extracts the path component from a given [Uri].
+ */
+val Uri.path: String
+    get() = LeadingSlash + uri.split(SchemeSeparator)
+        .last()
+        .split(QueryDelimiter)
+        .first()
+
+fun String.getAsRawUri(host: Uri.Host): String = host.prefix + SchemeSeparator + split(LeadingSlash)
+    .drop(1)
+    .joinToString(separator = LeadingSlash)
+    .split(QueryDelimiter)
+    .first()
+
+
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
 ): JsonContent = BlueskyJson.decodeFromString(
@@ -77,5 +93,9 @@ private fun extractTimestampFromTid(tid: Long): Long {
     // Shift to remove the clock identifier (10 bits)
     return tid shr 10
 }
+
+private const val SchemeSeparator = "://"
+private const val QueryDelimiter = "?"
+private const val LeadingSlash = "/"
 
 private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"

@@ -52,10 +52,11 @@ import org.jetbrains.compose.resources.stringResource
 fun FeedGenerator(
     modifier: Modifier = Modifier,
     feedGenerator: FeedGenerator,
+    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
     Column(
         modifier = modifier
-            .clickable { }
+            .clickable { onFeedGeneratorClicked(feedGenerator) }
             .padding(
                 vertical = 4.dp,
                 horizontal = 24.dp

@@ -23,9 +23,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
@@ -43,17 +46,22 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.RouteTrie
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routePath
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 
-private const val RoutePattern = "/profile/{profileId}/feed/{feedId}"
+private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
+private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -64,11 +72,30 @@ private fun createRoute(
     ),
 )
 
-internal val Route.feedLookup
-    get() = TimelineRequest.OfFeed.WithProfile(
-        profileHandleOrDid = routeParams.pathArgs.getValue("profileId").let(::ProfileId),
-        feedUriSuffix = routeParams.pathArgs.getValue("feedId"),
-    )
+private val Route.profileId by mappedRoutePath(
+    mapper = ::ProfileHandleOrId
+)
+
+private val Route.feedUriSuffix by routePath()
+
+private val RequestTrie = RouteTrie<(Route) -> TimelineRequest.OfFeed>().apply {
+    set(PathPattern(RoutePattern)) { route ->
+        TimelineRequest.OfFeed.WithProfile(
+            profileHandleOrDid = route.profileId,
+            feedUriSuffix = route.feedUriSuffix,
+        )
+    }
+    set(PathPattern(RouteUriPattern)) { route ->
+        TimelineRequest.OfFeed.WithUri(
+            uri = route.routeParams.pathAndQueries.getAsRawUri(Uri.Host.AtProto)
+                .let(::FeedGeneratorUri)
+                .also { println(it) }
+        )
+    }
+}
+
+internal val Route.timelineRequest: TimelineRequest.OfFeed
+    get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @KmpComponentCreate
 expect fun FeedNavigationComponent.Companion.create(): FeedNavigationComponent
@@ -88,6 +115,14 @@ abstract class FeedNavigationComponent {
     fun profileRouteParser(): Pair<String, RouteMatcher> =
         routePatternAndMatcher(
             routePattern = RoutePattern,
+            routeMapper = ::createRoute,
+        )
+
+    @IntoMap
+    @Provides
+    fun uriRouteParser(): Pair<String, RouteMatcher> =
+        routePatternAndMatcher(
+            routePattern = RouteUriPattern,
             routeMapper = ::createRoute,
         )
 
@@ -170,4 +205,14 @@ abstract class FeedComponent(
             )
         }
     )
+
+    @IntoMap
+    @Provides
+    fun routeUriAdaptiveConfiguration(
+        routeParser: RouteParser,
+        creator: FeedViewModelCreator,
+    ) = RouteUriPattern to routeAdaptiveConfiguration(
+        routeParser = routeParser,
+        creator = creator,
+    ).second
 }

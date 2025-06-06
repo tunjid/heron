@@ -27,7 +27,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.domain.timeline.timelineStateHolder
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.feed.di.feedLookup
+import com.tunjid.heron.feed.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -78,7 +78,7 @@ class ActualFeedViewModel(
     actionTransform = transform@{ actions ->
         merge(
             timelineStateHolderMutations(
-                lookup = route.feedLookup,
+                lookup = route.timelineRequest,
                 scope = scope,
                 timelineRepository = timelineRepository,
                 profileRepository = profileRepository,
