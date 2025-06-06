@@ -20,16 +20,15 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
 import com.tunjid.heron.data.utilities.hasDifferentAnchor
 import com.tunjid.heron.data.utilities.isValidFor
-import com.tunjid.heron.data.utilities.recordKey
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -173,21 +172,17 @@ private fun timelineUpdateMutations(
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.lookupTimeline(
         when (timeline) {
-            is Timeline.Home.Feed -> UriLookup.Timeline.FeedGenerator(
-                profileHandleOrDid = timeline.feedGenerator.creator.did,
-                feedUriSuffix = timeline.feedGenerator.uri.recordKey,
+            is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithUri(
+                uri = timeline.feedGenerator.uri,
             )
 
-            is Timeline.Home.Following -> UriLookup.Timeline.Following(
-                profileHandleOrDid = timeline.signedInProfileId,
+            is Timeline.Home.Following -> TimelineRequest.Following
+
+            is Timeline.Home.List -> TimelineRequest.OfList.WithUri(
+                uri = timeline.feedList.uri,
             )
 
-            is Timeline.Home.List -> UriLookup.Timeline.List(
-                profileHandleOrDid = timeline.feedList.creatorId,
-                listUriSuffix = timeline.feedList.uri.recordKey,
-            )
-
-            is Timeline.Profile -> UriLookup.Timeline.Profile(
+            is Timeline.Profile -> TimelineRequest.OfProfile(
                 profileHandleOrDid = timeline.profileId,
                 type = timeline.type,
             )

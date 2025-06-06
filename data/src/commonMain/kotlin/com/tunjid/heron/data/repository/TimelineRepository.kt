@@ -40,10 +40,11 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.UriLookup
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -58,9 +59,10 @@ import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
-import com.tunjid.heron.data.utilities.lookupUri
+import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.offset
@@ -94,6 +96,38 @@ import sh.christian.ozone.api.response.AtpResponse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+sealed interface TimelineRequest {
+
+    data object Following : TimelineRequest
+
+    data class OfProfile(
+        val profileHandleOrDid: Id.Profile,
+        val type: Timeline.Profile.Type,
+    ) : TimelineRequest
+
+    sealed interface OfFeed: TimelineRequest {
+        data class WithUri(
+            val uri: FeedGeneratorUri,
+        ) : OfFeed
+
+        data class WithProfile(
+            val profileHandleOrDid: Id.Profile,
+            val feedUriSuffix: String,
+        ) : OfFeed
+    }
+
+    sealed interface OfList: TimelineRequest {
+        data class WithUri(
+            val uri: ListUri,
+        ) : OfList
+
+        data class WithProfile(
+            val profileHandleOrDid: Id.Profile,
+            val listUriSuffix: String,
+        ) : OfList
+    }
+}
+
 class TimelineQuery(
     override val data: CursorQuery.Data,
     val timeline: Timeline,
@@ -123,7 +157,7 @@ interface TimelineRepository {
     fun homeTimelines(): Flow<List<Timeline.Home>>
 
     fun lookupTimeline(
-        lookup: UriLookup.Timeline,
+        request: TimelineRequest,
     ): Flow<Timeline>
 
     fun hasUpdates(
@@ -533,12 +567,12 @@ class OfflineTimelineRepository(
                 timelinePreferences.mapIndexed { index, preference ->
                     when (Type.safeValueOf(preference.type)) {
                         Type.Feed -> feedGeneratorTimeline(
-                            atUri = AtUri(preference.value),
+                            uri = FeedGeneratorUri(preference.value),
                             position = index,
                         )
 
                         Type.List -> listTimeline(
-                            atUri = AtUri(preference.value),
+                            uri = ListUri(preference.value),
                             position = index,
                         )
 
@@ -570,54 +604,85 @@ class OfflineTimelineRepository(
             .debounce(InvalidationTrackerDebounceMillis)
 
     override fun lookupTimeline(
-        lookup: UriLookup.Timeline,
+        request: TimelineRequest,
     ): Flow<Timeline> = flow {
-        val atUri = lookupUri(
-            networkService = networkService,
-            profileDao = profileDao,
-            uriLookup = lookup,
-        ) ?: return@flow
+        when (request) {
+            is TimelineRequest.OfFeed.WithUri -> emitAll(
+                feedGeneratorTimeline(
+                    uri = request.uri,
+                    position = 0,
+                )
+            )
 
-        emitAll(
-            when (lookup) {
-                is UriLookup.Timeline.FeedGenerator -> feedGeneratorTimeline(
-                    atUri = atUri,
+            is TimelineRequest.OfList.WithUri -> emitAll(
+                listTimeline(
+                    uri = request.uri,
                     position = 0
                 )
+            )
 
-                is UriLookup.Timeline.List -> listTimeline(
-                    atUri = atUri,
-                    position = 0
-                )
-
-                is UriLookup.Timeline.Profile -> {
-                    profileDao.profiles(
-                        ids = listOf(lookup.profileHandleOrDid)
+            is TimelineRequest.OfFeed.WithProfile -> {
+                val profileDid = lookupProfileDid(
+                    profileId = request.profileHandleOrDid,
+                    profileDao = profileDao,
+                    networkService = networkService,
+                ) ?: return@flow
+                emitAll(
+                    feedGeneratorTimeline(
+                        uri = FeedGeneratorUri(
+                            uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}"
+                        ),
+                        position = 0,
                     )
-                        .mapNotNull(List<ProfileEntity>::firstOrNull)
-                        .distinctUntilChangedBy(ProfileEntity::did)
-                        .flatMapLatest { profile ->
-                            timelineDao.lastFetchKey(
-                                sourceId = lookup.type.sourceId(profile.did)
-                            )
-                                .distinctUntilChanged()
-                                .map { timelinePreferenceEntity ->
-                                    Timeline.Profile(
-                                        profileId = profile.did,
-                                        type = lookup.type,
-                                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
-                                        presentation = timelinePreferenceEntity.preferredPresentation(),
-                                    )
-                                }
-                        }
-                }
+                )
+            }
 
-                is UriLookup.Timeline.Following -> followingTimeline(
+            is TimelineRequest.OfList.WithProfile -> {
+                val profileDid = lookupProfileDid(
+                    profileId = request.profileHandleOrDid,
+                    profileDao = profileDao,
+                    networkService = networkService,
+                ) ?: return@flow
+                emitAll(
+                    listTimeline(
+                        uri = ListUri(
+                            uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}"
+                        ),
+                        position = 0
+                    )
+                )
+            }
+
+            is TimelineRequest.OfProfile -> emitAll(
+                profileDao.profiles(
+                    ids = listOf(request.profileHandleOrDid)
+                )
+                    .mapNotNull(List<ProfileEntity>::firstOrNull)
+                    .distinctUntilChangedBy(ProfileEntity::did)
+                    .flatMapLatest { profile ->
+                        timelineDao.lastFetchKey(
+                            sourceId = request.type.sourceId(profile.did)
+                        )
+                            .distinctUntilChanged()
+                            .map { timelinePreferenceEntity ->
+                                Timeline.Profile(
+                                    profileId = profile.did,
+                                    type = request.type,
+                                    lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                                    presentation = timelinePreferenceEntity.preferredPresentation(),
+                                )
+                            }
+                    }
+            )
+
+            TimelineRequest.Following -> emitAll(
+                followingTimeline(
+                    // TODO: Get a string resource for this
                     name = "",
                     position = 0,
                 )
-            }
-        )
+            )
+        }
     }
 
     override suspend fun updatePreferredPresentation(
@@ -846,9 +911,9 @@ class OfflineTimelineRepository(
         }
 
     private fun feedGeneratorTimeline(
-        atUri: AtUri,
+        uri: FeedGeneratorUri,
         position: Int,
-    ) = feedGeneratorDao.feedGenerator(listOf(atUri.atUri.let(::Uri)))
+    ) = feedGeneratorDao.feedGenerator(listOf(uri))
         .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
         .distinctUntilChanged()
@@ -877,7 +942,7 @@ class OfflineTimelineRepository(
             runCatchingWithNetworkRetry(times = 2) {
                 networkService.api.getFeedGenerator(
                     GetFeedGeneratorQueryParams(
-                        feed = atUri
+                        feed = uri.uri.let(::AtUri)
                     )
                 )
             }
@@ -889,9 +954,9 @@ class OfflineTimelineRepository(
         }
 
     private fun listTimeline(
-        atUri: AtUri,
+        uri: ListUri,
         position: Int,
-    ) = listDao.list(atUri.atUri)
+    ) = listDao.list(uri.uri)
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest {
@@ -912,7 +977,7 @@ class OfflineTimelineRepository(
                     GetListQueryParams(
                         cursor = null,
                         limit = 1,
-                        list = atUri,
+                        list = uri.uri.let(::AtUri),
                     )
                 )
             }

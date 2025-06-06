@@ -28,6 +28,8 @@ internal object Collections {
     const val Repost = "app.bsky.feed.repost"
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
+    const val List = "app.bsky.graph.list"
+    const val FeedGenerator = "app.bsky.feed.generator"
 
     fun recordKey(uri: Uri) = RKey(
         rkey = uri.recordKey,
@@ -42,6 +44,22 @@ val Uri.tidInstant: Instant?
     } catch (e: IllegalArgumentException) {
         null
     }
+
+/**
+ * Extracts the path component from a given [Uri].
+ */
+val Uri.path: String
+    get() = LeadingSlash + uri.split(SchemeSeparator)
+        .last()
+        .split(QueryDelimiter)
+        .first()
+
+fun String.getAsRawUri(host: Uri.Host): String = host.prefix + SchemeSeparator + split(LeadingSlash)
+    .drop(1)
+    .joinToString(separator = LeadingSlash)
+    .split(QueryDelimiter)
+    .first()
+
 
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
@@ -75,5 +93,9 @@ private fun extractTimestampFromTid(tid: Long): Long {
     // Shift to remove the clock identifier (10 bits)
     return tid shr 10
 }
+
+private const val SchemeSeparator = "://"
+private const val QueryDelimiter = "?"
+private const val LeadingSlash = "/"
 
 private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"

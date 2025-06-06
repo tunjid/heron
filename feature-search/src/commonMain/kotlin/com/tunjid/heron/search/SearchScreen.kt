@@ -66,6 +66,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGenerator
@@ -182,6 +183,30 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onTrendClicked = remember {
+            { trend: Trend ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToRawUrl(
+                            path = trend.link,
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        )
+                    )
+                )
+            }
+        }
+        val onFeedGeneratorClicked = remember {
+            { feedGenerator: FeedGenerator ->
+                actions(
+                    Action.Navigate.DelegateTo(
+                        NavigationAction.Common.ToRawUrl(
+                            path = feedGenerator.uri.path,
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        )
+                    )
+                )
+            }
+        }
         val onPostSearchResultClicked = remember {
             { result: SearchResult.Post ->
                 actions(
@@ -214,16 +239,8 @@ internal fun SearchScreen(
                     onProfileClicked = onProfileClicked,
                     onViewerStateClicked = onViewerStateClicked,
                     onListMemberClicked = onListMemberClicked,
-                    onTrendClicked = { trend ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToRawUrl(
-                                    path = trend.link,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                )
-                            )
-                        )
-                    },
+                    onTrendClicked = onTrendClicked,
+                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
 
                 ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
@@ -294,6 +311,7 @@ private fun SuggestedContent(
     onProfileClicked: (ProfileWithViewerState) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onListMemberClicked: (ListMember) -> Unit,
+    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
@@ -382,6 +400,7 @@ private fun SuggestedContent(
                     modifier = Modifier
                         .fillParentMaxWidth(),
                     feedGenerator = feedGenerator,
+                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
             }
         )

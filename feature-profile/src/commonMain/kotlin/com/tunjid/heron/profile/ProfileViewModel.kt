@@ -20,7 +20,7 @@ package com.tunjid.heron.profile
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.UriLookup
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -157,9 +157,9 @@ private fun loadSignedInProfileMutations(
                     }
                     .map { type ->
                         timelineRepository.lookupTimeline(
-                            UriLookup.Timeline.Profile(
+                            TimelineRequest.OfProfile(
                                 profileHandleOrDid = profileId,
-                                type = type
+                                type = type,
                             )
                         )
                             // Only take 1 emission, timelines should be loaded lazily
