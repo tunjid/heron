@@ -23,12 +23,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.RssFeed
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -66,16 +70,25 @@ fun FeedGenerator(
             modifier = Modifier
                 .fillMaxWidth(),
             avatar = {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(44.dp),
-                    args = ImageArgs(
-                        url = feedGenerator.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = FeedGeneratorAvatarShape,
+                when(val avatar = feedGenerator.avatar) {
+                    null -> Icon(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(FeedGeneratorAvatarShape),
+                        imageVector = Icons.Rounded.RssFeed,
+                        contentDescription = feedGenerator.displayName,
                     )
-                )
+                    else -> AsyncImage(
+                        modifier = Modifier
+                            .size(44.dp),
+                        args = ImageArgs(
+                            url = avatar.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = FeedGeneratorAvatarShape,
+                        )
+                    )
+                }
             },
             label = {
                 Text(

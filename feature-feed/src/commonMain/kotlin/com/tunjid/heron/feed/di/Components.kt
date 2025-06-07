@@ -87,9 +87,9 @@ private val RequestTrie = RouteTrie<(Route) -> TimelineRequest.OfFeed>().apply {
     }
     set(PathPattern(RouteUriPattern)) { route ->
         TimelineRequest.OfFeed.WithUri(
-            uri = route.routeParams.pathAndQueries.getAsRawUri(Uri.Host.AtProto)
+            uri = route.routeParams.pathAndQueries
+                .getAsRawUri(Uri.Host.AtProto)
                 .let(::FeedGeneratorUri)
-                .also { println(it) }
         )
     }
 }

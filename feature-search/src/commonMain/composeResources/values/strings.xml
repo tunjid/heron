@@ -30,4 +30,5 @@
     <string name="liked_by">Liked by %1$s users</string>
     <string name="feed_by">Feed by %1$s</string>
     <string name="discover_feeds">Discover Feeds</string>
+    <string name="feeds">Feeds</string>
 </resources>

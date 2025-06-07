@@ -64,7 +64,6 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -76,7 +75,6 @@ import com.tunjid.heron.search.ui.StarterPackWithMembers
 import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
-import com.tunjid.heron.search.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
@@ -88,6 +86,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.discover_feeds
+import heron.feature_search.generated.resources.feeds
 import heron.feature_search.generated.resources.latest
 import heron.feature_search.generated.resources.people
 import heron.feature_search.generated.resources.starter_packs
@@ -112,7 +111,7 @@ internal fun SearchScreen(
     ) {
         Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
         val pagerState = rememberPagerState {
-            3
+            4
         }
         val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
             { profileWithViewerState ->
@@ -142,7 +141,7 @@ internal fun SearchScreen(
                     }
                 }
             }
-        val onProfileSearchResultClicked: (SearchResult.Profile) -> Unit = remember {
+        val onProfileSearchResultClicked: (SearchResult.OfProfile) -> Unit = remember {
             { profileSearchResult ->
                 actions(
                     Action.Navigate.DelegateTo(
@@ -156,14 +155,14 @@ internal fun SearchScreen(
             }
         }
         val onPostSearchResultProfileClicked = remember {
-            { result: SearchResult.Post ->
+            { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.DelegateTo(
                         NavigationAction.Common.ToProfile(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = result.post.author,
                             avatarSharedElementKey = result.post.avatarSharedElementKey(
-                                result.sharedElementPrefix()
+                                result.sharedElementPrefix
                             )
                         )
                     )
@@ -208,12 +207,12 @@ internal fun SearchScreen(
             }
         }
         val onPostSearchResultClicked = remember {
-            { result: SearchResult.Post ->
+            { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.DelegateTo(
                         NavigationAction.Common.ToPost(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                            sharedElementPrefix = result.sharedElementPrefix(),
+                            sharedElementPrefix = result.sharedElementPrefix,
                             post = result.post,
                         )
                     )
@@ -265,6 +264,7 @@ internal fun SearchScreen(
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
+                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
             }
         }
@@ -451,8 +451,8 @@ private fun TrendTitle(
 private fun AutoCompleteProfileSearchResults(
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     modifier: Modifier = Modifier,
-    results: List<SearchResult.Profile>,
-    onProfileClicked: (SearchResult.Profile) -> Unit,
+    results: List<SearchResult.OfProfile>,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
 ) {
     LazyColumn(
@@ -483,11 +483,12 @@ private fun TabbedSearchResults(
     pagerState: PagerState,
     state: State,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
-    onProfileClicked: (SearchResult.Profile) -> Unit,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
-    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
-    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
+    onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -505,6 +506,10 @@ private fun TabbedSearchResults(
                 ),
                 Tab(
                     title = stringResource(resource = Res.string.people),
+                    hasUpdate = false
+                ),
+                Tab(
+                    title = stringResource(resource = Res.string.feeds),
                     hasUpdate = false
                 ),
             ),
@@ -536,7 +541,8 @@ private fun TabbedSearchResults(
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
-                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
+                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
             }
         )
@@ -548,16 +554,17 @@ private fun SearchResults(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
-    onProfileClicked: (SearchResult.Profile) -> Unit,
-    onViewerStateClicked: (SearchResult.Profile) -> Unit,
-    onPostSearchResultProfileClicked: (SearchResult.Post) -> Unit,
-    onPostSearchResultClicked: (SearchResult.Post) -> Unit,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
+    onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
+    onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
+    onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     when (val state = searchState.value) {
-        is SearchState.Post -> {
+        is SearchState.OfPosts -> {
             val now = remember { Clock.System.now() }
             val results by rememberUpdatedState(state.results)
             LazyColumn(
@@ -590,7 +597,7 @@ private fun SearchResults(
             )
         }
 
-        is SearchState.Profile -> {
+        is SearchState.OfProfiles -> {
             val results by rememberUpdatedState(state.results)
             LazyColumn(
                 modifier = modifier,
@@ -606,6 +613,34 @@ private fun SearchResults(
                             result = result,
                             onProfileClicked = onProfileClicked,
                             onViewerStateClicked = onViewerStateClicked,
+                        )
+                    }
+                )
+            }
+            listState.PivotedTilingEffect(
+                items = results,
+                onQueryChanged = { query ->
+                    searchResultStateHolder.accept(
+                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                    )
+                }
+            )
+        }
+
+        is SearchState.OfFeedGenerators -> {
+            val results by rememberUpdatedState(state.results)
+            LazyColumn(
+                modifier = modifier,
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(
+                    items = results,
+                    key = { it.feedGenerator.cid.id },
+                    itemContent = { result ->
+                        FeedGenerator(
+                            feedGenerator = result.feedGenerator,
+                            onFeedGeneratorClicked = onFeedGeneratorClicked,
                         )
                     }
                 )

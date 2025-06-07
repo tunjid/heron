@@ -29,11 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -52,9 +52,9 @@ import kotlinx.datetime.Instant
 @Composable
 fun ProfileSearchResult(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    result: SearchResult.Profile,
-    onProfileClicked: (SearchResult.Profile) -> Unit,
-    onViewerStateClicked: (SearchResult.Profile) -> Unit,
+    result: SearchResult.OfProfile,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
+    onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = Modifier
@@ -104,9 +104,9 @@ fun ProfileSearchResult(
 internal fun PostSearchResult(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
-    result: SearchResult.Post,
-    onProfileClicked: (SearchResult.Post) -> Unit,
-    onPostClicked: (SearchResult.Post) -> Unit,
+    result: SearchResult.OfPost,
+    onProfileClicked: (SearchResult.OfPost) -> Unit,
+    onPostClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     ElevatedCard(
@@ -129,7 +129,7 @@ internal fun PostSearchResult(
                 post = result.post,
                 isAnchoredInTimeline = false,
                 avatarShape = RoundedPolygonShape.Circle,
-                sharedElementPrefix = result.sharedElementPrefix(),
+                sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
                 postActions = rememberPostActions(
@@ -150,11 +150,5 @@ internal fun PostSearchResult(
     )
 }
 
-internal fun SearchResult.Profile.avatarSharedElementKey(): String =
-    "${sharedElementPrefix()}-${profileWithViewerState.profile.did.id}"
-
-internal fun SearchResult.sharedElementPrefix() = when (this) {
-    is SearchResult.Post.Top -> "top-post-search-result"
-    is SearchResult.Post.Latest -> "latest-post-search-result"
-    is SearchResult.Profile -> "profile-search-result"
-}
+internal fun SearchResult.OfProfile.avatarSharedElementKey(): String =
+    "${sharedElementPrefix}-${profileWithViewerState.profile.did.id}"

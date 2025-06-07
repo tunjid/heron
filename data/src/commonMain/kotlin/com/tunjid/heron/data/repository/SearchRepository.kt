@@ -21,7 +21,9 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
+import app.bsky.feed.PostView
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetTrendsQueryParams
@@ -30,12 +32,13 @@ import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
@@ -72,28 +75,36 @@ sealed class SearchQuery : CursorQuery {
 
     val sourceId
         get() = when (this) {
-            is Post.Latest -> "latest-posts"
-            is Post.Top -> "top-posts"
-            is Profile -> "profiles"
+            is OfPosts.Latest -> "latest-posts"
+            is OfPosts.Top -> "top-posts"
+            is OfProfiles -> "profiles"
+            is OfFeedGenerators -> "feed-generators"
         }
 
     @Serializable
-    sealed class Post : SearchQuery() {
+    sealed class OfPosts : SearchQuery() {
         data class Top(
             override val query: String,
             override val isLocalOnly: Boolean,
             override val data: CursorQuery.Data,
-        ) : Post()
+        ) : OfPosts()
 
         data class Latest(
             override val query: String,
             override val isLocalOnly: Boolean,
             override val data: CursorQuery.Data,
-        ) : Post()
+        ) : OfPosts()
     }
 
     @Serializable
-    data class Profile(
+    data class OfProfiles(
+        override val query: String,
+        override val isLocalOnly: Boolean,
+        override val data: CursorQuery.Data,
+    ) : SearchQuery()
+
+    @Serializable
+    data class OfFeedGenerators(
         override val query: String,
         override val isLocalOnly: Boolean,
         override val data: CursorQuery.Data,
@@ -102,19 +113,24 @@ sealed class SearchQuery : CursorQuery {
 
 interface SearchRepository {
     fun postSearch(
-        query: SearchQuery.Post,
+        query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Post>>
+    ): Flow<CursorList<Post>>
 
     fun profileSearch(
-        query: SearchQuery.Profile,
+        query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Profile>>
+    ): Flow<CursorList<ProfileWithViewerState>>
+
+    fun feedGeneratorSearch(
+        query: SearchQuery.OfFeedGenerators,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedGenerator>>
 
     fun autoCompleteProfileSearch(
-        query: SearchQuery.Profile,
+        query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<List<SearchResult.Profile>>
+    ): Flow<List<ProfileWithViewerState>>
 
     fun trends(): Flow<List<Trend>>
 
@@ -139,9 +155,9 @@ class OfflineSearchRepository @Inject constructor(
 ) : SearchRepository {
 
     override fun postSearch(
-        query: SearchQuery.Post,
+        query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Post>> = flow {
+    ): Flow<CursorList<Post>> = flow {
         val response = runCatchingWithNetworkRetry {
             networkService.api.searchPosts(
                 params = SearchPostsQueryParams(
@@ -169,29 +185,18 @@ class OfflineSearchRepository @Inject constructor(
             }
         }
 
-        val posts = response.posts.map { postView ->
-            when (query) {
-                is SearchQuery.Post.Latest -> SearchResult.Post.Top(
-                    post = postView.post(),
-                )
-
-                is SearchQuery.Post.Top -> SearchResult.Post.Latest(
-                    post = postView.post(),
-                )
-            }
-        }
         emit(
             CursorList(
-                items = posts,
+                items = response.posts.map(PostView::post),
                 nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
             )
         )
     }
 
     override fun profileSearch(
-        query: SearchQuery.Profile,
+        query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<CursorList<SearchResult.Profile>> = flow {
+    ): Flow<CursorList<ProfileWithViewerState>> = flow {
         val response = runCatchingWithNetworkRetry {
             networkService.api.searchActors(
                 params = SearchActorsQueryParams(
@@ -229,8 +234,7 @@ class OfflineSearchRepository @Inject constructor(
                     signedInProfileId = signedInProfileId,
                     profileMapper = ProfileView::profile,
                     profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                )
-                    .map(SearchResult::Profile),
+                ),
                 nextCursor = nextCursor,
             )
         )
@@ -243,7 +247,52 @@ class OfflineSearchRepository @Inject constructor(
             )
                 .map { profileWithViewerStates ->
                     CursorList(
-                        items = profileWithViewerStates.map(SearchResult::Profile),
+                        items = profileWithViewerStates,
+                        nextCursor = nextCursor,
+                    )
+                }
+        )
+    }
+
+    override fun feedGeneratorSearch(
+        query: SearchQuery.OfFeedGenerators,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedGenerator>> = flow {
+        val response = runCatchingWithNetworkRetry {
+            networkService.api.getPopularFeedGeneratorsUnspecced(
+                params = GetPopularFeedGeneratorsQueryParams(
+                    query = query.query,
+                    limit = query.data.limit,
+                    cursor = when (cursor) {
+                        Cursor.Initial -> cursor.value
+                        is Cursor.Next -> cursor.value
+                        Cursor.Pending -> null
+                    },
+                )
+            )
+        }
+            .getOrNull()
+            ?: return@flow
+
+        multipleEntitySaverProvider.saveInTransaction {
+            response.feeds
+                .forEach { generatorView ->
+                    add(feedGeneratorView = generatorView)
+                }
+        }
+
+        val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+        val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
+
+        emitAll(
+            feedGeneratorDao.feedGenerator(
+                feedUris = feedUris
+            )
+                .map { populatedFeedGeneratorEntities ->
+                    CursorList(
+                        items = populatedFeedGeneratorEntities
+                            .map(PopulatedFeedGeneratorEntity::asExternalModel)
+                            .sortedBy { feedUris.indexOf(it.uri) },
                         nextCursor = nextCursor,
                     )
                 }
@@ -251,9 +300,9 @@ class OfflineSearchRepository @Inject constructor(
     }
 
     override fun autoCompleteProfileSearch(
-        query: SearchQuery.Profile,
+        query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<List<SearchResult.Profile>> = flow {
+    ): Flow<List<ProfileWithViewerState>> = flow {
         val profileViews = runCatchingWithNetworkRetry {
             networkService.api.searchActorsTypeahead(
                 params = SearchActorsTypeaheadQueryParams(
@@ -283,7 +332,6 @@ class OfflineSearchRepository @Inject constructor(
                 profileMapper = ProfileViewBasic::profile,
                 profileViewerStateEntities = ProfileViewBasic::profileViewerStateEntities,
             )
-                .map(SearchResult::Profile)
         )
 
         emitAll(
@@ -292,9 +340,6 @@ class OfflineSearchRepository @Inject constructor(
                 profileMapper = ProfileViewBasic::profile,
                 idMapper = { did.did.let(::Id) },
             )
-                .map { profileWithViewerStates ->
-                    profileWithViewerStates.map(SearchResult::Profile)
-                }
         )
     }
 
