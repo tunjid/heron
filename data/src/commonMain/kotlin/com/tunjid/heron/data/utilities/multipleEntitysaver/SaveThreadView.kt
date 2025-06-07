@@ -19,7 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.feed.ThreadViewPost
 import app.bsky.feed.ThreadViewPostParentUnion
 import app.bsky.feed.ThreadViewPostReplieUnion
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 
@@ -82,8 +82,8 @@ private fun MultipleEntitySaver.addThreadParent(
     )
     if (childPost is ThreadViewPost) add(
         PostThreadEntity(
-            postId = childPost.post.cid.cid.let(::Id),
-            parentPostId = parentPost.post.cid.cid.let(::Id),
+            postId = childPost.post.cid.cid.let(::PostId),
+            parentPostId = parentPost.post.cid.cid.let(::PostId),
         )
     )
     parentPost.replies
@@ -109,8 +109,8 @@ private fun MultipleEntitySaver.addThreadReply(
     )
     add(
         PostThreadEntity(
-            postId = reply.post.cid.cid.let(::Id),
-            parentPostId = parent.post.cid.cid.let(::Id),
+            postId = reply.post.cid.cid.let(::PostId),
+            parentPostId = parent.post.cid.cid.let(::PostId),
         )
     )
     reply.replies

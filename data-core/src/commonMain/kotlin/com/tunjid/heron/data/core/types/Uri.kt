@@ -30,16 +30,6 @@ sealed interface Uri {
     }
 }
 
-inline fun <reified T : Uri> Uri(uri: String): T = when (T::class.qualifiedName) {
-    PostUri::class.qualifiedName -> PostUri(uri = uri)
-    ProfileUri::class.qualifiedName -> ProfileUri(uri = uri)
-    FeedGeneratorUri::class.qualifiedName -> FeedGeneratorUri(uri = uri)
-    ListUri::class.qualifiedName -> ListUri(uri = uri)
-    ListMemberUri::class.qualifiedName -> ListMemberUri(uri = uri)
-    ImageUri::class.qualifiedName -> ImageUri(uri = uri)
-    else -> GenericUri(uri = uri)
-} as T
-
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
 @Serializable

@@ -20,8 +20,13 @@ import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
@@ -66,11 +71,11 @@ private fun RecordViewRecordUnion.profileEntity() =
         is RecordViewRecordUnion.ViewNotFound -> null
 
         is RecordViewRecordUnion.ViewRecord -> ProfileEntity(
-            did = Id(value.author.did.did),
-            handle = Id(value.author.handle.handle),
+            did = ProfileId(value.author.did.did),
+            handle = ProfileHandle(value.author.handle.handle),
             displayName = value.author.displayName,
             description = null,
-            avatar = value.author.avatar?.uri?.let(::Uri),
+            avatar = value.author.avatar?.uri?.let(::ImageUri),
             banner = null,
             followersCount = 0,
             followsCount = 0,
@@ -118,17 +123,17 @@ private fun RecordViewRecordUnion.embedEntities() =
                 when (innerRecord) {
                     is RecordViewRecordEmbedUnion.ExternalView -> listOf(
                         ExternalEmbedEntity(
-                            uri = Uri(innerRecord.value.external.uri.uri),
+                            uri = GenericUri(innerRecord.value.external.uri.uri),
                             title = innerRecord.value.external.title,
                             description = innerRecord.value.external.description,
-                            thumb = innerRecord.value.external.thumb?.uri?.let(::Uri),
+                            thumb = innerRecord.value.external.thumb?.uri?.let(::ImageUri),
                         )
                     )
 
                     is RecordViewRecordEmbedUnion.ImagesView -> innerRecord.value.images.map {
                         ImageEntity(
-                            fullSize = Uri(it.fullsize.uri),
-                            thumb = Uri(it.thumb.uri),
+                            fullSize = ImageUri(it.fullsize.uri),
+                            thumb = ImageUri(it.thumb.uri),
                             alt = it.alt,
                             width = it.aspectRatio?.width,
                             height = it.aspectRatio?.height,
@@ -140,9 +145,9 @@ private fun RecordViewRecordUnion.embedEntities() =
                     is RecordViewRecordEmbedUnion.Unknown -> emptyList()
                     is RecordViewRecordEmbedUnion.VideoView -> listOf(
                         VideoEntity(
-                            cid = Id(innerRecord.value.cid.cid),
-                            playlist = Uri(innerRecord.value.playlist.uri),
-                            thumbnail = innerRecord.value.thumbnail?.uri?.let(::Uri),
+                            cid = GenericId(innerRecord.value.cid.cid),
+                            playlist = GenericUri(innerRecord.value.playlist.uri),
+                            thumbnail = innerRecord.value.thumbnail?.uri?.let(::ImageUri),
                             alt = innerRecord.value.alt,
                             width = innerRecord.value.aspectRatio?.width,
                             height = innerRecord.value.aspectRatio?.height,
@@ -166,9 +171,9 @@ private fun RecordViewRecordUnion.postEntity() =
 
         is RecordViewRecordUnion.ViewRecord ->
             PostEntity(
-                cid = Id(value.cid.cid),
-                uri = Uri(value.uri.atUri),
-                authorId = Id(value.author.did.did),
+                cid = PostId(value.cid.cid),
+                uri = PostUri(value.uri.atUri),
+                authorId = ProfileId(value.author.did.did),
                 replyCount = value.replyCount,
                 repostCount = value.repostCount,
                 likeCount = value.likeCount,

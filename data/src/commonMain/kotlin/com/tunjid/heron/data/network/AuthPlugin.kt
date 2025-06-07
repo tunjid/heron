@@ -18,6 +18,7 @@ package com.tunjid.heron.data.network
 
 import com.atproto.server.RefreshSessionResponse
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
 import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
@@ -95,7 +96,7 @@ internal class AuthPlugin(
 
                                 plugin.saveAuth?.invoke(
                                     SavedState.AuthTokens(
-                                        authProfileId = Id(refreshed.did.did),
+                                        authProfileId = ProfileId(refreshed.did.did),
                                         auth = newAccessToken,
                                         refresh = newRefreshToken,
                                     )

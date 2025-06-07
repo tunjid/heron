@@ -19,8 +19,10 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.graph.ListView
 import app.bsky.graph.ListViewBasic
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import kotlinx.datetime.Instant
@@ -31,12 +33,12 @@ internal fun MultipleEntitySaver.add(
     listView.creator.profileEntity().let(::add)
     add(
         ListEntity(
-            cid = listView.cid.cid.let(::Id),
-            uri = listView.uri.atUri.let(::Uri),
-            creatorId = listView.creator.did.did.let(::Id),
+            cid = listView.cid.cid.let(::ListId),
+            uri = listView.uri.atUri.let(::ListUri),
+            creatorId = listView.creator.did.did.let(::ProfileId),
             name = listView.name,
             description = listView.description,
-            avatar = listView.avatar?.uri?.let(::Uri),
+            avatar = listView.avatar?.uri?.let(::ImageUri),
             listItemCount = listView.listItemCount,
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt,
@@ -51,12 +53,12 @@ internal fun MultipleEntitySaver.add(
     creator.profileEntity().let(::add)
     add(
         ListEntity(
-            cid = listView.cid.cid.let(::Id),
-            uri = listView.uri.atUri.let(::Uri),
-            creatorId = creator.did.did.let(::Id),
+            cid = listView.cid.cid.let(::ListId),
+            uri = listView.uri.atUri.let(::ListUri),
+            creatorId = creator.did.did.let(::ProfileId),
             name = listView.name,
             description = "",
-            avatar = listView.avatar?.uri?.let(::Uri),
+            avatar = listView.avatar?.uri?.let(::ImageUri),
             listItemCount = listView.listItemCount,
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt ?: Instant.DISTANT_PAST,

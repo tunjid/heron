@@ -26,18 +26,6 @@ sealed interface Id {
     sealed interface Profile : Id
 }
 
-inline fun <reified T : Id> Id(id: String): T = when (T::class.qualifiedName) {
-    PostId::class.qualifiedName -> PostId(id = id)
-    ProfileId::class.qualifiedName -> ProfileId(id = id)
-    ProfileHandle::class.qualifiedName -> ProfileHandle(id = id)
-    ProfileHandleOrId::class.qualifiedName -> ProfileHandleOrId(id = id)
-    Id.Profile::class.qualifiedName -> ProfileHandleOrId(id = id)
-    FeedGeneratorId::class.qualifiedName -> FeedGeneratorId(id = id)
-    ListId::class.qualifiedName -> ListId(id = id)
-    else -> GenericId(id = id)
-} as T
-
-
 @Serializable
 @JvmInline
 value class PostId(

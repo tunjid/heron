@@ -17,8 +17,10 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.graph.StarterPackView
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import app.bsky.graph.Starterpack as BskyStarterPack
@@ -40,17 +42,17 @@ internal fun MultipleEntitySaver.add(
         )
         starterPack.listItemsSample.forEach { listItemView ->
             add(
-                listUri = listView.uri.atUri.let(::Uri),
+                listUri = listView.uri.atUri.let(::ListUri),
                 listItemView = listItemView
             )
         }
     }
     add(
         StarterPackEntity(
-            cid = starterPack.cid.cid.let(::Id),
-            uri = starterPack.uri.atUri.let(::Uri),
-            creatorId = starterPack.creator.did.did.let(::Id),
-            listUri = starterPack.list?.uri?.atUri?.let(::Uri),
+            cid = starterPack.cid.cid.let(::GenericId),
+            uri = starterPack.uri.atUri.let(::GenericUri),
+            creatorId = starterPack.creator.did.did.let(::ProfileId),
+            listUri = starterPack.list?.uri?.atUri?.let(::ListUri),
             name = bskyStarterPack.name,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,

@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -110,7 +111,7 @@ class AuthTokenRepository(
             savedStateRepository.updateState {
                 copy(
                     auth = SavedState.AuthTokens(
-                        authProfileId = Id(result.did.did),
+                        authProfileId = ProfileId(result.did.did),
                         auth = result.accessJwt,
                         refresh = result.refreshJwt,
                     )

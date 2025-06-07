@@ -28,7 +28,9 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -154,7 +156,7 @@ class OfflineProfileRepository @Inject constructor(
                         add(list)
                         items.forEach { listItemView ->
                             add(
-                                listUri = list.uri.atUri.let(::Uri),
+                                listUri = list.uri.atUri.let(::ListUri),
                                 listItemView = listItemView,
                             )
                         }
@@ -190,7 +192,7 @@ class OfflineProfileRepository @Inject constructor(
                             ProfileViewerStateEntity.Partial(
                                 profileId = connection.signedInProfileId,
                                 otherProfileId = connection.profileId,
-                                following = it.uri.atUri.let(::Uri),
+                                following = it.uri.atUri.let(::GenericUri),
                                 followedBy = connection.followedBy,
                             )
                         )

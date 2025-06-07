@@ -20,11 +20,10 @@ import app.bsky.feed.PostView
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsReason
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import sh.christian.ozone.api.AtUri
 
@@ -41,7 +40,7 @@ internal fun MultipleEntitySaver.add(
             viewingProfileId = viewingProfileId,
             postView = it,
         )
-        postUrisToPostIds[it.uri.atUri.let(::Uri)] = it.cid.cid.let(::Id)
+        postUrisToPostIds[it.uri.atUri.let(::GenericUri)] = it.cid.cid.let(::PostId)
     }
 
     listNotificationsNotification.forEach { notification ->
@@ -51,9 +50,9 @@ internal fun MultipleEntitySaver.add(
         )
         add(
             NotificationEntity(
-                uri = notification.uri.atUri.let(::Uri),
-                cid = notification.cid.cid.let(::Id),
-                authorId = notification.author.did.did.let(::Id),
+                uri = notification.uri.atUri.let(::GenericUri),
+                cid = notification.cid.cid.let(::GenericId),
+                authorId = notification.author.did.did.let(::ProfileId),
                 reason = when (notification.reason) {
                     ListNotificationsReason.Follow -> Notification.Reason.Follow
                     ListNotificationsReason.Like -> Notification.Reason.Like
@@ -66,7 +65,7 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsReason.Verified -> Notification.Reason.Verified
                     ListNotificationsReason.Unverified -> Notification.Reason.Unverified
                 },
-                reasonSubject = notification.reasonSubject?.atUri?.let(::Uri),
+                reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
                 associatedPostId = notification.associatedPostUri()
                     ?.atUri
                     ?.let(::GenericUri)
