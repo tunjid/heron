@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities
 
 import com.atproto.identity.ResolveHandleQueryParams
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.network.NetworkService
@@ -34,7 +35,7 @@ internal suspend fun lookupProfileDid(
     return when {
         Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
         Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
-            ids = listOf(Id(profileHandleOrId))
+            ids = listOf(ProfileHandleOrId(profileHandleOrId))
         )
             .first()
             .takeIf(List<ProfileEntity>::isNotEmpty)

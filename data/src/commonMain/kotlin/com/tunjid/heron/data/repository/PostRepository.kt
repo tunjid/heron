@@ -45,8 +45,8 @@ import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -414,12 +414,12 @@ class OfflinePostRepository @Inject constructor(
                     upsertInteraction(
                         partial = when (interaction) {
                             is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = it.uri.atUri.let(::Uri),
+                                likeUri = it.uri.atUri.let(::GenericUri),
                                 postId = interaction.postId,
                             )
 
                             is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
-                                repostUri = it.uri.atUri.let(::Uri),
+                                repostUri = it.uri.atUri.let(::GenericUri),
                                 postId = interaction.postId,
                             )
                         }

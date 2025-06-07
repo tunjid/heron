@@ -17,8 +17,10 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.GeneratorView
-import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
@@ -28,13 +30,13 @@ internal fun MultipleEntitySaver.add(
     feedGeneratorView.creator.profileEntity().let(::add)
     add(
         FeedGeneratorEntity(
-            cid = feedGeneratorView.cid.cid.let(::Id),
-            did = feedGeneratorView.did.did.let(::Id),
-            uri = feedGeneratorView.uri.atUri.let(::Uri),
-            creatorId = feedGeneratorView.creator.did.did.let(::Id),
+            cid = feedGeneratorView.cid.cid.let(::FeedGeneratorId),
+            did = feedGeneratorView.did.did.let(::FeedGeneratorId),
+            uri = feedGeneratorView.uri.atUri.let(::FeedGeneratorUri),
+            creatorId = feedGeneratorView.creator.did.did.let(::ProfileId),
             displayName = feedGeneratorView.displayName,
             description = feedGeneratorView.description,
-            avatar = feedGeneratorView.avatar?.uri?.let(::Uri),
+            avatar = feedGeneratorView.avatar?.uri?.let(::ImageUri),
             likeCount = feedGeneratorView.likeCount,
             acceptsInteractions = feedGeneratorView.acceptsInteractions,
             contentMode = feedGeneratorView.contentMode,

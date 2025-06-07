@@ -21,9 +21,12 @@ import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 
@@ -51,11 +54,11 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 
 internal fun ProfileView.profileEntity(): ProfileEntity =
     ProfileEntity(
-        did = Id(did.did),
-        handle = Id(handle.handle),
+        did = ProfileId(did.did),
+        handle = ProfileHandle(handle.handle),
         displayName = displayName,
         description = description,
-        avatar = avatar?.uri?.let(::Uri),
+        avatar = avatar?.uri?.let(::ImageUri),
         banner = null,
         followersCount = 0,
         followsCount = 0,
@@ -67,11 +70,11 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
     ProfileEntity(
-        did = Id(did.did),
-        handle = Id(handle.handle),
+        did = ProfileId(did.did),
+        handle = ProfileHandle(handle.handle),
         displayName = displayName,
         description = null,
-        avatar = avatar?.uri?.let(::Uri),
+        avatar = avatar?.uri?.let(::ImageUri),
         banner = null,
         followersCount = 0,
         followsCount = 0,
@@ -83,16 +86,16 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
     ProfileEntity(
-        did = Id(did.did),
-        handle = Id(handle.handle),
+        did = ProfileId(did.did),
+        handle = ProfileHandle(handle.handle),
         displayName = displayName,
         description = description,
-        avatar = avatar?.uri?.let(::Uri),
-        banner = banner?.uri?.let(::Uri),
+        avatar = avatar?.uri?.let(::ImageUri),
+        banner = banner?.uri?.let(::ImageUri),
         followersCount = followersCount,
         followsCount = followsCount,
         postsCount = postsCount,
-        joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::Id),
+        joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::GenericId),
         indexedAt = indexedAt,
         createdAt = createdAt,
     )
@@ -103,14 +106,14 @@ internal fun ProfileViewBasic.profileViewerStateEntities(
     listOf(
         ProfileViewerStateEntity(
             profileId = viewingProfileId,
-            otherProfileId = Id(did.did),
+            otherProfileId = ProfileId(did.did),
             muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
             blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
-            following = viewer?.following?.atUri?.let(::Uri),
-            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
-            blocking = viewer?.blocking?.atUri?.let(::Uri),
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
+            following = viewer?.following?.atUri?.let(::GenericUri),
+            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
+            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
         ),
     )
 
@@ -120,14 +123,14 @@ internal fun ProfileView.profileViewerStateEntities(
     listOf(
         ProfileViewerStateEntity(
             profileId = viewingProfileId,
-            otherProfileId = Id(did.did),
+            otherProfileId = ProfileId(did.did),
             muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
             blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
-            following = viewer?.following?.atUri?.let(::Uri),
-            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
-            blocking = viewer?.blocking?.atUri?.let(::Uri),
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
+            following = viewer?.following?.atUri?.let(::GenericUri),
+            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
+            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
         ),
     )
 
@@ -137,24 +140,24 @@ internal fun ProfileViewDetailed.profileViewerStateEntities(
     listOf(
         ProfileViewerStateEntity(
             profileId = viewingProfileId,
-            otherProfileId = Id(did.did),
+            otherProfileId = ProfileId(did.did),
             muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::Id),
+            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
             blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::Id),
-            following = viewer?.following?.atUri?.let(::Uri),
-            followedBy = viewer?.followedBy?.atUri?.let(::Uri),
-            blocking = viewer?.blocking?.atUri?.let(::Uri),
+            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
+            following = viewer?.following?.atUri?.let(::GenericUri),
+            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
+            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
         ),
     )
 
 
 internal fun ProfileViewBasic.profile() = Profile(
-    did = did.did.let(::Id),
-    handle = handle.handle.let(::Id),
+    did = did.did.let(::ProfileId),
+    handle = handle.handle.let(::ProfileHandle),
     displayName = displayName,
     description = null,
-    avatar = avatar?.uri?.let(::Uri),
+    avatar = avatar?.uri?.let(::ImageUri),
     banner = null,
     followersCount = 0,
     followsCount = 0,
@@ -165,11 +168,11 @@ internal fun ProfileViewBasic.profile() = Profile(
 )
 
 internal fun ProfileView.profile() = Profile(
-    did = did.did.let(::Id),
-    handle = handle.handle.let(::Id),
+    did = did.did.let(::ProfileId),
+    handle = handle.handle.let(::ProfileHandle),
     displayName = displayName,
     description = description,
-    avatar = avatar?.uri?.let(::Uri),
+    avatar = avatar?.uri?.let(::ImageUri),
     banner = null,
     followersCount = 0,
     followsCount = 0,

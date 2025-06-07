@@ -39,9 +39,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
@@ -243,7 +241,7 @@ class OfflineSearchRepository @Inject constructor(
             response.actors.observeProfileWithViewerStates(
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
-                idMapper = { did.did.let(::Id) },
+                idMapper = { did.did.let(::ProfileId) },
             )
                 .map { profileWithViewerStates ->
                     CursorList(
@@ -338,7 +336,7 @@ class OfflineSearchRepository @Inject constructor(
             profileViews.observeProfileWithViewerStates(
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileViewBasic::profile,
-                idMapper = { did.did.let(::Id) },
+                idMapper = { did.did.let(::ProfileId) },
             )
         )
     }
@@ -386,7 +384,7 @@ class OfflineSearchRepository @Inject constructor(
             profileViews.observeProfileWithViewerStates(
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
-                idMapper = { did.did.let(::Id) },
+                idMapper = { did.did.let(::ProfileId) },
             )
         )
     }
@@ -409,7 +407,7 @@ class OfflineSearchRepository @Inject constructor(
 
         emitAll(
             starterPackDao.starterPacks(
-                starterPackViews.map { it.cid.cid.let(::Id) }
+                starterPackViews.map { it.cid.cid.let(::ProfileId) }
             )
                 .map { populatedStarterPackEntities ->
                     populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
@@ -436,7 +434,7 @@ class OfflineSearchRepository @Inject constructor(
 
         emitAll(
             feedGeneratorDao.feedGenerator(
-                generatorViews.map { it.uri.atUri.let(::Uri) }
+                generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) }
             )
                 .map { populatedFeedGeneratorEntities ->
                     populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)

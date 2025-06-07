@@ -87,8 +87,8 @@ data class PopulatedProfileEntity(
 )
 
 private fun emptyProfile() = Profile(
-    did = Id(""),
-    handle = Id(""),
+    did = ProfileId(""),
+    handle = ProfileHandle(""),
     displayName = null,
     description = null,
     avatar = null,
