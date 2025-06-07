@@ -68,10 +68,10 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.search.ui.FeedGenerator
+import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
-import com.tunjid.heron.search.ui.StarterPackWithMembers
+import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
@@ -305,7 +305,7 @@ private fun SuggestedContent(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
-    starterPacksWithMembers: List<StarterPackWithMembers>,
+    starterPacksWithMembers: List<SuggestedStarterPack>,
     feedGenerators: List<FeedGenerator>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
@@ -374,7 +374,7 @@ private fun SuggestedContent(
             items = starterPacksWithMembers.take(5),
             key = { starterPackWithMember -> starterPackWithMember.starterPack.cid.id },
             itemContent = { starterPackWithMember ->
-                StarterPackWithMembers(
+                SuggestedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .padding(horizontal = 24.dp),
@@ -396,7 +396,7 @@ private fun SuggestedContent(
             items = feedGenerators.take(5),
             key = { feedGenerator -> feedGenerator.cid.id },
             itemContent = { feedGenerator ->
-                FeedGenerator(
+                FeedGeneratorSearchResult(
                     modifier = Modifier
                         .fillParentMaxWidth(),
                     feedGenerator = feedGenerator,
@@ -638,7 +638,7 @@ private fun SearchResults(
                     items = results,
                     key = { it.feedGenerator.cid.id },
                     itemContent = { result ->
-                        FeedGenerator(
+                        FeedGeneratorSearchResult(
                             feedGenerator = result.feedGenerator,
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                         )

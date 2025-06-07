@@ -53,7 +53,7 @@ import heron.feature_search.generated.resources.liked_by
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun FeedGenerator(
+fun FeedGeneratorSearchResult(
     modifier: Modifier = Modifier,
     feedGenerator: FeedGenerator,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,

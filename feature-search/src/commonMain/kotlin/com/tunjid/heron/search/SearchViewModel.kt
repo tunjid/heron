@@ -37,7 +37,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.search.ui.StarterPackWithMembers
+import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -177,7 +177,7 @@ private fun suggestedStarterPackMutations(
             }
 
             val starterPackWithMembersList = starterPacks.map { starterPack ->
-                StarterPackWithMembers(
+                SuggestedStarterPack(
                     starterPack = starterPack,
                     members = emptyList()
                 )
