@@ -20,13 +20,12 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.search.ui.StarterPackWithMembers
+import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
@@ -42,15 +41,40 @@ enum class ScreenLayout {
 
 internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.LoadAround, StateFlow<SearchState>>
 
+sealed interface SearchResult {
+
+    val sharedElementPrefix: String
+
+    data class OfProfile(
+        val profileWithViewerState: ProfileWithViewerState,
+        override val sharedElementPrefix: String,
+    ) : SearchResult
+
+    data class OfFeedGenerator(
+        val feedGenerator: FeedGenerator,
+        override val sharedElementPrefix: String,
+    ) : SearchResult
+
+    data class OfPost(
+        val post: Post,
+        override val sharedElementPrefix: String,
+    ) : SearchResult
+}
+
 sealed class SearchState {
-    data class Post(
-        val currentQuery: SearchQuery.Post,
-        val results: TiledList<SearchQuery.Post, SearchResult.Post> = emptyTiledList(),
+    data class OfPosts(
+        val currentQuery: SearchQuery.OfPosts,
+        val results: TiledList<SearchQuery.OfPosts, SearchResult.OfPost> = emptyTiledList(),
     ) : SearchState()
 
-    data class Profile(
-        val currentQuery: SearchQuery.Profile,
-        val results: TiledList<SearchQuery.Profile, SearchResult.Profile> = emptyTiledList(),
+    data class OfProfiles(
+        val currentQuery: SearchQuery.OfProfiles,
+        val results: TiledList<SearchQuery.OfProfiles, SearchResult.OfProfile> = emptyTiledList(),
+    ) : SearchState()
+
+    data class OfFeedGenerators(
+        val currentQuery: SearchQuery.OfFeedGenerators,
+        val results: TiledList<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator> = emptyTiledList(),
     ) : SearchState()
 
     data class LoadAround(
@@ -68,13 +92,13 @@ data class State(
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
-    val starterPacksWithMembers: List<StarterPackWithMembers> = emptyList(),
+    val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
     @Transient
     val feedGenerators: List<FeedGenerator> = emptyList(),
     @Transient
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
-    val autoCompletedProfiles: List<SearchResult.Profile> = emptyList(),
+    val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )

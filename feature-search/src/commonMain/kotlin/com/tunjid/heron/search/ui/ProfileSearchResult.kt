@@ -29,11 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -52,9 +52,9 @@ import kotlinx.datetime.Instant
 @Composable
 fun ProfileSearchResult(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    result: SearchResult.Profile,
-    onProfileClicked: (SearchResult.Profile) -> Unit,
-    onViewerStateClicked: (SearchResult.Profile) -> Unit,
+    result: SearchResult.OfProfile,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
+    onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = Modifier
@@ -100,61 +100,5 @@ fun ProfileSearchResult(
     )
 }
 
-@Composable
-internal fun PostSearchResult(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    now: Instant,
-    result: SearchResult.Post,
-    onProfileClicked: (SearchResult.Post) -> Unit,
-    onPostClicked: (SearchResult.Post) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-) {
-    ElevatedCard(
-        modifier = Modifier,
-        onClick = {
-            onPostClicked(result)
-        },
-        content = {
-            Post(
-                modifier = Modifier
-                    .padding(
-                        top = 16.dp,
-                        bottom = 8.dp,
-                        start = 16.dp,
-                        end = 16.dp
-                    ),
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = paneMovableElementSharedTransitionScope,
-                now = now,
-                post = result.post,
-                isAnchoredInTimeline = false,
-                avatarShape = RoundedPolygonShape.Circle,
-                sharedElementPrefix = result.sharedElementPrefix(),
-                createdAt = result.post.createdAt,
-                presentation = Timeline.Presentation.Text.WithEmbed,
-                postActions = rememberPostActions(
-                    onPostClicked = { _, _ ->
-                        onPostClicked(result)
-                    },
-                    onProfileClicked = { _, _, _ ->
-                        onProfileClicked(result)
-                    },
-                    onPostMediaClicked = { _, _, _, _ ->
-
-                    },
-                    onReplyToPost = {},
-                    onPostInteraction = onPostInteraction,
-                ),
-            )
-        },
-    )
-}
-
-internal fun SearchResult.Profile.avatarSharedElementKey(): String =
-    "${sharedElementPrefix()}-${profileWithViewerState.profile.did.id}"
-
-internal fun SearchResult.sharedElementPrefix() = when (this) {
-    is SearchResult.Post.Top -> "top-post-search-result"
-    is SearchResult.Post.Latest -> "latest-post-search-result"
-    is SearchResult.Profile -> "profile-search-result"
-}
+internal fun SearchResult.OfProfile.avatarSharedElementKey(): String =
+    "${sharedElementPrefix}-${profileWithViewerState.profile.did.id}"

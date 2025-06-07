@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.SearchResult
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -38,7 +37,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.search.ui.StarterPackWithMembers
+import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -47,6 +46,7 @@ import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
+import com.tunjid.tiler.map
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
@@ -177,7 +177,7 @@ private fun suggestedStarterPackMutations(
             }
 
             val starterPackWithMembersList = starterPacks.map { starterPack ->
-                StarterPackWithMembers(
+                SuggestedStarterPack(
                     starterPack = starterPack,
                     members = emptyList()
                 )
@@ -245,21 +245,27 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     is Action.Search.OnSearchQueryConfirmed -> {
                         searchStateHolders.forEach {
                             val confirmedQuery = when (val searchState = it.state.value) {
-                                is SearchState.Post -> when (searchState.currentQuery) {
-                                    is SearchQuery.Post.Latest -> SearchQuery.Post.Top(
+                                is SearchState.OfPosts -> when (searchState.currentQuery) {
+                                    is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
                                         data = defaultSearchQueryData()
                                     )
 
-                                    is SearchQuery.Post.Top -> SearchQuery.Post.Top(
+                                    is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
                                         data = defaultSearchQueryData()
                                     )
                                 }
 
-                                is SearchState.Profile -> SearchQuery.Profile(
+                                is SearchState.OfProfiles -> SearchQuery.OfProfiles(
+                                    query = currentQuery,
+                                    isLocalOnly = action.isLocalOnly,
+                                    data = defaultSearchQueryData()
+                                )
+
+                                is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
                                     query = currentQuery,
                                     isLocalOnly = action.isLocalOnly,
                                     data = defaultSearchQueryData()
@@ -278,7 +284,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
             .debounce(300.milliseconds.inWholeMilliseconds)
             .flatMapLatest {
                 searchRepository.autoCompleteProfileSearch(
-                    query = SearchQuery.Profile(
+                    query = SearchQuery.OfProfiles(
                         query = it.query,
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
@@ -286,8 +292,15 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     cursor = Cursor.Pending
                 )
             }
-            .mapToMutation {
-                copy(autoCompletedProfiles = it)
+            .mapToMutation { profileWithViewerStates ->
+                copy(
+                    autoCompletedProfiles = profileWithViewerStates.map { profileWithViewerState ->
+                        SearchResult.OfProfile(
+                            profileWithViewerState = profileWithViewerState,
+                            sharedElementPrefix = "auto-complete-results"
+                        )
+                    }
+                )
             }
     )
 }
@@ -327,24 +340,32 @@ private fun searchStateHolders(
     coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
 ): List<SearchResultStateHolder> = listOf(
-    SearchState.Post(
-        currentQuery = SearchQuery.Post.Top(
+    SearchState.OfPosts(
+        currentQuery = SearchQuery.OfPosts.Top(
             query = "",
             isLocalOnly = false,
             data = defaultSearchQueryData(),
         ),
         results = emptyTiledList(),
     ),
-    SearchState.Post(
-        currentQuery = SearchQuery.Post.Latest(
+    SearchState.OfPosts(
+        currentQuery = SearchQuery.OfPosts.Latest(
             query = "",
             isLocalOnly = false,
             data = defaultSearchQueryData(),
         ),
         results = emptyTiledList(),
     ),
-    SearchState.Profile(
-        currentQuery = SearchQuery.Profile(
+    SearchState.OfProfiles(
+        currentQuery = SearchQuery.OfProfiles(
+            query = "",
+            isLocalOnly = false,
+            data = defaultSearchQueryData(),
+        ),
+        results = emptyTiledList(),
+    ),
+    SearchState.OfFeedGenerators(
+        currentQuery = SearchQuery.OfFeedGenerators(
             query = "",
             isLocalOnly = false,
             data = defaultSearchQueryData(),
@@ -357,31 +378,66 @@ private fun searchStateHolders(
         actionTransform = transform@{ actions ->
             actions.toMutationStream {
                 when (state()) {
-                    is SearchState.Post -> type().flow.searchMutations(
+                    is SearchState.OfPosts -> type().flow.searchMutations(
                         coroutineScope = coroutineScope,
                         updatePage = {
                             when (this) {
-                                is SearchQuery.Post.Latest -> copy(data = it)
-                                is SearchQuery.Post.Top -> copy(data = it)
+                                is SearchQuery.OfPosts.Latest -> copy(data = it)
+                                is SearchQuery.OfPosts.Top -> copy(data = it)
                             }
                         },
                         cursorListLoader = searchRepository::postSearch,
-                        searchStateResultsMutation = {
-                            check(this is SearchState.Post)
-                            if (it.isValidFor(currentQuery)) copy(results = it)
+                        searchStateResultsMutation = { posts ->
+                            check(this is SearchState.OfPosts)
+
+                            if (posts.isValidFor(currentQuery)) copy(
+                                results = posts.map { post ->
+                                    SearchResult.OfPost(
+                                        post = post,
+                                        sharedElementPrefix = currentQuery.sourceId,
+                                    )
+                                }
+                            )
                             else this
                         }
                     )
 
-                    is SearchState.Profile -> type().flow.searchMutations(
+                    is SearchState.OfProfiles -> type().flow.searchMutations(
                         coroutineScope = coroutineScope,
                         updatePage = {
                             copy(data = it)
                         },
                         cursorListLoader = searchRepository::profileSearch,
-                        searchStateResultsMutation = {
-                            check(this is SearchState.Profile)
-                            if (it.isValidFor(currentQuery)) copy(results = it)
+                        searchStateResultsMutation = { profileWithViewerStates ->
+                            check(this is SearchState.OfProfiles)
+                            if (profileWithViewerStates.isValidFor(currentQuery)) copy(
+                                results = profileWithViewerStates.map { profileWithViewerState ->
+                                    SearchResult.OfProfile(
+                                        profileWithViewerState = profileWithViewerState,
+                                        sharedElementPrefix = currentQuery.sourceId,
+                                    )
+                                }
+                            )
+                            else this
+                        }
+                    )
+
+                    is SearchState.OfFeedGenerators -> type().flow.searchMutations(
+                        coroutineScope = coroutineScope,
+                        updatePage = {
+                            copy(data = it)
+                        },
+                        cursorListLoader = searchRepository::feedGeneratorSearch,
+                        searchStateResultsMutation = { feedGenerators ->
+                            check(this is SearchState.OfFeedGenerators)
+                            if (feedGenerators.isValidFor(currentQuery)) copy(
+                                results = feedGenerators.map { feedGenerator ->
+                                    SearchResult.OfFeedGenerator(
+                                        feedGenerator = feedGenerator,
+                                        sharedElementPrefix = currentQuery.sourceId,
+                                    )
+                                }
+                            )
                             else this
                         }
                     )
@@ -394,7 +450,7 @@ private fun searchStateHolders(
 
 private inline fun <
         reified Query : SearchQuery,
-        reified Item : SearchResult,
+        reified Item,
         > Flow<SearchState.LoadAround>.searchMutations(
     coroutineScope: CoroutineScope,
     noinline updatePage: Query.(CursorQuery.Data) -> Query,
@@ -413,13 +469,18 @@ private inline fun <
         )
     val queryMutations = sharedQueries.mapToMutation<Query, SearchState> { query ->
         when (query) {
-            is SearchQuery.Post -> {
-                check(this is SearchState.Post)
+            is SearchQuery.OfPosts -> {
+                check(this is SearchState.OfPosts)
                 copy(currentQuery = query)
             }
 
-            is SearchQuery.Profile -> {
-                check(this is SearchState.Profile)
+            is SearchQuery.OfProfiles -> {
+                check(this is SearchState.OfProfiles)
+                copy(currentQuery = query)
+            }
+
+            is SearchQuery.OfFeedGenerators -> {
+                check(this is SearchState.OfFeedGenerators)
                 copy(currentQuery = query)
             }
 

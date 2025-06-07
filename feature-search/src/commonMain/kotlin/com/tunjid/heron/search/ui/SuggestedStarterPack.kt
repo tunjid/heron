@@ -54,17 +54,17 @@ import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
 
-data class StarterPackWithMembers(
+data class SuggestedStarterPack(
     val starterPack: StarterPack,
     val members: List<ListMember>,
 )
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun StarterPackWithMembers(
+fun SuggestedStarterPack(
     modifier: Modifier = Modifier,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    starterPackWithMembers: StarterPackWithMembers,
+    starterPackWithMembers: SuggestedStarterPack,
     onListMemberClicked: (ListMember) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     OutlinedCard(
