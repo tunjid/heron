@@ -74,7 +74,7 @@ import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/profile/{profileId}"
+private const val RoutePattern = "/profile/{profileHandleOrId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -85,7 +85,7 @@ private fun createRoute(
     )
 )
 
-internal val Route.profileId by mappedRoutePath(
+internal val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId
 )
 

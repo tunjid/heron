@@ -74,7 +74,7 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private const val RoutePattern = "/profile/{profileId}/post/{postRecordKey}"
+private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -93,12 +93,12 @@ internal val Route.postRecordKey by mappedRoutePath(
     mapper = ::RecordKey,
 )
 
-internal val Route.profileId by mappedRoutePath(
+internal val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId,
 )
 
 internal val Route.postUri by optionalMappedRouteQuery(
-    mapper = ::PostUri
+    mapper = ::PostUri,
 )
 
 @OptIn(ExperimentalUuidApi::class)
