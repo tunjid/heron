@@ -16,4 +16,7 @@
 
 <resources>
     <string name="app_name">heron</string>
+    <string name="http_bluesky_app_intent_filter">BlueSky</string>
+    <string name="https_bluesky_app_intent_filter">BlueSky</string>
+    <string name="at_proto_deep_link_intent_filter">BlueSky</string>
 </resources>

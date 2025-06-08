@@ -16,6 +16,7 @@
 
 package com.tunjid.heron
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,18 +25,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.scaffold.navigation.PredictiveBackEffects
 import com.tunjid.heron.scaffold.scaffold.App
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 
 class MainActivity : ComponentActivity() {
+
+    private val appState by lazy {
+        (application as HeronApplication).appState
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+
         super.onCreate(savedInstanceState)
         FileKit.init(this)
-
-        val appState = (application as HeronApplication).appState
 
         setContent {
             App(
@@ -44,6 +50,18 @@ class MainActivity : ComponentActivity() {
             )
             PredictiveBackEffects(appState)
         }
+
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent) {
+        intent.data
+            ?.path
+            ?.let(::GenericUri)
+            ?.let(appState::onDeepLink)
+            ?.also {
+               intent.data = null
+            }
     }
 }
 
