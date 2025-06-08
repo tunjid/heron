@@ -35,13 +35,13 @@ import me.tatarka.inject.annotations.Inject
 internal typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class SplashViewModelCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSplashViewModel,
+class RouteViewModelInitializer(
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualSplashViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSplashViewModel = creator.invoke(scope, route)
+    ): ActualSplashViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

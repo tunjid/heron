@@ -46,13 +46,13 @@ import me.tatarka.inject.annotations.Inject
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class HomeViewModelCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualHomeViewModel,
+class RouteViewModelInitializer(
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualHomeViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualHomeViewModel = creator.invoke(scope, route)
+    ): ActualHomeViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

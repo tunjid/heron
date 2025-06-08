@@ -41,13 +41,13 @@ import me.tatarka.inject.annotations.Inject
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class GalleryViewModelCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualGalleryViewModel,
+class RouteViewModelInitializer(
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualGalleryViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualGalleryViewModel = creator.invoke(scope, route)
+    ): ActualGalleryViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

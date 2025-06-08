@@ -33,7 +33,7 @@ import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
-import com.tunjid.heron.feed.FeedViewModelCreator
+import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -137,10 +137,28 @@ abstract class FeedComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         routeParser: RouteParser,
-        creator: FeedViewModelCreator,
-    ) = RoutePattern to threePaneEntry<Route>(
+        viewModelInitializer: RouteViewModelInitializer,
+    ) = RoutePattern to routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @IntoMap
+    @Provides
+    fun routeUriPattern(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ) = RouteUriPattern to routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+    
+    private fun routePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
@@ -150,7 +168,7 @@ abstract class FeedComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualFeedViewModel> {
-                creator.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )
@@ -205,14 +223,4 @@ abstract class FeedComponent(
             )
         }
     )
-
-    @IntoMap
-    @Provides
-    fun routeUriAdaptiveConfiguration(
-        routeParser: RouteParser,
-        creator: FeedViewModelCreator,
-    ) = RouteUriPattern to routeAdaptiveConfiguration(
-        routeParser = routeParser,
-        creator = creator,
-    ).second
 }

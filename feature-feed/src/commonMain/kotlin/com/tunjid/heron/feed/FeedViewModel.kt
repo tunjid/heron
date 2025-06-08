@@ -53,13 +53,13 @@ import me.tatarka.inject.annotations.Inject
 internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class FeedViewModelCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
+class RouteViewModelInitializer(
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualFeedViewModel = creator.invoke(scope, route)
+    ): ActualFeedViewModel = constructor.invoke(scope, route)
 }
 
 @Inject
@@ -78,7 +78,7 @@ class ActualFeedViewModel(
     actionTransform = transform@{ actions ->
         merge(
             timelineStateHolderMutations(
-                lookup = route.timelineRequest,
+                request = route.timelineRequest,
                 scope = scope,
                 timelineRepository = timelineRepository,
                 profileRepository = profileRepository,
@@ -101,7 +101,7 @@ class ActualFeedViewModel(
 )
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
-    lookup: TimelineRequest.OfFeed,
+    request: TimelineRequest.OfFeed,
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
@@ -117,7 +117,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
         )
     )
 
-    val timeline = timelineRepository.lookupTimeline(lookup)
+    val timeline = timelineRepository.timeline(request)
         .first()
     val createdHolder = timelineStateHolder(
         refreshOnStart = true,

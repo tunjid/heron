@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
-import com.tunjid.heron.compose.ComposeViewModelCreator
+import com.tunjid.heron.compose.RouteViewModelInitializer
 import com.tunjid.heron.compose.ui.BottomAppBarFab
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.TopAppBarFab
@@ -111,13 +111,19 @@ abstract class ComposeComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
-        creator: ComposeViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    fun routePattern(
+        viewModelInitializer: RouteViewModelInitializer,
+    ) = RoutePattern to routePaneEntry(
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    private fun routePaneEntry(
+        viewModelInitializer: RouteViewModelInitializer,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualComposeViewModel> {
-                creator.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

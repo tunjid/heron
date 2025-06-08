@@ -41,7 +41,7 @@ import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
-import com.tunjid.heron.profiles.ProfilesViewModelCreator
+import com.tunjid.heron.profiles.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -156,45 +156,45 @@ abstract class ProfilesComponent(
     @Provides
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = PostLikesPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        viewModelInitializer = viewModelInitializer,
     )
 
     @IntoMap
     @Provides
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = PostRepostsPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        viewModelInitializer = viewModelInitializer,
     )
 
     @IntoMap
     @Provides
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = ProfileFollowersPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        viewModelInitializer = viewModelInitializer,
     )
 
     @IntoMap
     @Provides
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = ProfileFollowingPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        viewModelInitializer = viewModelInitializer,
     )
 
     private fun profilesStrategy(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         paneMapping = { route ->
             mapOf(
@@ -205,7 +205,7 @@ abstract class ProfilesComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfilesViewModel> {
-                creator.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )

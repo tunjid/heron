@@ -59,13 +59,13 @@ import me.tatarka.inject.annotations.Inject
 internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class ProfileViewModelCreator(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfileViewModel,
+class RouteViewModelInitializer(
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualProfileViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualProfileViewModel = creator.invoke(scope, route)
+    ): ActualProfileViewModel = constructor.invoke(scope, route)
 }
 
 @Inject
@@ -156,7 +156,7 @@ private fun loadSignedInProfileMutations(
                         }
                     }
                     .map { type ->
-                        timelineRepository.lookupTimeline(
+                        timelineRepository.timeline(
                             TimelineRequest.OfProfile(
                                 profileHandleOrDid = profileId,
                                 type = type,
