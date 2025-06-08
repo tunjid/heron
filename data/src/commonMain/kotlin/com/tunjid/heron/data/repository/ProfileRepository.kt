@@ -42,6 +42,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -228,10 +229,11 @@ class OfflineProfileRepository @Inject constructor(
         .mapNotNull { it.auth?.authProfileId }
         .distinctUntilChanged()
 
-    private suspend fun fetchProfile(profileId: Id) {
+    private suspend fun fetchProfile(profileId: Id.Profile) {
+        val profileDid = did(profileId) ?: return
         runCatchingWithNetworkRetry {
             networkService.api.getProfile(
-                GetProfileQueryParams(actor = Did(profileId.id))
+                GetProfileQueryParams(actor = profileDid)
             )
         }
             .getOrNull()
@@ -244,4 +246,10 @@ class OfflineProfileRepository @Inject constructor(
                 }
             }
     }
+
+    private suspend fun did(profileId: Id.Profile) = lookupProfileDid(
+        profileId = profileId,
+        profileDao = profileDao,
+        networkService = networkService,
+    )
 }
