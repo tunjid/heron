@@ -28,7 +28,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.post
 import com.tunjid.heron.postdetail.di.postRecordKey
 import com.tunjid.heron.postdetail.di.postUri
-import com.tunjid.heron.postdetail.di.profileId
+import com.tunjid.heron.postdetail.di.profileHandleOrId
 import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -106,7 +106,7 @@ fun postThreadsMutations(
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> = flow {
-    val postUri = route.postUri ?: profileRepository.profile(route.profileId)
+    val postUri = route.postUri ?: profileRepository.profile(route.profileHandleOrId)
         .first()
         .let {
             PostUri(

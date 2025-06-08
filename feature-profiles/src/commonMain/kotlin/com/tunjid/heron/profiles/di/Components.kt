@@ -56,9 +56,9 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
-import com.tunjid.treenav.strings.RouteTrie
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.toRouteTrie
 import heron.feature_profiles.generated.resources.Res
 import heron.feature_profiles.generated.resources.back
 import me.tatarka.inject.annotations.Component
@@ -67,22 +67,40 @@ import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val PostLikesPattern = "/profile/{profileId}/post/{postRecordKey}/liked-by"
-private const val PostRepostsPattern = "/profile/{profileId}/post/{postRecordKey}/reposted-by"
-private const val ProfileFollowersPattern = "/profile/{profileId}/followers"
-private const val ProfileFollowingPattern = "/profile/{profileId}/follows"
+private const val PostLikesPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/liked-by"
+private const val PostRepostsPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/reposted-by"
+private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/followers"
+private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
-private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
-    set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postRecordKey, it.profileId) }
-    set(PathPattern(PostRepostsPattern)) { Load.Post.Reposts(it.postRecordKey, it.profileId) }
-    set(PathPattern(ProfileFollowersPattern)) { Load.Profile.Followers(it.profileId) }
-    set(PathPattern(ProfileFollowingPattern)) { Load.Profile.Following(it.profileId) }
-}
+private val LoadTrie = mapOf(
+    PathPattern(PostLikesPattern) to { route: Route ->
+        Load.Post.Likes(
+            route.postRecordKey,
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(PostRepostsPattern) to { route: Route ->
+        Load.Post.Reposts(
+            route.postRecordKey,
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(ProfileFollowersPattern) to { route: Route ->
+        Load.Profile.Followers(
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(ProfileFollowingPattern) to { route: Route ->
+        Load.Profile.Following(
+            route.profileHandleOrId,
+        )
+    },
+).toRouteTrie()
 
 internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
-private val Route.profileId by mappedRoutePath(
+private val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId
 )
 

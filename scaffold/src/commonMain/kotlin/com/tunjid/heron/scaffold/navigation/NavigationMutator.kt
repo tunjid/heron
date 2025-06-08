@@ -119,7 +119,7 @@ interface NavigationAction {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
-                        path = "/profile/{profileId}/post/${post.uri.recordKey}",
+                        path = "/profile/${post.author.did.id}/post/${post.uri.recordKey}",
                         queryParams = mapOf(
                             "post" to listOf(post.toUrlEncodedBase64()),
                             "postUri" to listOf(post.uri.uri),

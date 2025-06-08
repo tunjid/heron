@@ -35,7 +35,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
 import com.tunjid.heron.profile.di.profile
-import com.tunjid.heron.profile.di.profileId
+import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -83,25 +83,25 @@ class ActualProfileViewModel(
     initialState = State(
         avatarSharedElementKey = route.avatarSharedElementKey ?: "",
         profile = route.profile ?: stubProfile(
-            did = ProfileId(route.profileId.id),
-            handle = ProfileHandle(route.profileId.id),
+            did = ProfileId(route.profileHandleOrId.id),
+            handle = ProfileHandle(route.profileHandleOrId.id),
             avatar = null,
         ),
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadProfileMutations(
-            profileId = route.profileId,
+            profileId = route.profileHandleOrId,
             profileRepository = profileRepository,
         ),
         loadSignedInProfileMutations(
-            profileId = route.profileId,
+            profileId = route.profileHandleOrId,
             scope = scope,
             authTokenRepository = authTokenRepository,
             timelineRepository = timelineRepository,
         ),
         profileRelationshipMutations(
-            profileId = route.profileId,
+            profileId = route.profileHandleOrId,
             profileRepository = profileRepository,
         )
     ),
