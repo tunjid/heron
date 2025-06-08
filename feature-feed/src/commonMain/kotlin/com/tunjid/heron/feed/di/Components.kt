@@ -55,6 +55,7 @@ import com.tunjid.treenav.strings.RouteTrie
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
+import com.tunjid.treenav.strings.toRouteTrie
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
@@ -78,21 +79,21 @@ private val Route.profileId by mappedRoutePath(
 
 private val Route.feedUriSuffix by routePath()
 
-private val RequestTrie = RouteTrie<(Route) -> TimelineRequest.OfFeed>().apply {
-    set(PathPattern(RoutePattern)) { route ->
+private val RequestTrie = mapOf(
+    PathPattern(RoutePattern) to { route: Route ->
         TimelineRequest.OfFeed.WithProfile(
             profileHandleOrDid = route.profileId,
             feedUriSuffix = route.feedUriSuffix,
         )
-    }
-    set(PathPattern(RouteUriPattern)) { route ->
+    },
+    PathPattern(RouteUriPattern) to { route: Route ->
         TimelineRequest.OfFeed.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::FeedGeneratorUri)
         )
-    }
-}
+    },
+).toRouteTrie()
 
 internal val Route.timelineRequest: TimelineRequest.OfFeed
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -154,7 +155,7 @@ abstract class FeedComponent(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
-    
+
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,

@@ -56,9 +56,9 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
-import com.tunjid.treenav.strings.RouteTrie
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.toRouteTrie
 import heron.feature_profiles.generated.resources.Res
 import heron.feature_profiles.generated.resources.back
 import me.tatarka.inject.annotations.Component
@@ -72,12 +72,30 @@ private const val PostRepostsPattern = "/profile/{profileHandleOrId}/post/{postR
 private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/followers"
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
-private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
-    set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postRecordKey, it.profileHandleOrId) }
-    set(PathPattern(PostRepostsPattern)) { Load.Post.Reposts(it.postRecordKey, it.profileHandleOrId) }
-    set(PathPattern(ProfileFollowersPattern)) { Load.Profile.Followers(it.profileHandleOrId) }
-    set(PathPattern(ProfileFollowingPattern)) { Load.Profile.Following(it.profileHandleOrId) }
-}
+private val LoadTrie = mapOf(
+    PathPattern(PostLikesPattern) to { route: Route ->
+        Load.Post.Likes(
+            route.postRecordKey,
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(PostRepostsPattern) to { route: Route ->
+        Load.Post.Reposts(
+            route.postRecordKey,
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(ProfileFollowersPattern) to { route: Route ->
+        Load.Profile.Followers(
+            route.profileHandleOrId,
+        )
+    },
+    PathPattern(ProfileFollowingPattern) to { route: Route ->
+        Load.Profile.Following(
+            route.profileHandleOrId,
+        )
+    },
+).toRouteTrie()
 
 internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!

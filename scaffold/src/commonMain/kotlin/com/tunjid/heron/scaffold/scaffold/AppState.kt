@@ -187,12 +187,10 @@ class AppState @Inject constructor(
             navState.pop()
         }
 
-    fun onDeepLink(uri: GenericUri) {
-        println("DEEP LINK: $uri")
+    fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept {
             navState.push(uri.uri.toRoute)
         }
-    }
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
