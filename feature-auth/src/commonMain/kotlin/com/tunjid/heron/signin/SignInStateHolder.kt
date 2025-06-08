@@ -46,12 +46,12 @@ internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<Stat
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSignInViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualSignInViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSignInViewModel = creator.invoke(scope, route)
+    ): ActualSignInViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

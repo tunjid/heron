@@ -72,12 +72,12 @@ internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<Stat
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualSearchViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualSearchViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSearchViewModel = creator.invoke(scope, route)
+    ): ActualSearchViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

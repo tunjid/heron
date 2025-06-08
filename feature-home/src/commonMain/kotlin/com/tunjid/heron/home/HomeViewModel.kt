@@ -47,12 +47,12 @@ internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualHomeViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualHomeViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualHomeViewModel = creator.invoke(scope, route)
+    ): ActualHomeViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

@@ -59,12 +59,12 @@ internal typealias ProfilesStateHolder = ActionStateMutator<Action, StateFlow<St
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualProfilesViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualProfilesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualProfilesViewModel = creator.invoke(scope, route)
+    ): ActualProfilesViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

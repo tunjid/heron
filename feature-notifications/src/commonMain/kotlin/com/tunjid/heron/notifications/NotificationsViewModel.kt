@@ -63,12 +63,12 @@ internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFl
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualNotificationsViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualNotificationsViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualNotificationsViewModel = creator.invoke(scope, route)
+    ): ActualNotificationsViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

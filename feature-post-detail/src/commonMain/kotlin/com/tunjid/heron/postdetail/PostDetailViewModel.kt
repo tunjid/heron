@@ -47,12 +47,12 @@ internal typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualPostDetailViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualPostDetailViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualPostDetailViewModel = creator.invoke(scope, route)
+    ): ActualPostDetailViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

@@ -60,12 +60,12 @@ internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<Sta
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualComposeViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualComposeViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualComposeViewModel = creator.invoke(scope, route)
+    ): ActualComposeViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

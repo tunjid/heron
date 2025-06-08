@@ -54,12 +54,12 @@ internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualFeedViewModel = creator.invoke(scope, route)
+    ): ActualFeedViewModel = constructor.invoke(scope, route)
 }
 
 @Inject

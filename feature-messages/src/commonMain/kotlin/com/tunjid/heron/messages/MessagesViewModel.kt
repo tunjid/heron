@@ -36,12 +36,12 @@ internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<St
 
 @Inject
 class RouteViewModelFactory(
-    private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
+    private val constructor: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualMessagesViewModel = creator.invoke(scope, route)
+    ): ActualMessagesViewModel = constructor.invoke(scope, route)
 }
 
 @Inject
