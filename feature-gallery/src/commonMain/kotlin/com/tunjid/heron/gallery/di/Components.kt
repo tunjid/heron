@@ -29,7 +29,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
-import com.tunjid.heron.gallery.ViewModelCreator
+import com.tunjid.heron.gallery.RouteViewModelFactory
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -107,13 +107,13 @@ abstract class GalleryComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: ViewModelCreator,
+        creator: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
         creator = creator,
     )
 
     private fun routePaneEntry(
-        creator: ViewModelCreator,
+        creator: RouteViewModelFactory,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

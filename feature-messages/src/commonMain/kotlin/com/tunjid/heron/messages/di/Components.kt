@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
-import com.tunjid.heron.messages.ViewModelCreator
+import com.tunjid.heron.messages.RouteViewModelFactory
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
@@ -88,13 +88,13 @@ abstract class MessagesComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: ViewModelCreator,
+        creator: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
         creator = creator,
     )
 
     private fun routePaneEntry(
-        creator: ViewModelCreator,
+        creator: RouteViewModelFactory,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

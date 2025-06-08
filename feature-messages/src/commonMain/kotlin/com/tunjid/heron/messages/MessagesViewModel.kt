@@ -35,7 +35,7 @@ import me.tatarka.inject.annotations.Inject
 internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class ViewModelCreator(
+class RouteViewModelFactory(
     private val creator: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
