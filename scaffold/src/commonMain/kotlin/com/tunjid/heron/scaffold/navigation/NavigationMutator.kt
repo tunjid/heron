@@ -36,6 +36,7 @@ import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.utilities.recordKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -118,7 +119,7 @@ interface NavigationAction {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
-                        path = "/profile/{profileId}/post/${post.cid.id}",
+                        path = "/profile/{profileId}/post/${post.uri.recordKey}",
                         queryParams = mapOf(
                             "post" to listOf(post.toUrlEncodedBase64()),
                             "postUri" to listOf(post.uri.uri),

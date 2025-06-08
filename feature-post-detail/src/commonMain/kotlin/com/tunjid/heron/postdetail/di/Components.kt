@@ -31,6 +31,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
@@ -58,7 +60,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
-import com.tunjid.treenav.strings.mappedRouteQuery
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeQuery
@@ -69,8 +71,10 @@ import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-private const val RoutePattern = "/profile/{profileId}/post/{postId}"
+private const val RoutePattern = "/profile/{profileId}/post/{postRecordKey}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -85,11 +89,22 @@ internal val Route.post: Post? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl
 )
 
-internal val Route.postUri by mappedRouteQuery(
+internal val Route.postRecordKey by mappedRoutePath(
+    mapper = ::RecordKey,
+)
+
+internal val Route.profileId by mappedRoutePath(
+    mapper = ::ProfileHandleOrId,
+)
+
+internal val Route.postUri by optionalMappedRouteQuery(
     mapper = ::PostUri
 )
 
-internal val Route.sharedElementPrefix by routeQuery()
+@OptIn(ExperimentalUuidApi::class)
+internal val Route.sharedElementPrefix by routeQuery(
+    default = Uuid.random().toHexString(),
+)
 
 @KmpComponentCreate
 expect fun PostDetailNavigationComponent.Companion.create(): PostDetailNavigationComponent

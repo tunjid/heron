@@ -436,7 +436,7 @@ class OfflinePostRepository @Inject constructor(
                                 is Post.Interaction.Delete.Unlike -> Collections.Like
                             }
                         ),
-                        rkey = Collections.recordKey(
+                        rkey = Collections.rKey(
                             when (interaction) {
                                 is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri
                                 is Post.Interaction.Delete.Unlike -> interaction.likeUri

@@ -205,7 +205,7 @@ class OfflineProfileRepository @Inject constructor(
                     DeleteRecordRequest(
                         repo = connection.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.Follow),
-                        rkey = Collections.recordKey(connection.followUri),
+                        rkey = Collections.rKey(connection.followUri),
                     )
                 )
             }
