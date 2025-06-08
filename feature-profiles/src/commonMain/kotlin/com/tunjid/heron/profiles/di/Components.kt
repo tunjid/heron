@@ -175,7 +175,7 @@ abstract class ProfilesComponent(
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = PostLikesPattern to profilesStrategy(
+    ) = PostLikesPattern to routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
@@ -185,7 +185,7 @@ abstract class ProfilesComponent(
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = PostRepostsPattern to profilesStrategy(
+    ) = PostRepostsPattern to routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
@@ -195,7 +195,7 @@ abstract class ProfilesComponent(
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = ProfileFollowersPattern to profilesStrategy(
+    ) = ProfileFollowersPattern to routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
@@ -205,12 +205,12 @@ abstract class ProfilesComponent(
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = ProfileFollowingPattern to profilesStrategy(
+    ) = ProfileFollowingPattern to routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
-    private fun profilesStrategy(
+    private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
