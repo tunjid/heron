@@ -156,7 +156,7 @@ private fun loadSignedInProfileMutations(
                         }
                     }
                     .map { type ->
-                        timelineRepository.lookupTimeline(
+                        timelineRepository.timeline(
                             TimelineRequest.OfProfile(
                                 profileHandleOrDid = profileId,
                                 type = type,

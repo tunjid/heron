@@ -105,7 +105,7 @@ sealed interface TimelineRequest {
         val type: Timeline.Profile.Type,
     ) : TimelineRequest
 
-    sealed interface OfFeed: TimelineRequest {
+    sealed interface OfFeed : TimelineRequest {
         data class WithUri(
             val uri: FeedGeneratorUri,
         ) : OfFeed
@@ -116,7 +116,7 @@ sealed interface TimelineRequest {
         ) : OfFeed
     }
 
-    sealed interface OfList: TimelineRequest {
+    sealed interface OfList : TimelineRequest {
         data class WithUri(
             val uri: ListUri,
         ) : OfList
@@ -156,7 +156,7 @@ class TimelineQuery(
 interface TimelineRepository {
     fun homeTimelines(): Flow<List<Timeline.Home>>
 
-    fun lookupTimeline(
+    fun timeline(
         request: TimelineRequest,
     ): Flow<Timeline>
 
@@ -603,7 +603,7 @@ class OfflineTimelineRepository(
             .distinctUntilChanged()
             .debounce(InvalidationTrackerDebounceMillis)
 
-    override fun lookupTimeline(
+    override fun timeline(
         request: TimelineRequest,
     ): Flow<Timeline> = flow {
         when (request) {
@@ -804,19 +804,20 @@ class OfflineTimelineRepository(
             limit = query.data.limit,
         )
             .flatMapLatest { itemEntities ->
+                val postIds = itemEntities.flatMap {
+                    listOfNotNull(
+                        it.postId,
+                        it.reply?.parentPostId,
+                        it.reply?.rootPostId
+                    )
+                }
+                    .toSet()
                 combine(
                     postDao.posts(
-                        itemEntities.flatMap {
-                            listOfNotNull(
-                                it.postId,
-                                it.reply?.parentPostId,
-                                it.reply?.rootPostId
-                            )
-                        }
-                            .toSet()
+                        postIds
                     ),
                     postDao.embeddedPosts(
-                        itemEntities.map { it.postId }.toSet()
+                        postIds
                     ),
                     profileDao.profiles(
                         itemEntities.mapNotNull { it.reposter }

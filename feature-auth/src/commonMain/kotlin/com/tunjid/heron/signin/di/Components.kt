@@ -99,12 +99,18 @@ abstract class SignInComponent(
 ) {
     companion object
 
-    @OptIn(ExperimentalSharedTransitionApi::class)
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         creator: SignInViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to routePaneEntry(
+        creator = creator,
+    )
+
+    @OptIn(ExperimentalSharedTransitionApi::class)
+    private fun routePaneEntry(
+        creator: SignInViewModelCreator,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSignInViewModel> {

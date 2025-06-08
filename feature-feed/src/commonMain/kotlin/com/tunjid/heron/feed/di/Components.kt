@@ -137,10 +137,28 @@ abstract class FeedComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         routeParser: RouteParser,
         creator: FeedViewModelCreator,
-    ) = RoutePattern to threePaneEntry<Route>(
+    ) = RoutePattern to routePaneEntry(
+        routeParser = routeParser,
+        creator = creator,
+    )
+
+    @IntoMap
+    @Provides
+    fun routeUriPattern(
+        routeParser: RouteParser,
+        creator: FeedViewModelCreator,
+    ) = RouteUriPattern to routePaneEntry(
+        routeParser = routeParser,
+        creator = creator,
+    )
+    
+    private fun routePaneEntry(
+        routeParser: RouteParser,
+        creator: FeedViewModelCreator,
+    ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
@@ -205,14 +223,4 @@ abstract class FeedComponent(
             )
         }
     )
-
-    @IntoMap
-    @Provides
-    fun routeUriAdaptiveConfiguration(
-        routeParser: RouteParser,
-        creator: FeedViewModelCreator,
-    ) = RouteUriPattern to routeAdaptiveConfiguration(
-        routeParser = routeParser,
-        creator = creator,
-    ).second
 }

@@ -99,9 +99,15 @@ abstract class NotificationsComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         creator: NotificationsViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to routePaneEntry(
+        creator = creator,
+    )
+
+    private fun routePaneEntry(
+        creator: NotificationsViewModelCreator,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualNotificationsViewModel> {

@@ -90,9 +90,15 @@ abstract class SearchComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         creator: SearchViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to routePaneEntry(
+        creator = creator,
+    )
+
+    private fun routePaneEntry(
+        creator: SearchViewModelCreator,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSearchViewModel> {

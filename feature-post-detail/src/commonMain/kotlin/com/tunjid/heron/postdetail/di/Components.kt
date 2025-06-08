@@ -123,10 +123,18 @@ abstract class PostDetailComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         routeParser: RouteParser,
         creator: PostDetailViewModelCreator,
-    ) = RoutePattern to threePaneEntry<Route>(
+    ) = RoutePattern to routePaneEntry(
+        routeParser = routeParser,
+        creator = creator,
+    )
+
+    private fun routePaneEntry(
+        routeParser: RouteParser,
+        creator: PostDetailViewModelCreator,
+    ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

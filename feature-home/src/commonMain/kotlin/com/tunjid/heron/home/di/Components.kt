@@ -107,9 +107,15 @@ abstract class HomeComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         creator: HomeViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to routePaneEntry(
+        creator = creator,
+    )
+
+    private fun routePaneEntry(
+        creator: HomeViewModelCreator,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualHomeViewModel> {

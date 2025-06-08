@@ -77,9 +77,15 @@ abstract class SplashComponent(
 
     @IntoMap
     @Provides
-    fun routeAdaptiveConfiguration(
+    fun routePattern(
         creator: SplashViewModelCreator,
-    ) = RoutePattern to threePaneEntry(
+    ) = RoutePattern to routePaneEntry(
+        creator = creator,
+    )
+
+    private fun routePaneEntry(
+        creator: SplashViewModelCreator,
+    ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSplashViewModel> {

@@ -170,7 +170,7 @@ private fun timelineUpdateMutations(
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> =
-    timelineRepository.lookupTimeline(
+    timelineRepository.timeline(
         when (timeline) {
             is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithUri(
                 uri = timeline.feedGenerator.uri,
