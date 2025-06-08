@@ -39,7 +39,7 @@ import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.ActualSearchViewModel
 import com.tunjid.heron.search.SearchScreen
-import com.tunjid.heron.search.SearchViewModelCreator
+import com.tunjid.heron.search.ViewModelCreator
 import com.tunjid.heron.search.ui.SearchBar
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
@@ -91,13 +91,13 @@ abstract class SearchComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: SearchViewModelCreator,
+        creator: ViewModelCreator,
     ) = RoutePattern to routePaneEntry(
         creator = creator,
     )
 
     private fun routePaneEntry(
-        creator: SearchViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

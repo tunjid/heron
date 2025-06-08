@@ -41,7 +41,7 @@ import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
-import com.tunjid.heron.profiles.ProfilesViewModelCreator
+import com.tunjid.heron.profiles.ViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -156,7 +156,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        creator: ViewModelCreator,
     ) = PostLikesPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -166,7 +166,7 @@ abstract class ProfilesComponent(
     @Provides
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        creator: ViewModelCreator,
     ) = PostRepostsPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -176,7 +176,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        creator: ViewModelCreator,
     ) = ProfileFollowersPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -186,7 +186,7 @@ abstract class ProfilesComponent(
     @Provides
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        creator: ViewModelCreator,
     ) = ProfileFollowingPattern to profilesStrategy(
         routeParser = routeParser,
         creator = creator,
@@ -194,7 +194,7 @@ abstract class ProfilesComponent(
 
     private fun profilesStrategy(
         routeParser: RouteParser,
-        creator: ProfilesViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry(
         paneMapping = { route ->
             mapOf(

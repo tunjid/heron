@@ -35,7 +35,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
-import com.tunjid.heron.postdetail.PostDetailViewModelCreator
+import com.tunjid.heron.postdetail.ViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -125,7 +125,7 @@ abstract class PostDetailComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        creator: PostDetailViewModelCreator,
+        creator: ViewModelCreator,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
         creator = creator,
@@ -133,7 +133,7 @@ abstract class PostDetailComponent(
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        creator: PostDetailViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(

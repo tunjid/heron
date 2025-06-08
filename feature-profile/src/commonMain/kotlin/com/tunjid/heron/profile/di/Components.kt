@@ -38,7 +38,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.Action
 import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
-import com.tunjid.heron.profile.ProfileViewModelCreator
+import com.tunjid.heron.profile.ViewModelCreator
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -129,7 +129,7 @@ abstract class ProfileComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        creator: ProfileViewModelCreator,
+        creator: ViewModelCreator,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
         creator = creator,
@@ -137,7 +137,7 @@ abstract class ProfileComponent(
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        creator: ProfileViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(

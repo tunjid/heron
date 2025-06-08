@@ -45,7 +45,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.SignInScreen
-import com.tunjid.heron.signin.SignInViewModelCreator
+import com.tunjid.heron.signin.ViewModelCreator
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -102,14 +102,14 @@ abstract class SignInComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: SignInViewModelCreator,
+        creator: ViewModelCreator,
     ) = RoutePattern to routePaneEntry(
         creator = creator,
     )
 
     @OptIn(ExperimentalSharedTransitionApi::class)
     private fun routePaneEntry(
-        creator: SignInViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope

@@ -33,7 +33,7 @@ import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
-import com.tunjid.heron.feed.FeedViewModelCreator
+import com.tunjid.heron.feed.ViewModelCreator
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -139,7 +139,7 @@ abstract class FeedComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        creator: FeedViewModelCreator,
+        creator: ViewModelCreator,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
         creator = creator,
@@ -149,7 +149,7 @@ abstract class FeedComponent(
     @Provides
     fun routeUriPattern(
         routeParser: RouteParser,
-        creator: FeedViewModelCreator,
+        creator: ViewModelCreator,
     ) = RouteUriPattern to routePaneEntry(
         routeParser = routeParser,
         creator = creator,
@@ -157,7 +157,7 @@ abstract class FeedComponent(
     
     private fun routePaneEntry(
         routeParser: RouteParser,
-        creator: FeedViewModelCreator,
+        creator: ViewModelCreator,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
