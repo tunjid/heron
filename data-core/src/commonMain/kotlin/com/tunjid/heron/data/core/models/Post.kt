@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -177,19 +178,19 @@ data class Post(
         @Serializable
         data class Likes(
             val profileId: ProfileId,
-            val postId: PostId,
+            val postRecordKey: RecordKey,
         ) : Metadata()
 
         @Serializable
         data class Reposts(
             val profileId: ProfileId,
-            val postId: PostId,
+            val postRecordKey: RecordKey,
         ) : Metadata()
 
         @Serializable
         data class Quotes(
             val profileId: ProfileId,
-            val postId: PostId,
+            val postRecordKey: RecordKey,
         ) : Metadata()
     }
 }

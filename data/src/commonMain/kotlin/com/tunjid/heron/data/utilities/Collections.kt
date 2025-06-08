@@ -16,8 +16,9 @@
 
 package com.tunjid.heron.data.utilities
 
-import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.recordKey
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import sh.christian.ozone.BlueskyJson
@@ -32,15 +33,14 @@ internal object Collections {
     const val List = "app.bsky.graph.list"
     const val FeedGenerator = "app.bsky.feed.generator"
 
-    fun rKey(uri: Uri) = RKey(
+    // TODO: This should be more specific
+    fun rKey(uri: GenericUri) = RKey(
         rkey = uri.recordKey.value,
     )
 }
 
-val Uri.recordKey
-    get() = RecordKey(uri.split("/").last())
-
-val Uri.tidInstant: Instant?
+// TODO: This should be more specific
+val GenericUri.tidInstant: Instant?
     get() = try {
         Instant.fromEpochMilliseconds(tidTimestampFromBase32(recordKey.value))
     } catch (e: IllegalArgumentException) {

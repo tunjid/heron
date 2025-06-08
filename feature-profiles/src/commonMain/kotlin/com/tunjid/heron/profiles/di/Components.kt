@@ -34,8 +34,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
@@ -67,14 +67,14 @@ import me.tatarka.inject.annotations.KmpComponentCreate
 import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
-private const val PostLikesPattern = "/profile/{profileId}/post/{postId}/liked-by"
-private const val PostRepostsPattern = "/profile/{profileId}/post/{postId}/reposted-by"
+private const val PostLikesPattern = "/profile/{profileId}/post/{postRecordKey}/liked-by"
+private const val PostRepostsPattern = "/profile/{profileId}/post/{postRecordKey}/reposted-by"
 private const val ProfileFollowersPattern = "/profile/{profileId}/followers"
 private const val ProfileFollowingPattern = "/profile/{profileId}/follows"
 
 private val LoadTrie = RouteTrie<(Route) -> Load>().apply {
-    set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postId) }
-    set(PathPattern(PostRepostsPattern)) { Load.Post.Reposts(it.postId) }
+    set(PathPattern(PostLikesPattern)) { Load.Post.Likes(it.postRecordKey, it.profileId) }
+    set(PathPattern(PostRepostsPattern)) { Load.Post.Reposts(it.postRecordKey, it.profileId) }
     set(PathPattern(ProfileFollowersPattern)) { Load.Profile.Followers(it.profileId) }
     set(PathPattern(ProfileFollowingPattern)) { Load.Profile.Following(it.profileId) }
 }
@@ -83,11 +83,11 @@ internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
 private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileId
+    mapper = ::ProfileHandleOrId
 )
 
-private val Route.postId by mappedRoutePath(
-    mapper = ::PostId
+private val Route.postRecordKey by mappedRoutePath(
+    mapper = ::RecordKey
 )
 
 private fun createRoute(

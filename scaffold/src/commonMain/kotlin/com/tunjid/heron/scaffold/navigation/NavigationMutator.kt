@@ -30,13 +30,13 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
-import com.tunjid.heron.data.utilities.recordKey
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -191,12 +191,12 @@ interface NavigationAction {
             sealed class Post : ToProfiles() {
                 data class Likes(
                     override val profileId: ProfileId,
-                    val postId: PostId,
+                    val postRecordKey: RecordKey,
                 ) : Post()
 
                 data class Repost(
                     override val profileId: ProfileId,
-                    val postId: PostId,
+                    val postRecordKey: RecordKey,
                 ) : Post()
             }
 
@@ -214,8 +214,8 @@ interface NavigationAction {
                 navState.push(
                     routeString(
                         path = when (this@ToProfiles) {
-                            is Post.Likes -> "/profile/${profileId.id}/post/${postId.id}/liked-by"
-                            is Post.Repost -> "/profile/${profileId.id}/post/${postId.id}/reposted-by"
+                            is Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
+                            is Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
                             is Profile.Followers -> "/profile/${profileId.id}/followers"
                             is Profile.Following -> "/profile/${profileId.id}/follows"
                         },
