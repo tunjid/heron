@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
@@ -328,7 +329,7 @@ private fun MetadataContent(
                 vertical = 4.dp,
             ),
         time = data.post.createdAt,
-        postId = data.post.cid,
+        postRecordKey = data.post.uri.recordKey,
         profileId = data.post.author.did,
         reposts = data.post.repostCount,
         quotes = data.post.quoteCount,

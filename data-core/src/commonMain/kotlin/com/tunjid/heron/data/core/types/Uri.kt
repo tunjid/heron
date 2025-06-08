@@ -25,8 +25,8 @@ sealed interface Uri {
     val uri: String
 
     enum class Host(val prefix: String) {
-        AtProto("at"),
-        Http("http"),
+        AtProto("at://"),
+        Http("http://"),
     }
 }
 

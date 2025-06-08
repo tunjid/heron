@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.GetProfileQueryParams
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
 import com.atproto.repo.CreateRecordRequest
@@ -46,6 +45,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.offset
+import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import kotlinx.coroutines.flow.Flow
@@ -62,6 +62,12 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import app.bsky.graph.Follow as BskyFollow
+
+@Serializable
+data class ProfilesQuery(
+    val profileId: Id.Profile,
+    override val data: CursorQuery.Data,
+) : CursorQuery
 
 @Serializable
 data class ListMemberQuery(
@@ -108,7 +114,15 @@ class OfflineProfileRepository @Inject constructor(
         profileDao.profiles(listOf(profileId))
             .map { it.firstOrNull()?.asExternalModel() }
             .filterNotNull()
-            .withRefresh { fetchProfile(profileId) }
+            .withRefresh {
+                refreshProfile(
+                    profileId = profileId,
+                    profileDao = profileDao,
+                    networkService = networkService,
+                    multipleEntitySaverProvider = multipleEntitySaverProvider,
+                    savedStateRepository = savedStateRepository,
+                )
+            }
             .distinctUntilChanged()
 
     override fun profileRelationships(
@@ -204,7 +218,7 @@ class OfflineProfileRepository @Inject constructor(
                     DeleteRecordRequest(
                         repo = connection.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.Follow),
-                        rkey = Collections.recordKey(connection.followUri),
+                        rkey = Collections.rKey(connection.followUri),
                     )
                 )
             }
@@ -227,21 +241,4 @@ class OfflineProfileRepository @Inject constructor(
     private fun signedInProfileId() = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }
         .distinctUntilChanged()
-
-    private suspend fun fetchProfile(profileId: Id) {
-        runCatchingWithNetworkRetry {
-            networkService.api.getProfile(
-                GetProfileQueryParams(actor = Did(profileId.id))
-            )
-        }
-            .getOrNull()
-            ?.let { response ->
-                multipleEntitySaverProvider.saveInTransaction {
-                    add(
-                        viewingProfileId = savedStateRepository.signedInProfileId,
-                        profileView = response,
-                    )
-                }
-            }
-    }
 }

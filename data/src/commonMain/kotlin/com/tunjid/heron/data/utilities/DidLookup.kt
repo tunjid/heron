@@ -16,12 +16,17 @@
 
 package com.tunjid.heron.data.utilities
 
+import app.bsky.actor.GetProfileQueryParams
 import com.atproto.identity.ResolveHandleQueryParams
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.signedInProfileId
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import kotlinx.coroutines.flow.first
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
@@ -55,4 +60,32 @@ internal suspend fun lookupProfileDid(
 
         else -> null
     }
+}
+
+internal suspend fun refreshProfile(
+    profileId: Id.Profile,
+    profileDao: ProfileDao,
+    networkService: NetworkService,
+    multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    savedStateRepository: SavedStateRepository,
+) {
+    val profileDid = lookupProfileDid(
+        profileId = profileId,
+        profileDao = profileDao,
+        networkService = networkService,
+    ) ?: return
+    runCatchingWithNetworkRetry {
+        networkService.api.getProfile(
+            GetProfileQueryParams(actor = profileDid)
+        )
+    }
+        .getOrNull()
+        ?.let { response ->
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    viewingProfileId = savedStateRepository.signedInProfileId,
+                    profileView = response,
+                )
+            }
+        }
 }

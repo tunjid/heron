@@ -18,14 +18,17 @@ package com.tunjid.heron.postdetail
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.post
+import com.tunjid.heron.postdetail.di.postRecordKey
 import com.tunjid.heron.postdetail.di.postUri
+import com.tunjid.heron.postdetail.di.profileId
 import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -40,6 +43,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 
@@ -57,6 +63,7 @@ class RouteViewModelInitializer(
 
 @Inject
 class ActualPostDetailViewModel(
+    profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -72,7 +79,8 @@ class ActualPostDetailViewModel(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         postThreadsMutations(
-            postUri = route.postUri,
+            route = route,
+            profileRepository = profileRepository,
             timelineRepository = timelineRepository,
         )
     ),
@@ -94,14 +102,26 @@ class ActualPostDetailViewModel(
 )
 
 fun postThreadsMutations(
-    postUri: PostUri,
+    route: Route,
+    profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.postThreadedItems(postUri = postUri)
-        .mapToMutation {
-            if (it.isEmpty()) this
-            else copy(items = it)
+): Flow<Mutation<State>> = flow {
+    val postUri = route.postUri ?: profileRepository.profile(route.profileId)
+        .first()
+        .let {
+            PostUri(
+                profileId = it.did,
+                postRecordKey = route.postRecordKey
+            )
         }
+    emitAll(
+        timelineRepository.postThreadedItems(postUri = postUri)
+            .mapToMutation {
+                if (it.isEmpty()) this
+                else copy(items = it)
+            }
+    )
+}
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

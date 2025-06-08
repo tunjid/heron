@@ -18,12 +18,12 @@ package com.tunjid.heron.profiles
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
@@ -81,7 +81,8 @@ class ActualProfilesViewModel(
     initialState = State(
         currentQuery = when (val load = route.load) {
             is Load.Post -> PostDataQuery(
-                postId = load.postId,
+                profileId = load.profileId,
+                postRecordKey = load.postRecordKey,
                 data = CursorQuery.Data(
                     page = 0,
                     cursorAnchor = Clock.System.now(),
@@ -89,8 +90,8 @@ class ActualProfilesViewModel(
             )
 
             // TODO: Actually query for profiles
-            is Load.Profile -> PostDataQuery(
-                postId = Constants.unknownPostId,
+            is Load.Profile -> ProfilesQuery(
+                profileId = load.profileId,
                 data = CursorQuery.Data(
                     page = 0,
                     cursorAnchor = Clock.System.now(),
@@ -144,6 +145,7 @@ suspend fun Flow<Action.LoadAround>.profilesLoadMutations(
     val updatePage: CursorQuery.(CursorQuery.Data) -> CursorQuery = {
         when (this) {
             is PostDataQuery -> copy(data = it)
+            is ProfilesQuery -> copy(data = it)
             else -> throw IllegalArgumentException("Invalid query")
         }
 
@@ -170,11 +172,13 @@ suspend fun Flow<Action.LoadAround>.profilesLoadMutations(
 
                         is Load.Profile.Followers -> {
                             // TODO()
+                            check(query is ProfilesQuery)
                             emptyFlow()
                         }
 
                         is Load.Profile.Following -> {
                             // TODO()
+                            check(query is ProfilesQuery)
                             emptyFlow()
                         }
                     }

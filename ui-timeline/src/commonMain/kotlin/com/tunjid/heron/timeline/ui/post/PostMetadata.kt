@@ -31,8 +31,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.pluralStringResource
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.singularStringResource
 import com.tunjid.heron.timeline.utilities.formatDate
@@ -52,7 +52,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
-    postId: PostId,
+    postRecordKey: RecordKey,
     profileId: ProfileId,
     reposts: Long,
     quotes: Long,
@@ -85,17 +85,17 @@ internal fun PostMetadata(
                                     when (metadataText) {
                                         PostMetadataText.Likes -> Post.Metadata.Likes(
                                             profileId = profileId,
-                                            postId = postId,
+                                            postRecordKey = postRecordKey,
                                         )
 
                                         PostMetadataText.Quotes -> Post.Metadata.Quotes(
                                             profileId = profileId,
-                                            postId = postId,
+                                            postRecordKey = postRecordKey,
                                         )
 
                                         PostMetadataText.Reposts -> Post.Metadata.Reposts(
                                             profileId = profileId,
-                                            postId = postId
+                                            postRecordKey = postRecordKey
                                         )
                                     }
                                 )

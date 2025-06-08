@@ -18,8 +18,9 @@ package com.tunjid.heron.profiles
 
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -41,27 +42,30 @@ data class State(
 )
 
 sealed class Load {
+    abstract val profileId: Id.Profile
+
     sealed class Post : Load() {
-        abstract val postId: PostId
+        abstract val postRecordKey: RecordKey
 
         data class Likes(
-            override val postId: PostId,
+            override val postRecordKey: RecordKey,
+            override val profileId: Id.Profile,
         ) : Post()
 
         data class Reposts(
-            override val postId: PostId,
+            override val postRecordKey: RecordKey,
+            override val profileId: Id.Profile,
         ) : Post()
     }
 
     sealed class Profile : Load() {
-        abstract val profileId: ProfileId
 
         data class Followers(
-            override val profileId: ProfileId,
+            override val profileId: Id.Profile,
         ) : Profile()
 
         data class Following(
-            override val profileId: ProfileId,
+            override val profileId: Id.Profile,
         ) : Profile()
     }
 

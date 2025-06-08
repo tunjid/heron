@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -51,6 +52,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.compose.transforms.Transform
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.push
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
@@ -184,6 +186,13 @@ class AppState @Inject constructor(
         navigationStateHolder.accept {
             navState.pop()
         }
+
+    fun onDeepLink(uri: GenericUri) {
+        println("DEEP LINK: $uri")
+        navigationStateHolder.accept {
+            navState.push(uri.uri.toRoute)
+        }
+    }
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
