@@ -156,45 +156,45 @@ abstract class ProfilesComponent(
     @Provides
     fun postLikesAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = PostLikesPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     @IntoMap
     @Provides
     fun postRepostsAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = PostRepostsPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     @IntoMap
     @Provides
     fun profileFollowersAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = ProfileFollowersPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     @IntoMap
     @Provides
     fun profileFollowingAdaptiveConfiguration(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = ProfileFollowingPattern to profilesStrategy(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     private fun profilesStrategy(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = threePaneEntry(
         paneMapping = { route ->
             mapOf(
@@ -205,7 +205,7 @@ abstract class ProfilesComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfilesViewModel> {
-                creator.invoke(
+                factory.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )

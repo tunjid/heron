@@ -102,19 +102,19 @@ abstract class SignInComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
-        creator = creator,
+        factory = factory,
     )
 
     @OptIn(ExperimentalSharedTransitionApi::class)
     private fun routePaneEntry(
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSignInViewModel> {
-                creator.invoke(
+                factory.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

@@ -139,25 +139,25 @@ abstract class FeedComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     @IntoMap
     @Provides
     fun routeUriPattern(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = RouteUriPattern to routePaneEntry(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
     
     private fun routePaneEntry(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
@@ -168,7 +168,7 @@ abstract class FeedComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualFeedViewModel> {
-                creator.invoke(
+                factory.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )

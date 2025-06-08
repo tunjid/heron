@@ -108,18 +108,18 @@ abstract class HomeComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
-        creator = creator,
+        factory = factory,
     )
 
     private fun routePaneEntry(
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualHomeViewModel> {
-                creator.invoke(
+                factory.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

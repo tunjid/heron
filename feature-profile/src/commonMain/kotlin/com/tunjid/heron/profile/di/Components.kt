@@ -129,15 +129,15 @@ abstract class ProfileComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
-        creator = creator,
+        factory = factory,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        creator: RouteViewModelFactory,
+        factory: RouteViewModelFactory,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
@@ -148,7 +148,7 @@ abstract class ProfileComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfileViewModel> {
-                creator.invoke(
+                factory.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )
