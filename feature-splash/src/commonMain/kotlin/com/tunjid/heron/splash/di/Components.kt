@@ -26,7 +26,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
-import com.tunjid.heron.splash.RouteViewModelFactory
+import com.tunjid.heron.splash.RouteViewModelInitializer
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
@@ -78,18 +78,18 @@ abstract class SplashComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RoutePattern to routePaneEntry(
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSplashViewModel> {
-                factory.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

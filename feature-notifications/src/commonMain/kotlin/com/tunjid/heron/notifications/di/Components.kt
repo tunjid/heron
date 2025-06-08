@@ -33,7 +33,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
-import com.tunjid.heron.notifications.RouteViewModelFactory
+import com.tunjid.heron.notifications.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
@@ -100,18 +100,18 @@ abstract class NotificationsComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RoutePattern to routePaneEntry(
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualNotificationsViewModel> {
-                factory.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

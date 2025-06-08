@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
-import com.tunjid.heron.compose.RouteViewModelFactory
+import com.tunjid.heron.compose.RouteViewModelInitializer
 import com.tunjid.heron.compose.ui.BottomAppBarFab
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.TopAppBarFab
@@ -112,18 +112,18 @@ abstract class ComposeComponent(
     @IntoMap
     @Provides
     fun routePattern(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RoutePattern to routePaneEntry(
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualComposeViewModel> {
-                factory.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = route,
                 )

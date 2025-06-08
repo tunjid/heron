@@ -33,7 +33,7 @@ import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
-import com.tunjid.heron.feed.RouteViewModelFactory
+import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -139,25 +139,25 @@ abstract class FeedComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
 
     @IntoMap
     @Provides
     fun routeUriPattern(
         routeParser: RouteParser,
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RouteUriPattern to routePaneEntry(
         routeParser = routeParser,
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
     
     private fun routePaneEntry(
         routeParser: RouteParser,
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
@@ -168,7 +168,7 @@ abstract class FeedComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualFeedViewModel> {
-                factory.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )

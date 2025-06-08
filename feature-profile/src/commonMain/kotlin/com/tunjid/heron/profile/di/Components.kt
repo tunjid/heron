@@ -38,7 +38,7 @@ import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.profile.Action
 import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
-import com.tunjid.heron.profile.RouteViewModelFactory
+import com.tunjid.heron.profile.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -129,15 +129,15 @@ abstract class ProfileComponent(
     @Provides
     fun routePattern(
         routeParser: RouteParser,
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = RoutePattern to routePaneEntry(
         routeParser = routeParser,
-        factory = factory,
+        viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        factory: RouteViewModelFactory,
+        viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry<Route>(
         paneMapping = { route ->
             mapOf(
@@ -148,7 +148,7 @@ abstract class ProfileComponent(
         render = { route ->
             val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfileViewModel> {
-                factory.invoke(
+                viewModelInitializer.invoke(
                     scope = lifecycleCoroutineScope,
                     route = routeParser.hydrate(route),
                 )

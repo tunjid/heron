@@ -59,7 +59,7 @@ import me.tatarka.inject.annotations.Inject
 internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class RouteViewModelFactory(
+class RouteViewModelInitializer(
     private val constructor: (scope: CoroutineScope, route: Route) -> ActualComposeViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(

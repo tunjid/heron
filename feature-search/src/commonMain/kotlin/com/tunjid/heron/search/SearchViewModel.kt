@@ -71,7 +71,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @Inject
-class RouteViewModelFactory(
+class RouteViewModelInitializer(
     private val constructor: (scope: CoroutineScope, route: Route) -> ActualSearchViewModel,
 ) : AssistedViewModelFactory {
     override fun invoke(
