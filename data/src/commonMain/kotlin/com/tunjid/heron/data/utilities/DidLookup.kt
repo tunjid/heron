@@ -18,16 +18,25 @@ package com.tunjid.heron.data.utilities
 
 import app.bsky.actor.GetProfileQueryParams
 import com.atproto.identity.ResolveHandleQueryParams
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.repository.signedInProfileId
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
 
@@ -88,4 +97,64 @@ internal suspend fun refreshProfile(
                 )
             }
         }
+}
+
+internal fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
+    signedInProfileId: ProfileId?,
+    profileMapper: ProfileViewType.() -> Profile,
+    profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
+): List<ProfileWithViewerState> {
+    return map { profileView ->
+        ProfileWithViewerState(
+            profile = profileView.profileMapper(),
+            viewerState =
+                if (signedInProfileId == null) null
+                else profileView.profileViewerStateEntities(
+                    signedInProfileId
+                )
+                    .first()
+                    .asExternalModel(),
+        )
+    }
+}
+
+internal fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
+    profileDao: ProfileDao,
+    signedInProfileId: ProfileId?,
+    profileMapper: ProfileViewType.() -> Profile,
+    idMapper: ProfileViewType.() -> ProfileId,
+): Flow<List<ProfileWithViewerState>> {
+    val profileViews = this
+    return when (signedInProfileId) {
+        null -> flowOf(
+            map { profileView ->
+                ProfileWithViewerState(
+                    profile = profileView.profileMapper(),
+                    viewerState = null
+                )
+            }
+        )
+
+        else -> profileDao.viewerState(
+            profileId = signedInProfileId.id,
+            otherProfileIds = mapTo(
+                destination = mutableSetOf(),
+                transform = idMapper,
+            )
+        )
+            .distinctUntilChanged()
+            .map { viewerStates ->
+                val profileIdsToViewerStates = viewerStates.associateBy(
+                    ProfileViewerStateEntity::otherProfileId
+                )
+
+                profileViews.map { profileViewBasic ->
+                    val profile = profileViewBasic.profileMapper()
+                    ProfileWithViewerState(
+                        profile = profile,
+                        viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
+                    )
+                }
+            }
+    }
 }
