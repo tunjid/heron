@@ -33,7 +33,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
@@ -46,8 +45,6 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
-import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
@@ -55,12 +52,13 @@ import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
@@ -239,6 +237,7 @@ class OfflineSearchRepository @Inject constructor(
 
         emitAll(
             response.actors.observeProfileWithViewerStates(
+                profileDao = profileDao,
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
                 idMapper = { did.did.let(::ProfileId) },
@@ -334,6 +333,7 @@ class OfflineSearchRepository @Inject constructor(
 
         emitAll(
             profileViews.observeProfileWithViewerStates(
+                profileDao = profileDao,
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileViewBasic::profile,
                 idMapper = { did.did.let(::ProfileId) },
@@ -382,6 +382,7 @@ class OfflineSearchRepository @Inject constructor(
 
         emitAll(
             profileViews.observeProfileWithViewerStates(
+                profileDao = profileDao,
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
                 idMapper = { did.did.let(::ProfileId) },
@@ -441,65 +442,6 @@ class OfflineSearchRepository @Inject constructor(
                 }
                 .distinctUntilChanged()
         )
-    }
-
-    private fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
-        signedInProfileId: ProfileId?,
-        profileMapper: ProfileViewType.() -> Profile,
-        profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
-    ): List<ProfileWithViewerState> {
-        return map { profileView ->
-            ProfileWithViewerState(
-                profile = profileView.profileMapper(),
-                viewerState =
-                    if (signedInProfileId == null) null
-                    else profileView.profileViewerStateEntities(
-                        signedInProfileId
-                    )
-                        .first()
-                        .asExternalModel(),
-            )
-        }
-    }
-
-    private fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
-        signedInProfileId: ProfileId?,
-        profileMapper: ProfileViewType.() -> Profile,
-        idMapper: ProfileViewType.() -> ProfileId,
-    ): Flow<List<ProfileWithViewerState>> {
-        val profileViews = this
-        return when (signedInProfileId) {
-            null -> flowOf(
-                map { profileView ->
-                    ProfileWithViewerState(
-                        profile = profileView.profileMapper(),
-                        viewerState = null
-                    )
-                }
-            )
-
-            else -> profileDao.viewerState(
-                profileId = signedInProfileId.id,
-                otherProfileIds = mapTo(
-                    destination = mutableSetOf(),
-                    transform = idMapper,
-                )
-            )
-                .distinctUntilChanged()
-                .map { viewerStates ->
-                    val profileIdsToViewerStates = viewerStates.associateBy(
-                        ProfileViewerStateEntity::otherProfileId
-                    )
-
-                    profileViews.map { profileViewBasic ->
-                        val profile = profileViewBasic.profileMapper()
-                        ProfileWithViewerState(
-                            profile = profile,
-                            viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
-                        )
-                    }
-                }
-        }
     }
 }
 

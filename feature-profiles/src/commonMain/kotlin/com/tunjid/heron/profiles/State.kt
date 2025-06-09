@@ -35,6 +35,7 @@ import kotlinx.serialization.Transient
 data class State(
     val signedInProfileId: ProfileId? = null,
     val currentQuery: CursorQuery,
+    val isRefreshing: Boolean = false,
     @Transient
     val profiles: TiledList<CursorQuery, ProfileWithViewerState> = emptyTiledList(),
     @Transient
@@ -73,9 +74,14 @@ sealed class Load {
 
 sealed class Action(val key: String) {
 
-    data class LoadAround(
-        val query: CursorQuery,
-    ) : Action("LoadAround")
+    sealed class Fetch : Action(key = "Load") {
+
+        data object Refresh : Fetch()
+
+        data class LoadAround(
+            val query: CursorQuery,
+        ) : Fetch()
+    }
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,

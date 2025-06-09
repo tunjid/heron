@@ -108,7 +108,7 @@ internal fun ProfilesScreen(
         items = items,
         onQueryChanged = { query ->
             actions(
-                Action.LoadAround(query ?: state.currentQuery)
+                Action.Fetch.LoadAround(query ?: state.currentQuery)
             )
         }
     )
