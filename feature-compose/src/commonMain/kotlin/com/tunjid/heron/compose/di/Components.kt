@@ -203,7 +203,8 @@ abstract class ComposeComponent(
                         modifier = Modifier
                             .padding(
                                 top = paddingValues.calculateTopPadding()
-                            ),
+                            )
+                            .imePadding(),
                         state = state,
                         actions = viewModel.accept,
                     )

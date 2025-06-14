@@ -20,8 +20,10 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -119,6 +121,10 @@ internal fun ComposeScreen(
             onMediaItemUpdated = { item ->
                 actions(Action.EditMedia.UpdateMedia(item))
             }
+        )
+        Spacer(
+            modifier = Modifier
+                .height(56.dp)
         )
 
         LaunchedEffect(Unit) {
