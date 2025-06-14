@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose.ui
 
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,6 +63,7 @@ internal fun ComposePostBottomBar(
 ) {
     Row(
         modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
             .fillMaxWidth(),
         horizontalArrangement = spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
