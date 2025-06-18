@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +36,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -57,14 +60,49 @@ data class Tab(
     val hasUpdate: Boolean,
 )
 
+@Stable
+class TabsState private constructor(
+    selectedTabIndex: Float,
+    tabs: List<Tab>,
+    val onTabSelected: (Int) -> Unit,
+    val onTabReselected: (Int) -> Unit,
+) {
+    var selectedTabIndex by mutableFloatStateOf(selectedTabIndex)
+        private set
+
+    internal val tabs = mutableStateListOf(*(tabs.toTypedArray()))
+
+    companion object {
+        @Composable
+        fun rememberTabsState(
+            selectedTabIndex: Float,
+            tabs: List<Tab>,
+            onTabSelected: (Int) -> Unit,
+            onTabReselected: (Int) -> Unit,
+        ) = remember {
+            TabsState(
+                selectedTabIndex = selectedTabIndex,
+                tabs = tabs,
+                onTabSelected = onTabSelected,
+                onTabReselected = onTabReselected
+            )
+        }.also {
+            it.selectedTabIndex = selectedTabIndex
+            if (it.tabs != tabs) {
+                it.tabs.clear()
+                it.tabs.addAll(tabs)
+            }
+        }
+    }
+}
+
+
 @Composable
 fun Tabs(
     modifier: Modifier = Modifier,
-    tabs: List<Tab>,
-    selectedTabIndex: Float,
-    onTabSelected: (Int) -> Unit,
-    onTabReselected: (Int) -> Unit,
-) {
+    tabsState: TabsState,
+    tabContent: @Composable TabsState.(Tab) -> Unit = { Tab(tab = it) },
+) = with(tabsState) {
     Box(modifier = modifier) {
         val lazyListState = rememberLazyListState()
         LazyRow(
@@ -72,28 +110,17 @@ fun Tabs(
             state = lazyListState,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            itemsIndexed(
+            items(
                 items = tabs,
-                key = { _, tab -> tab.title },
-                itemContent = { index, tab ->
+                key = Tab::title,
+                itemContent = { tab ->
                     BadgedBox(
+                        modifier = modifier,
                         badge = {
                             if (tab.hasUpdate) Badge()
                         },
                         content = {
-                            FilterChip(
-                                modifier = Modifier,
-                                shape = TabShape,
-                                border = null,
-                                selected = false,
-                                onClick = {
-                                    if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
-                                    else onTabReselected(index)
-                                },
-                                label = {
-                                    Text(tab.title)
-                                },
-                            )
+                            tabContent(tab)
                         }
                     )
                 }
@@ -101,6 +128,29 @@ fun Tabs(
         }
         Indicator(lazyListState, selectedTabIndex)
     }
+}
+
+@Composable
+fun TabsState.Tab(
+    modifier: Modifier = Modifier,
+    tab: Tab,
+) {
+    FilterChip(
+        modifier = modifier,
+        shape = TabShape,
+        border = null,
+        selected = false,
+        onClick = click@{
+            val index = tabs.indexOf(tab)
+            if (index < 0) return@click
+
+            if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+            else onTabReselected(index)
+        },
+        label = {
+            Text(tab.title)
+        },
+    )
 }
 
 @Composable

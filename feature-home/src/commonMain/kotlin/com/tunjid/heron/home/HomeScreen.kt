@@ -88,6 +88,7 @@ import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -204,14 +205,16 @@ private fun HomeTabs(
                 .background(MaterialTheme.colorScheme.surface)
                 .weight(1f)
                 .clip(CircleShape),
-            tabs = tabs,
-            selectedTabIndex = pagerState.tabIndex,
-            onTabSelected = {
-                scope.launch {
-                    pagerState.animateScrollToPage(it)
-                }
-            },
-            onTabReselected = onRefreshTabClicked,
+            tabsState = rememberTabsState(
+                tabs = tabs,
+                selectedTabIndex = pagerState.tabIndex,
+                onTabSelected = {
+                    scope.launch {
+                        pagerState.animateScrollToPage(it)
+                    }
+                },
+                onTabReselected = onRefreshTabClicked,
+            )
         )
         TimelinePresentationSelector(
             currentSourceId = currentSourceId,
