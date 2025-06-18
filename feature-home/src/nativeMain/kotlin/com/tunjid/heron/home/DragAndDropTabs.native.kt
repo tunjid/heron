@@ -27,5 +27,5 @@ actual fun dragAndDropTransferData(
         items = listOf(UIDragItem().apply { localObject = title })
     )
 
-actual fun DragAndDropEvent.draggedTitle(): String? =
+actual fun DragAndDropEvent.draggedId(): String? =
     items.firstOrNull()?.localObject as? String

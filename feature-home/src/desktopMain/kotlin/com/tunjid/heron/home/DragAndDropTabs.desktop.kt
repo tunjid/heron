@@ -35,6 +35,6 @@ actual fun dragAndDropTransferData(
     ),
 )
 
-actual fun DragAndDropEvent.draggedTitle(): String? {
+actual fun DragAndDropEvent.draggedId(): String? {
     return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
 }

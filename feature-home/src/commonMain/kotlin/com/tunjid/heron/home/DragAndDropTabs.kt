@@ -55,7 +55,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
@@ -84,7 +84,7 @@ import kotlinx.coroutines.launch
 
 expect fun dragAndDropTransferData(title: String): DragAndDropTransferData
 
-expect fun DragAndDropEvent.draggedTitle(): String?
+expect fun DragAndDropEvent.draggedId(): String?
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -92,7 +92,7 @@ fun HomeTabs(
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope,
     pagerState: PagerState,
-    timelines: List<Timeline>,
+    timelines: List<Timeline.Home>,
     currentSourceId: String?,
     timelineStateHolders: TimelineStateHolders,
     tabs: List<Tab>,
@@ -120,7 +120,7 @@ fun HomeTabs(
             targetState = isExpanded,
         ) { expanded ->
             if (expanded) ExpandedTabs(
-                tabs = tabs,
+                timelines = timelines,
                 tabsState = tabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
@@ -159,17 +159,16 @@ fun HomeTabs(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedTabs(
-    tabs: List<Tab>,
+    timelines: List<Timeline.Home>,
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
 ) = with(sharedTransitionScope) {
     val state = remember {
+        timelines.toMutableStateList()
         DragAndDropTabsState(
-            draggableTabs = mutableStateListOf(
-                *Array(tabs.size) { tabs[it].title }
-            ),
+            timelines = timelines.toMutableStateList(),
         )
     }
 
@@ -198,29 +197,29 @@ private fun ExpandedTabs(
                     ),
                 horizontalArrangement = Arrangement.Start,
             ) {
-                state.draggableTabs.forEachIndexed { index, title ->
-                    key(title) {
-                        if (!state.isDraggedTab(title)) FilterChip(
+                state.timelines.forEachIndexed { index, timeline ->
+                    key(timeline.sourceId) {
+                        if (!state.isDraggedId(timeline.sourceId)) FilterChip(
                             modifier = Modifier.Companion
                                 .animateBounds(sharedTransitionScope)
                                 .sharedElement(
                                     sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                        title
+                                        timeline.name
                                     ),
                                     animatedVisibilityScope = animatedContentScope,
                                 )
                                 .tabDragAndDrop(
                                     state = state,
-                                    title = title,
+                                    sourceId = timeline.sourceId,
                                 ),
                             shape = CircleShape,
                             border = null,
-                            selected = state.isHoveredTab(title),
+                            selected = state.isHoveredId(timeline.sourceId),
                             onClick = click@{
                                 tabsState.onTabSelected(index)
                             },
                             label = {
-                                Text(title)
+                                Text(timeline.name)
                             },
                         )
                     }
@@ -345,48 +344,52 @@ private fun TimelinePresentationSelector(
 
 @Stable
 private class DragAndDropTabsState(
-    val draggableTabs: SnapshotStateList<String>,
+    val timelines: SnapshotStateList<Timeline.Home>,
 ) {
-    var hoveredTitle by mutableStateOf<String?>(null)
-    var draggedTitle by mutableStateOf<String?>(null)
+    var hoveredId by mutableStateOf<String?>(null)
+    var draggedId by mutableStateOf<String?>(null)
 
     val children = mutableStateMapOf<String, DragAndDropTabsState.Child>()
 
-    fun isHoveredTab(title: String) = title == hoveredTitle
+    fun isHoveredId(sourceId: String) = sourceId == hoveredId
 
-    fun isDraggedTab(title: String) = title == draggedTitle
+    fun isDraggedId(sourceId: String) = sourceId == draggedId
 
     inner class Child(
-        title: String,
+        sourceId: String,
     ) : DragAndDropTarget {
 
-        var title by mutableStateOf(title)
+        var sourceId by mutableStateOf(sourceId)
 
         override fun onStarted(event: DragAndDropEvent) {
-            draggedTitle = event.draggedTitle()
+            draggedId = event.draggedId()
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            hoveredTitle = title
+            hoveredId = sourceId
         }
 
         override fun onExited(event: DragAndDropEvent) {
-            if (isHoveredTab(title)) hoveredTitle = null
+            if (isHoveredId(sourceId)) hoveredId = null
         }
 
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val draggedIndex = event.draggedTitle()?.let(draggableTabs::indexOf) ?: -1
-            val droppedIndex = draggableTabs.indexOf(title)
+            val draggedIndex = event.draggedId()?.let { draggedId ->
+                timelines.indexOfFirst { it.sourceId == draggedId }
+            } ?: -1
+            val droppedIndex = timelines.indexOfFirst {
+                it.sourceId == sourceId
+            }
 
             val acceptedDrop = draggedIndex >= 0 && droppedIndex >= 0
 
             Snapshot.withMutableSnapshot {
-                if (acceptedDrop) draggableTabs.add(
+                if (acceptedDrop) timelines.add(
                     index = droppedIndex,
-                    element = draggableTabs.removeAt(draggedIndex),
+                    element = timelines.removeAt(draggedIndex),
                 )
-                hoveredTitle = null
-                draggedTitle = null
+                hoveredId = null
+                draggedId = null
             }
 
             return acceptedDrop
@@ -394,8 +397,8 @@ private class DragAndDropTabsState(
 
         override fun onEnded(event: DragAndDropEvent) {
             Snapshot.withMutableSnapshot {
-                hoveredTitle = null
-                draggedTitle = null
+                hoveredId = null
+                draggedId = null
             }
         }
     }
@@ -403,17 +406,17 @@ private class DragAndDropTabsState(
     companion object {
         fun Modifier.tabDragAndDrop(
             state: DragAndDropTabsState,
-            title: String,
+            sourceId: String,
         ) = dragAndDropSource {
-            dragAndDropTransferData(title)
+            dragAndDropTransferData(sourceId)
         }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
-                    event.draggedTitle() != null
+                    event.draggedId() != null
                 },
-                target = state.children.getOrPut(title) {
-                    state.Child(title)
-                }.also { it.title = title },
+                target = state.children.getOrPut(sourceId) {
+                    state.Child(sourceId)
+                }.also { it.sourceId = sourceId },
             )
     }
 }

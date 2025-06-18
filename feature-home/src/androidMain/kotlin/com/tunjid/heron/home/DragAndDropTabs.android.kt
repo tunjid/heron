@@ -29,5 +29,5 @@ actual fun dragAndDropTransferData(
         localState = title,
     )
 
-actual fun DragAndDropEvent.draggedTitle(): String? =
+actual fun DragAndDropEvent.draggedId(): String? =
     this.toAndroidDragEvent().localState as? String
