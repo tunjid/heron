@@ -16,11 +16,10 @@
 
 package com.tunjid.heron.home
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,28 +27,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
@@ -63,12 +55,10 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAc
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
-import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.domain.timeline.TimelineStatus
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -87,18 +77,15 @@ import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.Tab
-import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun HomeScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -148,6 +135,7 @@ internal fun HomeScreen(
                 .offset {
                     tabsOffsetNestedScrollConnection.offset.round()
                 },
+            sharedTransitionScope = paneScaffoldState,
             pagerState = pagerState,
             currentSourceId = state.currentSourceId,
             timelines = state.timelines,
@@ -180,47 +168,6 @@ internal fun HomeScreen(
                     )
                 }
         }
-    }
-}
-
-@Composable
-private fun HomeTabs(
-    modifier: Modifier = Modifier,
-    pagerState: PagerState,
-    timelines: List<Timeline>,
-    currentSourceId: String?,
-    timelineStateHolders: TimelineStateHolders,
-    tabs: List<Tab>,
-    onRefreshTabClicked: (Int) -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .clip(CircleShape),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val scope = rememberCoroutineScope()
-        Tabs(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .weight(1f)
-                .clip(CircleShape),
-            tabsState = rememberTabsState(
-                tabs = tabs,
-                selectedTabIndex = pagerState.tabIndex,
-                onTabSelected = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(it)
-                    }
-                },
-                onTabReselected = onRefreshTabClicked,
-            )
-        )
-        TimelinePresentationSelector(
-            currentSourceId = currentSourceId,
-            timelines = timelines,
-            timelineStateHolders = timelineStateHolders,
-        )
     }
 }
 
@@ -411,38 +358,5 @@ private fun HomeTimeline(
             )
         }
             .collect(actions)
-    }
-}
-
-@Composable
-private fun TimelinePresentationSelector(
-    currentSourceId: String?,
-    timelines: List<Timeline>,
-    timelineStateHolders: TimelineStateHolders,
-) {
-    val timeline = timelines.firstOrNull {
-        it.sourceId == currentSourceId
-    }
-    if (timeline != null) Row(
-        modifier = Modifier.wrapContentWidth(),
-        horizontalArrangement = Arrangement.aligned(Alignment.End)
-    ) {
-        com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
-            selected = timeline.presentation,
-            available = timeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                val index = timelines.indexOfFirst {
-                    it.sourceId == currentSourceId
-                }
-                timelineStateHolders.stateHolderAtOrNull(index)
-                    ?.accept
-                    ?.invoke(
-                        TimelineLoadAction.UpdatePreferredPresentation(
-                            timeline = timeline,
-                            presentation = presentation,
-                        )
-                    )
-            }
-        )
     }
 }
