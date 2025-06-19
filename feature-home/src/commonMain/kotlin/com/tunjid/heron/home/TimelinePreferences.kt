@@ -118,7 +118,7 @@ fun HomeTabs(
     sourceIdsToHasUpdates: Map<String, Boolean>,
     onRefreshTabClicked: (Int) -> Unit,
     onExpansionChanged: (Boolean) -> Unit,
-    ) = with(sharedTransitionScope) {
+) = with(sharedTransitionScope) {
     val scope = rememberCoroutineScope()
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -295,31 +295,7 @@ private fun CollapsedTabs(
                 .clip(CircleShape),
             tabsState = tabsState,
             tabContent = { tab ->
-                FilterChip(
-                    modifier = modifier,
-                    shape = RoundedCornerShape(16.dp),
-                    border = null,
-                    selected = false,
-                    onClick = click@{
-                        val index = tabList.indexOf(tab)
-                        if (index < 0) return@click
-
-                        if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
-                        else onTabReselected(index)
-                    },
-                    label = {
-                        Text(
-                            modifier = Modifier
-                                .sharedElement(
-                                    sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                        tab.title
-                                    ),
-                                    animatedVisibilityScope = animatedContentScope,
-                                ),
-                            text = tab.title
-                        )
-                    },
-                )
+                CollapsedTab(tab, sharedTransitionScope, animatedContentScope)
             }
         )
         TimelinePresentationSelector(
@@ -393,6 +369,40 @@ private fun TabsState.ExpandedTab(
             Icon(
                 imageVector = Icons.Rounded.Remove,
                 contentDescription = "",
+            )
+        },
+    )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun TabsState.CollapsedTab(
+    tab: Tab,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope
+) = with(sharedTransitionScope) {
+    FilterChip(
+        modifier = Modifier,
+        shape = CollapsedTabShape,
+        border = null,
+        selected = false,
+        onClick = click@{
+            val index = tabList.indexOf(tab)
+            if (index < 0) return@click
+
+            if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+            else onTabReselected(index)
+        },
+        label = {
+            Text(
+                modifier = Modifier.Companion
+                    .sharedElement(
+                        sharedContentState = sharedTransitionScope.rememberSharedContentState(
+                            tab.title
+                        ),
+                        animatedVisibilityScope = animatedContentScope,
+                    ),
+                text = tab.title
             )
         },
     )
@@ -575,4 +585,4 @@ private class TimelinePreferencesState(
     }
 }
 
-
+private val CollapsedTabShape = RoundedCornerShape(16.dp)
