@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,12 +43,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,17 +73,22 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.home.DragAndDropTabsState.Companion.tabDragAndDrop
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 expect fun dragAndDropTransferData(title: String): DragAndDropTransferData
 
@@ -144,6 +153,7 @@ fun HomeTabs(
                 .renderInSharedTransitionScopeOverlay(
                     renderInOverlay = this@with::isTransitionActive
                 ),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ExpandButton(
                 isExpanded = isExpanded,
@@ -193,36 +203,24 @@ private fun ExpandedTabs(
             )
             FlowRow(
                 modifier = Modifier
+                    .skipToLookaheadSize()
                     .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
                     .background(
                         color = MaterialTheme.colorScheme.surface
                     ),
-                horizontalArrangement = Arrangement.Start,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 state.timelines.forEachIndexed { index, timeline ->
                     key(timeline.sourceId) {
-                        if (!state.isDraggedId(timeline.sourceId)) FilterChip(
-                            modifier = Modifier.Companion
-                                .animateBounds(sharedTransitionScope)
-                                .sharedElement(
-                                    sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                        timeline.name
-                                    ),
-                                    animatedVisibilityScope = animatedContentScope,
-                                )
-                                .tabDragAndDrop(
-                                    state = state,
-                                    sourceId = timeline.sourceId,
-                                ),
-                            shape = CircleShape,
-                            border = null,
-                            selected = state.isHoveredId(timeline.sourceId),
-                            onClick = click@{
-                                tabsState.onTabSelected(index)
-                            },
-                            label = {
-                                Text(timeline.name)
-                            },
+                        if (!state.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                            modifier = Modifier
+                                .animateBounds(this@with),
+                            dragAndDropTabsState = state,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedContentScope = animatedContentScope,
+                            timeline = timeline,
+                            index = index,
                         )
                     }
                 }
@@ -250,20 +248,36 @@ private fun CollapsedTabs(
     ) {
         Tabs(
             modifier = Modifier
+                .skipToLookaheadSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .weight(1f)
                 .clip(CircleShape),
             tabsState = tabsState,
             tabContent = { tab ->
-                Tab(
-                    modifier = Modifier.Companion
-                        .sharedElement(
-                            sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                tab.title
-                            ),
-                            animatedVisibilityScope = animatedContentScope,
-                        ),
-                    tab = tab,
+                FilterChip(
+                    modifier = modifier,
+                    shape = RoundedCornerShape(16.dp),
+                    border = null,
+                    selected = false,
+                    onClick = click@{
+                        val index = tabList.indexOf(tab)
+                        if (index < 0) return@click
+
+                        if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+                        else onTabReselected(index)
+                    },
+                    label = {
+                        Text(
+                            modifier = Modifier
+                                .sharedElement(
+                                    sharedContentState = sharedTransitionScope.rememberSharedContentState(
+                                        tab.title
+                                    ),
+                                    animatedVisibilityScope = animatedContentScope,
+                                ),
+                            text = tab.title
+                        )
+                    },
                 )
             }
         )
@@ -277,6 +291,70 @@ private fun CollapsedTabs(
                 .width(48.dp),
         )
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun TabsState.ExpandedTab(
+    modifier: Modifier = Modifier,
+    dragAndDropTabsState: DragAndDropTabsState,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    timeline: Timeline.Home,
+    index: Int,
+) = with(sharedTransitionScope) {
+    InputChip(
+        modifier = modifier
+            .skipToLookaheadSize()
+            .tabDragAndDrop(
+                state = dragAndDropTabsState,
+                sourceId = timeline.sourceId,
+            ),
+        shape = CircleShape,
+        selected = dragAndDropTabsState.isHoveredId(timeline.sourceId),
+        onClick = click@{
+            onTabSelected(index)
+        },
+        avatar = {
+            val url = when (timeline) {
+                is Timeline.Home.Feed -> timeline.feedGenerator.avatar?.uri
+                is Timeline.Home.Following -> null
+                is Timeline.Home.List -> timeline.feedList.avatar?.uri
+            }
+            if (url != null) AsyncImage(
+                modifier = Modifier
+                    .size(24.dp),
+                args = remember(url) {
+                    ImageArgs(
+                        url = url,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                }
+            )
+        },
+        label = {
+            Text(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .sharedElement(
+                        sharedContentState = sharedTransitionScope.rememberSharedContentState(
+                            timeline.name
+                        ),
+                        animatedVisibilityScope = animatedContentScope,
+                    ),
+                text = timeline.name,
+                maxLines = 1,
+            )
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Cancel,
+                contentDescription = "",
+            )
+        },
+    )
 }
 
 @Composable
@@ -351,7 +429,7 @@ private class DragAndDropTabsState(
     var hoveredId by mutableStateOf<String?>(null)
     var draggedId by mutableStateOf<String?>(null)
 
-    val children = mutableStateMapOf<String, DragAndDropTabsState.Child>()
+    val children = mutableStateMapOf<String, Child>()
 
     fun isHoveredId(sourceId: String) = sourceId == hoveredId
 

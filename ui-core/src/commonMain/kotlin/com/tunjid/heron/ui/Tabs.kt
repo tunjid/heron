@@ -70,6 +70,8 @@ class TabsState private constructor(
     var selectedTabIndex by mutableFloatStateOf(selectedTabIndex)
         private set
 
+    val tabList: List<Tab> get() = tabs
+
     internal val tabs = mutableStateListOf(*(tabs.toTypedArray()))
 
     companion object {
