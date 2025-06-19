@@ -46,8 +46,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,7 +88,14 @@ import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
+import heron.feature_home.generated.resources.Res
+import heron.feature_home.generated.resources.pinned
+import heron.feature_home.generated.resources.saved
+import heron.feature_home.generated.resources.timeline_preferences
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 expect fun dragAndDropTransferData(title: String): DragAndDropTransferData
@@ -97,7 +105,7 @@ expect fun DragAndDropEvent.draggedId(): String?
 expect fun Modifier.tabDragAndDropSource(sourceId: String): Modifier
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeTabs(
     modifier: Modifier = Modifier,
@@ -145,7 +153,8 @@ fun HomeTabs(
         onTabReselected = onRefreshTabClicked,
     )
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface),
     ) {
         AnimatedContent(
             modifier = Modifier
@@ -171,19 +180,26 @@ fun HomeTabs(
         }
         Row(
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .fillMaxWidth()
+                .padding(
+                    start = 8.dp,
+                    end = 8.dp,
+                )
                 .renderInSharedTransitionScopeOverlay(
                     renderInOverlay = this@with::isTransitionActive
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Text(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .weight(1f),
+                text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
+                style = MaterialTheme.typography.titleMediumEmphasized
+            )
             ExpandButton(
                 isExpanded = isExpanded,
                 onToggled = { isExpanded = !isExpanded }
-            )
-            Spacer(
-                modifier = Modifier
-                    .width(8.dp)
             )
         }
     }
@@ -227,13 +243,15 @@ private fun ExpandedTabs(
                 modifier = Modifier
                     .skipToLookaheadSize()
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface
-                    ),
+                    .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 state.timelines.forEachIndexed { index, timeline ->
+                    if (index == 0) {
+                        SectionTitle(stringResource(Res.string.pinned))
+                    } else if (index == state.firstUnpinnedIndex) {
+                        SectionTitle(stringResource(Res.string.saved))
+                    }
                     key(timeline.sourceId) {
                         if (!state.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                             modifier = Modifier
@@ -372,7 +390,7 @@ private fun TabsState.ExpandedTab(
         },
         trailingIcon = {
             Icon(
-                imageVector = Icons.Rounded.Cancel,
+                imageVector = Icons.Rounded.Remove,
                 contentDescription = "",
             )
         },
@@ -408,6 +426,22 @@ private fun ExpandButton(
             },
         )
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun SectionTitle(
+    title: String
+) {
+    Text(
+        modifier = Modifier
+            .padding(
+                vertical = 8.dp
+            )
+            .fillMaxWidth(),
+        text = title,
+        style = MaterialTheme.typography.titleSmallEmphasized
+    )
 }
 
 @Composable
@@ -451,6 +485,8 @@ private class DragAndDropTabsState(
     var hoveredId by mutableStateOf<String?>(null)
     var draggedId by mutableStateOf<String?>(null)
 
+    var firstUnpinnedIndex by mutableStateOf(timelines.indexOfFirst { !it.isPinned })
+
     val children = mutableStateMapOf<String, Child>()
 
     fun isHoveredId(sourceId: String) = sourceId == hoveredId
@@ -483,13 +519,30 @@ private class DragAndDropTabsState(
                 it.sourceId == sourceId
             }
 
-            val acceptedDrop = draggedIndex >= 0 && droppedIndex >= 0
+            val acceptedDrop =
+                // Make sure at least 1 item is always pinned
+                if (firstUnpinnedIndex in draggedIndex..droppedIndex) firstUnpinnedIndex > 1
+                else draggedIndex >= 0 && droppedIndex >= 0
 
             Snapshot.withMutableSnapshot {
-                if (acceptedDrop) timelines.add(
-                    index = droppedIndex,
-                    element = timelines.removeAt(draggedIndex),
-                )
+                if (acceptedDrop) {
+                    timelines.add(
+                        index = droppedIndex,
+                        element = timelines.removeAt(draggedIndex),
+                    )
+                    when (firstUnpinnedIndex) {
+                        // Moved out of pinned items
+                        in draggedIndex..droppedIndex -> firstUnpinnedIndex = max(
+                            a = firstUnpinnedIndex - 1,
+                            b = 0,
+                        )
+                        // Moved into pinned items
+                        in droppedIndex..draggedIndex -> firstUnpinnedIndex = min(
+                            a = firstUnpinnedIndex + 1,
+                            b = timelines.lastIndex,
+                        )
+                    }
+                }
                 hoveredId = null
                 draggedId = null
             }
