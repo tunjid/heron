@@ -140,6 +140,7 @@ internal fun HomeScreen(
                 },
             sharedTransitionScope = paneScaffoldState,
             selectedTabIndex = pagerState::tabIndex,
+            saveRequestId = state.saveRequestId,
             currentSourceId = state.currentSourceId,
             isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
@@ -165,7 +166,12 @@ internal fun HomeScreen(
                         presentation = presentation,
                     )
                 )
-            }
+            },
+            onTimelinePreferencesSaved = { timelines ->
+                actions(
+                    Action.UpdateTimeline.Update(timelines)
+                )
+            },
         )
 
         LaunchedEffect(Unit) {

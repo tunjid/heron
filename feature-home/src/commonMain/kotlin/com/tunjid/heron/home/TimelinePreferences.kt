@@ -56,13 +56,16 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
@@ -88,6 +91,8 @@ import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.pinned
 import heron.feature_home.generated.resources.saved
 import heron.feature_home.generated.resources.timeline_preferences
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
@@ -106,6 +111,7 @@ fun HomeTabs(
     modifier: Modifier = Modifier,
     isExpanded: Boolean,
     currentSourceId: String?,
+    saveRequestId: String?,
     timelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
     sourceIdsToHasUpdates: Map<String, Boolean>,
@@ -114,6 +120,7 @@ fun HomeTabs(
     onRefreshTabClicked: (Int) -> Unit,
     onExpansionChanged: (Boolean) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
+    onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit
 ) = with(sharedTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -156,11 +163,13 @@ fun HomeTabs(
             targetState = isExpanded,
         ) { expanded ->
             if (expanded) ExpandedTabs(
+                saveRequestId = saveRequestId,
                 timelines = timelines,
                 tabsState = expandedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
-                onDismissed = { onExpansionChanged(false) }
+                onDismissed = { onExpansionChanged(false) },
+                onTimelinePreferencesSaved = onTimelinePreferencesSaved,
             )
             else CollapsedTabs(
                 modifier = Modifier,
@@ -203,11 +212,13 @@ fun HomeTabs(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedTabs(
+    saveRequestId: String?,
     timelines: List<Timeline.Home>,
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
+    onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
 ) = with(sharedTransitionScope) {
     val timelinePreferencesState = remember {
         timelines.toMutableStateList()
@@ -260,6 +271,19 @@ private fun ExpandedTabs(
                 }
             }
         }
+    }
+
+    val currentSaveRequestState = rememberUpdatedState(saveRequestId)
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            currentSaveRequestState.value
+        }
+            .drop(1)
+            .collectLatest {
+                onTimelinePreferencesSaved(
+                    timelinePreferencesState.timelines
+                )
+            }
     }
 }
 

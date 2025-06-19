@@ -189,7 +189,8 @@ abstract class HomeComponent(
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
+                                if (state.timelinePreferencesExpanded) Action.UpdateTimeline.RequestUpdate
+                                else Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,

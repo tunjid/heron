@@ -30,6 +30,8 @@ data class State(
     val currentSourceId: String? = null,
     val timelinePreferencesExpanded: Boolean = false,
     @Transient
+    val saveRequestId: String? = null,
+    @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
     val timelines: List<Timeline.Home> = emptyList(),
@@ -62,6 +64,14 @@ sealed class Action(val key: String) {
     ) : Action(key = "SetPreferencesExpanded")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
+
+    sealed class UpdateTimeline : Action(key = "Timeline") {
+        data object RequestUpdate : UpdateTimeline()
+
+        data class Update(
+            val timelines: List<Timeline.Home>
+        ) : UpdateTimeline()
+    }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
