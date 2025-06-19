@@ -108,7 +108,7 @@ fun Tabs(
     Box(modifier = modifier) {
         val lazyListState = rememberLazyListState()
         LazyRow(
-            modifier = Modifier,
+            modifier = modifier,
             state = lazyListState,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -117,7 +117,7 @@ fun Tabs(
                 key = Tab::title,
                 itemContent = { tab ->
                     BadgedBox(
-                        modifier = modifier,
+                        modifier = Modifier,
                         badge = {
                             if (tab.hasUpdate) Badge()
                         },
