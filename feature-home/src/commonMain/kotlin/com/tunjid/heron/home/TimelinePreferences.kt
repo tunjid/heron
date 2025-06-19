@@ -281,7 +281,7 @@ private fun ExpandedTabs(
             .drop(1)
             .collectLatest { requestId ->
                 if (requestId != null) onTimelinePreferencesSaved(
-                    timelinePreferencesState.timelines
+                    timelinePreferencesState.timelinesToSave()
                 )
             }
     }
@@ -517,8 +517,10 @@ private class TimelinePreferencesState(
 
     val children = mutableStateMapOf<String, Child>()
 
+    @Stable
     fun isHoveredId(sourceId: String) = sourceId == hoveredId
 
+    @Stable
     fun isDraggedId(sourceId: String) = sourceId == draggedId
 
     fun remove(index: Int) {
@@ -529,6 +531,15 @@ private class TimelinePreferencesState(
         )
     }
 
+    fun timelinesToSave() = timelines.mapIndexed { index, timeline ->
+        when (timeline) {
+            is Timeline.Home.Feed -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+            is Timeline.Home.Following -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+            is Timeline.Home.List -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+        }
+    }
+
+    @Stable
     inner class Child(
         sourceId: String,
     ) : DragAndDropTarget {
