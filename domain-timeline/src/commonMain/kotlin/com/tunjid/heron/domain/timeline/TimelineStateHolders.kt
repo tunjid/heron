@@ -17,7 +17,6 @@
 package com.tunjid.heron.domain.timeline
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.TimelineRepository
 import kotlinx.coroutines.CoroutineScope
