@@ -46,12 +46,15 @@ sealed class Timeline {
         override val sourceId: String
             get() = source.uri
 
+        abstract val isPinned: Boolean
+
         @Serializable
         data class Following(
             override val name: String,
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
+            override val isPinned: Boolean,
             val signedInProfileId: ProfileId,
         ) : Home(
             source = Constants.timelineFeed,
@@ -64,6 +67,7 @@ sealed class Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
+            override val isPinned: Boolean,
             val feedList: FeedList,
         ) : Home(
             source = feedList.uri,
@@ -80,6 +84,7 @@ sealed class Timeline {
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
             override val supportedPresentations: kotlin.collections.List<Presentation>,
+            override val isPinned: Boolean,
             val feedGenerator: FeedGenerator,
         ) : Home(
             source = feedGenerator.uri,

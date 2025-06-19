@@ -569,16 +569,19 @@ class OfflineTimelineRepository(
                         Type.Feed -> feedGeneratorTimeline(
                             uri = FeedGeneratorUri(preference.value),
                             position = index,
+                            isPinned = preference.pinned,
                         )
 
                         Type.List -> listTimeline(
                             uri = ListUri(preference.value),
                             position = index,
+                            isPinned = preference.pinned,
                         )
 
                         Type.Timeline -> followingTimeline(
                             name = preference.value,
                             position = index,
+                            isPinned = preference.pinned,
                         )
 
                         is Type.Unknown -> emptyFlow()
@@ -605,85 +608,115 @@ class OfflineTimelineRepository(
 
     override fun timeline(
         request: TimelineRequest,
-    ): Flow<Timeline> = flow {
-        when (request) {
-            is TimelineRequest.OfFeed.WithUri -> emitAll(
-                feedGeneratorTimeline(
-                    uri = request.uri,
-                    position = 0,
-                )
-            )
-
-            is TimelineRequest.OfList.WithUri -> emitAll(
-                listTimeline(
-                    uri = request.uri,
-                    position = 0
-                )
-            )
-
-            is TimelineRequest.OfFeed.WithProfile -> {
-                val profileDid = lookupProfileDid(
-                    profileId = request.profileHandleOrDid,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                ) ?: return@flow
-                emitAll(
-                    feedGeneratorTimeline(
-                        uri = FeedGeneratorUri(
-                            uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}"
-                        ),
-                        position = 0,
-                    )
-                )
-            }
-
-            is TimelineRequest.OfList.WithProfile -> {
-                val profileDid = lookupProfileDid(
-                    profileId = request.profileHandleOrDid,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                ) ?: return@flow
-                emitAll(
-                    listTimeline(
-                        uri = ListUri(
-                            uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}"
-                        ),
-                        position = 0
-                    )
-                )
-            }
-
-            is TimelineRequest.OfProfile -> emitAll(
-                profileDao.profiles(
-                    ids = listOf(request.profileHandleOrDid)
-                )
-                    .mapNotNull(List<ProfileEntity>::firstOrNull)
-                    .distinctUntilChangedBy(ProfileEntity::did)
-                    .flatMapLatest { profile ->
-                        timelineDao.lastFetchKey(
-                            sourceId = request.type.sourceId(profile.did)
+    ): Flow<Timeline> = savedStateRepository.savedState
+        .mapNotNull { it.preferences?.timelinePreferences }
+        .distinctUntilChanged()
+        .flatMapLatest { preferences ->
+            flow {
+                when (request) {
+                    is TimelineRequest.OfFeed.WithUri -> emitAll(
+                        feedGeneratorTimeline(
+                            uri = request.uri,
+                            position = 0,
+                            isPinned = preferences.firstOrNull {
+                                val feedUri = Type.safeValueOf(it.type) as? Type.Feed
+                                    ?: return@firstOrNull false
+                                feedUri.value == request.uri.uri
+                            }?.pinned ?: false
                         )
-                            .distinctUntilChanged()
-                            .map { timelinePreferenceEntity ->
-                                Timeline.Profile(
-                                    profileId = profile.did,
-                                    type = request.type,
-                                    lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
-                                    presentation = timelinePreferenceEntity.preferredPresentation(),
-                                )
-                            }
-                    }
-            )
+                    )
 
-            TimelineRequest.Following -> emitAll(
-                followingTimeline(
-                    // TODO: Get a string resource for this
-                    name = "",
-                    position = 0,
-                )
-            )
+                    is TimelineRequest.OfList.WithUri -> emitAll(
+                        listTimeline(
+                            uri = request.uri,
+                            position = 0,
+                            isPinned = preferences.firstOrNull {
+                                val listUri = Type.safeValueOf(it.type) as? Type.List
+                                    ?: return@firstOrNull false
+                                listUri.value == request.uri.uri
+                            }?.pinned ?: false
+                        )
+                    )
+
+                    is TimelineRequest.OfFeed.WithProfile -> {
+                        val profileDid = lookupProfileDid(
+                            profileId = request.profileHandleOrDid,
+                            profileDao = profileDao,
+                            networkService = networkService,
+                        ) ?: return@flow
+                        val uri = FeedGeneratorUri(
+                            uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}"
+                        )
+                        emitAll(
+                            feedGeneratorTimeline(
+                                uri = uri,
+                                position = 0,
+                                isPinned = preferences.firstOrNull {
+                                    val feedUri = Type.safeValueOf(it.type) as? Type.Feed
+                                        ?: return@firstOrNull false
+                                    feedUri.value == uri.uri
+                                }?.pinned ?: false
+                            )
+                        )
+                    }
+
+                    is TimelineRequest.OfList.WithProfile -> {
+                        val profileDid = lookupProfileDid(
+                            profileId = request.profileHandleOrDid,
+                            profileDao = profileDao,
+                            networkService = networkService,
+                        ) ?: return@flow
+                        val uri = ListUri(
+                            uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}"
+                        )
+                        emitAll(
+                            listTimeline(
+                                uri = uri,
+                                position = 0,
+                                isPinned = preferences.firstOrNull {
+                                    val listUri = Type.safeValueOf(it.type) as? Type.List
+                                        ?: return@firstOrNull false
+                                    listUri.value == uri.uri
+                                }?.pinned ?: false
+                            )
+                        )
+                    }
+
+                    is TimelineRequest.OfProfile -> emitAll(
+                        profileDao.profiles(
+                            ids = listOf(request.profileHandleOrDid)
+                        )
+                            .mapNotNull(List<ProfileEntity>::firstOrNull)
+                            .distinctUntilChangedBy(ProfileEntity::did)
+                            .flatMapLatest { profile ->
+                                timelineDao.lastFetchKey(
+                                    sourceId = request.type.sourceId(profile.did)
+                                )
+                                    .distinctUntilChanged()
+                                    .map { timelinePreferenceEntity ->
+                                        Timeline.Profile(
+                                            profileId = profile.did,
+                                            type = request.type,
+                                            lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                                            presentation = timelinePreferenceEntity.preferredPresentation(),
+                                        )
+                                    }
+                            }
+                    )
+
+                    TimelineRequest.Following -> emitAll(
+                        followingTimeline(
+                            // TODO: Get a string resource for this
+                            name = "",
+                            position = 0,
+                            isPinned = preferences.firstOrNull {
+                                Type.safeValueOf(it.type) is Type.Timeline
+                            }?.pinned ?: false
+                        )
+                    )
+                }
+            }
         }
-    }
 
     override suspend fun updatePreferredPresentation(
         timeline: Timeline,
@@ -894,6 +927,7 @@ class OfflineTimelineRepository(
     private fun followingTimeline(
         name: String,
         position: Int,
+        isPinned: Boolean,
     ) = savedStateRepository.savedState
         .mapNotNull { it.auth?.authProfileId }
         .distinctUntilChanged()
@@ -907,6 +941,7 @@ class OfflineTimelineRepository(
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         signedInProfileId = signedInProfileId,
+                        isPinned = isPinned,
                     )
                 }
         }
@@ -914,6 +949,7 @@ class OfflineTimelineRepository(
     private fun feedGeneratorTimeline(
         uri: FeedGeneratorUri,
         position: Int,
+        isPinned: Boolean,
     ) = feedGeneratorDao.feedGenerator(listOf(uri))
         .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
@@ -936,6 +972,7 @@ class OfflineTimelineRepository(
                                 populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
                             },
                         ),
+                        isPinned = isPinned,
                     )
                 }
         }
@@ -957,6 +994,7 @@ class OfflineTimelineRepository(
     private fun listTimeline(
         uri: ListUri,
         position: Int,
+        isPinned: Boolean,
     ) = listDao.list(uri.uri)
         .filterNotNull()
         .distinctUntilChanged()
@@ -969,6 +1007,7 @@ class OfflineTimelineRepository(
                         feedList = it.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
+                        isPinned = isPinned,
                     )
                 }
         }
