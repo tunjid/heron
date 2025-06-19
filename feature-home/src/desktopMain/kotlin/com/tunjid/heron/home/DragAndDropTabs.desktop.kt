@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.home
 
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferAction
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
@@ -37,4 +39,10 @@ actual fun dragAndDropTransferData(
 
 actual fun DragAndDropEvent.draggedId(): String? {
     return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
+}
+
+actual fun Modifier.tabDragAndDropSource(
+    sourceId: String
+): Modifier = this.dragAndDropSource {
+    dragAndDropTransferData(sourceId)
 }

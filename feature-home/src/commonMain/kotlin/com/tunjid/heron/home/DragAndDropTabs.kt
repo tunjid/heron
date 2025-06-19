@@ -25,7 +25,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -85,6 +84,9 @@ import kotlinx.coroutines.launch
 expect fun dragAndDropTransferData(title: String): DragAndDropTransferData
 
 expect fun DragAndDropEvent.draggedId(): String?
+
+expect fun Modifier.tabDragAndDropSource(sourceId: String): Modifier
+
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -407,9 +409,7 @@ private class DragAndDropTabsState(
         fun Modifier.tabDragAndDrop(
             state: DragAndDropTabsState,
             sourceId: String,
-        ) = dragAndDropSource {
-            dragAndDropTransferData(sourceId)
-        }
+        ) = tabDragAndDropSource(sourceId)
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event.draggedId() != null
