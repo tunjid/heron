@@ -49,8 +49,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.round
 import kotlin.math.roundToInt
 
 data class Tab(
@@ -184,7 +184,7 @@ private fun BoxScope.Indicator(
         snapshotFlow {
             val currentIndex = selectedTabIndex()
             val flooredIndex = floor(currentIndex).roundToInt()
-            val roundedIndex = round(currentIndex).roundToInt()
+            val roundedIndex = ceil(currentIndex).roundToInt()
             val fraction = currentIndex - flooredIndex
 
             val flooredPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
