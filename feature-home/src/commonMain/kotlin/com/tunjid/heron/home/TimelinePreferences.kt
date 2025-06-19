@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -418,7 +419,9 @@ private fun ExpandButton(
         targetValue = if (isExpanded) 180f else 0f
     )
     ElevatedCard(
-        modifier = modifier,
+        modifier = modifier
+            // TODO: This offset is needed bc of some awkward behavior in chips
+            .offset(y = 4.dp),
         shape = CircleShape,
     ) {
         IconButton(
