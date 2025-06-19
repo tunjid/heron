@@ -619,9 +619,7 @@ class OfflineTimelineRepository(
                             uri = request.uri,
                             position = 0,
                             isPinned = preferences.firstOrNull {
-                                val feedUri = Type.safeValueOf(it.type) as? Type.Feed
-                                    ?: return@firstOrNull false
-                                feedUri.value == request.uri.uri
+                                it.value == request.uri.uri
                             }?.pinned ?: false
                         )
                     )
@@ -631,9 +629,7 @@ class OfflineTimelineRepository(
                             uri = request.uri,
                             position = 0,
                             isPinned = preferences.firstOrNull {
-                                val listUri = Type.safeValueOf(it.type) as? Type.List
-                                    ?: return@firstOrNull false
-                                listUri.value == request.uri.uri
+                                it.value == request.uri.uri
                             }?.pinned ?: false
                         )
                     )
@@ -652,9 +648,7 @@ class OfflineTimelineRepository(
                                 uri = uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
-                                    val feedUri = Type.safeValueOf(it.type) as? Type.Feed
-                                        ?: return@firstOrNull false
-                                    feedUri.value == uri.uri
+                                    it.value == uri.uri
                                 }?.pinned ?: false
                             )
                         )
@@ -674,9 +668,7 @@ class OfflineTimelineRepository(
                                 uri = uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
-                                    val listUri = Type.safeValueOf(it.type) as? Type.List
-                                        ?: return@firstOrNull false
-                                    listUri.value == uri.uri
+                                    it.value == uri.uri
                                 }?.pinned ?: false
                             )
                         )

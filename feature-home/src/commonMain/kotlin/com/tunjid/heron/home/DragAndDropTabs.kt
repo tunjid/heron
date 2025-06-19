@@ -106,13 +106,27 @@ fun HomeTabs(
     timelines: List<Timeline.Home>,
     currentSourceId: String?,
     timelineStateHolders: TimelineStateHolders,
-    tabs: List<Tab>,
+    sourceIdsToHasUpdates: Map<String, Boolean>,
     onRefreshTabClicked: (Int) -> Unit,
 ) = with(sharedTransitionScope) {
     var isExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val tabsState = rememberTabsState(
-        tabs = tabs,
+    val collapsedTabsState = rememberTabsState(
+        tabs = remember(sourceIdsToHasUpdates, timelines) {
+            timelines.forEach {
+                println("n: ${it.name}; p: ${it.isPinned}")
+            }
+            println("-----")
+
+            timelines.filter {
+                println("check ${it.name}; pinned: ${it.isPinned}")
+                it.isPinned }.map { timeline ->
+                Tab(
+                    title = timeline.name,
+                    hasUpdate = sourceIdsToHasUpdates[timeline.sourceId] == true,
+                )
+            }
+        },
         selectedTabIndex = pagerState.tabIndex,
         onTabSelected = {
             isExpanded = false
@@ -120,6 +134,19 @@ fun HomeTabs(
                 pagerState.animateScrollToPage(it)
             }
         },
+        onTabReselected = onRefreshTabClicked,
+    )
+    val expandedTabsState = rememberTabsState(
+        tabs = remember(timelines) {
+            timelines.map { timeline ->
+                Tab(
+                    title = timeline.name,
+                    hasUpdate = false,
+                )
+            }
+        },
+        selectedTabIndex = pagerState.tabIndex,
+        onTabSelected = collapsedTabsState.onTabSelected,
         onTabReselected = onRefreshTabClicked,
     )
     Box(
@@ -132,14 +159,14 @@ fun HomeTabs(
         ) { expanded ->
             if (expanded) ExpandedTabs(
                 timelines = timelines,
-                tabsState = tabsState,
+                tabsState = expandedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
                 onDismissed = { isExpanded = false }
             )
             else CollapsedTabs(
                 modifier = Modifier,
-                tabsState = tabsState,
+                tabsState = collapsedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
                 currentSourceId = currentSourceId,

@@ -76,7 +76,6 @@ import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
-import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -140,14 +139,7 @@ internal fun HomeScreen(
             currentSourceId = state.currentSourceId,
             timelines = state.timelines,
             timelineStateHolders = state.timelineStateHolders,
-            tabs = remember(state.sourceIdsToHasUpdates, state.timelines) {
-                state.timelines.map { timeline ->
-                    Tab(
-                        title = timeline.name,
-                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
-                    )
-                }
-            },
+            sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
             onRefreshTabClicked = { page ->
                 updatedTimelineStateHolders.stateHolderAt(page)
                     .accept(TimelineLoadAction.Fetch.Refresh)
