@@ -362,6 +362,8 @@ private fun TabsState.ExpandedTab(
         },
         trailingIcon = {
             Icon(
+                modifier = Modifier
+                    .clickable { timelinePreferencesState.remove(index) },
                 imageVector = Icons.Rounded.Remove,
                 contentDescription = "",
             )
@@ -500,6 +502,14 @@ private class TimelinePreferencesState(
     fun isHoveredId(sourceId: String) = sourceId == hoveredId
 
     fun isDraggedId(sourceId: String) = sourceId == draggedId
+
+    fun remove(index: Int) {
+        timelines.removeAt(index)
+        if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(
+            a = firstUnpinnedIndex - 1,
+            b = 0
+        )
+    }
 
     inner class Child(
         sourceId: String,
