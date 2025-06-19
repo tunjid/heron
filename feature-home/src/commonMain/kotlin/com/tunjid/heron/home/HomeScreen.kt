@@ -143,7 +143,6 @@ internal fun HomeScreen(
             currentSourceId = state.currentSourceId,
             isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
-            timelineStateHolders = state.timelineStateHolders,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
             scrollToPage = {
                 scope.launch {
@@ -156,6 +155,16 @@ internal fun HomeScreen(
             },
             onExpansionChanged = { isExpanded ->
                 actions(Action.SetPreferencesExpanded(isExpanded = isExpanded))
+            },
+            onTimelinePresentationUpdated = click@{ index, presentation ->
+                val timelineStateHolder = updatedTimelineStateHolders.stateHolderAtOrNull(index)
+                    ?: return@click
+                timelineStateHolder.accept(
+                    TimelineLoadAction.UpdatePreferredPresentation(
+                        timeline = timelineStateHolder.state.value.timeline,
+                        presentation = presentation,
+                    )
+                )
             }
         )
 

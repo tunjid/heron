@@ -76,8 +76,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.domain.timeline.TimelineLoadAction
-import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -110,12 +108,12 @@ fun HomeTabs(
     currentSourceId: String?,
     timelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
-    timelineStateHolders: TimelineStateHolders,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
     scrollToPage: (Int) -> Unit,
     onRefreshTabClicked: (Int) -> Unit,
     onExpansionChanged: (Boolean) -> Unit,
+    onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) = with(sharedTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -171,7 +169,7 @@ fun HomeTabs(
                 animatedContentScope = this@AnimatedContent,
                 currentSourceId = currentSourceId,
                 timelines = timelines,
-                timelineStateHolders = timelineStateHolders
+                onTimelinePresentationUpdated = onTimelinePresentationUpdated,
             )
         }
         Row(
@@ -274,7 +272,7 @@ private fun CollapsedTabs(
     animatedContentScope: AnimatedContentScope,
     currentSourceId: String?,
     timelines: List<Timeline>,
-    timelineStateHolders: TimelineStateHolders,
+    onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) = with(sharedTransitionScope) {
     Row(
         modifier = modifier
@@ -296,7 +294,7 @@ private fun CollapsedTabs(
         TimelinePresentationSelector(
             currentSourceId = currentSourceId,
             timelines = timelines,
-            timelineStateHolders = timelineStateHolders,
+            onTimelinePresentationUpdated = onTimelinePresentationUpdated,
         )
         Spacer(
             modifier = Modifier
@@ -459,7 +457,7 @@ private fun TimelinePresentationSelector(
     modifier: Modifier = Modifier,
     currentSourceId: String?,
     timelines: List<Timeline>,
-    timelineStateHolders: TimelineStateHolders,
+    onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) {
     val timeline = timelines.firstOrNull {
         it.sourceId == currentSourceId
@@ -475,14 +473,10 @@ private fun TimelinePresentationSelector(
                 val index = timelines.indexOfFirst {
                     it.sourceId == currentSourceId
                 }
-                timelineStateHolders.stateHolderAtOrNull(index)
-                    ?.accept
-                    ?.invoke(
-                        TimelineLoadAction.UpdatePreferredPresentation(
-                            timeline = timeline,
-                            presentation = presentation,
-                        )
-                    )
+                onTimelinePresentationUpdated(
+                    index,
+                    presentation,
+                )
             }
         )
     }
