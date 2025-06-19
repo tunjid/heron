@@ -42,7 +42,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,7 +62,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -88,12 +86,10 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.tabIndex
 import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.pinned
 import heron.feature_home.generated.resources.saved
 import heron.feature_home.generated.resources.timeline_preferences
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
@@ -110,17 +106,17 @@ expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modif
 @Composable
 fun HomeTabs(
     modifier: Modifier = Modifier,
-    timelines: List<Timeline.Home>,
     isExpanded: Boolean,
     currentSourceId: String?,
+    timelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
-    pagerState: PagerState,
     timelineStateHolders: TimelineStateHolders,
     sourceIdsToHasUpdates: Map<String, Boolean>,
+    selectedTabIndex: () -> Float,
+    scrollToPage: (Int) -> Unit,
     onRefreshTabClicked: (Int) -> Unit,
     onExpansionChanged: (Boolean) -> Unit,
 ) = with(sharedTransitionScope) {
-    val scope = rememberCoroutineScope()
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -132,12 +128,10 @@ fun HomeTabs(
                     )
                 }
         },
-        selectedTabIndex = pagerState.tabIndex,
+        selectedTabIndex = selectedTabIndex,
         onTabSelected = {
             onExpansionChanged(false)
-            scope.launch {
-                pagerState.animateScrollToPage(it)
-            }
+            scrollToPage(it)
         },
         onTabReselected = onRefreshTabClicked,
     )
@@ -150,9 +144,9 @@ fun HomeTabs(
                 )
             }
         },
-        selectedTabIndex = pagerState.tabIndex,
+        selectedTabIndex = selectedTabIndex,
         onTabSelected = collapsedTabsState.onTabSelected,
-        onTabReselected = onRefreshTabClicked,
+        onTabReselected = collapsedTabsState.onTabReselected,
     )
     Box(
         modifier = modifier
@@ -391,7 +385,7 @@ private fun TabsState.CollapsedTab(
             val index = tabList.indexOf(tab)
             if (index < 0) return@click
 
-            if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+            if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
             else onTabReselected(index)
         },
         label = {

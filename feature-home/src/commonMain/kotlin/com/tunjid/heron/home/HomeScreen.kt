@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -77,9 +78,11 @@ import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -98,6 +101,7 @@ internal fun HomeScreen(
     val pagerState = rememberPagerState {
         updatedTimelineStateHolders.size
     }
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = modifier
@@ -135,12 +139,17 @@ internal fun HomeScreen(
                     tabsOffsetNestedScrollConnection.offset.round()
                 },
             sharedTransitionScope = paneScaffoldState,
-            pagerState = pagerState,
+            selectedTabIndex = pagerState::tabIndex,
             currentSourceId = state.currentSourceId,
             isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
             timelineStateHolders = state.timelineStateHolders,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+            scrollToPage = {
+                scope.launch {
+                    pagerState.animateScrollToPage(it)
+                }
+            },
             onRefreshTabClicked = { page ->
                 updatedTimelineStateHolders.stateHolderAt(page)
                     .accept(TimelineLoadAction.Fetch.Refresh)

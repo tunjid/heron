@@ -516,7 +516,7 @@ private fun TabbedSearchResults(
                         hasUpdate = false
                     ),
                 ),
-                selectedTabIndex = pagerState.tabIndex,
+                selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
                     scope.launch {
                         pagerState.animateScrollToPage(it)

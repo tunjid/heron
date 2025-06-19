@@ -38,11 +38,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -62,13 +60,11 @@ data class Tab(
 
 @Stable
 class TabsState private constructor(
-    selectedTabIndex: Float,
     tabs: List<Tab>,
+    val selectedTabIndex: () -> Float,
     val onTabSelected: (Int) -> Unit,
     val onTabReselected: (Int) -> Unit,
 ) {
-    var selectedTabIndex by mutableFloatStateOf(selectedTabIndex)
-        private set
 
     val tabList: List<Tab> get() = tabs
 
@@ -77,8 +73,8 @@ class TabsState private constructor(
     companion object {
         @Composable
         fun rememberTabsState(
-            selectedTabIndex: Float,
             tabs: List<Tab>,
+            selectedTabIndex: () -> Float,
             onTabSelected: (Int) -> Unit,
             onTabReselected: (Int) -> Unit,
         ) = remember {
@@ -89,7 +85,6 @@ class TabsState private constructor(
                 onTabReselected = onTabReselected
             )
         }.also {
-            it.selectedTabIndex = selectedTabIndex
             if (it.tabs != tabs) {
                 it.tabs.clear()
                 it.tabs.addAll(tabs)
@@ -146,7 +141,7 @@ fun TabsState.Tab(
             val index = tabs.indexOf(tab)
             if (index < 0) return@click
 
-            if (index != selectedTabIndex.roundToInt()) onTabSelected(index)
+            if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
             else onTabReselected(index)
         },
         label = {
@@ -158,16 +153,15 @@ fun TabsState.Tab(
 @Composable
 private fun BoxScope.Indicator(
     lazyListState: LazyListState,
-    selectedTabIndex: Float,
+    selectedTabIndex: () -> Float,
 ) {
-    val updatedSelectedTabIndex by rememberUpdatedState(selectedTabIndex)
     var interpolatedOffset by remember { mutableStateOf(IntOffset.Zero) }
 
     // Keep selected tab on screen
     LaunchedEffect(lazyListState) {
         snapshotFlow {
             val layoutInfo = lazyListState.layoutInfo
-            val roundedIndex = updatedSelectedTabIndex.roundToInt()
+            val roundedIndex = selectedTabIndex().roundToInt()
 
             if (roundedIndex == layoutInfo.totalItemsCount - 1)
                 return@snapshotFlow layoutInfo.totalItemsCount - 1
@@ -188,9 +182,10 @@ private fun BoxScope.Indicator(
     // Interpolated highlighted tab position
     LaunchedEffect(lazyListState) {
         snapshotFlow {
-            val flooredIndex = floor(updatedSelectedTabIndex).roundToInt()
-            val roundedIndex = round(updatedSelectedTabIndex).roundToInt()
-            val fraction = updatedSelectedTabIndex - flooredIndex
+            val currentIndex = selectedTabIndex()
+            val flooredIndex = floor(currentIndex).roundToInt()
+            val roundedIndex = round(currentIndex).roundToInt()
+            val fraction = currentIndex - flooredIndex
 
             val flooredPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
                 it.index - flooredIndex

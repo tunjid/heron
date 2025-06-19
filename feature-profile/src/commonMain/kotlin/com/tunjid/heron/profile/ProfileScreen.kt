@@ -599,7 +599,7 @@ private fun ProfileTabs(
                 .clip(CircleShape),
             tabsState = rememberTabsState(
                 tabs = tabs,
-                selectedTabIndex = pagerState.tabIndex,
+                selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
                     scope.launch {
                         pagerState.animateScrollToPage(it)
