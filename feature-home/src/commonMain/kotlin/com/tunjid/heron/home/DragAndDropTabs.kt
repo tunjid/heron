@@ -113,19 +113,14 @@ fun HomeTabs(
     val scope = rememberCoroutineScope()
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
-            timelines.forEach {
-                println("n: ${it.name}; p: ${it.isPinned}")
-            }
-            println("-----")
-
-            timelines.filter {
-                println("check ${it.name}; pinned: ${it.isPinned}")
-                it.isPinned }.map { timeline ->
-                Tab(
-                    title = timeline.name,
-                    hasUpdate = sourceIdsToHasUpdates[timeline.sourceId] == true,
-                )
-            }
+            timelines
+                .filter(Timeline.Home::isPinned)
+                .map { timeline ->
+                    Tab(
+                        title = timeline.name,
+                        hasUpdate = sourceIdsToHasUpdates[timeline.sourceId] == true,
+                    )
+                }
         },
         selectedTabIndex = pagerState.tabIndex,
         onTabSelected = {

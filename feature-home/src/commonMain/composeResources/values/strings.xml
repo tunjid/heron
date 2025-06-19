@@ -20,5 +20,8 @@
     <string name="repost">Reply</string>
     <string name="repost_by">Repost by %1$s</string>
     <string name="pinned">Pinned</string>
+    <string name="saved">Saved</string>
+    <string name="timeline_preferences">Timeline Preferences</string>
+
     <string name="create_post">Create Post</string>
 </resources>
