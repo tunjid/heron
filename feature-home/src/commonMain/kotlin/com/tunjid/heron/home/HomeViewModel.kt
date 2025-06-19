@@ -151,7 +151,7 @@ private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
     mapLatestToManyMutations {
         when (it) {
             Action.UpdateTimeline.RequestUpdate -> emit {
-                copy(saveRequestId = Uuid.random().toHexString())
+                copy(timelinePreferenceSaveRequestId = Uuid.random().toHexString())
             }
 
             is Action.UpdateTimeline.Update -> {

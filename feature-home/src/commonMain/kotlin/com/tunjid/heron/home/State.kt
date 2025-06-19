@@ -30,7 +30,7 @@ data class State(
     val currentSourceId: String? = null,
     val timelinePreferencesExpanded: Boolean = false,
     @Transient
-    val saveRequestId: String? = null,
+    val timelinePreferenceSaveRequestId: String? = null,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient

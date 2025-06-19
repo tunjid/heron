@@ -279,8 +279,8 @@ private fun ExpandedTabs(
             currentSaveRequestState.value
         }
             .drop(1)
-            .collectLatest {
-                onTimelinePreferencesSaved(
+            .collectLatest { requestId ->
+                if (requestId != null) onTimelinePreferencesSaved(
                     timelinePreferencesState.timelines
                 )
             }

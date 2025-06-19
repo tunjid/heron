@@ -140,7 +140,7 @@ internal fun HomeScreen(
                 },
             sharedTransitionScope = paneScaffoldState,
             selectedTabIndex = pagerState::tabIndex,
-            saveRequestId = state.saveRequestId,
+            saveRequestId = state.timelinePreferenceSaveRequestId,
             currentSourceId = state.currentSourceId,
             isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
