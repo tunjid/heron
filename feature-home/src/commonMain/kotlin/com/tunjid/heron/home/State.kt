@@ -28,6 +28,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val currentSourceId: String? = null,
+    val timelinePreferencesExpanded: Boolean = false,
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
@@ -55,6 +56,10 @@ sealed class Action(val key: String) {
     data class SetCurrentTab(
         val sourceId: String,
     ) : Action(key = "SetCurrentTab")
+
+    data class SetPreferencesExpanded(
+        val isExpanded: Boolean,
+    ) : Action(key = "SetPreferencesExpanded")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
 

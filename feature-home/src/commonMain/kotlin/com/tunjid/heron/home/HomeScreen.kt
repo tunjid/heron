@@ -137,12 +137,16 @@ internal fun HomeScreen(
             sharedTransitionScope = paneScaffoldState,
             pagerState = pagerState,
             currentSourceId = state.currentSourceId,
+            isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
             timelineStateHolders = state.timelineStateHolders,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
             onRefreshTabClicked = { page ->
                 updatedTimelineStateHolders.stateHolderAt(page)
                     .accept(TimelineLoadAction.Fetch.Refresh)
+            },
+            onExpansionChanged = { isExpanded ->
+                actions(Action.SetPreferencesExpanded(isExpanded = isExpanded))
             }
         )
 

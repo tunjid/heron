@@ -94,6 +94,7 @@ class ActualHomeViewModel(
                 )
 
                 is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
+                is Action.SetPreferencesExpanded -> action.flow.setPreferencesExpanded()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -147,6 +148,12 @@ private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
 ): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(currentSourceId = action.sourceId)
+    }
+
+private fun Flow<Action.SetPreferencesExpanded>.setPreferencesExpanded(
+): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(timelinePreferencesExpanded = action.isExpanded)
     }
 
 private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(

@@ -109,15 +109,16 @@ expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modif
 @Composable
 fun HomeTabs(
     modifier: Modifier = Modifier,
+    timelines: List<Timeline.Home>,
+    isExpanded: Boolean,
+    currentSourceId: String?,
     sharedTransitionScope: SharedTransitionScope,
     pagerState: PagerState,
-    timelines: List<Timeline.Home>,
-    currentSourceId: String?,
     timelineStateHolders: TimelineStateHolders,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     onRefreshTabClicked: (Int) -> Unit,
-) = with(sharedTransitionScope) {
-    var isExpanded by remember { mutableStateOf(false) }
+    onExpansionChanged: (Boolean) -> Unit,
+    ) = with(sharedTransitionScope) {
     val scope = rememberCoroutineScope()
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -132,7 +133,7 @@ fun HomeTabs(
         },
         selectedTabIndex = pagerState.tabIndex,
         onTabSelected = {
-            isExpanded = false
+            onExpansionChanged(false)
             scope.launch {
                 pagerState.animateScrollToPage(it)
             }
@@ -166,7 +167,7 @@ fun HomeTabs(
                 tabsState = expandedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
-                onDismissed = { isExpanded = false }
+                onDismissed = { onExpansionChanged(false) }
             )
             else CollapsedTabs(
                 modifier = Modifier,
@@ -199,7 +200,7 @@ fun HomeTabs(
             )
             ExpandButton(
                 isExpanded = isExpanded,
-                onToggled = { isExpanded = !isExpanded }
+                onToggled = { onExpansionChanged(!isExpanded) }
             )
         }
     }
