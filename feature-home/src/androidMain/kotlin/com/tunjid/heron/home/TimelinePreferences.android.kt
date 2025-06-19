@@ -16,24 +16,37 @@
 
 package com.tunjid.heron.home
 
+import android.content.ClipData
 import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
-import platform.UIKit.UIDragItem
+import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
-actual fun dragAndDropTransferData(
+actual fun timelinePreferenceDragAndDropTransferData(
     title: String
 ): DragAndDropTransferData =
     DragAndDropTransferData(
-        items = listOf(UIDragItem().apply { localObject = title })
+        clipData = ClipData.newPlainText("Drag timeline", title),
+        localState = title
     )
 
 actual fun DragAndDropEvent.draggedId(): String? =
-    items.firstOrNull()?.localObject as? String
+    toAndroidDragEvent().localState as? String
 
-actual fun Modifier.tabDragAndDropSource(
+@Suppress("DEPRECATION")
+actual fun Modifier.timelinePreferenceDragAndDropSource(
     sourceId: String
-): Modifier = this.dragAndDropSource {
-    dragAndDropTransferData(sourceId)
-}
+): Modifier = dragAndDropSource(
+    block = {
+        detectDragGesturesAfterLongPress(
+            onDragStart = {
+                startTransfer(
+                    timelinePreferenceDragAndDropTransferData(sourceId)
+                )
+            },
+            onDrag = { _, _ -> }
+        )
+    }
+)

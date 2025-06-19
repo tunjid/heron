@@ -79,7 +79,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
-import com.tunjid.heron.home.DragAndDropTabsState.Companion.tabDragAndDrop
+import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.Tab
@@ -98,11 +98,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-expect fun dragAndDropTransferData(title: String): DragAndDropTransferData
+expect fun timelinePreferenceDragAndDropTransferData(title: String): DragAndDropTransferData
 
 expect fun DragAndDropEvent.draggedId(): String?
 
-expect fun Modifier.tabDragAndDropSource(sourceId: String): Modifier
+expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modifier
 
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -215,9 +215,9 @@ private fun ExpandedTabs(
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
 ) = with(sharedTransitionScope) {
-    val state = remember {
+    val timelinePreferencesState = remember {
         timelines.toMutableStateList()
-        DragAndDropTabsState(
+        TimelinePreferencesState(
             timelines = timelines.toMutableStateList(),
         )
     }
@@ -246,17 +246,17 @@ private fun ExpandedTabs(
                     .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.timelines.forEachIndexed { index, timeline ->
+                timelinePreferencesState.timelines.forEachIndexed { index, timeline ->
                     if (index == 0) {
                         SectionTitle(stringResource(Res.string.pinned))
-                    } else if (index == state.firstUnpinnedIndex) {
+                    } else if (index == timelinePreferencesState.firstUnpinnedIndex) {
                         SectionTitle(stringResource(Res.string.saved))
                     }
                     key(timeline.sourceId) {
-                        if (!state.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                        if (!timelinePreferencesState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                             modifier = Modifier
                                 .animateBounds(this@with),
-                            dragAndDropTabsState = state,
+                            timelinePreferencesState = timelinePreferencesState,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedContentScope = animatedContentScope,
                             timeline = timeline,
@@ -337,7 +337,7 @@ private fun CollapsedTabs(
 @Composable
 private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
-    dragAndDropTabsState: DragAndDropTabsState,
+    timelinePreferencesState: TimelinePreferencesState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
@@ -346,12 +346,12 @@ private fun TabsState.ExpandedTab(
     InputChip(
         modifier = modifier
             .skipToLookaheadSize()
-            .tabDragAndDrop(
-                state = dragAndDropTabsState,
+            .timelinePreferenceDragAndDrop(
+                state = timelinePreferencesState,
                 sourceId = timeline.sourceId,
             ),
         shape = CircleShape,
-        selected = dragAndDropTabsState.isHoveredId(timeline.sourceId),
+        selected = timelinePreferencesState.isHoveredId(timeline.sourceId),
         onClick = click@{
             onTabSelected(index)
         },
@@ -479,7 +479,7 @@ private fun TimelinePresentationSelector(
 }
 
 @Stable
-private class DragAndDropTabsState(
+private class TimelinePreferencesState(
     val timelines: SnapshotStateList<Timeline.Home>,
 ) {
     var hoveredId by mutableStateOf<String?>(null)
@@ -559,10 +559,10 @@ private class DragAndDropTabsState(
     }
 
     companion object {
-        fun Modifier.tabDragAndDrop(
-            state: DragAndDropTabsState,
+        fun Modifier.timelinePreferenceDragAndDrop(
+            state: TimelinePreferencesState,
             sourceId: String,
-        ) = tabDragAndDropSource(sourceId)
+        ) = timelinePreferenceDragAndDropSource(sourceId)
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event.draggedId() != null

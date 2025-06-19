@@ -19,30 +19,21 @@ package com.tunjid.heron.home
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTransferAction
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
-import androidx.compose.ui.draganddrop.DragAndDropTransferable
-import androidx.compose.ui.draganddrop.awtTransferable
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
+import platform.UIKit.UIDragItem
 
-actual fun dragAndDropTransferData(
+actual fun timelinePreferenceDragAndDropTransferData(
     title: String
-): DragAndDropTransferData = DragAndDropTransferData(
-    transferable = DragAndDropTransferable(
-        StringSelection(title)
-    ),
-    supportedActions = listOf(
-        DragAndDropTransferAction.Move,
-    ),
-)
+): DragAndDropTransferData =
+    DragAndDropTransferData(
+        items = listOf(UIDragItem().apply { localObject = title })
+    )
 
-actual fun DragAndDropEvent.draggedId(): String? {
-    return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
-}
+actual fun DragAndDropEvent.draggedId(): String? =
+    items.firstOrNull()?.localObject as? String
 
-actual fun Modifier.tabDragAndDropSource(
+actual fun Modifier.timelinePreferenceDragAndDropSource(
     sourceId: String
 ): Modifier = this.dragAndDropSource {
-    dragAndDropTransferData(sourceId)
+    timelinePreferenceDragAndDropTransferData(sourceId)
 }
