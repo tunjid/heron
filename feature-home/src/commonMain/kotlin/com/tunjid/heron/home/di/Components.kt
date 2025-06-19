@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.create_post
+import heron.feature_home.generated.resources.save
 import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.KmpComponentCreate
@@ -180,8 +182,10 @@ abstract class HomeComponent(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(Res.string.create_post),
-                        icon = Icons.Rounded.Edit,
+                        text = if (state.timelinePreferencesExpanded) stringResource(Res.string.save)
+                        else stringResource(Res.string.create_post),
+                        icon = if (state.timelinePreferencesExpanded) Icons.Rounded.Save
+                        else Icons.Rounded.Edit,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
