@@ -257,15 +257,16 @@ private fun ExpandedTabs(
                     } else if (index == timelinePreferencesState.firstUnpinnedIndex) {
                         SectionTitle(stringResource(Res.string.saved))
                     }
+
                     key(timeline.sourceId) {
                         if (!timelinePreferencesState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                             modifier = Modifier
                                 .animateBounds(this@with),
                             timelinePreferencesState = timelinePreferencesState,
+                            currentTimelines = timelines,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedContentScope = animatedContentScope,
                             timeline = timeline,
-                            index = index,
                         )
                     }
                 }
@@ -332,10 +333,10 @@ private fun CollapsedTabs(
 private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
     timelinePreferencesState: TimelinePreferencesState,
+    currentTimelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
-    index: Int,
 ) = with(sharedTransitionScope) {
     InputChip(
         modifier = modifier
@@ -347,7 +348,8 @@ private fun TabsState.ExpandedTab(
         shape = CircleShape,
         selected = timelinePreferencesState.isHoveredId(timeline.sourceId),
         onClick = click@{
-            onTabSelected(index)
+            val index = currentTimelines.indexOfFirst { it.sourceId == timeline.sourceId }
+            if (index >= 0) onTabSelected(index)
         },
         avatar = {
             val url = when (timeline) {
@@ -385,7 +387,9 @@ private fun TabsState.ExpandedTab(
         trailingIcon = {
             Icon(
                 modifier = Modifier
-                    .clickable { timelinePreferencesState.remove(index) },
+                    .clickable {
+                        timelinePreferencesState.remove(timeline)
+                    },
                 imageVector = Icons.Rounded.Remove,
                 contentDescription = "",
             )
@@ -523,7 +527,10 @@ private class TimelinePreferencesState(
     @Stable
     fun isDraggedId(sourceId: String) = sourceId == draggedId
 
-    fun remove(index: Int) {
+    fun remove(timeline: Timeline.Home) {
+        val index = timelines.indexOfFirst { it.sourceId == timeline.sourceId }
+        if (index < 0) return
+
         timelines.removeAt(index)
         if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(
             a = firstUnpinnedIndex - 1,
