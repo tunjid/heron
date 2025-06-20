@@ -71,8 +71,8 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
-import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.search.ui.SuggestedProfile
+import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -80,6 +80,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -495,32 +496,34 @@ private fun TabbedSearchResults(
     ) {
         val scope = rememberCoroutineScope()
         Tabs(
-            tabs = listOf(
-                Tab(
-                    title = stringResource(resource = Res.string.top),
-                    hasUpdate = false
-                ),
-                Tab(
-                    title = stringResource(resource = Res.string.latest),
-                    hasUpdate = false
-                ),
-                Tab(
-                    title = stringResource(resource = Res.string.people),
-                    hasUpdate = false
-                ),
-                Tab(
-                    title = stringResource(resource = Res.string.feeds),
-                    hasUpdate = false
-                ),
-            ),
             modifier = Modifier.fillMaxWidth(),
-            selectedTabIndex = pagerState.tabIndex,
-            onTabSelected = {
-                scope.launch {
-                    pagerState.animateScrollToPage(it)
-                }
-            },
-            onTabReselected = { },
+            tabsState = rememberTabsState(
+                tabs = listOf(
+                    Tab(
+                        title = stringResource(resource = Res.string.top),
+                        hasUpdate = false
+                    ),
+                    Tab(
+                        title = stringResource(resource = Res.string.latest),
+                        hasUpdate = false
+                    ),
+                    Tab(
+                        title = stringResource(resource = Res.string.people),
+                        hasUpdate = false
+                    ),
+                    Tab(
+                        title = stringResource(resource = Res.string.feeds),
+                        hasUpdate = false
+                    ),
+                ),
+                selectedTabIndex = pagerState::tabIndex,
+                onTabSelected = {
+                    scope.launch {
+                        pagerState.animateScrollToPage(it)
+                    }
+                },
+                onTabReselected = { },
+            )
         )
         HorizontalPager(
             modifier = Modifier

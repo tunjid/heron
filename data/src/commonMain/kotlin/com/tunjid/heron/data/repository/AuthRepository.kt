@@ -62,7 +62,7 @@ interface AuthRepository {
 
     suspend fun createSession(request: SessionRequest): Result<Unit>
 
-    suspend fun updateSignedInUser()
+    suspend fun updateSignedInUser(): Boolean
 }
 
 @Inject
@@ -123,13 +123,13 @@ class AuthTokenRepository(
         }
 
 
-    override suspend fun updateSignedInUser() {
-        runCatchingWithNetworkRetry {
+    override suspend fun updateSignedInUser(): Boolean {
+        return runCatchingWithNetworkRetry {
             networkService.api.getSession()
         }
             .getOrNull()
             ?.did
-            ?.let { updateSignedInUser(it) }
+            ?.let { updateSignedInUser(it) } == true
     }
 
     private suspend fun updateSignedInUser(did: Did) = supervisorScope {
@@ -140,18 +140,16 @@ class AuthTokenRepository(
                 }
                     .getOrNull()
                     ?.profileEntity()
-                    ?.let { profileDao.upsertProfiles(listOf(it)) }
+                    ?.let { profileDao.upsertProfiles(listOf(it)) } != null
             },
             async {
                 runCatchingWithNetworkRetry {
                     networkService.api.getPreferences()
                 }
                     .getOrNull()
-                    ?.let {
-                        savePreferences(it)
-                    }
+                    ?.let { savePreferences(it) } != null
             },
-        ).awaitAll()
+        ).awaitAll().all(true::equals)
     }
 
     private suspend fun savePreferences(

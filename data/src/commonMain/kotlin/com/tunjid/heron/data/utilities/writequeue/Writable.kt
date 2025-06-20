@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities.writequeue
 
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import kotlinx.serialization.Serializable
 
 sealed interface Writable {
@@ -72,6 +73,21 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write() {
             profileRepository.sendConnection(connection)
+        }
+    }
+
+    @Serializable
+    data class TimelineUpdate(
+        val timelines: List<Timeline.Home>,
+    ) : Writable {
+        override val queueId: String
+            get() = timelines.joinToString(
+                separator = "-",
+                transform = Timeline.Home::sourceId,
+            )
+
+        override suspend fun WriteQueue.write() {
+            timelineRepository.updateHomeTimelines(timelines)
         }
     }
 }

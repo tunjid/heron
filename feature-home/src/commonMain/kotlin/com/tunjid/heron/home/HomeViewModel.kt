@@ -32,6 +32,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -42,6 +43,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -93,7 +96,12 @@ class ActualHomeViewModel(
                     stateHolder = this@transform,
                 )
 
+                is Action.UpdateTimeline -> action.flow.saveTimelinePreferencesMutations(
+                    writeQueue = writeQueue,
+                )
+
                 is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
+                is Action.SetPreferencesExpanded -> action.flow.setPreferencesExpanded()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -136,6 +144,28 @@ private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<M
         copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }
 
+@OptIn(ExperimentalUuidApi::class)
+private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations {
+        when (it) {
+            Action.UpdateTimeline.RequestUpdate -> emit {
+                copy(timelinePreferenceSaveRequestId = Uuid.random().toHexString())
+            }
+
+            is Action.UpdateTimeline.Update -> {
+                val writable = Writable.TimelineUpdate(it.timelines)
+                writeQueue.enqueue(writable)
+                writeQueue.awaitDequeue(writable)
+                emit {
+                    copy(timelinePreferencesExpanded = false)
+                }
+            }
+        }
+    }
+
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -147,6 +177,12 @@ private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
 ): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(currentSourceId = action.sourceId)
+    }
+
+private fun Flow<Action.SetPreferencesExpanded>.setPreferencesExpanded(
+): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(timelinePreferencesExpanded = action.isExpanded)
     }
 
 private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(

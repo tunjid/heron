@@ -61,7 +61,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
-                    .padding(start = 16.dp)
+                    .padding(start = 8.dp)
                     .size(36.dp)
             )
         },
@@ -94,7 +94,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     )
                 }
             }
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(8.dp))
         },
     )
 }
