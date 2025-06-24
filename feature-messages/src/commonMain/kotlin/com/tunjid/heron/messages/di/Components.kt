@@ -22,9 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.messages.ActualMessagesViewModel
@@ -37,6 +35,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.RouteMatcher
@@ -97,10 +96,9 @@ abstract class MessagesComponent(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
-            val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualMessagesViewModel> {
                 viewModelInitializer.invoke(
-                    scope = lifecycleCoroutineScope,
+                    scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }

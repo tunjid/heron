@@ -31,9 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -42,10 +40,11 @@ import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
-import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.RouteViewModelInitializer
+import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -112,10 +111,9 @@ abstract class SignInComponent(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
-            val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualSignInViewModel> {
                 viewModelInitializer.invoke(
-                    scope = lifecycleCoroutineScope,
+                    scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }

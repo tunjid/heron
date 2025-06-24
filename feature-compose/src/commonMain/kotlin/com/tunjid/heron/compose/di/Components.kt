@@ -32,9 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
@@ -53,6 +51,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -121,10 +120,9 @@ abstract class ComposeComponent(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
-            val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualComposeViewModel> {
                 viewModelInitializer.invoke(
-                    scope = lifecycleCoroutineScope,
+                    scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
