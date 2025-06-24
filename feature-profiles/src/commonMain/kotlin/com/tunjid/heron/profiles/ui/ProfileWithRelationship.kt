@@ -62,7 +62,9 @@ fun ProfileWithRelationship(
                     .size(UiTokens.avatarSize)
                     .clip(RoundedPolygonShape.Circle)
                     .paneSharedElement(
-                        key = profileWithViewerState.sharedElementKey()
+                        sharedContentState = rememberSharedContentState(
+                            key = profileWithViewerState.sharedElementKey(),
+                        )
                     )
                     .clickable { onProfileClicked(profile) },
                 args = remember(profile.avatar) {
