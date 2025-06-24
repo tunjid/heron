@@ -55,10 +55,12 @@ internal fun PostExternal(
 ) = with(paneMovableElementSharedTransitionScope) {
     FeatureContainer(
         modifier = Modifier.paneSharedElement(
-            key = embedSharedElementKey(
-                prefix = sharedElementPrefix,
-                postId = postId,
-                text = feature.uri.uri,
+            sharedContentState = rememberSharedContentState(
+                key = embedSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                    text = feature.uri.uri,
+                ),
             ),
         ),
         onClick = onClick,
@@ -70,10 +72,12 @@ internal fun PostExternal(
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
                         .paneSharedElement(
-                            key = embedSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = feature.thumb?.uri,
+                            sharedContentState = rememberSharedContentState(
+                                key = embedSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postId = postId,
+                                    text = feature.thumb?.uri,
+                                )
                             ),
                         ),
                     args = ImageArgs(
@@ -91,10 +95,12 @@ internal fun PostExternal(
                         horizontal = 16.dp,
                     )
                     .paneSharedElement(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = feature.title,
+                        sharedContentState = rememberSharedContentState(
+                            key = embedSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = feature.title,
+                            ),
                         ),
                     ),
                 title = feature.title,

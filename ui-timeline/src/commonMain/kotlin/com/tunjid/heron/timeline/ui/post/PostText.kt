@@ -61,8 +61,10 @@ fun PostText(
                 indication = null,
             ) { onClick() }
             .paneSharedElement(
-                key = post.textSharedElementKey(
-                    prefix = sharedElementPrefix,
+                sharedContentState = rememberSharedContentState(
+                    key = post.textSharedElementKey(
+                        prefix = sharedElementPrefix,
+                    ),
                 ),
             ),
         text = rememberFormattedTextPost(

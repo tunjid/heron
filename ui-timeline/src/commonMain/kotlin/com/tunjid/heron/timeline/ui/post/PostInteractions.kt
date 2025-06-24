@@ -120,10 +120,12 @@ fun PostInteractions(
             PostInteraction(
                 modifier = Modifier
                     .paneSharedElement(
-                        key = postActionSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            button = button,
+                        sharedContentState = rememberSharedContentState(
+                            key = postActionSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                button = button,
+                            ),
                         ),
                     ),
                 icon = when (button) {
