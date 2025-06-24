@@ -17,9 +17,8 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -30,8 +29,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.navigationevent.NavigationEvent
 import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.splitlayout.SplitLayout
@@ -40,6 +42,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThu
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
+import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.transforms.threePanedAdaptiveTransform
 import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementTransform
@@ -61,83 +64,99 @@ fun App(
             LocalVideoPlayerController provides appState.videoPlayerController,
         ) {
             Surface {
-                Box(
+                // Root LookaheadScope used to anchor all shared element transitions
+                SharedTransitionLayout(
                     modifier = modifier.fillMaxSize()
                 ) {
-                    // Root LookaheadScope used to anchor all shared element transitions
-                    SharedTransitionScope { sharedElementModifier ->
-                        val movableSharedElementHostState = remember {
-                            MovableSharedElementHostState<ThreePane, Route>(
-                                sharedTransitionScope = this@SharedTransitionScope,
-                            )
-                        }
-                        MultiPaneDisplay(
-                            modifier = Modifier.fillMaxSize(),
-                            state = appState.rememberMultiPaneDisplayState(
-                                transforms = remember {
-                                    listOf(
-                                        threePanedAdaptiveTransform(
-                                            secondaryPaneBreakPoint = mutableStateOf(
-                                                SecondaryPaneMinWidthBreakpointDp
-                                            ),
-                                            tertiaryPaneBreakPoint = mutableStateOf(
-                                                TertiaryPaneMinWidthBreakpointDp
-                                            ),
-                                            windowWidthState = derivedStateOf {
-                                                appState.splitLayoutState.size
+                    val movableSharedElementHostState = remember {
+                        MovableSharedElementHostState<ThreePane, Route>(
+                            sharedTransitionScope = this,
+                        )
+                    }
+
+                    MultiPaneDisplay(
+                        modifier = Modifier.fillMaxSize(),
+                        state = appState.rememberMultiPaneDisplayState(
+                            transforms = remember {
+                                listOf(
+                                    threePanedAdaptiveTransform(
+                                        secondaryPaneBreakPoint = mutableStateOf(
+                                            SecondaryPaneMinWidthBreakpointDp
+                                        ),
+                                        tertiaryPaneBreakPoint = mutableStateOf(
+                                            TertiaryPaneMinWidthBreakpointDp
+                                        ),
+                                        windowWidthState = derivedStateOf {
+                                            appState.splitLayoutState.size
+                                        }
+                                    ),
+                                    threePanedMovableSharedElementTransform(
+                                        movableSharedElementHostState
+                                    ),
+                                    paneModifierTransform {
+                                        Modifier
+                                            .fillMaxSize()
+                                            .constrainedSizePlacement(
+                                                orientation = Orientation.Horizontal,
+                                                minSize = 180.dp,
+                                                atStart = paneState.pane == ThreePane.Secondary,
+                                            )
+                                            .run {
+                                                if (paneState.pane == ThreePane.Primary
+                                                    && inPredictiveBack
+                                                    && isActive
+                                                    && !appState.dragToPopState.isDraggingToPop
+                                                ) backPreview(appState.backPreviewState)
+                                                else this
                                             }
-                                        ),
-                                        threePanedMovableSharedElementTransform(
-                                            movableSharedElementHostState
-                                        ),
-                                        paneModifierTransform {
-                                            Modifier
-                                                .fillMaxSize()
-                                                .constrainedSizePlacement(
-                                                    orientation = Orientation.Horizontal,
-                                                    minSize = 180.dp,
-                                                    atStart = paneState.pane == ThreePane.Secondary,
-                                                )
-                                                .run {
-                                                    if (paneState.pane == ThreePane.Primary
-                                                        && inPredictiveBack
-                                                        && isActive
-                                                        && !appState.dragToPopState.isDraggingToPop
-                                                    ) backPreview(appState.backPreviewState)
-                                                    else this
-                                                }
-                                        },
-                                    )
-                                }
-                            ),
-                        ) {
-                            appState.displayScope = this
-                            appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
-                            appState.paneAnchorState.updateMaxWidth(
-                                with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
-                            )
-                            SplitLayout(
-                                state = appState.splitLayoutState,
-                                modifier = modifier
-                                    .fillMaxSize()
-                                    .then(sharedElementModifier),
-                                itemSeparators = { _, offset ->
-                                    DraggableThumb(
-                                        splitLayoutState = appState.splitLayoutState,
-                                        paneAnchorState = appState.paneAnchorState,
-                                        offset = offset
-                                    )
-                                },
-                                itemContent = { index ->
-                                    Destination(appState.filteredPaneOrder[index])
-                                }
-                            )
-                            LaunchedEffect(Unit) {
-                                snapshotFlow { appState.filteredPaneOrder }.collect { order ->
-                                    if (order.size != 1) return@collect
-                                    appState.paneAnchorState.onClosed()
-                                }
+                                    },
+                                )
                             }
+                        ),
+                    ) {
+                        appState.displayScope = this
+                        appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
+                        appState.paneAnchorState.updateMaxWidth(
+                            with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
+                        )
+                        SplitLayout(
+                            state = appState.splitLayoutState,
+                            modifier = modifier
+                                .fillMaxSize(),
+                            itemSeparators = { _, offset ->
+                                DraggableThumb(
+                                    splitLayoutState = appState.splitLayoutState,
+                                    paneAnchorState = appState.paneAnchorState,
+                                    offset = offset
+                                )
+                            },
+                            itemContent = { index ->
+                                Destination(appState.filteredPaneOrder[index])
+                            }
+                        )
+                        LaunchedEffect(Unit) {
+                            snapshotFlow { appState.filteredPaneOrder }.collect { order ->
+                                if (order.size != 1) return@collect
+                                appState.paneAnchorState.onClosed()
+                            }
+                        }
+                    }
+
+                    NavigationEventHandler(
+                        enabled = { true },
+                        passThrough = true,
+                    ) { progress ->
+                        try {
+                            progress.collect { event ->
+                                appState.backPreviewState.progress = event.progress
+                                appState.backPreviewState.atStart =
+                                    event.swipeEdge == NavigationEvent.EDGE_LEFT
+                                appState.backPreviewState.pointerOffset =
+                                    Offset(event.touchX, event.touchY).round()
+                            }
+                            appState.backPreviewState.progress = 0f
+                        } finally {
+                            appState.backPreviewState.progress = 0f
                         }
                     }
                 }
