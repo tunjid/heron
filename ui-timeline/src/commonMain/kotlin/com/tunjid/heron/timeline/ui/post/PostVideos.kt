@@ -103,10 +103,14 @@ internal fun PostVideo(
         )
         else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
             modifier = videoModifier,
-            key = video.sharedElementKey(
-                prefix = sharedElementPrefix,
-                postId = postId,
-            ),
+            sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                rememberSharedContentState(
+                    key = video.sharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                    )
+                )
+            },
             state = videoPlayerState,
             alternateOutgoingSharedElement = { state, innerModifier ->
                 VideoStill(

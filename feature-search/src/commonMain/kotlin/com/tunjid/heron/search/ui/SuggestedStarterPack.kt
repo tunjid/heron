@@ -94,7 +94,11 @@ fun SuggestedStarterPack(
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
                                 .clickable { onListMemberClicked(listMember) },
-                            key = listMember.avatarSharedElementKey(),
+                            sharedContentState = with(movableElementSharedTransitionScope) {
+                                rememberSharedContentState(
+                                    key = listMember.avatarSharedElementKey(),
+                                )
+                            },
                             state = remember(listMember.subject.avatar) {
                                 ImageArgs(
                                     url = listMember.subject.avatar?.uri,

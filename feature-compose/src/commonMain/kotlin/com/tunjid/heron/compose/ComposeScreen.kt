@@ -209,7 +209,11 @@ private fun ReplyingTo(
                 paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
                     modifier = Modifier
                         .size(AvatarSize),
-                    key = type.parent.avatarSharedElementKey(sharedElementPrefix),
+                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                        rememberSharedContentState(
+                            key = type.parent.avatarSharedElementKey(sharedElementPrefix),
+                        )
+                    },
                     state = remember(type.parent.author.avatar) {
                         ImageArgs(
                             url = type.parent.author.avatar?.uri,

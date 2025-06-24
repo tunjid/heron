@@ -80,10 +80,14 @@ internal fun PostImages(
                             .aspectRatio(tallestAspectRatio)
                     }
                         .clickable { onImageClicked(index) },
-                    key = image.sharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                    ),
+                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                        rememberSharedContentState(
+                            key = image.sharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                            )
+                        )
+                    },
                     state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,

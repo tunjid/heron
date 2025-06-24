@@ -163,7 +163,11 @@ private fun PostAttribution(
                     .size(UiTokens.avatarSize)
                     .clip(avatarShape)
                     .clickable { onProfileClicked(notification, post.author) },
-                key = post.avatarSharedElementKey(sharedElementPrefix),
+                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key = post.avatarSharedElementKey(sharedElementPrefix),
+                    )
+                },
                 state = remember(post.author.avatar) {
                     ImageArgs(
                         url = post.author.avatar?.uri,

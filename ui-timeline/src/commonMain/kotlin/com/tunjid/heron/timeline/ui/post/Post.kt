@@ -151,7 +151,9 @@ private fun AttributionContent(
                                 quotingPostId = null,
                             )
                         },
-                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    sharedContentState = rememberSharedContentState(
+                        key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    ),
                     state = remember(data.post.author.avatar) {
                         ImageArgs(
                             url = data.post.author.avatar?.uri,

@@ -197,10 +197,14 @@ private fun GalleryImage(
 ) {
     scaffoldState.updatedMovableSharedElementOf(
         modifier = modifier,
-        key = item.image.sharedElementKey(
-            prefix = sharedElementPrefix,
-            postId = postId,
-        ),
+        sharedContentState = with(scaffoldState) {
+            rememberSharedContentState(
+                key = item.image.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                )
+            )
+        },
         state = remember(item.image) {
             ImageArgs(
                 url = item.image.fullsize.uri,
@@ -239,10 +243,14 @@ private fun GalleryVideo(
     )
     else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
         modifier = modifier,
-        key = item.video.sharedElementKey(
-            prefix = sharedElementPrefix,
-            postId = postId,
-        ),
+        sharedContentState = with(paneMovableElementSharedTransitionScope) {
+            rememberSharedContentState(
+                key = item.video.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                ),
+            )
+        },
         state = videoPlayerState,
         alternateOutgoingSharedElement = { state, innerModifier ->
             VideoStill(

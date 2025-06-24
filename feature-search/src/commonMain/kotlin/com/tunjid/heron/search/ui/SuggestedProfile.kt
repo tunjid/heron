@@ -55,7 +55,11 @@ fun SuggestedProfile(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(profileWithViewerState) },
-                key = profileWithViewerState.avatarSharedElementKey(),
+                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key = profileWithViewerState.avatarSharedElementKey(),
+                    )
+                },
                 state = remember(profileWithViewerState.profile.avatar) {
                     ImageArgs(
                         url = profileWithViewerState.profile.avatar?.uri,
