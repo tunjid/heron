@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.scaffold.navigation.PredictiveBackEffects
 import com.tunjid.heron.scaffold.scaffold.App
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
@@ -48,7 +47,6 @@ class MainActivity : ComponentActivity() {
                 appState = appState,
                 modifier = Modifier.fillMaxSize(),
             )
-            PredictiveBackEffects(appState)
         }
 
         handleDeepLink(intent)
@@ -60,7 +58,7 @@ class MainActivity : ComponentActivity() {
             ?.let(::GenericUri)
             ?.let(appState::onDeepLink)
             ?.also {
-               intent.data = null
+                intent.data = null
             }
     }
 }
