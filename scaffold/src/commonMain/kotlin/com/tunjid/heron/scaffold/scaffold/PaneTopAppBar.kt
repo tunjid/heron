@@ -75,7 +75,9 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                         modifier = Modifier
                             .size(36.dp)
                             .paneSharedElement(
-                                key = SignedInUserAvatarSharedElementKey,
+                                sharedContentState = rememberSharedContentState(
+                                    key = SignedInUserAvatarSharedElementKey,
+                                ),
                             )
                             .clickable {
                                 onSignedInProfileClicked(

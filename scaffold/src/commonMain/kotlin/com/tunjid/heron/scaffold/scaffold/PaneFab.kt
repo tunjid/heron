@@ -94,7 +94,9 @@ fun PaneScaffoldState.PaneFab(
                 modifier = modifier
                     .animateFabSize()
                     .paneSharedElement(
-                        key = FabSharedElementKey,
+                        sharedContentState = rememberSharedContentState(
+                            key = FabSharedElementKey
+                        ),
                         visible = visible,
                         zIndexInOverlay = FabSharedElementZIndex,
                     ),
