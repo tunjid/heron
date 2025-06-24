@@ -104,10 +104,6 @@ class AppState @Inject constructor(
     internal val paneAnchorState by lazy { PaneAnchorState(density) }
     internal val dragToPopState = DragToPopState()
 
-    internal val isPreviewingBack
-        get() = !backPreviewState.progress.isNaN()
-                || dragToPopState.isDraggingToPop
-
     internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
     internal var displayScope by mutableStateOf<MultiPaneDisplayScope<ThreePane, Route>?>(null)
@@ -144,15 +140,21 @@ class AppState @Inject constructor(
         val displayState = remember {
             MultiPaneDisplayState(
                 panes = ThreePane.entries.toList(),
+                transforms = transforms,
                 navigationState = multiStackNavState,
                 backStackTransform = MultiStackNav::multiPaneDisplayBackstack,
                 destinationTransform = MultiStackNav::requireCurrent,
+                popTransform = MultiStackNav::pop,
+                onPopped = { poppedNavigationState ->
+                    navigationStateHolder.accept {
+                        poppedNavigationState
+                    }
+                },
                 entryProvider = { node ->
                     entryTrie[node] ?: threePaneEntry(
                         render = { },
                     )
                 },
-                transforms = transforms,
             )
         }
         DisposableEffect(Unit) {

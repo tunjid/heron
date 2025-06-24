@@ -42,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -51,7 +50,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
-import com.tunjid.composables.ui.skipIf
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
@@ -74,11 +72,7 @@ class PaneScaffoldState internal constructor(
     internal val canShowNavigationBar get() = !isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationBar
-        get() = canShowNavigationBar && when {
-            isActive && isPreviewingBack && paneState.pane == ThreePane.TransientPrimary -> true
-            isActive && !isPreviewingBack && paneState.pane == ThreePane.Primary -> true
-            else -> false
-        }
+        get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail
         get() = appState.filteredPaneOrder.firstOrNull() == paneState.pane
@@ -90,7 +84,6 @@ class PaneScaffoldState internal constructor(
     internal val canShowFab
         get() = when (paneState.pane) {
             ThreePane.Primary -> true
-            ThreePane.TransientPrimary -> true
             ThreePane.Secondary -> false
             ThreePane.Tertiary -> false
             ThreePane.Overlay -> false
@@ -103,9 +96,6 @@ class PaneScaffoldState internal constructor(
     internal fun hasMatchedSize(): Boolean =
         abs(scaffoldCurrentSize.width - scaffoldTargetSize.width) <= 2
                 && abs(scaffoldCurrentSize.height - scaffoldTargetSize.height) <= 2
-
-    private val isPreviewingBack: Boolean
-        get() = paneState.adaptations.contains(ThreePane.PrimaryToTransient)
 }
 
 @Composable
@@ -244,9 +234,6 @@ private fun scaffoldBoundsTransform(
         ThreePane.Tertiary,
             -> if (appState.paneAnchorState.hasInteractions) snap()
         else spring()
-
-        ThreePane.TransientPrimary,
-            -> spring<Rect>().skipIf(paneScaffoldState::hasMatchedSize)
 
         ThreePane.Overlay,
         null,

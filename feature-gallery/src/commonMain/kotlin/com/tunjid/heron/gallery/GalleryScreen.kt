@@ -55,7 +55,7 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
-import com.tunjid.heron.ui.isPrimaryOrPreview
+import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import kotlinx.coroutines.flow.collectLatest
@@ -237,7 +237,7 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (!paneMovableElementSharedTransitionScope.isPrimaryOrPreview) VideoStill(
+    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )

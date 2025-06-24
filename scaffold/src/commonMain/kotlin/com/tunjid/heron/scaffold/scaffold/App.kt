@@ -38,15 +38,12 @@ import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
-import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.transforms.backPreviewTransform
 import com.tunjid.treenav.compose.threepane.transforms.threePanedAdaptiveTransform
 import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementTransform
 import com.tunjid.treenav.compose.transforms.paneModifierTransform
-import com.tunjid.treenav.pop
 import com.tunjid.treenav.strings.Route
 
 /**
@@ -90,12 +87,6 @@ fun App(
                                                 appState.splitLayoutState.size
                                             }
                                         ),
-                                        backPreviewTransform(
-                                            isPreviewingBack = derivedStateOf {
-                                                appState.isPreviewingBack
-                                            },
-                                            navigationStateBackTransform = MultiStackNav::pop,
-                                        ),
                                         threePanedMovableSharedElementTransform(
                                             movableSharedElementHostState
                                         ),
@@ -108,9 +99,11 @@ fun App(
                                                     atStart = paneState.pane == ThreePane.Secondary,
                                                 )
                                                 .run {
-                                                    if (paneState.pane == ThreePane.TransientPrimary) backPreview(
-                                                        appState.backPreviewState
-                                                    )
+                                                    if (paneState.pane == ThreePane.Primary
+                                                        && inPredictiveBack
+                                                        && isActive
+                                                        && !appState.dragToPopState.isDraggingToPop
+                                                    ) backPreview(appState.backPreviewState)
                                                     else this
                                                 }
                                         },

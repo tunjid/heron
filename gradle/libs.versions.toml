@@ -11,6 +11,7 @@ androidx-graphics-core = "1.0.3"
 androidx-graphics-path = "1.0.1"
 androidx-graphics-shapes = "1.0.1"
 androidx-media3 = "1.7.1"
+androidxNavigationEvent = "1.0.0-alpha02"
 androidx-room = "2.7.1"
 androidx-sqlite = "2.5.1"
 androidx-espresso-core = "3.6.1"
@@ -66,6 +67,7 @@ androidx-media3-exoplayer-dash = { group = "androidx.media3", name = "media3-exo
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "androidx-media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "androidx-media3" }
+androidx-navigation-event = { group = "androidx.navigationevent", name = "navigationevent", version.ref = "androidxNavigationEvent" }
 androidx-room-GradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
