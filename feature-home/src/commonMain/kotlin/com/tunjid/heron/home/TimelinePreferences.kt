@@ -253,8 +253,10 @@ private fun ExpandedTabs(
             ) {
                 timelinePreferencesState.timelines.forEachIndexed { index, timeline ->
                     if (index == 0) {
+                        Spacer(Modifier.height(24.dp).fillMaxWidth())
                         SectionTitle(stringResource(Res.string.pinned))
                     } else if (index == timelinePreferencesState.firstUnpinnedIndex) {
+                        Spacer(Modifier.height(24.dp).fillMaxWidth())
                         SectionTitle(stringResource(Res.string.saved))
                     }
 
