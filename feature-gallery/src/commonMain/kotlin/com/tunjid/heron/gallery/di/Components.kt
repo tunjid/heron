@@ -19,9 +19,7 @@ package com.tunjid.heron.gallery.di
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
@@ -35,6 +33,7 @@ import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -116,10 +115,9 @@ abstract class GalleryComponent(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
-            val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualGalleryViewModel> {
                 viewModelInitializer.invoke(
-                    scope = lifecycleCoroutineScope,
+                    scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }

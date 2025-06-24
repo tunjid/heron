@@ -30,9 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
@@ -49,6 +47,7 @@ import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.PathPattern
@@ -68,7 +67,8 @@ import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
 private const val PostLikesPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/liked-by"
-private const val PostRepostsPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/reposted-by"
+private const val PostRepostsPattern =
+    "/profile/{profileHandleOrId}/post/{postRecordKey}/reposted-by"
 private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/followers"
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
@@ -221,10 +221,9 @@ abstract class ProfilesComponent(
             )
         },
         render = { route ->
-            val lifecycleCoroutineScope = LocalLifecycleOwner.current.lifecycle.coroutineScope
             val viewModel = viewModel<ActualProfilesViewModel> {
                 viewModelInitializer.invoke(
-                    scope = lifecycleCoroutineScope,
+                    scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }

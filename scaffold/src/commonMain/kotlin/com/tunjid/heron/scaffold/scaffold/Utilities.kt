@@ -20,6 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 
 @Composable
@@ -29,6 +32,10 @@ internal inline fun <T> rememberUpdatedStateIf(
 ): State<T> = remember {
     mutableStateOf(value)
 }.also { if (predicate(value)) it.value = value }
+
+fun viewModelCoroutineScope() = CoroutineScope(
+    SupervisorJob() + Dispatchers.Main.immediate
+)
 
 internal val BottomNavSharedElementZIndex = 2f
 internal val FabSharedElementZIndex = 4f
