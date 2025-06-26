@@ -19,17 +19,21 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -74,7 +78,7 @@ fun App(
                         )
                     }
 
-                    MultiPaneDisplay(
+                    if (sharedElementsCoordinatesSet()) MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
                         state = appState.rememberMultiPaneDisplayState(
                             transforms = remember {
@@ -163,4 +167,23 @@ fun App(
             }
         }
     }
+}
+
+@Composable
+private fun sharedElementsCoordinatesSet(): Boolean {
+    var coordinatesSet by remember {
+        mutableStateOf(false)
+    }
+    Spacer(
+        Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, placeable.height) {
+                if (coordinates != null && isLookingAhead) {
+                    coordinatesSet = true
+                }
+                placeable.place(0, 0)
+            }
+        }
+    )
+    return coordinatesSet
 }
