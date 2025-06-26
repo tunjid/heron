@@ -417,43 +417,25 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
 private val InitialNavigationState = MultiStackNav(
     name = "splash-app",
     stacks = listOf(
-        StackNav(
-            name = AppStack.Splash.stackName,
-            children = listOf(routeOf("/splash"))
-        )
+        AppStack.Splash.toStackNav()
     )
 )
 
 private val SignedOutNavigationState = MultiStackNav(
     name = "signed-out-app",
     stacks = listOf(
-        StackNav(
-            name = AppStack.Auth.stackName,
-            children = listOf(routeOf("/auth"))
-        )
+        AppStack.Auth.toStackNav()
     )
 )
 
 private val SignedInNavigationState = MultiStackNav(
     name = "signed-in-app",
     stacks = listOf(
-        StackNav(
-            name = AppStack.Home.stackName,
-            children = listOf(routeOf("/home"))
-        ),
-        StackNav(
-            name = AppStack.Search.stackName,
-            children = listOf(routeOf("/search"))
-        ),
-        StackNav(
-            name = AppStack.Messages.stackName,
-            children = listOf(routeOf("/messages"))
-        ),
-        StackNav(
-            name = AppStack.Notifications.stackName,
-            children = listOf(routeOf("/notifications"))
-        ),
-    )
+        AppStack.Home,
+        AppStack.Search,
+        AppStack.Messages,
+        AppStack.Notifications,
+    ).map(AppStack::toStackNav)
 )
 
 
@@ -461,40 +443,48 @@ enum class AppStack(
     val stackName: String,
     val titleRes: StringResource,
     val icon: ImageVector,
+    val rootRoute: Route,
 ) {
     Home(
         stackName = "home-stack",
         titleRes = Res.string.home,
         icon = Icons.Rounded.Home,
+        rootRoute = routeOf("/home"),
     ),
     Search(
         stackName = "search-stack",
         titleRes = Res.string.search,
         icon = Icons.Rounded.Search,
+        rootRoute = routeOf("/search"),
     ),
     Messages(
         stackName = "messages-stack",
         titleRes = Res.string.messages,
         icon = Icons.Rounded.Mail,
-    ),
+        rootRoute = routeOf("/messages"),
+
+        ),
     Notifications(
         stackName = "notifications-stack",
         titleRes = Res.string.notifications,
         icon = Icons.Rounded.Notifications,
-    ),
-    Profile(
-        stackName = "profile-stack",
-        titleRes = Res.string.profile,
-        icon = Icons.Rounded.AccountCircle,
+        rootRoute = routeOf("/notifications"),
     ),
     Auth(
         stackName = "auth-stack",
         titleRes = Res.string.auth,
         icon = Icons.Rounded.Lock,
+        rootRoute = routeOf("/auth"),
     ),
     Splash(
         stackName = "splash-stack",
         titleRes = Res.string.splash,
         icon = Icons.Rounded.Start,
+        rootRoute = routeOf("/splash"),
     );
 }
+
+private fun AppStack.toStackNav() = StackNav(
+    name = stackName,
+    children = listOf(rootRoute)
+)
