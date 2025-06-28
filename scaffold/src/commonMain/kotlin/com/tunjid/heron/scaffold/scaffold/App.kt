@@ -47,10 +47,10 @@ import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
+import com.tunjid.treenav.compose.panedecorators.paneModifierDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.transforms.threePanedAdaptiveTransform
-import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementTransform
-import com.tunjid.treenav.compose.transforms.paneModifierTransform
+import com.tunjid.treenav.compose.threepane.transforms.threePaneAdaptiveDecorator
+import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
 
 /**
@@ -81,9 +81,9 @@ fun App(
                     if (sharedElementsCoordinatesSet()) MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
                         state = appState.rememberMultiPaneDisplayState(
-                            transforms = remember {
+                            paneDecorators = remember {
                                 listOf(
-                                    threePanedAdaptiveTransform(
+                                    threePaneAdaptiveDecorator(
                                         secondaryPaneBreakPoint = mutableStateOf(
                                             SecondaryPaneMinWidthBreakpointDp
                                         ),
@@ -94,10 +94,10 @@ fun App(
                                             appState.splitLayoutState.size
                                         }
                                     ),
-                                    threePanedMovableSharedElementTransform(
+                                    threePanedMovableSharedElementDecorator(
                                         movableSharedElementHostState
                                     ),
-                                    paneModifierTransform {
+                                    paneModifierDecorator {
                                         Modifier
                                             .fillMaxSize()
                                             .constrainedSizePlacement(
