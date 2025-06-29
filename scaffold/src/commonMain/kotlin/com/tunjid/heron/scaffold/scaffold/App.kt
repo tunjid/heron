@@ -49,8 +49,8 @@ import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHost
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.panedecorators.paneModifierDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.transforms.threePaneAdaptiveDecorator
-import com.tunjid.treenav.compose.threepane.transforms.threePanedMovableSharedElementDecorator
+import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
+import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
 
 /**
@@ -94,7 +94,7 @@ fun App(
                                             appState.splitLayoutState.size
                                         }
                                     ),
-                                    threePanedMovableSharedElementDecorator(
+                                    threePaneMovableSharedElementDecorator(
                                         movableSharedElementHostState
                                     ),
                                     paneModifierDecorator {
