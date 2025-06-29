@@ -54,7 +54,7 @@ internal fun PostExternal(
     onClick: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     FeatureContainer(
-        modifier = Modifier.paneSharedElement(
+        modifier = Modifier.paneStickySharedElement(
             sharedContentState = rememberSharedContentState(
                 key = embedSharedElementKey(
                     prefix = sharedElementPrefix,
@@ -71,7 +71,7 @@ internal fun PostExternal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
-                        .paneSharedElement(
+                        .paneStickySharedElement(
                             sharedContentState = rememberSharedContentState(
                                 key = embedSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -94,7 +94,7 @@ internal fun PostExternal(
                     .padding(
                         horizontal = 16.dp,
                     )
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = embedSharedElementKey(
                                 prefix = sharedElementPrefix,

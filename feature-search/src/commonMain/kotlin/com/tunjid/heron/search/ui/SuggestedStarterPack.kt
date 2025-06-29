@@ -49,7 +49,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
@@ -88,7 +88,7 @@ fun SuggestedStarterPack(
                 }
                 else starterPackWithMembers.members.take(count)
                     .forEachIndexed { index, listMember ->
-                        updatedMovableSharedElementOf(
+                        updatedMovableStickySharedElementOf (
                             modifier = Modifier
                                 .zIndex((MaxAvatars - index).toFloat())
                                 .fillMaxWidth()

@@ -62,7 +62,7 @@ import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -101,7 +101,7 @@ internal fun PostVideo(
             modifier = videoModifier,
             state = videoPlayerState,
         )
-        else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
+        else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf (
             modifier = videoModifier,
             sharedContentState = with(paneMovableElementSharedTransitionScope) {
                 rememberSharedContentState(

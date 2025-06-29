@@ -61,7 +61,7 @@ fun ProfileWithRelationship(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clip(RoundedPolygonShape.Circle)
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = profileWithViewerState.sharedElementKey(),
                         )

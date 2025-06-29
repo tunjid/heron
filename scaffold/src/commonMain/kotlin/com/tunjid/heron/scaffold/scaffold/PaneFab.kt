@@ -93,11 +93,10 @@ fun PaneScaffoldState.PaneFab(
             FloatingActionButton(
                 modifier = modifier
                     .animateFabSize()
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = FabSharedElementKey
                         ),
-                        visible = visible,
                         zIndexInOverlay = FabSharedElementZIndex,
                     ),
                 onClick = onClick,

@@ -51,7 +51,7 @@ fun PostHeadline(
             ProfileName(
                 modifier = Modifier
                     .weight(1f)
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = author.textSharedElementKey(
                                 prefix = sharedElementPrefix,
@@ -72,7 +72,7 @@ fun PostHeadline(
             Spacer(Modifier.height(2.dp))
             ProfileHandle(
                 modifier = Modifier
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = author.textSharedElementKey(
                                 prefix = sharedElementPrefix,

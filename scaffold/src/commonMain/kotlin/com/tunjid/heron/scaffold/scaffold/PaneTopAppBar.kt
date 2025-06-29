@@ -74,7 +74,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     AsyncImage(
                         modifier = Modifier
                             .size(36.dp)
-                            .paneSharedElement(
+                            .paneStickySharedElement(
                                 sharedContentState = rememberSharedContentState(
                                     key = SignedInUserAvatarSharedElementKey,
                                 ),

@@ -119,7 +119,7 @@ fun PostInteractions(
         PostInteractionButton.All.forEach { button ->
             PostInteraction(
                 modifier = Modifier
-                    .paneSharedElement(
+                    .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = postActionSharedElementKey(
                                 prefix = sharedElementPrefix,

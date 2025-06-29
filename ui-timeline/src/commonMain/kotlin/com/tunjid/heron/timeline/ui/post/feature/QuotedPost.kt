@@ -80,7 +80,7 @@ fun QuotedPost(
                     modifier = Modifier
                         .size(24.dp)
                         .align(Alignment.CenterVertically)
-                        .paneSharedElement(
+                        .paneStickySharedElement(
                             sharedContentState = rememberSharedContentState(
                                 key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
                             )
