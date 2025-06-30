@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -55,6 +56,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -68,6 +70,7 @@ internal fun PostDetailScreen(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.items)
+    val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val videoStates = remember { ThreadedVideoPositionStates() }
     val postInteractionState = rememberPostInteractionState()
@@ -103,6 +106,7 @@ internal fun PostDetailScreen(
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = rememberPostActions(
                         onPostClicked = { post: Post, quotingPostId: PostId? ->
+                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToPost(
@@ -116,6 +120,7 @@ internal fun PostDetailScreen(
                             )
                         },
                         onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToProfile(
@@ -130,6 +135,7 @@ internal fun PostDetailScreen(
                             )
                         },
                         onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ToMedia(
@@ -144,6 +150,7 @@ internal fun PostDetailScreen(
                             )
                         },
                         onReplyToPost = { post: Post ->
+                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
@@ -156,6 +163,7 @@ internal fun PostDetailScreen(
                             )
                         },
                         onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
+                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.DelegateTo(
                                     when (postMetadata) {
