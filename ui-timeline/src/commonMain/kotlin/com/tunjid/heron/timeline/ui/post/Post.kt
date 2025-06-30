@@ -62,7 +62,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import kotlinx.datetime.Instant
 
 @Composable
@@ -140,7 +140,7 @@ private fun AttributionContent(
                     presentation = data.presentation,
                 ),
             avatar = {
-                updatedMovableSharedElementOf(
+                updatedMovableStickySharedElementOf (
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .clip(data.avatarShape)
@@ -151,7 +151,9 @@ private fun AttributionContent(
                                 quotingPostId = null,
                             )
                         },
-                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    sharedContentState = rememberSharedContentState(
+                        key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                    ),
                     state = remember(data.post.author.avatar) {
                         ImageArgs(
                             url = data.post.author.avatar?.uri,

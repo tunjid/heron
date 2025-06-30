@@ -134,6 +134,7 @@ class OfflineProfileRepository @Inject constructor(
         profileId: Id.Profile,
     ): Flow<Profile> =
         profileDao.profiles(listOf(profileId))
+            .distinctUntilChanged()
             .map { it.firstOrNull()?.asExternalModel() }
             .filterNotNull()
             .withRefresh {
@@ -157,10 +158,10 @@ class OfflineProfileRepository @Inject constructor(
                     otherProfileIds = profileIds,
                 )
             }
+            .distinctUntilChanged()
             .map { viewerEntities ->
                 viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
             }
-            .distinctUntilChanged()
 
     override fun listMembers(
         query: ListMemberQuery,

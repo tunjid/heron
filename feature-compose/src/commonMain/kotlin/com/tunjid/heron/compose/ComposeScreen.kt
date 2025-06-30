@@ -65,7 +65,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -206,10 +206,14 @@ private fun ReplyingTo(
         is Post.Create.Reply -> AuthorAndPost(
             modifier = modifier,
             avatar = {
-                paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
+                paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf (
                     modifier = Modifier
                         .size(AvatarSize),
-                    key = type.parent.avatarSharedElementKey(sharedElementPrefix),
+                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                        rememberSharedContentState(
+                            key = type.parent.avatarSharedElementKey(sharedElementPrefix),
+                        )
+                    },
                     state = remember(type.parent.author.avatar) {
                         ImageArgs(
                             url = type.parent.author.avatar?.uri,

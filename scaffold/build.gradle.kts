@@ -43,6 +43,8 @@ kotlin {
                 implementation(project(":ui-core"))
                 implementation(project(":ui-media"))
 
+                implementation(libs.androidx.navigation.event)
+
                 implementation(libs.compose.animation)
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.foundation.foundation)

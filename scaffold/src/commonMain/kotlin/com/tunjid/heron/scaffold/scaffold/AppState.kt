@@ -48,9 +48,9 @@ import com.tunjid.treenav.compose.MultiPaneDisplayScope
 import com.tunjid.treenav.compose.MultiPaneDisplayState
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.multiPaneDisplayBackstack
+import com.tunjid.treenav.compose.panedecorators.PaneDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.compose.transforms.Transform
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.push
 import com.tunjid.treenav.requireCurrent
@@ -104,10 +104,6 @@ class AppState @Inject constructor(
     internal val paneAnchorState by lazy { PaneAnchorState(density) }
     internal val dragToPopState = DragToPopState()
 
-    internal val isPreviewingBack
-        get() = !backPreviewState.progress.isNaN()
-                || dragToPopState.isDraggingToPop
-
     internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
 
     internal var displayScope by mutableStateOf<MultiPaneDisplayScope<ThreePane, Route>?>(null)
@@ -138,21 +134,27 @@ class AppState @Inject constructor(
 
     @Composable
     internal fun rememberMultiPaneDisplayState(
-        transforms: List<Transform<ThreePane, MultiStackNav, Route>>,
-    ): MultiPaneDisplayState<ThreePane, MultiStackNav, Route> {
+        paneDecorators: List<PaneDecorator<MultiStackNav, Route, ThreePane>>,
+    ): MultiPaneDisplayState<MultiStackNav, Route, ThreePane> {
         LocalDensity.current.also { density = it }
         val displayState = remember {
             MultiPaneDisplayState(
                 panes = ThreePane.entries.toList(),
+                paneDecorators = paneDecorators,
                 navigationState = multiStackNavState,
                 backStackTransform = MultiStackNav::multiPaneDisplayBackstack,
                 destinationTransform = MultiStackNav::requireCurrent,
+                popTransform = MultiStackNav::pop,
+                onPopped = { poppedNavigationState ->
+                    navigationStateHolder.accept {
+                        poppedNavigationState
+                    }
+                },
                 entryProvider = { node ->
                     entryTrie[node] ?: threePaneEntry(
                         render = { },
                     )
                 },
-                transforms = transforms,
             )
         }
         DisposableEffect(Unit) {

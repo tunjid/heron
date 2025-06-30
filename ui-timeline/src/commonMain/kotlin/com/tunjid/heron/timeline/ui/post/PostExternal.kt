@@ -54,11 +54,13 @@ internal fun PostExternal(
     onClick: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     FeatureContainer(
-        modifier = Modifier.paneSharedElement(
-            key = embedSharedElementKey(
-                prefix = sharedElementPrefix,
-                postId = postId,
-                text = feature.uri.uri,
+        modifier = Modifier.paneStickySharedElement(
+            sharedContentState = rememberSharedContentState(
+                key = embedSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                    text = feature.uri.uri,
+                ),
             ),
         ),
         onClick = onClick,
@@ -69,11 +71,13 @@ internal fun PostExternal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
-                        .paneSharedElement(
-                            key = embedSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = feature.thumb?.uri,
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = embedSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postId = postId,
+                                    text = feature.thumb?.uri,
+                                )
                             ),
                         ),
                     args = ImageArgs(
@@ -90,11 +94,13 @@ internal fun PostExternal(
                     .padding(
                         horizontal = 16.dp,
                     )
-                    .paneSharedElement(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = feature.title,
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = embedSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = feature.title,
+                            ),
                         ),
                     ),
                 title = feature.title,

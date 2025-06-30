@@ -119,11 +119,13 @@ fun PostInteractions(
         PostInteractionButton.All.forEach { button ->
             PostInteraction(
                 modifier = Modifier
-                    .paneSharedElement(
-                        key = postActionSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            button = button,
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = postActionSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                button = button,
+                            ),
                         ),
                     ),
                 icon = when (button) {

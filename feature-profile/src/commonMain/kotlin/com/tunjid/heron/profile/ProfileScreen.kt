@@ -121,15 +121,13 @@ import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
-import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
@@ -198,7 +196,7 @@ internal fun ProfileScreen(
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
-                movableSharedElementScope = paneScaffoldState,
+                paneScaffoldState = paneScaffoldState,
                 pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
@@ -272,7 +270,7 @@ internal fun ProfileScreen(
 
 @Composable
 private fun ProfileHeader(
-    movableSharedElementScope: MovableSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     pullToRefreshState: PullToRefreshState,
     headerState: HeaderState,
     pagerState: PagerState,
@@ -351,7 +349,7 @@ private fun ProfileHeader(
             Spacer(Modifier.height(8.dp))
         }
         ProfileAvatar(
-            movableSharedElementScope = movableSharedElementScope,
+            paneScaffoldState = paneScaffoldState,
             pullToRefreshState = pullToRefreshState,
             modifier = Modifier
                 .align(
@@ -401,7 +399,7 @@ private fun ProfileBanner(
 @Composable
 private fun ProfileAvatar(
     modifier: Modifier = Modifier,
-    movableSharedElementScope: MovableSharedElementScope,
+    paneScaffoldState: PaneScaffoldState,
     headerState: HeaderState,
     pullToRefreshState: PullToRefreshState,
     isRefreshing: Boolean,
@@ -435,8 +433,12 @@ private fun ProfileAvatar(
                     scaleY = scale.value
                 }
         )
-        movableSharedElementScope.updatedMovableSharedElementOf(
-            key = avatarSharedElementKey,
+        paneScaffoldState.updatedMovableStickySharedElementOf (
+            sharedContentState = with(paneScaffoldState) {
+                rememberSharedContentState(
+                    key = avatarSharedElementKey,
+                )
+            },
             modifier = modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding),

@@ -52,7 +52,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import kotlinx.datetime.Instant
 
 @Composable
@@ -158,12 +158,16 @@ private fun PostAttribution(
     val post = notification.associatedPost
     AttributionLayout(
         avatar = {
-            updatedMovableSharedElementOf(
+            updatedMovableStickySharedElementOf (
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clip(avatarShape)
                     .clickable { onProfileClicked(notification, post.author) },
-                key = post.avatarSharedElementKey(sharedElementPrefix),
+                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key = post.avatarSharedElementKey(sharedElementPrefix),
+                    )
+                },
                 state = remember(post.author.avatar) {
                     ImageArgs(
                         url = post.author.avatar?.uri,

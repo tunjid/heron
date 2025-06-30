@@ -20,32 +20,24 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.search.SearchResult
-import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
-import com.tunjid.heron.timeline.ui.rememberPostActions
-import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
-import kotlinx.datetime.Instant
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -60,11 +52,15 @@ fun ProfileSearchResult(
         modifier = Modifier
             .clickable { onProfileClicked(result) },
         avatar = {
-            updatedMovableSharedElementOf(
+            updatedMovableStickySharedElementOf (
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(result) },
-                key = result.avatarSharedElementKey(),
+                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key = result.avatarSharedElementKey(),
+                    )
+                },
                 state = remember(result.profileWithViewerState.profile.avatar) {
                     ImageArgs(
                         url = result.profileWithViewerState.profile.avatar?.uri,

@@ -39,6 +39,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.treenav.compose.Adaptation
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -89,7 +90,10 @@ fun PaneScaffoldState.PaneNavigationRail(
                 boundsTransform = NavigationRailBoundsTransform,
             ),
         visible = canShowNavigationRail,
-        enter = enterTransition,
+        enter = if (
+            canShowNavigationRail
+            && paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
+        ) enterTransition else EnterTransition.None,
         exit = exitTransition,
         content = {
             if (canUseMovableNavigationRail) appState.movableNavigationRail(

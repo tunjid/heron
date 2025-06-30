@@ -60,9 +60,11 @@ fun PostText(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) { onClick() }
-            .paneSharedElement(
-                key = post.textSharedElementKey(
-                    prefix = sharedElementPrefix,
+            .paneStickySharedElement(
+                sharedContentState = rememberSharedContentState(
+                    key = post.textSharedElementKey(
+                        prefix = sharedElementPrefix,
+                    ),
                 ),
             ),
         text = rememberFormattedTextPost(

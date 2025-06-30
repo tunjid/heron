@@ -201,8 +201,10 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
             AsyncImage(
                 modifier = Modifier
                     .size(32.dp)
-                    .paneSharedElement(
-                        key = notification.avatarSharedElementKey(profile)
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = notification.avatarSharedElementKey(profile),
+                        )
                     )
                     .clickable { onProfileClicked(notification, profile) },
                 args = ImageArgs(

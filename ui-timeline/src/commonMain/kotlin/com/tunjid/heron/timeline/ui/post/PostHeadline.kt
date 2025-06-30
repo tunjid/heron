@@ -51,11 +51,13 @@ fun PostHeadline(
             ProfileName(
                 modifier = Modifier
                     .weight(1f)
-                    .paneSharedElement(
-                        key = author.textSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = primaryText
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = author.textSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = primaryText
+                            ),
                         ),
                     ),
                 profile = author,
@@ -70,11 +72,13 @@ fun PostHeadline(
             Spacer(Modifier.height(2.dp))
             ProfileHandle(
                 modifier = Modifier
-                    .paneSharedElement(
-                        key = author.textSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = secondaryText
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = author.textSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = secondaryText
+                            ),
                         ),
                     ),
                 profile = author,

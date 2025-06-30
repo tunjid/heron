@@ -74,8 +74,10 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     AsyncImage(
                         modifier = Modifier
                             .size(36.dp)
-                            .paneSharedElement(
-                                key = SignedInUserAvatarSharedElementKey,
+                            .paneStickySharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = SignedInUserAvatarSharedElementKey,
+                                ),
                             )
                             .clickable {
                                 onSignedInProfileClicked(

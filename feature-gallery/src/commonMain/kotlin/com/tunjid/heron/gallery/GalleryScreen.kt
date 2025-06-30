@@ -55,9 +55,9 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
-import com.tunjid.heron.ui.isPrimaryOrPreview
+import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -195,12 +195,16 @@ private fun GalleryImage(
     postId: PostId,
     sharedElementPrefix: String,
 ) {
-    scaffoldState.updatedMovableSharedElementOf(
+    scaffoldState.updatedMovableStickySharedElementOf (
         modifier = modifier,
-        key = item.image.sharedElementKey(
-            prefix = sharedElementPrefix,
-            postId = postId,
-        ),
+        sharedContentState = with(scaffoldState) {
+            rememberSharedContentState(
+                key = item.image.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                )
+            )
+        },
         state = remember(item.image) {
             ImageArgs(
                 url = item.image.fullsize.uri,
@@ -233,16 +237,20 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (!paneMovableElementSharedTransitionScope.isPrimaryOrPreview) VideoStill(
+    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
+    else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf (
         modifier = modifier,
-        key = item.video.sharedElementKey(
-            prefix = sharedElementPrefix,
-            postId = postId,
-        ),
+        sharedContentState = with(paneMovableElementSharedTransitionScope) {
+            rememberSharedContentState(
+                key = item.video.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postId = postId,
+                ),
+            )
+        },
         state = videoPlayerState,
         alternateOutgoingSharedElement = { state, innerModifier ->
             VideoStill(

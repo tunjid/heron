@@ -59,10 +59,10 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
-import com.tunjid.heron.ui.isPrimaryOrPreview
+import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -97,16 +97,20 @@ internal fun PostVideo(
                 videoPlayerController.play(videoId = video.playlist.uri)
                 onClicked()
             }
-        if (!paneMovableElementSharedTransitionScope.isPrimaryOrPreview) VideoStill(
+        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
             modifier = videoModifier,
             state = videoPlayerState,
         )
-        else paneMovableElementSharedTransitionScope.updatedMovableSharedElementOf(
+        else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf (
             modifier = videoModifier,
-            key = video.sharedElementKey(
-                prefix = sharedElementPrefix,
-                postId = postId,
-            ),
+            sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                rememberSharedContentState(
+                    key = video.sharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                    )
+                )
+            },
             state = videoPlayerState,
             alternateOutgoingSharedElement = { state, innerModifier ->
                 VideoStill(

@@ -80,8 +80,10 @@ fun QuotedPost(
                     modifier = Modifier
                         .size(24.dp)
                         .align(Alignment.CenterVertically)
-                        .paneSharedElement(
-                            key = quotedPost.avatarSharedElementKey(sharedElementPrefix)
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
+                            )
                         )
                         .clickable {
                             onProfileClicked(quotedPost, author)
