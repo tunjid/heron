@@ -38,6 +38,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+        // Fix for three-button nav not properly going edge-to-edge.
+        // TODO: https://issuetracker.google.com/issues/298296168
+        window.isNavigationBarContrastEnforced = false
 
         super.onCreate(savedInstanceState)
         FileKit.init(this)
