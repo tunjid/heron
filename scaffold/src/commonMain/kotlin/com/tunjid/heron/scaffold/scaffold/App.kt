@@ -144,23 +144,22 @@ fun App(
                                 appState.paneAnchorState.onClosed()
                             }
                         }
-                    }
-
-                    NavigationEventHandler(
-                        enabled = { true },
-                        passThrough = true,
-                    ) { progress ->
-                        try {
-                            progress.collect { event ->
-                                appState.backPreviewState.progress = event.progress
-                                appState.backPreviewState.atStart =
-                                    event.swipeEdge == NavigationEvent.EDGE_LEFT
-                                appState.backPreviewState.pointerOffset =
-                                    Offset(event.touchX, event.touchY).round()
+                        NavigationEventHandler(
+                            enabled = { true },
+                            passThrough = true,
+                        ) { progress ->
+                            try {
+                                progress.collect { event ->
+                                    appState.backPreviewState.progress = event.progress
+                                    appState.backPreviewState.atStart =
+                                        event.swipeEdge == NavigationEvent.EDGE_LEFT
+                                    appState.backPreviewState.pointerOffset =
+                                        Offset(event.touchX, event.touchY).round()
+                                }
+                                appState.backPreviewState.progress = 0f
+                            } finally {
+                                appState.backPreviewState.progress = 0f
                             }
-                            appState.backPreviewState.progress = 0f
-                        } finally {
-                            appState.backPreviewState.progress = 0f
                         }
                     }
                 }
