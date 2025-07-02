@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.Dashboard
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import heron.ui_timeline.generated.resources.Res
@@ -84,3 +86,12 @@ fun Timeline.sharedElementPrefix(
 ) = sourceId.withQuotingPostIdPrefix(
     quotingPostId = quotingPostId
 )
+
+fun LazyStaggeredGridState.pendingOffsetFor(
+    item: TimelineItem
+) = layoutInfo
+    .visibleItemsInfo
+    .first { it.key == item.id }
+    .offset
+    .y
+    .toFloat()
