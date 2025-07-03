@@ -30,9 +30,12 @@ data class State(
     @Transient
     val items: List<TimelineItem> = listOfNotNull(
         anchorPost?.let {
-            TimelineItem.Single(
+            TimelineItem.Thread(
                 id = it.cid.id,
-                post = it,
+                anchorPostIndex = 0,
+                posts = listOf(it),
+                generation = 0,
+                hasBreak = false,
             )
         }
     ),
