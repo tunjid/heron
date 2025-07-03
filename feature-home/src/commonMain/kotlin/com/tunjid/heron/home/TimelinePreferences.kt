@@ -22,6 +22,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,9 +76,13 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
@@ -86,6 +91,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.pinned
@@ -107,7 +113,7 @@ expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modif
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeTabs(
+internal fun HomeTabs(
     modifier: Modifier = Modifier,
     isExpanded: Boolean,
     currentSourceId: String?,
@@ -208,6 +214,37 @@ fun HomeTabs(
     }
 }
 
+@Composable
+internal fun AccumulatedOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
+    isExpanded: Boolean,
+) {
+    val density = LocalDensity.current
+    val expandedHeight = rememberUpdatedState(
+        with(density) {
+            (UiTokens.statusBarHeight + UiTokens.toolbarHeight).toPx()
+        }
+    )
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) return@LaunchedEffect
+
+        var cumulative = 0f
+        animate(
+            initialValue = cumulative,
+            targetValue = expandedHeight.value,
+        ) { current, _ ->
+            val delta = current - cumulative
+            cumulative += delta
+            onPreScroll(
+                available = Offset(
+                    x = 0f,
+                    y = delta,
+                ),
+                source = NestedScrollSource.SideEffect,
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

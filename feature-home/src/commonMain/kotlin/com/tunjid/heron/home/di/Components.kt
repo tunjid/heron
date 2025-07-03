@@ -40,6 +40,7 @@ import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
+import com.tunjid.heron.home.timelinePreferenceExpansionEffect
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
@@ -227,6 +228,10 @@ abstract class HomeComponent(
                             .padding(top = contentPadding.calculateTopPadding()),
                     )
                 }
+            )
+
+            topAppBarOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
+                isExpanded = state.timelinePreferencesExpanded,
             )
         }
     )

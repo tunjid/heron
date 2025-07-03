@@ -176,6 +176,10 @@ internal fun HomeScreen(
             },
         )
 
+        tabsOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
+            isExpanded = state.timelinePreferencesExpanded
+        )
+
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
