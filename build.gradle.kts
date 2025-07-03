@@ -26,4 +26,5 @@ plugins {
     alias(libs.plugins.androidxRoom) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
+    alias(libs.plugins.metro) apply false
 }
