@@ -160,7 +160,8 @@ private fun FeedTimeline(
                             presentation = presentation,
                             postActions = rememberPostActions(
                                 onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToPost(
@@ -174,7 +175,8 @@ private fun FeedTimeline(
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToProfile(
@@ -191,7 +193,8 @@ private fun FeedTimeline(
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToMedia(
@@ -206,7 +209,8 @@ private fun FeedTimeline(
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ComposePost(

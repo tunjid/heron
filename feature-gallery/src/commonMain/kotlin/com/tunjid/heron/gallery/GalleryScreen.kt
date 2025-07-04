@@ -57,7 +57,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -195,7 +195,7 @@ private fun GalleryImage(
     postId: PostId,
     sharedElementPrefix: String,
 ) {
-    scaffoldState.updatedMovableStickySharedElementOf (
+    scaffoldState.updatedMovableStickySharedElementOf(
         modifier = modifier,
         sharedContentState = with(scaffoldState) {
             rememberSharedContentState(
@@ -241,7 +241,7 @@ private fun GalleryVideo(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf (
+    else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
         modifier = modifier,
         sharedContentState = with(paneMovableElementSharedTransitionScope) {
             rememberSharedContentState(
