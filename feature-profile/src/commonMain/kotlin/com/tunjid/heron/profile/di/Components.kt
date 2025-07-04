@@ -42,7 +42,6 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -56,6 +55,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
@@ -66,13 +66,15 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.mention
 import heron.feature_profile.generated.resources.post
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}"
@@ -96,42 +98,37 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
-@KmpComponentCreate
-expect fun ProfileNavigationComponent.Companion.create(): ProfileNavigationComponent
+@DependencyGraph(isExtendable = true)
+interface ProfileNavigationComponent {
 
-@KmpComponentCreate
-expect fun ProfileComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): ProfileComponent
-
-@Component
-abstract class ProfileNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class ProfileComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
-) {
-    companion object
+@DependencyGraph(isExtendable = true)
+interface ProfileComponent {
 
-    @IntoMap
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Extends dataComponent: DataComponent,
+            @Extends scaffoldComponent: ScaffoldComponent,
+        ): ProfileComponent
+    }
+
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )

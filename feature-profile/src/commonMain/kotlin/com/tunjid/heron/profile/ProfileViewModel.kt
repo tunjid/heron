@@ -57,6 +57,9 @@ import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.feeds
 import heron.feature_profile.generated.resources.lists
@@ -75,19 +78,15 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 
 internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
-@Inject
-class RouteViewModelInitializer(
-    private val constructor: (scope: CoroutineScope, route: Route) -> ActualProfileViewModel,
-) : AssistedViewModelFactory {
+@AssistedFactory
+fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualProfileViewModel = constructor.invoke(scope, route)
+    ): ActualProfileViewModel
 }
 
 @Inject

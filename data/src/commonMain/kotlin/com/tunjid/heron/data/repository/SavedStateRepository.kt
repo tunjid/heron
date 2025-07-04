@@ -23,6 +23,8 @@ import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +34,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.tatarka.inject.annotations.Inject
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.FileSystem
@@ -96,7 +97,7 @@ interface SavedStateRepository {
 class DataStoreSavedStateRepository(
     path: Path,
     fileSystem: FileSystem,
-    appScope: CoroutineScope,
+    @Named("AppScope") appScope: CoroutineScope,
     protoBuf: ProtoBuf,
 ) : SavedStateRepository {
 

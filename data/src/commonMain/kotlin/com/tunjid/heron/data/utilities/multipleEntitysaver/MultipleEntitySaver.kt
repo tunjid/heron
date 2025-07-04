@@ -48,8 +48,8 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import dev.zacsweers.metro.Inject
 import kotlinx.datetime.Instant
-import me.tatarka.inject.annotations.Inject
 
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,

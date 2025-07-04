@@ -52,6 +52,9 @@ import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.map
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -67,20 +70,16 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
-@Inject
-class RouteViewModelInitializer(
-    private val constructor: (scope: CoroutineScope, route: Route) -> ActualSearchViewModel,
-) : AssistedViewModelFactory {
+@AssistedFactory
+fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSearchViewModel = constructor.invoke(scope, route)
+    ): ActualSearchViewModel
 }
 
 @Inject

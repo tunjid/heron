@@ -26,33 +26,34 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.Provides
 import kotlinx.coroutines.flow.StateFlow
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
-import me.tatarka.inject.annotations.Scope
 
-@Scope
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
-annotation class ScaffoldScope
+abstract class ScaffoldScope private constructor()
 
 class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
     val videoPlayerController: VideoPlayerController,
 )
 
-@KmpComponentCreate
-expect fun ScaffoldComponent.Companion.create(
-    module: ScaffoldModule,
-    dataComponent: DataComponent,
-): ScaffoldComponent
+@DependencyGraph(
+    scope = ScaffoldScope::class,
+    isExtendable = true,
+)
+interface ScaffoldComponent {
 
-@ScaffoldScope
-@Component
-abstract class ScaffoldComponent(
-    private val module: ScaffoldModule,
-    @Component val dataComponent: DataComponent,
-) {
+    val module: ScaffoldModule
+
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Provides module: ScaffoldModule,
+            @Extends dataComponent: DataComponent,
+        ): ScaffoldComponent
+    }
 
     @Provides
     fun navStateStream(
@@ -72,10 +73,6 @@ abstract class ScaffoldComponent(
         navStateHolder: NavigationStateHolder,
     ): (NavigationMutation) -> Unit = navStateHolder.accept
 
+    @Binds
     val PersistedNavigationStateHolder.bind: NavigationStateHolder
-        @ScaffoldScope
-        @Provides get() = this
-
-
-    companion object
 }
