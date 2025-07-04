@@ -19,9 +19,9 @@ package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.domain.timeline.timelineStateHolder
@@ -38,6 +38,9 @@ import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,19 +50,15 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 
 internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
-@Inject
-class RouteViewModelInitializer(
-    private val constructor: (scope: CoroutineScope, route: Route) -> ActualFeedViewModel,
-) : AssistedViewModelFactory {
+@AssistedFactory
+fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualFeedViewModel = constructor.invoke(scope, route)
+    ): ActualFeedViewModel
 }
 
 @Inject

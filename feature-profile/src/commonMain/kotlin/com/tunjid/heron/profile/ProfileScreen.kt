@@ -129,7 +129,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
@@ -435,7 +435,7 @@ private fun ProfileAvatar(
                     scaleY = scale.value
                 }
         )
-        paneScaffoldState.updatedMovableStickySharedElementOf (
+        paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey,

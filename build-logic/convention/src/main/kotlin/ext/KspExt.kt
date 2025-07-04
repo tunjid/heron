@@ -24,7 +24,7 @@ import java.util.Locale
 fun Project.configureKsp() {
     extensions.configure<KotlinMultiplatformExtension> {
         targets.configureEach {
-            configureKsp(project = this@configureKsp)
+//            configureKsp(project = this@configureKsp)
         }
     }
 }

@@ -26,22 +26,21 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 
 internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
-@Inject
-class RouteViewModelInitializer(
-    private val constructor: (scope: CoroutineScope, route: Route) -> ActualMessagesViewModel,
-) : AssistedViewModelFactory {
+@AssistedFactory
+fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualMessagesViewModel = constructor.invoke(scope, route)
+    ): ActualMessagesViewModel
 }
 
 @Inject
