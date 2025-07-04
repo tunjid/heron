@@ -18,55 +18,39 @@ package com.tunjid.heron
 
 import com.tunjid.heron.compose.di.ComposeComponent
 import com.tunjid.heron.compose.di.ComposeNavigationComponent
-import com.tunjid.heron.compose.di.create
 import com.tunjid.heron.data.di.DataComponent
 import com.tunjid.heron.data.di.DataModule
-import com.tunjid.heron.data.di.create
 import com.tunjid.heron.di.AppComponent
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.allRouteMatchers
-import com.tunjid.heron.di.create
 import com.tunjid.heron.feed.di.FeedComponent
 import com.tunjid.heron.feed.di.FeedNavigationComponent
-import com.tunjid.heron.feed.di.create
 import com.tunjid.heron.gallery.di.GalleryComponent
 import com.tunjid.heron.gallery.di.GalleryNavigationComponent
-import com.tunjid.heron.gallery.di.create
 import com.tunjid.heron.home.di.HomeComponent
 import com.tunjid.heron.home.di.HomeNavigationComponent
-import com.tunjid.heron.home.di.create
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesComponent
 import com.tunjid.heron.messages.di.MessagesNavigationComponent
-import com.tunjid.heron.messages.di.create
 import com.tunjid.heron.notifications.di.NotificationsComponent
 import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
-import com.tunjid.heron.notifications.di.create
 import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
-import com.tunjid.heron.postdetail.di.create
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
-import com.tunjid.heron.profile.avatar.di.create
-import com.tunjid.heron.profile.di.create
 import com.tunjid.heron.profiles.di.ProfilesComponent
 import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
-import com.tunjid.heron.profiles.di.create
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.di.ScaffoldModule
-import com.tunjid.heron.scaffold.di.create
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchComponent
 import com.tunjid.heron.search.di.SearchNavigationComponent
-import com.tunjid.heron.search.di.create
 import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
-import com.tunjid.heron.signin.di.create
 import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
-import com.tunjid.heron.splash.di.create
+import dev.zacsweers.metro.createGraph
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -83,27 +67,27 @@ fun createAppState(
 ): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    val navigationComponent = AppNavigationComponent.create(
-        signInNavigationComponent = SignInNavigationComponent.create(),
-        composeNavigationComponent = ComposeNavigationComponent.create(),
-        feedNavigationComponent = FeedNavigationComponent.create(),
-        galleryNavigationComponent = GalleryNavigationComponent.create(),
-        homeNavigationComponent = HomeNavigationComponent.create(),
-        messagesNavigationComponent = MessagesNavigationComponent.create(),
-        notificationsNavigationComponent = NotificationsNavigationComponent.create(),
-        postDetailNavigationComponent = PostDetailNavigationComponent.create(),
-        profileNavigationComponent = ProfileNavigationComponent.create(),
-        profileAvatarNavigationComponent = ProfileAvatarNavigationComponent.create(),
-        profilesNavigationComponent = ProfilesNavigationComponent.create(),
-        searchNavigationComponent = SearchNavigationComponent.create(),
-        splashNavigationComponent = SplashNavigationComponent.create(),
+    val navigationComponent = createGraphFactory<AppNavigationComponent.Factory>().create(
+        signInNavigationComponent = createGraph<SignInNavigationComponent>(),
+        composeNavigationComponent = createGraph<ComposeNavigationComponent>(),
+        feedNavigationComponent = createGraph<FeedNavigationComponent>(),
+        galleryNavigationComponent = createGraph<GalleryNavigationComponent>(),
+        homeNavigationComponent = createGraph<HomeNavigationComponent>(),
+        messagesNavigationComponent = createGraph<MessagesNavigationComponent>(),
+        notificationsNavigationComponent = createGraph<NotificationsNavigationComponent>(),
+        postDetailNavigationComponent = createGraph<PostDetailNavigationComponent>(),
+        profileNavigationComponent = createGraph<ProfileNavigationComponent>(),
+        profileAvatarNavigationComponent = createGraph<ProfileAvatarNavigationComponent>(),
+        profilesNavigationComponent = createGraph<ProfilesNavigationComponent>(),
+        searchNavigationComponent = createGraph<SearchNavigationComponent>(),
+        splashNavigationComponent = createGraph<SplashNavigationComponent>(),
     )
 
-    val dataComponent = DataComponent.create(
-        dataModule(appScope)
+    val dataComponent = createGraphFactory<DataComponent.Factory>().create(
+        module = dataModule(appScope)
     )
 
-    val scaffoldComponent = ScaffoldComponent.create(
+    val scaffoldComponent = createGraphFactory<ScaffoldComponent.Factory>().create(
         module = ScaffoldModule(
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers
@@ -111,58 +95,58 @@ fun createAppState(
         dataComponent = dataComponent,
     )
 
-    val appComponent = AppComponent.create(
+    val appComponent = createGraphFactory<AppComponent.Factory>().create(
         dataComponent = dataComponent,
         scaffoldComponent = scaffoldComponent,
-        signInComponent = SignInComponent.create(
+        signInComponent = createGraphFactory<SignInComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        composeComponent = ComposeComponent.create(
+        composeComponent = createGraphFactory<ComposeComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        feedComponent = FeedComponent.create(
+        feedComponent = createGraphFactory<FeedComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        galleryComponent = GalleryComponent.create(
+        galleryComponent = createGraphFactory<GalleryComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        homeComponent = HomeComponent.create(
+        homeComponent = createGraphFactory<HomeComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        messagesComponent = MessagesComponent.create(
+        messagesComponent = createGraphFactory<MessagesComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        notificationsComponent = NotificationsComponent.create(
+        notificationsComponent = createGraphFactory<NotificationsComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        postDetailComponent = PostDetailComponent.create(
+        postDetailComponent = createGraphFactory<PostDetailComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profileComponent = ProfileComponent.create(
+        profileComponent = createGraphFactory<ProfileComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profileAvatarComponent = ProfileAvatarComponent.create(
+        profileAvatarComponent = createGraphFactory<ProfileAvatarComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profilesComponent = ProfilesComponent.create(
+        profilesComponent = createGraphFactory<ProfilesComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        searchComponent = SearchComponent.create(
+        searchComponent = createGraphFactory<SearchComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        splashComponent = SplashComponent.create(
+        splashComponent = createGraphFactory<SplashComponent.Factory>().create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

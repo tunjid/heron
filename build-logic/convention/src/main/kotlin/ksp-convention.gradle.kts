@@ -21,3 +21,6 @@ plugins {
 }
 
 configureKsp()
+
+metro {
+}
