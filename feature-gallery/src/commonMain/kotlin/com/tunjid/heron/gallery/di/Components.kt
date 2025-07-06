@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -125,6 +127,8 @@ abstract class GalleryComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
+                    .fillMaxSize()
+                    .predictiveBackPlacement(paneScope = this)
                     .dragToPop(),
                 showNavigation = false,
                 containerColor = Color.Transparent,

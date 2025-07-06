@@ -32,7 +32,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.adaptTo
 
 @Composable
-fun Modifier.predictiveBackBackgroundModifier(
+fun Modifier.predictiveBackPlacement(
     paneScope: PaneScope<ThreePane, *>,
 ): Modifier = with(paneScope) {
     val appState = LocalAppState.current
@@ -48,7 +48,7 @@ fun Modifier.predictiveBackBackgroundModifier(
 
     if (shouldDrawBackground) backPreview(appState.backPreviewState)
         .clip(RoundedCornerShape(clipRadius))
-    else this@predictiveBackBackgroundModifier
+    else this@predictiveBackPlacement
 }
 
 val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
