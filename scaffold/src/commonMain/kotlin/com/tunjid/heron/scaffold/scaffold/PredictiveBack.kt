@@ -16,7 +16,10 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.compose.threepane.adaptTo
 
 @Composable
 fun Modifier.predictiveBackBackgroundModifier(
@@ -47,3 +51,10 @@ fun Modifier.predictiveBackBackgroundModifier(
     else this@predictiveBackBackgroundModifier
 }
 
+val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
+    {
+        ContentTransform(
+            fadeIn(),
+            fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
+        ).adaptTo(paneScope = this)
+    }
