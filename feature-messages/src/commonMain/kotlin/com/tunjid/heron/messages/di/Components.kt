@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.messages.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
@@ -33,7 +34,8 @@ import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -95,6 +97,7 @@ abstract class MessagesComponent(
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
+        contentTransform = predictiveBackContentTransform,
         render = { route ->
             val viewModel = viewModel<ActualMessagesViewModel> {
                 viewModelInitializer.invoke(
@@ -109,7 +112,8 @@ abstract class MessagesComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .fillMaxSize()
+                    .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,

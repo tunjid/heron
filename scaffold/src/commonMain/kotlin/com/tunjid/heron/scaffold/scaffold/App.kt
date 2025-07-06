@@ -18,7 +18,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -35,11 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
-import com.tunjid.composables.backpreview.backPreview
-import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
@@ -47,7 +43,6 @@ import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
-import com.tunjid.treenav.compose.panedecorators.paneModifierDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
@@ -78,45 +73,31 @@ fun App(
                         )
                     }
 
-                    if (sharedElementsCoordinatesSet()) MultiPaneDisplay(
+                    if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
+
+                    val displayState = appState.rememberMultiPaneDisplayState(
+                        paneDecorators = remember {
+                            listOf(
+                                threePaneAdaptiveDecorator(
+                                    secondaryPaneBreakPoint = mutableStateOf(
+                                        SecondaryPaneMinWidthBreakpointDp
+                                    ),
+                                    tertiaryPaneBreakPoint = mutableStateOf(
+                                        TertiaryPaneMinWidthBreakpointDp
+                                    ),
+                                    windowWidthState = derivedStateOf {
+                                        appState.splitLayoutState.size
+                                    }
+                                ),
+                                threePaneMovableSharedElementDecorator(
+                                    movableSharedElementHostState
+                                ),
+                            )
+                        }
+                    )
+                    MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
-                        state = appState.rememberMultiPaneDisplayState(
-                            paneDecorators = remember {
-                                listOf(
-                                    threePaneAdaptiveDecorator(
-                                        secondaryPaneBreakPoint = mutableStateOf(
-                                            SecondaryPaneMinWidthBreakpointDp
-                                        ),
-                                        tertiaryPaneBreakPoint = mutableStateOf(
-                                            TertiaryPaneMinWidthBreakpointDp
-                                        ),
-                                        windowWidthState = derivedStateOf {
-                                            appState.splitLayoutState.size
-                                        }
-                                    ),
-                                    threePaneMovableSharedElementDecorator(
-                                        movableSharedElementHostState
-                                    ),
-                                    paneModifierDecorator {
-                                        Modifier
-                                            .fillMaxSize()
-                                            .constrainedSizePlacement(
-                                                orientation = Orientation.Horizontal,
-                                                minSize = 180.dp,
-                                                atStart = paneState.pane == ThreePane.Secondary,
-                                            )
-                                            .run {
-                                                if (paneState.pane == ThreePane.Primary
-                                                    && inPredictiveBack
-                                                    && isActive
-                                                    && !appState.dragToPopState.isDraggingToPop
-                                                ) backPreview(appState.backPreviewState)
-                                                else this
-                                            }
-                                    },
-                                )
-                            }
-                        ),
+                        state = displayState,
                     ) {
                         appState.displayScope = this
                         appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
@@ -145,7 +126,7 @@ fun App(
                             }
                         }
                         NavigationEventHandler(
-                            enabled = { true },
+                            enabled = displayState::canPop,
                             passThrough = true,
                         ) { progress ->
                             try {

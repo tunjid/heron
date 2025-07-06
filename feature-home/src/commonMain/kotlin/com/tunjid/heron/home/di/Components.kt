@@ -18,6 +18,7 @@ package com.tunjid.heron.home.di
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -51,7 +52,8 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -118,6 +120,7 @@ abstract class HomeComponent(
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
+        contentTransform = predictiveBackContentTransform,
         render = { route ->
             val viewModel = viewModel<ActualHomeViewModel> {
                 viewModelInitializer.invoke(
@@ -143,7 +146,8 @@ abstract class HomeComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this)
+                    .fillMaxSize()
+                    .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarOffsetNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,

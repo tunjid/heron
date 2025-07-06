@@ -16,46 +16,45 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.compose.threepane.adaptTo
 
 @Composable
-fun Modifier.predictiveBackBackgroundModifier(
+fun Modifier.predictiveBackPlacement(
     paneScope: PaneScope<ThreePane, *>,
-): Modifier {
-    if (paneScope.paneState.pane != ThreePane.Primary
-        || !paneScope.isActive
-        || !paneScope.inPredictiveBack
-    ) return this
+): Modifier = with(paneScope) {
+    val appState = LocalAppState.current
+    val shouldDrawBackground = paneState.pane == ThreePane.Primary
+            && inPredictiveBack
+            && isActive
+            && !appState.dragToPopState.isDraggingToPop
 
-    var elevation by remember { mutableStateOf(0.dp) }
-    LaunchedEffect(Unit) {
-        animate(
-            initialValue = 0f,
-            targetValue = 4f,
-            animationSpec = spring(stiffness = Spring.StiffnessVeryLow)
-        ) { value, _ -> elevation = value.dp }
-    }
-    return background(
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(elevation),
-        shape = RoundedCornerShape(16.dp)
+    val clipRadius by animateDpAsState(
+        if (shouldDrawBackground) 16.dp
+        else 0.dp
     )
-        .clip(RoundedCornerShape(16.dp))
 
+    if (shouldDrawBackground) backPreview(appState.backPreviewState)
+        .clip(RoundedCornerShape(clipRadius))
+    else this@predictiveBackPlacement
 }
+
+val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
+    {
+        ContentTransform(
+            fadeIn(),
+            fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
+        ).adaptTo(paneScope = this)
+    }

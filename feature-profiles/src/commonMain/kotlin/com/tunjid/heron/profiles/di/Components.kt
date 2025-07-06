@@ -18,6 +18,7 @@ package com.tunjid.heron.profiles.di
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -45,7 +46,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -214,6 +216,7 @@ abstract class ProfilesComponent(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
+        contentTransform = predictiveBackContentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
@@ -231,7 +234,8 @@ abstract class ProfilesComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .fillMaxSize()
+                    .predictiveBackPlacement(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

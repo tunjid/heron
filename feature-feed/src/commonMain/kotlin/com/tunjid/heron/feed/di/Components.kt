@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -40,7 +41,8 @@ import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.predictiveBackBackgroundModifier
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -158,6 +160,7 @@ abstract class FeedComponent(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry<Route>(
+        contentTransform = predictiveBackContentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
@@ -175,7 +178,8 @@ abstract class FeedComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this),
+                    .fillMaxSize()
+                    .predictiveBackPlacement(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

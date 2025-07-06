@@ -19,6 +19,7 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,7 +59,6 @@ import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementShare
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
-import kotlin.math.abs
 
 class PaneScaffoldState internal constructor(
     density: Density,
@@ -93,9 +94,18 @@ class PaneScaffoldState internal constructor(
     internal var scaffoldTargetSize by mutableStateOf(IntSize.Zero)
     internal var scaffoldCurrentSize by mutableStateOf(IntSize.Zero)
 
-    internal fun hasMatchedSize(): Boolean =
-        abs(scaffoldCurrentSize.width - scaffoldTargetSize.width) <= 2
-                && abs(scaffoldCurrentSize.height - scaffoldTargetSize.height) <= 2
+    internal val defaultContainerColor: Color
+        @Composable get() {
+            val elevation by animateDpAsState(
+                if (paneState.pane == ThreePane.Primary
+                    && isActive
+                    && inPredictiveBack
+                ) 4.dp
+                else 0.dp
+            )
+
+            return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
+        }
 }
 
 @Composable
@@ -119,7 +129,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
 fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
-    containerColor: Color = MaterialTheme.colorScheme.background,
+    containerColor: Color = defaultContainerColor,
     snackBarMessages: List<String> = emptyList(),
     onSnackBarMessageConsumed: (String) -> Unit = {},
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
