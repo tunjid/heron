@@ -73,28 +73,31 @@ fun App(
                         )
                     }
 
-                    if (sharedElementsCoordinatesSet()) MultiPaneDisplay(
+                    if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
+
+                    val displayState = appState.rememberMultiPaneDisplayState(
+                        paneDecorators = remember {
+                            listOf(
+                                threePaneAdaptiveDecorator(
+                                    secondaryPaneBreakPoint = mutableStateOf(
+                                        SecondaryPaneMinWidthBreakpointDp
+                                    ),
+                                    tertiaryPaneBreakPoint = mutableStateOf(
+                                        TertiaryPaneMinWidthBreakpointDp
+                                    ),
+                                    windowWidthState = derivedStateOf {
+                                        appState.splitLayoutState.size
+                                    }
+                                ),
+                                threePaneMovableSharedElementDecorator(
+                                    movableSharedElementHostState
+                                ),
+                            )
+                        }
+                    )
+                    MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
-                        state = appState.rememberMultiPaneDisplayState(
-                            paneDecorators = remember {
-                                listOf(
-                                    threePaneAdaptiveDecorator(
-                                        secondaryPaneBreakPoint = mutableStateOf(
-                                            SecondaryPaneMinWidthBreakpointDp
-                                        ),
-                                        tertiaryPaneBreakPoint = mutableStateOf(
-                                            TertiaryPaneMinWidthBreakpointDp
-                                        ),
-                                        windowWidthState = derivedStateOf {
-                                            appState.splitLayoutState.size
-                                        }
-                                    ),
-                                    threePaneMovableSharedElementDecorator(
-                                        movableSharedElementHostState
-                                    ),
-                                )
-                            }
-                        ),
+                        state = displayState,
                     ) {
                         appState.displayScope = this
                         appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
@@ -123,7 +126,7 @@ fun App(
                             }
                         }
                         NavigationEventHandler(
-                            enabled = { true },
+                            enabled = displayState::canPop,
                             passThrough = true,
                         ) { progress ->
                             try {
