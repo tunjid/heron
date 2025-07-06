@@ -168,8 +168,9 @@ abstract class PostDetailComponent(
                 bottomNavigationNestedScrollConnection()
 
             rememberPaneScaffoldState().PaneScaffold(
-                modifier = Modifier
-                    .predictiveBackBackgroundModifier(paneScope = this)
+                modifier =                 Modifier
+                .fillMaxSize()
+                .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,

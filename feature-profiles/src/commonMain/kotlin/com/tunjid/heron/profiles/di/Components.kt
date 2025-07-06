@@ -18,6 +18,7 @@ package com.tunjid.heron.profiles.di
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -231,6 +232,7 @@ abstract class ProfilesComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
+                    .fillMaxSize()
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,

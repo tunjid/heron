@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -175,6 +176,7 @@ abstract class FeedComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
+                    .fillMaxSize()
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,

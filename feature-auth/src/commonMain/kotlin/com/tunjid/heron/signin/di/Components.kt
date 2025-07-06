@@ -19,6 +19,7 @@ package com.tunjid.heron.signin.di
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -121,6 +122,7 @@ abstract class SignInComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
+                    .fillMaxSize()
                     .predictiveBackBackgroundModifier(paneScope = this),
                 showNavigation = false,
                 snackBarMessages = state.messages,

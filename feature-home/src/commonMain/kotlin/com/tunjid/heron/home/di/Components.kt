@@ -18,6 +18,7 @@ package com.tunjid.heron.home.di
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -143,6 +144,7 @@ abstract class HomeComponent(
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
+                    .fillMaxSize()
                     .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(topAppBarOffsetNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
