@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -168,9 +169,9 @@ abstract class PostDetailComponent(
                 bottomNavigationNestedScrollConnection()
 
             rememberPaneScaffoldState().PaneScaffold(
-                modifier =                 Modifier
-                .fillMaxSize()
-                .predictiveBackBackgroundModifier(paneScope = this)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,

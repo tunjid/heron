@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.messages.di
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
@@ -108,9 +109,9 @@ abstract class MessagesComponent(
                 bottomNavigationNestedScrollConnection()
 
             rememberPaneScaffoldState().PaneScaffold(
-                modifier =                 Modifier
-                .fillMaxSize()
-                .predictiveBackBackgroundModifier(paneScope = this)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .predictiveBackBackgroundModifier(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
