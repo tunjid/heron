@@ -28,10 +28,10 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
-import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
 import com.tunjid.heron.profile.avatar.Action
+import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
 import com.tunjid.heron.profile.avatar.AvatarScreen
+import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -169,11 +169,10 @@ abstract class ProfileAvatarComponent(
                         actions = viewModel.accept,
                         modifier = Modifier,
                     )
-                    SecondaryPaneCloseBackHandler(
+                    if (!isDraggingToPop) SecondaryPaneCloseBackHandler(
                         enabled = paneState.pane == ThreePane.Primary
                                 && route.children.isNotEmpty()
                                 && isMediumScreenWidthOrWider
-                                && !isDraggingToPop
                     )
                 }
             )
