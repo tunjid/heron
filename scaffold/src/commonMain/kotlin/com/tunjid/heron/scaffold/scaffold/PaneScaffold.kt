@@ -68,6 +68,8 @@ class PaneScaffoldState internal constructor(
 
     val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
 
+    val isDraggingToPop get() = appState.dragToPopState.isDraggingToPop
+
     internal var density by mutableStateOf(density)
 
     internal val canShowNavigationBar get() = !isMediumScreenWidthOrWider

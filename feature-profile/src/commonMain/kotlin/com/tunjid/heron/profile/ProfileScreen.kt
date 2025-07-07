@@ -129,7 +129,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.followers
@@ -242,6 +242,14 @@ internal fun ProfileScreen(
                 onNavigateToProfiles = { navigationAction ->
                     actions(Action.Navigate.DelegateTo(navigationAction))
                 },
+                onProfileAvatarClicked = {
+                    actions(
+                        Action.Navigate.ToAvatar(
+                            profile = state.profile,
+                            avatarSharedElementKey = state.avatarSharedElementKey,
+                        )
+                    )
+                },
             )
         },
         body = {
@@ -287,6 +295,7 @@ private fun ProfileHeader(
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
+    onProfileAvatarClicked: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -365,6 +374,7 @@ private fun ProfileHeader(
             isRefreshing = isRefreshing,
             profile = profile,
             avatarSharedElementKey = avatarSharedElementKey,
+            onProfileAvatarClicked = onProfileAvatarClicked,
         )
     }
 }
@@ -407,6 +417,7 @@ private fun ProfileAvatar(
     isRefreshing: Boolean,
     profile: Profile,
     avatarSharedElementKey: String,
+    onProfileAvatarClicked: () -> Unit,
 ) {
     val statusBarHeight = UiTokens.statusBarHeight
     Box(
@@ -435,7 +446,7 @@ private fun ProfileAvatar(
                     scaleY = scale.value
                 }
         )
-        paneScaffoldState.updatedMovableStickySharedElementOf (
+        paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey,
@@ -443,7 +454,8 @@ private fun ProfileAvatar(
             },
             modifier = modifier
                 .fillMaxSize()
-                .padding(headerState.avatarPadding),
+                .padding(headerState.avatarPadding)
+                .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName,

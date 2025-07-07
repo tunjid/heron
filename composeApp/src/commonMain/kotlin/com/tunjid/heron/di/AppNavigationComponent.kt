@@ -23,6 +23,7 @@ import com.tunjid.heron.home.di.HomeNavigationComponent
 import com.tunjid.heron.messages.di.MessagesNavigationComponent
 import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
 import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
 import com.tunjid.heron.search.di.SearchNavigationComponent
@@ -43,6 +44,7 @@ expect fun AppNavigationComponent.Companion.create(
     notificationsNavigationComponent: NotificationsNavigationComponent,
     postDetailNavigationComponent: PostDetailNavigationComponent,
     profileNavigationComponent: ProfileNavigationComponent,
+    profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
     profilesNavigationComponent: ProfilesNavigationComponent,
     searchNavigationComponent: SearchNavigationComponent,
     splashNavigationComponent: SplashNavigationComponent,
@@ -60,6 +62,7 @@ abstract class AppNavigationComponent(
     @Component val notificationsNavigationComponent: NotificationsNavigationComponent,
     @Component val postDetailNavigationComponent: PostDetailNavigationComponent,
     @Component val profileNavigationComponent: ProfileNavigationComponent,
+    @Component val profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
     @Component val profilesNavigationComponent: ProfilesNavigationComponent,
     @Component val searchNavigationComponent: SearchNavigationComponent,
     @Component val splashNavigationComponent: SplashNavigationComponent,

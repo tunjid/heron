@@ -45,8 +45,11 @@ import com.tunjid.heron.notifications.di.create
 import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
 import com.tunjid.heron.postdetail.di.create
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
+import com.tunjid.heron.profile.avatar.di.create
 import com.tunjid.heron.profile.di.create
 import com.tunjid.heron.profiles.di.ProfilesComponent
 import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
@@ -90,6 +93,7 @@ fun createAppState(
         notificationsNavigationComponent = NotificationsNavigationComponent.create(),
         postDetailNavigationComponent = PostDetailNavigationComponent.create(),
         profileNavigationComponent = ProfileNavigationComponent.create(),
+        profileAvatarNavigationComponent = ProfileAvatarNavigationComponent.create(),
         profilesNavigationComponent = ProfilesNavigationComponent.create(),
         searchNavigationComponent = SearchNavigationComponent.create(),
         splashNavigationComponent = SplashNavigationComponent.create(),
@@ -143,6 +147,10 @@ fun createAppState(
             dataComponent = dataComponent,
         ),
         profileComponent = ProfileComponent.create(
+            scaffoldComponent = scaffoldComponent,
+            dataComponent = dataComponent,
+        ),
+        profileAvatarComponent = ProfileAvatarComponent.create(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
