@@ -22,6 +22,7 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
+import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
@@ -142,7 +144,12 @@ fun PaneScaffoldState.PaneScaffold(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     PaneNavigationRailScaffold(
-        modifier = modifier,
+        modifier = modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = 180.dp,
+                atStart = paneState.pane == ThreePane.Secondary,
+            ),
         navigationRail = {
             navigationRail()
         },
