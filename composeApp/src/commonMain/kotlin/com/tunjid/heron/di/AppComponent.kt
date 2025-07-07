@@ -27,6 +27,7 @@ import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesComponent
 import com.tunjid.heron.notifications.di.NotificationsComponent
 import com.tunjid.heron.postdetail.di.PostDetailComponent
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profiles.di.ProfilesComponent
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
@@ -55,6 +56,7 @@ expect fun AppComponent.Companion.create(
     notificationsComponent: NotificationsComponent,
     postDetailComponent: PostDetailComponent,
     profileComponent: ProfileComponent,
+    profileAvatarComponent: ProfileAvatarComponent,
     profilesComponent: ProfilesComponent,
     searchComponent: SearchComponent,
     splashComponent: SplashComponent,
@@ -73,6 +75,7 @@ abstract class AppComponent(
     @Component val notificationsComponent: NotificationsComponent,
     @Component val postDetailComponent: PostDetailComponent,
     @Component val profileComponent: ProfileComponent,
+    @Component val profileAvatarComponent: ProfileAvatarComponent,
     @Component val profilesComponent: ProfilesComponent,
     @Component val searchComponent: SearchComponent,
     @Component val splashComponent: SplashComponent,

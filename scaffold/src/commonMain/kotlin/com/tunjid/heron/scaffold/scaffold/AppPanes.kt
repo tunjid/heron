@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -276,7 +277,7 @@ internal class PaneAnchorState(
  */
 @Composable
 fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
-    val currentlyEnabled by mutableStateOf(enabled)
+    val currentlyEnabled by rememberUpdatedState(enabled)
     val appState = LocalAppState.current
     val paneAnchorState = appState.paneAnchorState
     var started by remember { mutableStateOf(false) }

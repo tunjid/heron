@@ -62,6 +62,7 @@ include(
     ":feature-notifications",
     ":feature-post-detail",
     ":feature-profile",
+    ":feature-profile-avatar",
     ":feature-profiles",
     ":feature-search",
     ":feature-splash",

@@ -18,7 +18,6 @@
 package com.tunjid.heron.scaffold.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Mail
@@ -32,11 +31,11 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -56,7 +55,6 @@ import heron.scaffold.generated.resources.auth
 import heron.scaffold.generated.resources.home
 import heron.scaffold.generated.resources.messages
 import heron.scaffold.generated.resources.notifications
-import heron.scaffold.generated.resources.profile
 import heron.scaffold.generated.resources.search
 import heron.scaffold.generated.resources.splash
 import kotlinx.coroutines.CoroutineScope
@@ -252,7 +250,7 @@ interface NavigationAction {
         companion object {
             private const val QueryParam = "referringRoute"
 
-            internal fun NavigationContext.referringRouteQueryParams(
+            fun NavigationContext.referringRouteQueryParams(
                 option: ReferringRouteOption,
             ): Pair<String, List<String>> = QueryParam to when (option) {
                 Current -> listOf(

@@ -19,10 +19,17 @@ package com.tunjid.heron.profile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.currentRoute
+import com.tunjid.treenav.push
+import com.tunjid.treenav.strings.routeString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -67,5 +74,25 @@ sealed class Action(val key: String) {
         data class DelegateTo(
             val delegate: NavigationAction.Common,
         ) : Navigate(), NavigationAction by delegate
+
+        data class ToAvatar(
+            val profile: Profile,
+            val avatarSharedElementKey: String?,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                routeString(
+                    path = "/profile/${profile.did.id}/avatar",
+                    queryParams = mapOf(
+                        "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
+                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        referringRouteQueryParams(ReferringRouteOption.Current),
+                    )
+                )
+                    .toRoute
+                    .takeIf { it.id != currentRoute.id }
+                    ?.let(navState::push)
+                    ?: navState
+            }
+        }
     }
 }

@@ -65,6 +65,7 @@ kotlin {
             implementation(project(":feature-notifications"))
             implementation(project(":feature-post-detail"))
             implementation(project(":feature-profile"))
+            implementation(project(":feature-profile-avatar"))
             implementation(project(":feature-profiles"))
             implementation(project(":feature-search"))
             implementation(project(":feature-splash"))
