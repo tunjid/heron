@@ -30,46 +30,35 @@ import com.tunjid.heron.search.di.SearchNavigationComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.KmpComponentCreate
-
-@KmpComponentCreate
-expect fun AppNavigationComponent.Companion.create(
-    signInNavigationComponent: SignInNavigationComponent,
-    composeNavigationComponent: ComposeNavigationComponent,
-    feedNavigationComponent: FeedNavigationComponent,
-    galleryNavigationComponent: GalleryNavigationComponent,
-    homeNavigationComponent: HomeNavigationComponent,
-    messagesNavigationComponent: MessagesNavigationComponent,
-    notificationsNavigationComponent: NotificationsNavigationComponent,
-    postDetailNavigationComponent: PostDetailNavigationComponent,
-    profileNavigationComponent: ProfileNavigationComponent,
-    profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
-    profilesNavigationComponent: ProfilesNavigationComponent,
-    searchNavigationComponent: SearchNavigationComponent,
-    splashNavigationComponent: SplashNavigationComponent,
-): AppNavigationComponent
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
 
 //@SingletonScope
-@Component
-abstract class AppNavigationComponent(
-    @Component val signInNavigationComponent: SignInNavigationComponent,
-    @Component val composeNavigationComponent: ComposeNavigationComponent,
-    @Component val feedNavigationComponent: FeedNavigationComponent,
-    @Component val galleryNavigationComponent: GalleryNavigationComponent,
-    @Component val homeNavigationComponent: HomeNavigationComponent,
-    @Component val messagesNavigationComponent: MessagesNavigationComponent,
-    @Component val notificationsNavigationComponent: NotificationsNavigationComponent,
-    @Component val postDetailNavigationComponent: PostDetailNavigationComponent,
-    @Component val profileNavigationComponent: ProfileNavigationComponent,
-    @Component val profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
-    @Component val profilesNavigationComponent: ProfilesNavigationComponent,
-    @Component val searchNavigationComponent: SearchNavigationComponent,
-    @Component val splashNavigationComponent: SplashNavigationComponent,
-) {
-    internal abstract val routeMatcherMap: Map<String, RouteMatcher>
+@DependencyGraph(
+    scope = AppScope::class
+)
+interface AppNavigationComponent {
 
-    companion object
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Extends signInNavigationComponent: SignInNavigationComponent,
+            @Extends composeNavigationComponent: ComposeNavigationComponent,
+            @Extends feedNavigationComponent: FeedNavigationComponent,
+            @Extends galleryNavigationComponent: GalleryNavigationComponent,
+            @Extends homeNavigationComponent: HomeNavigationComponent,
+            @Extends messagesNavigationComponent: MessagesNavigationComponent,
+            @Extends notificationsNavigationComponent: NotificationsNavigationComponent,
+            @Extends postDetailNavigationComponent: PostDetailNavigationComponent,
+            @Extends profileNavigationComponent: ProfileNavigationComponent,
+            @Extends profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
+            @Extends profilesNavigationComponent: ProfilesNavigationComponent,
+            @Extends searchNavigationComponent: SearchNavigationComponent,
+            @Extends splashNavigationComponent: SplashNavigationComponent,
+        ): AppNavigationComponent
+    }
+
+    val routeMatcherMap: Map<String, RouteMatcher>
 }
 
 val AppNavigationComponent.allRouteMatchers

@@ -50,6 +50,8 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeString
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.auth
 import heron.scaffold.generated.resources.home
@@ -69,7 +71,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.StringResource
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
@@ -286,7 +287,7 @@ interface NavigationAction {
 
 @Inject
 class PersistedNavigationStateHolder(
-    appScope: CoroutineScope,
+    @Named("AppScope") appScope: CoroutineScope,
     savedStateRepository: SavedStateRepository,
     routeParser: RouteParser,
 ) : NavigationStateHolder,

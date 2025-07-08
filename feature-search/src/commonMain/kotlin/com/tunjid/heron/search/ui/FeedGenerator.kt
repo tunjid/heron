@@ -70,7 +70,7 @@ fun FeedGeneratorSearchResult(
             modifier = Modifier
                 .fillMaxWidth(),
             avatar = {
-                when(val avatar = feedGenerator.avatar) {
+                when (val avatar = feedGenerator.avatar) {
                     null -> Icon(
                         modifier = Modifier
                             .size(44.dp)
@@ -78,6 +78,7 @@ fun FeedGeneratorSearchResult(
                         imageVector = Icons.Rounded.RssFeed,
                         contentDescription = feedGenerator.displayName,
                     )
+
                     else -> AsyncImage(
                         modifier = Modifier
                             .size(44.dp),

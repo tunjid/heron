@@ -44,12 +44,12 @@ import com.tunjid.heron.profiles.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.PathPattern
@@ -60,12 +60,14 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.toRouteTrie
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 import heron.feature_profiles.generated.resources.Res
 import heron.feature_profiles.generated.resources.back
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
 private const val PostLikesPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/liked-by"
@@ -119,95 +121,97 @@ private fun createRoute(
     )
 )
 
-@KmpComponentCreate
-expect fun ProfilesNavigationComponent.Companion.create(): ProfilesNavigationComponent
+@DependencyGraph(isExtendable = true)
+interface ProfilesNavigationComponent {
 
-@KmpComponentCreate
-expect fun ProfilesComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): ProfilesComponent
-
-@Component
-abstract class ProfilesNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun postLikesRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(PostLikesPattern)
+    fun providePostLikesRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = PostLikesPattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 
-    @IntoMap
     @Provides
-    fun postRepostsRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(PostRepostsPattern)
+    fun providePostRepostsRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = PostRepostsPattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 
-    @IntoMap
     @Provides
-    fun profileFollowersRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(ProfileFollowersPattern)
+    fun provideProfileFollowersRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = ProfileFollowersPattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 
-    @IntoMap
     @Provides
-    fun profileFollowingRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(ProfileFollowingPattern)
+    fun provideProfileFollowingRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = ProfileFollowingPattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 }
 
-@Component
-abstract class ProfilesComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
-) {
-    companion object
+@DependencyGraph(isExtendable = true)
+interface ProfilesComponent {
 
-    @IntoMap
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Extends dataComponent: DataComponent,
+            @Extends scaffoldComponent: ScaffoldComponent,
+        ): ProfilesComponent
+    }
+
     @Provides
-    fun postLikesAdaptiveConfiguration(
+    @IntoMap
+    @StringKey(PostLikesPattern)
+    fun providePostLikesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = PostLikesPattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
-    @IntoMap
     @Provides
-    fun postRepostsAdaptiveConfiguration(
+    @IntoMap
+    @StringKey(PostRepostsPattern)
+    fun providePostRepostsPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = PostRepostsPattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
-    @IntoMap
     @Provides
-    fun profileFollowersAdaptiveConfiguration(
+    @IntoMap
+    @StringKey(ProfileFollowersPattern)
+    fun provideProfileFollowersPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = ProfileFollowersPattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
-    @IntoMap
     @Provides
-    fun profileFollowingAdaptiveConfiguration(
+    @IntoMap
+    @StringKey(ProfileFollowingPattern)
+    fun provideProfileFollowingPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = ProfileFollowingPattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )

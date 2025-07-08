@@ -39,50 +39,42 @@ import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@KmpComponentCreate
-expect fun AppComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-    signInComponent: SignInComponent,
-    composeComponent: ComposeComponent,
-    feedComponent: FeedComponent,
-    galleryComponent: GalleryComponent,
-    homeComponent: HomeComponent,
-    messagesComponent: MessagesComponent,
-    notificationsComponent: NotificationsComponent,
-    postDetailComponent: PostDetailComponent,
-    profileComponent: ProfileComponent,
-    profileAvatarComponent: ProfileAvatarComponent,
-    profilesComponent: ProfilesComponent,
-    searchComponent: SearchComponent,
-    splashComponent: SplashComponent,
-): AppComponent
+abstract class AppScope private constructor()
 
-@Component
-abstract class AppComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
-    @Component val signInComponent: SignInComponent,
-    @Component val composeComponent: ComposeComponent,
-    @Component val feedComponent: FeedComponent,
-    @Component val galleryComponent: GalleryComponent,
-    @Component val homeComponent: HomeComponent,
-    @Component val messagesComponent: MessagesComponent,
-    @Component val notificationsComponent: NotificationsComponent,
-    @Component val postDetailComponent: PostDetailComponent,
-    @Component val profileComponent: ProfileComponent,
-    @Component val profileAvatarComponent: ProfileAvatarComponent,
-    @Component val profilesComponent: ProfilesComponent,
-    @Component val searchComponent: SearchComponent,
-    @Component val splashComponent: SplashComponent,
-) {
+@DependencyGraph(
+    scope = AppScope::class
+)
+interface AppComponent {
 
-    abstract val entryMap: Map<String, PaneEntry<ThreePane, Route>>
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Extends dataComponent: DataComponent,
+            @Extends scaffoldComponent: ScaffoldComponent,
+            @Extends signInComponent: SignInComponent,
+            @Extends composeComponent: ComposeComponent,
+            @Extends feedComponent: FeedComponent,
+            @Extends galleryComponent: GalleryComponent,
+            @Extends homeComponent: HomeComponent,
+            @Extends messagesComponent: MessagesComponent,
+            @Extends notificationsComponent: NotificationsComponent,
+            @Extends postDetailComponent: PostDetailComponent,
+            @Extends profileComponent: ProfileComponent,
+            @Extends profileAvatarComponent: ProfileAvatarComponent,
+            @Extends profilesComponent: ProfilesComponent,
+            @Extends searchComponent: SearchComponent,
+            @Extends splashComponent: SplashComponent,
+        ): AppComponent
+    }
 
+    val entryMap: Map<String, PaneEntry<ThreePane, Route>>
+
+    @SingleIn(AppScope::class)
     @Provides
     fun appState(
         notificationsRepository: NotificationsRepository,
@@ -97,7 +89,5 @@ abstract class AppComponent(
         writeQueue = writeQueue,
     )
 
-    abstract val appState: AppState
-
-    companion object
+    val appState: AppState
 }

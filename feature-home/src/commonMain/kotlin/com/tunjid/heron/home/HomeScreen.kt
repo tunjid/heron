@@ -266,7 +266,8 @@ private fun HomeTimeline(
                             presentation = presentation,
                             postActions = rememberPostActions(
                                 onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToPost(
@@ -280,7 +281,8 @@ private fun HomeTimeline(
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToProfile(
@@ -297,7 +299,8 @@ private fun HomeTimeline(
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ToMedia(
@@ -312,7 +315,8 @@ private fun HomeTimeline(
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.DelegateTo(
                                             NavigationAction.Common.ComposePost(

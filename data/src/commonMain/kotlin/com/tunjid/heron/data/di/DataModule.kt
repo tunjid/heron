@@ -22,6 +22,14 @@ import androidx.room.useWriterConnection
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
+import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.ListDao
+import com.tunjid.heron.data.database.daos.NotificationsDao
+import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
@@ -40,19 +48,19 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
-import me.tatarka.inject.annotations.Scope
 import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.BlueskyJson
 
-@Scope
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
-annotation class DataScope
+abstract class DataScope private constructor()
 
 class DataModule(
     val appScope: CoroutineScope,
@@ -61,82 +69,87 @@ class DataModule(
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
 
-@KmpComponentCreate
-expect fun DataComponent.Companion.create(
-    module: DataModule,
-): DataComponent
+@DependencyGraph(
+    scope = DataScope::class,
+    isExtendable = true,
+)
+interface DataComponent {
 
-@DataScope
-@Component
-abstract class DataComponent(
-    private val module: DataModule,
-) {
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Provides module: DataModule
+        ): DataComponent
+    }
 
-    @DataScope
+    val module: DataModule
+
+    @Named("AppScope")
+    @SingleIn(DataScope::class)
     @Provides
     fun provideAppScope(): CoroutineScope = module.appScope
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideSavedStatePath(): Path = module.savedStatePath
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = module.databaseBuilder.configureAndBuild()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun providePostDao(
         database: AppDatabase,
-    ) = database.postDao()
+    ): PostDao = database.postDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideProfileDao(
         database: AppDatabase,
-    ) = database.profileDao()
+    ): ProfileDao = database.profileDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideListDao(
         database: AppDatabase,
-    ) = database.listDao()
+    ): ListDao = database.listDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideEmbedDao(
         database: AppDatabase,
-    ) = database.embedDao()
+    ): EmbedDao = database.embedDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideTimelineDao(
         database: AppDatabase,
-    ) = database.timelineDao()
+    ): TimelineDao = database.timelineDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideFeedGeneratorDao(
         database: AppDatabase,
-    ) = database.feedGeneratorDao()
+    ): FeedGeneratorDao = database.feedGeneratorDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideNotificationsDao(
         database: AppDatabase,
-    ) = database.notificationsDao()
+    ): NotificationsDao = database.notificationsDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideStarterPackDao(
         database: AppDatabase,
-    ) = database.starterPackDao()
+    ): StarterPackDao = database.starterPackDao()
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
@@ -148,50 +161,48 @@ abstract class DataComponent(
         }
     }
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
-    fun provideAppJson() = BlueskyJson
+    fun provideAppJson(): Json = BlueskyJson
 
-    @DataScope
+    @SingleIn(DataScope::class)
     @Provides
-    fun provideAppProtoBuff() = ProtoBuf {
+    fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {
     }
 
+    @SingleIn(DataScope::class)
+    @Binds
     val KtorNetworkService.bind: NetworkService
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val SnapshotWriteQueue.bind: WriteQueue
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val DataStoreSavedStateRepository.bind: SavedStateRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val AuthTokenRepository.bind: AuthRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val OfflineTimelineRepository.bind: TimelineRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val OfflineProfileRepository.bind: ProfileRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val OfflineNotificationsRepository.bind: NotificationsRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val OfflineSearchRepository.bind: SearchRepository
-        @DataScope
-        @Provides get() = this
 
+    @SingleIn(DataScope::class)
+    @Binds
     val OfflinePostRepository.bind: PostRepository
-        @DataScope
-        @Provides get() = this
-
-    companion object
 }
