@@ -36,6 +36,8 @@ import com.tunjid.heron.notifications.di.NotificationsComponent
 import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
 import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
 import com.tunjid.heron.profiles.di.ProfilesComponent

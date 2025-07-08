@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
@@ -55,10 +56,12 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/avatar"
 
@@ -81,42 +84,37 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
-@KmpComponentCreate
-expect fun ProfileAvatarNavigationComponent.Companion.create(): ProfileAvatarNavigationComponent
+@DependencyGraph(isExtendable = true)
+interface ProfileAvatarNavigationComponent {
 
-@KmpComponentCreate
-expect fun ProfileAvatarComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): ProfileAvatarComponent
-
-@Component
-abstract class ProfileAvatarNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class ProfileAvatarComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
-) {
-    companion object
+@DependencyGraph(isExtendable = true)
+interface ProfileAvatarComponent {
 
-    @IntoMap
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(
+            @Extends dataComponent: DataComponent,
+            @Extends scaffoldComponent: ScaffoldComponent,
+        ): ProfileAvatarComponent
+    }
+
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
