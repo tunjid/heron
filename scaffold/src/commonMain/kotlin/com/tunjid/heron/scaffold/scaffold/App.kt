@@ -23,17 +23,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
 import com.tunjid.composables.splitlayout.SplitLayout
@@ -67,12 +66,17 @@ fun App(
                 SharedTransitionLayout(
                     modifier = modifier.fillMaxSize()
                 ) {
+                    val density = LocalDensity.current
                     val movableSharedElementHostState = remember {
                         MovableSharedElementHostState<ThreePane, Route>(
                             sharedTransitionScope = this,
                         )
                     }
-
+                    val windowWidth = rememberUpdatedState(
+                        with(density) {
+                            LocalWindowInfo.current.containerSize.width.toDp()
+                        }
+                    )
                     if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
                     val displayState = appState.rememberMultiPaneDisplayState(
@@ -85,9 +89,7 @@ fun App(
                                     tertiaryPaneBreakPoint = mutableStateOf(
                                         TertiaryPaneMinWidthBreakpointDp
                                     ),
-                                    windowWidthState = derivedStateOf {
-                                        appState.splitLayoutState.size
-                                    }
+                                    windowWidthState = windowWidth
                                 ),
                                 threePaneMovableSharedElementDecorator(
                                     movableSharedElementHostState
@@ -99,31 +101,35 @@ fun App(
                         modifier = Modifier.fillMaxSize(),
                         state = displayState,
                     ) {
-                        appState.displayScope = this
-                        appState.splitLayoutState.visibleCount = appState.filteredPaneOrder.size
-                        appState.paneAnchorState.updateMaxWidth(
-                            with(LocalDensity.current) { appState.splitLayoutState.size.roundToPx() }
-                        )
-                        SplitLayout(
-                            state = appState.splitLayoutState,
-                            modifier = modifier
-                                .fillMaxSize(),
-                            itemSeparators = { _, offset ->
-                                DraggableThumb(
-                                    splitLayoutState = appState.splitLayoutState,
-                                    paneAnchorState = appState.paneAnchorState,
-                                    offset = offset
-                                )
-                            },
-                            itemContent = { index ->
-                                Destination(appState.filteredPaneOrder[index])
-                            }
-                        )
-                        LaunchedEffect(Unit) {
-                            snapshotFlow { appState.filteredPaneOrder }.collect { order ->
-                                if (order.size != 1) return@collect
-                                appState.paneAnchorState.onClosed()
-                            }
+                        val splitPaneState = remember {
+                            SplitPaneState(
+                                displayScope = this,
+                                density = density,
+                            )
+                        }.also {
+                            it.update(
+                                displayScope = this,
+                                density = density
+                            )
+                        }
+                        CompositionLocalProvider(
+                            LocalSplitPaneState provides splitPaneState
+                        ) {
+                            SplitLayout(
+                                state = splitPaneState.splitLayoutState,
+                                modifier = modifier
+                                    .fillMaxSize(),
+                                itemSeparators = { _, offset ->
+                                    DraggableThumb(
+                                        splitLayoutState = splitPaneState.splitLayoutState,
+                                        paneAnchorState = splitPaneState.paneAnchorState,
+                                        offset = offset
+                                    )
+                                },
+                                itemContent = { index ->
+                                    Destination(splitPaneState.filteredPaneOrder[index])
+                                }
+                            )
                         }
                         NavigationEventHandler(
                             enabled = displayState::canPop,

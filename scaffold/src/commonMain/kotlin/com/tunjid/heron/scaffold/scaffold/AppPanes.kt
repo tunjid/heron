@@ -20,8 +20,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -87,9 +87,7 @@ enum class PaneAnchor(
 }
 
 @Stable
-internal class PaneAnchorState(
-    private val density: Density,
-) {
+internal class PaneAnchorState {
     var maxWidth by mutableIntStateOf(1000)
         internal set
     val width
@@ -128,21 +126,12 @@ internal class PaneAnchorState(
     private val anchoredDraggableState = AnchoredDraggableState(
         initialValue = PaneAnchor.OneThirds,
         anchors = currentAnchors(),
-        positionalThreshold = { distance: Float -> distance * 0.5f },
-        velocityThreshold = { 100f },
-        snapAnimationSpec = PaneSpring,
-        decayAnimationSpec = splineBasedDecay(density)
     )
 
-    val modifier = Modifier
-        .hoverable(thumbMutableInteractionSource)
-        .anchoredDraggable(
-            state = anchoredDraggableState,
-            orientation = Orientation.Horizontal,
-            interactionSource = thumbMutableInteractionSource,
-        )
-
-    fun updateMaxWidth(maxWidth: Int) {
+    fun updateMaxWidth(
+        density: Density,
+        maxWidth: Int
+    ) {
         if (maxWidth == this.maxWidth) return
         this.maxWidth = maxWidth
         val newAnchors = currentAnchors()
@@ -151,20 +140,13 @@ internal class PaneAnchorState(
             newTarget = newAnchors
                 .closestAnchor(anchoredDraggableState.offset)
                 .takeUnless(PaneAnchor.Zero::equals)
-                ?: defaultOpenAnchorPosition(),
+                ?: defaultOpenAnchorPosition(density),
         )
-    }
-
-    suspend fun onClosed() {
-        if (currentPaneAnchor != PaneAnchor.Full) return
-        moveTo(defaultOpenAnchorPosition())
     }
 
     fun dispatch(delta: Float) {
         anchoredDraggableState.dispatchRawDelta(delta)
     }
-
-    suspend fun completeDispatch() = anchoredDraggableState.settle(velocity = 0f)
 
     suspend fun moveTo(anchor: PaneAnchor) = anchoredDraggableState.animateTo(
         targetValue = anchor,
@@ -174,7 +156,7 @@ internal class PaneAnchorState(
         PaneAnchor.entries.forEach { it at maxWidth * it.fraction }
     }
 
-    private fun defaultOpenAnchorPosition(): PaneAnchor {
+    private fun defaultOpenAnchorPosition(density: Density): PaneAnchor {
         val layoutSize = with(density) { maxWidth.toDp() }
         val isExpanded = layoutSize >= SecondaryPaneMinWidthBreakpointDp
         return if (isExpanded) PaneAnchor.Half
@@ -220,7 +202,16 @@ internal class PaneAnchorState(
                     }
                     .fillMaxHeight()
                     .width(DraggableDividerSizeDp)
-                    .then(paneAnchorState.modifier)
+                    .hoverable(paneAnchorState.thumbMutableInteractionSource)
+                    .anchoredDraggable(
+                        state = paneAnchorState.anchoredDraggableState,
+                        orientation = Orientation.Horizontal,
+                        interactionSource = paneAnchorState.thumbMutableInteractionSource,
+                        flingBehavior = AnchoredDraggableDefaults.flingBehavior(
+                            state = paneAnchorState.anchoredDraggableState,
+                            animationSpec = PaneSpring
+                        )
+                    )
             ) {
                 Surface(
                     modifier = Modifier
@@ -279,7 +270,8 @@ internal class PaneAnchorState(
 fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
     val currentlyEnabled by rememberUpdatedState(enabled)
     val appState = LocalAppState.current
-    val paneAnchorState = appState.paneAnchorState
+    val splitPaneDisplayScope = LocalSplitPaneState.current
+    val paneAnchorState = splitPaneDisplayScope.paneAnchorState
     var started by remember { mutableStateOf(false) }
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
@@ -327,18 +319,9 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
             }
     }
 
-    // Fling to settle
-    LaunchedEffect(Unit) {
-        snapshotFlow { started }
-            .collect { isStarted ->
-                if (isStarted) return@collect
-                paneAnchorState.completeDispatch()
-            }
-    }
-
     // Pop when fully expanded
     LaunchedEffect(Unit) {
-        snapshotFlow { appState.paneAnchorState.currentPaneAnchor }
+        snapshotFlow { splitPaneDisplayScope.paneAnchorState.currentPaneAnchor }
             .collect { anchor ->
                 if (currentlyEnabled) when (anchor) {
                     PaneAnchor.Zero -> Unit

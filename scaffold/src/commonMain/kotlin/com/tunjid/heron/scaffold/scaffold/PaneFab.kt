@@ -149,7 +149,7 @@ private fun FabIcon(icon: ImageVector) {
 }
 
 fun PaneScaffoldState.isFabExpanded(offset: Offset): Boolean {
-    return offset.y < with(density) { 56.dp.toPx() }
+    return offset.y < with(splitPaneState.density) { 56.dp.toPx() }
 }
 
 fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
@@ -158,7 +158,7 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
         x = offset.x.roundToInt(),
         y = min(
             offset.y.roundToInt(),
-            with(density) { UiTokens.bottomNavHeight.roundToPx() },
+            with(splitPaneState.density) { UiTokens.bottomNavHeight.roundToPx() },
         )
     )
 }

@@ -38,20 +38,13 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.treenav.compose.PaneScope
@@ -63,16 +56,14 @@ import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 
 class PaneScaffoldState internal constructor(
-    density: Density,
     internal val appState: AppState,
+    internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
-    val isMediumScreenWidthOrWider get() = appState.isMediumScreenWidthOrWider
+    val isMediumScreenWidthOrWider get() = splitPaneState.isMediumScreenWidthOrWider
 
     val isDraggingToPop get() = appState.dragToPopState.isDraggingToPop
-
-    internal var density by mutableStateOf(density)
 
     internal val canShowNavigationBar get() = !isMediumScreenWidthOrWider
 
@@ -80,7 +71,7 @@ class PaneScaffoldState internal constructor(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail
-        get() = appState.filteredPaneOrder.firstOrNull() == paneState.pane
+        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane
                 && isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail
@@ -95,8 +86,8 @@ class PaneScaffoldState internal constructor(
             null -> false
         }
 
-    internal var scaffoldTargetSize by mutableStateOf(IntSize.Zero)
-    internal var scaffoldCurrentSize by mutableStateOf(IntSize.Zero)
+    internal val hasSiblings
+        get() = splitPaneState.filteredPaneOrder.size > 1
 
     internal val defaultContainerColor: Color
         @Composable get() {
@@ -114,18 +105,17 @@ class PaneScaffoldState internal constructor(
 
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
-    val density = LocalDensity.current
     val appState = LocalAppState.current
+    val splitPaneDisplayScope = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    return remember(appState) {
+    return remember(appState, splitPaneDisplayScope) {
         PaneScaffoldState(
             appState = appState,
+            splitPaneState = splitPaneDisplayScope,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            density = density,
         )
     }
-        .also { it.density = density }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -160,17 +150,13 @@ fun PaneScaffoldState.PaneScaffold(
                         lookaheadScope = this,
                         boundsTransform = remember {
                             scaffoldBoundsTransform(
-                                appState = appState,
                                 paneScaffoldState = this,
                             )
                         }
                     )
                     .padding(
-                        horizontal = if (appState.filteredPaneOrder.size > 1) 8.dp else 0.dp
-                    )
-                    .onSizeChanged {
-                        scaffoldCurrentSize = it
-                    },
+                        horizontal = if (hasSiblings) 8.dp else 0.dp
+                    ),
                 containerColor = containerColor,
                 topBar = {
                     topBar()
@@ -241,17 +227,13 @@ private inline fun PaneNavigationRailScaffold(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 private fun scaffoldBoundsTransform(
-    appState: AppState,
     paneScaffoldState: PaneScaffoldState,
-): BoundsTransform = BoundsTransform { _, targetBounds ->
-    paneScaffoldState.scaffoldTargetSize =
-        targetBounds.size.roundToIntSize()
-
+): BoundsTransform = BoundsTransform { _, _ ->
     when (paneScaffoldState.paneState.pane) {
         ThreePane.Primary,
         ThreePane.Secondary,
         ThreePane.Tertiary,
-            -> if (appState.paneAnchorState.hasInteractions) snap()
+            -> if (paneScaffoldState.splitPaneState.paneAnchorState.hasInteractions) snap()
         else spring()
 
         ThreePane.Overlay,
