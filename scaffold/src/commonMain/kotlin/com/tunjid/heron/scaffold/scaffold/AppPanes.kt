@@ -152,6 +152,10 @@ internal class PaneAnchorState {
         targetValue = anchor,
     )
 
+    suspend fun settle() {
+        anchoredDraggableState.settle(PaneSpring)
+    }
+
     private fun currentAnchors() = DraggableAnchors {
         PaneAnchor.entries.forEach { it at maxWidth * it.fraction }
     }
@@ -316,6 +320,15 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
             .collect { (isStarted, paneWidth) ->
                 if (!isStarted) return@collect
                 paneAnchorState.dispatch(delta = paneWidth - paneAnchorState.width.toFloat())
+            }
+    }
+
+    // Fling to settle
+    LaunchedEffect(Unit) {
+        snapshotFlow { started }
+            .collect { isStarted ->
+                if (isStarted) return@collect
+                paneAnchorState.settle()
             }
     }
 
