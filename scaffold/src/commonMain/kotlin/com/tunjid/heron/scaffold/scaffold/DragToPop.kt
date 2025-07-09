@@ -18,7 +18,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -28,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
@@ -41,33 +39,34 @@ import kotlin.math.min
 @Stable
 internal class DragToPopState {
     var isDraggingToPop by mutableStateOf(false)
-    internal val dragToDismissState = DragToDismissState(
-        enabled = false,
-    )
 }
 
 @Composable
 fun Modifier.dragToPop(): Modifier {
-    val state = LocalAppState.current
-    val dragToPopState = state.dragToPopState
-
+    val dragToPopState = LocalAppState.current.dragToPopState
     val density = LocalDensity.current
-    val dismissThreshold = remember { with(density) { 200.dp.toPx().let { it * it } } }
+
+    val dismissThreshold = remember(density) {
+        with(density) { 200.dp.toPx().let { it * it } }
+    }
+
+    val dragToDismissState = remember(::DragToDismissState)
 
     val dispatcher = checkNotNull(
         LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher
     )
+
     LaunchedEffect(Unit) {
         snapshotFlow {
-            state.dragToPopState.dragToDismissState.offset
+            dragToDismissState.offset
         }
             .collectLatest {
-                if (state.dragToPopState.isDraggingToPop) {
+                if (dragToPopState.isDraggingToPop) {
                     dispatcher.dispatchOnProgressed(
-                        state.dragToPopState.dragToDismissState.navigationEvent(
+                        dragToDismissState.navigationEvent(
                             min(
                                 a = 1f,
-                                b = state.dragToPopState.dragToDismissState.offset.getDistanceSquared() / dismissThreshold,
+                                b = dragToDismissState.offset.getDistanceSquared() / dismissThreshold,
                             )
                         )
                     )
@@ -75,46 +74,32 @@ fun Modifier.dragToPop(): Modifier {
             }
     }
 
-    DisposableEffect(dragToPopState) {
-        dragToPopState.dragToDismissState.enabled = true
-        onDispose { dragToPopState.dragToDismissState.enabled = false }
-    }
-    // TODO: This should not be necessary. Figure out why a frame renders with
-    //  an offset of zero while the content in the transient primary container
-    //  is still visible.
-    val dragToDismissOffset by rememberUpdatedStateIf(
-        value = dragToPopState.dragToDismissState.offset.round(),
-        predicate = {
-            it != IntOffset.Zero
-        }
-    )
-
     return dragToDismiss(
-        state = state.dragToPopState.dragToDismissState,
+        state = dragToDismissState,
         dragThresholdCheck = { offset, _ ->
             offset.getDistanceSquared() > dismissThreshold
         },
         // Enable back preview
         onStart = {
-            state.dragToPopState.isDraggingToPop = true
+            dragToPopState.isDraggingToPop = true
             dispatcher.dispatchOnStarted(
-                state.dragToPopState.dragToDismissState.navigationEvent(0f)
+                dragToDismissState.navigationEvent(0f)
             )
         },
         onCancelled = {
             // Dismiss back preview
-            state.dragToPopState.isDraggingToPop = false
+            dragToPopState.isDraggingToPop = false
             dispatcher.dispatchOnCancelled()
         },
         onDismissed = {
             // Dismiss back preview
-            state.dragToPopState.isDraggingToPop = false
+            dragToPopState.isDraggingToPop = false
 
             // Pop navigation
             dispatcher.dispatchOnCompleted()
         }
     )
-        .offset { dragToDismissOffset }
+        .offset { dragToDismissState.offset.round() }
 }
 
 private fun DragToDismissState.navigationEvent(

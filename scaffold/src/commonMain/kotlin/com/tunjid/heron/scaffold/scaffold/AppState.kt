@@ -75,11 +75,6 @@ class AppState @Inject constructor(
     private var hasNotifications by mutableStateOf(false)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
-    private val paneRenderOrder = listOf(
-        ThreePane.Tertiary,
-        ThreePane.Secondary,
-        ThreePane.Primary,
-    )
 
     internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf {
@@ -91,22 +86,8 @@ class AppState @Inject constructor(
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
     )
-    internal val splitLayoutState = SplitLayoutState(
-        orientation = Orientation.Horizontal,
-        maxCount = paneRenderOrder.size,
-        minSize = MinPaneWidth,
-        keyAtIndex = { index ->
-            val indexDiff = paneRenderOrder.size - visibleCount
-            paneRenderOrder[index + indexDiff]
-        }
-    )
 
-    internal val paneAnchorState by lazy { PaneAnchorState(density) }
     internal val dragToPopState = DragToPopState()
-
-    internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
-
-    internal var displayScope by mutableStateOf<MultiPaneDisplayScope<ThreePane, Route>?>(null)
 
     internal val movableNavigationBar =
         movableContentOf<Modifier, () -> Boolean> { modifier, onNavItemReselected ->
@@ -123,10 +104,6 @@ class AppState @Inject constructor(
                 onNavItemReselected = onNavItemReselected,
             )
         }
-
-    internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
-        paneRenderOrder.filter { displayScope?.destinationIn(it) != null }
-    }
 
     private val entryTrie = entryMap
         .mapKeys { (template) -> PathPattern(template) }
@@ -193,6 +170,57 @@ class AppState @Inject constructor(
         navigationStateHolder.accept {
             navState.push(uri.uri.toRoute)
         }
+}
+
+@Stable
+internal class SplitPaneState(
+    displayScope: MultiPaneDisplayScope<ThreePane, Route>,
+    density: Density,
+) {
+
+    private var displayScope by mutableStateOf(displayScope)
+    internal var density by mutableStateOf(density)
+
+    private val paneRenderOrder = listOf(
+        ThreePane.Tertiary,
+        ThreePane.Secondary,
+        ThreePane.Primary,
+    )
+
+    internal val paneAnchorState = PaneAnchorState()
+
+    internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
+        paneRenderOrder.filter { displayScope.destinationIn(it) != null }
+    }
+
+    internal val splitLayoutState = SplitLayoutState(
+        orientation = Orientation.Horizontal,
+        maxCount = paneRenderOrder.size,
+        minSize = MinPaneWidth,
+        keyAtIndex = { index ->
+            val indexDiff = paneRenderOrder.size - visibleCount
+            paneRenderOrder[index + indexDiff]
+        }
+    )
+
+    internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
+
+    fun update(
+        displayScope: MultiPaneDisplayScope<ThreePane, Route>,
+        density: Density,
+    ) {
+        this.displayScope = displayScope
+        this.density = density
+        splitLayoutState.visibleCount = filteredPaneOrder.size
+        paneAnchorState.updateMaxWidth(
+            density = density,
+            maxWidth = with(density) { splitLayoutState.size.roundToPx() },
+        )
+    }
+}
+
+internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
+    TODO()
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
