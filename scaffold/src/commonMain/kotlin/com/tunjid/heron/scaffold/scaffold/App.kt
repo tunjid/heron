@@ -105,6 +105,7 @@ fun App(
                             SplitPaneState(
                                 displayScope = this,
                                 density = density,
+                                windowWidth = windowWidth,
                             )
                         }.also {
                             it.update(
