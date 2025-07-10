@@ -18,7 +18,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
@@ -65,7 +64,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.splitlayout.SplitLayoutState
-import com.tunjid.heron.scaffold.navigation.BackHandler
+import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
@@ -272,38 +272,33 @@ internal class PaneAnchorState {
  */
 @Composable
 fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
-    val currentlyEnabled by rememberUpdatedState(enabled)
+    val currentlyEnabled = rememberUpdatedState(enabled)
     val appState = LocalAppState.current
     val splitPaneDisplayScope = LocalSplitPaneState.current
     val paneAnchorState = splitPaneDisplayScope.paneAnchorState
     var started by remember { mutableStateOf(false) }
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
-    val animatedDesiredPanelWidth by animateFloatAsState(
-        label = "DesiredAppPanelWidth",
-        targetValue = desiredPaneWidth,
-    )
 
-    BackHandler(
-        enabled = currentlyEnabled,
-        onStarted = {
-            paneAnchorState.hasInteractions = true
-            widthAtStart = paneAnchorState.width
-            started = true
-        },
-        onProgressed = { progress ->
-            val distanceToCover = paneAnchorState.maxWidth - widthAtStart
-            desiredPaneWidth = (progress * distanceToCover) + widthAtStart
-        },
-        onCancelled = {
-            paneAnchorState.hasInteractions = false
-            started = false
-        },
-        onBack = {
-            paneAnchorState.hasInteractions = false
+    NavigationEventHandler(
+        enabled = currentlyEnabled::value
+    ) { events ->
+        try {
+            events.collectIndexed { index, event ->
+                if (index == 0) {
+                    appState.dismissBehavior = AppState.DismissBehavior.Gesture.Slide
+                    widthAtStart = paneAnchorState.width
+                    started = true
+                }
+                val progress = event.progress
+                val distanceToCover = paneAnchorState.maxWidth - widthAtStart
+                desiredPaneWidth = (progress * distanceToCover) + widthAtStart
+            }
+        } finally {
+            appState.dismissBehavior = AppState.DismissBehavior.None
             started = false
         }
-    )
+    }
 
     // Make sure desiredPaneWidth is synced with paneSplitState.width before the back gesture
     LaunchedEffect(Unit) {
@@ -315,8 +310,8 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
     }
 
     // Dispatch changes as the user presses back
-    LaunchedEffect(started, animatedDesiredPanelWidth) {
-        snapshotFlow { started to animatedDesiredPanelWidth }
+    LaunchedEffect(started, desiredPaneWidth) {
+        snapshotFlow { started to desiredPaneWidth }
             .collect { (isStarted, paneWidth) ->
                 if (!isStarted) return@collect
                 paneAnchorState.dispatch(delta = paneWidth - paneAnchorState.width.toFloat())
@@ -336,12 +331,8 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
     LaunchedEffect(Unit) {
         snapshotFlow { splitPaneDisplayScope.paneAnchorState.currentPaneAnchor }
             .collect { anchor ->
-                if (currentlyEnabled) when (anchor) {
-                    PaneAnchor.Zero -> Unit
-                    PaneAnchor.OneThirds -> Unit
-                    PaneAnchor.Half -> Unit
-                    PaneAnchor.TwoThirds -> Unit
-                    PaneAnchor.Full -> appState.pop()
+                if (currentlyEnabled.value && anchor == PaneAnchor.Full) {
+                    appState.pop()
                 }
             }
     }

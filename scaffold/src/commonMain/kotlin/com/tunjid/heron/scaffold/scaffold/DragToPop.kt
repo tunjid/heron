@@ -19,11 +19,7 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -36,14 +32,9 @@ import com.tunjid.treenav.compose.navigation3.ui.LocalNavigationEventDispatcherO
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.min
 
-@Stable
-internal class DragToPopState {
-    var isDraggingToPop by mutableStateOf(false)
-}
-
 @Composable
 fun Modifier.dragToPop(): Modifier {
-    val dragToPopState = LocalAppState.current.dragToPopState
+    val appState = LocalAppState.current
     val density = LocalDensity.current
 
     val dismissThreshold = remember(density) {
@@ -61,7 +52,7 @@ fun Modifier.dragToPop(): Modifier {
             dragToDismissState.offset
         }
             .collectLatest {
-                if (dragToPopState.isDraggingToPop) {
+                if (appState.dismissBehavior == AppState.DismissBehavior.Gesture.Drag) {
                     dispatcher.dispatchOnProgressed(
                         dragToDismissState.navigationEvent(
                             min(
@@ -81,19 +72,19 @@ fun Modifier.dragToPop(): Modifier {
         },
         // Enable back preview
         onStart = {
-            dragToPopState.isDraggingToPop = true
+            appState.dismissBehavior = AppState.DismissBehavior.Gesture.Drag
             dispatcher.dispatchOnStarted(
                 dragToDismissState.navigationEvent(0f)
             )
         },
         onCancelled = {
             // Dismiss back preview
-            dragToPopState.isDraggingToPop = false
+            appState.dismissBehavior = AppState.DismissBehavior.None
             dispatcher.dispatchOnCancelled()
         },
         onDismissed = {
             // Dismiss back preview
-            dragToPopState.isDraggingToPop = false
+            appState.dismissBehavior = AppState.DismissBehavior.None
 
             // Pop navigation
             dispatcher.dispatchOnCompleted()

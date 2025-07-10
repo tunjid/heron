@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.navigation.navItems
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.compose.MultiPaneDisplayScope
 import com.tunjid.treenav.compose.MultiPaneDisplayState
@@ -89,7 +90,7 @@ class AppState @Inject constructor(
         minScale = 0.75f,
     )
 
-    internal val dragToPopState = DragToPopState()
+    internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
 
     internal val movableNavigationBar =
         movableContentOf<Modifier, () -> Boolean> { modifier, onNavItemReselected ->
@@ -172,6 +173,14 @@ class AppState @Inject constructor(
         navigationStateHolder.accept {
             navState.push(uri.uri.toRoute)
         }
+
+    sealed class DismissBehavior {
+        data object None : DismissBehavior()
+        sealed class Gesture: DismissBehavior() {
+            data object Drag : Gesture()
+            data object Slide : Gesture()
+        }
+    }
 }
 
 @Stable
@@ -189,6 +198,9 @@ internal class SplitPaneState(
     internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
         PaneRenderOrder.filter { displayScope.destinationIn(it) != null }
     }
+
+    internal val minPaneWidth: Dp
+        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
