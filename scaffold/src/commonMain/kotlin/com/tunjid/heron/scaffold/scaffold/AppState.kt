@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
@@ -31,6 +32,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
@@ -176,34 +178,29 @@ class AppState @Inject constructor(
 internal class SplitPaneState(
     displayScope: MultiPaneDisplayScope<ThreePane, Route>,
     density: Density,
+    private val windowWidth: State<Dp>,
 ) {
 
     private var displayScope by mutableStateOf(displayScope)
     internal var density by mutableStateOf(density)
 
-    private val paneRenderOrder = listOf(
-        ThreePane.Tertiary,
-        ThreePane.Secondary,
-        ThreePane.Primary,
-    )
-
     internal val paneAnchorState = PaneAnchorState()
 
     internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
-        paneRenderOrder.filter { displayScope.destinationIn(it) != null }
+        PaneRenderOrder.filter { displayScope.destinationIn(it) != null }
     }
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
-        maxCount = paneRenderOrder.size,
+        maxCount = PaneRenderOrder.size,
         minSize = MinPaneWidth,
         keyAtIndex = { index ->
-            val indexDiff = paneRenderOrder.size - visibleCount
-            paneRenderOrder[index + indexDiff]
+            filteredPaneOrder[index]
         }
     )
 
-    internal val isMediumScreenWidthOrWider get() = splitLayoutState.size >= SecondaryPaneMinWidthBreakpointDp
+    internal val isMediumScreenWidthOrWider
+        get() = windowWidth.value >= SecondaryPaneMinWidthBreakpointDp
 
     fun update(
         displayScope: MultiPaneDisplayScope<ThreePane, Route>,
@@ -214,10 +211,16 @@ internal class SplitPaneState(
         splitLayoutState.visibleCount = filteredPaneOrder.size
         paneAnchorState.updateMaxWidth(
             density = density,
-            maxWidth = with(density) { splitLayoutState.size.roundToPx() },
+            maxWidth = with(density) { windowWidth.value.roundToPx() },
         )
     }
 }
+
+private val PaneRenderOrder = listOf(
+    ThreePane.Tertiary,
+    ThreePane.Secondary,
+    ThreePane.Primary,
+)
 
 internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
     TODO()
