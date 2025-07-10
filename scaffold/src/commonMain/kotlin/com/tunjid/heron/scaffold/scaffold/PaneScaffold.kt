@@ -61,20 +61,23 @@ class PaneScaffoldState internal constructor(
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
-    val isMediumScreenWidthOrWider get() = splitPaneState.isMediumScreenWidthOrWider
+    val isMediumScreenWidthOrWider: Boolean
+        get() = splitPaneState.isMediumScreenWidthOrWider
 
-    val isDraggingToPop get() = appState.dragToPopState.isDraggingToPop
+    val dismissBehavior: AppState.DismissBehavior
+        get() = appState.dismissBehavior
 
-    internal val canShowNavigationBar get() = !isMediumScreenWidthOrWider
+    internal val canShowNavigationBar: Boolean
+        get() = !isMediumScreenWidthOrWider
 
-    internal val canUseMovableNavigationBar
+    internal val canUseMovableNavigationBar: Boolean
         get() = isActive && canShowNavigationBar
 
-    internal val canShowNavigationRail
+    internal val canShowNavigationRail: Boolean
         get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane
                 && isMediumScreenWidthOrWider
 
-    internal val canUseMovableNavigationRail
+    internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
 
     internal val canShowFab
@@ -137,7 +140,7 @@ fun PaneScaffoldState.PaneScaffold(
         modifier = modifier
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
-                minSize = 180.dp,
+                minSize = splitPaneState.minPaneWidth,
                 atStart = paneState.pane == ThreePane.Secondary,
             ),
         navigationRail = {
@@ -145,15 +148,20 @@ fun PaneScaffoldState.PaneScaffold(
         },
         content = {
             Scaffold(
-                modifier = Modifier
-                    .animateBounds(
-                        lookaheadScope = this,
-                        boundsTransform = remember {
-                            scaffoldBoundsTransform(
-                                paneScaffoldState = this,
-                            )
-                        }
-                    )
+                modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
+                else when (dismissBehavior) {
+                    AppState.DismissBehavior.None,
+                    AppState.DismissBehavior.Gesture.Drag -> Modifier
+                        .animateBounds(
+                            lookaheadScope = this,
+                            boundsTransform = remember {
+                                scaffoldBoundsTransform(
+                                    paneScaffoldState = this,
+                                )
+                            }
+                        )
+                    AppState.DismissBehavior.Gesture.Slide -> Modifier
+                }
                     .padding(
                         horizontal = if (hasSiblings) 8.dp else 0.dp
                     ),
