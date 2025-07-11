@@ -36,10 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.ListMember
@@ -47,9 +45,10 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
@@ -71,6 +70,7 @@ fun SuggestedStarterPack(
         modifier = modifier,
         content = {
             OverlappingAvatarRow(
+                overlap = AvatarOverlap,
                 maxItems = MaxAvatars,
                 modifier = Modifier
                     .padding(16.dp)
@@ -88,7 +88,7 @@ fun SuggestedStarterPack(
                 }
                 else starterPackWithMembers.members.take(count)
                     .forEachIndexed { index, listMember ->
-                        updatedMovableStickySharedElementOf (
+                        updatedMovableStickySharedElementOf(
                             modifier = Modifier
                                 .zIndex((MaxAvatars - index).toFloat())
                                 .fillMaxWidth()
@@ -158,44 +158,6 @@ fun SuggestedStarterPack(
             )
         }
     )
-}
-
-@Composable
-private fun OverlappingAvatarRow(
-    modifier: Modifier = Modifier,
-    maxItems: Int,
-    content: @Composable () -> Unit
-) {
-    Layout(
-        modifier = modifier,
-        content = content
-    ) { measurables, constraints ->
-
-        val overlapOffset = AvatarOverlap.roundToPx()
-        val totalWidth = constraints.maxWidth + (overlapOffset * (maxItems - 1))
-        val itemSize = totalWidth / maxItems
-
-        val placeables = measurables.map { measurable ->
-            measurable.measure(
-                Constraints.fixed(itemSize, itemSize)
-            )
-        }
-
-        layout(constraints.maxWidth, itemSize) {
-            // Track the x co-ord we have placed children up to
-            var xPosition = 0
-
-            // Place children in the parent layout
-            placeables.forEachIndexed { index, placeable ->
-                placeable.placeRelative(
-                    x = xPosition - (overlapOffset * index),
-                    y = 0,
-                )
-
-                xPosition += placeable.width
-            }
-        }
-    }
 }
 
 internal fun ListMember.avatarSharedElementKey(): String =
