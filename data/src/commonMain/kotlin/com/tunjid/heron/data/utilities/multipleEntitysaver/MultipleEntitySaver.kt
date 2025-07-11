@@ -178,8 +178,14 @@ internal class MultipleEntitySaver(
         postDao.upsertPostStatistics(postViewerStatisticsEntities)
         postDao.upsertPostLikes(postLikeEntities)
 
+        val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.partition {
+            it.commonFollowersCount != null
+        }
         profileDao.upsertProfileViewers(
-            profileViewerEntities
+            fullProfileViewerEntities
+        )
+        profileDao.insertOrPartiallyUpdateProfileViewers(
+            partialProfileViewerEntities
         )
 
         notificationsDao.upsertNotifications(notificationEntities)
