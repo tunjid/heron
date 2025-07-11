@@ -77,4 +77,5 @@ fun ProfileViewerStateEntity.asExternalModel() =
     ProfileViewerState(
         following = following,
         followedBy = followedBy,
+        commonFollowersCount = commonFollowersCount,
     )
