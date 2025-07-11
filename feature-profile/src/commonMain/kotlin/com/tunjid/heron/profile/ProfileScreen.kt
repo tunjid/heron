@@ -72,7 +72,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -190,6 +189,9 @@ internal fun ProfileScreen(
     CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
+            .onSizeChanged {
+                headerState.width = with(density) { it.width.toDp() }
+            }
             .pullToRefresh(
                 isRefreshing = isRefreshing,
                 state = pullToRefreshState,
@@ -198,8 +200,7 @@ internal fun ProfileScreen(
                         ?.accept
                         ?.invoke(TimelineLoadAction.Fetch.Refresh)
                 }
-            )
-            .onPlaced { headerState.width = with(density) { it.size.width.toDp() } },
+            ),
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
