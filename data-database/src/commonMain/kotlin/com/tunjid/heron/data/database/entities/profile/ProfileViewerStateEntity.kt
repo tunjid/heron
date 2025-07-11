@@ -55,6 +55,7 @@ data class ProfileViewerStateEntity(
     val blockingByList: ListId?,
     val following: GenericUri?,
     val followedBy: GenericUri?,
+    val commonFollowersCount: Long?,
 ) {
     data class Partial(
         val profileId: ProfileId,

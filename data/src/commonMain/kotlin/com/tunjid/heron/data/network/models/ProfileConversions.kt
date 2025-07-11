@@ -114,6 +114,7 @@ internal fun ProfileViewBasic.profileViewerStateEntities(
             following = viewer?.following?.atUri?.let(::GenericUri),
             followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
             blocking = viewer?.blocking?.atUri?.let(::GenericUri),
+            commonFollowersCount = viewer?.knownFollowers?.count,
         ),
     )
 
@@ -131,6 +132,7 @@ internal fun ProfileView.profileViewerStateEntities(
             following = viewer?.following?.atUri?.let(::GenericUri),
             followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
             blocking = viewer?.blocking?.atUri?.let(::GenericUri),
+            commonFollowersCount = viewer?.knownFollowers?.count,
         ),
     )
 
@@ -148,6 +150,7 @@ internal fun ProfileViewDetailed.profileViewerStateEntities(
             following = viewer?.following?.atUri?.let(::GenericUri),
             followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
             blocking = viewer?.blocking?.atUri?.let(::GenericUri),
+            commonFollowersCount = viewer?.knownFollowers?.count,
         ),
     )
 
