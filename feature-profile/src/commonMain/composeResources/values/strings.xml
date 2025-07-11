@@ -28,4 +28,6 @@
     <string name="likes">Likes</string>
     <string name="mention">Mention</string>
     <string name="post">Post</string>
+    <string name="followed_by_profiles">Followed by %1$s</string>
+    <string name="followed_by_others">, and %1$d others</string>
 </resources>

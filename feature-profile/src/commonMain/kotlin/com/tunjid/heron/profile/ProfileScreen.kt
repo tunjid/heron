@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -79,6 +80,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
@@ -121,6 +123,7 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -132,6 +135,8 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
+import heron.feature_profile.generated.resources.followed_by_others
+import heron.feature_profile.generated.resources.followed_by_profiles
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.posts
@@ -217,6 +222,7 @@ internal fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                commonFollowers = state.commonFollowers,
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
@@ -287,6 +293,7 @@ private fun ProfileHeader(
     timelineTabs: List<Tab>,
     modifier: Modifier = Modifier,
     profile: Profile,
+    commonFollowers: List<Profile>,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
@@ -344,6 +351,10 @@ private fun ProfileHeader(
                     onNavigateToProfiles = onNavigateToProfiles,
                 )
                 Text(text = profile.description ?: "")
+                if (commonFollowers.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    CommonFollowers(commonFollowers)
+                }
                 Spacer(Modifier.height(16.dp))
             }
             ProfileTabs(
@@ -589,6 +600,62 @@ fun Statistic(
             text = description,
             maxLines = 1,
             style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
+        )
+    }
+}
+
+@Composable
+private fun CommonFollowers(
+    commonFollowers: List<Profile>
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OverlappingAvatarRow(
+            modifier = Modifier
+                .width(20.dp * commonFollowers.size),
+            overlap = 16.dp,
+            maxItems = commonFollowers.size,
+            content = {
+                commonFollowers.forEachIndexed { index, profile ->
+                    AsyncImage(
+                        modifier = Modifier
+                            .zIndex(-index.toFloat()),
+                        args = remember(profile.avatar) {
+                            ImageArgs(
+                                url = profile.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = profile.displayName
+                                    ?: profile.handle.id,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
+                    )
+                }
+            }
+        )
+        Text(
+            text = stringResource(
+                Res.string.followed_by_profiles,
+                when (val size = commonFollowers.size) {
+                    1 -> commonFollowers.first().displayName ?: ""
+                    2 -> commonFollowers.joinToString(
+                        separator = ", ",
+                        transform = { it.displayName ?: "" },
+                    )
+
+                    else -> commonFollowers.take(2).joinToString(
+                        separator = ", ",
+                        transform = { it.displayName ?: "" },
+                        postfix = stringResource(
+                            Res.string.followed_by_others,
+                            size - 2
+                        ),
+                    )
+                }
+            ),
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }

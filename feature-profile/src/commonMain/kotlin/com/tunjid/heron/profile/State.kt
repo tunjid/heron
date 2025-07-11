@@ -41,6 +41,7 @@ data class State(
     val isSignedInProfile: Boolean = false,
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
+    val commonFollowers: List<Profile> = emptyList(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
