@@ -222,6 +222,7 @@ internal fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
+                commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
@@ -293,6 +294,7 @@ private fun ProfileHeader(
     timelineTabs: List<Tab>,
     modifier: Modifier = Modifier,
     profile: Profile,
+    commonFollowerCount: Long?,
     commonFollowers: List<Profile>,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
@@ -353,7 +355,10 @@ private fun ProfileHeader(
                 Text(text = profile.description ?: "")
                 if (commonFollowers.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    CommonFollowers(commonFollowers)
+                    CommonFollowers(
+                        commonFollowerCount = commonFollowerCount,
+                        commonFollowers = commonFollowers,
+                    )
                 }
                 Spacer(Modifier.height(16.dp))
             }
@@ -606,7 +611,8 @@ fun Statistic(
 
 @Composable
 private fun CommonFollowers(
-    commonFollowers: List<Profile>
+    commonFollowerCount: Long?,
+    commonFollowers: List<Profile>,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -650,7 +656,7 @@ private fun CommonFollowers(
                         transform = { it.displayName ?: "" },
                         postfix = stringResource(
                             Res.string.followed_by_others,
-                            size - 2
+                            (commonFollowerCount?.toInt() ?: size) - 2
                         ),
                     )
                 }
