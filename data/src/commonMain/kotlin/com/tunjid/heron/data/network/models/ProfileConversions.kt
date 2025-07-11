@@ -103,53 +103,62 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
 internal fun ProfileViewBasic.profileViewerStateEntities(
     viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
-    listOf(
-        ProfileViewerStateEntity(
-            profileId = viewingProfileId,
-            otherProfileId = ProfileId(did.did),
-            muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
-            blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
-            following = viewer?.following?.atUri?.let(::GenericUri),
-            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
-            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
-        ),
-    )
+    when (val viewer = viewer) {
+        null -> emptyList()
+        else -> listOf(
+            ProfileViewerStateEntity(
+                profileId = viewingProfileId,
+                otherProfileId = ProfileId(did.did),
+                muted = viewer.muted,
+                mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
+                blockedBy = viewer.blockedBy,
+                blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
+                following = viewer.following?.atUri?.let(::GenericUri),
+                followedBy = viewer.followedBy?.atUri?.let(::GenericUri),
+                blocking = viewer.blocking?.atUri?.let(::GenericUri),
+            ),
+        )
+    }
 
 internal fun ProfileView.profileViewerStateEntities(
     viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
-    listOf(
-        ProfileViewerStateEntity(
-            profileId = viewingProfileId,
-            otherProfileId = ProfileId(did.did),
-            muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
-            blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
-            following = viewer?.following?.atUri?.let(::GenericUri),
-            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
-            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
-        ),
-    )
+    when (val viewer = viewer) {
+        null -> emptyList()
+        else -> listOf(
+            ProfileViewerStateEntity(
+                profileId = viewingProfileId,
+                otherProfileId = ProfileId(did.did),
+                muted = viewer.muted,
+                mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
+                blockedBy = viewer.blockedBy,
+                blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
+                following = viewer.following?.atUri?.let(::GenericUri),
+                followedBy = viewer.followedBy?.atUri?.let(::GenericUri),
+                blocking = viewer.blocking?.atUri?.let(::GenericUri),
+            ),
+        )
+    }
 
 internal fun ProfileViewDetailed.profileViewerStateEntities(
     viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> =
-    listOf(
-        ProfileViewerStateEntity(
-            profileId = viewingProfileId,
-            otherProfileId = ProfileId(did.did),
-            muted = viewer?.muted,
-            mutedByList = viewer?.mutedByList?.cid?.cid?.let(::ListId),
-            blockedBy = viewer?.blockedBy,
-            blockingByList = viewer?.blockingByList?.cid?.cid?.let(::ListId),
-            following = viewer?.following?.atUri?.let(::GenericUri),
-            followedBy = viewer?.followedBy?.atUri?.let(::GenericUri),
-            blocking = viewer?.blocking?.atUri?.let(::GenericUri),
-        ),
-    )
+    when (val viewer = viewer) {
+        null -> emptyList()
+        else -> listOf(
+            ProfileViewerStateEntity(
+                profileId = viewingProfileId,
+                otherProfileId = ProfileId(did.did),
+                muted = viewer.muted,
+                mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
+                blockedBy = viewer.blockedBy,
+                blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
+                following = viewer.following?.atUri?.let(::GenericUri),
+                followedBy = viewer.followedBy?.atUri?.let(::GenericUri),
+                blocking = viewer.blocking?.atUri?.let(::GenericUri),
+            ),
+        )
+    }
 
 
 internal fun ProfileViewBasic.profile() = Profile(

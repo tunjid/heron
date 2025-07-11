@@ -31,6 +31,16 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+        }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -41,6 +51,16 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+        }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -51,4 +71,14 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+        }
 }
