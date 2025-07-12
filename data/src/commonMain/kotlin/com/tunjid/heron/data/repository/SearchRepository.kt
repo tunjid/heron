@@ -23,6 +23,7 @@ import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
 import app.bsky.feed.PostView
 import app.bsky.feed.SearchPostsQueryParams
+import app.bsky.feed.SearchPostsSort
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
@@ -159,6 +160,10 @@ class OfflineSearchRepository @Inject constructor(
                 params = SearchPostsQueryParams(
                     q = query.query,
                     limit = query.data.limit,
+                    sort = when (query) {
+                        is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
+                        is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
+                    },
                     cursor = when (cursor) {
                         Cursor.Initial -> cursor.value
                         is Cursor.Next -> cursor.value
