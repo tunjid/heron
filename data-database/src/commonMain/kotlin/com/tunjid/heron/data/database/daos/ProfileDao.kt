@@ -60,6 +60,29 @@ interface ProfileDao {
         otherProfileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerStateEntity>>
 
+
+    @Query(
+        """
+            SELECT * FROM profiles
+            INNER JOIN profileViewerStates
+            ON otherProfileId = did
+            WHERE profileId = :profileId
+            AND `following` IS NOT NULL
+            AND did IN (
+                SELECT profileId FROM profileViewerStates
+                WHERE otherProfileId = :otherProfileId
+                AND `following` IS NOT NULL
+            )
+            ORDER BY followersCount
+            LIMIT :limit
+        """
+    )
+    fun commonFollowers(
+        profileId: String,
+        otherProfileId: String,
+        limit: Long,
+    ): Flow<List<ProfileEntity>>
+
     @Upsert
     suspend fun upsertProfiles(
         entities: List<ProfileEntity>,

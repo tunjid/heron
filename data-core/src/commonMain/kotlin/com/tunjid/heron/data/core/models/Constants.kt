@@ -30,6 +30,7 @@ object Constants {
     val notFoundPostId = PostId("at://not_found")
     val unknownPostId = PostId(UNKNOWN)
     val unknownPostUri = PostUri(UNKNOWN)
+    val unknownGenericUri = GenericUri(UNKNOWN)
     val unknownAuthorId = ProfileId(UNKNOWN)
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }

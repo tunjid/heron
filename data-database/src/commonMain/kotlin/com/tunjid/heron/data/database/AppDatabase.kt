@@ -57,7 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 11,
+    version = 12,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -112,6 +112,8 @@ import kotlinx.coroutines.IO
         ),
         // Add StarterPackEntity and ListItemEntity
         AutoMigration(from = 10, to = 11),
+        // Add commonFollowersCount to ProfileViewerStateEntity
+        AutoMigration(from = 11, to = 12),
     ],
     exportSchema = true,
 )

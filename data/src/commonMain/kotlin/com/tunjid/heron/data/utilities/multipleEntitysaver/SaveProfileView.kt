@@ -19,7 +19,9 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
 
@@ -31,6 +33,24 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+
+            // Save the common follower relationship with an unknown generic URI
+            add(
+                unknownFollower(
+                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                    otherProfileId = profileView.did.did.let(::ProfileId),
+                )
+            )
+        }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -41,6 +61,24 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+
+            // Save the common follower relationship with an unknown generic URI
+            add(
+                unknownFollower(
+                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                    otherProfileId = profileView.did.did.let(::ProfileId),
+                )
+            )
+        }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -51,4 +89,38 @@ internal fun MultipleEntitySaver.add(
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,
     ).forEach(::add)
+
+    profileView.viewer
+        ?.knownFollowers
+        ?.followers
+        ?.forEach { knownFollowerProfile ->
+            add(
+                viewingProfileId = viewingProfileId,
+                profileView = knownFollowerProfile,
+            )
+
+            // Save the common follower relationship with an unknown generic URI
+            add(
+                unknownFollower(
+                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                    otherProfileId = profileView.did.did.let(::ProfileId),
+                )
+            )
+        }
 }
+
+private fun unknownFollower(
+    profileId: ProfileId,
+    otherProfileId: ProfileId,
+) = ProfileViewerStateEntity(
+    profileId = profileId,
+    otherProfileId = otherProfileId,
+    muted = null,
+    mutedByList = null,
+    blockedBy = null,
+    blockingByList = null,
+    following = Constants.unknownGenericUri,
+    followedBy = null,
+    blocking = null,
+    commonFollowersCount = null,
+)

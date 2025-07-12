@@ -131,9 +131,17 @@ private fun loadProfileMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
-    profileRepository.profile(profileId).mapToMutation {
-        copy(profile = it)
-    }
+    merge(
+        profileRepository.profile(profileId).mapToMutation {
+            copy(profile = it)
+        },
+        profileRepository.commonFollowers(
+            otherProfileId = profileId,
+            limit = 6
+        ).mapToMutation {
+            copy(commonFollowers = it)
+        }
+    )
 
 private fun loadSignedInProfileMutations(
     profileId: Id.Profile,
@@ -194,7 +202,7 @@ private fun profileRelationshipMutations(
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
-        copy(viewerState = it.firstOrNull())
+        copy(viewerState = it.firstOrNull().also { println("aa: ${it?.commonFollowersCount}") })
     }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =

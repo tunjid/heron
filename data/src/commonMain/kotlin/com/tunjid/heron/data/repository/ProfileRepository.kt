@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -62,6 +63,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -96,6 +98,11 @@ interface ProfileRepository {
     fun profileRelationships(
         profileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerState>>
+
+    fun commonFollowers(
+        otherProfileId: Id.Profile,
+        limit: Long,
+    ): Flow<List<Profile>>
 
     fun listMembers(
         query: ListMemberQuery,
@@ -161,6 +168,29 @@ class OfflineProfileRepository @Inject constructor(
             .distinctUntilChanged()
             .map { viewerEntities ->
                 viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
+            }
+
+    override fun commonFollowers(
+        otherProfileId: Id.Profile,
+        limit: Long,
+    ): Flow<List<Profile>> =
+        signedInProfileId()
+            .flatMapLatest { signedInProfile ->
+                val otherProfileResolvedId = lookupProfileDid(
+                    profileId = otherProfileId,
+                    profileDao = profileDao,
+                    networkService = networkService
+                )?.did ?: return@flatMapLatest emptyFlow()
+
+                profileDao.commonFollowers(
+                    profileId = signedInProfile.id,
+                    otherProfileId = otherProfileResolvedId,
+                    limit = limit,
+                )
+                    .distinctUntilChanged()
+                    .map { profileEntities ->
+                        profileEntities.map(ProfileEntity::asExternalModel)
+                    }
             }
 
     override fun listMembers(
