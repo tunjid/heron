@@ -47,9 +47,9 @@ import com.tunjid.heron.scaffold.navigation.navItems
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
-import com.tunjid.treenav.compose.MultiPaneDisplayScope
 import com.tunjid.treenav.compose.MultiPaneDisplayState
 import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.PaneNavigationState
 import com.tunjid.treenav.compose.multiPaneDisplayBackstack
 import com.tunjid.treenav.compose.panedecorators.PaneDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -185,18 +185,18 @@ class AppState @Inject constructor(
 
 @Stable
 internal class SplitPaneState(
-    displayScope: MultiPaneDisplayScope<ThreePane, Route>,
+    paneNavigationState: PaneNavigationState<ThreePane, Route>,
     density: Density,
     private val windowWidth: State<Dp>,
 ) {
 
-    private var displayScope by mutableStateOf(displayScope)
+    private var paneNavigationState by mutableStateOf(paneNavigationState)
     internal var density by mutableStateOf(density)
 
     internal val paneAnchorState = PaneAnchorState()
 
     internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
-        PaneRenderOrder.filter { displayScope.destinationIn(it) != null }
+        PaneRenderOrder.filter { paneNavigationState.destinationIn(it) != null }
     }
 
     internal val minPaneWidth: Dp
@@ -215,10 +215,10 @@ internal class SplitPaneState(
         get() = windowWidth.value >= SecondaryPaneMinWidthBreakpointDp
 
     fun update(
-        displayScope: MultiPaneDisplayScope<ThreePane, Route>,
+        paneNavigationState: PaneNavigationState<ThreePane, Route>,
         density: Density,
     ) {
-        this.displayScope = displayScope
+        this.paneNavigationState = paneNavigationState
         this.density = density
         splitLayoutState.visibleCount = filteredPaneOrder.size
         paneAnchorState.updateMaxWidth(
