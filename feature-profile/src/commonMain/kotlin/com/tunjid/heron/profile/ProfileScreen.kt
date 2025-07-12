@@ -354,7 +354,7 @@ private fun ProfileHeader(
                     onNavigateToProfiles = onNavigateToProfiles,
                 )
                 Text(text = profile.description ?: "")
-                if (commonFollowers.isNotEmpty()) {
+                if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     CommonFollowers(
                         commonFollowerCount = commonFollowerCount,
