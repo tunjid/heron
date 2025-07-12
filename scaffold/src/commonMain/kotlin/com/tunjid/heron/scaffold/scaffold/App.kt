@@ -103,13 +103,13 @@ fun App(
                     ) {
                         val splitPaneState = remember {
                             SplitPaneState(
-                                displayScope = this,
+                                paneNavigationState = paneNavigationState,
                                 density = density,
                                 windowWidth = windowWidth,
                             )
                         }.also {
                             it.update(
-                                displayScope = this,
+                                paneNavigationState = paneNavigationState,
                                 density = density
                             )
                         }
