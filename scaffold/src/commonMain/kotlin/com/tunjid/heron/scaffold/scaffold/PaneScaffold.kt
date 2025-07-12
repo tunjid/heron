@@ -16,12 +16,9 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,13 +106,13 @@ class  PaneScaffoldState internal constructor(
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val appState = LocalAppState.current
-    val splitPaneDisplayScope = LocalSplitPaneState.current
+    val splitPaneState = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    return remember(appState, splitPaneDisplayScope) {
+    return remember(appState, splitPaneState) {
         PaneScaffoldState(
             appState = appState,
-            splitPaneState = splitPaneDisplayScope,
+            splitPaneState = splitPaneState,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
     }
@@ -154,11 +151,6 @@ fun PaneScaffoldState.PaneScaffold(
                     AppState.DismissBehavior.Gesture.Drag -> Modifier
                         .animateBounds(
                             lookaheadScope = this,
-                            boundsTransform = remember {
-                                scaffoldBoundsTransform(
-                                    paneScaffoldState = this,
-                                )
-                            }
                         )
                     AppState.DismissBehavior.Gesture.Slide -> Modifier
                 }
@@ -231,23 +223,6 @@ private inline fun PaneNavigationRailScaffold(
             )
         },
     )
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-private fun scaffoldBoundsTransform(
-    paneScaffoldState: PaneScaffoldState,
-): BoundsTransform = BoundsTransform { _, _ ->
-    when (paneScaffoldState.paneState.pane) {
-        ThreePane.Primary,
-        ThreePane.Secondary,
-        ThreePane.Tertiary,
-            -> if (paneScaffoldState.splitPaneState.paneAnchorState.hasInteractions) snap()
-        else spring()
-
-        ThreePane.Overlay,
-        null,
-            -> snap()
-    }
 }
 
 fun Modifier.paneClip() =
