@@ -30,6 +30,7 @@ import com.tunjid.composables.dragtodismiss.DragToDismissState
 import com.tunjid.composables.dragtodismiss.dragToDismiss
 import com.tunjid.composables.dragtodismiss.rememberUpdatedDragToDismissState
 import com.tunjid.treenav.compose.navigation3.ui.LocalNavigationEventDispatcherOwner
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.min
 
@@ -48,22 +49,27 @@ fun Modifier.dragToPop(): Modifier {
         LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher
     )
 
-    LaunchedEffect(Unit) {
-        snapshotFlow {
-            dragToDismissState.offset
-        }
-            .collectLatest {
-                if (appState.dismissBehavior == AppState.DismissBehavior.Gesture.Drag) {
-                    dispatcher.dispatchOnProgressed(
-                        dragToDismissState.navigationEvent(
-                            min(
-                                a = 1f,
-                                b = dragToDismissState.offset.getDistanceSquared() / dismissThreshold,
-                            )
-                        )
+    LaunchedEffect(appState.dismissBehavior) {
+        val offsetFlow = when (appState.dismissBehavior) {
+            AppState.DismissBehavior.Gesture.Drag -> snapshotFlow(dragToDismissState::offset)
+            AppState.DismissBehavior.Gesture.Slide,
+            AppState.DismissBehavior.None -> null
+        } ?: return@LaunchedEffect
+
+        delay(10)
+        dispatcher.dispatchOnStarted(
+            dragToDismissState.navigationEvent(progress = 0f)
+        )
+        offsetFlow.collectLatest { offset ->
+            dispatcher.dispatchOnProgressed(
+                dragToDismissState.navigationEvent(
+                    min(
+                        a = 1f,
+                        b = offset.getDistanceSquared() / dismissThreshold,
                     )
-                }
-            }
+                )
+            )
+        }
     }
 
     return dragToDismiss(
@@ -74,11 +80,10 @@ fun Modifier.dragToPop(): Modifier {
         // Enable back preview
         onStart = {
             appState.dismissBehavior = AppState.DismissBehavior.Gesture.Drag
-            dispatcher.dispatchOnStarted(
-                dragToDismissState.navigationEvent(0f)
-            )
         },
-        onCancelled = {
+        onCancelled = cancelled@{ hasResetOffset ->
+            if (hasResetOffset) return@cancelled
+
             // Dismiss back preview
             appState.dismissBehavior = AppState.DismissBehavior.None
             dispatcher.dispatchOnCancelled()

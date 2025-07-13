@@ -36,7 +36,6 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
-import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -170,11 +169,7 @@ abstract class ProfileAvatarComponent(
                         actions = viewModel.accept,
                         modifier = Modifier,
                     )
-                    if (dismissBehavior != AppState.DismissBehavior.Gesture.Drag) SecondaryPaneCloseBackHandler(
-                        enabled = paneState.pane == ThreePane.Primary
-                                && route.children.isNotEmpty()
-                                && isMediumScreenWidthOrWider
-                    )
+                    SecondaryPaneCloseBackHandler()
                 }
             )
         }

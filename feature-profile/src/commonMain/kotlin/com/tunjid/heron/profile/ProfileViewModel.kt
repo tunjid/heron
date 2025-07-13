@@ -202,7 +202,7 @@ private fun profileRelationshipMutations(
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
-        copy(viewerState = it.firstOrNull().also { println("aa: ${it?.commonFollowersCount}") })
+        copy(viewerState = it.firstOrNull())
     }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
