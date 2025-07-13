@@ -56,7 +56,9 @@ fun Modifier.dragToPop(): Modifier {
             AppState.DismissBehavior.None -> null
         } ?: return@LaunchedEffect
 
-        delay(10)
+        // This delay is needed so as to not conflict with the NavigationEventHandler
+        // for slide to dismiss
+        delay(timeMillis = 10)
         dispatcher.dispatchOnStarted(
             dragToDismissState.navigationEvent(progress = 0f)
         )
@@ -84,16 +86,16 @@ fun Modifier.dragToPop(): Modifier {
         onCancelled = cancelled@{ hasResetOffset ->
             if (hasResetOffset) return@cancelled
 
-            // Dismiss back preview
-            appState.dismissBehavior = AppState.DismissBehavior.None
+            // Notify of cancellation first
             dispatcher.dispatchOnCancelled()
+
+            appState.dismissBehavior = AppState.DismissBehavior.None
         },
         onDismissed = {
-            // Dismiss back preview
-            appState.dismissBehavior = AppState.DismissBehavior.None
-
-            // Pop navigation
+            // Notify of completion first
             dispatcher.dispatchOnCompleted()
+
+            appState.dismissBehavior = AppState.DismissBehavior.None
         }
     )
         .offset { dragToDismissState.offset.round() }
