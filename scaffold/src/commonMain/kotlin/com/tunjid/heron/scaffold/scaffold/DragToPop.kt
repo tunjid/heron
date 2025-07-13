@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
 import com.tunjid.composables.dragtodismiss.DragToDismissState
 import com.tunjid.composables.dragtodismiss.dragToDismiss
+import com.tunjid.composables.dragtodismiss.rememberUpdatedDragToDismissState
 import com.tunjid.treenav.compose.navigation3.ui.LocalNavigationEventDispatcherOwner
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.min
@@ -41,7 +42,7 @@ fun Modifier.dragToPop(): Modifier {
         with(density) { 200.dp.toPx().let { it * it } }
     }
 
-    val dragToDismissState = remember(::DragToDismissState)
+    val dragToDismissState = rememberUpdatedDragToDismissState()
 
     val dispatcher = checkNotNull(
         LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher
@@ -67,7 +68,7 @@ fun Modifier.dragToPop(): Modifier {
 
     return dragToDismiss(
         state = dragToDismissState,
-        dragThresholdCheck = { offset, _ ->
+        shouldDismiss = { offset, _ ->
             offset.getDistanceSquared() > dismissThreshold
         },
         // Enable back preview
