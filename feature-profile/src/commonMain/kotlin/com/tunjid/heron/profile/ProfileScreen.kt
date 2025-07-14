@@ -138,6 +138,7 @@ import heron.feature_profile.generated.resources.followed_by_others
 import heron.feature_profile.generated.resources.followed_by_profiles
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
+import heron.feature_profile.generated.resources.follows_you
 import heron.feature_profile.generated.resources.posts
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -325,6 +326,7 @@ private fun ProfileHeader(
                 }
         ) {
             Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .background(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = headerState.bioAlpha),
@@ -340,7 +342,7 @@ private fun ProfileHeader(
                         alpha = headerState.bioAlpha
                     },
             ) {
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(24.dp))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
@@ -351,11 +353,11 @@ private fun ProfileHeader(
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
+                    followsSignInProfile = viewerState?.followedBy != null,
                     onNavigateToProfiles = onNavigateToProfiles,
                 )
                 Text(text = profile.description ?: "")
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
                     CommonFollowers(
                         commonFollowerCount = commonFollowerCount,
                         commonFollowers = commonFollowers,
@@ -539,11 +541,13 @@ private fun ProfileHeadline(
 private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
+    followsSignInProfile: Boolean,
     onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(40.dp)
+        horizontalArrangement = Arrangement.spacedBy(40.dp),
+        verticalAlignment = Alignment.Bottom,
     ) {
         Statistic(
             value = profile.followersCount ?: 0,
@@ -572,6 +576,18 @@ private fun ProfileStats(
             description = stringResource(Res.string.posts),
             onClick = {}
         )
+        Box(
+            Modifier
+                .weight(1f)
+        ) {
+            if (followsSignInProfile) Text(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd),
+                text = stringResource(Res.string.follows_you),
+                maxLines = 2,
+                style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
+            )
+        }
     }
 }
 
@@ -583,7 +599,6 @@ fun Statistic(
 ) {
     Column(
         modifier = Modifier
-            .padding(vertical = 8.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

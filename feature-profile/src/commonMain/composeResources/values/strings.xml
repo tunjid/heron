@@ -30,4 +30,5 @@
     <string name="post">Post</string>
     <string name="followed_by_profiles">Followed by %1$s</string>
     <string name="followed_by_others">, and %1$d others</string>
+    <string name="follows_you">Follows you</string>
 </resources>
