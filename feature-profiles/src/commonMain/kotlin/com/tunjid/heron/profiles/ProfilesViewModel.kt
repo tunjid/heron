@@ -45,6 +45,7 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
@@ -248,8 +249,10 @@ private fun itemMutations(
                 )
             )
     }
-        .mapToMutation {
-            if (it.isValidFor(currentQuery)) copy(profiles = it)
+        .mapToMutation { profiles ->
+            if (profiles.isValidFor(currentQuery)) copy(
+                profiles = profiles.distinctBy { it.profile.did }
+            )
             else this
         }
 }

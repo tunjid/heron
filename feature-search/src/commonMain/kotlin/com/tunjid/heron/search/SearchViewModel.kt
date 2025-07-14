@@ -20,6 +20,8 @@ package com.tunjid.heron.search
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -45,6 +47,7 @@ import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.map
 import com.tunjid.tiler.toTiledList
@@ -391,12 +394,14 @@ private fun searchStateHolders(
                             check(this is SearchState.OfPosts)
 
                             if (posts.isValidFor(currentQuery)) copy(
-                                results = posts.map { post ->
-                                    SearchResult.OfPost(
-                                        post = post,
-                                        sharedElementPrefix = currentQuery.sourceId,
-                                    )
-                                }
+                                results = posts
+                                    .distinctBy(Post::cid)
+                                    .map { post ->
+                                        SearchResult.OfPost(
+                                            post = post,
+                                            sharedElementPrefix = currentQuery.sourceId,
+                                        )
+                                    }
                             )
                             else this
                         }
@@ -411,12 +416,14 @@ private fun searchStateHolders(
                         searchStateResultsMutation = { profileWithViewerStates ->
                             check(this is SearchState.OfProfiles)
                             if (profileWithViewerStates.isValidFor(currentQuery)) copy(
-                                results = profileWithViewerStates.map { profileWithViewerState ->
-                                    SearchResult.OfProfile(
-                                        profileWithViewerState = profileWithViewerState,
-                                        sharedElementPrefix = currentQuery.sourceId,
-                                    )
-                                }
+                                results = profileWithViewerStates
+                                    .distinctBy { it.profile.did }
+                                    .map { profileWithViewerState ->
+                                        SearchResult.OfProfile(
+                                            profileWithViewerState = profileWithViewerState,
+                                            sharedElementPrefix = currentQuery.sourceId,
+                                        )
+                                    }
                             )
                             else this
                         }
@@ -431,12 +438,14 @@ private fun searchStateHolders(
                         searchStateResultsMutation = { feedGenerators ->
                             check(this is SearchState.OfFeedGenerators)
                             if (feedGenerators.isValidFor(currentQuery)) copy(
-                                results = feedGenerators.map { feedGenerator ->
-                                    SearchResult.OfFeedGenerator(
-                                        feedGenerator = feedGenerator,
-                                        sharedElementPrefix = currentQuery.sourceId,
-                                    )
-                                }
+                                results = feedGenerators
+                                    .distinctBy(FeedGenerator::cid)
+                                    .map { feedGenerator ->
+                                        SearchResult.OfFeedGenerator(
+                                            feedGenerator = feedGenerator,
+                                            sharedElementPrefix = currentQuery.sourceId,
+                                        )
+                                    }
                             )
                             else this
                         }
