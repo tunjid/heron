@@ -20,7 +20,6 @@ package com.tunjid.heron.profile
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -28,6 +27,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.domain.timeline.update
@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -149,9 +150,17 @@ private fun loadSignedInProfileMutations(
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    merge(
-        authTokenRepository.isSignedInProfile(profileId).mapToManyMutations { isSignedInProfile ->
-            emit { copy(isSignedInProfile = isSignedInProfile) }
+    authTokenRepository.signedInUser
+        .distinctUntilChangedBy { it?.handle }
+        .mapToManyMutations { signedInProfile ->
+            val isSignedInProfile = signedInProfile?.did?.id == profileId.id ||
+                    signedInProfile?.handle?.id == profileId.id
+            emit {
+                copy(
+                    signedInProfileId = signedInProfile?.did,
+                    isSignedInProfile = isSignedInProfile
+                )
+            }
             emitAll(
                 Timeline.Profile.Type.entries
                     .filter {
@@ -191,11 +200,7 @@ private fun loadSignedInProfileMutations(
                         )
                     }
             )
-        },
-        authTokenRepository.signedInUser.mapToMutation { signedInProfile ->
-            copy(signedInProfileId = signedInProfile?.did)
         }
-    )
 
 private fun profileRelationshipMutations(
     profileId: Id.Profile,
