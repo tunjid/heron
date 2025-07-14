@@ -326,7 +326,7 @@ private fun ProfileHeader(
                 }
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .background(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = headerState.bioAlpha),
@@ -358,12 +358,13 @@ private fun ProfileHeader(
                 )
                 Text(text = profile.description ?: "")
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
+                    Spacer(Modifier.height(Dp.Hairline))
                     CommonFollowers(
                         commonFollowerCount = commonFollowerCount,
                         commonFollowers = commonFollowers,
                     )
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(4.dp))
             }
             ProfileTabs(
                 modifier = Modifier
