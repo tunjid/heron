@@ -45,13 +45,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
+import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -271,20 +272,32 @@ internal class PaneAnchorState {
  * Maps a back gesture to shutting the secondary pane
  */
 @Composable
-fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
-    val currentlyEnabled = rememberUpdatedState(enabled)
-    val appState = LocalAppState.current
-    val splitPaneDisplayScope = LocalSplitPaneState.current
-    val paneAnchorState = splitPaneDisplayScope.paneAnchorState
+fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
+    val currentlyEnabled = remember {
+        derivedStateOf {
+            paneState.pane == ThreePane.Primary &&
+                    splitPaneState.filteredPaneOrder.size > 1 &&
+                    appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
+        }
+    }
+
+    val paneAnchorState = splitPaneState.paneAnchorState
     var started by remember { mutableStateOf(false) }
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
 
     NavigationEventHandler(
-        enabled = currentlyEnabled::value
+        enabled = remember(currentlyEnabled.value) {
+            // Force create a new lambda to work around:
+            // https://issuetracker.google.com/issues/431534103
+            { currentlyEnabled.value }
+        }
     ) { events ->
         try {
             events.collectIndexed { index, event ->
+                check(appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag) {
+                    "The secondary pane close back handler should not run when dragging to dismiss"
+                }
                 if (index == 0) {
                     appState.dismissBehavior = AppState.DismissBehavior.Gesture.Slide
                     widthAtStart = paneAnchorState.width
@@ -329,7 +342,7 @@ fun SecondaryPaneCloseBackHandler(enabled: Boolean) {
 
     // Pop when fully expanded
     LaunchedEffect(Unit) {
-        snapshotFlow { splitPaneDisplayScope.paneAnchorState.currentPaneAnchor }
+        snapshotFlow { splitPaneState.paneAnchorState.currentPaneAnchor }
             .collect { anchor ->
                 if (currentlyEnabled.value && anchor == PaneAnchor.Full) {
                     appState.pop()

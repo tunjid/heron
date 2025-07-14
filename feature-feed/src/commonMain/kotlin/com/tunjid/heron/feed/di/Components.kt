@@ -41,8 +41,8 @@ import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -216,11 +216,7 @@ abstract class FeedComponent(
                         state = state,
                         actions = viewModel.accept,
                     )
-                    SecondaryPaneCloseBackHandler(
-                        enabled = paneState.pane == ThreePane.Primary
-                                && route.children.isNotEmpty()
-                                && isMediumScreenWidthOrWider
-                    )
+                    SecondaryPaneCloseBackHandler()
                 }
             )
         }
