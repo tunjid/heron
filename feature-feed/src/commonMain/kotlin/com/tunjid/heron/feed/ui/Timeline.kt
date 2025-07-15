@@ -120,8 +120,8 @@ private val Timeline.avatarImageArgs: ImageArgs?
 private fun Timeline.getDescription(
     creator: Profile?,
 ): String = when (this) {
-    is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.did.id
-    is Timeline.Home.List -> creator?.displayName ?: feedList.creatorId.id
+    is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.handle.id
+    is Timeline.Home.List -> creator?.displayName ?: feedList.creator.handle.id
 
     is Timeline.Home.Following,
     is Timeline.Profile,

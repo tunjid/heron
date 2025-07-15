@@ -19,7 +19,6 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
-import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -27,7 +26,7 @@ import kotlinx.serialization.Serializable
 data class FeedList(
     val cid: ListId,
     val uri: ListUri,
-    val creatorId: ProfileId,
+    val creator: Profile,
     val name: String,
     val description: String?,
     val avatar: ImageUri?,

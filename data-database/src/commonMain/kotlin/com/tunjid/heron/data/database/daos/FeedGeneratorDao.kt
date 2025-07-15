@@ -39,6 +39,24 @@ interface FeedGeneratorDao {
         feedUris: List<FeedGeneratorUri>,
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM feedGenerators
+	        WHERE creatorId = :creatorId
+            ORDER BY indexedAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun profileFeedGenerators(
+        creatorId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedFeedGeneratorEntity>>
+
     @Transaction
     @Upsert
     suspend fun upsertFeedGenerators(

@@ -39,6 +39,22 @@ interface StarterPackDao {
         ids: List<Id>,
     ): Flow<List<PopulatedStarterPackEntity>>
 
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM starterPacks
+	        WHERE creatorId = :creatorId
+            ORDER BY createdAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun profileStarterPacks(
+        creatorId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedStarterPackEntity>>
 
     @Upsert
     suspend fun upsertStarterPacks(

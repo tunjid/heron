@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.graph.StarterPackView
+import app.bsky.graph.StarterPackViewBasic
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ListUri
@@ -53,6 +54,31 @@ internal fun MultipleEntitySaver.add(
             uri = starterPack.uri.atUri.let(::GenericUri),
             creatorId = starterPack.creator.did.did.let(::ProfileId),
             listUri = starterPack.list?.uri?.atUri?.let(::ListUri),
+            name = bskyStarterPack.name,
+            joinedWeekCount = starterPack.joinedWeekCount,
+            joinedAllTimeCount = starterPack.joinedAllTimeCount,
+            createdAt = bskyStarterPack.createdAt,
+            indexedAt = starterPack.indexedAt,
+        )
+    )
+}
+
+internal fun MultipleEntitySaver.add(
+    starterPack: StarterPackViewBasic,
+) {
+    val bskyStarterPack = try {
+        starterPack.record.decodeAs<BskyStarterPack>()
+    } catch (e: Exception) {
+        return
+    }
+    starterPack.creator.profileEntity().let(::add)
+
+    add(
+        StarterPackEntity(
+            cid = starterPack.cid.cid.let(::GenericId),
+            uri = starterPack.uri.atUri.let(::GenericUri),
+            creatorId = starterPack.creator.did.did.let(::ProfileId),
+            listUri = bskyStarterPack.list.atUri.let(::ListUri),
             name = bskyStarterPack.name,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,

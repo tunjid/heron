@@ -25,6 +25,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.partial
 import kotlinx.coroutines.flow.Flow
@@ -67,7 +68,7 @@ interface ListDao {
     )
     fun list(
         listUri: String,
-    ): Flow<ListEntity?>
+    ): Flow<PopulatedListEntity?>
 
     @Transaction
     @Query(
@@ -85,6 +86,23 @@ interface ListDao {
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedListMemberEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM lists
+	        WHERE creatorId = :creatorId
+            ORDER BY indexedAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun profileLists(
+        creatorId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedListEntity>>
 
     @Upsert
     suspend fun upsertListItems(
