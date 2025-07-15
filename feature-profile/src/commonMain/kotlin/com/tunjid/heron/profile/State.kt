@@ -47,6 +47,8 @@ data class State(
     @Transient
     val timelineStateHolders: TimelineStateHolders = TimelineStateHolders(),
     @Transient
+    val collectionStateHolders: List<ProfileCollectionStateHolder> = emptyList(),
+    @Transient
     val messages: List<String> = emptyList(),
 )
 

@@ -50,7 +50,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
 
-
 internal typealias ProfileCollectionStateHolder = ActionStateMutator<ProfilesQuery, StateFlow<ProfileCollection>>
 
 sealed class ProfileCollection {
@@ -70,7 +69,7 @@ sealed class ProfileCollection {
     ) : ProfileCollection()
 }
 
-private fun profileCollectionStateHolders(
+internal fun profileCollectionStateHolders(
     coroutineScope: CoroutineScope,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
@@ -89,12 +88,12 @@ private fun profileCollectionStateHolders(
         ),
         starterPacks = emptyTiledList(),
     ),
-    ProfileCollection.OfFeedGenerators(
+    ProfileCollection.OfLists(
         currentQuery = ProfilesQuery(
             profileId = profileId,
             data = defaultQueryData(),
         ),
-        feedGenerators = emptyTiledList(),
+        items = emptyTiledList(),
     ),
 ).map { searchState ->
     coroutineScope.actionStateFlowMutator(

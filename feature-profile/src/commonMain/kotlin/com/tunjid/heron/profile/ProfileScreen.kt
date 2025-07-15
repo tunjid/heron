@@ -134,12 +134,15 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
+import heron.feature_profile.generated.resources.feeds
 import heron.feature_profile.generated.resources.followed_by_others
 import heron.feature_profile.generated.resources.followed_by_profiles
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.follows_you
+import heron.feature_profile.generated.resources.lists
 import heron.feature_profile.generated.resources.posts
+import heron.feature_profile.generated.resources.starter_packs
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -170,8 +173,11 @@ internal fun ProfileScreen(
     val updatedTimelineStateHolders by rememberUpdatedState(
         state.timelineStateHolders
     )
+    val updatedCollectionStateHolders by rememberUpdatedState(
+        state.collectionStateHolders
+    )
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.size
+        updatedTimelineStateHolders.size + updatedCollectionStateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -220,6 +226,17 @@ internal fun ProfileScreen(
                         title = timeline.displayName(),
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
+                } + updatedCollectionStateHolders.map {
+                    Tab(
+                        title = stringResource(
+                            when (it.state.value) {
+                                is ProfileCollection.OfFeedGenerators -> Res.string.feeds
+                                is ProfileCollection.OfLists -> Res.string.lists
+                                is ProfileCollection.OfStarterPacks -> Res.string.starter_packs
+                            }
+                        ),
+                        hasUpdate = false,
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -229,12 +246,14 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
-                timelineStateHolders = state.timelineStateHolders,
+                timelineStateHolders = updatedTimelineStateHolders,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    updatedTimelineStateHolders.stateHolderAt(
+                    updatedTimelineStateHolders.stateHolderAtOrNull(
                         index = index
-                    ).accept(TimelineLoadAction.Fetch.Refresh)
+                    )
+                        ?.accept
+                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -273,13 +292,19 @@ internal fun ProfileScreen(
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     pageContent = { page ->
                         val timelineStateHolder = remember {
-                            updatedTimelineStateHolders.stateHolderAt(page)
+                            updatedTimelineStateHolders.stateHolderAtOrNull(page)
                         }
-                        ProfileTimeline(
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            timelineStateHolder = timelineStateHolder,
-                            actions = actions,
-                        )
+                        when (timelineStateHolder) {
+                            null -> {
+                                Text(text = "hello")
+                            }
+
+                            else -> ProfileTimeline(
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                timelineStateHolder = timelineStateHolder,
+                                actions = actions,
+                            )
+                        }
                     }
                 )
             }

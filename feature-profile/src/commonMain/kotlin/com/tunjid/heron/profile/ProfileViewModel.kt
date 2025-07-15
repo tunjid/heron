@@ -100,6 +100,7 @@ class ActualProfileViewModel(
             scope = scope,
             authTokenRepository = authTokenRepository,
             timelineRepository = timelineRepository,
+            profileRepository = profileRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileHandleOrId,
@@ -149,6 +150,7 @@ private fun loadSignedInProfileMutations(
     scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
+    profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser
         .distinctUntilChangedBy { it?.handle }
@@ -196,6 +198,11 @@ private fun loadSignedInProfileMutations(
                                 startNumColumns = 1,
                                 updatedTimelines = timelines,
                                 timelineRepository = timelineRepository,
+                            ),
+                            collectionStateHolders = profileCollectionStateHolders(
+                                coroutineScope = scope,
+                                profileId = profileId,
+                                profileRepository = profileRepository,
                             )
                         )
                     }
