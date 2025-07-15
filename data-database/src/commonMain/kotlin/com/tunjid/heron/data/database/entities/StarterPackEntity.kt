@@ -42,6 +42,7 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["indexedAt"]),
+        Index(value = ["createdAt"]),
     ],
 )
 data class StarterPackEntity(

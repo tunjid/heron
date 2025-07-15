@@ -45,6 +45,7 @@ import kotlinx.datetime.Instant
     indices = [
         Index(value = ["indexedAt"]),
         Index(value = ["uri"], unique = true),
+        Index(value = ["createdAt"]),
     ],
 )
 data class ListEntity(
@@ -58,6 +59,7 @@ data class ListEntity(
     val listItemCount: Long?,
     val purpose: String,
     val indexedAt: Instant,
+    val createdAt: Instant,
 ) {
     data class Partial(
         val cid: Id,

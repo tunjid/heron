@@ -21,7 +21,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId

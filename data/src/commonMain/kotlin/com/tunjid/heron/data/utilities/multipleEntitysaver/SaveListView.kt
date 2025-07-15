@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.utilities.tidInstant
 import kotlinx.datetime.Instant
 
 internal fun MultipleEntitySaver.add(
@@ -42,6 +43,7 @@ internal fun MultipleEntitySaver.add(
             listItemCount = listView.listItemCount,
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt,
+            createdAt = listView.uri.tidInstant ?: listView.indexedAt,
         )
     )
 }
@@ -62,6 +64,7 @@ internal fun MultipleEntitySaver.add(
             listItemCount = listView.listItemCount,
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt ?: Instant.DISTANT_PAST,
+            createdAt = listView.uri.tidInstant ?: listView.indexedAt ?: Instant.DISTANT_PAST,
         )
     )
 }
