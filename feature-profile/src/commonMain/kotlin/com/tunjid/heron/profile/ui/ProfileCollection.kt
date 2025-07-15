@@ -37,6 +37,7 @@ import com.tunjid.heron.profile.ProfileCollection
 import com.tunjid.heron.profile.ProfileCollectionStateHolder
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
 internal fun ProfileCollection(
@@ -131,4 +132,17 @@ internal fun ProfileCollection(
             )
         }
     }
+
+    listState.PivotedTilingEffect(
+        items = when (val state = collectionState) {
+            is ProfileCollection.OfFeedGenerators -> state.feedGenerators
+            is ProfileCollection.OfLists -> state.items
+            is ProfileCollection.OfStarterPacks -> state.starterPacks
+        },
+        onQueryChanged = { query ->
+            collectionStateHolder.accept(
+                query ?: collectionState.currentQuery
+            )
+        }
+    )
 }

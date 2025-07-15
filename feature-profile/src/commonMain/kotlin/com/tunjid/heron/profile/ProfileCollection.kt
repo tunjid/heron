@@ -53,18 +53,21 @@ import kotlinx.datetime.Clock
 internal typealias ProfileCollectionStateHolder = ActionStateMutator<ProfilesQuery, StateFlow<ProfileCollection>>
 
 sealed class ProfileCollection {
+
+    abstract val currentQuery: ProfilesQuery
+
     data class OfFeedGenerators(
-        val currentQuery: ProfilesQuery,
+        override val currentQuery: ProfilesQuery,
         val feedGenerators: TiledList<ProfilesQuery, FeedGenerator> = emptyTiledList(),
     ) : ProfileCollection()
 
     data class OfStarterPacks(
-        val currentQuery: ProfilesQuery,
+        override val currentQuery: ProfilesQuery,
         val starterPacks: TiledList<ProfilesQuery, StarterPack> = emptyTiledList(),
     ) : ProfileCollection()
 
     data class OfLists(
-        val currentQuery: ProfilesQuery,
+        override val currentQuery: ProfilesQuery,
         val items: TiledList<ProfilesQuery, FeedList> = emptyTiledList(),
     ) : ProfileCollection()
 }
