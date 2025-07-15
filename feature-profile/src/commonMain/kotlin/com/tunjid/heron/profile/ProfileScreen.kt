@@ -101,6 +101,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -296,7 +297,13 @@ internal fun ProfileScreen(
                         }
                         when (timelineStateHolder) {
                             null -> {
-                                Text(text = "hello")
+                                val collectionStateHolder = remember {
+                                    updatedCollectionStateHolders[page - updatedTimelineStateHolders.size]
+                                }
+                                ProfileCollection(
+                                    collectionStateHolder = collectionStateHolder,
+                                    actions = actions,
+                                )
                             }
 
                             else -> ProfileTimeline(
