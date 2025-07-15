@@ -83,6 +83,13 @@ private fun RecordViewRecordUnion.profileEntity() =
             joinedViaStarterPack = null,
             indexedAt = null,
             createdAt = value.author.createdAt,
+            associated = ProfileEntity.Associated(
+                createdListCount = value.author.associated?.lists,
+                createdFeedGeneratorCount = value.author.associated?.feedgens,
+                createdStarterPackCount = value.author.associated?.starterPacks,
+                labeler = value.author.associated?.labeler,
+                allowDms = value.author.associated?.chat?.allowIncoming?.value,
+            )
         )
     }
 

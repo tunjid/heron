@@ -39,6 +39,7 @@ data class Profile(
     val joinedViaStarterPack: GenericId?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
+    val metadata: Metadata,
 ) : ByteSerializable {
 
     @Serializable
@@ -60,6 +61,13 @@ data class Profile(
             val followUri: GenericUri,
         ) : Connection()
     }
+
+    @Serializable
+    data class Metadata(
+        val createdListCount: Long,
+        val createdFeedGeneratorCount: Long,
+        val createdStarterPackCount: Long,
+    )
 }
 
 @Serializable
@@ -88,4 +96,9 @@ fun stubProfile(
     joinedViaStarterPack = null,
     indexedAt = null,
     createdAt = null,
+    metadata = Profile.Metadata(
+        createdListCount = 0,
+        createdFeedGeneratorCount = 0,
+        createdStarterPackCount = 0,
+    ),
 )

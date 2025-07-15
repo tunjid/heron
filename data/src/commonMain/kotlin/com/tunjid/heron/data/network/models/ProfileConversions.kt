@@ -31,28 +31,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 
-
-//internal fun PostViewerState.profileViewerEntity(
-//    viewingProfileId: Id,
-//    otherProfileId: Id,
-//): List<ProfileViewerEntity> =
-//    listOf(
-//        ProfileViewerEntity(
-//            profileId = viewingProfileId,
-//            otherProfileId = otherProfileId,
-//            follows = following != null,
-//            muted = muted == true,
-//            blocking = blocking != null,
-//        ),
-//        ProfileViewerEntity(
-//            profileId = otherProfileId,
-//            otherProfileId = viewingProfileId,
-//            follows = followedBy != null,
-//            muted = mutedByList != null,
-//            blocking = blockedBy == true,
-//        ),
-//    )
-
 internal fun ProfileView.profileEntity(): ProfileEntity =
     ProfileEntity(
         did = ProfileId(did.did),
@@ -67,6 +45,13 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
         joinedViaStarterPack = null,
         indexedAt = indexedAt,
         createdAt = createdAt,
+        associated = ProfileEntity.Associated(
+            createdListCount = associated?.lists,
+            createdFeedGeneratorCount = associated?.feedgens,
+            createdStarterPackCount = associated?.starterPacks,
+            labeler = associated?.labeler,
+            allowDms = associated?.chat?.allowIncoming?.value,
+        )
     )
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
@@ -83,6 +68,13 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
         joinedViaStarterPack = null,
         indexedAt = null,
         createdAt = createdAt,
+        associated = ProfileEntity.Associated(
+            createdListCount = associated?.lists,
+            createdFeedGeneratorCount = associated?.feedgens,
+            createdStarterPackCount = associated?.starterPacks,
+            labeler = associated?.labeler,
+            allowDms = associated?.chat?.allowIncoming?.value,
+        )
     )
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
@@ -99,6 +91,13 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
         joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::GenericId),
         indexedAt = indexedAt,
         createdAt = createdAt,
+        associated = ProfileEntity.Associated(
+            createdListCount = associated?.lists,
+            createdFeedGeneratorCount = associated?.feedgens,
+            createdStarterPackCount = associated?.starterPacks,
+            labeler = associated?.labeler,
+            allowDms = associated?.chat?.allowIncoming?.value,
+        )
     )
 
 internal fun ProfileViewBasic.profileViewerStateEntities(
@@ -157,6 +156,11 @@ internal fun ProfileViewBasic.profile() = Profile(
     joinedViaStarterPack = null,
     indexedAt = null,
     createdAt = createdAt,
+    metadata = Profile.Metadata(
+        createdListCount = associated?.lists ?: 0,
+        createdFeedGeneratorCount = associated?.feedgens ?: 0,
+        createdStarterPackCount = associated?.starterPacks ?: 0,
+    ),
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -171,7 +175,12 @@ internal fun ProfileView.profile() = Profile(
     postsCount = 0,
     joinedViaStarterPack = null,
     indexedAt = indexedAt,
-    createdAt = createdAt
+    createdAt = createdAt,
+    metadata = Profile.Metadata(
+        createdListCount = associated?.lists ?: 0,
+        createdFeedGeneratorCount = associated?.feedgens ?: 0,
+        createdStarterPackCount = associated?.starterPacks ?: 0,
+    ),
 )
 
 private fun profileViewerStateEntity(

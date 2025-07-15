@@ -45,12 +45,23 @@ data class ProfileEntity(
     val joinedViaStarterPack: GenericId?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
+    @Embedded
+    val associated: Associated,
 ) {
     data class Partial(
         val did: ProfileId,
         val handle: ProfileHandle,
         val displayName: String?,
         val avatar: ImageUri?,
+    )
+
+    // TODO Should this be in a separate table?
+    data class Associated(
+        val createdListCount: Long? = null,
+        val createdFeedGeneratorCount: Long? = null,
+        val createdStarterPackCount: Long? = null,
+        val labeler: Boolean? = null,
+        val allowDms: String? = null,
     )
 }
 
@@ -76,6 +87,11 @@ fun ProfileEntity?.asExternalModel() =
         joinedViaStarterPack = joinedViaStarterPack,
         indexedAt = indexedAt,
         createdAt = createdAt,
+        metadata = Profile.Metadata(
+            createdListCount = associated.createdListCount ?: 0,
+            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
+            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+        ),
     )
 
 data class PopulatedProfileEntity(
@@ -98,4 +114,9 @@ private fun emptyProfile() = Profile(
     joinedViaStarterPack = null,
     indexedAt = null,
     createdAt = null,
+    metadata = Profile.Metadata(
+        createdListCount = 0,
+        createdFeedGeneratorCount = 0,
+        createdStarterPackCount = 0,
+    ),
 )

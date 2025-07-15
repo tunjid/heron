@@ -143,6 +143,13 @@ internal fun FeedViewPostReasonUnion.profileEntity() =
             joinedViaStarterPack = null,
             indexedAt = null,
             createdAt = value.by.createdAt,
+            associated = ProfileEntity.Associated(
+                createdListCount = value.by.associated?.lists,
+                createdFeedGeneratorCount = value.by.associated?.feedgens,
+                createdStarterPackCount = value.by.associated?.starterPacks,
+                labeler = value.by.associated?.labeler,
+                allowDms = value.by.associated?.chat?.allowIncoming?.value,
+            )
         )
 
         else -> null
