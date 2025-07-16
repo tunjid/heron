@@ -176,7 +176,7 @@ class AppState @Inject constructor(
 
     sealed class DismissBehavior {
         data object None : DismissBehavior()
-        sealed class Gesture: DismissBehavior() {
+        sealed class Gesture : DismissBehavior() {
             data object Drag : Gesture()
             data object Slide : Gesture()
         }

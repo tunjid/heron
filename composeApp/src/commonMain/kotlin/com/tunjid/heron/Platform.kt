@@ -18,8 +18,8 @@ package com.tunjid.heron
 
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
@@ -42,8 +42,8 @@ import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profile.di.ProfileNavigationBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
