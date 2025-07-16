@@ -135,15 +135,12 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.feeds
 import heron.feature_profile.generated.resources.followed_by_others
 import heron.feature_profile.generated.resources.followed_by_profiles
 import heron.feature_profile.generated.resources.followers
 import heron.feature_profile.generated.resources.following
 import heron.feature_profile.generated.resources.follows_you
-import heron.feature_profile.generated.resources.lists
 import heron.feature_profile.generated.resources.posts
-import heron.feature_profile.generated.resources.starter_packs
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -227,15 +224,9 @@ internal fun ProfileScreen(
                         title = timeline.displayName(),
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
-                } + updatedCollectionStateHolders.map {
+                } + updatedCollectionStateHolders.map { holder ->
                     Tab(
-                        title = stringResource(
-                            when (it.state.value) {
-                                is ProfileCollection.OfFeedGenerators -> Res.string.feeds
-                                is ProfileCollection.OfLists -> Res.string.lists
-                                is ProfileCollection.OfStarterPacks -> Res.string.starter_packs
-                            }
-                        ),
+                        title = stringResource(remember(holder.state.value::stringResource)),
                         hasUpdate = false,
                     )
                 },
