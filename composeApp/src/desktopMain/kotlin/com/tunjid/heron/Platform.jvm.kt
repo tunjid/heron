@@ -17,7 +17,7 @@
 package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
-import com.tunjid.heron.data.di.DataModule
+import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import okio.FileSystem
@@ -36,8 +36,8 @@ fun createAppState(): AppState =
         videoPlayerController = {
             StubVideoPlayerController
         },
-        dataModule = { appScope ->
-            DataModule(
+        args = { appScope ->
+            DataBindingArgs(
                 appScope = appScope,
                 savedStatePath = savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,

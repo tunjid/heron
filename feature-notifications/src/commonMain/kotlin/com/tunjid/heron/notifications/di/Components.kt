@@ -28,12 +28,12 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
@@ -87,8 +87,8 @@ object NotificationsNavigationComponent {
 
 @BindingContainer
 class NotificationsComponent(
-    @Includes dataComponent: DataComponent,
-    @Includes scaffoldComponent: ScaffoldComponent,
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
 
     @Provides

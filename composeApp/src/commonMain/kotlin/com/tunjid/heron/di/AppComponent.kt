@@ -17,7 +17,7 @@
 package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeComponent
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedComponent
@@ -30,7 +30,7 @@ import com.tunjid.heron.postdetail.di.PostDetailComponent
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
 import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profiles.di.ProfilesComponent
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchComponent
@@ -54,8 +54,8 @@ interface AppComponent {
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
-            @Includes dataComponent: DataComponent,
-            @Includes scaffoldComponent: ScaffoldComponent,
+            @Includes dataBindings: DataBindings,
+            @Includes scaffoldBindings: ScaffoldBindings,
             @Includes signInComponent: SignInComponent,
             @Includes composeComponent: ComposeComponent,
             @Includes feedComponent: FeedComponent,

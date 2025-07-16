@@ -27,12 +27,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.profile.avatar.Action
 import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
 import com.tunjid.heron.profile.avatar.AvatarScreen
 import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -98,8 +98,8 @@ object ProfileAvatarNavigationComponent {
 
 @BindingContainer
 class ProfileAvatarComponent(
-    @Includes dataComponent: DataComponent,
-    @Includes scaffoldComponent: ScaffoldComponent,
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
 
     @Provides

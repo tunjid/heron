@@ -19,8 +19,8 @@ package com.tunjid.heron.splash.di
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.RouteViewModelInitializer
@@ -63,8 +63,8 @@ object SplashNavigationComponent {
 
 @BindingContainer
 class SplashComponent(
-    @Includes dataComponent: DataComponent,
-    @Includes scaffoldComponent: ScaffoldComponent,
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
 
     @Provides

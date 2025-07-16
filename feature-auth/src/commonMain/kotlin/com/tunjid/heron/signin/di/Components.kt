@@ -34,8 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
@@ -89,8 +89,8 @@ object SignInNavigationComponent {
 
 @BindingContainer
 class SignInComponent(
-    @Includes dataComponent: DataComponent,
-    @Includes scaffoldComponent: ScaffoldComponent,
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
 
     @Provides

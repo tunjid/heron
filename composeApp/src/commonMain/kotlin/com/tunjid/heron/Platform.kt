@@ -18,8 +18,8 @@ package com.tunjid.heron
 
 import com.tunjid.heron.compose.di.ComposeComponent
 import com.tunjid.heron.compose.di.ComposeNavigationComponent
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.data.di.DataModule
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.di.AppComponent
 import com.tunjid.heron.di.AppNavigationComponent
 import com.tunjid.heron.di.allRouteMatchers
@@ -42,8 +42,8 @@ import com.tunjid.heron.profile.di.ProfileComponent
 import com.tunjid.heron.profile.di.ProfileNavigationComponent
 import com.tunjid.heron.profiles.di.ProfilesComponent
 import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.di.ScaffoldModule
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchComponent
 import com.tunjid.heron.search.di.SearchNavigationComponent
@@ -51,7 +51,6 @@ import com.tunjid.heron.signin.di.SignInComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
-import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +64,7 @@ expect fun getPlatform(): Platform
 
 fun createAppState(
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
-    dataModule: (appScope: CoroutineScope) -> DataModule,
+    args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -85,72 +84,72 @@ fun createAppState(
         splashNavigationComponent = SplashNavigationComponent,
     )
 
-    val dataComponent = DataComponent(
-        module = dataModule(appScope)
+    val dataBindings = DataBindings(
+        args = args(appScope)
     )
 
-    val scaffoldComponent = ScaffoldComponent(
-        module = ScaffoldModule(
+    val scaffoldBindings = ScaffoldBindings(
+        args = ScaffoldBindingArgs(
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers
         ),
-        dataComponent = dataComponent,
+        dataBindings = dataBindings,
     )
 
     val appComponent = createGraphFactory<AppComponent.Factory>().create(
-        dataComponent = dataComponent,
-        scaffoldComponent = scaffoldComponent,
+        dataBindings = dataBindings,
+        scaffoldBindings = scaffoldBindings,
         signInComponent = SignInComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         composeComponent = ComposeComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         feedComponent = FeedComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         galleryComponent = GalleryComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         homeComponent = HomeComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         messagesComponent = MessagesComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         notificationsComponent = NotificationsComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         postDetailComponent = PostDetailComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         profileComponent = ProfileComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         profileAvatarComponent = ProfileAvatarComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         profilesComponent = ProfilesComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         searchComponent = SearchComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
         splashComponent = SplashComponent(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
     )
 

@@ -17,7 +17,7 @@
 package com.tunjid.heron.scaffold.di
 
 
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
@@ -33,15 +33,15 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.StateFlow
 
-class ScaffoldModule(
+class ScaffoldBindingArgs(
     val routeMatchers: List<RouteMatcher>,
     val videoPlayerController: VideoPlayerController,
 )
 
 @BindingContainer
-class ScaffoldComponent(
-    val module: ScaffoldModule,
-    @Includes val dataComponent: DataComponent,
+class ScaffoldBindings(
+    val args: ScaffoldBindingArgs,
+    @Includes val dataBindings: DataBindings,
 ) {
 
     @SingleIn(AppScope::class)
@@ -53,12 +53,12 @@ class ScaffoldComponent(
     @SingleIn(AppScope::class)
     @Provides
     fun routeParser(): RouteParser =
-        routeParserFrom(*(module.routeMatchers).toTypedArray())
+        routeParserFrom(*(args.routeMatchers).toTypedArray())
 
     @SingleIn(AppScope::class)
     @Provides
     fun videoPlayerController(): VideoPlayerController =
-        module.videoPlayerController
+        args.videoPlayerController
 
     @SingleIn(AppScope::class)
     @Provides

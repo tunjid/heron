@@ -60,7 +60,7 @@ import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.BlueskyJson
 
-class DataModule(
+class DataBindingArgs(
     val appScope: CoroutineScope,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
@@ -68,26 +68,26 @@ class DataModule(
 )
 
 @BindingContainer
-class DataComponent(
-    private val module: DataModule
+class DataBindings(
+    private val args: DataBindingArgs
 ) {
 
     @Named("AppScope")
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppScope(): CoroutineScope = module.appScope
+    fun provideAppScope(): CoroutineScope = args.appScope
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStatePath(): Path = module.savedStatePath
+    fun provideSavedStatePath(): Path = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
+    fun provideSavedStateFileSystem(): FileSystem = args.savedStateFileSystem
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideRoomDatabase(): AppDatabase = module.databaseBuilder.configureAndBuild()
+    fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
 
     @SingleIn(AppScope::class)
     @Provides

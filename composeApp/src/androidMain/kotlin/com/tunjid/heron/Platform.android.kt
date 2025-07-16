@@ -19,7 +19,7 @@ package com.tunjid.heron
 import android.content.Context
 import android.os.Build
 import com.tunjid.heron.data.database.getDatabaseBuilder
-import com.tunjid.heron.data.di.DataModule
+import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.media.video.ExoplayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import kotlinx.coroutines.Dispatchers
@@ -42,8 +42,8 @@ fun createAppState(context: Context): AppState =
                 diffingDispatcher = Dispatchers.Default,
             )
         },
-        dataModule = { appScope ->
-            DataModule(
+        args = { appScope ->
+            DataBindingArgs(
                 appScope = appScope,
                 savedStatePath = context.savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
