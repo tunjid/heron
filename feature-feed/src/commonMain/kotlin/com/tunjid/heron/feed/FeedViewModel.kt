@@ -158,7 +158,7 @@ private fun timelineCreatorMutations(
 
         is Timeline.Home.Following -> emptyFlow()
         is Timeline.Home.List -> profileRepository.profile(
-            profileId = timeline.feedList.creatorId
+            profileId = timeline.feedList.creator.did
         )
 
         is Timeline.Profile -> emptyFlow()

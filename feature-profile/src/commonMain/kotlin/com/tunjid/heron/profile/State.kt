@@ -16,22 +16,31 @@
 
 package com.tunjid.heron.profile
 
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.currentRoute
+import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.routeString
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.compose.resources.StringResource
 
 
 @Serializable
@@ -47,9 +56,40 @@ data class State(
     @Transient
     val timelineStateHolders: TimelineStateHolders = TimelineStateHolders(),
     @Transient
+    val collectionStateHolders: List<ProfileCollectionStateHolder> = emptyList(),
+    @Transient
     val messages: List<String> = emptyList(),
 )
 
+typealias ProfileCollectionStateHolder = ActionStateMutator<ProfilesQuery, StateFlow<ProfileCollectionState>>
+
+data class ProfileCollectionState(
+    val stringResource: StringResource,
+    val currentQuery: ProfilesQuery,
+    val items: TiledList<ProfilesQuery, ProfileCollection> = emptyTiledList(),
+)
+
+sealed class ProfileCollection {
+
+    val id
+        get() = when (this) {
+            is OfFeedGenerators -> feedGenerator.cid.id
+            is OfLists -> list.cid.id
+            is OfStarterPacks -> starterPack.cid.id
+        }
+
+    data class OfFeedGenerators(
+        val feedGenerator: FeedGenerator,
+    ) : ProfileCollection()
+
+    data class OfStarterPacks(
+        val starterPack: StarterPack,
+    ) : ProfileCollection()
+
+    data class OfLists(
+        val list: FeedList,
+    ) : ProfileCollection()
+}
 
 sealed class Action(val key: String) {
 

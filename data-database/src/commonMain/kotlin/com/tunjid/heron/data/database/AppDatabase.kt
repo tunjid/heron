@@ -57,7 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 12,
+    version = 14,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -96,6 +96,7 @@ import kotlinx.coroutines.IO
             to = 7,
             spec = PostViewerStatisticsAutoMigration::class
         ),
+        // Migration 5 - 6 is a manual migration
         // postLikes and postReposts
         AutoMigration(from = 7, to = 8),
         // profile profile relationships, follows, mutes, blocks, etc
@@ -114,6 +115,9 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 10, to = 11),
         // Add commonFollowersCount to ProfileViewerStateEntity
         AutoMigration(from = 11, to = 12),
+        // Migration 12 - 13 is a manual migration
+        // Add Profile.Associated as embedded field to ProfileEntity
+        AutoMigration(from = 13, to = 14),
     ],
     exportSchema = true,
 )
@@ -150,6 +154,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
     )
         .addMigrations(
             NonNullPostUriAndAuthorMigration,
+            FeedAndListsCreatedAtAutoMigration,
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)

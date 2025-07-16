@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.types.recordKey
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import sh.christian.ozone.BlueskyJson
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.JsonContent
 
@@ -43,6 +44,13 @@ internal object Collections {
 val GenericUri.tidInstant: Instant?
     get() = try {
         Instant.fromEpochMilliseconds(tidTimestampFromBase32(recordKey.value))
+    } catch (e: IllegalArgumentException) {
+        null
+    }
+
+internal val AtUri.tidInstant: Instant?
+    get() = try {
+        Instant.fromEpochMilliseconds(tidTimestampFromBase32(atUri.split("/").last()))
     } catch (e: IllegalArgumentException) {
         null
     }

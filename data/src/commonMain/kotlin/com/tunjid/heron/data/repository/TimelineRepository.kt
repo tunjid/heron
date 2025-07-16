@@ -57,6 +57,7 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
@@ -1027,9 +1028,9 @@ class OfflineTimelineRepository(
         isPinned: Boolean,
     ) = listDao.list(uri.uri)
         .filterNotNull()
-        .distinctUntilChanged()
+        .distinctUntilChangedBy(PopulatedListEntity::entity)
         .flatMapLatest {
-            timelineDao.lastFetchKey(it.uri.uri)
+            timelineDao.lastFetchKey(it.entity.uri.uri)
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.List(

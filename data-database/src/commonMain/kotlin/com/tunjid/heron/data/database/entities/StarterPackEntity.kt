@@ -42,6 +42,7 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["indexedAt"]),
+        Index(value = ["createdAt"]),
     ],
 )
 data class StarterPackEntity(
@@ -79,7 +80,7 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         uri = entity.uri,
         name = entity.name,
         creator = creator.asExternalModel(),
-        list = list?.asExternalModel(),
+        list = creator?.let { list?.asExternalModel(it.asExternalModel()) },
         joinedWeekCount = entity.joinedWeekCount,
         joinedAllTimeCount = entity.joinedAllTimeCount,
         indexedAt = entity.indexedAt,

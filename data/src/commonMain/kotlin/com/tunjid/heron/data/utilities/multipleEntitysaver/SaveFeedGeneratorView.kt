@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.utilities.tidInstant
 
 internal fun MultipleEntitySaver.add(
     feedGeneratorView: GeneratorView,
@@ -41,6 +42,7 @@ internal fun MultipleEntitySaver.add(
             acceptsInteractions = feedGeneratorView.acceptsInteractions,
             contentMode = feedGeneratorView.contentMode,
             indexedAt = feedGeneratorView.indexedAt,
+            createdAt = feedGeneratorView.uri.tidInstant ?: feedGeneratorView.indexedAt,
         )
     )
 }

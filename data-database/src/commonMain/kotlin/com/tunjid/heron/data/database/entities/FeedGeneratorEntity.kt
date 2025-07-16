@@ -42,6 +42,7 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["indexedAt"]),
+        Index(value = ["createdAt"]),
     ],
 )
 data class FeedGeneratorEntity(
@@ -57,6 +58,7 @@ data class FeedGeneratorEntity(
     val acceptsInteractions: Boolean?,
     val contentMode: String?,
     val indexedAt: Instant,
+    val createdAt: Instant,
 )
 
 data class PopulatedFeedGeneratorEntity(

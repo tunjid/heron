@@ -17,28 +17,42 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.ProfileView
+import app.bsky.feed.GetActorFeedsQueryParams
+import app.bsky.feed.GetActorFeedsResponse
+import app.bsky.graph.GetActorStarterPacksQueryParams
+import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetFollowersQueryParams
 import app.bsky.graph.GetFollowsQueryParams
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
+import app.bsky.graph.GetListsQueryParams
+import app.bsky.graph.GetListsResponse
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -114,6 +128,21 @@ interface ProfileRepository {
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
+    fun starterPacks(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StarterPack>>
+
+    fun lists(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedList>>
+
+    fun feedGenerators(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedGenerator>>
+
     fun following(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -127,6 +156,8 @@ interface ProfileRepository {
 class OfflineProfileRepository @Inject constructor(
     private val profileDao: ProfileDao,
     private val listDao: ListDao,
+    private val starterPackDao: StarterPackDao,
+    private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
@@ -367,6 +398,138 @@ class OfflineProfileRepository @Inject constructor(
                         nextCursor = nextCursor,
                     )
                 }
+        )
+    }
+
+    override fun starterPacks(
+        query: ProfilesQuery,
+        cursor: Cursor
+    ): Flow<CursorList<StarterPack>> = flow {
+        val profileDid = lookupProfileDid(
+            profileId = query.profileId,
+            profileDao = profileDao,
+            networkService = networkService,
+        ) ?: return@flow
+
+        emitAll(
+            combine(
+                starterPackDao.profileStarterPacks(
+                    creatorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map { populatedStarterPackEntities ->
+                        populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                    },
+                nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getActorStarterPacks(
+                            params = GetActorStarterPacksQueryParams(
+                                actor = profileDid,
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            )
+                        )
+                    },
+                    nextCursor = GetActorStarterPacksResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            starterPacks.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList
+            )
+                .distinctUntilChanged()
+        )
+    }
+
+    override fun lists(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedList>> = flow {
+        val profileDid = lookupProfileDid(
+            profileId = query.profileId,
+            profileDao = profileDao,
+            networkService = networkService,
+        ) ?: return@flow
+
+        emitAll(
+            combine(
+                listDao.profileLists(
+                    creatorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map { populatedListEntities ->
+                        populatedListEntities.map(PopulatedListEntity::asExternalModel)
+                    },
+                nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getLists(
+                            params = GetListsQueryParams(
+                                actor = profileDid,
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            )
+                        )
+                    },
+                    nextCursor = GetListsResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            lists.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList
+            )
+                .distinctUntilChanged()
+        )
+    }
+
+    override fun feedGenerators(
+        query: ProfilesQuery,
+        cursor: Cursor
+    ): Flow<CursorList<FeedGenerator>> = flow {
+        val profileDid = lookupProfileDid(
+            profileId = query.profileId,
+            profileDao = profileDao,
+            networkService = networkService,
+        ) ?: return@flow
+
+        emitAll(
+            combine(
+                feedGeneratorDao.profileFeedGenerators(
+                    creatorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map { populatedFeedGeneratorEntities ->
+                        populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
+                    },
+                nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        networkService.api.getActorFeeds(
+                            params = GetActorFeedsQueryParams(
+                                actor = profileDid,
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            )
+                        )
+                    },
+                    nextCursor = GetActorFeedsResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            feeds.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList
+            )
+                .distinctUntilChanged()
         )
     }
 

@@ -101,6 +101,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -170,8 +171,11 @@ internal fun ProfileScreen(
     val updatedTimelineStateHolders by rememberUpdatedState(
         state.timelineStateHolders
     )
+    val updatedCollectionStateHolders by rememberUpdatedState(
+        state.collectionStateHolders
+    )
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.size
+        updatedTimelineStateHolders.size + updatedCollectionStateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -220,6 +224,11 @@ internal fun ProfileScreen(
                         title = timeline.displayName(),
                         hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
+                } + updatedCollectionStateHolders.map { holder ->
+                    Tab(
+                        title = stringResource(remember(holder.state.value::stringResource)),
+                        hasUpdate = false,
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -229,12 +238,14 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
-                timelineStateHolders = state.timelineStateHolders,
+                timelineStateHolders = updatedTimelineStateHolders,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    updatedTimelineStateHolders.stateHolderAt(
+                    updatedTimelineStateHolders.stateHolderAtOrNull(
                         index = index
-                    ).accept(TimelineLoadAction.Fetch.Refresh)
+                    )
+                        ?.accept
+                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -273,13 +284,25 @@ internal fun ProfileScreen(
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     pageContent = { page ->
                         val timelineStateHolder = remember {
-                            updatedTimelineStateHolders.stateHolderAt(page)
+                            updatedTimelineStateHolders.stateHolderAtOrNull(page)
                         }
-                        ProfileTimeline(
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            timelineStateHolder = timelineStateHolder,
-                            actions = actions,
-                        )
+                        when (timelineStateHolder) {
+                            null -> {
+                                val collectionStateHolder = remember {
+                                    updatedCollectionStateHolders[page - updatedTimelineStateHolders.size]
+                                }
+                                ProfileCollection(
+                                    collectionStateHolder = collectionStateHolder,
+                                    actions = actions,
+                                )
+                            }
+
+                            else -> ProfileTimeline(
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                timelineStateHolder = timelineStateHolder,
+                                actions = actions,
+                            )
+                        }
                     }
                 )
             }
