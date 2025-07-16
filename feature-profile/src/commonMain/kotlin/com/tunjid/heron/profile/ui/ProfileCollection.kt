@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.profile.Action
@@ -41,6 +42,7 @@ import com.tunjid.heron.profile.ProfileCollection.OfFeedGenerators
 import com.tunjid.heron.profile.ProfileCollection.OfLists
 import com.tunjid.heron.profile.ProfileCollection.OfStarterPacks
 import com.tunjid.heron.profile.ProfileCollectionStateHolder
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -71,6 +73,16 @@ internal fun ProfileCollection(
                     modifier = Modifier.fillMaxWidth(),
                     title = collectionState.stringResource,
                     collection = profileCollection,
+                    onCollectionClicked = { collection ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToRawUrl(
+                                    path = collection.uriPath,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
+                    },
                 )
             }
         )
@@ -91,6 +103,7 @@ private fun ProfileCollection(
     modifier: Modifier = Modifier,
     title: StringResource,
     collection: ProfileCollection,
+    onCollectionClicked: (ProfileCollection) -> Unit,
 ) {
     CollectionLayout(
         modifier = modifier
@@ -128,6 +141,7 @@ private fun ProfileCollection(
             }
         },
         onClicked = {
+            onCollectionClicked(collection)
         },
     )
 }
@@ -163,4 +177,11 @@ private val ProfileCollection.avatar
         is OfFeedGenerators -> feedGenerator.avatar
         is OfLists -> list.avatar
         is OfStarterPacks -> null
+    }
+
+private val ProfileCollection.uriPath
+    get() = when (this) {
+        is OfFeedGenerators -> feedGenerator.uri.path
+        is OfLists -> list.uri.path
+        is OfStarterPacks -> starterPack.uri.path
     }
