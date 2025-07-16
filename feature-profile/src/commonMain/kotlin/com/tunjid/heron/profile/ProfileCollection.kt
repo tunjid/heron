@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -76,28 +77,32 @@ internal fun profileCollectionStateHolders(
     coroutineScope: CoroutineScope,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): List<ProfileCollectionStateHolder> = listOf(
-    ProfileCollection.OfFeedGenerators(
+    metadata: Profile.Metadata,
+): List<ProfileCollectionStateHolder> = listOfNotNull(
+    if (metadata.createdFeedGeneratorCount > 0) ProfileCollection.OfFeedGenerators(
         currentQuery = ProfilesQuery(
             profileId = profileId,
             data = defaultQueryData(),
         ),
         feedGenerators = emptyTiledList(),
-    ),
-    ProfileCollection.OfStarterPacks(
+    )
+    else null,
+    if (metadata.createdStarterPackCount > 0) ProfileCollection.OfStarterPacks(
         currentQuery = ProfilesQuery(
             profileId = profileId,
             data = defaultQueryData(),
         ),
         starterPacks = emptyTiledList(),
-    ),
-    ProfileCollection.OfLists(
+    )
+    else null,
+    if (metadata.createdListCount > 0) ProfileCollection.OfLists(
         currentQuery = ProfilesQuery(
             profileId = profileId,
             data = defaultQueryData(),
         ),
         items = emptyTiledList(),
-    ),
+    )
+    else null,
 ).map { searchState ->
     coroutineScope.actionStateFlowMutator(
         initialState = searchState,

@@ -93,6 +93,7 @@ class ActualProfileViewModel(
     inputs = listOf(
         loadProfileMutations(
             profileId = route.profileHandleOrId,
+            scope = scope,
             profileRepository = profileRepository,
         ),
         loadSignedInProfileMutations(
@@ -100,7 +101,6 @@ class ActualProfileViewModel(
             scope = scope,
             authTokenRepository = authTokenRepository,
             timelineRepository = timelineRepository,
-            profileRepository = profileRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileHandleOrId,
@@ -131,11 +131,23 @@ class ActualProfileViewModel(
 
 private fun loadProfileMutations(
     profileId: Id.Profile,
+    scope: CoroutineScope,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     merge(
         profileRepository.profile(profileId).mapToMutation {
-            copy(profile = it)
+            copy(
+                profile = it,
+                collectionStateHolders = collectionStateHolders.ifEmpty {
+                    // Only replace collectionStateHolders if they were previously empty
+                    profileCollectionStateHolders(
+                        coroutineScope = scope,
+                        profileId = profileId,
+                        metadata = it.metadata,
+                        profileRepository = profileRepository,
+                    )
+                }
+            )
         },
         profileRepository.commonFollowers(
             otherProfileId = profileId,
@@ -150,7 +162,6 @@ private fun loadSignedInProfileMutations(
     scope: CoroutineScope,
     authTokenRepository: AuthTokenRepository,
     timelineRepository: TimelineRepository,
-    profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     authTokenRepository.signedInUser
         .distinctUntilChangedBy { it?.handle }
@@ -199,11 +210,6 @@ private fun loadSignedInProfileMutations(
                                 updatedTimelines = timelines,
                                 timelineRepository = timelineRepository,
                             ),
-                            collectionStateHolders = profileCollectionStateHolders(
-                                coroutineScope = scope,
-                                profileId = profileId,
-                                profileRepository = profileRepository,
-                            )
                         )
                     }
             )
