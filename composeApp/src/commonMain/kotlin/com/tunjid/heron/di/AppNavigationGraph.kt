@@ -37,7 +37,7 @@ import dev.zacsweers.metro.Includes
 @DependencyGraph(
     scope = AppScope::class
 )
-interface AppNavigationComponent {
+interface AppNavigationGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
@@ -55,13 +55,13 @@ interface AppNavigationComponent {
             @Includes profilesNavigationComponent: ProfilesNavigationComponent,
             @Includes searchNavigationComponent: SearchNavigationComponent,
             @Includes splashNavigationComponent: SplashNavigationComponent,
-        ): AppNavigationComponent
+        ): AppNavigationGraph
     }
 
     val routeMatcherMap: Map<String, RouteMatcher>
 }
 
-val AppNavigationComponent.allRouteMatchers
+val AppNavigationGraph.allRouteMatchers
     get() = routeMatcherMap
         .toList()
         .sortedWith(routeMatchingComparator())

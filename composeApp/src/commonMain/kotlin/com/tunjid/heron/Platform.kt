@@ -20,8 +20,8 @@ import com.tunjid.heron.compose.di.ComposeComponent
 import com.tunjid.heron.compose.di.ComposeNavigationComponent
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.di.DataBindingArgs
-import com.tunjid.heron.di.AppComponent
-import com.tunjid.heron.di.AppNavigationComponent
+import com.tunjid.heron.di.AppGraph
+import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
 import com.tunjid.heron.feed.di.FeedComponent
 import com.tunjid.heron.feed.di.FeedNavigationComponent
@@ -68,7 +68,7 @@ fun createAppState(
 ): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    val navigationComponent = createGraphFactory<AppNavigationComponent.Factory>().create(
+    val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
         signInNavigationComponent = SignInNavigationComponent,
         composeNavigationComponent = ComposeNavigationComponent,
         feedNavigationComponent = FeedNavigationComponent,
@@ -96,7 +96,7 @@ fun createAppState(
         dataBindings = dataBindings,
     )
 
-    val appComponent = createGraphFactory<AppComponent.Factory>().create(
+    val appGraph = createGraphFactory<AppGraph.Factory>().create(
         dataBindings = dataBindings,
         scaffoldBindings = scaffoldBindings,
         signInComponent = SignInComponent(
@@ -153,5 +153,5 @@ fun createAppState(
         ),
     )
 
-    return appComponent.appState
+    return appGraph.appState
 }

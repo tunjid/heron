@@ -49,7 +49,7 @@ import dev.zacsweers.metro.SingleIn
 @DependencyGraph(
     scope = AppScope::class
 )
-interface AppComponent {
+interface AppGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
@@ -69,7 +69,7 @@ interface AppComponent {
             @Includes profilesComponent: ProfilesComponent,
             @Includes searchComponent: SearchComponent,
             @Includes splashComponent: SplashComponent,
-        ): AppComponent
+        ): AppGraph
     }
 
     val entryMap: Map<String, PaneEntry<ThreePane, Route>>
