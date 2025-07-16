@@ -25,7 +25,6 @@ compose-multiplatform = "1.8.2"
 compose-multiplatform-material3 = "1.8.0-alpha03"
 compose-material-icons = "1.7.3"
 junit = "4.13.2"
-kotlin-inject = "0.7.2"
 kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.6.2"
@@ -104,8 +103,6 @@ savedstate-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "s
 savedstate-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "saved-state" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 java-diff-utils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "javaDiffUtils" }
-kotlin-inject-compiler = { group = "me.tatarka.inject", name = "kotlin-inject-compiler-ksp", version.ref = "kotlin-inject" }
-kotlin-inject-runtime = { group = "me.tatarka.inject", name = "kotlin-inject-runtime-kmp", version.ref = "kotlin-inject" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-serializationPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

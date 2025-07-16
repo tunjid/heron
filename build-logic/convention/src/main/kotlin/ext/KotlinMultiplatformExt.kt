@@ -45,9 +45,7 @@ fun Project.configureKotlinMultiplatform(
             }
 
             named("commonMain") {
-//                kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
                 dependencies {
-                    api(libs.findLibrary("kotlin-inject-runtime").get())
                     implementation(libs.findLibrary("compose-runtime").get())
                 }
             }
