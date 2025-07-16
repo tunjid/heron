@@ -57,8 +57,8 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.toRouteTrie
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -100,8 +100,8 @@ private val RequestTrie = mapOf(
 internal val Route.timelineRequest: TimelineRequest.OfFeed
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
-@DependencyGraph(isExtendable = true)
-interface FeedNavigationComponent {
+@BindingContainer
+object FeedNavigationComponent {
 
     @Provides
     @IntoMap
@@ -123,16 +123,11 @@ interface FeedNavigationComponent {
 
 }
 
-@DependencyGraph(isExtendable = true)
-interface FeedComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): FeedComponent
-    }
+@BindingContainer
+class FeedComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

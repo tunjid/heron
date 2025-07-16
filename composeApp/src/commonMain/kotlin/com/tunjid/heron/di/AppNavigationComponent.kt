@@ -31,9 +31,8 @@ import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
 import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.Includes
 
-//@SingletonScope
 @DependencyGraph(
     scope = AppScope::class
 )
@@ -42,19 +41,19 @@ interface AppNavigationComponent {
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
-            @Extends signInNavigationComponent: SignInNavigationComponent,
-            @Extends composeNavigationComponent: ComposeNavigationComponent,
-            @Extends feedNavigationComponent: FeedNavigationComponent,
-            @Extends galleryNavigationComponent: GalleryNavigationComponent,
-            @Extends homeNavigationComponent: HomeNavigationComponent,
-            @Extends messagesNavigationComponent: MessagesNavigationComponent,
-            @Extends notificationsNavigationComponent: NotificationsNavigationComponent,
-            @Extends postDetailNavigationComponent: PostDetailNavigationComponent,
-            @Extends profileNavigationComponent: ProfileNavigationComponent,
-            @Extends profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
-            @Extends profilesNavigationComponent: ProfilesNavigationComponent,
-            @Extends searchNavigationComponent: SearchNavigationComponent,
-            @Extends splashNavigationComponent: SplashNavigationComponent,
+            @Includes signInNavigationComponent: SignInNavigationComponent,
+            @Includes composeNavigationComponent: ComposeNavigationComponent,
+            @Includes feedNavigationComponent: FeedNavigationComponent,
+            @Includes galleryNavigationComponent: GalleryNavigationComponent,
+            @Includes homeNavigationComponent: HomeNavigationComponent,
+            @Includes messagesNavigationComponent: MessagesNavigationComponent,
+            @Includes notificationsNavigationComponent: NotificationsNavigationComponent,
+            @Includes postDetailNavigationComponent: PostDetailNavigationComponent,
+            @Includes profileNavigationComponent: ProfileNavigationComponent,
+            @Includes profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
+            @Includes profilesNavigationComponent: ProfilesNavigationComponent,
+            @Includes searchNavigationComponent: SearchNavigationComponent,
+            @Includes splashNavigationComponent: SplashNavigationComponent,
         ): AppNavigationComponent
     }
 

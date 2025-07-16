@@ -40,7 +40,7 @@ import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 
@@ -54,21 +54,21 @@ interface AppComponent {
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-            @Extends signInComponent: SignInComponent,
-            @Extends composeComponent: ComposeComponent,
-            @Extends feedComponent: FeedComponent,
-            @Extends galleryComponent: GalleryComponent,
-            @Extends homeComponent: HomeComponent,
-            @Extends messagesComponent: MessagesComponent,
-            @Extends notificationsComponent: NotificationsComponent,
-            @Extends postDetailComponent: PostDetailComponent,
-            @Extends profileComponent: ProfileComponent,
-            @Extends profileAvatarComponent: ProfileAvatarComponent,
-            @Extends profilesComponent: ProfilesComponent,
-            @Extends searchComponent: SearchComponent,
-            @Extends splashComponent: SplashComponent,
+            @Includes dataComponent: DataComponent,
+            @Includes scaffoldComponent: ScaffoldComponent,
+            @Includes signInComponent: SignInComponent,
+            @Includes composeComponent: ComposeComponent,
+            @Includes feedComponent: FeedComponent,
+            @Includes galleryComponent: GalleryComponent,
+            @Includes homeComponent: HomeComponent,
+            @Includes messagesComponent: MessagesComponent,
+            @Includes notificationsComponent: NotificationsComponent,
+            @Includes postDetailComponent: PostDetailComponent,
+            @Includes profileComponent: ProfileComponent,
+            @Includes profileAvatarComponent: ProfileAvatarComponent,
+            @Includes profilesComponent: ProfilesComponent,
+            @Includes searchComponent: SearchComponent,
+            @Includes splashComponent: SplashComponent,
         ): AppComponent
     }
 

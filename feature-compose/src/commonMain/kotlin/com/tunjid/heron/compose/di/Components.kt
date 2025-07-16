@@ -49,8 +49,8 @@ import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.PaneEntry
@@ -63,8 +63,8 @@ import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -83,8 +83,8 @@ internal val Route.creationType: Post.Create? by optionalMappedRouteQuery(
 
 internal val Route.sharedElementPrefix by optionalRouteQuery()
 
-@DependencyGraph(isExtendable = true)
-interface ComposeNavigationComponent {
+@BindingContainer
+object ComposeNavigationComponent {
 
     @Provides
     @IntoMap
@@ -96,16 +96,11 @@ interface ComposeNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface ComposeComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): ComposeComponent
-    }
+@BindingContainer
+class ComposeComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

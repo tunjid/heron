@@ -26,9 +26,8 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
-import dev.zacsweers.metro.Binds
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
 import kotlinx.coroutines.flow.StateFlow
 
@@ -39,21 +38,11 @@ class ScaffoldModule(
     val videoPlayerController: VideoPlayerController,
 )
 
-@DependencyGraph(
-    scope = ScaffoldScope::class,
-    isExtendable = true,
-)
-interface ScaffoldComponent {
-
-    val module: ScaffoldModule
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides module: ScaffoldModule,
-            @Extends dataComponent: DataComponent,
-        ): ScaffoldComponent
-    }
+@BindingContainer
+class ScaffoldComponent(
+    val module: ScaffoldModule,
+    @Includes val dataComponent: DataComponent,
+) {
 
     @Provides
     fun navStateStream(
@@ -73,6 +62,8 @@ interface ScaffoldComponent {
         navStateHolder: NavigationStateHolder,
     ): (NavigationMutation) -> Unit = navStateHolder.accept
 
-    @Binds
-    val PersistedNavigationStateHolder.bind: NavigationStateHolder
+    @Provides
+    fun provideNavigationStateHolder(
+        persistedNavigationStateHolder: PersistedNavigationStateHolder
+    ): NavigationStateHolder = persistedNavigationStateHolder
 }

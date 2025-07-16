@@ -31,8 +31,8 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
@@ -49,8 +49,8 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -63,8 +63,8 @@ private fun createRoute(
     params = routeParams,
 )
 
-@DependencyGraph(isExtendable = true)
-interface SearchNavigationComponent {
+@BindingContainer
+object SearchNavigationComponent {
 
     @Provides
     @IntoMap
@@ -76,16 +76,11 @@ interface SearchNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface SearchComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): SearchComponent
-    }
+@BindingContainer
+class SearchComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

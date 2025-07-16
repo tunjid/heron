@@ -35,7 +35,6 @@ import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldComponent
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -57,8 +56,8 @@ import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -84,8 +83,8 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
-@DependencyGraph(isExtendable = true)
-interface ProfileAvatarNavigationComponent {
+@BindingContainer
+object ProfileAvatarNavigationComponent {
 
     @Provides
     @IntoMap
@@ -97,16 +96,11 @@ interface ProfileAvatarNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface ProfileAvatarComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): ProfileAvatarComponent
-    }
+@BindingContainer
+class ProfileAvatarComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

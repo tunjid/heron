@@ -48,8 +48,8 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import dev.zacsweers.metro.Binds
-import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
@@ -60,8 +60,6 @@ import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.BlueskyJson
 
-abstract class DataScope private constructor()
-
 class DataModule(
     val appScope: CoroutineScope,
     val savedStatePath: Path,
@@ -69,87 +67,64 @@ class DataModule(
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
 
-@DependencyGraph(
-    scope = DataScope::class,
-    isExtendable = true,
-)
-interface DataComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides module: DataModule
-        ): DataComponent
-    }
-
-    val module: DataModule
+@BindingContainer
+class DataComponent(
+    private val module: DataModule
+) {
 
     @Named("AppScope")
-    @SingleIn(DataScope::class)
     @Provides
     fun provideAppScope(): CoroutineScope = module.appScope
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideSavedStatePath(): Path = module.savedStatePath
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = module.databaseBuilder.configureAndBuild()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun providePostDao(
         database: AppDatabase,
     ): PostDao = database.postDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideProfileDao(
         database: AppDatabase,
     ): ProfileDao = database.profileDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideListDao(
         database: AppDatabase,
     ): ListDao = database.listDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideEmbedDao(
         database: AppDatabase,
     ): EmbedDao = database.embedDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideTimelineDao(
         database: AppDatabase,
     ): TimelineDao = database.timelineDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideFeedGeneratorDao(
         database: AppDatabase,
     ): FeedGeneratorDao = database.feedGeneratorDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideNotificationsDao(
         database: AppDatabase,
     ): NotificationsDao = database.notificationsDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideStarterPackDao(
         database: AppDatabase,
     ): StarterPackDao = database.starterPackDao()
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
@@ -161,48 +136,55 @@ interface DataComponent {
         }
     }
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideAppJson(): Json = BlueskyJson
 
-    @SingleIn(DataScope::class)
     @Provides
     fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {
     }
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val KtorNetworkService.bind: NetworkService
+    @Provides
+    fun provideKtorNetworkService(
+        ktorNetworkService: KtorNetworkService
+    ): NetworkService = ktorNetworkService
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val SnapshotWriteQueue.bind: WriteQueue
+    @Provides
+    fun provideSnapshotWriteQueue(
+        snapshotWriteQueue: SnapshotWriteQueue
+    ): WriteQueue = snapshotWriteQueue
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val DataStoreSavedStateRepository.bind: SavedStateRepository
+    @Provides
+    private fun provideDataStoreSavedStateRepository(
+        dataStoreSavedStateRepository: DataStoreSavedStateRepository
+    ): SavedStateRepository = dataStoreSavedStateRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val AuthTokenRepository.bind: AuthRepository
+    @Provides
+    fun provideAuthTokenRepository(
+        authTokenRepository: AuthTokenRepository
+    ): AuthRepository = authTokenRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val OfflineTimelineRepository.bind: TimelineRepository
+    @Provides
+    fun provideOfflineTimelineRepository(
+        offlineTimelineRepository: OfflineTimelineRepository
+    ): TimelineRepository = offlineTimelineRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val OfflineProfileRepository.bind: ProfileRepository
+    @Provides
+    fun provideOfflineProfileRepository(
+        offlineProfileRepository: OfflineProfileRepository
+    ): ProfileRepository = offlineProfileRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val OfflineNotificationsRepository.bind: NotificationsRepository
+    @Provides
+    fun provideOfflineNotificationsRepository(
+        offlineNotificationsRepository: OfflineNotificationsRepository
+    ): NotificationsRepository = offlineNotificationsRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val OfflineSearchRepository.bind: SearchRepository
+    @Provides
+    fun provideOfflineSearchRepository(
+        offlineSearchRepository: OfflineSearchRepository
+    ): SearchRepository = offlineSearchRepository
 
-    @SingleIn(DataScope::class)
-    @Binds
-    val OfflinePostRepository.bind: PostRepository
+    @Provides
+    fun provideOfflinePostRepository(
+        offlinePostRepository: OfflinePostRepository
+    ): PostRepository = offlinePostRepository
 }

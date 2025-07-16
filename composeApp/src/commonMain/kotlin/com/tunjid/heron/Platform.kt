@@ -70,26 +70,26 @@ fun createAppState(
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = createGraphFactory<AppNavigationComponent.Factory>().create(
-        signInNavigationComponent = createGraph<SignInNavigationComponent>(),
-        composeNavigationComponent = createGraph<ComposeNavigationComponent>(),
-        feedNavigationComponent = createGraph<FeedNavigationComponent>(),
-        galleryNavigationComponent = createGraph<GalleryNavigationComponent>(),
-        homeNavigationComponent = createGraph<HomeNavigationComponent>(),
-        messagesNavigationComponent = createGraph<MessagesNavigationComponent>(),
-        notificationsNavigationComponent = createGraph<NotificationsNavigationComponent>(),
-        postDetailNavigationComponent = createGraph<PostDetailNavigationComponent>(),
-        profileNavigationComponent = createGraph<ProfileNavigationComponent>(),
-        profileAvatarNavigationComponent = createGraph<ProfileAvatarNavigationComponent>(),
-        profilesNavigationComponent = createGraph<ProfilesNavigationComponent>(),
-        searchNavigationComponent = createGraph<SearchNavigationComponent>(),
-        splashNavigationComponent = createGraph<SplashNavigationComponent>(),
+        signInNavigationComponent = SignInNavigationComponent,
+        composeNavigationComponent = ComposeNavigationComponent,
+        feedNavigationComponent = FeedNavigationComponent,
+        galleryNavigationComponent = GalleryNavigationComponent,
+        homeNavigationComponent = HomeNavigationComponent,
+        messagesNavigationComponent = MessagesNavigationComponent,
+        notificationsNavigationComponent = NotificationsNavigationComponent,
+        postDetailNavigationComponent = PostDetailNavigationComponent,
+        profileNavigationComponent = ProfileNavigationComponent,
+        profileAvatarNavigationComponent = ProfileAvatarNavigationComponent,
+        profilesNavigationComponent = ProfilesNavigationComponent,
+        searchNavigationComponent = SearchNavigationComponent,
+        splashNavigationComponent = SplashNavigationComponent,
     )
 
-    val dataComponent = createGraphFactory<DataComponent.Factory>().create(
+    val dataComponent = DataComponent(
         module = dataModule(appScope)
     )
 
-    val scaffoldComponent = createGraphFactory<ScaffoldComponent.Factory>().create(
+    val scaffoldComponent = ScaffoldComponent(
         module = ScaffoldModule(
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers
@@ -100,55 +100,55 @@ fun createAppState(
     val appComponent = createGraphFactory<AppComponent.Factory>().create(
         dataComponent = dataComponent,
         scaffoldComponent = scaffoldComponent,
-        signInComponent = createGraphFactory<SignInComponent.Factory>().create(
+        signInComponent = SignInComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        composeComponent = createGraphFactory<ComposeComponent.Factory>().create(
+        composeComponent = ComposeComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        feedComponent = createGraphFactory<FeedComponent.Factory>().create(
+        feedComponent = FeedComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        galleryComponent = createGraphFactory<GalleryComponent.Factory>().create(
+        galleryComponent = GalleryComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        homeComponent = createGraphFactory<HomeComponent.Factory>().create(
+        homeComponent = HomeComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        messagesComponent = createGraphFactory<MessagesComponent.Factory>().create(
+        messagesComponent = MessagesComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        notificationsComponent = createGraphFactory<NotificationsComponent.Factory>().create(
+        notificationsComponent = NotificationsComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        postDetailComponent = createGraphFactory<PostDetailComponent.Factory>().create(
+        postDetailComponent = PostDetailComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profileComponent = createGraphFactory<ProfileComponent.Factory>().create(
+        profileComponent = ProfileComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profileAvatarComponent = createGraphFactory<ProfileAvatarComponent.Factory>().create(
+        profileAvatarComponent = ProfileAvatarComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        profilesComponent = createGraphFactory<ProfilesComponent.Factory>().create(
+        profilesComponent = ProfilesComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        searchComponent = createGraphFactory<SearchComponent.Factory>().create(
+        searchComponent = SearchComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),
-        splashComponent = createGraphFactory<SplashComponent.Factory>().create(
+        splashComponent = SplashComponent(
             scaffoldComponent = scaffoldComponent,
             dataComponent = dataComponent,
         ),

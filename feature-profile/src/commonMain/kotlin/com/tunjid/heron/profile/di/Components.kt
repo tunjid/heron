@@ -67,8 +67,8 @@ import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -98,8 +98,8 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
-@DependencyGraph(isExtendable = true)
-interface ProfileNavigationComponent {
+@BindingContainer
+object ProfileNavigationComponent {
 
     @Provides
     @IntoMap
@@ -111,16 +111,11 @@ interface ProfileNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface ProfileComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): ProfileComponent
-    }
+@BindingContainer
+class ProfileComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

@@ -47,8 +47,8 @@ import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -78,8 +78,8 @@ internal val Route.sharedElementPrefix by routeQuery(
     default = ""
 )
 
-@DependencyGraph(isExtendable = true)
-interface GalleryNavigationComponent {
+@BindingContainer
+object GalleryNavigationComponent {
 
     @Provides
     @IntoMap
@@ -91,16 +91,11 @@ interface GalleryNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface GalleryComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): GalleryComponent
-    }
+@BindingContainer
+class GalleryComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap

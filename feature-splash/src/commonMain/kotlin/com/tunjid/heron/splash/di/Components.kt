@@ -34,8 +34,8 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Extends
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -48,8 +48,8 @@ private fun createRoute(
     params = routeParams,
 )
 
-@DependencyGraph(isExtendable = true)
-interface SplashNavigationComponent {
+@BindingContainer
+object SplashNavigationComponent {
 
     @Provides
     @IntoMap
@@ -61,16 +61,11 @@ interface SplashNavigationComponent {
         )
 }
 
-@DependencyGraph(isExtendable = true)
-interface SplashComponent {
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Extends dataComponent: DataComponent,
-            @Extends scaffoldComponent: ScaffoldComponent,
-        ): SplashComponent
-    }
+@BindingContainer
+class SplashComponent(
+    @Includes dataComponent: DataComponent,
+    @Includes scaffoldComponent: ScaffoldComponent,
+) {
 
     @Provides
     @IntoMap
