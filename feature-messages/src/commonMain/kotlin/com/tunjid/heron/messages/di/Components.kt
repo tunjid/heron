@@ -61,7 +61,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object MessagesNavigationComponent {
+object MessagesNavigationBindings {
 
     @Provides
     @IntoMap
@@ -74,7 +74,7 @@ object MessagesNavigationComponent {
 }
 
 @BindingContainer
-class MessagesComponent(
+class MessagesBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

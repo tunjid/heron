@@ -84,7 +84,7 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
 )
 
 @BindingContainer
-object ProfileAvatarNavigationComponent {
+object ProfileAvatarNavigationBindings {
 
     @Provides
     @IntoMap
@@ -97,7 +97,7 @@ object ProfileAvatarNavigationComponent {
 }
 
 @BindingContainer
-class ProfileAvatarComponent(
+class ProfileAvatarBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

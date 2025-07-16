@@ -110,7 +110,7 @@ internal val Route.sharedElementPrefix by routeQuery(
 )
 
 @BindingContainer
-object PostDetailNavigationComponent {
+object PostDetailNavigationBindings {
 
     @Provides
     @IntoMap
@@ -123,7 +123,7 @@ object PostDetailNavigationComponent {
 }
 
 @BindingContainer
-class PostDetailComponent(
+class PostDetailBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

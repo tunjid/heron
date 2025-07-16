@@ -101,7 +101,7 @@ internal val Route.timelineRequest: TimelineRequest.OfFeed
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
-object FeedNavigationComponent {
+object FeedNavigationBindings {
 
     @Provides
     @IntoMap
@@ -124,7 +124,7 @@ object FeedNavigationComponent {
 }
 
 @BindingContainer
-class FeedComponent(
+class FeedBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

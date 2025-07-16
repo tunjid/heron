@@ -73,7 +73,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object NotificationsNavigationComponent {
+object NotificationsNavigationBindings {
 
     @Provides
     @IntoMap
@@ -86,7 +86,7 @@ object NotificationsNavigationComponent {
 }
 
 @BindingContainer
-class NotificationsComponent(
+class NotificationsBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

@@ -84,7 +84,7 @@ internal val Route.creationType: Post.Create? by optionalMappedRouteQuery(
 internal val Route.sharedElementPrefix by optionalRouteQuery()
 
 @BindingContainer
-object ComposeNavigationComponent {
+object ComposeNavigationBindings {
 
     @Provides
     @IntoMap
@@ -97,7 +97,7 @@ object ComposeNavigationComponent {
 }
 
 @BindingContainer
-class ComposeComponent(
+class ComposeBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

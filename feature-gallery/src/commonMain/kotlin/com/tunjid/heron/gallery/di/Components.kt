@@ -79,7 +79,7 @@ internal val Route.sharedElementPrefix by routeQuery(
 )
 
 @BindingContainer
-object GalleryNavigationComponent {
+object GalleryNavigationBindings {
 
     @Provides
     @IntoMap
@@ -92,7 +92,7 @@ object GalleryNavigationComponent {
 }
 
 @BindingContainer
-class GalleryComponent(
+class GalleryBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

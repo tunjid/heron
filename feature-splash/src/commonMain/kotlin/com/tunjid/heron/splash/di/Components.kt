@@ -49,7 +49,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object SplashNavigationComponent {
+object SplashNavigationBindings {
 
     @Provides
     @IntoMap
@@ -62,7 +62,7 @@ object SplashNavigationComponent {
 }
 
 @BindingContainer
-class SplashComponent(
+class SplashBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

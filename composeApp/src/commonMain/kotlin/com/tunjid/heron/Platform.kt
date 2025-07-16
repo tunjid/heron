@@ -16,41 +16,41 @@
 
 package com.tunjid.heron
 
-import com.tunjid.heron.compose.di.ComposeComponent
-import com.tunjid.heron.compose.di.ComposeNavigationComponent
+import com.tunjid.heron.compose.di.ComposeBindings
+import com.tunjid.heron.compose.di.ComposeNavigationBindings
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
-import com.tunjid.heron.feed.di.FeedComponent
-import com.tunjid.heron.feed.di.FeedNavigationComponent
-import com.tunjid.heron.gallery.di.GalleryComponent
-import com.tunjid.heron.gallery.di.GalleryNavigationComponent
-import com.tunjid.heron.home.di.HomeComponent
-import com.tunjid.heron.home.di.HomeNavigationComponent
+import com.tunjid.heron.feed.di.FeedBindings
+import com.tunjid.heron.feed.di.FeedNavigationBindings
+import com.tunjid.heron.gallery.di.GalleryBindings
+import com.tunjid.heron.gallery.di.GalleryNavigationBindings
+import com.tunjid.heron.home.di.HomeBindings
+import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.messages.di.MessagesComponent
-import com.tunjid.heron.messages.di.MessagesNavigationComponent
-import com.tunjid.heron.notifications.di.NotificationsComponent
-import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
-import com.tunjid.heron.postdetail.di.PostDetailComponent
-import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
-import com.tunjid.heron.profile.di.ProfileComponent
-import com.tunjid.heron.profile.di.ProfileNavigationComponent
-import com.tunjid.heron.profiles.di.ProfilesComponent
-import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
+import com.tunjid.heron.messages.di.MessagesBindings
+import com.tunjid.heron.messages.di.MessagesNavigationBindings
+import com.tunjid.heron.notifications.di.NotificationsBindings
+import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
+import com.tunjid.heron.postdetail.di.PostDetailBindings
+import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
+import com.tunjid.heron.profile.di.ProfileBindings
+import com.tunjid.heron.profile.di.ProfileNavigationBindings
+import com.tunjid.heron.profiles.di.ProfilesBindings
+import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.scaffold.scaffold.AppState
-import com.tunjid.heron.search.di.SearchComponent
-import com.tunjid.heron.search.di.SearchNavigationComponent
-import com.tunjid.heron.signin.di.SignInComponent
-import com.tunjid.heron.signin.di.SignInNavigationComponent
-import com.tunjid.heron.splash.di.SplashComponent
-import com.tunjid.heron.splash.di.SplashNavigationComponent
+import com.tunjid.heron.search.di.SearchBindings
+import com.tunjid.heron.search.di.SearchNavigationBindings
+import com.tunjid.heron.signin.di.SignInBindings
+import com.tunjid.heron.signin.di.SignInNavigationBindings
+import com.tunjid.heron.splash.di.SplashBindings
+import com.tunjid.heron.splash.di.SplashNavigationBindings
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,19 +69,19 @@ fun createAppState(
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
-        signInNavigationComponent = SignInNavigationComponent,
-        composeNavigationComponent = ComposeNavigationComponent,
-        feedNavigationComponent = FeedNavigationComponent,
-        galleryNavigationComponent = GalleryNavigationComponent,
-        homeNavigationComponent = HomeNavigationComponent,
-        messagesNavigationComponent = MessagesNavigationComponent,
-        notificationsNavigationComponent = NotificationsNavigationComponent,
-        postDetailNavigationComponent = PostDetailNavigationComponent,
-        profileNavigationComponent = ProfileNavigationComponent,
-        profileAvatarNavigationComponent = ProfileAvatarNavigationComponent,
-        profilesNavigationComponent = ProfilesNavigationComponent,
-        searchNavigationComponent = SearchNavigationComponent,
-        splashNavigationComponent = SplashNavigationComponent,
+        signInNavigationBindings = SignInNavigationBindings,
+        composeNavigationBindings = ComposeNavigationBindings,
+        feedNavigationBindings = FeedNavigationBindings,
+        galleryNavigationBindings = GalleryNavigationBindings,
+        homeNavigationBindings = HomeNavigationBindings,
+        messagesNavigationBindings = MessagesNavigationBindings,
+        notificationsNavigationBindings = NotificationsNavigationBindings,
+        postDetailNavigationBindings = PostDetailNavigationBindings,
+        profileNavigationBindings = ProfileNavigationBindings,
+        profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
+        profilesNavigationBindings = ProfilesNavigationBindings,
+        searchNavigationBindings = SearchNavigationBindings,
+        splashNavigationBindings = SplashNavigationBindings,
     )
 
     val dataBindings = DataBindings(
@@ -99,55 +99,55 @@ fun createAppState(
     val appGraph = createGraphFactory<AppGraph.Factory>().create(
         dataBindings = dataBindings,
         scaffoldBindings = scaffoldBindings,
-        signInComponent = SignInComponent(
+        signInBindings = SignInBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        composeComponent = ComposeComponent(
+        composeBindings = ComposeBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        feedComponent = FeedComponent(
+        feedBindings = FeedBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        galleryComponent = GalleryComponent(
+        galleryBindings = GalleryBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        homeComponent = HomeComponent(
+        homeBindings = HomeBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        messagesComponent = MessagesComponent(
+        messagesBindings = MessagesBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        notificationsComponent = NotificationsComponent(
+        notificationsBindings = NotificationsBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        postDetailComponent = PostDetailComponent(
+        postDetailBindings = PostDetailBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        profileComponent = ProfileComponent(
+        profileBindings = ProfileBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        profileAvatarComponent = ProfileAvatarComponent(
+        profileAvatarBindings = ProfileAvatarBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        profilesComponent = ProfilesComponent(
+        profilesBindings = ProfilesBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        searchComponent = SearchComponent(
+        searchBindings = SearchBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
-        splashComponent = SplashComponent(
+        splashBindings = SplashBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

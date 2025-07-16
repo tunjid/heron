@@ -122,7 +122,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object ProfilesNavigationComponent {
+object ProfilesNavigationBindings {
 
     @Provides
     @IntoMap
@@ -162,7 +162,7 @@ object ProfilesNavigationComponent {
 }
 
 @BindingContainer
-class ProfilesComponent(
+class ProfilesBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

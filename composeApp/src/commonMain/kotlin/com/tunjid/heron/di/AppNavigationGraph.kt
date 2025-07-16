@@ -16,19 +16,19 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.compose.di.ComposeNavigationComponent
-import com.tunjid.heron.feed.di.FeedNavigationComponent
-import com.tunjid.heron.gallery.di.GalleryNavigationComponent
-import com.tunjid.heron.home.di.HomeNavigationComponent
-import com.tunjid.heron.messages.di.MessagesNavigationComponent
-import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
-import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
-import com.tunjid.heron.profile.di.ProfileNavigationComponent
-import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
-import com.tunjid.heron.search.di.SearchNavigationComponent
-import com.tunjid.heron.signin.di.SignInNavigationComponent
-import com.tunjid.heron.splash.di.SplashNavigationComponent
+import com.tunjid.heron.compose.di.ComposeNavigationBindings
+import com.tunjid.heron.feed.di.FeedNavigationBindings
+import com.tunjid.heron.gallery.di.GalleryNavigationBindings
+import com.tunjid.heron.home.di.HomeNavigationBindings
+import com.tunjid.heron.messages.di.MessagesNavigationBindings
+import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
+import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
+import com.tunjid.heron.profile.di.ProfileNavigationBindings
+import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
+import com.tunjid.heron.search.di.SearchNavigationBindings
+import com.tunjid.heron.signin.di.SignInNavigationBindings
+import com.tunjid.heron.splash.di.SplashNavigationBindings
 import com.tunjid.treenav.strings.RouteMatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
@@ -42,19 +42,19 @@ interface AppNavigationGraph {
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
-            @Includes signInNavigationComponent: SignInNavigationComponent,
-            @Includes composeNavigationComponent: ComposeNavigationComponent,
-            @Includes feedNavigationComponent: FeedNavigationComponent,
-            @Includes galleryNavigationComponent: GalleryNavigationComponent,
-            @Includes homeNavigationComponent: HomeNavigationComponent,
-            @Includes messagesNavigationComponent: MessagesNavigationComponent,
-            @Includes notificationsNavigationComponent: NotificationsNavigationComponent,
-            @Includes postDetailNavigationComponent: PostDetailNavigationComponent,
-            @Includes profileNavigationComponent: ProfileNavigationComponent,
-            @Includes profileAvatarNavigationComponent: ProfileAvatarNavigationComponent,
-            @Includes profilesNavigationComponent: ProfilesNavigationComponent,
-            @Includes searchNavigationComponent: SearchNavigationComponent,
-            @Includes splashNavigationComponent: SplashNavigationComponent,
+            @Includes signInNavigationBindings: SignInNavigationBindings,
+            @Includes composeNavigationBindings: ComposeNavigationBindings,
+            @Includes feedNavigationBindings: FeedNavigationBindings,
+            @Includes galleryNavigationBindings: GalleryNavigationBindings,
+            @Includes homeNavigationBindings: HomeNavigationBindings,
+            @Includes messagesNavigationBindings: MessagesNavigationBindings,
+            @Includes notificationsNavigationBindings: NotificationsNavigationBindings,
+            @Includes postDetailNavigationBindings: PostDetailNavigationBindings,
+            @Includes profileNavigationBindings: ProfileNavigationBindings,
+            @Includes profileAvatarNavigationBindings: ProfileAvatarNavigationBindings,
+            @Includes profilesNavigationBindings: ProfilesNavigationBindings,
+            @Includes searchNavigationBindings: SearchNavigationBindings,
+            @Includes splashNavigationBindings: SplashNavigationBindings,
         ): AppNavigationGraph
     }
 

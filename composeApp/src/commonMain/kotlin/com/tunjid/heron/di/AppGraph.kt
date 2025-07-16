@@ -16,26 +16,26 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.compose.di.ComposeComponent
+import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feed.di.FeedComponent
-import com.tunjid.heron.gallery.di.GalleryComponent
-import com.tunjid.heron.home.di.HomeComponent
+import com.tunjid.heron.feed.di.FeedBindings
+import com.tunjid.heron.gallery.di.GalleryBindings
+import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.messages.di.MessagesComponent
-import com.tunjid.heron.notifications.di.NotificationsComponent
-import com.tunjid.heron.postdetail.di.PostDetailComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
-import com.tunjid.heron.profile.di.ProfileComponent
-import com.tunjid.heron.profiles.di.ProfilesComponent
+import com.tunjid.heron.messages.di.MessagesBindings
+import com.tunjid.heron.notifications.di.NotificationsBindings
+import com.tunjid.heron.postdetail.di.PostDetailBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
+import com.tunjid.heron.profile.di.ProfileBindings
+import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.scaffold.AppState
-import com.tunjid.heron.search.di.SearchComponent
-import com.tunjid.heron.signin.di.SignInComponent
-import com.tunjid.heron.splash.di.SplashComponent
+import com.tunjid.heron.search.di.SearchBindings
+import com.tunjid.heron.signin.di.SignInBindings
+import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -56,19 +56,19 @@ interface AppGraph {
         fun create(
             @Includes dataBindings: DataBindings,
             @Includes scaffoldBindings: ScaffoldBindings,
-            @Includes signInComponent: SignInComponent,
-            @Includes composeComponent: ComposeComponent,
-            @Includes feedComponent: FeedComponent,
-            @Includes galleryComponent: GalleryComponent,
-            @Includes homeComponent: HomeComponent,
-            @Includes messagesComponent: MessagesComponent,
-            @Includes notificationsComponent: NotificationsComponent,
-            @Includes postDetailComponent: PostDetailComponent,
-            @Includes profileComponent: ProfileComponent,
-            @Includes profileAvatarComponent: ProfileAvatarComponent,
-            @Includes profilesComponent: ProfilesComponent,
-            @Includes searchComponent: SearchComponent,
-            @Includes splashComponent: SplashComponent,
+            @Includes signInBindings: SignInBindings,
+            @Includes composeBindings: ComposeBindings,
+            @Includes feedBindings: FeedBindings,
+            @Includes galleryBindings: GalleryBindings,
+            @Includes homeBindings: HomeBindings,
+            @Includes messagesBindings: MessagesBindings,
+            @Includes notificationsBindings: NotificationsBindings,
+            @Includes postDetailBindings: PostDetailBindings,
+            @Includes profileBindings: ProfileBindings,
+            @Includes profileAvatarBindings: ProfileAvatarBindings,
+            @Includes profilesBindings: ProfilesBindings,
+            @Includes searchBindings: SearchBindings,
+            @Includes splashBindings: SplashBindings,
         ): AppGraph
     }
 

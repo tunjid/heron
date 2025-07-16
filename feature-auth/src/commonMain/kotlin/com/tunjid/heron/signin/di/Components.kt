@@ -75,7 +75,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object SignInNavigationComponent {
+object SignInNavigationBindings {
 
     @Provides
     @IntoMap
@@ -88,7 +88,7 @@ object SignInNavigationComponent {
 }
 
 @BindingContainer
-class SignInComponent(
+class SignInBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

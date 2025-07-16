@@ -99,7 +99,7 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
 )
 
 @BindingContainer
-object ProfileNavigationComponent {
+object ProfileNavigationBindings {
 
     @Provides
     @IntoMap
@@ -112,7 +112,7 @@ object ProfileNavigationComponent {
 }
 
 @BindingContainer
-class ProfileComponent(
+class ProfileBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

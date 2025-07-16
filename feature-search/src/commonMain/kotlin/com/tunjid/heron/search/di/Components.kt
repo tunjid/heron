@@ -64,7 +64,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object SearchNavigationComponent {
+object SearchNavigationBindings {
 
     @Provides
     @IntoMap
@@ -77,7 +77,7 @@ object SearchNavigationComponent {
 }
 
 @BindingContainer
-class SearchComponent(
+class SearchBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {

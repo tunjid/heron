@@ -84,7 +84,7 @@ private fun createRoute(
 )
 
 @BindingContainer
-object HomeNavigationComponent {
+object HomeNavigationBindings {
 
     @Provides
     @IntoMap
@@ -97,7 +97,7 @@ object HomeNavigationComponent {
 }
 
 @BindingContainer
-class HomeComponent(
+class HomeBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
