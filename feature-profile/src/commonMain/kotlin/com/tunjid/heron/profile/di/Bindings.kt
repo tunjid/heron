@@ -14,34 +14,34 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.postdetail.di
+package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Reply
+import androidx.compose.material.icons.rounded.AlternateEmail
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
-import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.postdetail.Action
-import com.tunjid.heron.postdetail.ActualPostDetailViewModel
-import com.tunjid.heron.postdetail.PostDetailScreen
-import com.tunjid.heron.postdetail.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.profile.Action
+import com.tunjid.heron.profile.ActualProfileViewModel
+import com.tunjid.heron.profile.ProfileScreen
+import com.tunjid.heron.profile.RouteViewModelInitializer
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -55,6 +55,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
@@ -63,19 +64,20 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.routeQuery
-import heron.feature_post_detail.generated.resources.Res
-import heron.feature_post_detail.generated.resources.reply
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
+import heron.feature_profile.generated.resources.Res
+import heron.feature_profile.generated.resources.mention
+import heron.feature_profile.generated.resources.post
 import org.jetbrains.compose.resources.stringResource
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
+private const val RoutePattern = "/profile/{profileHandleOrId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -86,63 +88,42 @@ private fun createRoute(
     )
 )
 
-internal val Route.post: Post? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl
-)
-
-internal val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
-
 internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
+    mapper = ::ProfileHandleOrId
 )
 
-internal val Route.postUri by optionalMappedRouteQuery(
-    mapper = ::PostUri,
+internal val Route.avatarSharedElementKey by optionalRouteQuery()
+
+internal val Route.profile: Profile? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl,
 )
 
-@OptIn(ExperimentalUuidApi::class)
-internal val Route.sharedElementPrefix by routeQuery(
-    default = Uuid.random().toHexString(),
-)
+@BindingContainer
+object ProfileNavigationBindings {
 
-@KmpComponentCreate
-expect fun PostDetailNavigationComponent.Companion.create(): PostDetailNavigationComponent
-
-@KmpComponentCreate
-expect fun PostDetailComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): PostDetailComponent
-
-@Component
-abstract class PostDetailNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class PostDetailComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class ProfileBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
@@ -159,7 +140,7 @@ abstract class PostDetailComponent(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualPostDetailViewModel> {
+            val viewModel = viewModel<ActualProfileViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
@@ -176,11 +157,10 @@ abstract class PostDetailComponent(
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                },
                 topBar = {
                     PoppableDestinationTopAppBar(
+                        // Limit width so tabs may be tapped
+                        modifier = Modifier.width(60.dp),
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
@@ -190,18 +170,22 @@ abstract class PostDetailComponent(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
+                        text = stringResource(
+                            if (state.isSignedInProfile) Res.string.post
+                            else Res.string.mention
+                        ),
+                        icon =
+                            if (state.isSignedInProfile) Icons.Rounded.Edit
+                            else Icons.Rounded.AlternateEmail,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        text = stringResource(Res.string.reply),
-                        icon = Icons.AutoMirrored.Rounded.Reply,
-                        onClick = onClick@{
-                            val anchorPost = state.anchorPost ?: return@onClick
+                        onClick = {
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
-                                        type = Post.Create.Reply(
-                                            parent = anchorPost,
-                                        ),
-                                        sharedElementPrefix = state.sharedElementPrefix,
+                                        type =
+                                            if (state.isSignedInProfile) Post.Create.Timeline
+                                            else Post.Create.Mention(state.profile),
+                                        sharedElementPrefix = null,
                                     )
                                 )
                             )
@@ -218,15 +202,15 @@ abstract class PostDetailComponent(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = { paddingValues ->
-                    PostDetailScreen(
+                snackBarMessages = state.messages,
+                onSnackBarMessageConsumed = {
+                },
+                content = {
+                    ProfileScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding()
-                            ),
+                        modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
                 }

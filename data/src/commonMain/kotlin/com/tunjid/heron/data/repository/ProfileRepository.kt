@@ -73,6 +73,7 @@ import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -85,7 +86,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid

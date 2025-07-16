@@ -39,6 +39,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +50,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
-import me.tatarka.inject.annotations.Inject
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 

@@ -25,17 +25,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -45,10 +46,12 @@ import com.tunjid.treenav.strings.mappedRouteQuery
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeQuery
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/post/{postId}/gallery"
 
@@ -75,41 +78,31 @@ internal val Route.sharedElementPrefix by routeQuery(
     default = ""
 )
 
-@KmpComponentCreate
-expect fun GalleryNavigationComponent.Companion.create(): GalleryNavigationComponent
+@BindingContainer
+object GalleryNavigationBindings {
 
-@KmpComponentCreate
-expect fun GalleryComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): GalleryComponent
-
-@Component
-abstract class GalleryNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class GalleryComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class GalleryBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,
     )
 

@@ -25,28 +25,32 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
 import com.tunjid.heron.messages.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/messages"
 
@@ -56,41 +60,31 @@ private fun createRoute(
     params = routeParams,
 )
 
-@KmpComponentCreate
-expect fun MessagesNavigationComponent.Companion.create(): MessagesNavigationComponent
+@BindingContainer
+object MessagesNavigationBindings {
 
-@KmpComponentCreate
-expect fun MessagesComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): MessagesComponent
-
-@Component
-abstract class MessagesNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class MessagesComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class MessagesBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,
     )
 

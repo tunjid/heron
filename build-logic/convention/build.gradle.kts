@@ -32,4 +32,5 @@ dependencies {
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.kotlin.serializationPlugin)
     implementation(libs.google.devtools.kspPlugin)
+    implementation(libs.metro.gradlePlugin)
 }

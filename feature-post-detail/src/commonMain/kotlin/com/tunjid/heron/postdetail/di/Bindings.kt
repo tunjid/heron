@@ -14,13 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.notifications.di
+package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -28,93 +28,133 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.notifications.Action
-import com.tunjid.heron.notifications.ActualNotificationsViewModel
-import com.tunjid.heron.notifications.NotificationsScreen
-import com.tunjid.heron.notifications.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.postdetail.Action
+import com.tunjid.heron.postdetail.ActualPostDetailViewModel
+import com.tunjid.heron.postdetail.PostDetailScreen
+import com.tunjid.heron.postdetail.RouteViewModelInitializer
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import heron.feature_notifications.generated.resources.Res
-import heron.feature_notifications.generated.resources.create_post
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.routeQuery
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
+import heron.feature_post_detail.generated.resources.Res
+import heron.feature_post_detail.generated.resources.reply
 import org.jetbrains.compose.resources.stringResource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-private const val RoutePattern = "/notifications"
+private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
 
 private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    )
 )
 
-@KmpComponentCreate
-expect fun NotificationsNavigationComponent.Companion.create(): NotificationsNavigationComponent
+internal val Route.post: Post? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl
+)
 
-@KmpComponentCreate
-expect fun NotificationsComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): NotificationsComponent
+internal val Route.postRecordKey by mappedRoutePath(
+    mapper = ::RecordKey,
+)
 
-@Component
-abstract class NotificationsNavigationComponent {
-    companion object
+internal val Route.profileHandleOrId by mappedRoutePath(
+    mapper = ::ProfileHandleOrId,
+)
 
-    @IntoMap
+internal val Route.postUri by optionalMappedRouteQuery(
+    mapper = ::PostUri,
+)
+
+@OptIn(ExperimentalUuidApi::class)
+internal val Route.sharedElementPrefix by routeQuery(
+    default = Uuid.random().toHexString(),
+)
+
+@BindingContainer
+object PostDetailNavigationBindings {
+
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class NotificationsComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class PostDetailBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
+        routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
+        routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
+    ) = threePaneEntry<Route>(
         contentTransform = predictiveBackContentTransform,
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
-            val viewModel = viewModel<ActualNotificationsViewModel> {
+            val viewModel = viewModel<ActualPostDetailViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
-                    route = route,
+                    route = routeParser.hydrate(route),
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -132,20 +172,8 @@ abstract class NotificationsComponent(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier,
-                        signedInProfile = state.signedInProfile,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
-                            )
-                        },
+                    PoppableDestinationTopAppBar(
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
                 floatingActionButton = {
@@ -154,15 +182,18 @@ abstract class NotificationsComponent(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(Res.string.create_post),
-                        icon = Icons.Rounded.Edit,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        onClick = {
+                        text = stringResource(Res.string.reply),
+                        icon = Icons.AutoMirrored.Rounded.Reply,
+                        onClick = onClick@{
+                            val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
                                 Action.Navigate.DelegateTo(
                                     NavigationAction.Common.ComposePost(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
+                                        type = Post.Create.Reply(
+                                            parent = anchorPost,
+                                        ),
+                                        sharedElementPrefix = state.sharedElementPrefix,
                                     )
                                 )
                             )
@@ -171,32 +202,25 @@ abstract class NotificationsComponent(
                 },
                 navigationBar = {
                     PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Fetch.Refresh)
-                            true
+                        modifier = Modifier.offset {
+                            bottomNavigationNestedScrollConnection.offset.round()
                         },
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Fetch.Refresh)
-                            true
-                        },
-                    )
+                    PaneNavigationRail()
                 },
-                content = { contentPadding ->
-                    NotificationsScreen(
+                content = { paddingValues ->
+                    PostDetailScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = contentPadding.calculateTopPadding()),
+                            .padding(
+                                top = paddingValues.calculateTopPadding()
+                            ),
                     )
+                    SecondaryPaneCloseBackHandler()
                 }
             )
         }

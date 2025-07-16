@@ -16,57 +16,42 @@
 
 package com.tunjid.heron
 
-import com.tunjid.heron.compose.di.ComposeComponent
-import com.tunjid.heron.compose.di.ComposeNavigationComponent
-import com.tunjid.heron.compose.di.create
-import com.tunjid.heron.data.di.DataComponent
-import com.tunjid.heron.data.di.DataModule
-import com.tunjid.heron.data.di.create
-import com.tunjid.heron.di.AppComponent
-import com.tunjid.heron.di.AppNavigationComponent
+import com.tunjid.heron.compose.di.ComposeBindings
+import com.tunjid.heron.compose.di.ComposeNavigationBindings
+import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.di.AppGraph
+import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
-import com.tunjid.heron.di.create
-import com.tunjid.heron.feed.di.FeedComponent
-import com.tunjid.heron.feed.di.FeedNavigationComponent
-import com.tunjid.heron.feed.di.create
-import com.tunjid.heron.gallery.di.GalleryComponent
-import com.tunjid.heron.gallery.di.GalleryNavigationComponent
-import com.tunjid.heron.gallery.di.create
-import com.tunjid.heron.home.di.HomeComponent
-import com.tunjid.heron.home.di.HomeNavigationComponent
-import com.tunjid.heron.home.di.create
+import com.tunjid.heron.feed.di.FeedBindings
+import com.tunjid.heron.feed.di.FeedNavigationBindings
+import com.tunjid.heron.gallery.di.GalleryBindings
+import com.tunjid.heron.gallery.di.GalleryNavigationBindings
+import com.tunjid.heron.home.di.HomeBindings
+import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.messages.di.MessagesComponent
-import com.tunjid.heron.messages.di.MessagesNavigationComponent
-import com.tunjid.heron.messages.di.create
-import com.tunjid.heron.notifications.di.NotificationsComponent
-import com.tunjid.heron.notifications.di.NotificationsNavigationComponent
-import com.tunjid.heron.notifications.di.create
-import com.tunjid.heron.postdetail.di.PostDetailComponent
-import com.tunjid.heron.postdetail.di.PostDetailNavigationComponent
-import com.tunjid.heron.postdetail.di.create
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarComponent
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationComponent
-import com.tunjid.heron.profile.di.ProfileComponent
-import com.tunjid.heron.profile.di.ProfileNavigationComponent
-import com.tunjid.heron.profile.avatar.di.create
-import com.tunjid.heron.profile.di.create
-import com.tunjid.heron.profiles.di.ProfilesComponent
-import com.tunjid.heron.profiles.di.ProfilesNavigationComponent
-import com.tunjid.heron.profiles.di.create
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
-import com.tunjid.heron.scaffold.di.ScaffoldModule
-import com.tunjid.heron.scaffold.di.create
+import com.tunjid.heron.messages.di.MessagesBindings
+import com.tunjid.heron.messages.di.MessagesNavigationBindings
+import com.tunjid.heron.notifications.di.NotificationsBindings
+import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
+import com.tunjid.heron.postdetail.di.PostDetailBindings
+import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
+import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
+import com.tunjid.heron.profile.di.ProfileBindings
+import com.tunjid.heron.profile.di.ProfileNavigationBindings
+import com.tunjid.heron.profiles.di.ProfilesBindings
+import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
+import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.AppState
-import com.tunjid.heron.search.di.SearchComponent
-import com.tunjid.heron.search.di.SearchNavigationComponent
-import com.tunjid.heron.search.di.create
-import com.tunjid.heron.signin.di.SignInComponent
-import com.tunjid.heron.signin.di.SignInNavigationComponent
-import com.tunjid.heron.signin.di.create
-import com.tunjid.heron.splash.di.SplashComponent
-import com.tunjid.heron.splash.di.SplashNavigationComponent
-import com.tunjid.heron.splash.di.create
+import com.tunjid.heron.search.di.SearchBindings
+import com.tunjid.heron.search.di.SearchNavigationBindings
+import com.tunjid.heron.signin.di.SignInBindings
+import com.tunjid.heron.signin.di.SignInNavigationBindings
+import com.tunjid.heron.splash.di.SplashBindings
+import com.tunjid.heron.splash.di.SplashNavigationBindings
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -79,94 +64,94 @@ expect fun getPlatform(): Platform
 
 fun createAppState(
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
-    dataModule: (appScope: CoroutineScope) -> DataModule,
+    args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    val navigationComponent = AppNavigationComponent.create(
-        signInNavigationComponent = SignInNavigationComponent.create(),
-        composeNavigationComponent = ComposeNavigationComponent.create(),
-        feedNavigationComponent = FeedNavigationComponent.create(),
-        galleryNavigationComponent = GalleryNavigationComponent.create(),
-        homeNavigationComponent = HomeNavigationComponent.create(),
-        messagesNavigationComponent = MessagesNavigationComponent.create(),
-        notificationsNavigationComponent = NotificationsNavigationComponent.create(),
-        postDetailNavigationComponent = PostDetailNavigationComponent.create(),
-        profileNavigationComponent = ProfileNavigationComponent.create(),
-        profileAvatarNavigationComponent = ProfileAvatarNavigationComponent.create(),
-        profilesNavigationComponent = ProfilesNavigationComponent.create(),
-        searchNavigationComponent = SearchNavigationComponent.create(),
-        splashNavigationComponent = SplashNavigationComponent.create(),
+    val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
+        signInNavigationBindings = SignInNavigationBindings,
+        composeNavigationBindings = ComposeNavigationBindings,
+        feedNavigationBindings = FeedNavigationBindings,
+        galleryNavigationBindings = GalleryNavigationBindings,
+        homeNavigationBindings = HomeNavigationBindings,
+        messagesNavigationBindings = MessagesNavigationBindings,
+        notificationsNavigationBindings = NotificationsNavigationBindings,
+        postDetailNavigationBindings = PostDetailNavigationBindings,
+        profileNavigationBindings = ProfileNavigationBindings,
+        profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
+        profilesNavigationBindings = ProfilesNavigationBindings,
+        searchNavigationBindings = SearchNavigationBindings,
+        splashNavigationBindings = SplashNavigationBindings,
     )
 
-    val dataComponent = DataComponent.create(
-        dataModule(appScope)
+    val dataBindings = DataBindings(
+        args = args(appScope)
     )
 
-    val scaffoldComponent = ScaffoldComponent.create(
-        module = ScaffoldModule(
+    val scaffoldBindings = ScaffoldBindings(
+        args = ScaffoldBindingArgs(
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers
         ),
-        dataComponent = dataComponent,
+        dataBindings = dataBindings,
     )
 
-    val appComponent = AppComponent.create(
-        dataComponent = dataComponent,
-        scaffoldComponent = scaffoldComponent,
-        signInComponent = SignInComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+    val appGraph = createGraphFactory<AppGraph.Factory>().create(
+        dataBindings = dataBindings,
+        scaffoldBindings = scaffoldBindings,
+        signInBindings = SignInBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        composeComponent = ComposeComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        composeBindings = ComposeBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        feedComponent = FeedComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        feedBindings = FeedBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        galleryComponent = GalleryComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        galleryBindings = GalleryBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        homeComponent = HomeComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        homeBindings = HomeBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        messagesComponent = MessagesComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        messagesBindings = MessagesBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        notificationsComponent = NotificationsComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        notificationsBindings = NotificationsBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        postDetailComponent = PostDetailComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        postDetailBindings = PostDetailBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        profileComponent = ProfileComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        profileBindings = ProfileBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        profileAvatarComponent = ProfileAvatarComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        profileAvatarBindings = ProfileAvatarBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        profilesComponent = ProfilesComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        profilesBindings = ProfilesBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        searchComponent = SearchComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        searchBindings = SearchBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
-        splashComponent = SplashComponent.create(
-            scaffoldComponent = scaffoldComponent,
-            dataComponent = dataComponent,
+        splashBindings = SplashBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
         ),
     )
 
-    return appComponent.appState
+    return appGraph.appState
 }

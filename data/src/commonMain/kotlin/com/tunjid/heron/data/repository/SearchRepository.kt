@@ -56,13 +56,13 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
-import me.tatarka.inject.annotations.Inject
 
 @Serializable
 sealed class SearchQuery : CursorQuery {

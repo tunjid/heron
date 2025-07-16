@@ -27,15 +27,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.profile.avatar.Action
 import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
 import com.tunjid.heron.profile.avatar.AvatarScreen
 import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -45,6 +44,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
@@ -55,10 +55,12 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/avatar"
 
@@ -81,42 +83,32 @@ internal val Route.profile: Profile? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
-@KmpComponentCreate
-expect fun ProfileAvatarNavigationComponent.Companion.create(): ProfileAvatarNavigationComponent
+@BindingContainer
+object ProfileAvatarNavigationBindings {
 
-@KmpComponentCreate
-expect fun ProfileAvatarComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): ProfileAvatarComponent
-
-@Component
-abstract class ProfileAvatarNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class ProfileAvatarComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class ProfileAvatarBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )

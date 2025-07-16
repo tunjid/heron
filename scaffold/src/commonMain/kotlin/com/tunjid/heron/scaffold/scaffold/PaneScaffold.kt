@@ -52,7 +52,7 @@ import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 
-class  PaneScaffoldState internal constructor(
+class PaneScaffoldState internal constructor(
     internal val appState: AppState,
     internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
@@ -152,6 +152,7 @@ fun PaneScaffoldState.PaneScaffold(
                         .animateBounds(
                             lookaheadScope = this,
                         )
+
                     AppState.DismissBehavior.Gesture.Slide -> Modifier
                 }
                     .padding(

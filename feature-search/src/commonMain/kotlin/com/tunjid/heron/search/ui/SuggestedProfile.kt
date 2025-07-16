@@ -35,7 +35,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf 
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -51,7 +51,7 @@ fun SuggestedProfile(
             .clickable { onProfileClicked(profileWithViewerState) }
             .padding(horizontal = 24.dp),
         avatar = {
-            updatedMovableStickySharedElementOf (
+            updatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(profileWithViewerState) },

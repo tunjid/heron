@@ -45,6 +45,9 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,19 +60,15 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Clock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
-@Inject
-class RouteViewModelInitializer(
-    private val constructor: (scope: CoroutineScope, route: Route) -> ActualNotificationsViewModel,
-) : AssistedViewModelFactory {
+@AssistedFactory
+fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualNotificationsViewModel = constructor.invoke(scope, route)
+    ): ActualNotificationsViewModel
 }
 
 @Inject

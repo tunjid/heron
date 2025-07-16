@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
@@ -34,10 +34,9 @@ import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.ui.TimelineTitle
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -45,6 +44,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.PathPattern
@@ -56,10 +56,12 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.toRouteTrie
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
 private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
@@ -98,60 +100,53 @@ private val RequestTrie = mapOf(
 internal val Route.timelineRequest: TimelineRequest.OfFeed
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
-@KmpComponentCreate
-expect fun FeedNavigationComponent.Companion.create(): FeedNavigationComponent
+@BindingContainer
+object FeedNavigationBindings {
 
-@KmpComponentCreate
-expect fun FeedComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): FeedComponent
-
-@Component
-abstract class FeedNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 
-    @IntoMap
     @Provides
-    fun uriRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RouteUriPattern)
+    fun provideRouteUriMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RouteUriPattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
 
 }
 
-@Component
-abstract class FeedComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class FeedBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
-    @IntoMap
     @Provides
-    fun routeUriPattern(
+    @IntoMap
+    @StringKey(RouteUriPattern)
+    fun provideUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RouteUriPattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )

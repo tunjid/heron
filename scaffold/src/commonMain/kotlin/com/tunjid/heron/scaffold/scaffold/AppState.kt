@@ -60,10 +60,10 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Inject
 
 @Stable
 class AppState @Inject constructor(
@@ -176,7 +176,7 @@ class AppState @Inject constructor(
 
     sealed class DismissBehavior {
         data object None : DismissBehavior()
-        sealed class Gesture: DismissBehavior() {
+        sealed class Gesture : DismissBehavior() {
             data object Drag : Gesture()
             data object Slide : Gesture()
         }

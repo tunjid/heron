@@ -36,15 +36,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.timelinePreferenceExpansionEffect
-import com.tunjid.heron.scaffold.di.ScaffoldComponent
+import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.routePatternAndMatcher
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -52,23 +51,28 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.create_post
 import heron.feature_home.generated.resources.save
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
 import org.jetbrains.compose.resources.stringResource
 
 internal const val RoutePattern = "/home"
@@ -79,41 +83,31 @@ private fun createRoute(
     params = routeParams,
 )
 
-@KmpComponentCreate
-expect fun HomeNavigationComponent.Companion.create(): HomeNavigationComponent
+@BindingContainer
+object HomeNavigationBindings {
 
-@KmpComponentCreate
-expect fun HomeComponent.Companion.create(
-    dataComponent: DataComponent,
-    scaffoldComponent: ScaffoldComponent,
-): HomeComponent
-
-@Component
-abstract class HomeNavigationComponent {
-    companion object
-
-    @IntoMap
     @Provides
-    fun profileRouteParser(): Pair<String, RouteMatcher> =
-        routePatternAndMatcher(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun provideRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute,
+            routeMapper = ::createRoute
         )
-
 }
 
-@Component
-abstract class HomeComponent(
-    @Component val dataComponent: DataComponent,
-    @Component val scaffoldComponent: ScaffoldComponent,
+@BindingContainer
+class HomeBindings(
+    @Includes dataBindings: DataBindings,
+    @Includes scaffoldBindings: ScaffoldBindings,
 ) {
-    companion object
 
-    @IntoMap
     @Provides
-    fun routePattern(
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
-    ) = RoutePattern to routePaneEntry(
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,
     )
 

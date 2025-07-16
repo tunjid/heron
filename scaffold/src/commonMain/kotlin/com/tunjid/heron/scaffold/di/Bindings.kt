@@ -17,7 +17,7 @@
 package com.tunjid.heron.scaffold.di
 
 
-import com.tunjid.heron.data.di.DataComponent
+import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
@@ -26,56 +26,49 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.StateFlow
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.KmpComponentCreate
-import me.tatarka.inject.annotations.Provides
-import me.tatarka.inject.annotations.Scope
 
-@Scope
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
-annotation class ScaffoldScope
-
-class ScaffoldModule(
+class ScaffoldBindingArgs(
     val routeMatchers: List<RouteMatcher>,
     val videoPlayerController: VideoPlayerController,
 )
 
-@KmpComponentCreate
-expect fun ScaffoldComponent.Companion.create(
-    module: ScaffoldModule,
-    dataComponent: DataComponent,
-): ScaffoldComponent
-
-@ScaffoldScope
-@Component
-abstract class ScaffoldComponent(
-    private val module: ScaffoldModule,
-    @Component val dataComponent: DataComponent,
+@BindingContainer
+class ScaffoldBindings(
+    val args: ScaffoldBindingArgs,
+    @Includes val dataBindings: DataBindings,
 ) {
 
+    @SingleIn(AppScope::class)
     @Provides
     fun navStateStream(
         navStateHolder: NavigationStateHolder,
     ): StateFlow<MultiStackNav> = navStateHolder.state
 
+    @SingleIn(AppScope::class)
     @Provides
     fun routeParser(): RouteParser =
-        routeParserFrom(*(module.routeMatchers).toTypedArray())
+        routeParserFrom(*(args.routeMatchers).toTypedArray())
 
+    @SingleIn(AppScope::class)
     @Provides
     fun videoPlayerController(): VideoPlayerController =
-        module.videoPlayerController
+        args.videoPlayerController
 
+    @SingleIn(AppScope::class)
     @Provides
     fun navActions(
         navStateHolder: NavigationStateHolder,
     ): (NavigationMutation) -> Unit = navStateHolder.accept
 
-    val PersistedNavigationStateHolder.bind: NavigationStateHolder
-        @ScaffoldScope
-        @Provides get() = this
-
-
-    companion object
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideNavigationStateHolder(
+        persistedNavigationStateHolder: PersistedNavigationStateHolder
+    ): NavigationStateHolder = persistedNavigationStateHolder
 }
