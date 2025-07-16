@@ -26,12 +26,12 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.StateFlow
-
-abstract class ScaffoldScope private constructor()
 
 class ScaffoldModule(
     val routeMatchers: List<RouteMatcher>,
@@ -44,24 +44,29 @@ class ScaffoldComponent(
     @Includes val dataComponent: DataComponent,
 ) {
 
+    @SingleIn(AppScope::class)
     @Provides
     fun navStateStream(
         navStateHolder: NavigationStateHolder,
     ): StateFlow<MultiStackNav> = navStateHolder.state
 
+    @SingleIn(AppScope::class)
     @Provides
     fun routeParser(): RouteParser =
         routeParserFrom(*(module.routeMatchers).toTypedArray())
 
+    @SingleIn(AppScope::class)
     @Provides
     fun videoPlayerController(): VideoPlayerController =
         module.videoPlayerController
 
+    @SingleIn(AppScope::class)
     @Provides
     fun navActions(
         navStateHolder: NavigationStateHolder,
     ): (NavigationMutation) -> Unit = navStateHolder.accept
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideNavigationStateHolder(
         persistedNavigationStateHolder: PersistedNavigationStateHolder

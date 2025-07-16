@@ -73,58 +73,71 @@ class DataComponent(
 ) {
 
     @Named("AppScope")
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAppScope(): CoroutineScope = module.appScope
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSavedStatePath(): Path = module.savedStatePath
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSavedStateFileSystem(): FileSystem = module.savedStateFileSystem
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = module.databaseBuilder.configureAndBuild()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun providePostDao(
         database: AppDatabase,
     ): PostDao = database.postDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideProfileDao(
         database: AppDatabase,
     ): ProfileDao = database.profileDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideListDao(
         database: AppDatabase,
     ): ListDao = database.listDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideEmbedDao(
         database: AppDatabase,
     ): EmbedDao = database.embedDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideTimelineDao(
         database: AppDatabase,
     ): TimelineDao = database.timelineDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideFeedGeneratorDao(
         database: AppDatabase,
     ): FeedGeneratorDao = database.feedGeneratorDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideNotificationsDao(
         database: AppDatabase,
     ): NotificationsDao = database.notificationsDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideStarterPackDao(
         database: AppDatabase,
     ): StarterPackDao = database.starterPackDao()
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
@@ -136,53 +149,64 @@ class DataComponent(
         }
     }
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAppJson(): Json = BlueskyJson
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {
     }
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideKtorNetworkService(
         ktorNetworkService: KtorNetworkService
     ): NetworkService = ktorNetworkService
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSnapshotWriteQueue(
         snapshotWriteQueue: SnapshotWriteQueue
     ): WriteQueue = snapshotWriteQueue
 
+    @SingleIn(AppScope::class)
     @Provides
     private fun provideDataStoreSavedStateRepository(
         dataStoreSavedStateRepository: DataStoreSavedStateRepository
     ): SavedStateRepository = dataStoreSavedStateRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAuthTokenRepository(
         authTokenRepository: AuthTokenRepository
     ): AuthRepository = authTokenRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOfflineTimelineRepository(
         offlineTimelineRepository: OfflineTimelineRepository
     ): TimelineRepository = offlineTimelineRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOfflineProfileRepository(
         offlineProfileRepository: OfflineProfileRepository
     ): ProfileRepository = offlineProfileRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOfflineNotificationsRepository(
         offlineNotificationsRepository: OfflineNotificationsRepository
     ): NotificationsRepository = offlineNotificationsRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOfflineSearchRepository(
         offlineSearchRepository: OfflineSearchRepository
     ): SearchRepository = offlineSearchRepository
 
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOfflinePostRepository(
         offlinePostRepository: OfflinePostRepository

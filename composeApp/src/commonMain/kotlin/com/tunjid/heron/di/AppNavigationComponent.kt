@@ -30,6 +30,7 @@ import com.tunjid.heron.search.di.SearchNavigationComponent
 import com.tunjid.heron.signin.di.SignInNavigationComponent
 import com.tunjid.heron.splash.di.SplashNavigationComponent
 import com.tunjid.treenav.strings.RouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 

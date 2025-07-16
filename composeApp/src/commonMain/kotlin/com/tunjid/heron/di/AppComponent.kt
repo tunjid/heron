@@ -39,12 +39,12 @@ import com.tunjid.heron.splash.di.SplashComponent
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 
-abstract class AppScope private constructor()
 
 @DependencyGraph(
     scope = AppScope::class
