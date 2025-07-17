@@ -25,6 +25,7 @@ fun org.gradle.api.Project.configureUiModule(
 
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":data"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))

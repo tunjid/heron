@@ -39,6 +39,7 @@ kotlin {
         }
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":data"))
                 implementation(project(":ui-core"))
                 implementation(project(":ui-media"))
