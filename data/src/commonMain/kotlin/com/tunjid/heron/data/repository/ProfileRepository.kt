@@ -153,7 +153,7 @@ interface ProfileRepository {
     )
 }
 
-class OfflineProfileRepository @Inject constructor(
+internal class OfflineProfileRepository @Inject constructor(
     private val profileDao: ProfileDao,
     private val listDao: ListDao,
     private val starterPackDao: StarterPackDao,

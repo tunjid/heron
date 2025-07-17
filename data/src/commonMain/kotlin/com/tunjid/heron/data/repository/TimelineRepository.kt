@@ -189,7 +189,7 @@ interface TimelineRepository {
 }
 
 @Inject
-class OfflineTimelineRepository(
+internal class OfflineTimelineRepository(
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val profileDao: ProfileDao,

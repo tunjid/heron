@@ -94,7 +94,7 @@ interface SavedStateRepository {
 }
 
 @Inject
-class DataStoreSavedStateRepository(
+internal class DataStoreSavedStateRepository(
     path: Path,
     fileSystem: FileSystem,
     @Named("AppScope") appScope: CoroutineScope,

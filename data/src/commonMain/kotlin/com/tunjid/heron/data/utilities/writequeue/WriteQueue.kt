@@ -45,7 +45,7 @@ sealed class WriteQueue {
     abstract suspend fun drain()
 }
 
-class SnapshotWriteQueue @Inject constructor(
+internal class SnapshotWriteQueue @Inject constructor(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val timelineRepository: TimelineRepository,

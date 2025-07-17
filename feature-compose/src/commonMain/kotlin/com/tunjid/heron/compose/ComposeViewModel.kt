@@ -97,7 +97,7 @@ class ActualComposeViewModel(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadSignedInProfileMutations(
-            authTokenRepository = authRepository,
+            authRepository = authRepository,
         ),
         quotedPostMutations(
             quotedPostId = when (val creationType = route.creationType) {
@@ -133,9 +133,9 @@ class ActualComposeViewModel(
 )
 
 private fun loadSignedInProfileMutations(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.signedInUser.mapToMutation {
+    authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
 

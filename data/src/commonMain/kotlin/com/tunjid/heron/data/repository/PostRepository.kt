@@ -139,7 +139,7 @@ interface PostRepository {
     )
 }
 
-class OfflinePostRepository @Inject constructor(
+internal class OfflinePostRepository @Inject constructor(
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,

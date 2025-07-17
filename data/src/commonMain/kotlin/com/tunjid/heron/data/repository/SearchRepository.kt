@@ -142,7 +142,7 @@ interface SearchRepository {
     ): Flow<List<FeedGenerator>>
 }
 
-class OfflineSearchRepository @Inject constructor(
+internal class OfflineSearchRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,

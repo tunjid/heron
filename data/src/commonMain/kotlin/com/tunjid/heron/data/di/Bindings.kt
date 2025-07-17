@@ -166,7 +166,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSnapshotWriteQueue(
+    internal fun provideSnapshotWriteQueue(
         snapshotWriteQueue: SnapshotWriteQueue
     ): WriteQueue = snapshotWriteQueue
 
@@ -178,37 +178,37 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAuthTokenRepository(
+    internal fun provideAuthTokenRepository(
         authTokenRepository: AuthTokenRepository
     ): AuthRepository = authTokenRepository
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOfflineTimelineRepository(
+    internal fun provideOfflineTimelineRepository(
         offlineTimelineRepository: OfflineTimelineRepository
     ): TimelineRepository = offlineTimelineRepository
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOfflineProfileRepository(
+    internal fun provideOfflineProfileRepository(
         offlineProfileRepository: OfflineProfileRepository
     ): ProfileRepository = offlineProfileRepository
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOfflineNotificationsRepository(
+    internal fun provideOfflineNotificationsRepository(
         offlineNotificationsRepository: OfflineNotificationsRepository
     ): NotificationsRepository = offlineNotificationsRepository
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOfflineSearchRepository(
+    internal fun provideOfflineSearchRepository(
         offlineSearchRepository: OfflineSearchRepository
     ): SearchRepository = offlineSearchRepository
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOfflinePostRepository(
+    internal fun provideOfflinePostRepository(
         offlinePostRepository: OfflinePostRepository
     ): PostRepository = offlinePostRepository
 }

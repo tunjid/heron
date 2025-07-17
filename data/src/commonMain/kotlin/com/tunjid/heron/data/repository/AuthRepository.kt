@@ -66,7 +66,7 @@ interface AuthRepository {
 }
 
 @Inject
-class AuthTokenRepository(
+internal class AuthTokenRepository(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
