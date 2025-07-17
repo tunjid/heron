@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.CursorQuery
@@ -75,7 +75,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualNotificationsViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     notificationsRepository: NotificationsRepository,
     @Assisted
     scope: CoroutineScope,
@@ -91,7 +91,7 @@ class ActualNotificationsViewModel(
             notificationsRepository
         ),
         loadProfileMutations(
-            authTokenRepository
+            authRepository
         ),
     ),
     actionTransform = transform@{ actions ->
@@ -121,9 +121,9 @@ class ActualNotificationsViewModel(
 )
 
 private fun loadProfileMutations(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.signedInUser.mapToMutation {
+    authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
 

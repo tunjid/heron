@@ -32,8 +32,8 @@ kotlin {
         named("commonMain") {
             dependencies {
                 api(project(":di"))
-                api(project(":data-core"))
-                api(project(":data-database"))
+                implementation(project(":data-core"))
+                implementation(project(":data-database"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)

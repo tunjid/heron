@@ -26,7 +26,7 @@ import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -91,7 +91,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @Inject
 class ActualProfileViewModel(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
@@ -119,7 +119,7 @@ class ActualProfileViewModel(
         loadSignedInProfileMutations(
             profileId = route.profileHandleOrId,
             scope = scope,
-            authTokenRepository = authTokenRepository,
+            authRepository = authRepository,
             timelineRepository = timelineRepository,
         ),
         profileRelationshipMutations(
@@ -180,10 +180,10 @@ private fun loadProfileMutations(
 private fun loadSignedInProfileMutations(
     profileId: Id.Profile,
     scope: CoroutineScope,
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.signedInUser
+    authRepository.signedInUser
         .distinctUntilChangedBy { it?.handle }
         .mapToManyMutations { signedInProfile ->
             val isSignedInProfile = signedInProfile?.did?.id == profileId.id ||

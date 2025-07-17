@@ -18,7 +18,7 @@ package com.tunjid.heron.home
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -59,7 +59,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @Inject
 class ActualHomeViewModel(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -78,7 +78,7 @@ class ActualHomeViewModel(
             timelineRepository = timelineRepository,
         ),
         loadProfileMutations(
-            authTokenRepository
+            authRepository
         ),
     ),
     actionTransform = transform@{ actions ->
@@ -110,9 +110,9 @@ class ActualHomeViewModel(
 )
 
 private fun loadProfileMutations(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.signedInUser.mapToMutation {
+    authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
 

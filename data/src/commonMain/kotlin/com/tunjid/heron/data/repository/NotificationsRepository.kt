@@ -70,7 +70,7 @@ interface NotificationsRepository {
     suspend fun markRead(at: Instant)
 }
 
-class OfflineNotificationsRepository @Inject constructor(
+internal class OfflineNotificationsRepository @Inject constructor(
     @Named("AppScope") appScope: CoroutineScope,
     private val postDao: PostDao,
     private val notificationsDao: NotificationsDao,

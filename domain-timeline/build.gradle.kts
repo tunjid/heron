@@ -30,6 +30,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":data-core"))
                 implementation(project(":data"))
 
                 implementation(libs.kotlinx.coroutines.core)

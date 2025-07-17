@@ -54,6 +54,8 @@ kotlin {
             implementation(libs.filekit.dialogs)
         }
         commonMain.dependencies {
+            implementation(project(":data-core"))
+            implementation(project(":data-database"))
             implementation(project(":data"))
             implementation(project(":scaffold"))
             implementation(project(":feature-auth"))

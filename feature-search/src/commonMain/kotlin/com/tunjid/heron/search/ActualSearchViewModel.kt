@@ -23,7 +23,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
@@ -85,7 +85,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualSearchViewModel(
     navActions: (NavigationMutation) -> Unit,
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
@@ -103,7 +103,7 @@ class ActualSearchViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-        loadProfileMutations(authTokenRepository),
+        loadProfileMutations(authRepository),
         trendsMutations(searchRepository),
         suggestedStarterPackMutations(
             searchRepository = searchRepository,
@@ -144,9 +144,9 @@ class ActualSearchViewModel(
 )
 
 private fun loadProfileMutations(
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    authTokenRepository.signedInUser.mapToMutation {
+    authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
 
@@ -491,8 +491,6 @@ private inline fun <
                 check(this is SearchState.OfFeedGenerators)
                 copy(currentQuery = query)
             }
-
-            else -> throw IllegalArgumentException()
         }
     }
     val refreshes = sharedQueries.distinctUntilChangedBy {
