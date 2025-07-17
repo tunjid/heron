@@ -17,6 +17,7 @@
 package com.tunjid.heron.search
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -63,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
@@ -71,7 +73,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
-import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
@@ -80,6 +81,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -122,7 +124,9 @@ internal fun SearchScreen(
                     Action.Navigate.DelegateTo(
                         NavigationAction.Common.ToProfile(
                             profile = profileWithViewerState.profile,
-                            avatarSharedElementKey = profileWithViewerState.avatarSharedElementKey(),
+                            avatarSharedElementKey = profileWithViewerState
+                                .profile
+                                .searchProfileAvatarSharedElementKey(),
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
                         )
                     )
@@ -355,13 +359,17 @@ private fun SuggestedContent(
             items = suggestedProfiles.take(5),
             key = { suggestedProfile -> suggestedProfile.profile.did.id },
             itemContent = { suggestedProfile ->
-                SuggestedProfile(
-                    modifier = Modifier
-                        .fillParentMaxWidth(),
-                    paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                    profileWithViewerState = suggestedProfile,
-                    onProfileClicked = onProfileClicked,
-                    onViewerStateClicked = onViewerStateClicked,
+                ProfileWithViewerState(
+                    modifier = modifier
+                        .clickable { onProfileClicked(suggestedProfile) }
+                        .padding(horizontal = 24.dp),
+                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    signedInProfileId = null,
+                    profile = suggestedProfile.profile,
+                    viewerState = suggestedProfile.viewerState,
+                    profileSharedElementKey = Profile::searchProfileAvatarSharedElementKey,
+                    onProfileClicked = { onProfileClicked(suggestedProfile) },
+                    onViewerStateClicked = { onViewerStateClicked(suggestedProfile) },
                 )
             }
         )
@@ -673,3 +681,6 @@ private fun SearchResults(
         }
     }
 }
+
+private fun Profile.searchProfileAvatarSharedElementKey(): String =
+    "suggested-profile-${did.id}"

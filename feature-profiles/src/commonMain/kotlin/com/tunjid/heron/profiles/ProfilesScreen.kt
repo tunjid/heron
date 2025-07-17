@@ -31,12 +31,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.profiles.ui.ProfileWithRelationship
-import com.tunjid.heron.profiles.ui.sharedElementKey
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -71,20 +71,24 @@ internal fun ProfilesScreen(
             items = items,
             key = { it.profile.did.id },
             itemContent = { item ->
-                ProfileWithRelationship(
+                ProfileWithViewerState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
-                    profileWithViewerState = item,
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     signedInProfileId = signedInProfileId,
+                    profile = item.profile,
+                    viewerState = item.viewerState,
+                    profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
                     onProfileClicked = { profile ->
                         actions(
                             Action.Navigate.DelegateTo(
                                 NavigationAction.Common.ToProfile(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = profile,
-                                    avatarSharedElementKey = item.sharedElementKey()
+                                    avatarSharedElementKey = item
+                                        .profile
+                                        .profileWithRelationshipAvatarSharedElementKey(),
                                 )
                             )
                         )
@@ -120,3 +124,5 @@ internal fun ProfilesScreen(
     )
 }
 
+private fun Profile.profileWithRelationshipAvatarSharedElementKey() =
+    "profiles-${did}"
