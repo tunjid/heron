@@ -27,4 +27,5 @@ data class ListMember(
     val subject: Profile,
     val listUri: ListUri,
     val createdAt: Instant,
+    val viewerState: ProfileViewerState?,
 )

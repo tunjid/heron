@@ -206,7 +206,7 @@ internal class OfflineProfileRepository @Inject constructor(
         limit: Long,
     ): Flow<List<Profile>> =
         signedInProfileId()
-            .flatMapLatest { signedInProfile ->
+            .flatMapLatest { profileId ->
                 val otherProfileResolvedId = lookupProfileDid(
                     profileId = otherProfileId,
                     profileDao = profileDao,
@@ -214,7 +214,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 )?.did ?: return@flatMapLatest emptyFlow()
 
                 profileDao.commonFollowers(
-                    profileId = signedInProfile.id,
+                    profileId = profileId.id,
                     otherProfileId = otherProfileResolvedId,
                     limit = limit,
                 )
@@ -228,42 +228,46 @@ internal class OfflineProfileRepository @Inject constructor(
         query: ListMemberQuery,
         cursor: Cursor
     ): Flow<CursorList<ListMember>> =
-        combine(
-            listDao.listMembers(
-                listUri = query.listUri.uri,
-                offset = query.data.offset,
-                limit = query.data.limit,
-            )
-                .map {
-                    it.map(PopulatedListMemberEntity::asExternalModel)
-                },
-            nextCursorFlow(
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    networkService.api.getList(
-                        GetListQueryParams(
-                            list = query.listUri.uri.let(::AtUri),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        )
+        signedInProfileId()
+            .flatMapLatest { profileId ->
+                combine(
+                    listDao.listMembers(
+                        listUri = query.listUri.uri,
+                        signedInUserId = profileId.id,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
                     )
-                },
-                nextCursor = GetListResponse::cursor,
-                onResponse = {
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(list)
-                        items.forEach { listItemView ->
-                            add(
-                                listUri = list.uri.atUri.let(::ListUri),
-                                listItemView = listItemView,
+                        .map {
+                            it.map(PopulatedListMemberEntity::asExternalModel)
+                        },
+                    nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            networkService.api.getList(
+                                GetListQueryParams(
+                                    list = query.listUri.uri.let(::AtUri),
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
+                                )
                             )
-                        }
-                    }
-                },
-            ),
-            ::CursorList
-        )
-            .distinctUntilChanged()
+                        },
+                        nextCursor = GetListResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(list)
+                                items.forEach { listItemView ->
+                                    add(
+                                        listUri = list.uri.atUri.let(::ListUri),
+                                        listItemView = listItemView,
+                                    )
+                                }
+                            }
+                        },
+                    ),
+                    ::CursorList
+                )
+                    .distinctUntilChanged()
+            }
 
     override fun followers(
         query: ProfilesQuery,

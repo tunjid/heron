@@ -74,6 +74,9 @@ interface ListDao {
     @Query(
         """
             SELECT * FROM listMembers
+            LEFT JOIN profileViewerStates
+            ON profileId = :signedInUserId
+            AND subjectId = otherProfileId
 	        WHERE listUri = :listUri
             ORDER BY createdAt
             DESC
@@ -83,6 +86,7 @@ interface ListDao {
     )
     fun listMembers(
         listUri: String,
+        signedInUserId: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedListMemberEntity>>
