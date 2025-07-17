@@ -26,7 +26,7 @@ import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.repository.AuthTokenRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -70,7 +70,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
-    authTokenRepository: AuthTokenRepository,
+    authRepository: AuthRepository,
     postRepository: PostRepository,
     writeQueue: WriteQueue,
     @Assisted
@@ -97,7 +97,7 @@ class ActualComposeViewModel(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadSignedInProfileMutations(
-            authTokenRepository = authTokenRepository,
+            authTokenRepository = authRepository,
         ),
         quotedPostMutations(
             quotedPostId = when (val creationType = route.creationType) {
