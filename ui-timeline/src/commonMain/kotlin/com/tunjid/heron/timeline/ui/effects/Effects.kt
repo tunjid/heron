@@ -22,8 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import com.tunjid.heron.domain.timeline.TilingState
-import com.tunjid.heron.domain.timeline.TimelineState
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.scan

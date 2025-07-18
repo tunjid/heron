@@ -22,10 +22,10 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.TilingState
-import com.tunjid.heron.domain.timeline.TimelineLoadAction
-import com.tunjid.heron.domain.timeline.tilingAction
-import com.tunjid.heron.domain.timeline.update
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.tiling.tilingAction
+import com.tunjid.heron.timeline.state.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation

@@ -18,8 +18,8 @@ package com.tunjid.heron.feed
 
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.domain.timeline.TimelineState
-import com.tunjid.heron.domain.timeline.TimelineStateHolder
+import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.treenav.pop

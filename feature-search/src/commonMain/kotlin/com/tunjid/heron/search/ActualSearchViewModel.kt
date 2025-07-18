@@ -28,9 +28,9 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.TilingState
-import com.tunjid.heron.domain.timeline.mapCursorList
-import com.tunjid.heron.domain.timeline.tilingMutations
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation

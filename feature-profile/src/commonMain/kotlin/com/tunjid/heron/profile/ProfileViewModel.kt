@@ -38,7 +38,7 @@ import com.tunjid.heron.data.utilities.ensureValidAnchors
 import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.update
+import com.tunjid.heron.timeline.state.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
