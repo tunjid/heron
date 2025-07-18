@@ -131,8 +131,15 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                     "Expected query of ${Query::class}, got ${action.query::class}"
                 )
                 val lastQuery = queries.value
+
+                // Everything is okay, proceed.
                 val hasSameAnchor = !lastQuery.hasDifferentAnchor(action.query)
+
+                // Favor the query that was requested with a more current anchor.
+                // The query with the older anchor was most likely triggered by a scroll
+                // at a boundary.
                 val isNewerQuery = action.query.data.cursorAnchor > lastQuery.data.cursorAnchor
+
                 if (hasSameAnchor || isNewerQuery) queries.update {
                     action.query
                 }
@@ -202,24 +209,6 @@ inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).
 
 fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
     data.cursorAnchor != newQuery.data.cursorAnchor
-
-inline fun <Query : CursorQuery> Flow<Query>.ensureValidAnchors(
-): Flow<Query> = scan<Query, Query?>(
-    initial = null,
-    operation = { lastQuery, currentQuery ->
-        if (lastQuery == null) return@scan currentQuery
-
-        // Everything is okay, proceed.
-        if (!currentQuery.hasDifferentAnchor(lastQuery)) return@scan currentQuery
-
-        // Favor the query that was requested with a more current anchor.
-        // The query with the older anchor was most likely triggered by a scroll
-        // at a boundary.
-        if (currentQuery.data.cursorAnchor > lastQuery.data.cursorAnchor) currentQuery
-        else lastQuery
-    }
-)
-    .filterNotNull()
 
 fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     currentQuery: Query,
