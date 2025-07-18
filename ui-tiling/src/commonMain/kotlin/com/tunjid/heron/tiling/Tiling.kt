@@ -41,15 +41,19 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 interface TilingState<Query : CursorQuery, Item> {
 
     val tilingData: Data<Query, Item>
 
+    @Serializable
     data class Data<Query : CursorQuery, Item>(
         val currentQuery: Query,
         val numColumns: Int = 1,
         val status: Status = Status.Initial,
+        @Transient
         val items: TiledList<Query, Item> = emptyTiledList(),
     )
 
