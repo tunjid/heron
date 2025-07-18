@@ -85,7 +85,7 @@ interface TilingState<Query : CursorQuery, Item> {
 val TilingState<*, *>.isRefreshing
     get() = tilingData.status is TilingState.Status.Refreshing
 
-val <T> TilingState<*, T>.tiledItems
+val <Query: CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
 fun <Action : Any, State : TilingState<*, *>> ActionStateMutator<Action, StateFlow<State>>.tilingAction(
