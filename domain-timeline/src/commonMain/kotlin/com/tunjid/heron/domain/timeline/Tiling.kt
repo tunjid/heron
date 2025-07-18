@@ -18,6 +18,7 @@ package com.tunjid.heron.domain.timeline
 
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.cursorListTiler
 import com.tunjid.heron.data.utilities.cursorTileInputs
@@ -35,8 +36,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.Instant
 
 interface TilingState<Query : CursorQuery, Item> {
@@ -92,10 +95,11 @@ fun <Action : Any, State : TilingState<*, *>> ActionStateMutator<Action, StateFl
 suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
     crossinline currentState: suspend () -> State,
     crossinline onRefreshQuery: (Query) -> Query,
-    noinline updatePage: Query.(CursorQuery.Data) -> Query,
-    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     crossinline onNewItems: (TiledList<Query, Item>) -> TiledList<Query, Item>,
     crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State,
+    noinline updatePage: Query.(CursorQuery.Data) -> Query,
+    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
+    noinline queryRefreshBy: (Query) -> Any = { it.data.cursorAnchor },
 ): Flow<Mutation<State>> {
     // Read the starting state at the time of subscription
     val startingState = currentState().tilingData
@@ -113,11 +117,14 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             }
 
             is TilingState.Action.LoadAround -> {
-                if (!queries.value.hasDifferentAnchor(action.query)) {
-                    if (action.query !is Query) throw IllegalArgumentException(
-                        "Expected query of ${Query::class}, got ${action.query::class}"
-                    )
-                    queries.value = action.query
+                if (action.query !is Query) throw IllegalArgumentException(
+                    "Expected query of ${Query::class}, got ${action.query::class}"
+                )
+                val lastQuery = queries.value
+                val hasSameAnchor = !lastQuery.hasDifferentAnchor(action.query)
+                val isNewerQuery = action.query.data.cursorAnchor > lastQuery.data.cursorAnchor
+                if (hasSameAnchor || isNewerQuery) queries.update {
+                    action.query
                 }
             }
 
@@ -132,9 +139,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
         .distinctUntilChanged()
         .flatMapLatest { (queries, numColumns) ->
             // Refreshes need tear down the tiling pipeline all over
-            val refreshes = queries.distinctUntilChangedBy {
-                it.data.cursorAnchor
-            }
+            val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
             merge(
                 queries.mapToMutation<Query, TilingState.Data<Query, Item>> { newQuery ->
                     copy(
@@ -171,8 +176,15 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             )
         }
         .mapToMutation { tilingDataMutation ->
-            onTilingDataUpdated(
-                tilingDataMutation(tilingData)
-            )
+            val updatedTilingData = tilingDataMutation(this.tilingData)
+            onTilingDataUpdated(updatedTilingData)
         }
+}
+
+inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).mapCursorList(
+    crossinline mapper: (T) -> R
+): (Query, Cursor) -> Flow<CursorList<R>> = { query, cursor ->
+    invoke(query, cursor).map { cursorList ->
+        cursorList.mapCursorList(mapper)
+    }
 }

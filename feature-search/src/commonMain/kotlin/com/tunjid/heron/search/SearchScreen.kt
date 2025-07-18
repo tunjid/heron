@@ -66,6 +66,8 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.domain.timeline.TilingState
+import com.tunjid.heron.domain.timeline.tiledItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
@@ -569,7 +571,7 @@ private fun SearchResults(
     when (val state = searchState.value) {
         is SearchState.OfPosts -> {
             val now = remember { Clock.System.now() }
-            val results by rememberUpdatedState(state.results)
+            val results by rememberUpdatedState(state.tiledItems)
             LazyColumn(
                 modifier = modifier,
                 state = listState,
@@ -594,14 +596,18 @@ private fun SearchResults(
                 items = results,
                 onQueryChanged = { query ->
                     searchResultStateHolder.accept(
-                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                        SearchState.Tile(
+                            tilingAction = TilingState.Action.LoadAround(
+                                query ?: state.tilingData.currentQuery,
+                            )
+                        )
                     )
                 }
             )
         }
 
         is SearchState.OfProfiles -> {
-            val results by rememberUpdatedState(state.results)
+            val results by rememberUpdatedState(state.tiledItems)
             LazyColumn(
                 modifier = modifier,
                 state = listState,
@@ -624,14 +630,18 @@ private fun SearchResults(
                 items = results,
                 onQueryChanged = { query ->
                     searchResultStateHolder.accept(
-                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                        SearchState.Tile(
+                            tilingAction = TilingState.Action.LoadAround(
+                                query ?: state.tilingData.currentQuery,
+                            )
+                        )
                     )
                 }
             )
         }
 
         is SearchState.OfFeedGenerators -> {
-            val results by rememberUpdatedState(state.results)
+            val results by rememberUpdatedState(state.tiledItems)
             LazyColumn(
                 modifier = modifier,
                 state = listState,
@@ -652,7 +662,11 @@ private fun SearchResults(
                 items = results,
                 onQueryChanged = { query ->
                     searchResultStateHolder.accept(
-                        SearchState.LoadAround(query = query ?: state.currentQuery)
+                        SearchState.Tile(
+                            tilingAction = TilingState.Action.LoadAround(
+                                query ?: state.tilingData.currentQuery,
+                            )
+                        )
                     )
                 }
             )

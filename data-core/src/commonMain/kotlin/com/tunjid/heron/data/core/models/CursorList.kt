@@ -26,6 +26,13 @@ data class CursorList<T>(
     val nextCursor: Cursor,
 ) : List<T> by items
 
+inline fun <T, R> CursorList<T>.mapCursorList(
+    mapper: (T) -> R
+) = CursorList(
+    items = items.map(mapper),
+    nextCursor = nextCursor,
+)
+
 @Serializable
 sealed class Cursor {
     @Serializable
