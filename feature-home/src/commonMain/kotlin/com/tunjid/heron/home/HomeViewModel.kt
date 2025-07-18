@@ -22,7 +22,9 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.domain.timeline.TilingState
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
+import com.tunjid.heron.domain.timeline.tilingAction
 import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -192,6 +194,8 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
         (0..<currentState.timelineStateHolders.size)
             .map(currentState.timelineStateHolders::stateHolderAt)
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
-            ?.accept
-            ?.invoke(TimelineLoadAction.Fetch.Refresh)
+            ?.tilingAction(
+                tilingAction = TilingState.Action.Refresh,
+                stateHolderAction = TimelineLoadAction::Tile,
+            )
     }

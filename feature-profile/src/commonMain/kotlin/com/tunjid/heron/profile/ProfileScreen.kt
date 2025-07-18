@@ -93,10 +93,13 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.domain.timeline.TilingState
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
 import com.tunjid.heron.domain.timeline.TimelineStateHolders
-import com.tunjid.heron.domain.timeline.TimelineStatus
+import com.tunjid.heron.domain.timeline.isRefreshing
+import com.tunjid.heron.domain.timeline.tiledItems
+import com.tunjid.heron.domain.timeline.tilingAction
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -187,7 +190,7 @@ internal fun ProfileScreen(
         updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
             ?.state
             ?.collect {
-                value = it.status is TimelineStatus.Refreshing
+                value = it.isRefreshing
             }
     }
 
@@ -202,8 +205,10 @@ internal fun ProfileScreen(
                 state = pullToRefreshState,
                 onRefresh = {
                     updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
-                        ?.accept
-                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
+                        ?.tilingAction(
+                            tilingAction = TilingState.Action.Refresh,
+                            stateHolderAction = TimelineLoadAction::Tile,
+                        )
                 }
             ),
         state = headerState.headerState,
@@ -244,8 +249,10 @@ internal fun ProfileScreen(
                     updatedTimelineStateHolders.stateHolderAtOrNull(
                         index = index
                     )
-                        ?.accept
-                        ?.invoke(TimelineLoadAction.Fetch.Refresh)
+                        ?.tilingAction(
+                            tilingAction = TilingState.Action.Refresh,
+                            stateHolderAction = TimelineLoadAction::Tile,
+                        )
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -752,7 +759,7 @@ private fun ProfileTimeline(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.items)
+    val items by rememberUpdatedState(timelineState.tiledItems)
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val density = LocalDensity.current
@@ -773,10 +780,11 @@ private fun ProfileTimeline(
                     val itemWidth = with(density) {
                         presentation.cardSize.toPx()
                     }
-                    timelineStateHolder.accept(
-                        TimelineLoadAction.Fetch.GridSize(
+                    timelineStateHolder.tilingAction(
+                        tilingAction = TilingState.Action.GridSize(
                             floor(it.width / itemWidth).roundToInt()
-                        )
+                        ),
+                        stateHolderAction = TimelineLoadAction::Tile,
                     )
                 },
             state = gridState,
@@ -906,8 +914,11 @@ private fun ProfileTimeline(
     gridState.PivotedTilingEffect(
         items = items,
         onQueryChanged = { query ->
-            timelineStateHolder.accept(
-                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
+            timelineStateHolder.tilingAction(
+                tilingAction = TilingState.Action.LoadAround(
+                    query ?: timelineState.tilingData.currentQuery
+                ),
+                stateHolderAction = TimelineLoadAction::Tile,
             )
         }
     )

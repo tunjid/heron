@@ -32,6 +32,7 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data-core"))
+                implementation(project(":data"))
                 implementation(project(":domain-timeline"))
 
                 implementation(project(":ui-core"))

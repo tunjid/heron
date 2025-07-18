@@ -47,9 +47,12 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.domain.timeline.TilingState
 import com.tunjid.heron.domain.timeline.TimelineLoadAction
 import com.tunjid.heron.domain.timeline.TimelineStateHolder
-import com.tunjid.heron.domain.timeline.TimelineStatus
+import com.tunjid.heron.domain.timeline.isRefreshing
+import com.tunjid.heron.domain.timeline.tiledItems
+import com.tunjid.heron.domain.timeline.tilingAction
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -102,7 +105,7 @@ private fun FeedTimeline(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.items)
+    val items by rememberUpdatedState(timelineState.tiledItems)
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val density = LocalDensity.current
@@ -122,15 +125,21 @@ private fun FeedTimeline(
                 val itemWidth = with(density) {
                     presentation.cardSize.toPx()
                 }
-                timelineStateHolder.accept(
-                    TimelineLoadAction.Fetch.GridSize(
+                timelineStateHolder.tilingAction(
+                    tilingAction = TilingState.Action.GridSize(
                         floor(it.width / itemWidth).roundToInt()
-                    )
+                    ),
+                    stateHolderAction = TimelineLoadAction::Tile,
                 )
             },
-        isRefreshing = timelineState.status is TimelineStatus.Refreshing,
+        isRefreshing = timelineState.isRefreshing,
         state = rememberPullToRefreshState(),
-        onRefresh = { timelineStateHolder.accept(TimelineLoadAction.Fetch.Refresh) }
+        onRefresh = {
+            timelineStateHolder.tilingAction(
+                tilingAction = TilingState.Action.Refresh,
+                stateHolderAction = TimelineLoadAction::Tile,
+            )
+        }
     ) {
         LookaheadScope {
             LazyVerticalStaggeredGrid(
@@ -253,8 +262,11 @@ private fun FeedTimeline(
     gridState.PivotedTilingEffect(
         items = items,
         onQueryChanged = { query ->
-            timelineStateHolder.accept(
-                TimelineLoadAction.Fetch.LoadAround(query ?: timelineState.currentQuery)
+            timelineStateHolder.tilingAction(
+                tilingAction = TilingState.Action.LoadAround(
+                    query ?: timelineState.tilingData.currentQuery
+                ),
+                stateHolderAction = TimelineLoadAction::Tile,
             )
         }
     )

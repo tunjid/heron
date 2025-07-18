@@ -96,10 +96,10 @@ fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     return seenQuery
 }
 
-fun <Query : CursorQuery, Item> cursorTileInputs(
+inline fun <Query : CursorQuery, Item> cursorTileInputs(
     numColumns: Flow<Int>,
     queries: Flow<Query>,
-    updatePage: Query.(CursorQuery.Data) -> Query,
+    crossinline updatePage: Query.(CursorQuery.Data) -> Query,
 ): Flow<Tile.Input<Query, Item>> = merge(
     numColumns.map { columns ->
         Tile.Limiter(
@@ -109,9 +109,18 @@ fun <Query : CursorQuery, Item> cursorTileInputs(
     },
     queries.toPivotedTileInputs(
         numColumns.map { columns ->
-            cursorPivotRequest(
-                numColumns = max(1, columns),
-                updatePage = updatePage,
+            val numColumns = max(1, columns)
+            PivotRequest(
+                onCount = numColumns * 3,
+                offCount = numColumns * 2,
+                comparator = cursorQueryComparator(),
+                previousQuery = {
+                    if ((data.page - 1) < 0) null
+                    else updatePage(data.copy(page = data.page - 1))
+                },
+                nextQuery = {
+                    updatePage(data.copy(page = data.page + 1))
+                }
             )
         }
     )
@@ -133,23 +142,7 @@ fun <Query : CursorQuery, Item> cursorListTiler(
     )
 )
 
-private inline fun <Query : CursorQuery, Item> cursorPivotRequest(
-    numColumns: Int,
-    crossinline updatePage: Query.(CursorQuery.Data) -> Query,
-) = PivotRequest<Query, Item>(
-    onCount = numColumns * 3,
-    offCount = numColumns * 2,
-    comparator = cursorQueryComparator(),
-    previousQuery = {
-        if ((data.page - 1) < 0) null
-        else updatePage(data.copy(page = data.page - 1))
-    },
-    nextQuery = {
-        updatePage(data.copy(page = data.page + 1))
-    }
-)
-
-private inline fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query ->
+fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query ->
     query.data.page
 }
 

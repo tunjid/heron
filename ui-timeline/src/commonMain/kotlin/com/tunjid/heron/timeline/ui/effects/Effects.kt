@@ -22,8 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.domain.timeline.TilingState
 import com.tunjid.heron.domain.timeline.TimelineState
-import com.tunjid.heron.domain.timeline.TimelineStatus
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.scan
@@ -35,13 +35,13 @@ fun <LazyState : ScrollableState> LazyState.TimelineRefreshEffect(
 ) {
     val updatedTimelineState by rememberUpdatedState(timelineState)
     LaunchedEffect(this) {
-        snapshotFlow { updatedTimelineState.status }
+        snapshotFlow { updatedTimelineState.tilingData.status }
             // Scan to make sure its not the first refreshed emission
-            .scan(Pair<TimelineStatus?, TimelineStatus?>(null, null)) { pair, current ->
+            .scan(Pair<TilingState.Status?, TilingState.Status?>(null, null)) { pair, current ->
                 pair.copy(first = pair.second, second = current)
             }
             .filter { (first, second) ->
-                first != null && first != second && second is TimelineStatus.Refreshed
+                first != null && first != second && second is TilingState.Status.Refreshed
             }
             .collectLatest {
                 onRefresh()
