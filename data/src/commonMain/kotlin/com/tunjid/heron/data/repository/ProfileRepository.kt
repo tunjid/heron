@@ -61,14 +61,14 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
-import com.tunjid.heron.data.utilities.offset
+import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates

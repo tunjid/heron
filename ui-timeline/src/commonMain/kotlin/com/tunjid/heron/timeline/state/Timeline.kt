@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.utilities.CursorQuery
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
