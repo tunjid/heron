@@ -34,6 +34,7 @@ kotlin {
                 implementation(project(":data"))
 
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.serialization.core)
 
                 implementation(libs.tunjid.mutator.core.common)
                 implementation(libs.tunjid.mutator.coroutines.common)
