@@ -31,7 +31,6 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data-core"))
-                implementation(project(":data"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.core)
