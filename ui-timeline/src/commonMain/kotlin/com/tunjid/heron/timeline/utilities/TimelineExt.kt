@@ -74,13 +74,14 @@ fun Timeline.displayName() = when (this) {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimelineTitle(
+    modifier: Modifier = Modifier,
     timeline: Timeline?,
     creator: Profile?,
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
 ) {
     if (timeline != null) Row(
-        modifier = Modifier
+        modifier = modifier
             .padding(
                 horizontal = 8.dp
             ),
@@ -127,7 +128,7 @@ val Timeline.description: String
     get() = when (this) {
         is Timeline.Home.Feed -> feedGenerator.description
         is Timeline.Home.List -> feedList.description
-        is Timeline.StarterPack -> ""
+        is Timeline.StarterPack -> starterPack.description
 
         is Timeline.Home.Following,
         is Timeline.Profile,
