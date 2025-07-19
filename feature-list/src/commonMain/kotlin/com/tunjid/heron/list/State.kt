@@ -65,8 +65,9 @@ sealed class ListScreenStateHolders {
         }
 
     fun refresh() = when(this) {
-        // TODO: Implement refresh here
-        is Members -> Unit
+        is Members -> accept(
+            TilingState.Action.Refresh
+        )
         is Timeline -> accept(
             TimelineLoadAction.Tile(
                 tilingAction = TilingState.Action.Refresh
@@ -80,7 +81,7 @@ data class MemberState(
     override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
 ) : TilingState<ListMemberQuery, ListMember>
 
-typealias MembersStateHolder = ActionStateMutator<ListMemberQuery, StateFlow<MemberState>>
+typealias MembersStateHolder = ActionStateMutator<TilingState.Action, StateFlow<MemberState>>
 
 sealed class Action(val key: String) {
 

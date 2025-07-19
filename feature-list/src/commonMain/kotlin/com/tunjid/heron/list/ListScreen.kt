@@ -299,7 +299,9 @@ private fun ListMembers(
         items = updatedMembers,
         onQueryChanged = { query ->
             membersStateHolder.accept(
-                query ?: state.tilingData.currentQuery
+                TilingState.Action.LoadAround(
+                    query ?: state.tilingData.currentQuery
+                )
             )
         }
     )

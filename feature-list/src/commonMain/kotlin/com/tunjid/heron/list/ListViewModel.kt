@@ -210,7 +210,6 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
             actionTransform = { actions ->
                 actions.toMutationStream {
                     type().flow
-                        .map { TilingState.Action.LoadAround(it) }
                         .tilingMutations(
                             currentState = { state() },
                             onRefreshQuery = { query ->
