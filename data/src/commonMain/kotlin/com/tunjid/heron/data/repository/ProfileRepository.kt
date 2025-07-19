@@ -32,6 +32,7 @@ import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -39,6 +40,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
@@ -61,14 +63,12 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
-import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates

@@ -66,8 +66,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
@@ -77,6 +75,8 @@ import com.tunjid.heron.search.ui.SuggestedProfile
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState

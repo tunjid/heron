@@ -19,23 +19,23 @@ package com.tunjid.heron.search
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.mapCursorList
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator

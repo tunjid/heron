@@ -93,13 +93,6 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.timeline.state.TimelineLoadAction
-import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.state.TimelineStateHolders
-import com.tunjid.heron.tiling.isRefreshing
-import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.tiling.tilingAction
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -108,6 +101,13 @@ import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.isRefreshing
+import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.tiling.tilingAction
+import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect

@@ -33,8 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs

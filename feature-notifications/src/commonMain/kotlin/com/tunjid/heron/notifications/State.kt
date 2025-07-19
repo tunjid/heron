@@ -16,12 +16,12 @@
 
 package com.tunjid.heron.notifications
 
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems

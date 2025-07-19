@@ -24,9 +24,9 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
