@@ -95,18 +95,18 @@ internal fun TimelineTitle(
 private val Timeline.avatarImageArgs: ImageArgs?
     get() = when (this) {
         is Timeline.Home.Feed ->
-            if (listGenerator.avatar == null) null
+            if (feedGenerator.avatar == null) null
             else ImageArgs(
-                url = listGenerator.avatar?.uri,
+                url = feedGenerator.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
                 shape = TimelineAvatarShape,
             )
 
         is Timeline.Home.List ->
-            if (listList.avatar == null) null
+            if (feedList.avatar == null) null
             else ImageArgs(
-                url = listList.avatar?.uri,
+                url = feedList.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
                 shape = TimelineAvatarShape,
@@ -120,8 +120,8 @@ private val Timeline.avatarImageArgs: ImageArgs?
 private fun Timeline.getDescription(
     creator: Profile?,
 ): String = when (this) {
-    is Timeline.Home.Feed -> creator?.displayName ?: listGenerator.creator.handle.id
-    is Timeline.Home.List -> creator?.displayName ?: listList.creator.handle.id
+    is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.handle.id
+    is Timeline.Home.List -> creator?.displayName ?: feedList.creator.handle.id
 
     is Timeline.Home.Following,
     is Timeline.Profile,
