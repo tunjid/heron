@@ -263,7 +263,7 @@ internal fun ProfileScreen(
                     modifier = Modifier
                         .paneClip(),
                     state = pagerState,
-                    key = { page -> page },
+                    key = { page -> updatedStateHolders[page].key },
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {

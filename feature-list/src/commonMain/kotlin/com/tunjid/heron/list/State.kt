@@ -56,6 +56,10 @@ sealed class ListScreenStateHolders {
         val mutator: TimelineStateHolder,
     ) : ListScreenStateHolders(), TimelineStateHolder by mutator
 
+    val key get() = when(this) {
+        is Members -> "Members"
+        is Timeline -> "Timeline"
+    }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {

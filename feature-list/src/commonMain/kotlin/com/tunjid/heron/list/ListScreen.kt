@@ -188,6 +188,7 @@ internal fun ListScreen(
                     modifier = Modifier
                         .fillMaxSize(),
                     state = pagerState,
+                    key = { page -> updatedStateHolders[page].key },
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
                             is ListScreenStateHolders.Members -> ListMembers(
