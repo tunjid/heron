@@ -112,6 +112,15 @@ private val Timeline.avatarImageArgs: ImageArgs?
                 shape = TimelineAvatarShape,
             )
 
+        is Timeline.StarterPack ->
+            if (starterPack.list?.avatar == null) null
+            else ImageArgs(
+                url = starterPack.list?.avatar?.uri,
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+                shape = TimelineAvatarShape,
+            )
+
         is Timeline.Home.Following,
         is Timeline.Profile,
             -> null
@@ -122,10 +131,12 @@ private fun Timeline.getDescription(
 ): String = when (this) {
     is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.handle.id
     is Timeline.Home.List -> creator?.displayName ?: feedList.creator.handle.id
+    is Timeline.StarterPack -> creator?.displayName ?: listTimeline.getDescription(creator)
 
     is Timeline.Home.Following,
     is Timeline.Profile,
         -> null
+
 } ?: ""
 
 private val TimelineAvatarShape = RoundedPolygonShape.Star(

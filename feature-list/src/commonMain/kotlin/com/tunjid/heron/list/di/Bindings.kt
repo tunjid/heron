@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
@@ -85,6 +86,9 @@ private val Route.profileId by mappedRoutePath(
 
 private val Route.listUriSuffix by routePath()
 
+private val Route.starterPackUriSuffix by routePath()
+
+
 private val RequestTrie = mapOf(
     PathPattern(ListRoutePattern) to { route: Route ->
         TimelineRequest.OfList.WithProfile(
@@ -97,6 +101,19 @@ private val RequestTrie = mapOf(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::ListUri)
+        )
+    },
+    PathPattern(StarterPackRoutePattern) to { route: Route ->
+        TimelineRequest.OfStarterPack.WithProfile(
+            profileHandleOrDid = route.profileId,
+            starterPackUriSuffix = route.starterPackUriSuffix,
+        )
+    },
+    PathPattern(StarterPackRouteUriPattern) to { route: Route ->
+        TimelineRequest.OfStarterPack.WithUri(
+            uri = route.routeParams.pathAndQueries
+                .getAsRawUri(Uri.Host.AtProto)
+                .let(::StarterPackUri)
         )
     },
 ).toRouteTrie()
@@ -125,6 +142,24 @@ object ListNavigationBindings {
             routeMapper = ::createRoute
         )
 
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRoutePattern)
+    fun provideStarterPackRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = StarterPackRoutePattern,
+            routeMapper = ::createRoute
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRouteUriPattern)
+    fun provideRouteStarterPackUriMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = StarterPackRouteUriPattern,
+            routeMapper = ::createRoute
+        )
+
 }
 
 @BindingContainer
@@ -148,6 +183,28 @@ class ListBindings(
     @IntoMap
     @StringKey(ListRouteUriPattern)
     fun provideUriPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRoutePattern)
+    fun provideStarterPackRoutePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRouteUriPattern)
+    fun provideStarterPackUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(

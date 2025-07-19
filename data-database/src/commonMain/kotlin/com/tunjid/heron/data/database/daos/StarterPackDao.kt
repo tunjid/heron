@@ -28,6 +28,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StarterPackDao {
 
+    @Query(
+        """
+            SELECT * FROM starterPacks
+            WHERE uri = :starterPackUri
+        """
+    )
+    fun starterPack(
+        starterPackUri: String,
+    ): Flow<PopulatedStarterPackEntity?>
+
     @Transaction
     @Query(
         """

@@ -173,6 +173,9 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
     if (existingHolder != null) return@flow
 
     val timeline = timelineRepository.timeline(request)
+        .map { timeline ->
+            if (timeline is Timeline.StarterPack) timeline.listTimeline else timeline
+        }
         .filterIsInstance<Timeline.Home.List>()
         .first()
 
@@ -252,13 +255,17 @@ private fun timelineCreatorMutations(
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     when (timeline) {
-        is Timeline.Home.Feed -> emptyFlow()
-        is Timeline.Home.Following -> emptyFlow()
+        is Timeline.Home.Feed,
+        is Timeline.Home.Following,
+        is Timeline.Profile -> emptyFlow()
+
         is Timeline.Home.List -> profileRepository.profile(
             profileId = timeline.feedList.creator.did
         )
 
-        is Timeline.Profile -> emptyFlow()
+        is Timeline.StarterPack -> profileRepository.profile(
+            profileId = timeline.starterPack.creator.did
+        )
     }
         .mapToMutation {
             copy(creator = it)

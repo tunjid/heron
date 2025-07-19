@@ -42,6 +42,7 @@ fun Timeline.displayName() = when (this) {
     is Timeline.Home.Feed -> name
     is Timeline.Home.Following -> name
     is Timeline.Home.List -> name
+    is Timeline.StarterPack -> starterPack.name
     is Timeline.Profile -> when (type) {
         Timeline.Profile.Type.Media -> stringResource(Res.string.media)
         Timeline.Profile.Type.Posts -> stringResource(Res.string.posts)

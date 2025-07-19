@@ -79,7 +79,8 @@ fun timelineStateHolder(
                 data = CursorQuery.Data(
                     page = 0,
                     cursorAnchor = when (timeline) {
-                        is Timeline.Home -> timeline.lastRefreshed
+                        is Timeline.Home,
+                        is Timeline.StarterPack -> timeline.lastRefreshed
                             .takeUnless { refreshOnStart }
                             ?: Clock.System.now()
 
@@ -142,7 +143,7 @@ private fun timelineUpdateMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.timeline(
-        when (timeline) {
+        request = when (timeline) {
             is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithUri(
                 uri = timeline.feedGenerator.uri,
             )
@@ -156,6 +157,10 @@ private fun timelineUpdateMutations(
             is Timeline.Profile -> TimelineRequest.OfProfile(
                 profileHandleOrDid = timeline.profileId,
                 type = timeline.type,
+            )
+
+            is Timeline.StarterPack -> TimelineRequest.OfStarterPack.WithUri(
+                uri = timeline.starterPack.uri,
             )
         }
     )
