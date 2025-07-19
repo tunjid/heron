@@ -43,6 +43,7 @@ import com.tunjid.heron.profile.ProfileCollection.OfLists
 import com.tunjid.heron.profile.ProfileCollection.OfStarterPacks
 import com.tunjid.heron.profile.ProfileCollectionStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -93,7 +94,9 @@ internal fun ProfileCollection(
         items = updatedItems,
         onQueryChanged = { query ->
             collectionStateHolder.accept(
-                query ?: collectionState.tilingData.currentQuery
+                TilingState.Action.LoadAround(
+                    query = query ?: collectionState.tilingData.currentQuery
+                )
             )
         }
     )

@@ -42,7 +42,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.state.update
+import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -65,7 +65,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -107,36 +106,39 @@ class ActualProfileViewModel(
             scope = scope,
             profileRepository = profileRepository,
         ),
-        loadSignedInProfileMutations(
-            profileId = route.profileHandleOrId,
-            scope = scope,
-            authRepository = authRepository,
-            timelineRepository = timelineRepository,
-        ),
         profileRelationshipMutations(
             profileId = route.profileHandleOrId,
             profileRepository = profileRepository,
         )
     ),
     actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+        merge(
+            actions.toMutationStream(
+                keySelector = Action::key
+            ) {
+                when (val action = type()) {
+                    is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
-            }
-        }
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions
+                    )
+                }
+            },
+            loadSignedInProfileMutations(
+                currentState = { state() },
+                profileId = route.profileHandleOrId,
+                scope = scope,
+                authRepository = authRepository,
+                timelineRepository = timelineRepository,
+            ),
+        )
     }
 )
 
@@ -146,17 +148,21 @@ private fun loadProfileMutations(
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
     merge(
-        profileRepository.profile(profileId).mapToMutation {
+        profileRepository.profile(profileId).mapToMutation { profile ->
             copy(
-                profile = it,
-                collectionStateHolders = collectionStateHolders.ifEmpty {
+                profile = profile,
+                stateHolders = when {
                     // Only replace collectionStateHolders if they were previously empty
-                    profileCollectionStateHolders(
+                    stateHolders.none { stateHolder ->
+                        stateHolder is ProfileScreenStateHolders.Collections
+                    } -> stateHolders + profileCollectionStateHolders(
                         coroutineScope = scope,
                         profileId = profileId,
-                        metadata = it.metadata,
+                        metadata = profile.metadata,
                         profileRepository = profileRepository,
                     )
+
+                    else -> stateHolders
                 }
             )
         },
@@ -169,6 +175,7 @@ private fun loadProfileMutations(
     )
 
 private fun loadSignedInProfileMutations(
+    currentState: suspend () -> State,
     profileId: Id.Profile,
     scope: CoroutineScope,
     authRepository: AuthRepository,
@@ -185,6 +192,13 @@ private fun loadSignedInProfileMutations(
                     isSignedInProfile = isSignedInProfile
                 )
             }
+
+            val state = currentState()
+            val hasProfileStateHolders = state.stateHolders.any { stateHolder ->
+                stateHolder is ProfileScreenStateHolders.Timeline
+            }
+            if (hasProfileStateHolders) return@mapToManyMutations
+
             emitAll(
                 Timeline.Profile.Type.entries
                     .filter {
@@ -196,6 +210,7 @@ private fun loadSignedInProfileMutations(
                             Timeline.Profile.Type.Videos -> true
                         }
                     }
+                    // Map to a list of flows for each timeline
                     .map { type ->
                         timelineRepository.timeline(
                             TimelineRequest.OfProfile(
@@ -213,15 +228,25 @@ private fun loadSignedInProfileMutations(
                         )
                     }
                     .mapToMutation { timelines ->
-                        copy(
-                            timelineStateHolders = timelineStateHolders.update(
-                                scope = scope,
-                                refreshOnStart = true,
-                                startNumColumns = 1,
-                                updatedTimelines = timelines,
-                                timelineRepository = timelineRepository,
-                            ),
-                        )
+                        when {
+                            stateHolders.any { stateHolder ->
+                                stateHolder is ProfileScreenStateHolders.Timeline
+                            } -> this
+
+                            else -> copy(
+                                stateHolders = timelines.map { timeline ->
+                                    ProfileScreenStateHolders.Timeline(
+                                        timelineStateHolder(
+                                            scope = scope,
+                                            refreshOnStart = true,
+                                            timeline = timeline,
+                                            startNumColumns = 1,
+                                            timelineRepository = timelineRepository,
+                                        )
+                                    )
+                                } + stateHolders,
+                            )
+                        }
                     }
             )
         }
@@ -275,7 +300,7 @@ private fun profileCollectionStateHolders(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
     metadata: Profile.Metadata,
-): List<ProfileCollectionStateHolder> = listOfNotNull(
+): List<ProfileScreenStateHolders.Collections> = listOfNotNull(
     if (metadata.createdFeedGeneratorCount > 0) ProfileCollectionState(
         stringResource = Res.string.feeds,
         tilingData = TilingState.Data(
@@ -307,25 +332,27 @@ private fun profileCollectionStateHolders(
     ) to profileRepository::lists.mapCursorList(ProfileCollection::OfLists)
     else null,
 ).map { (state, cursorListLoader) ->
-    coroutineScope.actionStateFlowMutator(
-        initialState = state,
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream {
-                type().flow.map { TilingState.Action.LoadAround(it) }
-                    .tilingMutations(
-                        currentState = { state() },
-                        onRefreshQuery = { query ->
-                            query.copy(data = query.data.copy(page = 0))
-                        },
-                        onNewItems = { items ->
-                            items.distinctBy(ProfileCollection::id)
-                        },
-                        onTilingDataUpdated = { copy(tilingData = it) },
-                        updatePage = { newData -> copy(data = newData) },
-                        cursorListLoader = cursorListLoader,
-                    )
+    ProfileScreenStateHolders.Collections(
+        mutator = coroutineScope.actionStateFlowMutator(
+            initialState = state,
+            actionTransform = transform@{ actions ->
+                actions.toMutationStream {
+                    type().flow
+                        .tilingMutations(
+                            currentState = { state() },
+                            onRefreshQuery = { query ->
+                                query.copy(data = query.data.copy(page = 0))
+                            },
+                            onNewItems = { items ->
+                                items.distinctBy(ProfileCollection::id)
+                            },
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                            updatePage = { newData -> copy(data = newData) },
+                            cursorListLoader = cursorListLoader,
+                        )
+                }
             }
-        }
+        )
     )
 }
 
