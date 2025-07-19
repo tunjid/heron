@@ -126,11 +126,15 @@ internal fun HomeScreen(
                 }
                 .paneClip(),
             state = pagerState,
-            key = { page -> updatedTimelineStateHolders.keyAt(page) },
+            key = { page ->
+                updatedTimelineStateHolders[page]
+                    .state
+                    .value
+                    .timeline
+                    .sourceId
+            },
             pageContent = { page ->
-                val timelineStateHolder = remember {
-                    updatedTimelineStateHolders.stateHolderAt(page)
-                }
+                val timelineStateHolder = updatedTimelineStateHolders[page]
                 HomeTimeline(
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     timelineStateHolder = timelineStateHolder,
@@ -156,8 +160,8 @@ internal fun HomeScreen(
                 }
             },
             onRefreshTabClicked = { page ->
-                updatedTimelineStateHolders.stateHolderAt(page)
-                    .tilingAction(
+                updatedTimelineStateHolders.getOrNull(page)
+                    ?.tilingAction(
                         tilingAction = TilingState.Action.Refresh,
                         stateHolderAction = TimelineState.Action::Tile,
                     )
@@ -166,7 +170,7 @@ internal fun HomeScreen(
                 actions(Action.SetPreferencesExpanded(isExpanded = isExpanded))
             },
             onTimelinePresentationUpdated = click@{ index, presentation ->
-                val timelineStateHolder = updatedTimelineStateHolders.stateHolderAtOrNull(index)
+                val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
                     ?: return@click
                 timelineStateHolder.accept(
                     TimelineState.Action.UpdatePreferredPresentation(
@@ -191,7 +195,7 @@ internal fun HomeScreen(
                 .collect { page ->
                     if (page < updatedTimelineStateHolders.size) actions(
                         Action.SetCurrentTab(
-                            updatedTimelineStateHolders.stateHolderAt(page)
+                            updatedTimelineStateHolders[page]
                                 .state
                                 .value
                                 .timeline

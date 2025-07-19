@@ -29,7 +29,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tilingAction
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.state.update
+import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -130,13 +130,20 @@ private fun timelineMutations(
                     .firstOrNull()
                     ?.sourceId,
             timelines = homeTimelines,
-            timelineStateHolders = timelineStateHolders.update(
-                updatedTimelines = homeTimelines,
-                scope = scope,
-                refreshOnStart = false,
-                startNumColumns = startNumColumns,
-                timelineRepository = timelineRepository,
-            )
+            timelineStateHolders = homeTimelines.map { timeline ->
+                timelineStateHolders
+                    // Preserve the existing state holder or create a new one
+                    .firstOrNull { holder ->
+                        holder.state.value.timeline.sourceId == timeline.sourceId
+                    }
+                    ?: timelineStateHolder(
+                        refreshOnStart = false,
+                        timeline = timeline,
+                        startNumColumns = startNumColumns,
+                        scope = scope,
+                        timelineRepository = timelineRepository,
+                    )
+            }
         )
     }
 
@@ -191,8 +198,7 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations {
         val currentState = stateHolder.state()
-        (0..<currentState.timelineStateHolders.size)
-            .map(currentState.timelineStateHolders::stateHolderAt)
+        currentState.timelineStateHolders
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
             ?.tilingAction(
                 tilingAction = TilingState.Action.Refresh,

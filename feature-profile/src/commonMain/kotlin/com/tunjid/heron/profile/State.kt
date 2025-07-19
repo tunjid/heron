@@ -34,7 +34,6 @@ import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.routeString
@@ -72,6 +71,10 @@ sealed class ProfileScreenStateHolders {
     ) : ProfileScreenStateHolders(),
         TimelineStateHolder by mutator
 
+    val key get() = when(this) {
+        is Collections -> state.value.stringResource.toString()
+        is Timeline -> state.value.timeline.sourceId
+    }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
