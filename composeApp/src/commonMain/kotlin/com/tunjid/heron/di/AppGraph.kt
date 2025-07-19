@@ -23,6 +23,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.home.di.HomeBindings
+import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
 import com.tunjid.heron.notifications.di.NotificationsBindings
@@ -61,6 +62,7 @@ interface AppGraph {
             @Includes feedBindings: FeedBindings,
             @Includes galleryBindings: GalleryBindings,
             @Includes homeBindings: HomeBindings,
+            @Includes listBindings: ListBindings,
             @Includes messagesBindings: MessagesBindings,
             @Includes notificationsBindings: NotificationsBindings,
             @Includes postDetailBindings: PostDetailBindings,

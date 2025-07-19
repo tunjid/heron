@@ -14,24 +14,27 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.feed.di
+package com.tunjid.heron.list.di
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.getAsRawUri
-import com.tunjid.heron.feed.Action
-import com.tunjid.heron.feed.ActualFeedViewModel
-import com.tunjid.heron.feed.FeedScreen
-import com.tunjid.heron.feed.RouteViewModelInitializer
+import com.tunjid.heron.list.Action
+import com.tunjid.heron.list.ActualListViewModel
+import com.tunjid.heron.list.ListScreen
+import com.tunjid.heron.list.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -63,8 +66,12 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
-private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
-private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
+private const val ListRoutePattern = "/profile/{profileId}/lists/{listUriSuffix}"
+private const val ListRouteUriPattern = "/{listUriPrefix}/app.bsky.graph.list/{listUriSuffix}"
+
+private const val StarterPackRoutePattern = "/starter-pack/{profileId}/{starterPackUriSuffix}"
+private const val StarterPackRouteUriPattern =
+    "/{starterPackUriPrefix}/app.bsky.graph.starterpack/{starterPackUriSuffix}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -79,59 +86,93 @@ private val Route.profileId by mappedRoutePath(
     mapper = ::ProfileHandleOrId
 )
 
-private val Route.feedUriSuffix by routePath()
+private val Route.listUriSuffix by routePath()
+
+private val Route.starterPackUriSuffix by routePath()
+
 
 private val RequestTrie = mapOf(
-    PathPattern(RoutePattern) to { route: Route ->
-        TimelineRequest.OfFeed.WithProfile(
+    PathPattern(ListRoutePattern) to { route: Route ->
+        TimelineRequest.OfList.WithProfile(
             profileHandleOrDid = route.profileId,
-            feedUriSuffix = route.feedUriSuffix,
+            listUriSuffix = route.listUriSuffix,
         )
     },
-    PathPattern(RouteUriPattern) to { route: Route ->
-        TimelineRequest.OfFeed.WithUri(
+    PathPattern(ListRouteUriPattern) to { route: Route ->
+        TimelineRequest.OfList.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
-                .let(::FeedGeneratorUri)
+                .let(::ListUri)
+        )
+    },
+    PathPattern(StarterPackRoutePattern) to { route: Route ->
+        TimelineRequest.OfStarterPack.WithProfile(
+            profileHandleOrDid = route.profileId,
+            starterPackUriSuffix = route.starterPackUriSuffix,
+        )
+    },
+    PathPattern(StarterPackRouteUriPattern) to { route: Route ->
+        TimelineRequest.OfStarterPack.WithUri(
+            uri = route.routeParams.pathAndQueries
+                .getAsRawUri(Uri.Host.AtProto)
+                .let(::StarterPackUri)
         )
     },
 ).toRouteTrie()
 
-internal val Route.timelineRequest: TimelineRequest.OfFeed
+internal val Route.timelineRequest: TimelineRequest.OfList
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
-object FeedNavigationBindings {
+object ListNavigationBindings {
 
     @Provides
     @IntoMap
-    @StringKey(RoutePattern)
+    @StringKey(ListRoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
-            routePattern = RoutePattern,
+            routePattern = ListRoutePattern,
             routeMapper = ::createRoute
         )
 
     @Provides
     @IntoMap
-    @StringKey(RouteUriPattern)
+    @StringKey(ListRouteUriPattern)
     fun provideRouteUriMatcher(): RouteMatcher =
         urlRouteMatcher(
-            routePattern = RouteUriPattern,
+            routePattern = ListRouteUriPattern,
+            routeMapper = ::createRoute
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRoutePattern)
+    fun provideStarterPackRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = StarterPackRoutePattern,
+            routeMapper = ::createRoute
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRouteUriPattern)
+    fun provideRouteStarterPackUriMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = StarterPackRouteUriPattern,
             routeMapper = ::createRoute
         )
 
 }
 
 @BindingContainer
-class FeedBindings(
+class ListBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
 
     @Provides
     @IntoMap
-    @StringKey(RoutePattern)
+    @StringKey(ListRoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
@@ -142,8 +183,30 @@ class FeedBindings(
 
     @Provides
     @IntoMap
-    @StringKey(RouteUriPattern)
+    @StringKey(ListRouteUriPattern)
     fun provideUriPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRoutePattern)
+    fun provideStarterPackRoutePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(StarterPackRouteUriPattern)
+    fun provideStarterPackUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
@@ -163,7 +226,7 @@ class FeedBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualFeedViewModel> {
+            val viewModel = viewModel<ActualListViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
@@ -181,6 +244,8 @@ class FeedBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surface),
                         title = {
                             TimelineTitle(
                                 timeline = state.timelineState?.timeline,
@@ -202,7 +267,7 @@ class FeedBindings(
                     )
                 },
                 content = { paddingValues ->
-                    FeedScreen(
+                    ListScreen(
                         paneScaffoldState = this,
                         modifier = Modifier
                             .padding(

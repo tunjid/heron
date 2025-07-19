@@ -31,6 +31,8 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
@@ -81,6 +83,7 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(ProfileHandleOrId::class)
             subclass(FeedGeneratorId::class)
             subclass(ListId::class)
+            subclass(StarterPackId::class)
             subclass(GenericId::class)
         }
         polymorphic(Id.Profile::class) {
@@ -93,6 +96,7 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(ProfileUri::class)
             subclass(FeedGeneratorUri::class)
             subclass(ListUri::class)
+            subclass(StarterPackUri::class)
             subclass(ListMemberUri::class)
             subclass(ImageUri::class)
             subclass(GenericUri::class)

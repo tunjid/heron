@@ -29,6 +29,8 @@ import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.gallery.di.GalleryNavigationBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
+import com.tunjid.heron.list.di.ListBindings
+import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
 import com.tunjid.heron.messages.di.MessagesNavigationBindings
@@ -74,6 +76,7 @@ fun createAppState(
         feedNavigationBindings = FeedNavigationBindings,
         galleryNavigationBindings = GalleryNavigationBindings,
         homeNavigationBindings = HomeNavigationBindings,
+        listNavigationBindings = ListNavigationBindings,
         messagesNavigationBindings = MessagesNavigationBindings,
         notificationsNavigationBindings = NotificationsNavigationBindings,
         postDetailNavigationBindings = PostDetailNavigationBindings,
@@ -116,6 +119,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         homeBindings = HomeBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        listBindings = ListBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

@@ -33,8 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -48,7 +46,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.collection_by
@@ -95,9 +92,6 @@ internal fun ProfileCollection(
     listState.PivotedTilingEffect(
         items = updatedItems,
         onQueryChanged = { query ->
-            val c: TiledList<CursorQuery, ProfileCollection> = updatedItems
-            val a: CursorQuery? = query
-            val b: ProfilesQuery = collectionState.tilingData.currentQuery
             collectionStateHolder.accept(
                 query ?: collectionState.tilingData.currentQuery
             )

@@ -63,6 +63,7 @@ kotlin {
             implementation(project(":feature-feed"))
             implementation(project(":feature-gallery"))
             implementation(project(":feature-home"))
+            implementation(project(":feature-list"))
             implementation(project(":feature-messages"))
             implementation(project(":feature-notifications"))
             implementation(project(":feature-post-detail"))

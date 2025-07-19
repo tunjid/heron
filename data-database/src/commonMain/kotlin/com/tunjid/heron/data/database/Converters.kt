@@ -31,6 +31,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 
@@ -69,6 +71,10 @@ internal class UriConverters {
     @TypeConverter
     fun listUriFromString(value: String?): ListUri? =
         value?.let(::ListUri)
+
+    @TypeConverter
+    fun starterPackUriFromString(value: String?): StarterPackUri? =
+        value?.let(::StarterPackUri)
 
     @TypeConverter
     fun listMemberUriFromString(value: String?): ListMemberUri? =
@@ -110,10 +116,14 @@ internal class IdConverters {
         value?.let(::ListId)
 
     @TypeConverter
+    fun starterPackIdFromString(value: String?): StarterPackId? =
+        value?.let(::StarterPackId)
+
+    @TypeConverter
     fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? =
         value?.let(::FeedGeneratorId)
 
     @TypeConverter
-    fun toUriString(id: Id?): String? =
+    fun toIdString(id: Id?): String? =
         id?.id
 }

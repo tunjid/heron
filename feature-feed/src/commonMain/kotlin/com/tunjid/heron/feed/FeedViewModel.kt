@@ -161,6 +161,7 @@ private fun timelineCreatorMutations(
         )
 
         is Timeline.Profile -> emptyFlow()
+        is Timeline.StarterPack -> emptyFlow()
     }
         .mapToMutation {
             copy(creator = it)

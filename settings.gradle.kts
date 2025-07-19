@@ -58,6 +58,7 @@ include(
     ":feature-feed",
     ":feature-gallery",
     ":feature-home",
+    ":feature-list",
     ":feature-messages",
     ":feature-notifications",
     ":feature-post-detail",

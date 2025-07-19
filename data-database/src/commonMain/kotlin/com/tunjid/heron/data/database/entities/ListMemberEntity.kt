@@ -26,6 +26,8 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlinx.datetime.Instant
 
 
@@ -61,6 +63,8 @@ data class ListMemberEntity(
 data class PopulatedListMemberEntity(
     @Embedded
     val entity: ListMemberEntity,
+    @Embedded
+    val viewerStateEntity: ProfileViewerStateEntity?,
     @Relation(
         parentColumn = "subjectId",
         entityColumn = "did"
@@ -74,5 +78,6 @@ fun PopulatedListMemberEntity.asExternalModel() =
         subject = subject.asExternalModel(),
         listUri = entity.listUri,
         createdAt = entity.createdAt,
+        viewerState = viewerStateEntity?.asExternalModel(),
     )
 

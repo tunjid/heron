@@ -67,6 +67,14 @@ value class ListUri(
 
 @Serializable
 @JvmInline
+value class StarterPackUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
 value class ListMemberUri(
     override val uri: String,
 ) : Uri {

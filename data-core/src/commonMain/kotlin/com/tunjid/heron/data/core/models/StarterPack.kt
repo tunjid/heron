@@ -16,16 +16,17 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class StarterPack(
-    val cid: GenericId,
-    val uri: GenericUri,
+    val cid: StarterPackId,
+    val uri: StarterPackUri,
     val name: String,
+    val description: String?,
     val creator: Profile,
     val list: FeedList?,
     val joinedWeekCount: Long?,

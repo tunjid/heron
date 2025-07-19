@@ -23,10 +23,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.StarterPack
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlinx.datetime.Instant
 
 
@@ -47,11 +47,12 @@ import kotlinx.datetime.Instant
 )
 data class StarterPackEntity(
     @PrimaryKey
-    val cid: GenericId,
-    val uri: GenericUri,
+    val cid: StarterPackId,
+    val uri: StarterPackUri,
     val creatorId: ProfileId,
     val listUri: ListUri?,
     val name: String,
+    val description: String?,
     val joinedWeekCount: Long?,
     val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
@@ -79,6 +80,7 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         cid = entity.cid,
         uri = entity.uri,
         name = entity.name,
+        description = entity.description,
         creator = creator.asExternalModel(),
         list = creator?.let { list?.asExternalModel(it.asExternalModel()) },
         joinedWeekCount = entity.joinedWeekCount,

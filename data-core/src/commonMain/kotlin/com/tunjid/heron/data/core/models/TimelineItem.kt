@@ -24,20 +24,20 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Timeline {
+sealed interface Timeline {
 
-    abstract val sourceId: String
+    val sourceId: String
 
-    abstract val lastRefreshed: Instant?
+    val lastRefreshed: Instant?
 
-    abstract val presentation: Presentation
+    val presentation: Presentation
 
-    abstract val supportedPresentations: List<Presentation>
+    val supportedPresentations: List<Presentation>
 
     @Serializable
     sealed class Home(
         val source: Uri,
-    ) : Timeline() {
+    ) : Timeline {
 
         abstract val position: Int
 
@@ -101,7 +101,7 @@ sealed class Timeline {
         val type: Type,
         override val lastRefreshed: Instant?,
         override val presentation: Presentation,
-    ) : Timeline() {
+    ) : Timeline {
 
         override val sourceId: String
             get() = type.sourceId(profileId)
@@ -127,6 +127,12 @@ sealed class Timeline {
             fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
         }
     }
+
+    @Serializable
+    data class StarterPack(
+        val starterPack: com.tunjid.heron.data.core.models.StarterPack,
+        val listTimeline: Home.List,
+    ) : Timeline by listTimeline
 
     @Serializable
     sealed class Presentation(

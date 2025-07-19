@@ -57,7 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 14,
+    version = 15,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -118,6 +118,8 @@ import kotlinx.coroutines.IO
         // Migration 12 - 13 is a manual migration
         // Add Profile.Associated as embedded field to ProfileEntity
         AutoMigration(from = 13, to = 14),
+        // Add description to StarterPackEntity
+        AutoMigration(from = 14, to = 15),
     ],
     exportSchema = true,
 )

@@ -18,10 +18,10 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.graph.StarterPackView
 import app.bsky.graph.StarterPackViewBasic
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import app.bsky.graph.Starterpack as BskyStarterPack
@@ -31,7 +31,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     val bskyStarterPack = try {
         starterPack.record.decodeAs<BskyStarterPack>()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return
     }
     starterPack.creator.profileEntity().let(::add)
@@ -50,11 +50,12 @@ internal fun MultipleEntitySaver.add(
     }
     add(
         StarterPackEntity(
-            cid = starterPack.cid.cid.let(::GenericId),
-            uri = starterPack.uri.atUri.let(::GenericUri),
+            cid = starterPack.cid.cid.let(::StarterPackId),
+            uri = starterPack.uri.atUri.let(::StarterPackUri),
             creatorId = starterPack.creator.did.did.let(::ProfileId),
             listUri = starterPack.list?.uri?.atUri?.let(::ListUri),
             name = bskyStarterPack.name,
+            description = bskyStarterPack.description,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
@@ -68,18 +69,19 @@ internal fun MultipleEntitySaver.add(
 ) {
     val bskyStarterPack = try {
         starterPack.record.decodeAs<BskyStarterPack>()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return
     }
     starterPack.creator.profileEntity().let(::add)
 
     add(
         StarterPackEntity(
-            cid = starterPack.cid.cid.let(::GenericId),
-            uri = starterPack.uri.atUri.let(::GenericUri),
+            cid = starterPack.cid.cid.let(::StarterPackId),
+            uri = starterPack.uri.atUri.let(::StarterPackUri),
             creatorId = starterPack.creator.did.did.let(::ProfileId),
             listUri = bskyStarterPack.list.atUri.let(::ListUri),
             name = bskyStarterPack.name,
+            description = bskyStarterPack.description,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,

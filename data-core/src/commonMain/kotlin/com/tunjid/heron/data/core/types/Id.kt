@@ -74,6 +74,13 @@ value class ListId(
     override fun toString(): String = id
 }
 
+@Serializable
+@JvmInline
+value class StarterPackId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
 
 @Serializable
 @JvmInline

@@ -38,6 +38,7 @@ import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
 import app.bsky.graph.GetListQueryParams
+import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -51,10 +52,12 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
@@ -131,6 +134,17 @@ sealed interface TimelineRequest {
             val listUriSuffix: String,
         ) : OfList
     }
+
+    sealed interface OfStarterPack : OfList {
+        data class WithUri(
+            val uri: StarterPackUri,
+        ) : OfStarterPack
+
+        data class WithProfile(
+            val profileHandleOrDid: Id.Profile,
+            val starterPackUriSuffix: String,
+        ) : OfStarterPack
+    }
 }
 
 class TimelineQuery(
@@ -194,6 +208,7 @@ internal class OfflineTimelineRepository(
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
+    private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -361,6 +376,14 @@ internal class OfflineTimelineRepository(
                 )
             )
         }
+
+        is Timeline.StarterPack -> timelineItems(
+            query = TimelineQuery(
+                data = query.data,
+                timeline = timeline.listTimeline,
+            ),
+            cursor = cursor
+        )
     }
         .distinctUntilChanged()
 
@@ -491,6 +514,10 @@ internal class OfflineTimelineRepository(
                 networkResponseToFeedViews = GetAuthorFeedResponse::feed,
             )
         }
+
+        is Timeline.StarterPack -> hasUpdates(
+            timeline = timeline.listTimeline,
+        )
     }
 
     override fun postThreadedItems(
@@ -706,6 +733,28 @@ internal class OfflineTimelineRepository(
                             }
                     )
 
+                    is TimelineRequest.OfStarterPack.WithProfile -> {
+                        val profileDid = lookupProfileDid(
+                            profileId = request.profileHandleOrDid,
+                            profileDao = profileDao,
+                            networkService = networkService,
+                        ) ?: return@flow
+                        val uri = StarterPackUri(
+                            uri = "at://${profileDid.did}/${Collections.StarterPack}/${request.starterPackUriSuffix}"
+                        )
+                        emitAll(
+                            starterPackTimeline(
+                                uri = uri,
+                            )
+                        )
+                    }
+
+                    is TimelineRequest.OfStarterPack.WithUri -> emitAll(
+                        starterPackTimeline(
+                            uri = request.uri,
+                        )
+                    )
+
                     TimelineRequest.Following -> emitAll(
                         followingTimeline(
                             // TODO: Get a string resource for this
@@ -716,6 +765,7 @@ internal class OfflineTimelineRepository(
                             }?.pinned ?: false
                         )
                     )
+
                 }
             }
         }
@@ -1054,6 +1104,41 @@ internal class OfflineTimelineRepository(
             }
                 .getOrNull()
                 ?.list
+                ?.let {
+                    multipleEntitySaverProvider.saveInTransaction { add(it) }
+                }
+        }
+
+    private fun starterPackTimeline(
+        uri: StarterPackUri,
+    ) = starterPackDao.starterPack(uri.uri)
+        .mapNotNull { populatedStarterPackEntity ->
+            populatedStarterPackEntity?.list?.let { populatedStarterPackEntity to it }
+        }
+        .filterNotNull()
+        .distinctUntilChangedBy { it.first.entity }
+        .flatMapLatest { (populatedStarterPackEntity, listEntity) ->
+            listTimeline(
+                uri = listEntity.uri,
+                position = 0,
+                isPinned = false,
+            ).map { listTimeline ->
+                Timeline.StarterPack(
+                    starterPack = populatedStarterPackEntity.asExternalModel(),
+                    listTimeline = listTimeline,
+                )
+            }
+        }
+        .withRefresh {
+            runCatchingWithNetworkRetry(times = 2) {
+                networkService.api.getStarterPack(
+                    GetStarterPackQueryParams(
+                        starterPack = uri.uri.let(::AtUri)
+                    )
+                )
+            }
+                .getOrNull()
+                ?.starterPack
                 ?.let {
                     multipleEntitySaverProvider.saveInTransaction { add(it) }
                 }
