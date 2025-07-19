@@ -44,6 +44,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -109,7 +110,8 @@ internal fun ListScreen(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val pagerState = rememberPagerState { 2 }
+    val updatedStateHolders by rememberUpdatedState(state.stateHolders)
+    val pagerState = rememberPagerState { updatedStateHolders.size }
     val scope = rememberCoroutineScope()
 
     val collapsedHeight = with(density) {
@@ -131,7 +133,8 @@ internal fun ListScreen(
                     .offset {
                         IntOffset(
                             x = 0,
-                            y = -collapsingHeaderState.translation.roundToInt())
+                            y = -collapsingHeaderState.translation.roundToInt()
+                        )
                     }
             ) {
                 Text(
@@ -160,32 +163,48 @@ internal fun ListScreen(
             }
         },
         body = {
-            HorizontalPager(
+            val isRefreshing by produceState(
+                initialValue = false,
+                key1 = pagerState.currentPage,
+                key2 = updatedStateHolders.size,
+            ) {
+                updatedStateHolders[pagerState.currentPage]
+                    .tilingState
+                    .collect {
+                        value = it.isRefreshing
+                    }
+            }
+            PullToRefreshBox(
                 modifier = Modifier
-                    .fillMaxSize(),
-                state = pagerState,
-                pageContent = { page ->
-                    when (page) {
-                        0 -> when (val membersStateHolder = state.membersStateHolder) {
-                            null -> Unit
-                            else -> ListMembers(
+                    .fillMaxSize()
+                    .paneClip(),
+                isRefreshing = isRefreshing,
+                state = rememberPullToRefreshState(),
+                onRefresh = {
+                    updatedStateHolders[pagerState.currentPage].refresh()
+                }
+            ) {
+                HorizontalPager(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    state = pagerState,
+                    pageContent = { page ->
+                        when (val stateHolder = updatedStateHolders[page]) {
+                            is ListScreenStateHolders.Members -> ListMembers(
                                 paneScaffoldState = paneScaffoldState,
-                                membersStateHolder = membersStateHolder,
+                                membersStateHolder = stateHolder,
                                 actions = actions,
                             )
-                        }
 
-                        else -> when (val timelineStateHolder = state.timelineStateHolder) {
-                            null -> Unit
-                            else -> ListTimeline(
+                            is ListScreenStateHolders.Timeline -> ListTimeline(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                timelineStateHolder = timelineStateHolder,
+                                timelineStateHolder = stateHolder,
                                 actions = actions,
                             )
                         }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }
@@ -301,139 +320,128 @@ private fun ListTimeline(
     val videoStates = remember { ThreadedVideoPositionStates() }
     val presentation = timelineState.timeline.presentation
 
-    PullToRefreshBox(
-        modifier = Modifier
-            .padding(
-                horizontal = animateDpAsState(
-                    presentation.timelineHorizontalPadding
-                ).value
-            )
-            .fillMaxSize()
-            .paneClip()
-            .onSizeChanged {
-                val itemWidth = with(density) {
-                    presentation.cardSize.toPx()
-                }
-                timelineStateHolder.accept(
-                    TimelineLoadAction.Tile(
-                        tilingAction = TilingState.Action.GridSize(
-                            floor(it.width / itemWidth).roundToInt()
+    LookaheadScope {
+        LazyVerticalStaggeredGrid(
+            modifier = Modifier
+                .padding(
+                    horizontal = animateDpAsState(
+                        presentation.timelineHorizontalPadding
+                    ).value
+                )
+                .fillMaxSize()
+                .paneClip()
+                .onSizeChanged {
+                    val itemWidth = with(density) {
+                        presentation.cardSize.toPx()
+                    }
+                    timelineStateHolder.accept(
+                        TimelineLoadAction.Tile(
+                            tilingAction = TilingState.Action.GridSize(
+                                floor(it.width / itemWidth).roundToInt()
+                            )
                         )
                     )
-                )
-            },
-        isRefreshing = timelineState.isRefreshing,
-        state = rememberPullToRefreshState(),
-        onRefresh = {
-            timelineStateHolder.accept(
-                TimelineLoadAction.Tile(
-                    tilingAction = TilingState.Action.Refresh
-                )
+                },
+            state = gridState,
+            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+            verticalItemSpacing = 8.dp,
+            contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
+        ) {
+            items(
+                items = items,
+                key = TimelineItem::id,
+                itemContent = { item ->
+                    TimelineItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .threadedVideoPosition(
+                                state = videoStates.getOrCreateStateFor(item)
+                            ),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = this@LookaheadScope,
+                        now = remember { Clock.System.now() },
+                        item = item,
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        presentation = presentation,
+                        postActions = rememberPostActions(
+                            onPostClicked = { post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value =
+                                    gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToPost(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                            post = post,
+                                        )
+                                    )
+                                )
+                            },
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value =
+                                    gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToProfile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                            profile = profile,
+                                            avatarSharedElementKey = post
+                                                .avatarSharedElementKey(
+                                                    prefix = timelineState.timeline.sourceId,
+                                                    quotingPostId = quotingPostId,
+                                                )
+                                                .takeIf { post.author.did == profile.did }
+                                        )
+                                    )
+                                )
+                            },
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value =
+                                    gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ToMedia(
+                                            post = post,
+                                            media = media,
+                                            startIndex = index,
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                        )
+                                    )
+                                )
+                            },
+                            onReplyToPost = { post: Post ->
+                                pendingScrollOffsetState.value =
+                                    gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.DelegateTo(
+                                        NavigationAction.Common.ComposePost(
+                                            type = Post.Create.Reply(
+                                                parent = post,
+                                            ),
+                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                        )
+                                    )
+                                )
+                            },
+                            onPostInteraction = {
+                                actions(
+                                    Action.SendPostInteraction(it)
+                                )
+                            }
+                        ),
+                    )
+                }
             )
         }
-    ) {
-        LookaheadScope {
-            LazyVerticalStaggeredGrid(
-                state = gridState,
-                columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-                verticalItemSpacing = 8.dp,
-                contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
-            ) {
-                items(
-                    items = items,
-                    key = TimelineItem::id,
-                    itemContent = { item ->
-                        TimelineItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item)
-                                ),
-                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                            presentationLookaheadScope = this@LookaheadScope,
-                            now = remember { Clock.System.now() },
-                            item = item,
-                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                            presentation = presentation,
-                            postActions = rememberPostActions(
-                                onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToPost(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
-                                                ),
-                                                post = post,
-                                            )
-                                        )
-                                    )
-                                },
-                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToProfile(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                profile = profile,
-                                                avatarSharedElementKey = post
-                                                    .avatarSharedElementKey(
-                                                        prefix = timelineState.timeline.sourceId,
-                                                        quotingPostId = quotingPostId,
-                                                    )
-                                                    .takeIf { post.author.did == profile.did }
-                                            )
-                                        )
-                                    )
-                                },
-                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ToMedia(
-                                                post = post,
-                                                media = media,
-                                                startIndex = index,
-                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
-                                                ),
-                                            )
-                                        )
-                                    )
-                                },
-                                onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
-                                    actions(
-                                        Action.Navigate.DelegateTo(
-                                            NavigationAction.Common.ComposePost(
-                                                type = Post.Create.Reply(
-                                                    parent = post,
-                                                ),
-                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                            )
-                                        )
-                                    )
-                                },
-                                onPostInteraction = {
-                                    actions(
-                                        Action.SendPostInteraction(it)
-                                    )
-                                }
-                            ),
-                        )
-                    }
-                )
-            }
-        }
     }
+
     if (paneMovableElementSharedTransitionScope.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(

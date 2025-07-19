@@ -128,7 +128,10 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> = flow {
-    val existingHolder = state().timelineStateHolder
+    val existingHolder = state().stateHolders
+        .filterIsInstance<ListScreenStateHolders.Timeline>()
+        .firstOrNull()
+
     if (existingHolder != null) return@flow emitAll(
         merge(
             existingHolder.state.mapToMutation { copy(timelineState = it) },
@@ -141,15 +144,20 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
 
     val timeline = timelineRepository.timeline(request)
         .first()
-    val createdHolder = timelineStateHolder(
-        refreshOnStart = true,
-        timeline = timeline,
-        startNumColumns = 1,
-        scope = scope,
-        timelineRepository = timelineRepository,
+
+    val createdHolder = ListScreenStateHolders.Timeline(
+        mutator = timelineStateHolder(
+            refreshOnStart = true,
+            timeline = timeline,
+            startNumColumns = 1,
+            scope = scope,
+            timelineRepository = timelineRepository,
+        )
     )
     emit {
-        copy(timelineStateHolder = createdHolder)
+        copy(
+            stateHolders = stateHolders + createdHolder
+        )
     }
     emitAll(
         merge(
@@ -169,7 +177,10 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
     profileRepository: ProfileRepository,
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> = flow {
-    val existingHolder = state().membersStateHolder
+    val existingHolder = state().stateHolders
+        .filterIsInstance<ListScreenStateHolders.Members>()
+        .firstOrNull()
+
     if (existingHolder != null) return@flow
 
     val timeline = timelineRepository.timeline(request)
@@ -179,43 +190,47 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
         .filterIsInstance<Timeline.Home.List>()
         .first()
 
-    val createdHolder = scope.actionStateFlowMutator<ListMemberQuery, MemberState>(
-        initialState = MemberState(
-            signedInProfileId = null,
-            tilingData = TilingState.Data(
-                currentQuery = ListMemberQuery(
-                    listUri = timeline.feedList.uri,
-                    data = defaultQueryData(),
+    val createdHolder = ListScreenStateHolders.Members(
+        mutator = scope.actionStateFlowMutator(
+            initialState = MemberState(
+                signedInProfileId = null,
+                tilingData = TilingState.Data(
+                    currentQuery = ListMemberQuery(
+                        listUri = timeline.feedList.uri,
+                        data = defaultQueryData(),
+                    ),
                 ),
             ),
-        ),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            authRepository.signedInUser.mapToMutation {
-                copy(signedInProfileId = it?.did)
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            inputs = listOf(
+                authRepository.signedInUser.mapToMutation {
+                    copy(signedInProfileId = it?.did)
+                }
+            ),
+            actionTransform = { actions ->
+                actions.toMutationStream {
+                    type().flow
+                        .map { TilingState.Action.LoadAround(it) }
+                        .tilingMutations(
+                            currentState = { state() },
+                            onRefreshQuery = { query ->
+                                query.copy(data = query.data.copy(page = 0))
+                            },
+                            onNewItems = { items ->
+                                items.distinctBy(ListMember::uri)
+                            },
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                            updatePage = { newData -> copy(data = newData) },
+                            cursorListLoader = profileRepository::listMembers,
+                        )
+                }
             }
-        ),
-        actionTransform = { actions ->
-            actions.toMutationStream {
-                type().flow
-                    .map { TilingState.Action.LoadAround(it) }
-                    .tilingMutations(
-                        currentState = { state() },
-                        onRefreshQuery = { query ->
-                            query.copy(data = query.data.copy(page = 0))
-                        },
-                        onNewItems = { items ->
-                            items.distinctBy(ListMember::uri)
-                        },
-                        onTilingDataUpdated = { copy(tilingData = it) },
-                        updatePage = { newData -> copy(data = newData) },
-                        cursorListLoader = profileRepository::listMembers,
-                    )
-            }
-        }
+        )
     )
     emit {
-        copy(membersStateHolder = createdHolder)
+        copy(
+            stateHolders = listOf(createdHolder) + stateHolders
+        )
     }
 }
 

@@ -25,6 +25,7 @@ import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineLoadAction
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
@@ -40,12 +41,39 @@ data class State(
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
-    val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val membersStateHolder: MembersStateHolder? = null,
+    val stateHolders: List<ListScreenStateHolders> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
+
+sealed class ListScreenStateHolders {
+
+    class Members(
+        val mutator: MembersStateHolder
+    ) : ListScreenStateHolders(),
+        MembersStateHolder by mutator
+
+    class Timeline(
+        val mutator: TimelineStateHolder,
+    ) : ListScreenStateHolders(), TimelineStateHolder by mutator
+
+
+    val tilingState: StateFlow<TilingState<*, *>>
+        get() = when (this) {
+            is Members -> state
+            is Timeline -> state
+        }
+
+    fun refresh() = when(this) {
+        // TODO: Implement refresh here
+        is Members -> Unit
+        is Timeline -> accept(
+            TimelineLoadAction.Tile(
+                tilingAction = TilingState.Action.Refresh
+            )
+        )
+    }
+}
 
 data class MemberState(
     val signedInProfileId: ProfileId?,
