@@ -18,8 +18,7 @@ package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
@@ -31,14 +30,8 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.utilities.CursorQuery
-import com.tunjid.heron.data.utilities.cursorListTiler
-import com.tunjid.heron.data.utilities.cursorTileInputs
-import com.tunjid.heron.data.utilities.ensureValidAnchors
-import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.avatarSharedElementKey
@@ -46,16 +39,17 @@ import com.tunjid.heron.profile.di.profile
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.state.update
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.emptyTiledList
-import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -71,11 +65,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 
@@ -287,96 +278,54 @@ private fun profileCollectionStateHolders(
 ): List<ProfileCollectionStateHolder> = listOfNotNull(
     if (metadata.createdFeedGeneratorCount > 0) ProfileCollectionState(
         stringResource = Res.string.feeds,
-        currentQuery = ProfilesQuery(
-            profileId = profileId,
-            data = defaultQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = ProfilesQuery(
+                profileId = profileId,
+                data = defaultQueryData(),
+            ),
         ),
-    ) to profileRepository::feedGenerators.toProfileCollectionCursorList(ProfileCollection::OfFeedGenerators)
+    ) to profileRepository::feedGenerators.mapCursorList(ProfileCollection::OfFeedGenerators)
     else null,
     if (metadata.createdStarterPackCount > 0) ProfileCollectionState(
         stringResource = Res.string.starter_packs,
-        currentQuery = ProfilesQuery(
-            profileId = profileId,
-            data = defaultQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = ProfilesQuery(
+                profileId = profileId,
+                data = defaultQueryData(),
+            ),
         ),
-    ) to profileRepository::starterPacks.toProfileCollectionCursorList(ProfileCollection::OfStarterPacks)
+    ) to profileRepository::starterPacks.mapCursorList(ProfileCollection::OfStarterPacks)
     else null,
     if (metadata.createdListCount > 0) ProfileCollectionState(
         stringResource = Res.string.lists,
-        currentQuery = ProfilesQuery(
-            profileId = profileId,
-            data = defaultQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = ProfilesQuery(
+                profileId = profileId,
+                data = defaultQueryData(),
+            ),
         ),
-        items = emptyTiledList(),
-    ) to profileRepository::lists.toProfileCollectionCursorList(ProfileCollection::OfLists)
+    ) to profileRepository::lists.mapCursorList(ProfileCollection::OfLists)
     else null,
 ).map { (state, cursorListLoader) ->
     coroutineScope.actionStateFlowMutator(
         initialState = state,
         actionTransform = transform@{ actions ->
-            actions.loadMutations(
-                coroutineScope = coroutineScope,
-                cursorListLoader = cursorListLoader,
-                profileCollectionMutation = { items ->
-
-                    if (items.isValidFor(currentQuery)) copy(
-                        items = items.distinctBy(ProfileCollection::id)
+            actions.toMutationStream {
+                type().flow.map { TilingState.Action.LoadAround(it) }
+                    .tilingMutations(
+                        currentState = { state() },
+                        onRefreshQuery = { query ->
+                            query.copy(data = query.data.copy(page = 0))
+                        },
+                        onNewItems = { items ->
+                            items.distinctBy(ProfileCollection::id)
+                        },
+                        onTilingDataUpdated = { copy(tilingData = it) },
+                        updatePage = { newData -> copy(data = newData) },
+                        cursorListLoader = cursorListLoader,
                     )
-                    else this
-                }
-            )
+            }
         }
-    )
-}
-
-private fun <T> ((ProfilesQuery, Cursor) -> Flow<CursorList<T>>).toProfileCollectionCursorList(
-    mapper: (T) -> ProfileCollection
-): (ProfilesQuery, Cursor) -> Flow<CursorList<ProfileCollection>> = { query, cursor ->
-    invoke(query, cursor).map { cursorList ->
-        CursorList(
-            nextCursor = cursorList.nextCursor,
-            items = cursorList.items.map(mapper)
-        )
-    }
-}
-
-private inline fun Flow<ProfilesQuery>.loadMutations(
-    coroutineScope: CoroutineScope,
-    noinline cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<ProfileCollection>>,
-    noinline profileCollectionMutation: ProfileCollectionState.(TiledList<ProfilesQuery, ProfileCollection>) -> ProfileCollectionState,
-): Flow<Mutation<ProfileCollectionState>> {
-    val sharedQueries = ensureValidAnchors()
-        .shareIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            replay = 1,
-        )
-    val queryMutations =
-        sharedQueries.mapToMutation<ProfilesQuery, ProfileCollectionState> { query ->
-            copy(currentQuery = query)
-        }
-    val refreshes = sharedQueries.distinctUntilChangedBy {
-        it.data.cursorAnchor
-    }
-    val itemMutations = refreshes.flatMapLatest { refreshedQuery ->
-        cursorTileInputs<ProfilesQuery, ProfileCollection>(
-            numColumns = flowOf(1),
-            queries = sharedQueries,
-            updatePage = ProfilesQueryUpdater,
-        )
-            .toTiledList(
-                cursorListTiler(
-                    startingQuery = refreshedQuery,
-                    updatePage = ProfilesQueryUpdater,
-                    cursorListLoader = cursorListLoader,
-                )
-            )
-    }
-        .mapToMutation(profileCollectionMutation)
-
-    return merge(
-        queryMutations,
-        itemMutations,
     )
 }
 
@@ -385,6 +334,3 @@ private fun defaultQueryData() = CursorQuery.Data(
     cursorAnchor = Clock.System.now(),
     limit = 15
 )
-
-private val ProfilesQueryUpdater: ProfilesQuery.(CursorQuery.Data) -> ProfilesQuery =
-    { newData -> copy(data = newData) }

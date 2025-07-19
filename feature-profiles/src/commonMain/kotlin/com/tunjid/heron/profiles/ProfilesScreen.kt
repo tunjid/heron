@@ -35,6 +35,8 @@ import com.tunjid.heron.profiles.ui.ProfileWithRelationship
 import com.tunjid.heron.profiles.ui.sharedElementKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -45,7 +47,7 @@ internal fun ProfilesScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val items by rememberUpdatedState(state.profiles)
+    val items by rememberUpdatedState(state.tiledItems)
     val signedInProfileId by rememberUpdatedState(state.signedInProfileId)
     LazyColumn(
         modifier = modifier
@@ -108,7 +110,11 @@ internal fun ProfilesScreen(
         items = items,
         onQueryChanged = { query ->
             actions(
-                Action.Fetch.LoadAround(query ?: state.currentQuery)
+                Action.Tile(
+                    TilingState.Action.LoadAround(
+                        query ?: state.tilingData.currentQuery,
+                    )
+                )
             )
         }
     )

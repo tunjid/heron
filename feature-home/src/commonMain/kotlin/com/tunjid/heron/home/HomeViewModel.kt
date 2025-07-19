@@ -22,12 +22,14 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.domain.timeline.TimelineLoadAction
-import com.tunjid.heron.domain.timeline.update
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tilingAction
+import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.update
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -192,6 +194,8 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
         (0..<currentState.timelineStateHolders.size)
             .map(currentState.timelineStateHolders::stateHolderAt)
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
-            ?.accept
-            ?.invoke(TimelineLoadAction.Fetch.Refresh)
+            ?.tilingAction(
+                tilingAction = TilingState.Action.Refresh,
+                stateHolderAction = TimelineLoadAction::Tile,
+            )
     }

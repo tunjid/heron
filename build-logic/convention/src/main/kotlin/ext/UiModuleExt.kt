@@ -29,9 +29,10 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":data"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
-                implementation(project(":ui-timeline"))
-                implementation(project(":ui-media"))
                 implementation(project(":ui-core"))
+                implementation(project(":ui-media"))
+                implementation(project(":ui-tiling"))
+                implementation(project(":ui-timeline"))
 
                 api(libs.findLibrary("lifecycle-runtime").get())
                 api(libs.findLibrary("lifecycle-runtime-compose").get())

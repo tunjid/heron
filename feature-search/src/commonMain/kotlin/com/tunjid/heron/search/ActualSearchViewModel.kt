@@ -19,20 +19,13 @@ package com.tunjid.heron.search
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.data.utilities.CursorQuery
-import com.tunjid.heron.data.utilities.cursorListTiler
-import com.tunjid.heron.data.utilities.cursorTileInputs
-import com.tunjid.heron.data.utilities.ensureValidAnchors
-import com.tunjid.heron.data.utilities.isValidFor
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -40,17 +33,16 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.emptyTiledList
-import com.tunjid.tiler.map
-import com.tunjid.tiler.toTiledList
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -60,10 +52,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
@@ -247,7 +237,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     is Action.Search.OnSearchQueryConfirmed -> {
                         searchStateHolders.forEach {
                             val confirmedQuery = when (val searchState = it.state.value) {
-                                is SearchState.OfPosts -> when (searchState.currentQuery) {
+                                is SearchState.OfPosts -> when (searchState.tilingData.currentQuery) {
                                     is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
@@ -273,7 +263,12 @@ private fun Flow<Action.Search>.searchQueryMutations(
                                     data = defaultSearchQueryData()
                                 )
                             }
-                            it.accept(SearchState.LoadAround(confirmedQuery))
+
+                            it.accept(
+                                SearchState.Tile(
+                                    tilingAction = TilingState.Action.LoadAround(confirmedQuery)
+                                )
+                            )
                         }
                         copy(
                             layout = ScreenLayout.GeneralSearchResults,
@@ -343,180 +338,147 @@ private fun searchStateHolders(
     searchRepository: SearchRepository,
 ): List<SearchResultStateHolder> = listOf(
     SearchState.OfPosts(
-        currentQuery = SearchQuery.OfPosts.Top(
-            query = "",
-            isLocalOnly = false,
-            data = defaultSearchQueryData(),
-        ),
-        results = emptyTiledList(),
+        tilingData = TilingState.Data(
+            currentQuery = SearchQuery.OfPosts.Top(
+                query = "",
+                isLocalOnly = false,
+                data = defaultSearchQueryData(),
+            ),
+        )
     ),
     SearchState.OfPosts(
-        currentQuery = SearchQuery.OfPosts.Latest(
-            query = "",
-            isLocalOnly = false,
-            data = defaultSearchQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = SearchQuery.OfPosts.Latest(
+                query = "",
+                isLocalOnly = false,
+                data = defaultSearchQueryData(),
+            ),
         ),
-        results = emptyTiledList(),
     ),
     SearchState.OfProfiles(
-        currentQuery = SearchQuery.OfProfiles(
-            query = "",
-            isLocalOnly = false,
-            data = defaultSearchQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = SearchQuery.OfProfiles(
+                query = "",
+                isLocalOnly = false,
+                data = defaultSearchQueryData(),
+            ),
         ),
-        results = emptyTiledList(),
     ),
     SearchState.OfFeedGenerators(
-        currentQuery = SearchQuery.OfFeedGenerators(
-            query = "",
-            isLocalOnly = false,
-            data = defaultSearchQueryData(),
+        tilingData = TilingState.Data(
+            currentQuery = SearchQuery.OfFeedGenerators(
+                query = "",
+                isLocalOnly = false,
+                data = defaultSearchQueryData(),
+            ),
         ),
-        results = emptyTiledList(),
     ),
 ).map { searchState ->
-    coroutineScope.actionStateFlowMutator(
-        initialState = searchState,
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream {
-                when (state()) {
-                    is SearchState.OfPosts -> type().flow.searchMutations(
-                        coroutineScope = coroutineScope,
-                        updatePage = {
-                            when (this) {
-                                is SearchQuery.OfPosts.Latest -> copy(data = it)
-                                is SearchQuery.OfPosts.Top -> copy(data = it)
-                            }
-                        },
-                        cursorListLoader = searchRepository::postSearch,
-                        searchStateResultsMutation = { posts ->
-                            check(this is SearchState.OfPosts)
+    when (searchState) {
+        is SearchState.OfPosts -> coroutineScope.actionStateFlowMutator(
+            initialState = searchState,
+            actionTransform = transform@{ actions ->
+                actions.toMutationStream {
+                    type().flow.map { it.tilingAction }
+                        .tilingMutations(
+                            currentState = { state() },
+                            onRefreshQuery = { query ->
+                                when (query) {
+                                    is SearchQuery.OfPosts.Latest -> query.copy(
+                                        data = query.data.copy(page = 0)
+                                    )
 
-                            if (posts.isValidFor(currentQuery)) copy(
-                                results = posts
-                                    .distinctBy(Post::cid)
-                                    .map { post ->
-                                        SearchResult.OfPost(
-                                            post = post,
-                                            sharedElementPrefix = currentQuery.sourceId,
-                                        )
-                                    }
-                            )
-                            else this
-                        }
-                    )
-
-                    is SearchState.OfProfiles -> type().flow.searchMutations(
-                        coroutineScope = coroutineScope,
-                        updatePage = {
-                            copy(data = it)
-                        },
-                        cursorListLoader = searchRepository::profileSearch,
-                        searchStateResultsMutation = { profileWithViewerStates ->
-                            check(this is SearchState.OfProfiles)
-                            if (profileWithViewerStates.isValidFor(currentQuery)) copy(
-                                results = profileWithViewerStates
-                                    .distinctBy { it.profile.did }
-                                    .map { profileWithViewerState ->
-                                        SearchResult.OfProfile(
-                                            profileWithViewerState = profileWithViewerState,
-                                            sharedElementPrefix = currentQuery.sourceId,
-                                        )
-                                    }
-                            )
-                            else this
-                        }
-                    )
-
-                    is SearchState.OfFeedGenerators -> type().flow.searchMutations(
-                        coroutineScope = coroutineScope,
-                        updatePage = {
-                            copy(data = it)
-                        },
-                        cursorListLoader = searchRepository::feedGeneratorSearch,
-                        searchStateResultsMutation = { feedGenerators ->
-                            check(this is SearchState.OfFeedGenerators)
-                            if (feedGenerators.isValidFor(currentQuery)) copy(
-                                results = feedGenerators
-                                    .distinctBy(FeedGenerator::cid)
-                                    .map { feedGenerator ->
-                                        SearchResult.OfFeedGenerator(
-                                            feedGenerator = feedGenerator,
-                                            sharedElementPrefix = currentQuery.sourceId,
-                                        )
-                                    }
-                            )
-                            else this
-                        }
-                    )
+                                    is SearchQuery.OfPosts.Top -> query.copy(
+                                        data = query.data.copy(page = 0)
+                                    )
+                                }
+                            },
+                            updatePage = {
+                                when (this) {
+                                    is SearchQuery.OfPosts.Latest -> copy(data = it)
+                                    is SearchQuery.OfPosts.Top -> copy(data = it)
+                                }
+                            },
+                            cursorListLoader = searchRepository::postSearch.mapCursorList {
+                                SearchResult.OfPost(
+                                    post = it,
+                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                )
+                            },
+                            onNewItems = { items ->
+                                items.distinctBy { it.post.cid }
+                            },
+                            queryRefreshBy = {
+                                it.query to it.data.cursorAnchor
+                            },
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                        )
                 }
             }
-        }
-    )
-}
-
-
-private inline fun <
-        reified Query : SearchQuery,
-        reified Item,
-        > Flow<SearchState.LoadAround>.searchMutations(
-    coroutineScope: CoroutineScope,
-    noinline updatePage: Query.(CursorQuery.Data) -> Query,
-    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
-    noinline searchStateResultsMutation: SearchState.(TiledList<Query, Item>) -> SearchState,
-): Flow<Mutation<SearchState>> {
-    val sharedQueries = map {
-        it.query.takeIf { searchQuery -> searchQuery.query.isNotBlank() }
-    }
-        .filterIsInstance<Query>()
-        .ensureValidAnchors()
-        .shareIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            replay = 1,
         )
-    val queryMutations = sharedQueries.mapToMutation<Query, SearchState> { query ->
-        when (query) {
-            is SearchQuery.OfPosts -> {
-                check(this is SearchState.OfPosts)
-                copy(currentQuery = query)
-            }
 
-            is SearchQuery.OfProfiles -> {
-                check(this is SearchState.OfProfiles)
-                copy(currentQuery = query)
+        is SearchState.OfProfiles -> coroutineScope.actionStateFlowMutator(
+            initialState = searchState,
+            actionTransform = transform@{ actions ->
+                actions.toMutationStream {
+                    type().flow.map { it.tilingAction }
+                        .tilingMutations(
+                            currentState = { state() },
+                            onRefreshQuery = { query ->
+                                query.copy(data = query.data.copy(page = 0))
+                            },
+                            updatePage = {
+                                copy(data = it)
+                            },
+                            cursorListLoader = searchRepository::profileSearch.mapCursorList {
+                                SearchResult.OfProfile(
+                                    profileWithViewerState = it,
+                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                )
+                            },
+                            onNewItems = { items ->
+                                items.distinctBy { it.profileWithViewerState.profile.did }
+                            },
+                            queryRefreshBy = {
+                                it.query to it.data.cursorAnchor
+                            },
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                        )
+                }
             }
-
-            is SearchQuery.OfFeedGenerators -> {
-                check(this is SearchState.OfFeedGenerators)
-                copy(currentQuery = query)
-            }
-        }
-    }
-    val refreshes = sharedQueries.distinctUntilChangedBy {
-        // Refreshes are caused by different queries or different anchors
-        it.query to it.data.cursorAnchor
-    }
-    val itemMutations = refreshes.flatMapLatest { refreshedQuery ->
-        cursorTileInputs<Query, Item>(
-            numColumns = flowOf(1),
-            queries = sharedQueries,
-            updatePage = updatePage
         )
-            .toTiledList(
-                cursorListTiler(
-                    startingQuery = refreshedQuery,
-                    updatePage = updatePage,
-                    cursorListLoader = cursorListLoader,
-                )
-            )
-    }
-        .mapToMutation(searchStateResultsMutation)
 
-    return merge(
-        queryMutations,
-        itemMutations,
-    )
+        is SearchState.OfFeedGenerators -> coroutineScope.actionStateFlowMutator(
+            initialState = searchState,
+            actionTransform = transform@{ actions ->
+                actions.toMutationStream {
+                    type().flow.map { it.tilingAction }
+                        .tilingMutations(
+                            currentState = { state() },
+                            onRefreshQuery = { query ->
+                                query.copy(data = query.data.copy(page = 0))
+                            },
+                            updatePage = {
+                                copy(data = it)
+                            },
+                            cursorListLoader = searchRepository::feedGeneratorSearch.mapCursorList {
+                                SearchResult.OfFeedGenerator(
+                                    feedGenerator = it,
+                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                )
+                            },
+                            onNewItems = { items ->
+                                items.distinctBy { it.feedGenerator.cid }
+                            },
+                            queryRefreshBy = {
+                                it.query to it.data.cursorAnchor
+                            },
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                        )
+                }
+            }
+        )
+    }
 }
 
 private fun defaultSearchQueryData() = CursorQuery.Data(

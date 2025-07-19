@@ -16,16 +16,15 @@
 
 package com.tunjid.heron.profiles
 
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -34,13 +33,10 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val signedInProfileId: ProfileId? = null,
-    val currentQuery: CursorQuery,
-    val isRefreshing: Boolean = false,
-    @Transient
-    val profiles: TiledList<CursorQuery, ProfileWithViewerState> = emptyTiledList(),
+    override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
     @Transient
     val messages: List<String> = emptyList(),
-)
+) : TilingState<CursorQuery, ProfileWithViewerState>
 
 sealed class Load {
     abstract val profileId: Id.Profile
@@ -74,14 +70,9 @@ sealed class Load {
 
 sealed class Action(val key: String) {
 
-    sealed class Fetch : Action(key = "Load") {
-
-        data object Refresh : Fetch()
-
-        data class LoadAround(
-            val query: CursorQuery,
-        ) : Fetch()
-    }
+    data class Tile(
+        val tilingAction: TilingState.Action,
+    ) : Action(key = "Load")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,

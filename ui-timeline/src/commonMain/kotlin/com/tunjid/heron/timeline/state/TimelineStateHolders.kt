@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.domain.timeline
+package com.tunjid.heron.timeline.state
 
 import androidx.compose.runtime.Immutable
 import com.tunjid.heron.data.core.models.Timeline

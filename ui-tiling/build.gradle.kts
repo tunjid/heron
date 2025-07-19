@@ -17,29 +17,27 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
-    id("ui-module-convention")
-    id("ksp-convention")
+    kotlin("plugin.serialization")
 }
 android {
-    namespace = "com.tunjid.heron.feature.feed"
+    namespace = "com.tunjid.heron.ui.tiling"
+    buildFeatures {
+        compose = false
+    }
 }
 
 kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation(project(":data"))
-                implementation(project(":scaffold"))
-                implementation(project(":feature-template"))
-                implementation(project(":ui-tiling"))
+                implementation(project(":data-core"))
 
-                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.serialization.cbor)
-                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.serialization.core)
 
+                implementation(libs.tunjid.mutator.core.common)
+                implementation(libs.tunjid.mutator.coroutines.common)
                 implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.tiler.compose)
             }
         }
     }

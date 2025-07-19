@@ -26,9 +26,8 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -39,7 +38,7 @@ enum class ScreenLayout {
     GeneralSearchResults
 }
 
-internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.LoadAround, StateFlow<SearchState>>
+internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.Tile, out StateFlow<SearchState>>
 
 sealed interface SearchResult {
 
@@ -63,22 +62,19 @@ sealed interface SearchResult {
 
 sealed class SearchState {
     data class OfPosts(
-        val currentQuery: SearchQuery.OfPosts,
-        val results: TiledList<SearchQuery.OfPosts, SearchResult.OfPost> = emptyTiledList(),
-    ) : SearchState()
+        override val tilingData: TilingState.Data<SearchQuery.OfPosts, SearchResult.OfPost>,
+    ) : SearchState(), TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
 
     data class OfProfiles(
-        val currentQuery: SearchQuery.OfProfiles,
-        val results: TiledList<SearchQuery.OfProfiles, SearchResult.OfProfile> = emptyTiledList(),
-    ) : SearchState()
+        override val tilingData: TilingState.Data<SearchQuery.OfProfiles, SearchResult.OfProfile>,
+    ) : SearchState(), TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
-        val currentQuery: SearchQuery.OfFeedGenerators,
-        val results: TiledList<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator> = emptyTiledList(),
-    ) : SearchState()
+        override val tilingData: TilingState.Data<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>,
+    ) : SearchState(), TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
 
-    data class LoadAround(
-        val query: SearchQuery,
+    data class Tile(
+        val tilingAction: TilingState.Action,
     )
 }
 

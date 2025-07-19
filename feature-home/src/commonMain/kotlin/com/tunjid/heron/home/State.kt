@@ -19,8 +19,8 @@ package com.tunjid.heron.home
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.timeline.state.TimelineStateHolders
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 

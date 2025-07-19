@@ -21,10 +21,17 @@ import kotlinx.serialization.Serializable
 /**
  * A sublist [List] containing a cursor to fetch the consecutive list in its backing sequence.
  */
-data class CursorList<T>(
+data class CursorList<out T>(
     val items: List<T>,
     val nextCursor: Cursor,
 ) : List<T> by items
+
+inline fun <T, R> CursorList<T>.mapCursorList(
+    mapper: (T) -> R
+) = CursorList(
+    items = items.map(mapper),
+    nextCursor = nextCursor,
+)
 
 @Serializable
 sealed class Cursor {

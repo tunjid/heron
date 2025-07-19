@@ -53,6 +53,8 @@ import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
@@ -133,7 +135,11 @@ internal fun NotificationsScreen(
         modifier = modifier
             .fillMaxSize(),
         isRefreshing = state.isRefreshing,
-        onRefresh = { actions(Action.Fetch.Refresh) },
+        onRefresh = {
+            actions(
+                Action.Tile(TilingState.Action.Refresh)
+            )
+        },
     ) {
         LazyColumn(
             modifier = Modifier
@@ -286,7 +292,11 @@ internal fun NotificationsScreen(
         items = items,
         onQueryChanged = { query ->
             actions(
-                Action.Fetch.LoadAround(query ?: state.currentQuery)
+                Action.Tile(
+                    tilingAction = TilingState.Action.LoadAround(
+                        query ?: state.tilingData.currentQuery
+                    )
+                )
             )
         }
     )

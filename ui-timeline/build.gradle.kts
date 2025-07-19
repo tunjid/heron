@@ -32,10 +32,11 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data-core"))
-                implementation(project(":domain-timeline"))
+                implementation(project(":data"))
 
                 implementation(project(":ui-core"))
                 implementation(project(":ui-media"))
+                implementation(project(":ui-tiling"))
 
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.foundation.foundation)
@@ -53,6 +54,9 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.tunjid.composables)
+                implementation(libs.tunjid.mutator.core.common)
+                implementation(libs.tunjid.mutator.coroutines.common)
+                implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.treenav.compose)
                 implementation(libs.tunjid.treenav.compose.threepane)
             }

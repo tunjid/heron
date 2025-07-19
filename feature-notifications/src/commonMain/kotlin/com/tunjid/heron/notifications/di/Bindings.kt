@@ -47,6 +47,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -170,7 +171,7 @@ class NotificationsBindings(
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
-                            viewModel.accept(Action.Fetch.Refresh)
+                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
                             true
                         },
                     )
@@ -178,7 +179,7 @@ class NotificationsBindings(
                 navigationRail = {
                     PaneNavigationRail(
                         onNavItemReselected = {
-                            viewModel.accept(Action.Fetch.Refresh)
+                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
                             true
                         },
                     )

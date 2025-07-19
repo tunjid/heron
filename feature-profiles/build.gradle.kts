@@ -29,6 +29,7 @@ kotlin {
         named("commonMain") {
             dependencies {
                 implementation(project(":data"))
+                implementation(project(":ui-tiling"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature-template"))
 

@@ -26,15 +26,14 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
-import com.tunjid.heron.domain.timeline.TimelineStateHolders
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.currentRoute
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.routeString
 import kotlinx.coroutines.flow.StateFlow
@@ -65,9 +64,8 @@ typealias ProfileCollectionStateHolder = ActionStateMutator<ProfilesQuery, State
 
 data class ProfileCollectionState(
     val stringResource: StringResource,
-    val currentQuery: ProfilesQuery,
-    val items: TiledList<ProfilesQuery, ProfileCollection> = emptyTiledList(),
-)
+    override val tilingData: TilingState.Data<ProfilesQuery, ProfileCollection>,
+) : TilingState<ProfilesQuery, ProfileCollection>
 
 sealed class ProfileCollection {
 

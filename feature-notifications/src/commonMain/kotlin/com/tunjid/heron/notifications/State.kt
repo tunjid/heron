@@ -16,16 +16,16 @@
 
 package com.tunjid.heron.notifications
 
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
-import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.tiler.TiledList
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.tiler.buildTiledList
-import com.tunjid.tiler.emptyTiledList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -34,29 +34,28 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val currentQuery: NotificationsQuery = NotificationsQuery(
-        data = CursorQuery.Data(
-            page = 0,
-            cursorAnchor = Clock.System.now(),
-        )
-    ),
-    val isRefreshing: Boolean = false,
     val lastRefreshed: Instant? = null,
     @Transient
     val signedInProfile: Profile? = null,
-    @Transient
-    val notifications: TiledList<NotificationsQuery, Notification> = emptyTiledList(),
+    override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
+        currentQuery = NotificationsQuery(
+            data = CursorQuery.Data(
+                page = 0,
+                cursorAnchor = Clock.System.now(),
+            )
+        ),
+    ),
     @Transient
     val messages: List<String> = emptyList(),
-)
+) : TilingState<NotificationsQuery, Notification>
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
-    notifications.forEachIndexed { index, notification ->
+    tiledItems.forEachIndexed { index, notification ->
         when {
             isNotEmpty() && last().canAggregate(notification) -> {
                 val last = remove(lastIndex)
                 add(
-                    query = notifications.queryAt(index),
+                    query = tiledItems.queryAt(index),
                     item = last.copy(
                         isRead = last.isRead && notification.isRead,
                         aggregatedProfiles = last.aggregatedProfiles + notification.author,
@@ -65,7 +64,7 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
             }
 
             else -> add(
-                query = notifications.queryAt(index),
+                query = tiledItems.queryAt(index),
                 item = AggregatedNotification(
                     isRead = notification.isRead,
                     notification = notification,
@@ -78,14 +77,9 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
 
 sealed class Action(val key: String) {
 
-    sealed class Fetch : Action(key = "Load") {
-
-        data object Refresh : Fetch()
-
-        data class LoadAround(
-            val query: NotificationsQuery,
-        ) : Fetch()
-    }
+    data class Tile(
+        val tilingAction: TilingState.Action,
+    ) : Action(key = "Tile")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

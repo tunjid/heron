@@ -32,6 +32,7 @@ import app.bsky.unspecced.Status
 import app.bsky.unspecced.TrendView
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -50,7 +51,6 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
-import com.tunjid.heron.data.utilities.CursorQuery
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
@@ -60,6 +60,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -154,152 +155,158 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun postSearch(
         query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.searchPosts(
-                params = SearchPostsQueryParams(
-                    q = query.query,
-                    limit = query.data.limit,
-                    sort = when (query) {
-                        is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
-                        is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
-                    },
-                    cursor = when (cursor) {
-                        Cursor.Initial -> cursor.value
-                        is Cursor.Next -> cursor.value
-                        Cursor.Pending -> null
-                    },
-                )
-            )
-        }
-            .getOrNull()
-            ?: return@flow
-
-        val authProfileId = savedStateRepository.signedInProfileId
-
-        multipleEntitySaverProvider.saveInTransaction {
-            response.posts.forEach { postView ->
-                add(
-                    viewingProfileId = authProfileId,
-                    postView = postView
+    ): Flow<CursorList<Post>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.searchPosts(
+                    params = SearchPostsQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        sort = when (query) {
+                            is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
+                            is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
+                        },
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
+                    )
                 )
             }
-        }
+                .getOrNull()
+                ?: return@flow
 
-        emit(
-            CursorList(
-                items = response.posts.map(PostView::post),
-                nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            val authProfileId = savedStateRepository.signedInProfileId
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.posts.forEach { postView ->
+                    add(
+                        viewingProfileId = authProfileId,
+                        postView = postView
+                    )
+                }
+            }
+
+            emit(
+                CursorList(
+                    items = response.posts.map(PostView::post),
+                    nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+                )
             )
-        )
-    }
+        }
 
     override fun profileSearch(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.searchActors(
-                params = SearchActorsQueryParams(
-                    q = query.query,
-                    limit = query.data.limit,
-                    cursor = when (cursor) {
-                        Cursor.Initial -> cursor.value
-                        is Cursor.Next -> cursor.value
-                        Cursor.Pending -> null
-                    },
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.searchActors(
+                    params = SearchActorsQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
+                    )
+                )
+            }
+                .getOrNull()
+                ?: return@flow
+
+            val signedInProfileId = savedStateRepository.signedInProfileId
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.actors
+                    .forEach { profileView ->
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            profileView = profileView,
+                        )
+                    }
+            }
+
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+            // Emit network results immediately for minimal latency during search
+            emit(
+                CursorList(
+                    items = response.actors.toProfileWithViewerStates(
+                        signedInProfileId = signedInProfileId,
+                        profileMapper = ProfileView::profile,
+                        profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                    ),
+                    nextCursor = nextCursor,
                 )
             )
-        }
-            .getOrNull()
-            ?: return@flow
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
-
-        multipleEntitySaverProvider.saveInTransaction {
-            response.actors
-                .forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
-        }
-
-        val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-        // Emit network results immediately for minimal latency during search
-        emit(
-            CursorList(
-                items = response.actors.toProfileWithViewerStates(
+            emitAll(
+                response.actors.observeProfileWithViewerStates(
+                    profileDao = profileDao,
                     signedInProfileId = signedInProfileId,
                     profileMapper = ProfileView::profile,
-                    profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                ),
-                nextCursor = nextCursor,
+                    idMapper = { did.did.let(::ProfileId) },
+                )
+                    .map { profileWithViewerStates ->
+                        CursorList(
+                            items = profileWithViewerStates,
+                            nextCursor = nextCursor,
+                        )
+                    }
             )
-        )
-
-        emitAll(
-            response.actors.observeProfileWithViewerStates(
-                profileDao = profileDao,
-                signedInProfileId = signedInProfileId,
-                profileMapper = ProfileView::profile,
-                idMapper = { did.did.let(::ProfileId) },
-            )
-                .map { profileWithViewerStates ->
-                    CursorList(
-                        items = profileWithViewerStates,
-                        nextCursor = nextCursor,
-                    )
-                }
-        )
-    }
+        }
 
     override fun feedGeneratorSearch(
         query: SearchQuery.OfFeedGenerators,
         cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>> = flow {
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.getPopularFeedGeneratorsUnspecced(
-                params = GetPopularFeedGeneratorsQueryParams(
-                    query = query.query,
-                    limit = query.data.limit,
-                    cursor = when (cursor) {
-                        Cursor.Initial -> cursor.value
-                        is Cursor.Next -> cursor.value
-                        Cursor.Pending -> null
-                    },
-                )
-            )
-        }
-            .getOrNull()
-            ?: return@flow
-
-        multipleEntitySaverProvider.saveInTransaction {
-            response.feeds
-                .forEach { generatorView ->
-                    add(feedGeneratorView = generatorView)
-                }
-        }
-
-        val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-        val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
-
-        emitAll(
-            feedGeneratorDao.feedGenerator(
-                feedUris = feedUris
-            )
-                .map { populatedFeedGeneratorEntities ->
-                    CursorList(
-                        items = populatedFeedGeneratorEntities
-                            .map(PopulatedFeedGeneratorEntity::asExternalModel)
-                            .sortedBy { feedUris.indexOf(it.uri) },
-                        nextCursor = nextCursor,
+    ): Flow<CursorList<FeedGenerator>> =
+        if (query.query.isBlank()) emptyFlow()
+        else flow {
+            val response = runCatchingWithNetworkRetry {
+                networkService.api.getPopularFeedGeneratorsUnspecced(
+                    params = GetPopularFeedGeneratorsQueryParams(
+                        query = query.query,
+                        limit = query.data.limit,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
                     )
-                }
-        )
-    }
+                )
+            }
+                .getOrNull()
+                ?: return@flow
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.feeds
+                    .forEach { generatorView ->
+                        add(feedGeneratorView = generatorView)
+                    }
+            }
+
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
+
+            emitAll(
+                feedGeneratorDao.feedGenerator(
+                    feedUris = feedUris
+                )
+                    .map { populatedFeedGeneratorEntities ->
+                        CursorList(
+                            items = populatedFeedGeneratorEntities
+                                .map(PopulatedFeedGeneratorEntity::asExternalModel)
+                                .sortedBy { feedUris.indexOf(it.uri) },
+                            nextCursor = nextCursor,
+                        )
+                    }
+            )
+        }
 
     override fun autoCompleteProfileSearch(
         query: SearchQuery.OfProfiles,
