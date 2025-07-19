@@ -90,7 +90,6 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
@@ -107,7 +106,6 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.tiling.tilingAction
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -171,24 +169,20 @@ internal fun ProfileScreen(
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
     }
-    val updatedTimelineStateHolders by rememberUpdatedState(
-        state.timelineStateHolders
-    )
-    val updatedCollectionStateHolders by rememberUpdatedState(
-        state.collectionStateHolders
-    )
+    val updatedStateHolders by rememberUpdatedState(state.stateHolders)
+
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.size + updatedCollectionStateHolders.size
+        updatedStateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
     val isRefreshing by produceState(
         initialValue = false,
         key1 = pagerState.currentPage,
-        key2 = updatedTimelineStateHolders.size
+        key2 = updatedStateHolders.size,
     ) {
-        updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
-            ?.state
+        updatedStateHolders.getOrNull(pagerState.currentPage)
+            ?.tilingState
             ?.collect {
                 value = it.isRefreshing
             }
@@ -204,11 +198,9 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 state = pullToRefreshState,
                 onRefresh = {
-                    updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
-                        ?.tilingAction(
-                            tilingAction = TilingState.Action.Refresh,
-                            stateHolderAction = TimelineState.Action::Tile,
-                        )
+                    updatedStateHolders
+                        .getOrNull(pagerState.currentPage)
+                        ?.refresh()
                 }
             ),
         state = headerState.headerState,
@@ -218,23 +210,10 @@ internal fun ProfileScreen(
                 pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = (0..<updatedTimelineStateHolders.size).map { page ->
-                    val timeline = remember {
-                        updatedTimelineStateHolders.stateHolderAt(page).state
-                            .value
-                            .timeline
-                    }
-                    check(timeline is Timeline.Profile)
-                    Tab(
-                        title = timeline.displayName(),
-                        hasUpdate = state.sourceIdsToHasUpdates[timeline.sourceId] == true,
-                    )
-                } + updatedCollectionStateHolders.map { holder ->
-                    Tab(
-                        title = stringResource(remember(holder.state.value::stringResource)),
-                        hasUpdate = false,
-                    )
-                },
+                timelineTabs = timelineTabs(
+                    updatedStateHolders = updatedStateHolders,
+                    sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+                ),
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
@@ -243,16 +222,13 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
                 viewerState = state.viewerState,
-                timelineStateHolders = updatedTimelineStateHolders,
+                timelineStateHolders = remember(updatedStateHolders) {
+                    updatedStateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
+                },
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    updatedTimelineStateHolders.stateHolderAtOrNull(
-                        index = index
-                    )
-                        ?.tilingAction(
-                            tilingAction = TilingState.Action.Refresh,
-                            stateHolderAction = TimelineState.Action::Tile,
-                        )
+                    updatedStateHolders.getOrNull(index = index)
+                        ?.refresh()
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -290,23 +266,15 @@ internal fun ProfileScreen(
                     key = { page -> page },
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     pageContent = { page ->
-                        val timelineStateHolder = remember {
-                            updatedTimelineStateHolders.stateHolderAtOrNull(page)
-                        }
-                        when (timelineStateHolder) {
-                            null -> {
-                                val collectionStateHolder = remember {
-                                    updatedCollectionStateHolders[page - updatedTimelineStateHolders.size]
-                                }
-                                ProfileCollection(
-                                    collectionStateHolder = collectionStateHolder,
-                                    actions = actions,
-                                )
-                            }
+                        when (val stateHolder = updatedStateHolders[page]) {
+                            is ProfileScreenStateHolders.Collections -> ProfileCollection(
+                                collectionStateHolder = stateHolder,
+                                actions = actions,
+                            )
 
-                            else -> ProfileTimeline(
+                            is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                timelineStateHolder = timelineStateHolder,
+                                timelineStateHolder = stateHolder,
                                 actions = actions,
                             )
                         }
@@ -315,6 +283,24 @@ internal fun ProfileScreen(
             }
         }
     )
+}
+
+@Composable
+private fun timelineTabs(
+    updatedStateHolders: List<ProfileScreenStateHolders>,
+    sourceIdsToHasUpdates: Map<String, Boolean>,
+): List<Tab> = updatedStateHolders.map { holder ->
+    when (holder) {
+        is ProfileScreenStateHolders.Collections -> Tab(
+            title = stringResource(remember(holder.state.value::stringResource)),
+            hasUpdate = false,
+        )
+
+        is ProfileScreenStateHolders.Timeline -> Tab(
+            title = holder.state.value.timeline.displayName(),
+            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
+        )
+    }
 }
 
 @Composable
@@ -331,7 +317,7 @@ private fun ProfileHeader(
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
-    timelineStateHolders: TimelineStateHolders,
+    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
@@ -718,7 +704,7 @@ private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     tabs: List<Tab>,
-    timelineStateHolders: TimelineStateHolders,
+    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -933,14 +919,14 @@ private fun ProfileTimeline(
 private fun TimelinePresentationSelector(
     modifier: Modifier = Modifier,
     page: Int,
-    timelineStateHolders: TimelineStateHolders,
+    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
 ) {
     val timeline = produceState(
-        initialValue = timelineStateHolders.stateHolderAtOrNull(page)?.state?.value?.timeline,
+        initialValue = timelineStateHolders.getOrNull(page)?.state?.value?.timeline,
         key1 = page,
         key2 = timelineStateHolders,
     ) {
-        val holder = timelineStateHolders.stateHolderAtOrNull(page) ?: return@produceState
+        val holder = timelineStateHolders.getOrNull(page) ?: return@produceState
         value = holder.state.value.timeline
         holder.state.collect {
             value = it.timeline
@@ -952,7 +938,7 @@ private fun TimelinePresentationSelector(
         selected = timeline.presentation,
         available = timeline.supportedPresentations,
         onPresentationSelected = { presentation ->
-            timelineStateHolders.stateHolderAtOrNull(page)
+            timelineStateHolders.getOrNull(page)
                 ?.accept
                 ?.invoke(
                     TimelineState.Action.UpdatePreferredPresentation(

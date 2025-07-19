@@ -32,6 +32,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.push
@@ -53,14 +55,43 @@ data class State(
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
-    val timelineStateHolders: TimelineStateHolders = TimelineStateHolders(),
-    @Transient
-    val collectionStateHolders: List<ProfileCollectionStateHolder> = emptyList(),
+    val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
 )
 
-typealias ProfileCollectionStateHolder = ActionStateMutator<ProfilesQuery, StateFlow<ProfileCollectionState>>
+sealed class ProfileScreenStateHolders {
+
+    class Collections(
+        val mutator: ProfileCollectionStateHolder
+    ) : ProfileScreenStateHolders(),
+        ProfileCollectionStateHolder by mutator
+
+    class Timeline(
+        val mutator: TimelineStateHolder,
+    ) : ProfileScreenStateHolders(),
+        TimelineStateHolder by mutator
+
+
+    val tilingState: StateFlow<TilingState<*, *>>
+        get() = when (this) {
+            is Collections -> state
+            is Timeline -> state
+        }
+
+    fun refresh() = when(this) {
+        is Collections -> accept(
+            TilingState.Action.Refresh
+        )
+        is Timeline -> accept(
+            TimelineState.Action.Tile(
+                tilingAction = TilingState.Action.Refresh
+            )
+        )
+    }
+}
+
+typealias ProfileCollectionStateHolder = ActionStateMutator<TilingState.Action, StateFlow<ProfileCollectionState>>
 
 data class ProfileCollectionState(
     val stringResource: StringResource,
