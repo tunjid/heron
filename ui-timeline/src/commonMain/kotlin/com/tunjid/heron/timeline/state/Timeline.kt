@@ -44,23 +44,22 @@ data class TimelineState(
     val timeline: Timeline,
     val hasUpdates: Boolean,
     override val tilingData: TilingState.Data<TimelineQuery, TimelineItem>,
-) : TilingState<TimelineQuery, TimelineItem>
+) : TilingState<TimelineQuery, TimelineItem> {
+    sealed class Action(
+        val key: String,
+    ) {
+        data class Tile(
+            val tilingAction: TilingState.Action,
+        ) : Action(key = "Tile")
 
-sealed class TimelineLoadAction(
-    val key: String,
-) {
-
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : TimelineLoadAction(key = "Fetch")
-
-    data class UpdatePreferredPresentation(
-        val timeline: Timeline,
-        val presentation: Timeline.Presentation,
-    ) : TimelineLoadAction(key = "UpdatePreferredPresentation")
+        data class UpdatePreferredPresentation(
+            val timeline: Timeline,
+            val presentation: Timeline.Presentation,
+        ) : Action(key = "UpdatePreferredPresentation")
+    }
 }
 
-typealias TimelineStateHolder = ActionStateMutator<TimelineLoadAction, StateFlow<TimelineState>>
+typealias TimelineStateHolder = ActionStateMutator<TimelineState.Action, StateFlow<TimelineState>>
 
 fun timelineStateHolder(
     refreshOnStart: Boolean,
@@ -101,9 +100,9 @@ fun timelineStateHolder(
         ),
     ),
     actionTransform = transform@{ actions ->
-        actions.toMutationStream(keySelector = TimelineLoadAction::key) {
+        actions.toMutationStream(keySelector = TimelineState.Action::key) {
             when (val action = type()) {
-                is TimelineLoadAction.Tile -> action.flow
+                is TimelineState.Action.Tile -> action.flow
                     .map { it.tilingAction }
                     .tilingMutations(
                         currentState = { state() },
@@ -114,7 +113,7 @@ fun timelineStateHolder(
                         onTilingDataUpdated = { copy(tilingData = it) },
                     )
 
-                is TimelineLoadAction.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
+                is TimelineState.Action.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
                     timelineRepository = timelineRepository,
                 )
             }
@@ -166,7 +165,7 @@ private fun timelineUpdateMutations(
     )
         .mapToMutation { copy(timeline = it) }
 
-private suspend fun Flow<TimelineLoadAction.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
+private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> = mapLatestToManyMutations {
     timelineRepository.updatePreferredPresentation(

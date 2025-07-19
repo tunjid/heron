@@ -72,7 +72,7 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -168,9 +168,9 @@ internal fun ListScreen(
                 key1 = pagerState.currentPage,
                 key2 = updatedStateHolders.size,
             ) {
-                updatedStateHolders[pagerState.currentPage]
-                    .tilingState
-                    .collect {
+                updatedStateHolders.getOrNull(pagerState.currentPage)
+                    ?.tilingState
+                    ?.collect {
                         value = it.isRefreshing
                     }
             }
@@ -337,7 +337,7 @@ private fun ListTimeline(
                         presentation.cardSize.toPx()
                     }
                     timelineStateHolder.accept(
-                        TimelineLoadAction.Tile(
+                        TimelineState.Action.Tile(
                             tilingAction = TilingState.Action.GridSize(
                                 floor(it.width / itemWidth).roundToInt()
                             )
@@ -464,7 +464,7 @@ private fun ListTimeline(
         items = items,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
-                TimelineLoadAction.Tile(
+                TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
                         query ?: timelineState.tilingData.currentQuery
                     )

@@ -34,6 +34,7 @@ import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.list.Action
 import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
+import com.tunjid.heron.list.ListScreenStateHolders
 import com.tunjid.heron.list.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -45,7 +46,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -252,10 +253,12 @@ class ListBindings(
                                 creator = state.creator,
                                 hasUpdates = state.timelineState?.hasUpdates == true,
                                 onPresentationSelected = { timeline, presentation ->
-                                    state.timelineStateHolder
+                                    state.stateHolders
+                                        .filterIsInstance<ListScreenStateHolders.Timeline>()
+                                        .firstOrNull()
                                         ?.accept
                                         ?.invoke(
-                                            TimelineLoadAction.UpdatePreferredPresentation(
+                                            TimelineState.Action.UpdatePreferredPresentation(
                                                 timeline = timeline,
                                                 presentation = presentation
                                             )

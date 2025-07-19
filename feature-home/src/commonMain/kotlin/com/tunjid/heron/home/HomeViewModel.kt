@@ -28,7 +28,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tilingAction
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.update
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -196,6 +196,6 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
             ?.tilingAction(
                 tilingAction = TilingState.Action.Refresh,
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
     }

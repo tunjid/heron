@@ -68,7 +68,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.tiling.tilingAction
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -159,7 +159,7 @@ internal fun HomeScreen(
                 updatedTimelineStateHolders.stateHolderAt(page)
                     .tilingAction(
                         tilingAction = TilingState.Action.Refresh,
-                        stateHolderAction = TimelineLoadAction::Tile,
+                        stateHolderAction = TimelineState.Action::Tile,
                     )
             },
             onExpansionChanged = { isExpanded ->
@@ -169,7 +169,7 @@ internal fun HomeScreen(
                 val timelineStateHolder = updatedTimelineStateHolders.stateHolderAtOrNull(index)
                     ?: return@click
                 timelineStateHolder.accept(
-                    TimelineLoadAction.UpdatePreferredPresentation(
+                    TimelineState.Action.UpdatePreferredPresentation(
                         timeline = timelineStateHolder.state.value.timeline,
                         presentation = presentation,
                     )
@@ -233,7 +233,7 @@ private fun HomeTimeline(
         onRefresh = {
             timelineStateHolder.tilingAction(
                 tilingAction = TilingState.Action.Refresh,
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
         }
     ) {
@@ -249,7 +249,7 @@ private fun HomeTimeline(
                             tilingAction = TilingState.Action.GridSize(
                                 floor(it.width / itemWidth).roundToInt()
                             ),
-                            stateHolderAction = TimelineLoadAction::Tile,
+                            stateHolderAction = TimelineState.Action::Tile,
                         )
                     },
                 state = gridState,
@@ -390,7 +390,7 @@ private fun HomeTimeline(
                 tilingAction = TilingState.Action.LoadAround(
                     query ?: timelineState.tilingData.currentQuery
                 ),
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
         }
     )

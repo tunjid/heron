@@ -42,7 +42,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -190,7 +190,7 @@ class FeedBindings(
                                     state.timelineStateHolder
                                         ?.accept
                                         ?.invoke(
-                                            TimelineLoadAction.UpdatePreferredPresentation(
+                                            TimelineState.Action.UpdatePreferredPresentation(
                                                 timeline = timeline,
                                                 presentation = presentation
                                             )

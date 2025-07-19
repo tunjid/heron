@@ -56,7 +56,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.tiling.tilingAction
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -129,7 +129,7 @@ private fun FeedTimeline(
                     tilingAction = TilingState.Action.GridSize(
                         floor(it.width / itemWidth).roundToInt()
                     ),
-                    stateHolderAction = TimelineLoadAction::Tile,
+                    stateHolderAction = TimelineState.Action::Tile,
                 )
             },
         isRefreshing = timelineState.isRefreshing,
@@ -137,7 +137,7 @@ private fun FeedTimeline(
         onRefresh = {
             timelineStateHolder.tilingAction(
                 tilingAction = TilingState.Action.Refresh,
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
         }
     ) {
@@ -266,7 +266,7 @@ private fun FeedTimeline(
                 tilingAction = TilingState.Action.LoadAround(
                     query ?: timelineState.tilingData.currentQuery
                 ),
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
         }
     )

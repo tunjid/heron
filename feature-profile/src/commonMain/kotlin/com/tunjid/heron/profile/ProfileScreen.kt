@@ -105,7 +105,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.tiling.tilingAction
-import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.TimelineStateHolders
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -207,7 +207,7 @@ internal fun ProfileScreen(
                     updatedTimelineStateHolders.stateHolderAtOrNull(pagerState.currentPage)
                         ?.tilingAction(
                             tilingAction = TilingState.Action.Refresh,
-                            stateHolderAction = TimelineLoadAction::Tile,
+                            stateHolderAction = TimelineState.Action::Tile,
                         )
                 }
             ),
@@ -251,7 +251,7 @@ internal fun ProfileScreen(
                     )
                         ?.tilingAction(
                             tilingAction = TilingState.Action.Refresh,
-                            stateHolderAction = TimelineLoadAction::Tile,
+                            stateHolderAction = TimelineState.Action::Tile,
                         )
                 },
                 onViewerStateClicked = { viewerState ->
@@ -784,7 +784,7 @@ private fun ProfileTimeline(
                         tilingAction = TilingState.Action.GridSize(
                             floor(it.width / itemWidth).roundToInt()
                         ),
-                        stateHolderAction = TimelineLoadAction::Tile,
+                        stateHolderAction = TimelineState.Action::Tile,
                     )
                 },
             state = gridState,
@@ -918,7 +918,7 @@ private fun ProfileTimeline(
                 tilingAction = TilingState.Action.LoadAround(
                     query ?: timelineState.tilingData.currentQuery
                 ),
-                stateHolderAction = TimelineLoadAction::Tile,
+                stateHolderAction = TimelineState.Action::Tile,
             )
         }
     )
@@ -955,7 +955,7 @@ private fun TimelinePresentationSelector(
             timelineStateHolders.stateHolderAtOrNull(page)
                 ?.accept
                 ?.invoke(
-                    TimelineLoadAction.UpdatePreferredPresentation(
+                    TimelineState.Action.UpdatePreferredPresentation(
                         timeline = timeline,
                         presentation = presentation,
                     )

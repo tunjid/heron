@@ -25,7 +25,6 @@ import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.timeline.state.TimelineLoadAction
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
@@ -69,7 +68,7 @@ sealed class ListScreenStateHolders {
             TilingState.Action.Refresh
         )
         is Timeline -> accept(
-            TimelineLoadAction.Tile(
+            TimelineState.Action.Tile(
                 tilingAction = TilingState.Action.Refresh
             )
         )
