@@ -32,7 +32,6 @@ import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.RouteViewModelInitializer
-import com.tunjid.heron.feed.ui.TimelineTitle
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -44,6 +43,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.state.TimelineLoadAction
+import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
