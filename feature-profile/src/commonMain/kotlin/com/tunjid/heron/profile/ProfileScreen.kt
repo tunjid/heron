@@ -210,19 +210,10 @@ internal fun ProfileScreen(
                 pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = updatedStateHolders.map { holder ->
-                    when (holder) {
-                        is ProfileScreenStateHolders.Collections -> Tab(
-                            title = stringResource(remember(holder.state.value::stringResource)),
-                            hasUpdate = false,
-                        )
-
-                        is ProfileScreenStateHolders.Timeline -> Tab(
-                            title = holder.state.value.timeline.displayName(),
-                            hasUpdate = state.sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
-                        )
-                    }
-                },
+                timelineTabs = timelineTabs(
+                    updatedStateHolders = updatedStateHolders,
+                    sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+                ),
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
@@ -292,6 +283,24 @@ internal fun ProfileScreen(
             }
         }
     )
+}
+
+@Composable
+private fun timelineTabs(
+    updatedStateHolders: List<ProfileScreenStateHolders>,
+    sourceIdsToHasUpdates: Map<String, Boolean>,
+): List<Tab> = updatedStateHolders.map { holder ->
+    when (holder) {
+        is ProfileScreenStateHolders.Collections -> Tab(
+            title = stringResource(remember(holder.state.value::stringResource)),
+            hasUpdate = false,
+        )
+
+        is ProfileScreenStateHolders.Timeline -> Tab(
+            title = holder.state.value.timeline.displayName(),
+            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
+        )
+    }
 }
 
 @Composable
