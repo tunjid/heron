@@ -101,7 +101,7 @@ fun TimelineTitle(
                     style = MaterialTheme.typography.titleSmallEmphasized,
                 )
                 Text(
-                    text = timeline.getDescription(creator),
+                    text = timeline.creatorDescription(creator),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -122,6 +122,18 @@ fun TimelineTitle(
         )
     }
 }
+
+val Timeline.description: String
+    get() = when (this) {
+        is Timeline.Home.Feed -> feedGenerator.description
+        is Timeline.Home.List -> feedList.description
+        is Timeline.StarterPack -> ""
+
+        is Timeline.Home.Following,
+        is Timeline.Profile,
+            -> null
+
+    } ?: ""
 
 val Timeline.Presentation.cardSize
     get() = when (this) {
@@ -151,12 +163,12 @@ internal val Timeline.Presentation.icon
         Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
     }
 
-private fun Timeline.getDescription(
+private fun Timeline.creatorDescription(
     creator: Profile?,
 ): String = when (this) {
     is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.handle.id
     is Timeline.Home.List -> creator?.displayName ?: feedList.creator.handle.id
-    is Timeline.StarterPack -> creator?.displayName ?: listTimeline.getDescription(creator)
+    is Timeline.StarterPack -> creator?.displayName ?: listTimeline.creatorDescription(creator)
 
     is Timeline.Home.Following,
     is Timeline.Profile,

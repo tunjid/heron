@@ -17,4 +17,6 @@
 <resources>
     <string name="heron">Heron</string>
     <string name="back">Back</string>
+    <string name="people">People</string>
+    <string name="posts">Posts</string>
 </resources>

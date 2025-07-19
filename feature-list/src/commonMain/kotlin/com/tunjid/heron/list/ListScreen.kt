@@ -18,13 +18,14 @@ package com.tunjid.heron.list
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,20 +36,27 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
+import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
@@ -72,13 +80,24 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.description
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
+import com.tunjid.heron.ui.Tab
+import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import heron.feature_list.generated.resources.Res
+import heron.feature_list.generated.resources.people
+import heron.feature_list.generated.resources.posts
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -89,37 +108,97 @@ internal fun ListScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
-        val pagerState = rememberPagerState { 2 }
-        HorizontalPager(
-            modifier = modifier
-                .fillMaxSize(),
-            state = pagerState,
-            pageContent = { page ->
-                when (page) {
-                    0 -> when (val membersStateHolder = state.membersStateHolder) {
-                        null -> Unit
-                        else -> ListMembers(
-                            paneScaffoldState = paneScaffoldState,
-                            membersStateHolder = membersStateHolder,
-                            actions = actions,
-                        )
-                    }
+    val density = LocalDensity.current
+    val pagerState = rememberPagerState { 2 }
+    val scope = rememberCoroutineScope()
 
-                    else -> when (val timelineStateHolder = state.timelineStateHolder) {
-                        null -> Unit
-                        else -> ListTimeline(
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            timelineStateHolder = timelineStateHolder,
-                            actions = actions,
-                        )
+    val collapsedHeight = with(density) {
+        UiTokens.tabsHeight.toPx()
+    }
+    val collapsingHeaderState = rememberCollapsingHeaderState(
+        collapsedHeight = collapsedHeight,
+        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    )
+
+    CollapsingHeaderLayout(
+        modifier = modifier
+            .fillMaxSize(),
+        state = collapsingHeaderState,
+        headerContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset {
+                        IntOffset(
+                            x = 0,
+                            y = -collapsingHeaderState.translation.roundToInt())
+                    }
+            ) {
+                Text(
+                    text = state.timelineState?.timeline?.description ?: ""
+                )
+                Tabs(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(CircleShape),
+                    tabsState = rememberTabsState(
+                        tabs = listTabs(),
+                        selectedTabIndex = pagerState::tabIndex,
+                        onTabSelected = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(it)
+                            }
+                        },
+                        onTabReselected = { },
+                    ),
+                )
+            }
+        },
+        body = {
+            HorizontalPager(
+                modifier = Modifier
+                    .fillMaxSize(),
+                state = pagerState,
+                pageContent = { page ->
+                    when (page) {
+                        0 -> when (val membersStateHolder = state.membersStateHolder) {
+                            null -> Unit
+                            else -> ListMembers(
+                                paneScaffoldState = paneScaffoldState,
+                                membersStateHolder = membersStateHolder,
+                                actions = actions,
+                            )
+                        }
+
+                        else -> when (val timelineStateHolder = state.timelineStateHolder) {
+                            null -> Unit
+                            else -> ListTimeline(
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                timelineStateHolder = timelineStateHolder,
+                                actions = actions,
+                            )
+                        }
                     }
                 }
+            )
+        }
+    )
+}
 
-            }
+@Composable
+private fun listTabs(): List<Tab> = remember { mutableStateListOf<Tab>() }.apply {
+    if (isEmpty()) {
+        add(
+            Tab(
+                title = stringResource(Res.string.people),
+                hasUpdate = false
+            )
+        )
+        add(
+            Tab(
+                title = stringResource(Res.string.posts),
+                hasUpdate = false
+            )
         )
     }
 }
