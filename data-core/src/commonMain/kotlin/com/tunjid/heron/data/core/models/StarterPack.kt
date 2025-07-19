@@ -26,6 +26,7 @@ data class StarterPack(
     val cid: StarterPackId,
     val uri: StarterPackUri,
     val name: String,
+    val description: String?,
     val creator: Profile,
     val list: FeedList?,
     val joinedWeekCount: Long?,

@@ -31,7 +31,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     val bskyStarterPack = try {
         starterPack.record.decodeAs<BskyStarterPack>()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return
     }
     starterPack.creator.profileEntity().let(::add)
@@ -55,6 +55,7 @@ internal fun MultipleEntitySaver.add(
             creatorId = starterPack.creator.did.did.let(::ProfileId),
             listUri = starterPack.list?.uri?.atUri?.let(::ListUri),
             name = bskyStarterPack.name,
+            description = bskyStarterPack.description,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
@@ -68,7 +69,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     val bskyStarterPack = try {
         starterPack.record.decodeAs<BskyStarterPack>()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return
     }
     starterPack.creator.profileEntity().let(::add)
@@ -80,6 +81,7 @@ internal fun MultipleEntitySaver.add(
             creatorId = starterPack.creator.did.did.let(::ProfileId),
             listUri = bskyStarterPack.list.atUri.let(::ListUri),
             name = bskyStarterPack.name,
+            description = bskyStarterPack.description,
             joinedWeekCount = starterPack.joinedWeekCount,
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
