@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -25,6 +26,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -85,6 +87,8 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(ListId::class)
             subclass(StarterPackId::class)
             subclass(GenericId::class)
+            subclass(ConversationId::class)
+            subclass(MessageId::class)
         }
         polymorphic(Id.Profile::class) {
             subclass(ProfileId::class)
