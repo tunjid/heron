@@ -16,12 +16,19 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.ListMember
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlinx.datetime.Instant
 
 
@@ -47,7 +54,7 @@ import kotlinx.datetime.Instant
 )
 data class MessageEntity(
     @PrimaryKey
-    val id: String,
+    val id: MessageId,
     val rev: String,
     val text: String,
     val senderId: ProfileId,
@@ -58,3 +65,22 @@ data class MessageEntity(
         val base64EncodedRecord: String?,
     )
 }
+
+data class PopulatedMessageEntity(
+    @Embedded
+    val entity: MessageEntity,
+    @Relation(
+        parentColumn = "senderId",
+        entityColumn = "did"
+    )
+    val sender: ProfileEntity,
+)
+
+fun PopulatedMessageEntity.asExternalModel() =
+    Message(
+        id = entity.id,
+        text = entity.text,
+        sentAt = entity.sentAt,
+        sender = sender.asExternalModel(),
+    )
+

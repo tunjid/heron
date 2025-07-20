@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 
@@ -35,3 +37,18 @@ data class ConversationEntity(
     val status: String? = null,
     val unreadCount: Long,
 )
+
+data class PopulatedConversationEntity(
+    @Embedded
+    val entity: ConversationEntity,
+    @Embedded
+    val lastMessageEntity: PopulatedMessageEntity?,
+)
+
+fun PopulatedConversationEntity.asExternalModel() =
+    Conversation(
+        id = entity.id,
+        muted = entity.muted,
+        unreadCount = entity.unreadCount,
+        lastMessage = lastMessageEntity?.asExternalModel(),
+    )
