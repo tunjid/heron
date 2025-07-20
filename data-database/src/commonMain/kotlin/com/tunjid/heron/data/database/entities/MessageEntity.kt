@@ -20,6 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
@@ -27,6 +28,12 @@ import kotlinx.datetime.Instant
 @Entity(
     tableName = "messages",
     foreignKeys = [
+        ForeignKey(
+            entity = ConversationEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["conversationId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
@@ -44,6 +51,7 @@ data class MessageEntity(
     val rev: String,
     val text: String,
     val senderId: ProfileId,
+    val conversationId: ConversationId,
     val sentAt: Instant,
 ) {
     data class RecordData(

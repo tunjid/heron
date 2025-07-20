@@ -26,7 +26,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
-import com.tunjid.heron.data.database.daos.MessagesDao
+import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -158,7 +158,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationsDao(): NotificationsDao
     abstract fun starterPackDao(): StarterPackDao
 
-    abstract fun messagesDao(): MessagesDao
+    abstract fun messagesDao(): MessageDao
 }
 
 // The Room compiler generates the `actual` implementations.
