@@ -41,6 +41,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
@@ -340,15 +341,13 @@ private fun profileCollectionStateHolders(
                     type().flow
                         .tilingMutations(
                             currentState = { state() },
-                            onRefreshQuery = { query ->
-                                query.copy(data = query.data.copy(page = 0))
-                            },
+                            updateQueryData = { copy(data = it) },
+                            refreshQuery = { copy(data = data.reset()) },
+                            cursorListLoader = cursorListLoader,
                             onNewItems = { items ->
                                 items.distinctBy(ProfileCollection::id)
                             },
                             onTilingDataUpdated = { copy(tilingData = it) },
-                            updatePage = { newData -> copy(data = newData) },
-                            cursorListLoader = cursorListLoader,
                         )
                 }
             }

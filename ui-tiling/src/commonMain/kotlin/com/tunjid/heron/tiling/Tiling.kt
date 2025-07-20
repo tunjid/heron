@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -103,11 +104,11 @@ fun <Action : Any, State : TilingState<*, *>> ActionStateMutator<Action, StateFl
  */
 suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
     crossinline currentState: suspend () -> State,
-    crossinline onRefreshQuery: (Query) -> Query,
+    noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
+    crossinline refreshQuery: Query.() -> Query,
+    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     crossinline onNewItems: (TiledList<Query, Item>) -> TiledList<Query, Item>,
     crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State,
-    noinline updatePage: Query.(CursorQuery.Data) -> Query,
-    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     noinline queryRefreshBy: (Query) -> Any = { it.data.cursorAnchor },
 ): Flow<Mutation<State>> {
     // Read the starting state at the time of subscription
@@ -145,7 +146,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             }
 
             is TilingState.Action.Refresh -> {
-                queries.value = onRefreshQuery(queries.value)
+                queries.value = refreshQuery(queries.value)
             }
         }
         // Emit the same item with each action
@@ -174,13 +175,13 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                     cursorTileInputs<Query, Item>(
                         numColumns = numColumns,
                         queries = queries,
-                        updatePage = updatePage,
+                        updatePage = updateQueryData,
                     )
                         .toTiledList(
                             cursorListTiler(
                                 startingQuery = refreshedQuery,
                                 cursorListLoader = cursorListLoader,
-                                updatePage = updatePage,
+                                updatePage = updateQueryData,
                             )
                         )
                 }
@@ -205,6 +206,7 @@ inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).
     }
 }
 
+fun CursorQuery.Data.reset() = copy(page = 0, cursorAnchor = Clock.System.now())
 
 fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
     data.cursorAnchor != newQuery.data.cursorAnchor

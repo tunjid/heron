@@ -24,6 +24,7 @@ import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -106,8 +107,8 @@ fun timelineStateHolder(
                     .map { it.tilingAction }
                     .tilingMutations(
                         currentState = { state() },
-                        onRefreshQuery = TimelineQuery::refresh,
-                        updatePage = TimelineQuery::updateData,
+                        updateQueryData = TimelineQuery::updateData,
+                        refreshQuery = TimelineQuery::refresh,
                         cursorListLoader = timelineRepository::timelineItems,
                         onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
                         onTilingDataUpdated = { copy(tilingData = it) },
@@ -183,10 +184,7 @@ private fun TimelineQuery.updateData(
 
 private fun TimelineQuery.refresh(): TimelineQuery = TimelineQuery(
     timeline = timeline,
-    data = CursorQuery.Data(
-        page = 0,
-        cursorAnchor = Clock.System.now(),
-    ),
+    data = data.reset(),
 )
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
