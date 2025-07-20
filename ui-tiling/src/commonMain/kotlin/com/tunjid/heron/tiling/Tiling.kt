@@ -20,7 +20,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.mapCursorList
-import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.tiler.ListTiler
@@ -36,7 +35,6 @@ import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,6 +42,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -93,21 +92,17 @@ val TilingState<*, *>.isRefreshing
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
-fun <Action : Any, State : TilingState<*, *>> ActionStateMutator<Action, StateFlow<State>>.tilingAction(
-    tilingAction: TilingState.Action,
-    stateHolderAction: (TilingState.Action) -> Action,
-) = accept(stateHolderAction(tilingAction))
-
 /**
  * Feed mutations as a function of the user's scroll position
  */
 suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+    isRefreshedOnNewItems: Boolean = true,
     crossinline currentState: suspend () -> State,
-    crossinline onRefreshQuery: (Query) -> Query,
+    noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
+    crossinline refreshQuery: Query.() -> Query,
+    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     crossinline onNewItems: (TiledList<Query, Item>) -> TiledList<Query, Item>,
     crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State,
-    noinline updatePage: Query.(CursorQuery.Data) -> Query,
-    noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     noinline queryRefreshBy: (Query) -> Any = { it.data.cursorAnchor },
 ): Flow<Mutation<State>> {
     // Read the starting state at the time of subscription
@@ -145,7 +140,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             }
 
             is TilingState.Action.Refresh -> {
-                queries.value = onRefreshQuery(queries.value)
+                queries.value = refreshQuery(queries.value)
             }
         }
         // Emit the same item with each action
@@ -160,11 +155,13 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                 queries.mapToMutation<Query, TilingState.Data<Query, Item>> { newQuery ->
                     copy(
                         currentQuery = newQuery,
-                        status =
-                            if (currentQuery.hasDifferentAnchor(newQuery)) TilingState.Status.Refreshing(
+                        status = when {
+                            currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
                                 cursorAnchor = newQuery.data.cursorAnchor,
                             )
-                            else status
+
+                            else -> status
+                        }
                     )
                 },
                 numColumns.mapToMutation {
@@ -174,19 +171,32 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                     cursorTileInputs<Query, Item>(
                         numColumns = numColumns,
                         queries = queries,
-                        updatePage = updatePage,
+                        updatePage = updateQueryData,
                     )
                         .toTiledList(
                             cursorListTiler(
                                 startingQuery = refreshedQuery,
                                 cursorListLoader = cursorListLoader,
-                                updatePage = updatePage,
+                                updatePage = updateQueryData,
                             )
                         )
                 }
                     .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
                         // Ignore results from stale queries
-                        if (items.isValidFor(currentQuery)) copy(items = onNewItems(items))
+                        if (items.isValidFor(currentQuery)) copy(
+                            items = onNewItems(items),
+                            status = when {
+                                isRefreshedOnNewItems && items.isNotEmpty() -> {
+                                    val fetchedQuery = items.queryAt(0)
+                                    if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
+                                    else TilingState.Status.Refreshed(
+                                        cursorAnchor = fetchedQuery.data.cursorAnchor
+                                    )
+                                }
+
+                                else -> status
+                            }
+                        )
                         else this
                     },
             )
@@ -205,6 +215,7 @@ inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).
     }
 }
 
+fun CursorQuery.Data.reset() = copy(page = 0, cursorAnchor = Clock.System.now())
 
 fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
     data.cursorAnchor != newQuery.data.cursorAnchor

@@ -35,6 +35,7 @@ import com.tunjid.heron.list.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
@@ -212,15 +213,13 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
                     type().flow
                         .tilingMutations(
                             currentState = { state() },
-                            onRefreshQuery = { query ->
-                                query.copy(data = query.data.copy(page = 0))
-                            },
+                            updateQueryData = { copy(data = it) },
+                            refreshQuery = { copy(data = data.reset()) },
+                            cursorListLoader = profileRepository::listMembers,
                             onNewItems = { items ->
                                 items.distinctBy(ListMember::uri)
                             },
                             onTilingDataUpdated = { copy(tilingData = it) },
-                            updatePage = { newData -> copy(data = newData) },
-                            cursorListLoader = profileRepository::listMembers,
                         )
                 }
             }

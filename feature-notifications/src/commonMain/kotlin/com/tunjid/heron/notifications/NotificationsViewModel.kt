@@ -28,6 +28,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -46,7 +47,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -155,18 +155,16 @@ suspend fun Flow<Action.Tile>.notificationsMutations(
 ): Flow<Mutation<State>> =
     map { it.tilingAction }
         .tilingMutations(
+            // This is determined by State.lastRefreshed
+            isRefreshedOnNewItems = false,
             currentState = { stateHolder.state() },
-            onRefreshQuery = { query ->
-                query.copy(data = query.data.copy(page = 0, cursorAnchor = Clock.System.now()))
-            },
+            updateQueryData = { copy(data = it) },
+            refreshQuery = { copy(data = data.reset()) },
+            cursorListLoader = notificationsRepository::notifications,
             onNewItems = { notifications ->
                 notifications.distinctBy(Notification::cid)
             },
             onTilingDataUpdated = {
                 copy(tilingData = it)
             },
-            updatePage = {
-                copy(data = it)
-            },
-            cursorListLoader = notificationsRepository::notifications,
         )

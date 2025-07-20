@@ -103,7 +103,6 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.tiling.tilingAction
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -766,11 +765,12 @@ private fun ProfileTimeline(
                     val itemWidth = with(density) {
                         presentation.cardSize.toPx()
                     }
-                    timelineStateHolder.tilingAction(
-                        tilingAction = TilingState.Action.GridSize(
-                            floor(it.width / itemWidth).roundToInt()
-                        ),
-                        stateHolderAction = TimelineState.Action::Tile,
+                    timelineStateHolder.accept(
+                        TimelineState.Action.Tile(
+                            tilingAction = TilingState.Action.GridSize(
+                                numColumns = floor(it.width / itemWidth).roundToInt()
+                            )
+                        )
                     )
                 },
             state = gridState,
@@ -900,11 +900,12 @@ private fun ProfileTimeline(
     gridState.PivotedTilingEffect(
         items = items,
         onQueryChanged = { query ->
-            timelineStateHolder.tilingAction(
-                tilingAction = TilingState.Action.LoadAround(
-                    query ?: timelineState.tilingData.currentQuery
-                ),
-                stateHolderAction = TimelineState.Action::Tile,
+            timelineStateHolder.accept(
+                TimelineState.Action.Tile(
+                    tilingAction = TilingState.Action.LoadAround(
+                        query = query ?: timelineState.tilingData.currentQuery
+                    )
+                )
             )
         }
     )

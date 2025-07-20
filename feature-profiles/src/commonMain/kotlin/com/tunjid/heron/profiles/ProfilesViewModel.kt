@@ -33,6 +33,7 @@ import com.tunjid.heron.profiles.di.load
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -143,17 +144,17 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
     map { it.tilingAction }
         .tilingMutations(
             currentState = { stateHolder.state() },
-            onRefreshQuery = { query ->
-                when (query) {
-                    is PostDataQuery -> query.copy(data = query.data.copy(page = 0))
-                    is ProfilesQuery -> query.copy(data = query.data.copy(page = 0))
-                    else -> throw IllegalArgumentException("Invalid query")
-                }
-            },
-            updatePage = {
+            updateQueryData = {
                 when (this) {
                     is PostDataQuery -> copy(data = it)
                     is ProfilesQuery -> copy(data = it)
+                    else -> throw IllegalArgumentException("Invalid query")
+                }
+            },
+            refreshQuery = {
+                when (this) {
+                    is PostDataQuery -> copy(data = data.reset())
+                    is ProfilesQuery -> copy(data = data.reset())
                     else -> throw IllegalArgumentException("Invalid query")
                 }
             },

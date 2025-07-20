@@ -35,6 +35,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
+import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -382,21 +383,16 @@ private fun searchStateHolders(
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
                             currentState = { state() },
-                            onRefreshQuery = { query ->
-                                when (query) {
-                                    is SearchQuery.OfPosts.Latest -> query.copy(
-                                        data = query.data.copy(page = 0)
-                                    )
-
-                                    is SearchQuery.OfPosts.Top -> query.copy(
-                                        data = query.data.copy(page = 0)
-                                    )
-                                }
-                            },
-                            updatePage = {
+                            updateQueryData = {
                                 when (this) {
                                     is SearchQuery.OfPosts.Latest -> copy(data = it)
                                     is SearchQuery.OfPosts.Top -> copy(data = it)
+                                }
+                            },
+                            refreshQuery = {
+                                when (this) {
+                                    is SearchQuery.OfPosts.Latest -> copy(data = data.reset())
+                                    is SearchQuery.OfPosts.Top -> copy(data = data.reset())
                                 }
                             },
                             cursorListLoader = searchRepository::postSearch.mapCursorList {
@@ -424,12 +420,8 @@ private fun searchStateHolders(
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
                             currentState = { state() },
-                            onRefreshQuery = { query ->
-                                query.copy(data = query.data.copy(page = 0))
-                            },
-                            updatePage = {
-                                copy(data = it)
-                            },
+                            updateQueryData = { copy(data = it) },
+                            refreshQuery = { copy(data = data.reset()) },
                             cursorListLoader = searchRepository::profileSearch.mapCursorList {
                                 SearchResult.OfProfile(
                                     profileWithViewerState = it,
@@ -455,12 +447,8 @@ private fun searchStateHolders(
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
                             currentState = { state() },
-                            onRefreshQuery = { query ->
-                                query.copy(data = query.data.copy(page = 0))
-                            },
-                            updatePage = {
-                                copy(data = it)
-                            },
+                            updateQueryData = { copy(data = it) },
+                            refreshQuery = { copy(data = data.reset()) },
                             cursorListLoader = searchRepository::feedGeneratorSearch.mapCursorList {
                                 SearchResult.OfFeedGenerator(
                                     feedGenerator = it,
