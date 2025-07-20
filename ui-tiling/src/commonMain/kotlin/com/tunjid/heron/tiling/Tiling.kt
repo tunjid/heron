@@ -154,11 +154,13 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                 queries.mapToMutation<Query, TilingState.Data<Query, Item>> { newQuery ->
                     copy(
                         currentQuery = newQuery,
-                        status =
-                            if (currentQuery.hasDifferentAnchor(newQuery)) TilingState.Status.Refreshing(
+                        status = when {
+                            currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
                                 cursorAnchor = newQuery.data.cursorAnchor,
                             )
-                            else status
+
+                            else -> status
+                        }
                     )
                 },
                 numColumns.mapToMutation {
