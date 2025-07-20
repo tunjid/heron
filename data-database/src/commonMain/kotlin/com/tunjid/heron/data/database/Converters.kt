@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.database
 
 import androidx.room.TypeConverter
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -26,6 +27,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -122,6 +124,14 @@ internal class IdConverters {
     @TypeConverter
     fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? =
         value?.let(::FeedGeneratorId)
+
+    @TypeConverter
+    fun conversationIdFromString(value: String?): ConversationId? =
+        value?.let(::ConversationId)
+
+    @TypeConverter
+    fun messageIdFromString(value: String?): MessageId? =
+        value?.let(::MessageId)
 
     @TypeConverter
     fun toIdString(id: Id?): String? =

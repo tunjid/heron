@@ -89,3 +89,20 @@ value class GenericId(
 ) : Id {
     override fun toString(): String = id
 }
+
+@Serializable
+@JvmInline
+value class ConversationId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class MessageId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
