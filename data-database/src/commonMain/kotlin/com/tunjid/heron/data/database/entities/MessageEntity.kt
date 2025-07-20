@@ -22,13 +22,10 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
-import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlinx.datetime.Instant
 
 
@@ -59,6 +56,7 @@ data class MessageEntity(
     val text: String,
     val senderId: ProfileId,
     val conversationId: ConversationId,
+    val isDeleted: Boolean,
     val sentAt: Instant,
 ) {
     data class RecordData(
@@ -81,6 +79,7 @@ fun PopulatedMessageEntity.asExternalModel() =
         id = entity.id,
         text = entity.text,
         sentAt = entity.sentAt,
+        isDeleted = entity.isDeleted,
         sender = sender.asExternalModel(),
     )
 

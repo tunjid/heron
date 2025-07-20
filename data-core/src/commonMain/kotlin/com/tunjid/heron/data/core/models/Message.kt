@@ -23,5 +23,6 @@ data class Message(
     val id: MessageId,
     val text: String,
     val sender: Profile,
+    val isDeleted: Boolean,
     val sentAt: Instant,
 )
