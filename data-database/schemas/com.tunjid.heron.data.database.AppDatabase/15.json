@@ -1,0 +1,1618 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 15,
+    "identityHash": "211965bd7f1fa58a3801595785ab3640",
+    "entities": [
+      {
+        "tableName": "externalEmbeds",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `thumb` TEXT, PRIMARY KEY(`uri`))",
+        "fields": [
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumb",
+            "columnName": "thumb",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uri"
+          ]
+        }
+      },
+      {
+        "tableName": "images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fullSize` TEXT NOT NULL, `thumb` TEXT NOT NULL, `alt` TEXT NOT NULL, `width` INTEGER, `height` INTEGER, PRIMARY KEY(`fullSize`))",
+        "fields": [
+          {
+            "fieldPath": "fullSize",
+            "columnName": "fullSize",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumb",
+            "columnName": "thumb",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alt",
+            "columnName": "alt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "fullSize"
+          ]
+        }
+      },
+      {
+        "tableName": "videos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `playlist` TEXT NOT NULL, `thumbnail` TEXT, `alt` TEXT, `width` INTEGER, `height` INTEGER, PRIMARY KEY(`cid`))",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playlist",
+            "columnName": "playlist",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumbnail",
+            "columnName": "thumbnail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "alt",
+            "columnName": "alt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        }
+      },
+      {
+        "tableName": "postExternalEmbeds",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `externalEmbedUri` TEXT NOT NULL, PRIMARY KEY(`postId`, `externalEmbedUri`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`externalEmbedUri`) REFERENCES `externalEmbeds`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "externalEmbedUri",
+            "columnName": "externalEmbedUri",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "externalEmbedUri"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postExternalEmbeds_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postExternalEmbeds_externalEmbedUri",
+            "unique": false,
+            "columnNames": [
+              "externalEmbedUri"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_externalEmbedUri` ON `${TABLE_NAME}` (`externalEmbedUri`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "externalEmbeds",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "externalEmbedUri"
+            ],
+            "referencedColumns": [
+              "uri"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postImages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `imageUri` TEXT NOT NULL, PRIMARY KEY(`postId`, `imageUri`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`imageUri`) REFERENCES `images`(`fullSize`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imageUri",
+            "columnName": "imageUri",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "imageUri"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postImages_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postImages_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postImages_imageUri",
+            "unique": false,
+            "columnNames": [
+              "imageUri"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postImages_imageUri` ON `${TABLE_NAME}` (`imageUri`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "images",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "imageUri"
+            ],
+            "referencedColumns": [
+              "fullSize"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postVideos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `videoId` TEXT NOT NULL, PRIMARY KEY(`postId`, `videoId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`videoId`) REFERENCES `videos`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "videoId",
+            "columnName": "videoId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "videoId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postVideos_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postVideos_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postVideos_videoId",
+            "unique": false,
+            "columnNames": [
+              "videoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postVideos_videoId` ON `${TABLE_NAME}` (`videoId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "videos",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "videoId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postPosts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `embeddedPostId` TEXT NOT NULL, PRIMARY KEY(`postId`, `embeddedPostId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`embeddedPostId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "embeddedPostId",
+            "columnName": "embeddedPostId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "embeddedPostId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postPosts_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postPosts_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postPosts_embeddedPostId",
+            "unique": false,
+            "columnNames": [
+              "embeddedPostId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postPosts_embeddedPostId` ON `${TABLE_NAME}` (`embeddedPostId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "embeddedPostId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "posts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `uri` TEXT NOT NULL, `authorId` TEXT NOT NULL, `replyCount` INTEGER, `repostCount` INTEGER, `likeCount` INTEGER, `quoteCount` INTEGER, `indexedAt` INTEGER NOT NULL, `text` TEXT, `base64EncodedRecord` TEXT, `createdAt` INTEGER, PRIMARY KEY(`cid`))",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replyCount",
+            "columnName": "replyCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "repostCount",
+            "columnName": "repostCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "likeCount",
+            "columnName": "likeCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "quoteCount",
+            "columnName": "quoteCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "record.text",
+            "columnName": "text",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "record.base64EncodedRecord",
+            "columnName": "base64EncodedRecord",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "record.createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        }
+      },
+      {
+        "tableName": "postAuthors",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `authorId` TEXT NOT NULL, PRIMARY KEY(`postId`, `authorId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "authorId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postAuthors_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postAuthors_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postAuthors_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postAuthors_authorId` ON `${TABLE_NAME}` (`authorId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "authorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postThreads",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`parentPostId` TEXT NOT NULL, `postId` TEXT NOT NULL, PRIMARY KEY(`parentPostId`, `postId`), FOREIGN KEY(`parentPostId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "parentPostId",
+            "columnName": "parentPostId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "parentPostId",
+            "postId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "parentPostId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postViewerStatistics",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `likeUri` TEXT DEFAULT NULL, `repostUri` TEXT DEFAULT NULL, `threadMuted` INTEGER NOT NULL, `replyDisabled` INTEGER NOT NULL, `embeddingDisabled` INTEGER NOT NULL, `pinned` INTEGER NOT NULL, PRIMARY KEY(`postId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "likeUri",
+            "columnName": "likeUri",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "repostUri",
+            "columnName": "repostUri",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "threadMuted",
+            "columnName": "threadMuted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replyDisabled",
+            "columnName": "replyDisabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "embeddingDisabled",
+            "columnName": "embeddingDisabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinned",
+            "columnName": "pinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "profileViewerStates",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileId` TEXT NOT NULL, `otherProfileId` TEXT NOT NULL, `muted` INTEGER, `mutedByList` TEXT, `blockedBy` INTEGER, `blocking` TEXT, `blockingByList` TEXT, `following` TEXT, `followedBy` TEXT, `commonFollowersCount` INTEGER, PRIMARY KEY(`profileId`, `otherProfileId`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`otherProfileId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "profileId",
+            "columnName": "profileId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "otherProfileId",
+            "columnName": "otherProfileId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "muted",
+            "columnName": "muted",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "mutedByList",
+            "columnName": "mutedByList",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "blockedBy",
+            "columnName": "blockedBy",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "blocking",
+            "columnName": "blocking",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "blockingByList",
+            "columnName": "blockingByList",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "following",
+            "columnName": "following",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "followedBy",
+            "columnName": "followedBy",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "commonFollowersCount",
+            "columnName": "commonFollowersCount",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileId",
+            "otherProfileId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "profileId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          },
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "otherProfileId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`did` TEXT NOT NULL, `handle` TEXT NOT NULL, `displayName` TEXT, `description` TEXT, `avatar` TEXT, `banner` TEXT, `followersCount` INTEGER, `followsCount` INTEGER, `postsCount` INTEGER, `joinedViaStarterPack` TEXT, `indexedAt` INTEGER, `createdAt` INTEGER, `createdListCount` INTEGER, `createdFeedGeneratorCount` INTEGER, `createdStarterPackCount` INTEGER, `labeler` INTEGER, `allowDms` TEXT, PRIMARY KEY(`did`))",
+        "fields": [
+          {
+            "fieldPath": "did",
+            "columnName": "did",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "handle",
+            "columnName": "handle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatar",
+            "columnName": "avatar",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "banner",
+            "columnName": "banner",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "followersCount",
+            "columnName": "followersCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "followsCount",
+            "columnName": "followsCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "postsCount",
+            "columnName": "postsCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "joinedViaStarterPack",
+            "columnName": "joinedViaStarterPack",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associated.createdListCount",
+            "columnName": "createdListCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associated.createdFeedGeneratorCount",
+            "columnName": "createdFeedGeneratorCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associated.createdStarterPackCount",
+            "columnName": "createdStarterPackCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associated.labeler",
+            "columnName": "labeler",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associated.allowDms",
+            "columnName": "allowDms",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "did"
+          ]
+        }
+      },
+      {
+        "tableName": "postLikes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `authorId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, PRIMARY KEY(`postId`, `authorId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "authorId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postLikes_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postLikes_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postLikes_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postLikes_authorId` ON `${TABLE_NAME}` (`authorId`)"
+          },
+          {
+            "name": "index_postLikes_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postLikes_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "authorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "postReposts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `authorId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, PRIMARY KEY(`postId`, `authorId`), FOREIGN KEY(`postId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "postId",
+            "authorId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_postReposts_postId",
+            "unique": false,
+            "columnNames": [
+              "postId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postReposts_postId` ON `${TABLE_NAME}` (`postId`)"
+          },
+          {
+            "name": "index_postReposts_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postReposts_authorId` ON `${TABLE_NAME}` (`authorId`)"
+          },
+          {
+            "name": "index_postReposts_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postReposts_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "postId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "authorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "lists",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `uri` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT, `avatar` TEXT, `listItemCount` INTEGER, `purpose` TEXT NOT NULL, `indexedAt` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`cid`), FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creatorId",
+            "columnName": "creatorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatar",
+            "columnName": "avatar",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "listItemCount",
+            "columnName": "listItemCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "purpose",
+            "columnName": "purpose",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_lists_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lists_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          },
+          {
+            "name": "index_lists_uri",
+            "unique": true,
+            "columnNames": [
+              "uri"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_lists_uri` ON `${TABLE_NAME}` (`uri`)"
+          },
+          {
+            "name": "index_lists_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lists_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creatorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "listMembers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `listUri` TEXT NOT NULL, `subjectId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`uri`), FOREIGN KEY(`subjectId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`listUri`) REFERENCES `lists`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "listUri",
+            "columnName": "listUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subjectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uri"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_listMembers_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_listMembers_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subjectId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          },
+          {
+            "table": "lists",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "listUri"
+            ],
+            "referencedColumns": [
+              "uri"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "feedGenerators",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `did` TEXT NOT NULL, `uri` TEXT NOT NULL, `avatar` TEXT, `likeCount` INTEGER, `creatorId` TEXT NOT NULL, `displayName` TEXT NOT NULL, `description` TEXT, `acceptsInteractions` INTEGER, `contentMode` TEXT, `indexedAt` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`cid`), FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "did",
+            "columnName": "did",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avatar",
+            "columnName": "avatar",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "likeCount",
+            "columnName": "likeCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "creatorId",
+            "columnName": "creatorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "acceptsInteractions",
+            "columnName": "acceptsInteractions",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "contentMode",
+            "columnName": "contentMode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_feedGenerators_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_feedGenerators_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          },
+          {
+            "name": "index_feedGenerators_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_feedGenerators_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creatorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "notifications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `uri` TEXT NOT NULL, `authorId` TEXT NOT NULL, `reason` TEXT NOT NULL, `reasonSubject` TEXT, `associatedPostId` TEXT, `isRead` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, PRIMARY KEY(`cid`), FOREIGN KEY(`associatedPostId`) REFERENCES `posts`(`cid`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reasonSubject",
+            "columnName": "reasonSubject",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "associatedPostId",
+            "columnName": "associatedPostId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "posts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "associatedPostId"
+            ],
+            "referencedColumns": [
+              "cid"
+            ]
+          },
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "authorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "timelineItems",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `reposter` TEXT, `hasMedia` INTEGER NOT NULL DEFAULT false, `isPinned` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, `id` TEXT NOT NULL, `rootPostId` TEXT, `parentPostId` TEXT, `grandParentPostAuthorId` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "postId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reposter",
+            "columnName": "reposter",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hasMedia",
+            "columnName": "hasMedia",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "false"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reply.rootPostId",
+            "columnName": "rootPostId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reply.parentPostId",
+            "columnName": "parentPostId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reply.grandParentPostAuthorId",
+            "columnName": "grandParentPostAuthorId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_timelineItems_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timelineItems_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "timelinePreferences",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` TEXT NOT NULL, `lastFetchedAt` INTEGER NOT NULL, `preferredPresentation` TEXT, PRIMARY KEY(`sourceId`))",
+        "fields": [
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastFetchedAt",
+            "columnName": "lastFetchedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredPresentation",
+            "columnName": "preferredPresentation",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sourceId"
+          ]
+        }
+      },
+      {
+        "tableName": "starterPacks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cid` TEXT NOT NULL, `uri` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `listUri` TEXT, `name` TEXT NOT NULL, `description` TEXT, `joinedWeekCount` INTEGER, `joinedAllTimeCount` INTEGER, `indexedAt` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`cid`), FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creatorId",
+            "columnName": "creatorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "listUri",
+            "columnName": "listUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "joinedWeekCount",
+            "columnName": "joinedWeekCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "joinedAllTimeCount",
+            "columnName": "joinedAllTimeCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_starterPacks_indexedAt",
+            "unique": false,
+            "columnNames": [
+              "indexedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_starterPacks_indexedAt` ON `${TABLE_NAME}` (`indexedAt`)"
+          },
+          {
+            "name": "index_starterPacks_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_starterPacks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creatorId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '211965bd7f1fa58a3801595785ab3640')"
+    ]
+  }
+}
