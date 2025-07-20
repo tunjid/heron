@@ -21,9 +21,53 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
 
 @Dao
 interface MessageDao {
+
+    @Query(
+        """
+            SELECT conversations.*, lastMessage.sentAt, lastMessageReactedTo.sentAt FROM conversations
+            LEFT JOIN messages AS lastMessage
+            ON lastMessageId = lastMessage.id
+            LEFT JOIN messages AS lastMessageReactedTo
+            ON lastMessageId = lastMessageReactedTo.id
+            ORDER BY COALESCE(
+                lastMessageReactedTo.sentAt,
+                lastMessage.sentAt
+            )
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun conversations(
+        sourceId: String,
+        before: Instant,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<TimelineItemEntity>>
+
+    @Query(
+        """
+            SELECT * FROM messages
+            WHERE conversationId = :conversationId
+            AND sentAt < :before
+            ORDER BY sentAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun messages(
+        conversationId: String,
+        before: Instant,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<MessageEntity>>
 
     @Upsert
     suspend fun upsertConversations(
