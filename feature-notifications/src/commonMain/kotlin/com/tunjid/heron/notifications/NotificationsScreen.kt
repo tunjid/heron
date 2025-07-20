@@ -28,13 +28,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
@@ -62,7 +66,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.Clock
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun NotificationsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -131,13 +135,24 @@ internal fun NotificationsScreen(
     }
     val onPostInteraction = postInteractionState::onInteraction
 
+    val pullToRefreshState = rememberPullToRefreshState()
+
     PullToRefreshBox(
         modifier = modifier
             .fillMaxSize(),
+        state = pullToRefreshState,
         isRefreshing = state.isRefreshing,
         onRefresh = {
             actions(
                 Action.Tile(TilingState.Action.Refresh)
+            )
+        },
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier
+                    .align(Alignment.TopCenter),
+                state = pullToRefreshState,
+                isRefreshing = state.isRefreshing,
             )
         },
     ) {

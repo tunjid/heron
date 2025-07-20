@@ -29,12 +29,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
@@ -96,6 +99,7 @@ internal fun FeedScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FeedTimeline(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -110,6 +114,7 @@ private fun FeedTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
     val presentation = timelineState.timeline.presentation
+    val pullToRefreshState = rememberPullToRefreshState()
 
     PullToRefreshBox(
         modifier = Modifier
@@ -133,14 +138,22 @@ private fun FeedTimeline(
                 )
             },
         isRefreshing = timelineState.isRefreshing,
-        state = rememberPullToRefreshState(),
+        state = pullToRefreshState,
         onRefresh = {
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.Refresh
                 )
             )
-        }
+        },
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier
+                    .align(Alignment.TopCenter),
+                state = pullToRefreshState,
+                isRefreshing = timelineState.isRefreshing,
+            )
+        },
     ) {
         LookaheadScope {
             LazyVerticalStaggeredGrid(
