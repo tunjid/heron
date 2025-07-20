@@ -96,6 +96,7 @@ val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
  * Feed mutations as a function of the user's scroll position
  */
 suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+    isRefreshedOnNewItems: Boolean = true,
     crossinline currentState: suspend () -> State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
     crossinline refreshQuery: Query.() -> Query,
@@ -182,7 +183,20 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                 }
                     .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
                         // Ignore results from stale queries
-                        if (items.isValidFor(currentQuery)) copy(items = onNewItems(items))
+                        if (items.isValidFor(currentQuery)) copy(
+                            items = onNewItems(items),
+                            status = when {
+                                isRefreshedOnNewItems && items.isNotEmpty() -> {
+                                    val fetchedQuery = items.queryAt(0)
+                                    if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
+                                    else TilingState.Status.Refreshed(
+                                        cursorAnchor = fetchedQuery.data.cursorAnchor
+                                    )
+                                }
+
+                                else -> status
+                            }
+                        )
                         else this
                     },
             )

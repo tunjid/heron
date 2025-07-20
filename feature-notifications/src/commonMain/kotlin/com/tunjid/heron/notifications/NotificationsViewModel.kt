@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -156,6 +155,8 @@ suspend fun Flow<Action.Tile>.notificationsMutations(
 ): Flow<Mutation<State>> =
     map { it.tilingAction }
         .tilingMutations(
+            // This is determined by State.lastRefreshed
+            isRefreshedOnNewItems = false,
             currentState = { stateHolder.state() },
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },

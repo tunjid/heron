@@ -106,6 +106,8 @@ fun timelineStateHolder(
                 is TimelineState.Action.Tile -> action.flow
                     .map { it.tilingAction }
                     .tilingMutations(
+                        // This is determined by State.hasUpdates
+                        isRefreshedOnNewItems = false,
                         currentState = { state() },
                         updateQueryData = TimelineQuery::updateData,
                         refreshQuery = TimelineQuery::refresh,
