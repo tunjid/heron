@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -87,14 +88,25 @@ fun TimelineTitle(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        timeline.avatarImageArgs?.let { args ->
-            AsyncImage(
+        when (val args = timeline.avatarImageArgs) {
+            null -> Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = timeline.shape,
+                    )
+                    .size(44.dp),
+            )
+
+            else -> AsyncImage(
                 modifier = Modifier
                     .size(44.dp),
                 args = args,
             )
-            Spacer(Modifier.width(12.dp))
         }
+
+        Spacer(Modifier.width(12.dp))
+
         Box {
             Column {
                 Text(
@@ -203,7 +215,7 @@ private val Timeline.avatarImageArgs: ImageArgs?
                 url = feedGenerator.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                shape = TimelineAvatarShape,
+                shape = shape,
             )
 
         is Timeline.Home.List ->
@@ -212,7 +224,7 @@ private val Timeline.avatarImageArgs: ImageArgs?
                 url = feedList.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                shape = TimelineAvatarShape,
+                shape = shape,
             )
 
         is Timeline.StarterPack ->
@@ -221,7 +233,7 @@ private val Timeline.avatarImageArgs: ImageArgs?
                 url = starterPack.list?.avatar?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                shape = TimelineAvatarShape,
+                shape = shape,
             )
 
         is Timeline.Home.Following,
@@ -229,7 +241,12 @@ private val Timeline.avatarImageArgs: ImageArgs?
             -> null
     }
 
-private val TimelineAvatarShape = RoundedPolygonShape.Star(
-    cornerSizeAtIndex = (0..<40).map { 40.dp },
-    roundingRadius = 0.32f,
-)
+private val Timeline.shape: RoundedPolygonShape
+    get() = when (this) {
+        is Timeline.Home.Feed -> FeedGeneratorCollectionShape
+        is Timeline.Home.List -> ListCollectionShape
+        is Timeline.StarterPack -> StarterPackCollectionShape
+        is Timeline.Home.Following,
+        is Timeline.Profile,
+            -> RoundedPolygonShape.Circle
+    }

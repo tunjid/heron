@@ -38,8 +38,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +50,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LookaheadScope
@@ -102,6 +105,7 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ListScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -163,6 +167,7 @@ internal fun ListScreen(
             }
         },
         body = {
+            val pullToRefreshState = rememberPullToRefreshState()
             val isRefreshing by produceState(
                 initialValue = false,
                 key1 = pagerState.currentPage,
@@ -179,10 +184,18 @@ internal fun ListScreen(
                     .fillMaxSize()
                     .paneClip(),
                 isRefreshing = isRefreshing,
-                state = rememberPullToRefreshState(),
+                state = pullToRefreshState,
                 onRefresh = {
                     updatedStateHolders[pagerState.currentPage].refresh()
-                }
+                },
+                indicator = {
+                    PullToRefreshDefaults.LoadingIndicator(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter),
+                        state = pullToRefreshState,
+                        isRefreshing = isRefreshing,
+                    )
+                },
             ) {
                 HorizontalPager(
                     modifier = Modifier

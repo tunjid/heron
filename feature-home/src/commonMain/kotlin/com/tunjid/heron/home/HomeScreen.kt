@@ -33,7 +33,11 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.IndicatorBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -208,6 +213,7 @@ internal fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTimeline(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -224,6 +230,7 @@ private fun HomeTimeline(
     val videoStates = remember { ThreadedVideoPositionStates() }
     val postInteractionState = rememberPostInteractionState()
     val presentation = timelineState.timeline.presentation
+    val pullToRefreshState = rememberPullToRefreshState()
 
     PullToRefreshBox(
         modifier = Modifier
@@ -234,14 +241,22 @@ private fun HomeTimeline(
             )
             .fillMaxSize(),
         isRefreshing = timelineState.isRefreshing,
-        state = rememberPullToRefreshState(),
+        state = pullToRefreshState,
         onRefresh = {
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.Refresh,
                 ),
             )
-        }
+        },
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier
+                    .align(Alignment.TopCenter),
+                state = pullToRefreshState,
+                isRefreshing = timelineState.isRefreshing,
+            )
+        },
     ) {
         LookaheadScope {
             LazyVerticalStaggeredGrid(
