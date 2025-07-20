@@ -17,10 +17,13 @@
 package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 internal fun Modifier.presentationPadding(
     presentation: Timeline.Presentation,
@@ -39,3 +42,19 @@ internal fun Modifier.presentationPadding(
     Timeline.Presentation.Media.Condensed -> this
     Timeline.Presentation.Media.Expanded -> this
 }
+
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
+    polygon = MaterialShapes.Gem,
+)
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+val ListCollectionShape = RoundedPolygonShape.Custom(
+    polygon = MaterialShapes.Pill,
+)
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+val StarterPackCollectionShape = RoundedPolygonShape.Custom(
+    polygon = MaterialShapes.Cookie9Sided,
+)

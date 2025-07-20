@@ -46,7 +46,6 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.circle
 import androidx.graphics.shapes.rectangle
-import androidx.graphics.shapes.star
 import kotlin.math.max
 
 @Stable
@@ -189,24 +188,13 @@ sealed class RoundedPolygonShape : Shape {
     }
 
     @Stable
-    data class Star(
-        val cornerSizeAtIndex: List<Dp>,
-        val roundingRadius: Float,
+    data class Custom(
+        val polygon: RoundedPolygon,
     ) : RoundedPolygonShape() {
-
         override fun createPolygon(
             size: Size,
-            density: Density,
-        ): RoundedPolygon = RoundedPolygon.star(
-            numVerticesPerRadius = cornerSizeAtIndex.size / 2,
-            rounding = CornerRounding(roundingRadius),
-            perVertexRounding = cornerSizeAtIndex.map {
-                val maxDimension = max(size.width, size.height)
-                val absoluteCornerSize = with(density) { it.toPx() }
-                val radius = (absoluteCornerSize / maxDimension) * 2f
-                CornerRounding(radius = radius)
-            },
-        )
+            density: Density
+        ): RoundedPolygon = polygon
     }
 }
 

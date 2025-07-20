@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.profile.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,9 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.RssFeed
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -45,6 +45,9 @@ import com.tunjid.heron.profile.ProfileCollectionStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
+import com.tunjid.heron.timeline.utilities.ListCollectionShape
+import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -125,11 +128,13 @@ private fun ProfileCollection(
         blurb = "",
         avatar = {
             when (val avatar = collection.avatar) {
-                null -> Icon(
+                null -> Box(
                     modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = collection.shape,
+                        )
                         .size(44.dp),
-                    imageVector = Icons.Rounded.RssFeed,
-                    contentDescription = null,
                 )
 
                 else -> AsyncImage(
@@ -139,7 +144,7 @@ private fun ProfileCollection(
                         url = avatar.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = collection.shape,
                     )
                 )
             }
@@ -188,4 +193,11 @@ private val ProfileCollection.uriPath
         is OfFeedGenerators -> feedGenerator.uri.path
         is OfLists -> list.uri.path
         is OfStarterPacks -> starterPack.uri.path
+    }
+
+private val ProfileCollection.shape: RoundedPolygonShape.Custom
+    get() = when (this) {
+        is OfFeedGenerators -> FeedGeneratorCollectionShape
+        is OfLists -> ListCollectionShape
+        is OfStarterPacks -> StarterPackCollectionShape
     }

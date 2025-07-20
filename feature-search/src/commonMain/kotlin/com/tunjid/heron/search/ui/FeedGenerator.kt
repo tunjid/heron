@@ -16,22 +16,21 @@
 
 package com.tunjid.heron.search.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.RssFeed
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.CollectionLayout
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.feed_by
 import heron.feature_search.generated.resources.liked_by
@@ -61,12 +60,13 @@ fun FeedGeneratorSearchResult(
         ),
         avatar = {
             when (val avatar = feedGenerator.avatar) {
-                null -> Icon(
+                null -> Box(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(FeedGeneratorAvatarShape),
-                    imageVector = Icons.Rounded.RssFeed,
-                    contentDescription = feedGenerator.displayName,
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = FeedGeneratorCollectionShape,
+                        )
+                        .size(44.dp),
                 )
 
                 else -> AsyncImage(
@@ -76,7 +76,7 @@ fun FeedGeneratorSearchResult(
                         url = avatar.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
-                        shape = FeedGeneratorAvatarShape,
+                        shape = FeedGeneratorCollectionShape,
                     )
                 )
             }
@@ -86,8 +86,3 @@ fun FeedGeneratorSearchResult(
         },
     )
 }
-
-private val FeedGeneratorAvatarShape = RoundedPolygonShape.Star(
-    cornerSizeAtIndex = (0..<40).map { 40.dp },
-    roundingRadius = 0.32f,
-)
