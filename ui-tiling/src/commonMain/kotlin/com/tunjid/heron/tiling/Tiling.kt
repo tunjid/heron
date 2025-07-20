@@ -20,7 +20,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.mapCursorList
-import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.tiler.ListTiler
@@ -36,7 +35,6 @@ import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -93,11 +91,6 @@ val TilingState<*, *>.isRefreshing
 
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
-
-fun <Action : Any, State : TilingState<*, *>> ActionStateMutator<Action, StateFlow<State>>.tilingAction(
-    tilingAction: TilingState.Action,
-    stateHolderAction: (TilingState.Action) -> Action,
-) = accept(stateHolderAction(tilingAction))
 
 /**
  * Feed mutations as a function of the user's scroll position
