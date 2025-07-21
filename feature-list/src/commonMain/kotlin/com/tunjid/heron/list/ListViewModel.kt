@@ -36,6 +36,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.list.di.model
+import com.tunjid.heron.list.di.sharedElementPrefix
 import com.tunjid.heron.list.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -91,7 +92,10 @@ class ActualListViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ListStateHolder by scope.actionStateFlowMutator(
-    initialState = State(model = route.model),
+    initialState = State(
+        model = route.model,
+        sharedElementPrefix = route.sharedElementPrefix,
+    ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     actionTransform = transform@{ actions ->
         merge(

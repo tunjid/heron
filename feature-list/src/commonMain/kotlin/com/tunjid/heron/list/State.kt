@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.list.di.model
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
@@ -45,6 +44,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val creator: Profile? = null,
+    val sharedElementPrefix: String? = null,
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
@@ -64,10 +64,11 @@ sealed class ListScreenStateHolders {
         val mutator: TimelineStateHolder,
     ) : ListScreenStateHolders(), TimelineStateHolder by mutator
 
-    val key get() = when(this) {
-        is Members -> "Members"
-        is Timeline -> "Timeline"
-    }
+    val key
+        get() = when (this) {
+            is Members -> "Members"
+            is Timeline -> "Timeline"
+        }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
@@ -75,10 +76,11 @@ sealed class ListScreenStateHolders {
             is Timeline -> state
         }
 
-    fun refresh() = when(this) {
+    fun refresh() = when (this) {
         is Members -> accept(
             TilingState.Action.Refresh
         )
+
         is Timeline -> accept(
             TimelineState.Action.Tile(
                 tilingAction = TilingState.Action.Refresh
@@ -121,10 +123,12 @@ sealed class Action(val key: String) {
 }
 
 fun State(
-    model: ByteSerializable?
+    model: ByteSerializable?,
+    sharedElementPrefix: String?,
 ) = State(
+    sharedElementPrefix = sharedElementPrefix,
     timelineState = model?.let { model ->
-        when(model) {
+        when (model) {
             is FeedList -> {
                 val timeline = Timeline.Home.List.stub(list = model)
                 TimelineState(
@@ -141,7 +145,8 @@ fun State(
                     )
                 )
             }
-            is StarterPack -> when(val starterPackList = model.list) {
+
+            is StarterPack -> when (val starterPackList = model.list) {
                 null -> null
                 else -> {
                     val timeline = Timeline.StarterPack.stub(
@@ -163,6 +168,7 @@ fun State(
                     )
                 }
             }
+
             else -> null
         }
     }

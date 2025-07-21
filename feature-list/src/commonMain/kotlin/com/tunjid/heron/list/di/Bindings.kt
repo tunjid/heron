@@ -60,6 +60,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.toRouteTrie
@@ -91,6 +92,8 @@ private val Route.profileId by mappedRoutePath(
 )
 
 private val Route.listUriSuffix by routePath()
+
+internal val Route.sharedElementPrefix by optionalRouteQuery()
 
 private val Route.starterPackUriSuffix by routePath()
 

@@ -87,6 +87,8 @@ private val Route.profileId by mappedRoutePath(
 
 private val Route.feedUriSuffix by routePath()
 
+internal val Route.sharedElementPrefix by optionalRouteQuery()
+
 internal val Route.model: ByteSerializable? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )

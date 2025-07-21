@@ -37,6 +37,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val creator: Profile? = null,
+    val sharedElementPrefix: String? = null,
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
@@ -66,8 +67,10 @@ sealed class Action(val key: String) {
 }
 
 fun State(
-    model: ByteSerializable?
+    model: ByteSerializable?,
+    sharedElementPrefix: String?,
 ) = State(
+    sharedElementPrefix = sharedElementPrefix,
     timelineState = model?.let { model ->
         if (model !is FeedGenerator) return@let null
         val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
