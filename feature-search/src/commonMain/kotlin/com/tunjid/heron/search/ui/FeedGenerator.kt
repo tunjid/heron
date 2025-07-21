@@ -17,11 +17,9 @@
 package com.tunjid.heron.search.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -29,6 +27,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.CollectionLayout
@@ -60,37 +59,24 @@ fun FeedGeneratorSearchResult(
             format(feedGenerator.likeCount ?: 0L)
         ),
         avatar = {
-            when (val avatar = feedGenerator.avatar) {
-                null -> Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = FeedGeneratorCollectionShape,
+            val avatar = feedGenerator.avatar ?: BlueskyClouds
+            AsyncImage(
+                modifier = Modifier
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
                         )
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
-                            )
-                        )
-                        .size(44.dp),
-                )
-
-                else -> AsyncImage(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
-                            )
-                        )
-                        .size(44.dp),
-                    args = ImageArgs(
+                    )
+                    .size(44.dp),
+                args = remember(avatar) {
+                    ImageArgs(
                         url = avatar.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         shape = FeedGeneratorCollectionShape,
                     )
-                )
-            }
+                }
+            )
         },
         onClicked = {
             onFeedGeneratorClicked(feedGenerator)

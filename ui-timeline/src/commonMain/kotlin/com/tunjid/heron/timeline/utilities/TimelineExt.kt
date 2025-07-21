@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -93,32 +94,24 @@ fun TimelineTitle(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        when (val args = timeline.avatarImageArgs) {
-            null -> Box(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = timeline.shape,
+        val avatar = timeline.avatar
+        AsyncImage(
+            modifier = Modifier
+                .paneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = timeline.avatarSharedElementKey(sharedElementPrefix)
                     )
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = timeline.avatarSharedElementKey(sharedElementPrefix)
-                        )
-                    )
-                    .size(44.dp),
-            )
-
-            else -> AsyncImage(
-                modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = timeline.avatarSharedElementKey(sharedElementPrefix)
-                        )
-                    )
-                    .size(44.dp),
-                args = args,
-            )
-        }
+                )
+                .size(44.dp),
+            args = remember(avatar) {
+                ImageArgs(
+                    url = avatar.uri,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                    shape = timeline.shape,
+                )
+            },
+        )
 
         Spacer(Modifier.width(12.dp))
 
@@ -223,39 +216,14 @@ fun LazyStaggeredGridState.pendingOffsetFor(
     .toFloat()
 
 
-private val Timeline.avatarImageArgs: ImageArgs?
+private val Timeline.avatar: ImageUri
     get() = when (this) {
-        is Timeline.Home.Feed ->
-            if (feedGenerator.avatar == null) null
-            else ImageArgs(
-                url = feedGenerator.avatar?.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                shape = shape,
-            )
-
-        is Timeline.Home.List ->
-            if (feedList.avatar == null) null
-            else ImageArgs(
-                url = feedList.avatar?.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                shape = shape,
-            )
-
-        is Timeline.StarterPack ->
-            if (starterPack.list?.avatar == null) null
-            else ImageArgs(
-                url = starterPack.list?.avatar?.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                shape = shape,
-            )
-
+        is Timeline.Home.Feed -> feedGenerator.avatar
+        is Timeline.Home.List -> feedList.avatar
+        is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
-        is Timeline.Profile,
-            -> null
-    }
+        is Timeline.Profile -> BlueskyClouds
+    } ?: BlueskyClouds
 
 private fun Timeline.avatarSharedElementKey(
     sharedElementPrefix: String?

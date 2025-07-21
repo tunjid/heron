@@ -17,18 +17,15 @@
 package com.tunjid.heron.profile.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -47,6 +44,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
@@ -137,37 +135,24 @@ private fun ProfileCollection(
         description = collection.description,
         blurb = "",
         avatar = {
-            when (val avatar = collection.avatar) {
-                null -> Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = collection.shape,
+            val avatar = collection.avatar ?: BlueskyClouds
+            AsyncImage(
+                modifier = Modifier
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = collection.avatarSharedElementKey,
                         )
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = collection.avatarSharedElementKey,
-                            )
-                        )
-                        .size(44.dp),
-                )
-
-                else -> AsyncImage(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = collection.avatarSharedElementKey,
-                            )
-                        )
-                        .size(44.dp),
-                    args = ImageArgs(
+                    )
+                    .size(44.dp),
+                args = remember(avatar) {
+                    ImageArgs(
                         url = avatar.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         shape = collection.shape,
                     )
-                )
-            }
+                }
+            )
         },
         onClicked = {
             onCollectionClicked(collection)
