@@ -126,6 +126,7 @@ private fun ProfileCollection(
 ) = with(movableElementSharedTransitionScope){
     CollectionLayout(
         modifier = modifier,
+        movableElementSharedTransitionScope=movableElementSharedTransitionScope,
         title = collection.title,
         subtitle = stringResource(
             Res.string.collection_by,
@@ -134,6 +135,8 @@ private fun ProfileCollection(
         ),
         description = collection.description,
         blurb = "",
+        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+        sharedElementType = collection.sharedElementType,
         avatar = {
             val avatar = collection.avatar ?: BlueskyClouds
             AsyncImage(
@@ -213,6 +216,13 @@ private val ProfileCollection.avatarSharedElementKey: String
         is OfStarterPacks -> starterPack.avatarSharedElementKey(
             ProfileCollectionSharedElementPrefix
         )
+    }
+
+private val ProfileCollection.sharedElementType: Any
+    get() = when (this) {
+        is OfFeedGenerators -> feedGenerator.uri
+        is OfLists -> list.uri
+        is OfStarterPacks -> starterPack.uri
     }
 
 private const val ProfileCollectionSharedElementPrefix = "profile-collection"

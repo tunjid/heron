@@ -60,6 +60,8 @@ import heron.ui_timeline.generated.resources.posts
 import heron.ui_timeline.generated.resources.replies
 import heron.ui_timeline.generated.resources.videos
 import org.jetbrains.compose.resources.stringResource
+import com.tunjid.heron.ui.titleSharedElementKey
+import com.tunjid.heron.ui.subtitleSharedElementKey
 
 @Composable
 fun Timeline.displayName() = when (this) {
@@ -118,10 +120,22 @@ fun TimelineTitle(
         Box {
             Column {
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = timeline.titleSharedElementKey(sharedElementPrefix)
+                            )
+                        ),
                     text = timeline.displayName(),
                     style = MaterialTheme.typography.titleSmallEmphasized,
                 )
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = timeline.subtitleSharedElementKey(sharedElementPrefix)
+                            )
+                        ),
                     text = timeline.creatorDescription(creator),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
@@ -233,6 +247,50 @@ private fun Timeline.avatarSharedElementKey(
     is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
     is Timeline.Home.Following -> "$sharedElementPrefix-following"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
+}
+
+private fun Timeline.titleSharedElementKey(
+    sharedElementPrefix: String?
+): String = when (this) {
+    is Timeline.Home.Feed -> titleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = feedGenerator.uri,
+    )
+
+    is Timeline.Home.List -> titleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = feedList.uri,
+    )
+
+    is Timeline.StarterPack -> titleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = starterPack.uri,
+    )
+
+    is Timeline.Home.Following -> "$sharedElementPrefix-following-title"
+    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-title"
+}
+
+private fun Timeline.subtitleSharedElementKey(
+    sharedElementPrefix: String?
+): String = when (this) {
+    is Timeline.Home.Feed -> subtitleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = feedGenerator.uri,
+    )
+
+    is Timeline.Home.List -> subtitleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = feedList.uri,
+    )
+
+    is Timeline.StarterPack -> subtitleSharedElementKey(
+        prefix = sharedElementPrefix,
+        type = starterPack.uri,
+    )
+
+    is Timeline.Home.Following -> "$sharedElementPrefix-following-subtitle"
+    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
 }
 
 private val Timeline.shape: RoundedPolygonShape

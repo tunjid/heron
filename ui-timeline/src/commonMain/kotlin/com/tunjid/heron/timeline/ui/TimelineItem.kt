@@ -366,15 +366,15 @@ fun Post.avatarSharedElementKey(
 
 fun FeedGenerator.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${uri.uri}"
+): String = "$prefix-${uri.uri}-avatar"
 
 fun FeedList.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${uri.uri}"
+): String = "$prefix-${uri.uri}-avatar"
 
 fun StarterPack.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${uri.uri}"
+): String = "$prefix-${uri.uri}-avatar"
 
 fun String.withQuotingPostIdPrefix(
     quotingPostId: PostId? = null,

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,27 +27,27 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CollectionLayout(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     title: String,
     subtitle: String,
     description: String?,
     blurb: String?,
+    sharedElementPrefix: String?,
+    sharedElementType: Any,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
     onClicked: () -> Unit,
-) {
+) = with(movableElementSharedTransitionScope){
     Column(
         modifier = modifier
             .clickable { onClicked() }
@@ -61,10 +62,28 @@ fun CollectionLayout(
             avatar = avatar,
             label = {
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = titleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = sharedElementType,
+                                )
+                            )
+                        ),
                     text = title,
                     style = LocalTextStyle.current.copy(fontWeight = Bold),
                 )
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = subtitleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = sharedElementType,
+                                )
+                            )
+                        ),
                     text = subtitle,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
@@ -97,3 +116,13 @@ fun CollectionLayout(
         )
     }
 }
+
+fun titleSharedElementKey(
+    prefix: String?,
+    type: Any,
+): String = "$prefix-$type-title"
+
+fun subtitleSharedElementKey(
+    prefix: String?,
+    type: Any,
+): String = "$prefix-$type-subtitle"

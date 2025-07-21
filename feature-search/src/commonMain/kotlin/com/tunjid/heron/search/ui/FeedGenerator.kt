@@ -48,12 +48,15 @@ fun FeedGeneratorSearchResult(
 ) = with(movableElementSharedTransitionScope) {
     CollectionLayout(
         modifier = modifier,
+        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = feedGenerator.displayName,
         subtitle = stringResource(
             Res.string.feed_by,
             feedGenerator.creator.handle.id,
         ),
         description = feedGenerator.description,
+        sharedElementPrefix = sharedElementPrefix,
+        sharedElementType = feedGenerator.uri,
         blurb = stringResource(
             Res.string.liked_by,
             format(feedGenerator.likeCount ?: 0L)

@@ -44,7 +44,6 @@ internal fun Modifier.presentationPadding(
     Timeline.Presentation.Media.Expanded -> this
 }
 
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Square,
@@ -60,4 +59,5 @@ val StarterPackCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Cookie9Sided,
 )
 
-val BlueskyClouds = ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
+val BlueskyClouds =
+    ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
