@@ -41,7 +41,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ImageUri
@@ -52,16 +51,19 @@ import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.subtitleSharedElementKey
+import com.tunjid.heron.ui.titleSharedElementKey
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
+import heron.ui_timeline.generated.resources.feed_by
 import heron.ui_timeline.generated.resources.likes
+import heron.ui_timeline.generated.resources.list_by
 import heron.ui_timeline.generated.resources.media
 import heron.ui_timeline.generated.resources.posts
 import heron.ui_timeline.generated.resources.replies
+import heron.ui_timeline.generated.resources.starter_pack_by
 import heron.ui_timeline.generated.resources.videos
 import org.jetbrains.compose.resources.stringResource
-import com.tunjid.heron.ui.titleSharedElementKey
-import com.tunjid.heron.ui.subtitleSharedElementKey
 
 @Composable
 fun Timeline.displayName() = when (this) {
@@ -84,7 +86,6 @@ fun TimelineTitle(
     modifier: Modifier = Modifier,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     timeline: Timeline?,
-    creator: Profile?,
     sharedElementPrefix: String?,
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
@@ -136,7 +137,7 @@ fun TimelineTitle(
                                 key = timeline.subtitleSharedElementKey(sharedElementPrefix)
                             )
                         ),
-                    text = timeline.creatorDescription(creator),
+                    text = timeline.creator(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -199,12 +200,20 @@ internal val Timeline.Presentation.icon
         Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
     }
 
-private fun Timeline.creatorDescription(
-    creator: Profile?,
+@Composable
+private fun Timeline.creator(
 ): String = when (this) {
-    is Timeline.Home.Feed -> creator?.displayName ?: feedGenerator.creator.handle.id
-    is Timeline.Home.List -> creator?.displayName ?: feedList.creator.handle.id
-    is Timeline.StarterPack -> creator?.displayName ?: listTimeline.creatorDescription(creator)
+    is Timeline.Home.Feed -> stringResource(
+        Res.string.feed_by, feedGenerator.creator.handle.id
+    )
+
+    is Timeline.Home.List -> stringResource(
+        Res.string.list_by, feedList.creator.handle.id
+    )
+
+    is Timeline.StarterPack -> stringResource(
+        Res.string.starter_pack_by, starterPack.creator.handle.id
+    )
 
     is Timeline.Home.Following,
     is Timeline.Profile,

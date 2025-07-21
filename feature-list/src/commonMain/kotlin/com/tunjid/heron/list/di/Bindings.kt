@@ -260,7 +260,6 @@ class ListBindings(
                             TimelineTitle(
                                 movableElementSharedTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
-                                creator = state.creator,
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 // Indicated on the tab instead
                                 hasUpdates = false,
