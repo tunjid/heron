@@ -79,7 +79,8 @@ internal fun ProfileCollection(
             key = ProfileCollection::id,
             itemContent = { profileCollection ->
                 ProfileCollection(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     title = collectionState.stringResource,
                     collection = profileCollection,
@@ -126,11 +127,7 @@ private fun ProfileCollection(
     onCollectionClicked: (ProfileCollection) -> Unit,
 ) = with(movableElementSharedTransitionScope){
     CollectionLayout(
-        modifier = modifier
-            .padding(
-                vertical = 4.dp,
-                horizontal = 24.dp
-            ),
+        modifier = modifier,
         title = collection.title,
         subtitle = stringResource(
             Res.string.collection_by,
@@ -177,11 +174,6 @@ private fun ProfileCollection(
         },
     )
 }
-
-//stringResource(
-//Res.string.liked_by,
-//format(feedGenerator.likeCount ?: 0L)
-//)
 
 private val ProfileCollection.creator
     get() = when (this) {
