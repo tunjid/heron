@@ -31,25 +31,25 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     convoView: ConvoView,
 ) {
-    convoView.members.forEach {
+    convoView.members.forEach { member ->
         add(
             viewingProfileId = viewingProfileId,
             profileView = ProfileViewBasic(
-                did = it.did,
-                handle = it.handle,
-                displayName = it.displayName,
-                avatar = it.avatar,
-                associated = it.associated,
-                viewer = it.viewer,
-                labels = it.labels,
+                did = member.did,
+                handle = member.handle,
+                displayName = member.displayName,
+                avatar = member.avatar,
+                associated = member.associated,
+                viewer = member.viewer,
+                labels = member.labels,
                 createdAt = Instant.DISTANT_PAST,
-                verification = it.verification,
+                verification = member.verification,
             ),
         )
         add(
             entity = ConversationMembersEntity(
                 conversationId = convoView.id.let(::ConversationId),
-                memberId = it.did.did.let(::ProfileId),
+                memberId = member.did.did.let(::ProfileId),
             )
         )
     }
