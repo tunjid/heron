@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ConversationEntity
+import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import kotlinx.datetime.Instant
 
 internal fun MultipleEntitySaver.add(
@@ -44,6 +45,12 @@ internal fun MultipleEntitySaver.add(
                 createdAt = Instant.DISTANT_PAST,
                 verification = it.verification,
             ),
+        )
+        add(
+            entity = ConversationMembersEntity(
+                conversationId = convoView.id.let(::ConversationId),
+                memberId = it.did.did.let(::ProfileId),
+            )
         )
     }
     val lastMessage = when (val lastMessage = convoView.lastMessage) {
