@@ -66,10 +66,17 @@ There are 6 kinds of modules:
 
 ### Dependency Injection
 
-Dependency injection is implemented with the [Kotlin Inject](https://github.com/evant/kotlin-inject)
+Dependency injection is implemented with the [Metro](https://github.com/ZacSweers/metro)
 library which constructs the dependency graph at build time
 and therefore is compile time safe. Assisted injection is used for feature screens to pass
-navigation arguments information to the feature.
+navigation arguments information to the feature. The items in the dependency graph are:
+
+* `NavigationBindings` from feature modules providing Navigation3 `NavEntry` instances per feature.
+* Feature `Bindings` from feature modules providing access to the data layer and app scaffold to each module.
+* Scaffold `Bindings` providing the `PaneScaffoldState` for building a multi-pane app,
+* Data `Bindings` for the data layer.
+* An `AppNavigationGraph` for resolving navigation routes.
+* An `AppGraph` containing the entire app DI graph.
 
 ### Navigation
 
