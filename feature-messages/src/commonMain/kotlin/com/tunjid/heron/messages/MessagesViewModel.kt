@@ -18,20 +18,30 @@ package com.tunjid.heron.messages
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.tiling.reset
+import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 
 internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -45,6 +55,8 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @Inject
 class ActualMessagesViewModel(
+    authRepository: AuthRepository,
+    messagesRepository: MessageRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -56,18 +68,39 @@ class ActualMessagesViewModel(
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
+        loadProfileMutations(
+            authRepository
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
             keySelector = Action::key
         ) {
             when (val action = type()) {
-
-
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
+
+                is Action.Tile -> action.flow
+                    .map { it.tilingAction }
+                    .tilingMutations(
+                        currentState = { state() },
+                        updateQueryData = { copy(data = it) },
+                        refreshQuery = { copy(data = data.reset()) },
+                        cursorListLoader = messagesRepository::conversations,
+                        onNewItems = { items ->
+                            items.distinctBy(Conversation::id)
+                        },
+                        onTilingDataUpdated = { copy(tilingData = it) },
+                    )
             }
         }
     }
 )
+
+private fun loadProfileMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation {
+        copy(signedInProfile = it)
+    }
