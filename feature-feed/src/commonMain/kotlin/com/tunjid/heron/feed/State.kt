@@ -16,13 +16,20 @@
 
 package com.tunjid.heron.feed
 
+import com.tunjid.heron.data.core.models.ByteSerializable
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.treenav.pop
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -57,3 +64,25 @@ sealed class Action(val key: String) {
         ) : Navigate(), NavigationAction by delegate
     }
 }
+
+fun State(
+    model: ByteSerializable?
+) = State(
+    timelineState = model?.let { model ->
+        if (model !is FeedGenerator) return@let null
+        val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
+        TimelineState(
+            timeline = timeline,
+            hasUpdates = false,
+            tilingData = TilingState.Data(
+                currentQuery = TimelineQuery(
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                    ),
+                    timeline = timeline,
+                ),
+            )
+        )
+    }
+)

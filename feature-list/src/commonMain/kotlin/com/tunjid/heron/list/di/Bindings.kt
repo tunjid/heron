@@ -24,6 +24,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.ByteSerializable
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -57,6 +59,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.toRouteTrie
@@ -91,6 +94,9 @@ private val Route.listUriSuffix by routePath()
 
 private val Route.starterPackUriSuffix by routePath()
 
+internal val Route.model: ByteSerializable? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl,
+)
 
 private val RequestTrie = mapOf(
     PathPattern(ListRoutePattern) to { route: Route ->
