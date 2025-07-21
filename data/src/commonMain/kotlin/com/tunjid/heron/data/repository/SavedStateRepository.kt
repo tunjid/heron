@@ -38,6 +38,7 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.FileSystem
 import okio.Path
+import sh.christian.ozone.api.model.JsonContent
 
 
 @Serializable
@@ -53,7 +54,39 @@ data class SavedState(
         val authProfileId: ProfileId,
         val auth: String,
         val refresh: String,
-    )
+        val didDoc: DidDoc = DidDoc(),
+    ) {
+        @Serializable
+        data class DidDoc(
+            val verificationMethod: List<VerificationMethod> = emptyList(),
+            val service: List<Service> = emptyList(),
+        ) {
+            @Serializable
+            data class VerificationMethod(
+                val id: String,
+                val type: String,
+                val controller: String,
+                val publicKeyMultibase: String,
+            )
+
+            @Serializable
+            data class Service(
+                val id: String,
+                val type: String,
+                val serviceEndpoint: String,
+            )
+
+            companion object {
+                fun fromJsonContentOrEmpty(jsonContent: JsonContent?): DidDoc =
+                    try {
+                        jsonContent?.decodeAs<DidDoc>()
+                    } catch (_: Exception) {
+                        null
+                    }
+                        ?: DidDoc()
+            }
+        }
+    }
 
     @Serializable
     data class Navigation(
