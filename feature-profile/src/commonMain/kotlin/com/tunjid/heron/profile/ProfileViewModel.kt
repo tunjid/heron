@@ -56,9 +56,9 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
 import heron.feature_profile.generated.resources.Res
-import heron.feature_profile.generated.resources.feeds
-import heron.feature_profile.generated.resources.lists
-import heron.feature_profile.generated.resources.starter_packs
+import heron.feature_profile.generated.resources.feed
+import heron.feature_profile.generated.resources.list
+import heron.feature_profile.generated.resources.starter_pack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -303,7 +303,7 @@ private fun profileCollectionStateHolders(
     metadata: Profile.Metadata,
 ): List<ProfileScreenStateHolders.Collections> = listOfNotNull(
     if (metadata.createdFeedGeneratorCount > 0) ProfileCollectionState(
-        stringResource = Res.string.feeds,
+        stringResource = Res.string.feed,
         tilingData = TilingState.Data(
             currentQuery = ProfilesQuery(
                 profileId = profileId,
@@ -313,7 +313,7 @@ private fun profileCollectionStateHolders(
     ) to profileRepository::feedGenerators.mapCursorList(ProfileCollection::OfFeedGenerators)
     else null,
     if (metadata.createdStarterPackCount > 0) ProfileCollectionState(
-        stringResource = Res.string.starter_packs,
+        stringResource = Res.string.starter_pack,
         tilingData = TilingState.Data(
             currentQuery = ProfilesQuery(
                 profileId = profileId,
@@ -323,7 +323,7 @@ private fun profileCollectionStateHolders(
     ) to profileRepository::starterPacks.mapCursorList(ProfileCollection::OfStarterPacks)
     else null,
     if (metadata.createdListCount > 0) ProfileCollectionState(
-        stringResource = Res.string.lists,
+        stringResource = Res.string.list,
         tilingData = TilingState.Data(
             currentQuery = ProfilesQuery(
                 profileId = profileId,

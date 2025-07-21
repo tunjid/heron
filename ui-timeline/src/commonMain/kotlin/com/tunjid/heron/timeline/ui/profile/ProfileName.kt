@@ -55,5 +55,6 @@ fun ProfileHandle(
         overflow = TextOverflow.Ellipsis,
         maxLines = 1,
         style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
     )
 }

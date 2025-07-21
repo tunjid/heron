@@ -16,12 +16,18 @@
 
 package com.tunjid.heron.list
 
+import com.tunjid.heron.data.core.models.ByteSerializable
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
@@ -30,6 +36,7 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.pop
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -37,6 +44,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val creator: Profile? = null,
+    val sharedElementPrefix: String? = null,
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
@@ -56,10 +64,11 @@ sealed class ListScreenStateHolders {
         val mutator: TimelineStateHolder,
     ) : ListScreenStateHolders(), TimelineStateHolder by mutator
 
-    val key get() = when(this) {
-        is Members -> "Members"
-        is Timeline -> "Timeline"
-    }
+    val key
+        get() = when (this) {
+            is Members -> "Members"
+            is Timeline -> "Timeline"
+        }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
@@ -67,10 +76,11 @@ sealed class ListScreenStateHolders {
             is Timeline -> state
         }
 
-    fun refresh() = when(this) {
+    fun refresh() = when (this) {
         is Members -> accept(
             TilingState.Action.Refresh
         )
+
         is Timeline -> accept(
             TimelineState.Action.Tile(
                 tilingAction = TilingState.Action.Refresh
@@ -111,3 +121,55 @@ sealed class Action(val key: String) {
         ) : Navigate(), NavigationAction by delegate
     }
 }
+
+fun State(
+    model: ByteSerializable?,
+    sharedElementPrefix: String?,
+) = State(
+    sharedElementPrefix = sharedElementPrefix,
+    timelineState = model?.let { model ->
+        when (model) {
+            is FeedList -> {
+                val timeline = Timeline.Home.List.stub(list = model)
+                TimelineState(
+                    timeline = timeline,
+                    hasUpdates = false,
+                    tilingData = TilingState.Data(
+                        currentQuery = TimelineQuery(
+                            data = CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                            ),
+                            timeline = timeline,
+                        ),
+                    )
+                )
+            }
+
+            is StarterPack -> when (val starterPackList = model.list) {
+                null -> null
+                else -> {
+                    val timeline = Timeline.StarterPack.stub(
+                        starterPack = model,
+                        list = starterPackList,
+                    )
+                    TimelineState(
+                        timeline = timeline,
+                        hasUpdates = false,
+                        tilingData = TilingState.Data(
+                            currentQuery = TimelineQuery(
+                                data = CursorQuery.Data(
+                                    page = 0,
+                                    cursorAnchor = Clock.System.now(),
+                                ),
+                                timeline = timeline,
+                            ),
+                        )
+                    )
+                }
+            }
+
+            else -> null
+        }
+    }
+)

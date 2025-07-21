@@ -16,70 +16,70 @@
 
 package com.tunjid.heron.search.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.CollectionLayout
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.feed_by
 import heron.feature_search.generated.resources.liked_by
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedGeneratorSearchResult(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
-) {
+) = with(movableElementSharedTransitionScope) {
     CollectionLayout(
-        modifier = modifier
-            .padding(
-                vertical = 4.dp,
-                horizontal = 24.dp
-            ),
+        modifier = modifier,
+        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = feedGenerator.displayName,
         subtitle = stringResource(
             Res.string.feed_by,
             feedGenerator.creator.handle.id,
         ),
         description = feedGenerator.description,
+        sharedElementPrefix = sharedElementPrefix,
+        sharedElementType = feedGenerator.uri,
         blurb = stringResource(
             Res.string.liked_by,
             format(feedGenerator.likeCount ?: 0L)
         ),
         avatar = {
-            when (val avatar = feedGenerator.avatar) {
-                null -> Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = FeedGeneratorCollectionShape,
+            val avatar = feedGenerator.avatar ?: BlueskyClouds
+            AsyncImage(
+                modifier = Modifier
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
                         )
-                        .size(44.dp),
-                )
-
-                else -> AsyncImage(
-                    modifier = Modifier
-                        .size(44.dp),
-                    args = ImageArgs(
+                    )
+                    .size(44.dp),
+                args = remember(avatar) {
+                    ImageArgs(
                         url = avatar.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         shape = FeedGeneratorCollectionShape,
                     )
-                )
-            }
+                }
+            )
         },
         onClicked = {
             onFeedGeneratorClicked(feedGenerator)

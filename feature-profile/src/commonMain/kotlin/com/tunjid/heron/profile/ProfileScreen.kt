@@ -145,6 +145,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -267,6 +268,7 @@ internal fun ProfileScreen(
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
                             is ProfileScreenStateHolders.Collections -> ProfileCollection(
+                                movableElementSharedTransitionScope = paneScaffoldState,
                                 collectionStateHolder = stateHolder,
                                 actions = actions,
                             )
@@ -965,7 +967,7 @@ private class HeaderState(
 
     val avatarTopPadding get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
     val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
-    val avatarPadding get() = 4.dp * (1f - progress)
+    val avatarPadding get() = 4.dp * max(0f, 1f - progress)
     val avatarAlignmentLerp get() = progress
     val tabsHorizontalPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
 
@@ -986,7 +988,7 @@ private class HeaderState(
 
     val sizeToken = 24.dp
 
-    private val progress get() = headerState.progress
+    private val progress get() = max(0f, headerState.progress)
 
     private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
 

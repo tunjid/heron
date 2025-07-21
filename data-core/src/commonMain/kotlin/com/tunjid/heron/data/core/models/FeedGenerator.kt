@@ -35,4 +35,4 @@ data class FeedGenerator(
     val contentMode: String?,
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
-)
+): ByteSerializable

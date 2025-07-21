@@ -63,12 +63,7 @@ internal fun Trend(
     onTrendClicked: (Trend) -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .clickable { onTrendClicked(trend) }
-            .padding(
-                vertical = 4.dp,
-                horizontal = 24.dp
-            ),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
@@ -92,6 +87,7 @@ internal fun Trend(
                 Text(
                     text = trendDetails(trend),
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
         }

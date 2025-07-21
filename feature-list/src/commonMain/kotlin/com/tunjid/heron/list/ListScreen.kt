@@ -154,7 +154,9 @@ internal fun ListScreen(
                         .fillMaxWidth()
                         .clip(CircleShape),
                     tabsState = rememberTabsState(
-                        tabs = listTabs(),
+                        tabs = listTabs(
+                            hasUpdate = state.timelineState?.hasUpdates == true
+                        ),
                         selectedTabIndex = pagerState::tabIndex,
                         onTabSelected = {
                             scope.launch {
@@ -224,19 +226,27 @@ internal fun ListScreen(
 }
 
 @Composable
-private fun listTabs(): List<Tab> = remember { mutableStateListOf<Tab>() }.apply {
-    if (isEmpty()) {
-        add(
-            Tab(
-                title = stringResource(Res.string.people),
-                hasUpdate = false
+private fun listTabs(
+    hasUpdate: Boolean
+): List<Tab> = remember { mutableStateListOf<Tab>() }.apply {
+    when {
+        isEmpty() -> {
+            add(
+                Tab(
+                    title = stringResource(Res.string.people),
+                    hasUpdate = false,
+                )
             )
-        )
-        add(
-            Tab(
-                title = stringResource(Res.string.posts),
-                hasUpdate = false
+            add(
+                Tab(
+                    title = stringResource(Res.string.posts),
+                    hasUpdate = hasUpdate,
+                )
             )
+        }
+        this[1].hasUpdate != hasUpdate -> this[1] = Tab(
+            title = stringResource(Res.string.posts),
+            hasUpdate = hasUpdate,
         )
     }
 }

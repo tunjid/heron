@@ -76,6 +76,18 @@ sealed interface Timeline {
                 get() = feedList.name
 
             override val supportedPresentations get() = TextOnlyPresentations
+
+            companion object {
+                fun stub(
+                    list: FeedList
+                ) = List(
+                    position = 0,
+                    lastRefreshed = null,
+                    presentation = Text.WithEmbed,
+                    isPinned = false,
+                    feedList = list,
+                )
+            }
         }
 
         @Serializable
@@ -91,6 +103,19 @@ sealed interface Timeline {
         ) {
             override val name: String
                 get() = feedGenerator.displayName
+
+            companion object {
+                fun stub(
+                    feedGenerator: FeedGenerator
+                ) = Feed(
+                    position = 0,
+                    lastRefreshed = null,
+                    presentation = Text.WithEmbed,
+                    supportedPresentations = emptyList(),
+                    isPinned = false,
+                    feedGenerator = feedGenerator,
+                )
+            }
         }
 
     }
@@ -132,7 +157,17 @@ sealed interface Timeline {
     data class StarterPack(
         val starterPack: com.tunjid.heron.data.core.models.StarterPack,
         val listTimeline: Home.List,
-    ) : Timeline by listTimeline
+    ) : Timeline by listTimeline {
+        companion object {
+            fun stub(
+                starterPack: com.tunjid.heron.data.core.models.StarterPack,
+                list: FeedList,
+            ) = StarterPack(
+                starterPack = starterPack,
+                listTimeline = Home.List.stub(list),
+            )
+        }
+    }
 
     @Serializable
     sealed class Presentation(

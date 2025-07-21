@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 internal fun Modifier.presentationPadding(
@@ -43,10 +44,9 @@ internal fun Modifier.presentationPadding(
     Timeline.Presentation.Media.Expanded -> this
 }
 
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
-    polygon = MaterialShapes.Gem,
+    polygon = MaterialShapes.Square,
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -58,3 +58,6 @@ val ListCollectionShape = RoundedPolygonShape.Custom(
 val StarterPackCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Cookie9Sided,
 )
+
+val BlueskyClouds =
+    ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")

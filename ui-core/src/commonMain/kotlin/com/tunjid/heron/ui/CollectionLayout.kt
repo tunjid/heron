@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,33 +27,33 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CollectionLayout(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     title: String,
     subtitle: String,
     description: String?,
     blurb: String?,
+    sharedElementPrefix: String?,
+    sharedElementType: Any,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
     onClicked: () -> Unit,
-) {
+) = with(movableElementSharedTransitionScope){
     Column(
         modifier = modifier
             .clickable { onClicked() }
             .padding(
                 vertical = 4.dp,
-                horizontal = 24.dp
+                horizontal = 16.dp
             ),
     ) {
         AttributionLayout(
@@ -61,14 +62,33 @@ fun CollectionLayout(
             avatar = avatar,
             label = {
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = titleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = sharedElementType,
+                                )
+                            )
+                        ),
                     text = title,
                     style = LocalTextStyle.current.copy(fontWeight = Bold),
                 )
                 Text(
+                    modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = subtitleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = sharedElementType,
+                                )
+                            )
+                        ),
                     text = subtitle,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
                 )
             },
             action = action,
@@ -78,28 +98,8 @@ fun CollectionLayout(
                 .height(8.dp)
         )
         Text(
-            text = remember(description ?: "") {
-                buildAnnotatedString {
-                    val text = description ?: ""
-
-                    append(text)
-
-                    val newlineIndices = text.indices.filter { text[it] == '\n' }
-                    newlineIndices.forEach { index ->
-                        addStyle(
-                            style = ParagraphStyle(lineHeight = 0.1.em),
-                            start = index,
-                            end = index + 1,
-                        )
-                        addStyle(
-                            style = SpanStyle(fontSize = 0.1.em),
-                            start = index,
-                            end = index + 1,
-                        )
-                    }
-                }
-            },
-            style = MaterialTheme.typography.bodyMedium,
+            text = description ?: "",
+            style = MaterialTheme.typography.bodySmall,
         )
         Spacer(
             modifier = Modifier
@@ -108,6 +108,7 @@ fun CollectionLayout(
         Text(
             text = blurb ?: "",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
         )
         Spacer(
             modifier = Modifier
@@ -115,3 +116,13 @@ fun CollectionLayout(
         )
     }
 }
+
+fun titleSharedElementKey(
+    prefix: String?,
+    type: Any,
+): String = "$prefix-$type-title"
+
+fun subtitleSharedElementKey(
+    prefix: String?,
+    type: Any,
+): String = "$prefix-$type-subtitle"
