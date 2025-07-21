@@ -364,7 +364,7 @@ private fun SuggestedContent(
             key = { suggestedProfile -> suggestedProfile.profile.did.id },
             itemContent = { suggestedProfile ->
                 ProfileWithViewerState(
-                    modifier = modifier
+                    modifier = Modifier
                         .clickable { onProfileClicked(suggestedProfile) }
                         .padding(horizontal = 16.dp),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
