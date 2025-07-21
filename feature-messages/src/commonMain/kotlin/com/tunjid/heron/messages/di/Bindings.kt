@@ -16,28 +16,39 @@
 
 package com.tunjid.heron.messages.di
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.messages.Action
 import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
 import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -101,6 +112,17 @@ class MessagesBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val statusBarHeight = UiTokens.statusBarHeight
+            val topAppBarOffsetNestedScrollConnection =
+                rememberAccumulatedOffsetNestedScrollConnection(
+                    maxOffset = { Offset.Zero },
+                    minOffset = {
+                        Offset(
+                            x = 0f,
+                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                        )
+                    },
+                )
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -112,6 +134,31 @@ class MessagesBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                },
+                topBar = {
+                    RootDestinationTopAppBar(
+                        modifier = Modifier.offset {
+                            topAppBarOffsetNestedScrollConnection.offset.round()
+                        },
+                        signedInProfile = state.signedInProfile,
+                        onSignedInProfileClicked = { profile, sharedElementKey ->
+                            viewModel.accept(
+                                Action.Navigate.DelegateTo(
+                                    NavigationAction.Common.ToProfile(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        profile = profile,
+                                        avatarSharedElementKey = sharedElementKey,
+                                    )
+                                )
+                            )
+                        },
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surface)
+                            .height(statusBarHeight)
+                            .fillMaxWidth()
+                    )
                 },
                 navigationBar = {
                     PaneNavigationBar(
@@ -127,8 +174,10 @@ class MessagesBindings(
                 content = { paddingValues ->
                     MessagesScreen(
                         paneScaffoldState = this,
+                        state = state,
+                        actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(top = paddingValues.calculateTopPadding()),
                     )
                 }
             )

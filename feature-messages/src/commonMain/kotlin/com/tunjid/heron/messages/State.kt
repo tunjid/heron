@@ -16,9 +16,15 @@
 
 package com.tunjid.heron.messages
 
+import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.pop
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -26,17 +32,30 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     @Transient
+    val signedInProfile: Profile? = null,
+    override val tilingData: TilingState.Data<ConversationQuery, Conversation> = TilingState.Data(
+        currentQuery = ConversationQuery(
+            data = CursorQuery.Data(
+                page = 0,
+                cursorAnchor = Clock.System.now(),
+                limit = 15
+            )
+        )
+    ),
+    @Transient
     val messages: List<String> = emptyList(),
-)
+): TilingState<ConversationQuery, Conversation>
 
 
 sealed class Action(val key: String) {
 
+    data class Tile(
+        val tilingAction: TilingState.Action,
+    ): Action(key = "Tile")
+
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data class DelegateTo(
+            val delegate: NavigationAction.Common,
+        ) : Navigate(), NavigationAction by delegate
     }
 }
