@@ -33,4 +33,4 @@ data class FeedList(
     val listItemCount: Long?,
     val purpose: String,
     val indexedAt: Instant,
-)
+): ByteSerializable

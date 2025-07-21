@@ -83,6 +83,12 @@ internal fun ProfileCollection(
                             Action.Navigate.DelegateTo(
                                 NavigationAction.Common.ToRawUrl(
                                     path = collection.uriPath,
+                                    model = when (collection) {
+                                        is OfFeedGenerators -> collection.feedGenerator
+                                        is OfLists -> collection.list
+                                        is OfStarterPacks -> collection.starterPack
+                                    },
+                                    sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 )
                             )
@@ -201,3 +207,5 @@ private val ProfileCollection.shape: RoundedPolygonShape.Custom
         is OfLists -> ListCollectionShape
         is OfStarterPacks -> StarterPackCollectionShape
     }
+
+private const val ProfileCollectionSharedElementPrefix = "profile-collection"

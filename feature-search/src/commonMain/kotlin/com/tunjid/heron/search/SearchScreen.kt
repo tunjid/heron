@@ -207,6 +207,8 @@ internal fun SearchScreen(
                     Action.Navigate.DelegateTo(
                         NavigationAction.Common.ToRawUrl(
                             path = feedGenerator.uri.path,
+                            model = feedGenerator,
+                            sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )
                     )
@@ -686,3 +688,5 @@ private fun SearchResults(
 
 private fun Profile.searchProfileAvatarSharedElementKey(): String =
     "suggested-profile-${did.id}"
+
+private const val SearchFeedGeneratorSharedElementPrefix = "search-feedGenerator"
