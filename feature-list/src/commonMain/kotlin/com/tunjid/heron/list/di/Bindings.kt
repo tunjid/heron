@@ -262,7 +262,8 @@ class ListBindings(
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
                                 sharedElementPrefix = state.sharedElementPrefix,
-                                hasUpdates = state.timelineState?.hasUpdates == true,
+                                // Indicated on the tab instead
+                                hasUpdates = false,
                                 onPresentationSelected = { timeline, presentation ->
                                     state.stateHolders
                                         .filterIsInstance<ListScreenStateHolders.Timeline>()
