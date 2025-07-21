@@ -26,14 +26,19 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
+import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.ConversationEntity
+import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
+import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -44,6 +49,10 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -57,7 +66,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 15,
+    version = 16,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -81,6 +90,14 @@ import kotlinx.coroutines.IO
         TimelineItemEntity::class,
         TimelinePreferencesEntity::class,
         StarterPackEntity::class,
+        ConversationEntity::class,
+        ConversationMembersEntity::class,
+        MessageEntity::class,
+        MessageFeedGeneratorEntity::class,
+        MessageListEntity::class,
+        MessagePostEntity::class,
+        MessageReactionEntity::class,
+        MessageStarterPackEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -120,6 +137,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 13, to = 14),
         // Add description to StarterPackEntity
         AutoMigration(from = 14, to = 15),
+        // Add ConversationEntity, MessagesEntity and other messaging related entities
+        AutoMigration(from = 15, to = 16),
     ],
     exportSchema = true,
 )
@@ -138,6 +157,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun feedGeneratorDao(): FeedGeneratorDao
     abstract fun notificationsDao(): NotificationsDao
     abstract fun starterPackDao(): StarterPackDao
+
+    abstract fun messagesDao(): MessageDao
 }
 
 // The Room compiler generates the `actual` implementations.

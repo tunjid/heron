@@ -16,18 +16,22 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
+import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
+import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
@@ -60,6 +64,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val notificationsDao: NotificationsDao,
     private val starterPackDao: StarterPackDao,
+    private val messageDao: MessageDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -73,6 +78,7 @@ class MultipleEntitySaverProvider @Inject constructor(
         feedGeneratorDao = feedGeneratorDao,
         notificationsDao = notificationsDao,
         starterPackDao = starterPackDao,
+        messageDao = messageDao,
         transactionWriter = transactionWriter,
     ).apply {
         block()
@@ -92,6 +98,7 @@ internal class MultipleEntitySaver(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val notificationsDao: NotificationsDao,
     private val starterPackDao: StarterPackDao,
+    private val messageDao: MessageDao,
     private val transactionWriter: TransactionWriter,
 ) {
     private val timelineItemEntities = mutableListOf<TimelineItemEntity>()
@@ -150,6 +157,12 @@ internal class MultipleEntitySaver(
     private val listItemEntities =
         mutableListOf<ListMemberEntity>()
 
+    private val conversationEntities =
+        mutableListOf<ConversationEntity>()
+
+    private val messageEntities =
+        mutableListOf<MessageEntity>()
+
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
@@ -159,8 +172,13 @@ internal class MultipleEntitySaver(
         val (fullProfileEntities, partialProfileEntities) = profileEntities.partition {
             it.followersCount != 0L && it.followsCount != 0L && it.postsCount != 0L
         }
+        // Profiles from messages may just be empty profiles with Dids
+        val (usablePartialProfileEntities, emptyProfileEntities) = partialProfileEntities.partition {
+            it.handle != Constants.unknownAuthorHandle
+        }
         profileDao.upsertProfiles(fullProfileEntities)
-        profileDao.insertOrPartiallyUpdateProfiles(partialProfileEntities)
+        profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
+        profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
 
         postDao.upsertPosts(postEntities)
 
@@ -203,6 +221,9 @@ internal class MultipleEntitySaver(
         feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities)
 
         timelineDao.upsertTimelineItems(timelineItemEntities)
+
+        messageDao.upsertConversations(conversationEntities)
+        messageDao.upsertMessages(messageEntities)
     }
 
     fun MultipleEntitySaver.associatePostEmbeds(
@@ -253,6 +274,10 @@ internal class MultipleEntitySaver(
     fun add(entity: StarterPackEntity) = starterPackEntities.add(entity)
 
     fun add(entity: ListMemberEntity) = listItemEntities.add(entity)
+
+    fun add(entity: ConversationEntity) = conversationEntities.add(entity)
+
+    fun add(entity: MessageEntity) = messageEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 

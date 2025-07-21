@@ -1,0 +1,105 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.data.database.daos
+
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Upsert
+import com.tunjid.heron.data.database.entities.ConversationEntity
+import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
+import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
+
+@Dao
+interface MessageDao {
+
+    @Query(
+        """
+            SELECT conversations.*,
+                lastMessage.id AS lastMessage_id, 
+                lastMessage.rev AS lastMessage_rev, 
+                lastMessage.text AS lastMessage_text, 
+                lastMessage.senderId AS lastMessage_senderId, 
+                lastMessage.conversationId AS lastMessage_conversationId, 
+                lastMessage.isDeleted AS lastMessage_isDeleted,
+                lastMessage.sentAt AS lastMessage_sentAt,
+                lastMessageReactedTo.sentAt FROM conversations
+            LEFT JOIN messages AS lastMessage
+            ON lastMessageId = lastMessage.id
+            LEFT JOIN messages AS lastMessageReactedTo
+            ON lastMessageId = lastMessageReactedTo.id
+            ORDER BY COALESCE(
+                lastMessageReactedTo.sentAt,
+                lastMessage.sentAt
+            )
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun conversations(
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedConversationEntity>>
+
+    @Query(
+        """
+            SELECT * FROM messages
+            WHERE conversationId = :conversationId
+            AND sentAt < :before
+            ORDER BY sentAt
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """
+    )
+    fun messages(
+        conversationId: String,
+        before: Instant,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedMessageEntity>>
+
+    @Upsert
+    suspend fun upsertConversations(
+        entities: List<ConversationEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertMessages(
+        entities: List<MessageEntity>,
+    )
+
+    @Query(
+        """
+        DELETE FROM conversations
+    """
+    )
+    suspend fun deleteAllConversations()
+
+    @Query(
+        """
+        DELETE FROM messages
+        WHERE conversationId = :conversationId
+    """
+    )
+    suspend fun deleteAllMessages(
+        conversationId: String,
+    )
+}

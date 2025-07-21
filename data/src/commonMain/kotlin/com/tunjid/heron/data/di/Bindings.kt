@@ -25,6 +25,7 @@ import com.tunjid.heron.data.database.configureAndBuild
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
+import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -35,7 +36,9 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.OfflineMessageRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
@@ -139,6 +142,12 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    fun provideMessageDao(
+        database: AppDatabase,
+    ): MessageDao = database.messagesDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
@@ -211,4 +220,10 @@ class DataBindings(
     internal fun provideOfflinePostRepository(
         offlinePostRepository: OfflinePostRepository
     ): PostRepository = offlinePostRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideOfflineMessageRepository(
+        offlineMessageRepository: OfflineMessageRepository
+    ): MessageRepository = offlineMessageRepository
 }
