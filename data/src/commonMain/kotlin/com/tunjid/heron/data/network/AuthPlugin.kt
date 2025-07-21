@@ -31,6 +31,9 @@ import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.Url
+import io.ktor.http.encodedPath
+import io.ktor.http.set
 import io.ktor.util.AttributeKey
 import kotlinx.coroutines.CancellationException
 import sh.christian.ozone.api.response.AtpErrorDescription
@@ -68,8 +71,25 @@ internal class AuthPlugin(
             scope: HttpClient,
         ) {
             scope.plugin(HttpSend).intercept { context ->
+                val authTokens = plugin.readAuth?.invoke()
+
+                if (ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
+                    context.headers.append(
+                        name = AtProtoProxyHeader,
+                        value = ChatAtProtoProxyHeaderValue,
+                    )
+                    authTokens?.didDoc
+                        ?.service
+                        ?.firstOrNull()
+                        ?.let {
+                            context.url.set(
+                                host = Url(urlString = it.serviceEndpoint).host
+                            )
+                        }
+                }
+
                 if (!context.headers.contains(Authorization)) {
-                    plugin.readAuth?.invoke()?.auth?.let { context.bearerAuth(it) }
+                    authTokens?.auth?.let { context.bearerAuth(it) }
                 }
 
                 var result: HttpClientCall = execute(context)
@@ -86,7 +106,7 @@ internal class AuthPlugin(
 
                 if (response.getOrNull()?.error == "ExpiredToken") {
                     try {
-                        scope.post("/xrpc/com.atproto.server.refreshSession") {
+                        scope.post(RefreshTokenEndpoint) {
                             plugin.readAuth?.invoke()?.refresh?.let { bearerAuth(it) }
                         }.body<RefreshSessionResponse>()
                             .let { refreshed ->
@@ -98,6 +118,9 @@ internal class AuthPlugin(
                                         authProfileId = ProfileId(refreshed.did.did),
                                         auth = newAccessToken,
                                         refresh = newRefreshToken,
+                                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                                            jsonContent = refreshed.didDoc,
+                                        ),
                                     )
                                 )
                                 context.headers.remove(Authorization)
@@ -106,7 +129,7 @@ internal class AuthPlugin(
                             }
                     } catch (e: CancellationException) {
                         throw e
-                    } catch (e: Throwable) {
+                    } catch (_: Throwable) {
                         // Delete existing token and force a log out
                         plugin.saveAuth?.invoke(null)
                     }
@@ -116,3 +139,11 @@ internal class AuthPlugin(
         }
     }
 }
+
+private val ChatProxyPaths = listOf(
+    "chat.bsky.convo.listConvos"
+)
+private const val AtProtoProxyHeader = "Atproto-Proxy"
+private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
+
+private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"

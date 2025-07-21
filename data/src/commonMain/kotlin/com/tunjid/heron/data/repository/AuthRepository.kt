@@ -114,6 +114,9 @@ internal class AuthTokenRepository(
                         authProfileId = ProfileId(result.did.did),
                         auth = result.accessJwt,
                         refresh = result.refreshJwt,
+                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                            jsonContent = result.didDoc,
+                        ),
                     )
                 )
             }
