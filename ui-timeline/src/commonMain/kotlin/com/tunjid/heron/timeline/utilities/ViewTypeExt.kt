@@ -46,7 +46,7 @@ internal fun Modifier.presentationPadding(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
-    polygon = MaterialShapes.Gem,
+    polygon = MaterialShapes.Square,
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

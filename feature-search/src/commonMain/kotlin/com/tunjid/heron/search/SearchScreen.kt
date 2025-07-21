@@ -328,7 +328,7 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 8.dp),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
             )
@@ -339,7 +339,9 @@ private fun SuggestedContent(
             itemContent = { index, trend ->
                 Trend(
                     modifier = Modifier
-                        .fillParentMaxWidth(),
+                        .fillParentMaxWidth()
+                        .clickable { onTrendClicked(trend) }
+                        .padding(horizontal = 16.dp),
                     index = index,
                     now = now,
                     trend = trend,
@@ -350,7 +352,7 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 16.dp),
                 icon = Icons.Rounded.AccountCircle,
                 title = stringResource(Res.string.suggested_accounts),
             )
@@ -362,7 +364,7 @@ private fun SuggestedContent(
                 ProfileWithViewerState(
                     modifier = modifier
                         .clickable { onProfileClicked(suggestedProfile) }
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = 16.dp),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     signedInProfileId = null,
                     profile = suggestedProfile.profile,
@@ -376,7 +378,7 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 16.dp),
                 icon = Icons.Rounded.JoinFull,
                 title = stringResource(Res.string.starter_packs),
             )
@@ -388,7 +390,7 @@ private fun SuggestedContent(
                 SuggestedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = 16.dp),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
@@ -398,7 +400,7 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 16.dp),
                 icon = Icons.Rounded.RssFeed,
                 title = stringResource(Res.string.discover_feeds),
             )

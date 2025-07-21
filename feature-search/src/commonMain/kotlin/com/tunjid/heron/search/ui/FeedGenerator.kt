@@ -43,11 +43,7 @@ fun FeedGeneratorSearchResult(
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
     CollectionLayout(
-        modifier = modifier
-            .padding(
-                vertical = 4.dp,
-                horizontal = 24.dp
-            ),
+        modifier = modifier,
         title = feedGenerator.displayName,
         subtitle = stringResource(
             Res.string.feed_by,

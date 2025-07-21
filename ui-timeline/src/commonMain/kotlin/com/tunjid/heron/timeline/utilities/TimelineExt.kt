@@ -116,6 +116,7 @@ fun TimelineTitle(
                 Text(
                     text = timeline.creatorDescription(creator),
                     style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
             if (hasUpdates) Badge(

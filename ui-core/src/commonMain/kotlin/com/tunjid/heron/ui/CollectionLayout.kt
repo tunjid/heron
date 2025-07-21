@@ -52,7 +52,7 @@ fun CollectionLayout(
             .clickable { onClicked() }
             .padding(
                 vertical = 4.dp,
-                horizontal = 24.dp
+                horizontal = 16.dp
             ),
     ) {
         AttributionLayout(
@@ -69,6 +69,7 @@ fun CollectionLayout(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
                 )
             },
             action = action,
@@ -78,28 +79,8 @@ fun CollectionLayout(
                 .height(8.dp)
         )
         Text(
-            text = remember(description ?: "") {
-                buildAnnotatedString {
-                    val text = description ?: ""
-
-                    append(text)
-
-                    val newlineIndices = text.indices.filter { text[it] == '\n' }
-                    newlineIndices.forEach { index ->
-                        addStyle(
-                            style = ParagraphStyle(lineHeight = 0.1.em),
-                            start = index,
-                            end = index + 1,
-                        )
-                        addStyle(
-                            style = SpanStyle(fontSize = 0.1.em),
-                            start = index,
-                            end = index + 1,
-                        )
-                    }
-                }
-            },
-            style = MaterialTheme.typography.bodyMedium,
+            text = description ?: "",
+            style = MaterialTheme.typography.bodySmall,
         )
         Spacer(
             modifier = Modifier
@@ -108,6 +89,7 @@ fun CollectionLayout(
         Text(
             text = blurb ?: "",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
         )
         Spacer(
             modifier = Modifier
