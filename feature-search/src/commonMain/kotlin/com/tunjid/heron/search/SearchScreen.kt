@@ -414,6 +414,8 @@ private fun SuggestedContent(
                 FeedGeneratorSearchResult(
                     modifier = Modifier
                         .fillParentMaxWidth(),
+                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = feedGenerator,
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
@@ -664,6 +666,8 @@ private fun SearchResults(
                     key = { it.feedGenerator.cid.id },
                     itemContent = { result ->
                         FeedGeneratorSearchResult(
+                            movableElementSharedTransitionScope = paneScaffoldState,
+                            sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             feedGenerator = result.feedGenerator,
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                         )
@@ -689,4 +693,4 @@ private fun SearchResults(
 private fun Profile.searchProfileAvatarSharedElementKey(): String =
     "suggested-profile-${did.id}"
 
-private const val SearchFeedGeneratorSharedElementPrefix = "search-feedGenerator"
+internal const val SearchFeedGeneratorSharedElementPrefix = "search-feedGenerator"

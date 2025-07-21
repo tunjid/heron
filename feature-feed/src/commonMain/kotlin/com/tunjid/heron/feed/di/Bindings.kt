@@ -23,8 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.ByteSerializable
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -195,8 +193,10 @@ class FeedBindings(
                     PoppableDestinationTopAppBar(
                         title = {
                             TimelineTitle(
+                                movableElementSharedTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
+                                sharedElementPrefix = state.sharedElementPrefix,
                                 hasUpdates = state.timelineState?.hasUpdates == true,
                                 onPresentationSelected = { timeline, presentation ->
                                     state.timelineStateHolder

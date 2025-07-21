@@ -258,8 +258,10 @@ class ListBindings(
                             .background(MaterialTheme.colorScheme.surface),
                         title = {
                             TimelineTitle(
+                                movableElementSharedTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
                                 creator = state.creator,
+                                sharedElementPrefix = state.sharedElementPrefix,
                                 hasUpdates = state.timelineState?.hasUpdates == true,
                                 onPresentationSelected = { timeline, presentation ->
                                     state.stateHolders

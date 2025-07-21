@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,8 +48,10 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.likes
 import heron.ui_timeline.generated.resources.media
@@ -72,15 +75,17 @@ fun Timeline.displayName() = when (this) {
     }.capitalize(Locale.current)
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun TimelineTitle(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     timeline: Timeline?,
     creator: Profile?,
+    sharedElementPrefix: String?,
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
-) {
+) = with(movableElementSharedTransitionScope) {
     if (timeline != null) Row(
         modifier = modifier
             .padding(
@@ -95,11 +100,21 @@ fun TimelineTitle(
                         color = MaterialTheme.colorScheme.secondaryContainer,
                         shape = timeline.shape,
                     )
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = timeline.avatarSharedElementKey(sharedElementPrefix)
+                        )
+                    )
                     .size(44.dp),
             )
 
             else -> AsyncImage(
                 modifier = Modifier
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = timeline.avatarSharedElementKey(sharedElementPrefix)
+                        )
+                    )
                     .size(44.dp),
                 args = args,
             )
@@ -241,6 +256,16 @@ private val Timeline.avatarImageArgs: ImageArgs?
         is Timeline.Profile,
             -> null
     }
+
+private fun Timeline.avatarSharedElementKey(
+    sharedElementPrefix: String?
+): String = when (this) {
+    is Timeline.Home.Feed -> feedGenerator.avatarSharedElementKey(sharedElementPrefix)
+    is Timeline.Home.List -> feedList.avatarSharedElementKey(sharedElementPrefix)
+    is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
+    is Timeline.Home.Following -> "$sharedElementPrefix-following"
+    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
+}
 
 private val Timeline.shape: RoundedPolygonShape
     get() = when (this) {

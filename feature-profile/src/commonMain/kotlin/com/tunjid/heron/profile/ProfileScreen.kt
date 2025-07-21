@@ -267,6 +267,7 @@ internal fun ProfileScreen(
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
                             is ProfileScreenStateHolders.Collections -> ProfileCollection(
+                                movableElementSharedTransitionScope = paneScaffoldState,
                                 collectionStateHolder = stateHolder,
                                 actions = actions,
                             )

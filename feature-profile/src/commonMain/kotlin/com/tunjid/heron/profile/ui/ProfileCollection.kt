@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,12 +46,14 @@ import com.tunjid.heron.profile.ProfileCollectionStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.collection_by
 import org.jetbrains.compose.resources.StringResource
@@ -58,6 +61,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ProfileCollection(
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     collectionStateHolder: ProfileCollectionStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -76,6 +80,7 @@ internal fun ProfileCollection(
             itemContent = { profileCollection ->
                 ProfileCollection(
                     modifier = Modifier.fillMaxWidth(),
+                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     title = collectionState.stringResource,
                     collection = profileCollection,
                     onCollectionClicked = { collection ->
@@ -111,13 +116,15 @@ internal fun ProfileCollection(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfileCollection(
     modifier: Modifier = Modifier,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     title: StringResource,
     collection: ProfileCollection,
     onCollectionClicked: (ProfileCollection) -> Unit,
-) {
+) = with(movableElementSharedTransitionScope){
     CollectionLayout(
         modifier = modifier
             .padding(
@@ -140,11 +147,21 @@ private fun ProfileCollection(
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             shape = collection.shape,
                         )
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = collection.avatarSharedElementKey,
+                            )
+                        )
                         .size(44.dp),
                 )
 
                 else -> AsyncImage(
                     modifier = Modifier
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = collection.avatarSharedElementKey,
+                            )
+                        )
                         .size(44.dp),
                     args = ImageArgs(
                         url = avatar.uri,
@@ -206,6 +223,19 @@ private val ProfileCollection.shape: RoundedPolygonShape.Custom
         is OfFeedGenerators -> FeedGeneratorCollectionShape
         is OfLists -> ListCollectionShape
         is OfStarterPacks -> StarterPackCollectionShape
+    }
+
+private val ProfileCollection.avatarSharedElementKey: String
+    get() = when (this) {
+        is OfFeedGenerators -> feedGenerator.avatarSharedElementKey(
+            ProfileCollectionSharedElementPrefix
+        )
+        is OfLists -> list.avatarSharedElementKey(
+            ProfileCollectionSharedElementPrefix
+        )
+        is OfStarterPacks -> starterPack.avatarSharedElementKey(
+            ProfileCollectionSharedElementPrefix
+        )
     }
 
 private const val ProfileCollectionSharedElementPrefix = "profile-collection"

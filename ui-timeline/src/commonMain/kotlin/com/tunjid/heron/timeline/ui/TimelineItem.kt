@@ -46,7 +46,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
@@ -360,6 +363,18 @@ fun Post.avatarSharedElementKey(
         ?: prefix
     return "$finalPrefix-${cid.id}-${author.did.id}"
 }
+
+fun FeedGenerator.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-${uri.uri}"
+
+fun FeedList.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-${uri.uri}"
+
+fun StarterPack.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-${uri.uri}"
 
 fun String.withQuotingPostIdPrefix(
     quotingPostId: PostId? = null,
