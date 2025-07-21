@@ -18,7 +18,6 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.Index
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 
@@ -26,8 +25,8 @@ import com.tunjid.heron.data.core.types.ProfileId
 @Entity(
     tableName = "conversationMembers",
     primaryKeys = [
-        "postId",
-        "authorId"
+        "conversationId",
+        "memberId"
     ],
     foreignKeys = [
         ForeignKey(
@@ -42,10 +41,6 @@ import com.tunjid.heron.data.core.types.ProfileId
             childColumns = ["memberId"],
             onDelete = ForeignKey.CASCADE,
         ),
-    ],
-    indices = [
-        Index(value = ["conversationId"]),
-        Index(value = ["memberId"]),
     ],
 )
 data class ConversationMembersEntity(

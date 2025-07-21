@@ -31,7 +31,15 @@ interface MessageDao {
 
     @Query(
         """
-            SELECT conversations.*, lastMessage.*, lastMessageReactedTo.sentAt FROM conversations
+            SELECT conversations.*,
+                lastMessage.id AS lastMessage_id, 
+                lastMessage.rev AS lastMessage_rev, 
+                lastMessage.text AS lastMessage_text, 
+                lastMessage.senderId AS lastMessage_senderId, 
+                lastMessage.conversationId AS lastMessage_conversationId, 
+                lastMessage.isDeleted AS lastMessage_isDeleted,
+                lastMessage.sentAt AS lastMessage_sentAt,
+                lastMessageReactedTo.sentAt FROM conversations
             LEFT JOIN messages AS lastMessage
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
@@ -83,9 +91,7 @@ interface MessageDao {
         DELETE FROM conversations
     """
     )
-    suspend fun deleteAllConversations(
-        sourceId: String,
-    )
+    suspend fun deleteAllConversations()
 
     @Query(
         """
