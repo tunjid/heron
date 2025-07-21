@@ -18,7 +18,9 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.MessageId
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Message(
     val id: MessageId,
     val text: String,

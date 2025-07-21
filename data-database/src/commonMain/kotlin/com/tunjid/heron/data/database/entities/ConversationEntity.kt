@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Conversation
@@ -46,10 +47,15 @@ data class PopulatedConversationEntity(
     @Embedded(prefix = "lastMessage_")
     val lastMessageEntity: MessageEntity?,
     @Relation(
-        parentColumn = "lastMessage_senderId",
+        parentColumn = "id",
         entityColumn = "did",
+        associateBy = Junction(
+            value = ConversationMembersEntity::class,
+            parentColumn = "conversationId",
+            entityColumn = "memberId",
+        ),
     )
-    val laseMessageSenderEntity: ProfileEntity?,
+    val memberEntities: List<ProfileEntity>,
 )
 
 fun PopulatedConversationEntity.asExternalModel() =
@@ -57,15 +63,19 @@ fun PopulatedConversationEntity.asExternalModel() =
         id = entity.id,
         muted = entity.muted,
         unreadCount = entity.unreadCount,
+        members = memberEntities.map(ProfileEntity::asExternalModel),
         lastMessage = lastMessageEntity?.let { message ->
-            laseMessageSenderEntity?.let { sender ->
-                Message(
-                    id = message.id,
-                    text = message.text,
-                    sentAt = message.sentAt,
-                    isDeleted = message.isDeleted,
-                    sender = sender.asExternalModel(),
-                )
+            memberEntities.firstOrNull {
+                it.did == message.senderId
             }
+                ?.let { sender ->
+                    Message(
+                        id = message.id,
+                        text = message.text,
+                        sentAt = message.sentAt,
+                        isDeleted = message.isDeleted,
+                        sender = sender.asExternalModel(),
+                    )
+                }
         },
     )

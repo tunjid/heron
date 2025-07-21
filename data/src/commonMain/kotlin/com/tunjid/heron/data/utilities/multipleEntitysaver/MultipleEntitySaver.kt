@@ -28,6 +28,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ConversationEntity
+import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
@@ -160,6 +161,9 @@ internal class MultipleEntitySaver(
     private val conversationEntities =
         mutableListOf<ConversationEntity>()
 
+    private val conversationMemberEntities =
+        mutableListOf<ConversationMembersEntity>()
+
     private val messageEntities =
         mutableListOf<MessageEntity>()
 
@@ -223,6 +227,7 @@ internal class MultipleEntitySaver(
         timelineDao.upsertTimelineItems(timelineItemEntities)
 
         messageDao.upsertConversations(conversationEntities)
+        messageDao.upsertConversationMembers(conversationMemberEntities)
         messageDao.upsertMessages(messageEntities)
     }
 
@@ -276,6 +281,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ListMemberEntity) = listItemEntities.add(entity)
 
     fun add(entity: ConversationEntity) = conversationEntities.add(entity)
+
+    fun add(entity: ConversationMembersEntity) = conversationMemberEntities.add(entity)
 
     fun add(entity: MessageEntity) = messageEntities.add(entity)
 

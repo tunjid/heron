@@ -20,6 +20,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.ConversationEntity
+import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
@@ -79,6 +80,11 @@ interface MessageDao {
     @Upsert
     suspend fun upsertConversations(
         entities: List<ConversationEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertConversationMembers(
+        entities: List<ConversationMembersEntity>,
     )
 
     @Upsert

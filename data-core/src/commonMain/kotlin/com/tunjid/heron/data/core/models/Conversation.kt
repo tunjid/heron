@@ -17,9 +17,12 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ConversationId
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Conversation(
     val id: ConversationId,
+    val members: List<Profile>,
     val muted: Boolean,
     val unreadCount: Long,
     val lastMessage: Message?,
