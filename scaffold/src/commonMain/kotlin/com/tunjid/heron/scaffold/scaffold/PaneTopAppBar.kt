@@ -17,10 +17,14 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.animateBounds
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -28,7 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TopAppBar
@@ -101,6 +104,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PoppableDestinationTopAppBar(
     modifier: Modifier = Modifier,
@@ -115,27 +119,37 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         ),
         navigationIcon = {
             AnimatedVisibility(
+                modifier = Modifier
+                    .animateBounds(lookaheadScope = this),
                 visible = paneState.pane == ThreePane.Primary,
-                enter = fadeIn(),
-                exit = fadeOut(),
+                enter = BackArrowEnter,
+                exit = BackArrowExit,
                 content = {
                     FilledTonalIconButton(
                         modifier = Modifier,
                         onClick = onBackPressed,
                     ) {
                         Icon(
-                            imageVector =
-                                if (paneState.pane == ThreePane.Primary) Icons.AutoMirrored.Rounded.ArrowBack
-                                else Icons.Rounded.Close,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(Res.string.go_back),
                         )
                     }
                 }
             )
         },
-        title = title,
+        title = {
+            Box(
+                modifier = Modifier
+                    .animateBounds(lookaheadScope = this)
+            ) {
+                title()
+            }
+        },
         actions = actions,
     )
 }
+
+private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
+private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 
 private const val SignedInUserAvatarSharedElementKey = "self"
