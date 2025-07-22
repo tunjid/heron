@@ -49,9 +49,9 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Message
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -88,16 +88,16 @@ internal fun ConversationScreen(
                 val isLastMessageByAuthor = nextAuthor != content.sender
 
                 Message(
-                    onAuthorClick = { profile ->
-//                        actions(
-//                            Action.Navigate.DelegateTo(
-//                                NavigationAction.Common.ToProfile(
-//                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-//                                    profile = profile,
-//                                    avatarSharedElementKey = sharedElementKey,
-//                                )
-//                            )
-//                        )
+                    onAuthorClick = { message ->
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToProfile(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    profile = message.sender,
+                                    avatarSharedElementKey = message.avatarSharedElementKey(),
+                                )
+                            )
+                        )
                     },
                     item = content,
                     isUserMe = content.sender.did == state.signedInProfile?.did,
@@ -126,7 +126,7 @@ internal fun ConversationScreen(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Message(
-    onAuthorClick: (Profile) -> Unit,
+    onAuthorClick: (Message) -> Unit,
     item: Message,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
@@ -153,12 +153,12 @@ fun Message(
                     .clip(CircleShape)
                     .align(Alignment.Top)
                     .clickable {
-                        onAuthorClick(item.sender)
+                        onAuthorClick(item)
                     },
             ) {
                 paneScaffoldState.updatedMovableStickySharedElementOf(
                     sharedContentState = paneScaffoldState.rememberSharedContentState(
-                        key = "${item.sender.did}-profile"
+                        key = item.avatarSharedElementKey()
                     ),
                     state = remember(item.sender.avatar) {
                         ImageArgs(
@@ -237,7 +237,7 @@ private fun AuthorNameTimestamp(
 }
 
 @Composable
-fun ChatItemBubble(
+private fun ChatItemBubble(
     item: Message,
     isUserMe: Boolean
 ) {
@@ -262,7 +262,7 @@ fun ChatItemBubble(
 }
 
 @Composable
-fun ChatMessage(
+private fun ChatMessage(
     message: Message,
 ) {
     Text(
@@ -272,7 +272,11 @@ fun ChatMessage(
     )
 }
 
-fun Instant.toTimestamp(): String {
+private fun Message.avatarSharedElementKey(): String {
+    return "${id.id}-${conversationId.id}-${sender.did.id}"
+}
+
+private fun Instant.toTimestamp(): String {
     // Convert Instant to LocalDateTime in the system's default time zone
     val localDateTime = this.toLocalDateTime(TimeZone.currentSystemDefault())
 
@@ -281,4 +285,9 @@ fun Instant.toTimestamp(): String {
     return "${localDateTime.hour}.$minute $amOrPm"
 }
 
-private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+private val ChatBubbleShape = RoundedCornerShape(
+    topStart = 4.dp,
+    topEnd = 20.dp,
+    bottomEnd = 20.dp,
+    bottomStart = 20.dp,
+)
