@@ -19,11 +19,13 @@ package com.tunjid.heron.conversation
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
@@ -44,9 +46,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.images.AsyncImage
@@ -101,7 +106,10 @@ internal fun ConversationScreen(
                     )
                 },
                 item = content,
-                isUserMe = content.sender.did == state.signedInProfile?.did,
+                side = when {
+                    content.sender.did == state.signedInProfile?.did -> Side.Sender
+                    else -> Side.Receiver
+                },
                 isFirstMessageByAuthor = isFirstMessageByAuthor,
                 isLastMessageByAuthor = isLastMessageByAuthor,
                 paneScaffoldState = paneScaffoldState
@@ -126,23 +134,27 @@ internal fun ConversationScreen(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun Message(
+private fun Message(
     onAuthorClick: (Message) -> Unit,
     item: Message,
-    isUserMe: Boolean,
+    side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val borderColor = if (isUserMe) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.tertiary
+    val borderColor = when (side) {
+        Side.Sender -> MaterialTheme.colorScheme.primary
+        Side.Receiver -> MaterialTheme.colorScheme.tertiary
     }
 
-    val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = 8.dp) else Modifier
-
-    Row(modifier = spaceBetweenAuthors) {
+    Row(
+        modifier = Modifier
+            .padding(
+                top = if (isLastMessageByAuthor) 8.dp else 0.dp
+            )
+            .fillMaxWidth(),
+        horizontalArrangement = side,
+    ) {
         if (isLastMessageByAuthor) {
             // Avatar
             Box(
@@ -181,29 +193,35 @@ fun Message(
         }
         AuthorAndTextMessage(
             item = item,
-            isUserMe = isUserMe,
+            side = side,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier
                 .padding(end = 16.dp)
-                .weight(1f)
+//                .weight(1f)
         )
     }
 }
 
 @Composable
-fun AuthorAndTextMessage(
+private fun AuthorAndTextMessage(
     item: Message,
-    isUserMe: Boolean,
+    side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = side,
+    ) {
         if (isLastMessageByAuthor) {
             AuthorNameTimestamp(item)
         }
-        ChatItemBubble(item, isUserMe)
+        ChatItemBubble(
+            item = item,
+            side = side,
+        )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
             Spacer(modifier = Modifier.height(8.dp))
@@ -219,7 +237,8 @@ private fun AuthorNameTimestamp(
     item: Message
 ) {
     // Combine author and timestamp for a11y.
-    Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
+    Row(
+        modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
             text = item.sender.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
@@ -240,18 +259,17 @@ private fun AuthorNameTimestamp(
 @Composable
 private fun ChatItemBubble(
     item: Message,
-    isUserMe: Boolean
+    side: Side,
 ) {
-    val backgroundBubbleColor = if (isUserMe) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
+    val backgroundBubbleColor = when (side) {
+        Side.Sender -> MaterialTheme.colorScheme.primary
+        Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     Column {
         Surface(
             color = backgroundBubbleColor,
-            shape = ChatBubbleShape
+            shape = side.bubbleShape
         ) {
             ChatMessage(
                 message = item,
@@ -286,9 +304,63 @@ private fun Instant.toTimestamp(): String {
     return "${localDateTime.hour}.$minute $amOrPm"
 }
 
-private val ChatBubbleShape = RoundedCornerShape(
-    topStart = 4.dp,
-    topEnd = 20.dp,
-    bottomEnd = 20.dp,
-    bottomStart = 20.dp,
-)
+
+private sealed interface Side :
+    Arrangement.Horizontal,
+    Alignment.Horizontal {
+    val bubbleShape: Shape
+
+    data object Sender : Side {
+
+        override val bubbleShape: Shape = RoundedCornerShape(
+            topStart = 20.dp,
+            topEnd = 4.dp,
+            bottomEnd = 20.dp,
+            bottomStart = 20.dp,
+        )
+
+        override fun Density.arrange(
+            totalSize: Int,
+            sizes: IntArray,
+            layoutDirection: LayoutDirection,
+            outPositions: IntArray
+        ) {
+            with(Arrangement.Start) {
+                arrange(
+                    totalSize = totalSize,
+                    sizes = sizes,
+                    layoutDirection = when (layoutDirection) {
+                        LayoutDirection.Ltr -> LayoutDirection.Rtl
+                        LayoutDirection.Rtl -> LayoutDirection.Ltr
+                    },
+                    outPositions = outPositions
+                )
+            }
+        }
+
+        override fun align(
+            size: Int,
+            space: Int,
+            layoutDirection: LayoutDirection
+        ): Int = Alignment.Start.align(
+            size = size,
+            space = space,
+            layoutDirection = when (layoutDirection) {
+                LayoutDirection.Ltr -> LayoutDirection.Rtl
+                LayoutDirection.Rtl -> LayoutDirection.Ltr
+            },
+        )
+    }
+
+    data object Receiver :
+        Side,
+        Arrangement.Horizontal by Arrangement.Start,
+        Alignment.Horizontal by Alignment.Start {
+        override val bubbleShape: Shape = RoundedCornerShape(
+            topStart = 4.dp,
+            topEnd = 20.dp,
+            bottomEnd = 20.dp,
+            bottomStart = 20.dp,
+        )
+    }
+}
