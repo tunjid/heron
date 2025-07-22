@@ -85,7 +85,7 @@ internal fun SearchBar(
             },
             textStyle = MaterialTheme.typography.labelLarge,
             singleLine = true,
-            shape = RoundedCornerShape(36.dp),
+            shape = SearchBarShape,
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Search,
             ),
@@ -106,3 +106,5 @@ internal fun SearchBar(
         }
     }
 }
+
+private val SearchBarShape = RoundedCornerShape(36.dp)

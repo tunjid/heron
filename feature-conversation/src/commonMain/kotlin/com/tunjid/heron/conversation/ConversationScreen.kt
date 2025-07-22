@@ -60,6 +60,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
@@ -80,8 +81,9 @@ internal fun ConversationScreen(
     LazyColumn(
         state = listState,
         reverseLayout = true,
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         items(
             count = items.size,

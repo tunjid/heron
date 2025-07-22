@@ -223,7 +223,7 @@ internal class PaneAnchorState {
                         .align(Alignment.Center)
                         .width(thumbWidth)
                         .height(DraggableDividerSizeDp),
-                    shape = RoundedCornerShape(DraggableDividerSizeDp),
+                    shape = DraggableDividerShape,
                     color = MaterialTheme.colorScheme.onSurface,
                     onClick = {
                         scope.launch { paneAnchorState.moveTo(PaneAnchor.OneThirds) }
@@ -354,3 +354,5 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
 private val DraggableDividerSizeDp = 48.dp
 internal val SecondaryPaneMinWidthBreakpointDp = 600.dp
 internal val TertiaryPaneMinWidthBreakpointDp = 1200.dp
+
+private val DraggableDividerShape = RoundedCornerShape(DraggableDividerSizeDp)
