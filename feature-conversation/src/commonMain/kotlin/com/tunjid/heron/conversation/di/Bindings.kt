@@ -16,14 +16,26 @@
 
 package com.tunjid.heron.conversation.di
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.times
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
@@ -31,12 +43,17 @@ import com.tunjid.heron.conversation.Action
 import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.RouteViewModelInitializer
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
@@ -44,7 +61,9 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
@@ -70,6 +89,11 @@ private fun createRoute(
 internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
 )
+
+internal val Route.members: List<Profile>
+    get() = routeParams.queryParams["model"]
+        ?.map { it.fromBase64EncodedUrl() }
+        ?: emptyList()
 
 @BindingContainer
 object ConversationNavigationBindings {
@@ -140,6 +164,13 @@ class ConversationBindings(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
+                        title = {
+                            ConversationTitle(
+                                conversationId = state.id,
+                                participants = state.members,
+                                paneScaffoldState = this,
+                            )
+                        },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
@@ -166,4 +197,46 @@ class ConversationBindings(
             )
         }
     )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun ConversationTitle(
+    conversationId: ConversationId,
+    participants: List<Profile>,
+    paneScaffoldState: PaneScaffoldState
+) = with(paneScaffoldState) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        participants.forEachIndexed { index, participant ->
+            updatedMovableSharedElementOf(
+                sharedContentState = paneScaffoldState.rememberSharedContentState(
+                    key = "${conversationId.id}-${participant.did}"
+                ),
+                state = remember(participant.avatar?.uri) {
+                    ImageArgs(
+                        url = participant.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                        contentDescription = null,
+                    )
+                },
+                modifier = Modifier
+                    .size(32.dp)
+                    .offset(x = index * (-8).dp),
+                sharedElement = { args, innerModifier ->
+                    AsyncImage(args, innerModifier)
+                }
+            )
+        }
+        Spacer(
+            modifier = Modifier
+                .width(16.dp)
+        )
+        Text(
+            modifier = Modifier,
+            text = "roomName",
+        )
+    }
 }

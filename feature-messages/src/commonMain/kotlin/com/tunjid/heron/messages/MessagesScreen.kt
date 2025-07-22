@@ -50,6 +50,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -79,6 +80,16 @@ internal fun MessagesScreen(
                     signedInProfileId = state.signedInProfile?.did,
                     conversation = conversation,
                     onConversationClicked = {
+                        actions(
+                            Action.Navigate.DelegateTo(
+                                NavigationAction.Common.ToConversation(
+                                    id = conversation.id,
+                                    members = conversation.members,
+                                    sharedElementPrefix = conversation.id.id,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
                     }
                 )
             }

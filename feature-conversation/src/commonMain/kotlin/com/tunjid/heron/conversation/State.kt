@@ -32,6 +32,8 @@ import kotlinx.serialization.Transient
 data class State(
     @Transient
     val signedInProfile: Profile? = null,
+    val id: ConversationId,
+    val members: List<Profile> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, Message>,
     @Transient
     val messages: List<String> = emptyList(),
@@ -55,7 +57,10 @@ sealed class Action(val key: String) {
 
 fun State(
     conversationId: ConversationId,
+    members: List<Profile>,
 ) = State(
+    id = conversationId,
+    members = members,
     tilingData = TilingState.Data(
         currentQuery = MessageQuery(
             conversationId = conversationId,

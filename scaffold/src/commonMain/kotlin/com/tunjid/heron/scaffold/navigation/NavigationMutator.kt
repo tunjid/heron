@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
@@ -181,6 +182,26 @@ interface NavigationAction {
                         path = path,
                         queryParams = mapOf(
                             "model" to listOfNotNull(model?.toUrlEncodedBase64()),
+                            "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
+                            referringRouteQueryParams(referringRouteOption),
+                        )
+                    ).toRoute
+                )
+            }
+        }
+
+        data class ToConversation(
+            val id: ConversationId,
+            val members: List<Profile> = emptyList(),
+            val sharedElementPrefix: String? = null,
+            val referringRouteOption: ReferringRouteOption,
+        ) : Common() {
+            override val navigationMutation: NavigationMutation = {
+                navState.push(
+                    routeString(
+                        path = "/messages/${id.id}",
+                        queryParams = mapOf(
+                            "model" to members.map { it.toUrlEncodedBase64() },
                             "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                             referringRouteQueryParams(referringRouteOption),
                         )

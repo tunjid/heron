@@ -372,7 +372,7 @@ fun Message.avatarSharedElementKey(
 ): String {
     val finalPrefix = conversationId
         .let { "$prefix-$it" }
-    return "$finalPrefix-${id.id}-${conversationId.id}"
+    return "$finalPrefix-${id.id}-${conversationId.id}-${sender.did.id}"
 }
 
 fun FeedGenerator.avatarSharedElementKey(

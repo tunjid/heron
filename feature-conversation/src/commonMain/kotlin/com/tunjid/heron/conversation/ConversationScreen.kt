@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
@@ -49,7 +48,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
@@ -59,7 +57,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -124,49 +121,6 @@ internal fun ConversationScreen(
             )
         }
     )
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun ChatTitle(
-    roomName: String,
-    participants: List<Profile>,
-    paneScaffoldState: PaneScaffoldState
-) = with(paneScaffoldState) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            modifier = Modifier
-                .paneSharedElement(rememberSharedContentState("title")),
-            text = roomName,
-        )
-        Spacer(
-            modifier = Modifier
-                .width(16.dp)
-        )
-        participants.forEachIndexed { index, participant ->
-            updatedMovableSharedElementOf(
-                sharedContentState = paneScaffoldState.rememberSharedContentState(
-                    key = "${roomName}-${participant}"
-                ),
-                state = remember(participant.avatar?.uri) {
-                    ImageArgs(
-                        url = participant.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                        contentDescription = null,
-                    )
-                },
-                modifier = Modifier
-                    .size(24.dp)
-                    .offset(x = index * (-8).dp),
-                sharedElement = { args, innerModifier ->
-                    AsyncImage(args, innerModifier)
-                }
-            )
-        }
-    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
