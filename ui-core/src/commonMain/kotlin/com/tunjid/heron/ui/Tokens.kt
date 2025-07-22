@@ -16,12 +16,14 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -47,4 +49,20 @@ object UiTokens {
         @Composable get() = WindowInsets.navigationBars.asPaddingValues().run {
             calculateTopPadding() + calculateBottomPadding()
         }
+
+    @Composable
+    fun bottomNavAndInsetPaddingValues(
+        top: Dp = 0.dp,
+        horizontal: Dp = 0.dp,
+    ): PaddingValues {
+        val padding = navigationBarHeight + bottomNavHeight
+        return remember(top, horizontal,padding) {
+            PaddingValues(
+                top = top,
+                start = horizontal,
+                end = horizontal,
+                bottom = padding,
+            )
+        }
+    }
 }

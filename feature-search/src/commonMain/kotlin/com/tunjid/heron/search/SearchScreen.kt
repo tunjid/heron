@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -86,6 +85,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -326,6 +326,7 @@ private fun SuggestedContent(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = bottomNavAndInsetPaddingValues(),
     ) {
         item {
             TrendTitle(
@@ -475,9 +476,9 @@ private fun AutoCompleteProfileSearchResults(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(
+        contentPadding = bottomNavAndInsetPaddingValues(
             horizontal = 16.dp,
-        )
+        ),
     ) {
         items(
             items = results,
@@ -590,6 +591,7 @@ private fun SearchResults(
                 modifier = modifier,
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = bottomNavAndInsetPaddingValues(),
             ) {
                 items(
                     items = results,
@@ -626,6 +628,7 @@ private fun SearchResults(
                 modifier = modifier,
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = bottomNavAndInsetPaddingValues(),
             ) {
                 items(
                     items = results,
@@ -660,6 +663,7 @@ private fun SearchResults(
                 modifier = modifier,
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = bottomNavAndInsetPaddingValues(),
             ) {
                 items(
                     items = results,

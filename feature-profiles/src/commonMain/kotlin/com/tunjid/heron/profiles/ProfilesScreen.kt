@@ -17,7 +17,6 @@
 package com.tunjid.heron.profiles
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,6 +36,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -60,9 +60,8 @@ internal fun ProfilesScreen(
                 )
             ),
         state = listState,
-        contentPadding = PaddingValues(
-            start = 8.dp,
-            end = 8.dp,
+        contentPadding = bottomNavAndInsetPaddingValues(
+            horizontal = 8.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,

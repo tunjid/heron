@@ -19,12 +19,8 @@ package com.tunjid.heron.list
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -92,6 +88,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -244,6 +241,7 @@ private fun listTabs(
                 )
             )
         }
+
         this[1].hasUpdate != hasUpdate -> this[1] = Tab(
             title = stringResource(Res.string.posts),
             hasUpdate = hasUpdate,
@@ -272,9 +270,8 @@ private fun ListMembers(
                 )
             ),
         state = listState,
-        contentPadding = PaddingValues(
-            start = 8.dp,
-            end = 8.dp,
+        contentPadding = bottomNavAndInsetPaddingValues(
+            horizontal = 8.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -371,7 +368,7 @@ private fun ListTimeline(
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             verticalItemSpacing = 8.dp,
-            contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
         ) {
