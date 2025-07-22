@@ -22,6 +22,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Commit
+import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -165,13 +168,15 @@ private fun ThreadedPost(
     postActions: PostActions,
 ) {
     var maxPosts by rememberSaveable {
-        mutableStateOf(3)
+        mutableStateOf(DefaultMaxPostsInThread)
     }
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item.posts.take(maxPosts).forEachIndexed { index, post ->
+        val limitedPosts = remember(item.posts, maxPosts) {
+            item.posts.take(maxPosts)
+        }
+        limitedPosts.forEachIndexed { index, post ->
             key(post.cid.id) {
                 if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
                     Post(
@@ -232,7 +237,7 @@ private fun ThreadedPost(
                                 .childThreadNode(videoId = null)
                         )
                     }
-                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
+                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
                         Modifier
                             .height(4.dp)
                             .childThreadNode(videoId = null)
@@ -241,11 +246,8 @@ private fun ThreadedPost(
             }
         }
 
-        if (item.posts.size > maxPosts) {
-            TextButton(
-                onClick = { maxPosts += 3 },
-                content = { Text(stringResource(Res.string.show_more)) }
-            )
+        if (item.posts.size > maxPosts) ShowMore {
+            maxPosts += DefaultMaxPostsInThread
         }
     }
 }
@@ -320,6 +322,45 @@ private fun BrokenTimeline(
                     .width(2.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun ShowMore(
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(),
+        ) {
+            Timeline(
+                Modifier
+                    .offset(8.dp)
+                    .height(4.dp)
+            )
+            Icon(
+                modifier = Modifier
+                    .offset(1.dp, y = (-3).dp)
+                    .rotate(90f),
+                imageVector = Icons.Rounded.LinearScale,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+        }
+        TextButton(
+            modifier = Modifier
+                .offset(y = (-4).dp)
+                .weight(1f),
+            onClick = onClick,
+            content = {
+                Text(stringResource(Res.string.show_more))
+            }
+        )
     }
 }
 
@@ -416,3 +457,5 @@ private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
 
 private val NoOpInteractionSource = MutableInteractionSource()
+
+private const val DefaultMaxPostsInThread = 3
