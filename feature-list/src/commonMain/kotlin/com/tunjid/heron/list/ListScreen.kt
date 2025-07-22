@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -263,12 +262,7 @@ private fun ListMembers(
         modifier = modifier
             .padding(horizontal = 8.dp)
             .fillMaxSize()
-            .clip(
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                )
-            ),
+            .paneClip(),
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
             horizontal = 8.dp,
@@ -368,7 +362,7 @@ private fun ListTimeline(
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             verticalItemSpacing = 8.dp,
-            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+            contentPadding = bottomNavAndInsetPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
         ) {

@@ -53,7 +53,7 @@ fun ProfileViewerState(
             .animateContentSize(),
         selected = follows,
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
+        shape = FollowChipShape,
         leadingIcon = {
             Icon(
                 imageVector =
@@ -68,3 +68,5 @@ fun ProfileViewerState(
         },
     )
 }
+
+private val FollowChipShape = RoundedCornerShape(16.dp)
