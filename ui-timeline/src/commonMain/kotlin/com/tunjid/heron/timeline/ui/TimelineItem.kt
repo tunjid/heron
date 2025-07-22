@@ -38,7 +38,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +70,7 @@ import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.see_more_posts
+import heron.ui_timeline.generated.resources.show_more
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -157,74 +164,88 @@ private fun ThreadedPost(
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
+    var maxPosts by rememberSaveable {
+        mutableStateOf(3)
+    }
     Column(
-        modifier = modifier
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item.posts.forEachIndexed { index, post ->
-            if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
-                Post(
-                    modifier = Modifier
-                        .childThreadNode(videoId = post.videoId),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    now = now,
-                    post = post,
-                    isAnchoredInTimeline = item.generation == 0L,
-                    avatarShape =
-                        when {
-                            item.isThreadedAnchor -> RoundedPolygonShape.Circle
-                            item.isThreadedAncestor ->
-                                if (item.posts.size == 1) ReplyThreadStartImageShape
-                                else ReplyThreadImageShape
-
-                            else -> when (index) {
-                                0 ->
-                                    if (item.posts.size == 1) RoundedPolygonShape.Circle
-                                    else ReplyThreadStartImageShape
-
-                                item.posts.lastIndex -> ReplyThreadEndImageShape
-                                else -> ReplyThreadImageShape
-                            }
-                        },
-                    sharedElementPrefix = sharedElementPrefix,
-                    createdAt = post.createdAt,
-                    presentation = presentation,
-                    postActions = postActions,
-                    timeline = {
-                        if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .padding(top = 52.dp)
-                        )
-                    }
-                )
-                if (index != item.posts.lastIndex)
-                    if (index == 0 && item.hasBreak) BrokenTimeline(
+        item.posts.take(maxPosts).forEachIndexed { index, post ->
+            key(post.cid.id) {
+                if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
+                    Post(
                         modifier = Modifier
-                            .padding(start = 8.dp)
-                            .childThreadNode(videoId = null),
-                        onClick = {
-                            postActions.onPostClicked(
-                                post = post,
-                                quotingPostId = null,
+                            .childThreadNode(videoId = post.videoId),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        now = now,
+                        post = post,
+                        isAnchoredInTimeline = item.generation == 0L,
+                        avatarShape =
+                            when {
+                                item.isThreadedAnchor -> RoundedPolygonShape.Circle
+                                item.isThreadedAncestor ->
+                                    if (item.posts.size == 1) ReplyThreadStartImageShape
+                                    else ReplyThreadImageShape
+
+                                else -> when (index) {
+                                    0 ->
+                                        if (item.posts.size == 1) RoundedPolygonShape.Circle
+                                        else ReplyThreadStartImageShape
+
+                                    item.posts.lastIndex -> ReplyThreadEndImageShape
+                                    else -> ReplyThreadImageShape
+                                }
+                            },
+                        sharedElementPrefix = sharedElementPrefix,
+                        createdAt = post.createdAt,
+                        presentation = presentation,
+                        postActions = postActions,
+                        timeline = {
+                            if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(top = 52.dp)
                             )
                         }
                     )
-                    else Timeline(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .height(
-                                if (index == 0) 16.dp
-                                else 12.dp
-                            )
+                    if (index != item.posts.lastIndex) {
+                        if (index == 0 && item.hasBreak) BrokenTimeline(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .childThreadNode(videoId = null),
+                            onClick = {
+                                postActions.onPostClicked(
+                                    post = post,
+                                    quotingPostId = null,
+                                )
+                            }
+                        )
+                        else Timeline(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .height(
+                                    if (index == 0) 16.dp
+                                    else 12.dp
+                                )
+                                .childThreadNode(videoId = null)
+                        )
+                    }
+                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
+                        Modifier
+                            .height(4.dp)
                             .childThreadNode(videoId = null)
                     )
-                if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
-                    Modifier
-                        .height(4.dp)
-                        .childThreadNode(videoId = null)
-                )
+                }
             }
+        }
+
+        if (item.posts.size > maxPosts) {
+            TextButton(
+                onClick = { maxPosts += 3 },
+                content = { Text(stringResource(Res.string.show_more)) }
+            )
         }
     }
 }
