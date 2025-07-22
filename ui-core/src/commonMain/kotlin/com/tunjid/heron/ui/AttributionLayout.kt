@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -33,6 +34,7 @@ fun AttributionLayout(
     Row(
         modifier = modifier,
         horizontalArrangement = spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         avatar?.invoke()
         Column(Modifier.weight(1f)) {

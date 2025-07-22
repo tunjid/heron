@@ -17,6 +17,7 @@
 package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeBindings
+import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -59,6 +60,7 @@ interface AppGraph {
             @Includes scaffoldBindings: ScaffoldBindings,
             @Includes signInBindings: SignInBindings,
             @Includes composeBindings: ComposeBindings,
+            @Includes conversationBindings: ConversationBindings,
             @Includes feedBindings: FeedBindings,
             @Includes galleryBindings: GalleryBindings,
             @Includes homeBindings: HomeBindings,

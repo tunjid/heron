@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -23,6 +24,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Message(
     val id: MessageId,
+    val conversationId: ConversationId,
     val text: String,
     val sender: Profile,
     val isDeleted: Boolean,

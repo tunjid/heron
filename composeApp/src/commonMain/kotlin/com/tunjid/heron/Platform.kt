@@ -18,6 +18,8 @@ package com.tunjid.heron
 
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
+import com.tunjid.heron.conversation.di.ConversationBindings
+import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.di.AppGraph
@@ -73,6 +75,7 @@ fun createAppState(
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
         signInNavigationBindings = SignInNavigationBindings,
         composeNavigationBindings = ComposeNavigationBindings,
+        conversationNavigationBindings = ConversationNavigationBindings,
         feedNavigationBindings = FeedNavigationBindings,
         galleryNavigationBindings = GalleryNavigationBindings,
         homeNavigationBindings = HomeNavigationBindings,
@@ -107,6 +110,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         composeBindings = ComposeBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        conversationBindings = ConversationBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

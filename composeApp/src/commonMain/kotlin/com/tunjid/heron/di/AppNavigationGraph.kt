@@ -17,6 +17,7 @@
 package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
+import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.feed.di.FeedNavigationBindings
 import com.tunjid.heron.gallery.di.GalleryNavigationBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
@@ -45,6 +46,7 @@ interface AppNavigationGraph {
         fun create(
             @Includes signInNavigationBindings: SignInNavigationBindings,
             @Includes composeNavigationBindings: ComposeNavigationBindings,
+            @Includes conversationNavigationBindings: ConversationNavigationBindings,
             @Includes feedNavigationBindings: FeedNavigationBindings,
             @Includes galleryNavigationBindings: GalleryNavigationBindings,
             @Includes homeNavigationBindings: HomeNavigationBindings,

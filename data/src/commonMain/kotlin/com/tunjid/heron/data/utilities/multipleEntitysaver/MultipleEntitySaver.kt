@@ -174,11 +174,14 @@ internal class MultipleEntitySaver(
     suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
         val (fullProfileEntities, partialProfileEntities) = profileEntities.partition {
-            it.followersCount != 0L && it.followsCount != 0L && it.postsCount != 0L
+            it.handle != Constants.unknownAuthorHandle
+                    && it.followersCount != null
+                    && it.followsCount != null
+                    && it.postsCount != null
         }
         // Profiles from messages may just be empty profiles with Dids
         val (usablePartialProfileEntities, emptyProfileEntities) = partialProfileEntities.partition {
-            it.handle != Constants.unknownAuthorHandle
+            it.handle != Constants.unknownAuthorHandle && it.displayName != null
         }
         profileDao.upsertProfiles(fullProfileEntities)
         profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
