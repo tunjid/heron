@@ -141,7 +141,8 @@ internal class AuthPlugin(
 }
 
 private val ChatProxyPaths = listOf(
-    "chat.bsky.convo.listConvos"
+    "chat.bsky.convo.listConvos",
+    "chat.bsky.convo.getMessages",
 )
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
