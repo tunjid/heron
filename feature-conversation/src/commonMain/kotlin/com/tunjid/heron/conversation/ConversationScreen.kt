@@ -198,7 +198,6 @@ private fun Message(
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier
                 .padding(end = 16.dp)
-//                .weight(1f)
         )
     }
 }
