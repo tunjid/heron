@@ -77,6 +77,7 @@ data class PopulatedMessageEntity(
 fun PopulatedMessageEntity.asExternalModel() =
     Message(
         id = entity.id,
+        conversationId = entity.conversationId,
         text = entity.text,
         sentAt = entity.sentAt,
         isDeleted = entity.isDeleted,

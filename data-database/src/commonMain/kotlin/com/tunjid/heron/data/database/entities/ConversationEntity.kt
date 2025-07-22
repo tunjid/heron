@@ -71,6 +71,7 @@ fun PopulatedConversationEntity.asExternalModel() =
                 ?.let { sender ->
                     Message(
                         id = message.id,
+                        conversationId = message.conversationId,
                         text = message.text,
                         sentAt = message.sentAt,
                         isDeleted = message.isDeleted,
