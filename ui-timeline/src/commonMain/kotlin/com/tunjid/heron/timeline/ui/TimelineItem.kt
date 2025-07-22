@@ -22,6 +22,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,12 +34,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Commit
+import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +73,7 @@ import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.see_more_posts
+import heron.ui_timeline.generated.resources.show_more
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -157,74 +167,87 @@ private fun ThreadedPost(
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
+    var maxPosts by rememberSaveable {
+        mutableStateOf(DefaultMaxPostsInThread)
+    }
     Column(
-        modifier = modifier
+        modifier = modifier,
     ) {
-        item.posts.forEachIndexed { index, post ->
-            if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
-                Post(
-                    modifier = Modifier
-                        .childThreadNode(videoId = post.videoId),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    now = now,
-                    post = post,
-                    isAnchoredInTimeline = item.generation == 0L,
-                    avatarShape =
-                        when {
-                            item.isThreadedAnchor -> RoundedPolygonShape.Circle
-                            item.isThreadedAncestor ->
-                                if (item.posts.size == 1) ReplyThreadStartImageShape
-                                else ReplyThreadImageShape
-
-                            else -> when (index) {
-                                0 ->
-                                    if (item.posts.size == 1) RoundedPolygonShape.Circle
-                                    else ReplyThreadStartImageShape
-
-                                item.posts.lastIndex -> ReplyThreadEndImageShape
-                                else -> ReplyThreadImageShape
-                            }
-                        },
-                    sharedElementPrefix = sharedElementPrefix,
-                    createdAt = post.createdAt,
-                    presentation = presentation,
-                    postActions = postActions,
-                    timeline = {
-                        if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .padding(top = 52.dp)
-                        )
-                    }
-                )
-                if (index != item.posts.lastIndex)
-                    if (index == 0 && item.hasBreak) BrokenTimeline(
+        val limitedPosts = remember(item.posts, maxPosts) {
+            item.posts.take(maxPosts)
+        }
+        limitedPosts.forEachIndexed { index, post ->
+            key(post.cid.id) {
+                if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
+                    Post(
                         modifier = Modifier
-                            .padding(start = 8.dp)
-                            .childThreadNode(videoId = null),
-                        onClick = {
-                            postActions.onPostClicked(
-                                post = post,
-                                quotingPostId = null,
+                            .childThreadNode(videoId = post.videoId),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        now = now,
+                        post = post,
+                        isAnchoredInTimeline = item.generation == 0L,
+                        avatarShape =
+                            when {
+                                item.isThreadedAnchor -> RoundedPolygonShape.Circle
+                                item.isThreadedAncestor ->
+                                    if (item.posts.size == 1) ReplyThreadStartImageShape
+                                    else ReplyThreadImageShape
+
+                                else -> when (index) {
+                                    0 ->
+                                        if (item.posts.size == 1) RoundedPolygonShape.Circle
+                                        else ReplyThreadStartImageShape
+
+                                    item.posts.lastIndex -> ReplyThreadEndImageShape
+                                    else -> ReplyThreadImageShape
+                                }
+                            },
+                        sharedElementPrefix = sharedElementPrefix,
+                        createdAt = post.createdAt,
+                        presentation = presentation,
+                        postActions = postActions,
+                        timeline = {
+                            if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(top = 52.dp)
                             )
                         }
                     )
-                    else Timeline(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .height(
-                                if (index == 0) 16.dp
-                                else 12.dp
-                            )
+                    if (index != item.posts.lastIndex) {
+                        if (index == 0 && item.hasBreak) BrokenTimeline(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .childThreadNode(videoId = null),
+                            onClick = {
+                                postActions.onPostClicked(
+                                    post = post,
+                                    quotingPostId = null,
+                                )
+                            }
+                        )
+                        else Timeline(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .height(
+                                    if (index == 0) 16.dp
+                                    else 12.dp
+                                )
+                                .childThreadNode(videoId = null)
+                        )
+                    }
+                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
+                        Modifier
+                            .height(4.dp)
                             .childThreadNode(videoId = null)
                     )
-                if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor) Spacer(
-                    Modifier
-                        .height(4.dp)
-                        .childThreadNode(videoId = null)
-                )
+                }
             }
+        }
+
+        if (item.posts.size > maxPosts) ShowMore {
+            maxPosts += DefaultMaxPostsInThread
         }
     }
 }
@@ -299,6 +322,45 @@ private fun BrokenTimeline(
                     .width(2.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun ShowMore(
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(),
+        ) {
+            Timeline(
+                Modifier
+                    .offset(8.dp)
+                    .height(4.dp)
+            )
+            Icon(
+                modifier = Modifier
+                    .offset(1.dp, y = (-3).dp)
+                    .rotate(90f),
+                imageVector = Icons.Rounded.LinearScale,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+        }
+        TextButton(
+            modifier = Modifier
+                .offset(y = (-4).dp)
+                .weight(1f),
+            onClick = onClick,
+            content = {
+                Text(stringResource(Res.string.show_more))
+            }
+        )
     }
 }
 
@@ -395,3 +457,5 @@ private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
 
 private val NoOpInteractionSource = MutableInteractionSource()
+
+private const val DefaultMaxPostsInThread = 3
