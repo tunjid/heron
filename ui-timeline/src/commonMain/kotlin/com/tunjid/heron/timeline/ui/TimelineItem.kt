@@ -48,10 +48,12 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
@@ -362,6 +364,15 @@ fun Post.avatarSharedElementKey(
         ?.let { "$prefix-$it" }
         ?: prefix
     return "$finalPrefix-${cid.id}-${author.did.id}"
+}
+
+fun Message.avatarSharedElementKey(
+    prefix: String?,
+    conversationId: ConversationId,
+): String {
+    val finalPrefix = conversationId
+        .let { "$prefix-$it" }
+    return "$finalPrefix-${id.id}-${conversationId.id}"
 }
 
 fun FeedGenerator.avatarSharedElementKey(

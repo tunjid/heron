@@ -55,6 +55,7 @@ include(
     ":scaffold",
     ":feature-auth",
     ":feature-compose",
+    ":feature-conversation",
     ":feature-feed",
     ":feature-gallery",
     ":feature-home",

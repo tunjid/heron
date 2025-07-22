@@ -60,6 +60,7 @@ kotlin {
             implementation(project(":scaffold"))
             implementation(project(":feature-auth"))
             implementation(project(":feature-compose"))
+            implementation(project(":feature-conversation"))
             implementation(project(":feature-feed"))
             implementation(project(":feature-gallery"))
             implementation(project(":feature-home"))
