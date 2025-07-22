@@ -72,42 +72,43 @@ internal fun ConversationScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.tiledItems)
 
-    Box(modifier = modifier) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            items(
-                count = items.size
-            ) { index ->
-                val prevAuthor = items.getOrNull(index - 1)?.sender
-                val nextAuthor = items.getOrNull(index + 1)?.sender
-                val content = items[index]
-                val isFirstMessageByAuthor = prevAuthor != content.sender
-                val isLastMessageByAuthor = nextAuthor != content.sender
+    LazyColumn(
+        state = listState,
+        reverseLayout = true,
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        items(
+            count = items.size,
+            key = { items[it].id.id }
+        ) { index ->
+            val prevAuthor = items.getOrNull(index - 1)?.sender
+            val nextAuthor = items.getOrNull(index + 1)?.sender
+            val content = items[index]
+            val isFirstMessageByAuthor = prevAuthor != content.sender
+            val isLastMessageByAuthor = nextAuthor != content.sender
 
-                Message(
-                    onAuthorClick = { message ->
-                        actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = message.sender,
-                                    avatarSharedElementKey = message.avatarSharedElementKey(),
-                                )
+            Message(
+                onAuthorClick = { message ->
+                    actions(
+                        Action.Navigate.DelegateTo(
+                            NavigationAction.Common.ToProfile(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                profile = message.sender,
+                                avatarSharedElementKey = message.avatarSharedElementKey(),
                             )
                         )
-                    },
-                    item = content,
-                    isUserMe = content.sender.did == state.signedInProfile?.did,
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor,
-                    paneScaffoldState = paneScaffoldState
-                )
-            }
+                    )
+                },
+                item = content,
+                isUserMe = content.sender.did == state.signedInProfile?.did,
+                isFirstMessageByAuthor = isFirstMessageByAuthor,
+                isLastMessageByAuthor = isLastMessageByAuthor,
+                paneScaffoldState = paneScaffoldState
+            )
         }
     }
+
 
     listState.PivotedTilingEffect(
         items = items,
