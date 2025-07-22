@@ -25,7 +25,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.tunjid.heron.data.core.models.ByteSerializable
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -172,7 +172,7 @@ interface NavigationAction {
 
         data class ToRawUrl(
             val path: String,
-            val model: ByteSerializable? = null,
+            val model: UrlEncodableModel? = null,
             val sharedElementPrefix: String? = null,
             val referringRouteOption: ReferringRouteOption,
         ) : Common() {

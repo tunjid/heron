@@ -42,14 +42,14 @@ data class Post(
 //    public val viewer: ViewerState? = null,
 //    public val labels: List<Label> = emptyList(),
 //    public val threadgate: ThreadgateView? = null,
-) : ByteSerializable {
+) : UrlEncodableModel {
     @Serializable
     data class Record(
         val text: String,
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
         val replyRef: ReplyRef? = null,
-    ) : ByteSerializable
+    ) : UrlEncodableModel
 
     @Serializable
     data class ViewerStats(
@@ -100,7 +100,7 @@ data class Post(
     }
 
     @Serializable
-    sealed class Create : ByteSerializable {
+    sealed class Create : UrlEncodableModel {
 
         @Serializable
         data class Metadata(

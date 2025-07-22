@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.list
 
-import com.tunjid.heron.data.core.models.ByteSerializable
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -123,7 +123,7 @@ sealed class Action(val key: String) {
 }
 
 fun State(
-    model: ByteSerializable?,
+    model: UrlEncodableModel?,
     sharedElementPrefix: String?,
 ) = State(
     sharedElementPrefix = sharedElementPrefix,

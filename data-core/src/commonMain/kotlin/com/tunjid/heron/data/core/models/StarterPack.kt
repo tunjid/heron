@@ -32,4 +32,4 @@ data class StarterPack(
     val joinedWeekCount: Long?,
     val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
-): ByteSerializable
+): UrlEncodableModel

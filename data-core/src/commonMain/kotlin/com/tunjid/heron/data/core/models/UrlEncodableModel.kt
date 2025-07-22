@@ -53,28 +53,28 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  * .
  * Currently does this using CBOR; Protobufs were evaluated but they're too terse.
  */
-sealed interface ByteSerializable
+sealed interface UrlEncodableModel
 
 
-inline fun <reified T : ByteSerializable> ByteArray.fromBytes(): T =
+inline fun <reified T : UrlEncodableModel> ByteArray.fromBytes(): T =
     ModelSerializerFormat.decodeFromByteArray(this)
 
-inline fun <reified T : ByteSerializable> T.toBytes(): ByteArray =
+inline fun <reified T : UrlEncodableModel> T.toBytes(): ByteArray =
     ModelSerializerFormat.encodeToByteArray(value = this)
 
 @OptIn(ExperimentalEncodingApi::class)
-inline fun <reified T : ByteSerializable> String.fromBase64EncodedUrl(): T =
+inline fun <reified T : UrlEncodableModel> String.fromBase64EncodedUrl(): T =
     ModelSerializerFormat.decodeFromByteArray(ModelUrlSafeBase64.decode(this))
 
 @OptIn(ExperimentalEncodingApi::class)
-inline fun <reified T : ByteSerializable> T.toUrlEncodedBase64(): String =
+inline fun <reified T : UrlEncodableModel> T.toUrlEncodedBase64(): String =
     ModelUrlSafeBase64.encode(toBytes())
 
 
 val ModelSerializerFormat: BinaryFormat = Cbor {
     ignoreUnknownKeys = true
     serializersModule = SerializersModule {
-        polymorphic(ByteSerializable::class) {
+        polymorphic(UrlEncodableModel::class) {
             subclass(Profile::class)
             subclass(Post::class)
             subclass(FeedGenerator::class)
