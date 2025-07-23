@@ -65,6 +65,8 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.post
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -284,8 +286,8 @@ private fun ListMembers(
                     profileSharedElementKey = Profile::listMemberAvatarSharedElementKey,
                     onProfileClicked = { profile ->
                         actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
+                            Action.Navigate.To(
+                                profile(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = profile,
                                     avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey()
@@ -388,8 +390,8 @@ private fun ListTimeline(
                                 pendingScrollOffsetState.value =
                                     gridState.pendingOffsetFor(item)
                                 actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToPost(
+                                    Action.Navigate.To(
+                                        post(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                 quotingPostId = quotingPostId,
@@ -403,8 +405,8 @@ private fun ListTimeline(
                                 pendingScrollOffsetState.value =
                                     gridState.pendingOffsetFor(item)
                                 actions(
-                                    Action.Navigate.DelegateTo(
-                                        NavigationAction.Common.ToProfile(
+                                    Action.Navigate.To(
+                                        profile(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                             profile = profile,
                                             avatarSharedElementKey = post
@@ -421,7 +423,7 @@ private fun ListTimeline(
                                 pendingScrollOffsetState.value =
                                     gridState.pendingOffsetFor(item)
                                 actions(
-                                    Action.Navigate.DelegateTo(
+                                    Action.Navigate.To(
                                         NavigationAction.Common.ToMedia(
                                             post = post,
                                             media = media,
@@ -437,7 +439,7 @@ private fun ListTimeline(
                                 pendingScrollOffsetState.value =
                                     gridState.pendingOffsetFor(item)
                                 actions(
-                                    Action.Navigate.DelegateTo(
+                                    Action.Navigate.To(
                                         NavigationAction.Common.ComposePost(
                                             type = Post.Create.Reply(
                                                 parent = post,

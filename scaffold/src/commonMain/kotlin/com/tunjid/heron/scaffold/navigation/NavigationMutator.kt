@@ -33,7 +33,6 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -79,6 +78,29 @@ import org.jetbrains.compose.resources.StringResource
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
+fun profile(
+    profile: Profile,
+    avatarSharedElementKey: String?,
+    referringRouteOption: NavigationAction.ReferringRouteOption,
+): NavigationAction.Common = NavigationAction.Common.ToRawUrl(
+    path = "/profile/${profile.did.id}",
+    model = profile,
+    sharedElementPrefix = null,
+    avatarSharedElementKey = avatarSharedElementKey,
+    referringRouteOption = referringRouteOption,
+)
+
+fun post(
+    post: Post,
+    sharedElementPrefix: String,
+    referringRouteOption: NavigationAction.ReferringRouteOption,
+): NavigationAction.Common = NavigationAction.Common.ToRawUrl(
+    path = post.uri.path,
+    model = post,
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = referringRouteOption,
+)
+
 /**
  * An action that causes mutations to navigation
  */
@@ -91,29 +113,6 @@ interface NavigationAction {
                 navState.pop()
             }
         }
-
-        data class ToProfile(
-            val profile: Profile,
-            val avatarSharedElementKey: String?,
-            val referringRouteOption: ReferringRouteOption,
-        ) : Common by ToRawUrl(
-            path = "/profile/${profile.did.id}",
-            model = profile,
-            sharedElementPrefix = null,
-            avatarSharedElementKey = avatarSharedElementKey,
-            referringRouteOption = referringRouteOption,
-        )
-
-        data class ToPost(
-            val post: Post,
-            val sharedElementPrefix: String,
-            val referringRouteOption: ReferringRouteOption,
-        ) : Common by ToRawUrl(
-            path = post.uri.path.also { println("PATH: $it") },
-            model = post,
-            sharedElementPrefix = sharedElementPrefix,
-            referringRouteOption = referringRouteOption,
-        )
 
         data class ComposePost(
             val type: Post.Create,
@@ -237,6 +236,7 @@ interface NavigationAction {
                 )
             }
         }
+
     }
 
     /**

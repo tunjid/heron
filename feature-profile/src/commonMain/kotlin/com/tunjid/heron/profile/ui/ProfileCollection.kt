@@ -84,7 +84,7 @@ internal fun ProfileCollection(
                     collection = profileCollection,
                     onCollectionClicked = { collection ->
                         actions(
-                            Action.Navigate.DelegateTo(
+                            Action.Navigate.To(
                                 NavigationAction.Common.ToRawUrl(
                                     path = collection.uriPath,
                                     model = when (collection) {

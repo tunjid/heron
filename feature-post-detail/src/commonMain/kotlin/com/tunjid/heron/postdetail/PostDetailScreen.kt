@@ -43,6 +43,8 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.post
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -106,8 +108,8 @@ internal fun PostDetailScreen(
                         onPostClicked = { post: Post, quotingPostId: PostId? ->
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToPost(
+                                Action.Navigate.To(
+                                    post(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                         sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
                                             quotingPostId = quotingPostId,
@@ -120,8 +122,8 @@ internal fun PostDetailScreen(
                         onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
+                                Action.Navigate.To(
+                                    profile(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                         profile = profile,
                                         avatarSharedElementKey = post.avatarSharedElementKey(
@@ -135,7 +137,7 @@ internal fun PostDetailScreen(
                         onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     NavigationAction.Common.ToMedia(
                                         post = post,
                                         media = media,
@@ -150,7 +152,7 @@ internal fun PostDetailScreen(
                         onReplyToPost = { post: Post ->
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Reply(
                                             parent = post,
@@ -163,7 +165,7 @@ internal fun PostDetailScreen(
                         onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     when (postMetadata) {
                                         is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
                                             profileId = postMetadata.profileId,
@@ -201,7 +203,7 @@ internal fun PostDetailScreen(
         },
         onQuotePostClicked = { repost ->
             actions(
-                Action.Navigate.DelegateTo(
+                Action.Navigate.To(
                     NavigationAction.Common.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = state.sharedElementPrefix,

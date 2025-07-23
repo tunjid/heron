@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -75,8 +76,8 @@ internal fun ProfilesScreen(
                     profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
                     onProfileClicked = { profile ->
                         actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToProfile(
+                            Action.Navigate.To(
+                                profile(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = profile,
                                     avatarSharedElementKey = item

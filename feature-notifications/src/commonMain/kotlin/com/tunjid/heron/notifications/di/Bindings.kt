@@ -35,6 +35,7 @@ import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -132,8 +133,8 @@ class NotificationsBindings(
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
+                                Action.Navigate.To(
+                                    profile(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
@@ -154,7 +155,7 @@ class NotificationsBindings(
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,

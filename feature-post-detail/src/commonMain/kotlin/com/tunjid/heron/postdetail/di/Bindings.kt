@@ -205,7 +205,7 @@ class PostDetailBindings(
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     NavigationAction.Common.ComposePost(
                                         type = Post.Create.Reply(
                                             parent = anchorPost,

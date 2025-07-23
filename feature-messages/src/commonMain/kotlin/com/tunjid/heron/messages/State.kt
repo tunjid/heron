@@ -54,7 +54,7 @@ sealed class Action(val key: String) {
     ): Action(key = "Tile")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data class DelegateTo(
+        data class To(
             val delegate: NavigationAction.Common,
         ) : Navigate(), NavigationAction by delegate
     }

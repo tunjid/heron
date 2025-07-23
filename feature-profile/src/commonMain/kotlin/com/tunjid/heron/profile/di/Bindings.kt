@@ -181,7 +181,7 @@ class ProfileBindings(
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
+                                Action.Navigate.To(
                                     NavigationAction.Common.ComposePost(
                                         type =
                                             if (state.isSignedInProfile) Post.Create.Timeline

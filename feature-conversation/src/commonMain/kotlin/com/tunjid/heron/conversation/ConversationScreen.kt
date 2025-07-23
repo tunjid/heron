@@ -57,6 +57,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -98,8 +99,8 @@ internal fun ConversationScreen(
             Message(
                 onAuthorClick = { message ->
                     actions(
-                        Action.Navigate.DelegateTo(
-                            NavigationAction.Common.ToProfile(
+                        Action.Navigate.To(
+                            profile(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = message.sender,
                                 avatarSharedElementKey = message.avatarSharedElementKey(),
