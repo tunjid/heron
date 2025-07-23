@@ -65,27 +65,27 @@ internal fun MultipleEntitySaver.add(
 }
 
 internal fun MultipleEntitySaver.add(
-    starterPack: StarterPackViewBasic,
+    starterPackView: StarterPackViewBasic,
 ) {
     val bskyStarterPack = try {
-        starterPack.record.decodeAs<BskyStarterPack>()
+        starterPackView.record.decodeAs<BskyStarterPack>()
     } catch (_: Exception) {
         return
     }
-    starterPack.creator.profileEntity().let(::add)
+    starterPackView.creator.profileEntity().let(::add)
 
     add(
         StarterPackEntity(
-            cid = starterPack.cid.cid.let(::StarterPackId),
-            uri = starterPack.uri.atUri.let(::StarterPackUri),
-            creatorId = starterPack.creator.did.did.let(::ProfileId),
+            cid = starterPackView.cid.cid.let(::StarterPackId),
+            uri = starterPackView.uri.atUri.let(::StarterPackUri),
+            creatorId = starterPackView.creator.did.did.let(::ProfileId),
             listUri = bskyStarterPack.list.atUri.let(::ListUri),
             name = bskyStarterPack.name,
             description = bskyStarterPack.description,
-            joinedWeekCount = starterPack.joinedWeekCount,
-            joinedAllTimeCount = starterPack.joinedAllTimeCount,
+            joinedWeekCount = starterPackView.joinedWeekCount,
+            joinedAllTimeCount = starterPackView.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
-            indexedAt = starterPack.indexedAt,
+            indexedAt = starterPackView.indexedAt,
         )
     )
 }
