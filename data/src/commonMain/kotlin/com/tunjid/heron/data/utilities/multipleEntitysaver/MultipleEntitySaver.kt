@@ -226,6 +226,10 @@ internal class MultipleEntitySaver(
         messageDao.upsertConversations(conversationEntities.list)
         messageDao.upsertConversationMembers(conversationMemberEntities.list)
         messageDao.upsertMessages(messageEntities.list)
+        messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
+        messageDao.upsertMessageLists(messageListEntities.list)
+        messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
+        messageDao.upsertMessagePosts(messagePostEntities.list)
     }
 
     fun MultipleEntitySaver.associatePostEmbeds(

@@ -24,6 +24,10 @@ import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
@@ -92,6 +96,25 @@ interface MessageDao {
         entities: List<MessageEntity>,
     )
 
+    @Upsert
+    suspend fun upsertMessageFeeds(
+        entities: List<MessageFeedGeneratorEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertMessageLists(
+        entities: List<MessageListEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertMessageStarterPacks(
+        entities: List<MessageStarterPackEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertMessagePosts(
+        entities: List<MessagePostEntity>,
+    )
     @Query(
         """
         DELETE FROM conversations
