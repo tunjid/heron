@@ -29,9 +29,12 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
+import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
-import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -41,7 +44,10 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -72,6 +78,10 @@ interface MessageRepository {
 
 internal class OfflineMessageRepository @Inject constructor(
     private val messageDao: MessageDao,
+    private val postDao: PostDao,
+    private val feedDao: FeedGeneratorDao,
+    private val listDao: ListDao,
+    private val starterPackDao: StarterPackDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateRepository: SavedStateRepository,
@@ -128,8 +138,60 @@ internal class OfflineMessageRepository @Inject constructor(
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
-                .map { populatedMessageEntities ->
-                    populatedMessageEntities.map(PopulatedMessageEntity::asExternalModel)
+                .distinctUntilChanged()
+                .flatMapLatest { populatedMessageEntities ->
+                    val feedIds = populatedMessageEntities.mapNotNull {
+                        it.feed?.feedGeneratorId
+                    }
+                    val listIds = populatedMessageEntities.mapNotNull {
+                        it.list?.listId
+                    }
+                    val starterPackIds = populatedMessageEntities.mapNotNull {
+                        it.starterPack?.starterPackId
+                    }
+                    val postIds = populatedMessageEntities.mapNotNull {
+                        it.post?.postId
+                    }
+                    combine(
+                        flow = feedIds.toFlowOrEmpty(feedDao::feedGenerators),
+                        flow2 = listIds.toFlowOrEmpty(listDao::lists),
+                        flow3 = starterPackIds.toFlowOrEmpty(starterPackDao::starterPacks),
+                        flow4 = postIds.toFlowOrEmpty(postDao::posts),
+                        flow5 = postIds.toFlowOrEmpty(postDao::embeddedPosts),
+                    ) { feeds, lists, starterPacks, posts, embeddedPosts ->
+                        val idsToFeeds = feeds.associateBy { it.entity.cid }
+                        val idsToLists = lists.associateBy { it.entity.cid }
+                        val idsToStarterPacks = starterPacks.associateBy { it.entity.cid }
+                        val idsToPosts = posts.associateBy { it.entity.cid }
+                        val idsToEmbeddedPosts = embeddedPosts.associateBy { it.postId }
+
+                        populatedMessageEntities.map { populatedMessageEntity ->
+                            populatedMessageEntity.asExternalModel(
+                                feedGenerator = populatedMessageEntity.feed
+                                    ?.feedGeneratorId
+                                    ?.let(idsToFeeds::get)
+                                    ?.asExternalModel(),
+                                list = populatedMessageEntity.list
+                                    ?.listId
+                                    ?.let(idsToLists::get)
+                                    ?.asExternalModel(),
+                                starterPack = populatedMessageEntity.starterPack
+                                    ?.starterPackId
+                                    ?.let(idsToStarterPacks::get)
+                                    ?.asExternalModel(),
+                                post = populatedMessageEntity.post
+                                    ?.postId
+                                    ?.let(idsToPosts::get)
+                                    ?.asExternalModel(
+                                        quote = populatedMessageEntity.post
+                                            ?.postId
+                                            ?.let(idsToEmbeddedPosts::get)
+                                            ?.entity
+                                            ?.asExternalModel(quote = null)
+                                    ),
+                            )
+                        }
+                    }
                 },
             nextCursorFlow(
                 currentCursor = cursor,
@@ -170,3 +232,11 @@ internal class OfflineMessageRepository @Inject constructor(
         )
             .distinctUntilChanged()
 }
+
+private inline fun <T, R> Collection<T>.toFlowOrEmpty(
+    block: (Collection<T>) -> Flow<List<R>>
+): Flow<List<R>> =
+    when {
+        isEmpty() -> emptyFlow()
+        else -> block(this)
+    }.onStart { emit(emptyList()) }

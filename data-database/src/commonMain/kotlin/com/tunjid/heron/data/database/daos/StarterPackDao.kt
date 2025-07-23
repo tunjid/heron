@@ -20,7 +20,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +46,7 @@ interface StarterPackDao {
         """
     )
     fun starterPacks(
-        ids: List<Id>,
+        ids: Collection<StarterPackId>,
     ): Flow<List<PopulatedStarterPackEntity>>
 
     @Transaction

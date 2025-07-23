@@ -94,7 +94,7 @@ interface PostDao {
         """
     )
     fun posts(
-        postIds: Set<PostId>,
+        postIds: Collection<PostId>,
     ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
@@ -118,7 +118,7 @@ interface PostDao {
         """
     )
     fun embeddedPosts(
-        postIds: Set<PostId>,
+        postIds: Collection<PostId>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
 
     @Transaction

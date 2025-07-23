@@ -76,6 +76,10 @@ fun PopulatedConversationEntity.asExternalModel() =
                         sentAt = message.sentAt,
                         isDeleted = message.isDeleted,
                         sender = sender.asExternalModel(),
+                        feedGenerator = null,
+                        list = null,
+                        starterPack = null,
+                        post = null,
                     )
                 }
         },

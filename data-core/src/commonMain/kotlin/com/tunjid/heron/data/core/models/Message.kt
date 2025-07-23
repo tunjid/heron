@@ -29,4 +29,8 @@ data class Message(
     val sender: Profile,
     val isDeleted: Boolean,
     val sentAt: Instant,
+    val feedGenerator: FeedGenerator?,
+    val list: FeedList?,
+    val starterPack: StarterPack?,
+    val post: Post?,
 )

@@ -23,6 +23,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
@@ -69,6 +70,17 @@ interface ListDao {
     fun list(
         listUri: String,
     ): Flow<PopulatedListEntity?>
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM lists
+            WHERE uri IN (:listIds)
+        """
+    )
+    fun lists(
+        listIds: Collection<ListId>,
+    ): Flow<List<PopulatedListEntity>>
 
     @Transaction
     @Query(
