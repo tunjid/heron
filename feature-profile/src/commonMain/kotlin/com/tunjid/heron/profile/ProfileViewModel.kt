@@ -21,10 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
@@ -34,8 +31,6 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.profile.di.avatarSharedElementKey
-import com.tunjid.heron.profile.di.profile
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -92,14 +87,7 @@ class ActualProfileViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-        profile = route.profile ?: stubProfile(
-            did = ProfileId(route.profileHandleOrId.id),
-            handle = ProfileHandle(route.profileHandleOrId.id),
-            avatar = null,
-        ),
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadProfileMutations(

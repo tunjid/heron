@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
@@ -94,7 +95,7 @@ internal val Route.profileHandleOrId by mappedRoutePath(
 
 internal val Route.avatarSharedElementKey by optionalRouteQuery()
 
-internal val Route.profile: Profile? by optionalMappedRouteQuery(
+internal val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 

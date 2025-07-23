@@ -22,10 +22,15 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.profile.di.avatarSharedElementKey
+import com.tunjid.heron.profile.di.model
+import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -36,6 +41,7 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.push
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -71,10 +77,11 @@ sealed class ProfileScreenStateHolders {
     ) : ProfileScreenStateHolders(),
         TimelineStateHolder by mutator
 
-    val key get() = when(this) {
-        is Collections -> state.value.stringResource.toString()
-        is Timeline -> state.value.timeline.sourceId
-    }
+    val key
+        get() = when (this) {
+            is Collections -> state.value.stringResource.toString()
+            is Timeline -> state.value.timeline.sourceId
+        }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
@@ -82,10 +89,11 @@ sealed class ProfileScreenStateHolders {
             is Timeline -> state
         }
 
-    fun refresh() = when(this) {
+    fun refresh() = when (this) {
         is Collections -> accept(
             TilingState.Action.Refresh
         )
+
         is Timeline -> accept(
             TimelineState.Action.Tile(
                 tilingAction = TilingState.Action.Refresh
@@ -169,3 +177,12 @@ sealed class Action(val key: String) {
         }
     }
 }
+
+internal fun State(route: Route) = State(
+    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+    profile = (route.model as? Profile) ?: stubProfile(
+        did = ProfileId(route.profileHandleOrId.id),
+        handle = ProfileHandle(route.profileHandleOrId.id),
+        avatar = null,
+    ),
+)

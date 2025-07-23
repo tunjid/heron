@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
@@ -78,6 +78,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
+private const val RouteUriPattern = "/{profileHandleOrId}/app.bsky.feed.post/{postRecordKey}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -88,8 +89,8 @@ private fun createRoute(
     )
 )
 
-internal val Route.post: Post? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl
+internal val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl,
 )
 
 internal val Route.postRecordKey by mappedRoutePath(
@@ -98,10 +99,6 @@ internal val Route.postRecordKey by mappedRoutePath(
 
 internal val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId,
-)
-
-internal val Route.postUri by optionalMappedRouteQuery(
-    mapper = ::PostUri,
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -120,6 +117,15 @@ object PostDetailNavigationBindings {
             routePattern = RoutePattern,
             routeMapper = ::createRoute
         )
+
+    @Provides
+    @IntoMap
+    @StringKey(RouteUriPattern)
+    fun provideRouteUriMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = RouteUriPattern,
+            routeMapper = ::createRoute
+        )
 }
 
 @BindingContainer
@@ -132,6 +138,17 @@ class PostDetailBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(RouteUriPattern)
+    fun provideUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
