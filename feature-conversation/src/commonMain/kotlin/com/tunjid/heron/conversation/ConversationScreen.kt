@@ -161,10 +161,8 @@ private fun Message(
         horizontalArrangement = side,
     ) {
         if (isLastMessageByAuthor) {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
+            MessageAvatar(
+                modifier = Modifier.size(24.dp)
                     .border(1.5.dp, borderColor, CircleShape)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
@@ -180,27 +178,10 @@ private fun Message(
                             )
                         )
                     },
-            ) {
-                paneScaffoldState.updatedMovableStickySharedElementOf(
-                    sharedContentState = paneScaffoldState.rememberSharedContentState(
-                        key = message.avatarSharedElementKey()
-                    ),
-                    state = remember(message.sender.avatar) {
-                        ImageArgs(
-                            url = message.sender.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = RoundedPolygonShape.Circle,
-                        )
-                    },
-                    modifier = Modifier.matchParentSize(),
-                    sharedElement = { args, innerModifier ->
-                        AsyncImage(args, innerModifier)
-                    }
-                )
-            }
+                message = message,
+                paneScaffoldState = paneScaffoldState
+            )
         }
-        // Space under avatar
         Spacer(
             modifier = Modifier
                 .width(if (isLastMessageByAuthor) 16.dp else 34.dp)
@@ -225,6 +206,36 @@ private fun Message(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun MessageAvatar(
+    modifier: Modifier = Modifier,
+    message: Message,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    Box(
+        modifier = modifier
+    ) {
+        paneScaffoldState.updatedMovableStickySharedElementOf(
+            sharedContentState = paneScaffoldState.rememberSharedContentState(
+                key = message.avatarSharedElementKey()
+            ),
+            state = remember(message.sender.avatar) {
+                ImageArgs(
+                    url = message.sender.avatar?.uri,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                    shape = RoundedPolygonShape.Circle,
+                )
+            },
+            modifier = Modifier.matchParentSize(),
+            sharedElement = { args, innerModifier ->
+                AsyncImage(args, innerModifier)
+            }
+        )
+    }
+}
+
 @Composable
 private fun AuthorAndTextMessage(
     message: Message,
@@ -241,7 +252,7 @@ private fun AuthorAndTextMessage(
             AuthorNameTimestamp(message)
         }
         ChatItemBubble(
-            item = message,
+            message = message,
             side = side,
         )
         if (isFirstMessageByAuthor) {
@@ -280,39 +291,27 @@ private fun AuthorNameTimestamp(
 
 @Composable
 private fun ChatItemBubble(
-    item: Message,
+    message: Message,
     side: Side,
 ) {
     val backgroundBubbleColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
     }
-
     Column {
         Surface(
             color = backgroundBubbleColor,
             shape = side.bubbleShape
         ) {
-            ChatMessage(
-                message = item,
+            Text(
+                text = message.text,
+                style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+                modifier = Modifier.padding(16.dp),
             )
         }
-
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
-
-@Composable
-private fun ChatMessage(
-    message: Message,
-) {
-    Text(
-        text = message.text,
-        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-        modifier = Modifier.padding(16.dp),
-    )
-}
-
 
 @Composable
 private fun PostMessage(
@@ -336,7 +335,7 @@ private fun PostMessage(
         post = post,
         isAnchoredInTimeline = false,
         avatarShape = RoundedPolygonShape.Circle,
-        sharedElementPrefix = message.conversationId.id,
+        sharedElementPrefix = message.id.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
         postActions = rememberPostActions(
@@ -346,7 +345,7 @@ private fun PostMessage(
                         post(
                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
-//                                quotingPostId = quotingPostId,
+                                quotingPostId = quotingPostId,
                             ),
                             post = post,
                         )
