@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -54,17 +55,26 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.post
 import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.Post
+import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -97,25 +107,15 @@ internal fun ConversationScreen(
             val isLastMessageByAuthor = nextAuthor != content.sender
 
             Message(
-                onAuthorClick = { message ->
-                    actions(
-                        Action.Navigate.To(
-                            profile(
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                profile = message.sender,
-                                avatarSharedElementKey = message.avatarSharedElementKey(),
-                            )
-                        )
-                    )
-                },
-                item = content,
+                message = content,
                 side = when {
                     content.sender.did == state.signedInProfile?.did -> Side.Sender
                     else -> Side.Receiver
                 },
                 isFirstMessageByAuthor = isFirstMessageByAuthor,
                 isLastMessageByAuthor = isLastMessageByAuthor,
-                paneScaffoldState = paneScaffoldState
+                paneScaffoldState = paneScaffoldState,
+                actions = actions,
             )
         }
     }
@@ -138,12 +138,12 @@ internal fun ConversationScreen(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun Message(
-    onAuthorClick: (Message) -> Unit,
-    item: Message,
+    message: Message,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
+    actions: (Action) -> Unit,
 ) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -153,7 +153,9 @@ private fun Message(
     Row(
         modifier = Modifier
             .padding(
-                top = if (isLastMessageByAuthor) 8.dp else 0.dp
+                top = if (isLastMessageByAuthor) 8.dp else 0.dp,
+                start = 16.dp,
+                end = 16.dp,
             )
             .fillMaxWidth(),
         horizontalArrangement = side,
@@ -162,23 +164,30 @@ private fun Message(
             // Avatar
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .size(42.dp)
+                    .size(24.dp)
                     .border(1.5.dp, borderColor, CircleShape)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top)
                     .clickable {
-                        onAuthorClick(item)
+                        actions(
+                            Action.Navigate.To(
+                                profile(
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    profile = message.sender,
+                                    avatarSharedElementKey = message.avatarSharedElementKey(),
+                                )
+                            )
+                        )
                     },
             ) {
                 paneScaffoldState.updatedMovableStickySharedElementOf(
                     sharedContentState = paneScaffoldState.rememberSharedContentState(
-                        key = item.avatarSharedElementKey()
+                        key = message.avatarSharedElementKey()
                     ),
-                    state = remember(item.sender.avatar) {
+                    state = remember(message.sender.avatar) {
                         ImageArgs(
-                            url = item.sender.avatar?.uri,
+                            url = message.sender.avatar?.uri,
                             contentScale = ContentScale.Crop,
                             contentDescription = null,
                             shape = RoundedPolygonShape.Circle,
@@ -190,38 +199,49 @@ private fun Message(
                     }
                 )
             }
-        } else {
-            // Space under avatar
-            Spacer(modifier = Modifier.width(74.dp))
         }
+        // Space under avatar
+        Spacer(
+            modifier = Modifier
+                .width(if (isLastMessageByAuthor) 16.dp else 34.dp)
+        )
+
         AuthorAndTextMessage(
-            item = item,
+            message = message,
             side = side,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier
-                .padding(end = 16.dp)
         )
+
+        message.post?.let { post ->
+            PostMessage(
+                post = post,
+                message = message,
+                paneScaffoldState = paneScaffoldState,
+                actions = actions,
+            )
+        }
     }
 }
 
 @Composable
 private fun AuthorAndTextMessage(
-    item: Message,
+    message: Message,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    if (message.text.isNotBlank()) Column(
         modifier = modifier,
         horizontalAlignment = side,
     ) {
         if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(item)
+            AuthorNameTimestamp(message)
         }
         ChatItemBubble(
-            item = item,
+            item = message,
             side = side,
         )
         if (isFirstMessageByAuthor) {
@@ -290,6 +310,75 @@ private fun ChatMessage(
         text = message.text,
         style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
         modifier = Modifier.padding(16.dp),
+    )
+}
+
+
+@Composable
+private fun PostMessage(
+    post: Post,
+    message: Message,
+    paneScaffoldState: PaneScaffoldState,
+    actions: (Action) -> Unit
+) {
+    Post(
+        modifier = Modifier
+            .padding(
+                top = 16.dp,
+                bottom = 8.dp,
+                start = 16.dp,
+                end = 16.dp
+            )
+            .widthIn(max = 200.dp),
+        paneMovableElementSharedTransitionScope = paneScaffoldState,
+        presentationLookaheadScope = paneScaffoldState,
+        now = remember { Clock.System.now() },
+        post = post,
+        isAnchoredInTimeline = false,
+        avatarShape = RoundedPolygonShape.Circle,
+        sharedElementPrefix = message.conversationId.id,
+        createdAt = post.createdAt,
+        presentation = Timeline.Presentation.Text.WithEmbed,
+        postActions = rememberPostActions(
+            onPostClicked = { post, quotingPostId ->
+                actions(
+                    Action.Navigate.To(
+                        post(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
+//                                quotingPostId = quotingPostId,
+                            ),
+                            post = post,
+                        )
+                    )
+                )
+            },
+            onProfileClicked = { profile, post, quotingPostId ->
+                actions(
+                    Action.Navigate.To(
+                        profile(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            profile = profile,
+                            avatarSharedElementKey = post.avatarSharedElementKey(
+                                prefix = message.id.id.withQuotingPostIdPrefix(
+                                    quotingPostId = quotingPostId,
+                                ),
+                                quotingPostId = quotingPostId,
+                            ),
+                        )
+                    )
+                )
+            },
+            onPostMediaClicked = { _, _, _, _ ->
+
+            },
+            onReplyToPost = {
+
+            },
+            onPostInteraction = {
+                actions(Action.SendPostInteraction(it))
+            },
+        )
     )
 }
 

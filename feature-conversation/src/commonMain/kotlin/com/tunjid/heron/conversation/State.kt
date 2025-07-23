@@ -18,6 +18,7 @@ package com.tunjid.heron.conversation
 
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.repository.MessageQuery
@@ -45,6 +46,10 @@ sealed class Action(val key: String) {
     data class Tile(
         val tilingAction: TilingState.Action,
     ) : Action(key = "Tile")
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop

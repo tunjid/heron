@@ -23,6 +23,8 @@ import com.tunjid.heron.conversation.di.members
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -32,6 +34,7 @@ import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.distinctBy
@@ -59,6 +62,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualConversationViewModel(
     authRepository: AuthRepository,
     messagesRepository: MessageRepository,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -85,6 +89,10 @@ class ActualConversationViewModel(
                     navigationMutationConsumer = navActions
                 )
 
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
+
                 is Action.Tile -> action.flow
                     .map { it.tilingAction }
                     .tilingMutations(
@@ -107,4 +115,11 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
