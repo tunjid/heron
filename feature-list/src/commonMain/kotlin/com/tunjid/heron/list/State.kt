@@ -29,12 +29,10 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.treenav.pop
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
@@ -110,14 +108,10 @@ sealed class Action(val key: String) {
     ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
-            val delegate: NavigationAction.Common,
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

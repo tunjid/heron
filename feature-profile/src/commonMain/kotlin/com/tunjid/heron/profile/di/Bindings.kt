@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -182,7 +181,7 @@ class ProfileBindings(
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    NavigationAction.Common.ComposePost(
+                                    NavigationAction.Destination.ComposePost(
                                         type =
                                             if (state.isSignedInProfile) Post.Create.Timeline
                                             else Post.Create.Mention(state.profile),

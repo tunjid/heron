@@ -189,7 +189,7 @@ class HomeBindings(
                             viewModel.accept(
                                 if (state.timelinePreferencesExpanded) Action.UpdateTimeline.RequestUpdate
                                 else Action.Navigate.To(
-                                    NavigationAction.Common.ComposePost(
+                                    NavigationAction.Destination.ComposePost(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,
                                     )

@@ -21,9 +21,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.treenav.pop
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -55,7 +53,7 @@ sealed class Action(val key: String) {
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data class To(
-            val delegate: NavigationAction.Common,
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

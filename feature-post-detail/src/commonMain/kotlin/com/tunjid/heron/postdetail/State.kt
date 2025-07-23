@@ -54,10 +54,10 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
-            val delegate: NavigationAction.Common,
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

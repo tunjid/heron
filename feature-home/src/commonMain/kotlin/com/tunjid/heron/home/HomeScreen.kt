@@ -334,7 +334,7 @@ private fun HomeTimeline(
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Common.ToMedia(
+                                            NavigationAction.Destination.ToMedia(
                                                 post = post,
                                                 media = media,
                                                 startIndex = index,
@@ -350,7 +350,7 @@ private fun HomeTimeline(
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Common.ComposePost(
+                                            NavigationAction.Destination.ComposePost(
                                                 type = Post.Create.Reply(
                                                     parent = post,
                                                 ),
@@ -378,7 +378,7 @@ private fun HomeTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )

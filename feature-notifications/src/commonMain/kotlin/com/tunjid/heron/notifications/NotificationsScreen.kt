@@ -122,7 +122,7 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Reply(
                             parent = notification.associatedPost,
                         ),
@@ -290,7 +290,7 @@ internal fun NotificationsScreen(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )

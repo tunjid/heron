@@ -571,7 +571,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.followers),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Common.ToProfiles.Profile.Followers(
+                    NavigationAction.Destination.ToProfiles.Profile.Followers(
                         profileId = profile.did,
                     ),
                 )
@@ -582,7 +582,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.following),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Common.ToProfiles.Profile.Following(
+                    NavigationAction.Destination.ToProfiles.Profile.Following(
                         profileId = profile.did,
                     ),
                 )
@@ -832,7 +832,7 @@ private fun ProfileTimeline(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        NavigationAction.Common.ToMedia(
+                                        NavigationAction.Destination.ToMedia(
                                             post = post,
                                             media = media,
                                             startIndex = index,
@@ -847,7 +847,7 @@ private fun ProfileTimeline(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        NavigationAction.Common.ComposePost(
+                                        NavigationAction.Destination.ComposePost(
                                             type = Post.Create.Reply(
                                                 parent = post,
                                             ),
@@ -874,7 +874,7 @@ private fun ProfileTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )

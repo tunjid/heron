@@ -220,7 +220,7 @@ private fun FeedTimeline(
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Common.ToMedia(
+                                            NavigationAction.Destination.ToMedia(
                                                 post = post,
                                                 media = media,
                                                 startIndex = index,
@@ -236,7 +236,7 @@ private fun FeedTimeline(
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Common.ComposePost(
+                                            NavigationAction.Destination.ComposePost(
                                                 type = Post.Create.Reply(
                                                     parent = post,
                                                 ),

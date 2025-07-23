@@ -195,7 +195,7 @@ internal fun SearchScreen(
             { trend: Trend ->
                 actions(
                     Action.Navigate.To(
-                        NavigationAction.Common.ToRawUrl(
+                        NavigationAction.Destination.ToRawUrl(
                             path = trend.link,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )
@@ -207,7 +207,7 @@ internal fun SearchScreen(
             { feedGenerator: FeedGenerator ->
                 actions(
                     Action.Navigate.To(
-                        NavigationAction.Common.ToRawUrl(
+                        NavigationAction.Destination.ToRawUrl(
                             path = feedGenerator.uri.path,
                             model = feedGenerator,
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
@@ -291,7 +291,7 @@ internal fun SearchScreen(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )

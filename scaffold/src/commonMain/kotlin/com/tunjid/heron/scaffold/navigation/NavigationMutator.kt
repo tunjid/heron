@@ -38,6 +38,7 @@ import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.scaffold.navigation.NavigationAction.Destination
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -82,7 +83,7 @@ fun profile(
     profile: Profile,
     avatarSharedElementKey: String?,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): NavigationAction.Common = NavigationAction.Common.ToRawUrl(
+): Destination = Destination.ToRawUrl(
     path = "/profile/${profile.did.id}",
     model = profile,
     sharedElementPrefix = null,
@@ -94,7 +95,7 @@ fun post(
     post: Post,
     sharedElementPrefix: String,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): NavigationAction.Common = NavigationAction.Common.ToRawUrl(
+): Destination = Destination.ToRawUrl(
     path = post.uri.path,
     model = post,
     sharedElementPrefix = sharedElementPrefix,
@@ -107,17 +108,18 @@ fun post(
 interface NavigationAction {
     val navigationMutation: NavigationMutation
 
-    sealed interface Common : NavigationAction {
-        data object Pop : Common {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
+    data object Pop : NavigationAction {
+        override val navigationMutation: NavigationMutation = {
+            navState.pop()
         }
+    }
+
+    sealed interface Destination : NavigationAction {
 
         data class ComposePost(
             val type: Post.Create,
             val sharedElementPrefix: String?,
-        ) : Common {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -136,7 +138,7 @@ interface NavigationAction {
             val media: Embed.Media,
             val startIndex: Int,
             val sharedElementPrefix: String,
-        ) : Common {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -158,7 +160,7 @@ interface NavigationAction {
             val sharedElementPrefix: String? = null,
             val avatarSharedElementKey: String? = null,
             val referringRouteOption: ReferringRouteOption,
-        ) : Common {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 routeString(
                     path = path,
@@ -180,7 +182,7 @@ interface NavigationAction {
             val members: List<Profile> = emptyList(),
             val sharedElementPrefix: String? = null,
             val referringRouteOption: ReferringRouteOption,
-        ) : Common {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -195,39 +197,39 @@ interface NavigationAction {
             }
         }
 
-        sealed class ToProfiles : Common {
+        sealed class ToProfiles : Destination {
             abstract val profileId: ProfileId
 
             sealed class Post : ToProfiles() {
                 data class Likes(
                     override val profileId: ProfileId,
                     val postRecordKey: RecordKey,
-                ) : Post()
+                ) : ToProfiles.Post()
 
                 data class Repost(
                     override val profileId: ProfileId,
                     val postRecordKey: RecordKey,
-                ) : Post()
+                ) : ToProfiles.Post()
             }
 
             sealed class Profile : ToProfiles() {
                 data class Followers(
                     override val profileId: ProfileId,
-                ) : Profile()
+                ) : ToProfiles.Profile()
 
                 data class Following(
                     override val profileId: ProfileId,
-                ) : Profile()
+                ) : ToProfiles.Profile()
             }
 
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
                         path = when (this@ToProfiles) {
-                            is Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
-                            is Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
-                            is Profile.Followers -> "/profile/${profileId.id}/followers"
-                            is Profile.Following -> "/profile/${profileId.id}/follows"
+                            is ToProfiles.Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
+                            is ToProfiles.Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
+                            is ToProfiles.Profile.Followers -> "/profile/${profileId.id}/followers"
+                            is ToProfiles.Profile.Following -> "/profile/${profileId.id}/follows"
                         },
                         queryParams = mapOf(
                             referringRouteQueryParams(ReferringRouteOption.Current),

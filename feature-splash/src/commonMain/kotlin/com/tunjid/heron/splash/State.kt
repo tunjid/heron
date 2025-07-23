@@ -32,11 +32,5 @@ data class State(
 
 sealed class Action(val key: String) {
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
-    }
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction
 }

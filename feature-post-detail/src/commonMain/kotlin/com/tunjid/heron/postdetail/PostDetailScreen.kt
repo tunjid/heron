@@ -138,7 +138,7 @@ internal fun PostDetailScreen(
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.To(
-                                    NavigationAction.Common.ToMedia(
+                                    NavigationAction.Destination.ToMedia(
                                         post = post,
                                         media = media,
                                         startIndex = index,
@@ -153,7 +153,7 @@ internal fun PostDetailScreen(
                             pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                             actions(
                                 Action.Navigate.To(
-                                    NavigationAction.Common.ComposePost(
+                                    NavigationAction.Destination.ComposePost(
                                         type = Post.Create.Reply(
                                             parent = post,
                                         ),
@@ -167,13 +167,13 @@ internal fun PostDetailScreen(
                             actions(
                                 Action.Navigate.To(
                                     when (postMetadata) {
-                                        is Post.Metadata.Likes -> NavigationAction.Common.ToProfiles.Post.Likes(
+                                        is Post.Metadata.Likes -> NavigationAction.Destination.ToProfiles.Post.Likes(
                                             profileId = postMetadata.profileId,
                                             postRecordKey = postMetadata.postRecordKey,
                                         )
 
                                         is Post.Metadata.Quotes -> return@onPostMetadataClicked
-                                        is Post.Metadata.Reposts -> NavigationAction.Common.ToProfiles.Post.Repost(
+                                        is Post.Metadata.Reposts -> NavigationAction.Destination.ToProfiles.Post.Repost(
                                             profileId = postMetadata.profileId,
                                             postRecordKey = postMetadata.postRecordKey,
                                         )
@@ -204,7 +204,7 @@ internal fun PostDetailScreen(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Common.ComposePost(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = state.sharedElementPrefix,
                     )

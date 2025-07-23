@@ -129,7 +129,7 @@ sealed class Action(val key: String) {
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
         data class To(
-            val delegate: NavigationAction.Common,
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

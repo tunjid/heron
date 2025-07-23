@@ -16,19 +16,17 @@
 
 package com.tunjid.heron.feed
 
-import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.treenav.pop
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -54,14 +52,10 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
-            val delegate: NavigationAction.Common,
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

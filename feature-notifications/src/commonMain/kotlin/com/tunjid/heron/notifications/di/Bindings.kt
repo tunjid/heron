@@ -156,7 +156,7 @@ class NotificationsBindings(
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    NavigationAction.Common.ComposePost(
+                                    NavigationAction.Destination.ComposePost(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,
                                     )
