@@ -40,6 +40,10 @@ import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
@@ -146,6 +150,15 @@ internal class MultipleEntitySaver(
     private val conversationMemberEntities = LazyList<ConversationMembersEntity>()
 
     private val messageEntities = LazyList<MessageEntity>()
+
+    private val messageFeedGeneratorEntities = LazyList<MessageFeedGeneratorEntity>()
+
+    private val messageListEntities = LazyList<MessageListEntity>()
+
+    private val messagePostEntities = LazyList<MessagePostEntity>()
+
+    private val messageStarterPackEntities = LazyList<MessageStarterPackEntity>()
+
 
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
@@ -269,6 +282,14 @@ internal class MultipleEntitySaver(
     fun add(entity: ConversationMembersEntity) = conversationMemberEntities.add(entity)
 
     fun add(entity: MessageEntity) = messageEntities.add(entity)
+
+    fun add(entity: MessageFeedGeneratorEntity) = messageFeedGeneratorEntities.add(entity)
+
+    fun add(entity: MessageListEntity) = messageListEntities.add(entity)
+
+    fun add(entity: MessagePostEntity) = messagePostEntities.add(entity)
+
+    fun add(entity: MessageStarterPackEntity) = messageStarterPackEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 

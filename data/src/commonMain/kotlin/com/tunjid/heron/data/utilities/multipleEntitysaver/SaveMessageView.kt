@@ -25,10 +25,18 @@ import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.MessageId
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
+import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
@@ -55,28 +63,57 @@ internal fun MultipleEntitySaver.add(
     when (val embed = messageView.embed) {
         is MessageViewEmbedUnion.Unknown -> Unit
         is MessageViewEmbedUnion.View -> when (val record = embed.value.record) {
-            is RecordViewRecordUnion.FeedGeneratorView -> add(
-                feedGeneratorView = record.value,
-            )
+            is RecordViewRecordUnion.FeedGeneratorView -> {
+                add(
+                    feedGeneratorView = record.value,
+                )
+                add(
+                    entity = MessageFeedGeneratorEntity(
+                        messageId = messageView.id.let(::MessageId),
+                        feedGeneratorId = record.value.cid.cid.let(::FeedGeneratorId),
+                    )
+                )
+            }
 
-            is RecordViewRecordUnion.GraphListView -> add(
-                listView = record.value,
-            )
+            is RecordViewRecordUnion.GraphListView -> {
+                add(
+                    listView = record.value,
+                )
+                add(
+                    entity = MessageListEntity(
+                        messageId = messageView.id.let(::MessageId),
+                        listId = record.value.cid.cid.let(::ListId),
+                    )
+                )
+            }
 
-            is RecordViewRecordUnion.GraphStarterPackViewBasic -> add(
-                starterPackView = record.value,
-            )
+            is RecordViewRecordUnion.GraphStarterPackViewBasic -> {
+                add(
+                    starterPackView = record.value,
+                )
+                add(
+                    entity = MessageStarterPackEntity(
+                        messageId = messageView.id.let(::MessageId),
+                        starterPackId = record.value.cid.cid.let(::StarterPackId),
+                    )
+                )
+            }
 
             is RecordViewRecordUnion.LabelerLabelerView,
             is RecordViewRecordUnion.Unknown,
             is RecordViewRecordUnion.ViewBlocked,
             is RecordViewRecordUnion.ViewDetached,
-            is RecordViewRecordUnion.ViewNotFound -> Unit
+            is RecordViewRecordUnion.ViewNotFound -> {
+                Unit
+            }
 
-            is RecordViewRecordUnion.ViewRecord -> add(
-                viewingProfileId = viewingProfileId,
-                record = record,
-            )
+            is RecordViewRecordUnion.ViewRecord -> {
+                add(
+                    viewingProfileId = viewingProfileId,
+                    messageId = messageView.id.let(::MessageId),
+                    record = record,
+                )
+            }
         }
 
         null -> Unit
@@ -85,50 +122,58 @@ internal fun MultipleEntitySaver.add(
 
 private fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
+    messageId: MessageId,
     record: RecordViewRecordUnion.ViewRecord,
 ) {
     record.value.embeds.forEach { embed ->
+        val postView = PostView(
+            uri = record.value.uri,
+            cid = record.value.cid,
+            author = record.value.author,
+            record = record.value.value,
+            embed = when (embed) {
+                is RecordViewRecordEmbedUnion.ExternalView -> PostViewEmbedUnion.ExternalView(
+                    value = embed.value
+                )
+
+                is RecordViewRecordEmbedUnion.ImagesView -> PostViewEmbedUnion.ImagesView(
+                    value = embed.value
+                )
+
+                is RecordViewRecordEmbedUnion.RecordView -> PostViewEmbedUnion.RecordView(
+                    value = embed.value
+                )
+
+                is RecordViewRecordEmbedUnion.RecordWithMediaView -> PostViewEmbedUnion.RecordWithMediaView(
+                    value = embed.value
+                )
+
+                is RecordViewRecordEmbedUnion.Unknown -> PostViewEmbedUnion.Unknown(
+                    value = embed.value
+                )
+
+                is RecordViewRecordEmbedUnion.VideoView -> PostViewEmbedUnion.VideoView(
+                    value = embed.value
+                )
+            },
+            replyCount = record.value.replyCount,
+            repostCount = record.value.repostCount,
+            likeCount = record.value.likeCount,
+            quoteCount = record.value.quoteCount,
+            indexedAt = record.value.indexedAt,
+            viewer = null,
+            labels = record.value.labels,
+            threadgate = null,
+        )
         add(
             viewingProfileId = viewingProfileId,
-            postView = PostView(
-                uri = record.value.uri,
-                cid = record.value.cid,
-                author = record.value.author,
-                record = record.value.value,
-                embed = when (embed) {
-                    is RecordViewRecordEmbedUnion.ExternalView -> PostViewEmbedUnion.ExternalView(
-                        value = embed.value
-                    )
-
-                    is RecordViewRecordEmbedUnion.ImagesView -> PostViewEmbedUnion.ImagesView(
-                        value = embed.value
-                    )
-
-                    is RecordViewRecordEmbedUnion.RecordView -> PostViewEmbedUnion.RecordView(
-                        value = embed.value
-                    )
-
-                    is RecordViewRecordEmbedUnion.RecordWithMediaView -> PostViewEmbedUnion.RecordWithMediaView(
-                        value = embed.value
-                    )
-
-                    is RecordViewRecordEmbedUnion.Unknown -> PostViewEmbedUnion.Unknown(
-                        value = embed.value
-                    )
-
-                    is RecordViewRecordEmbedUnion.VideoView -> PostViewEmbedUnion.VideoView(
-                        value = embed.value
-                    )
-                },
-                replyCount = record.value.replyCount,
-                repostCount = record.value.repostCount,
-                likeCount = record.value.likeCount,
-                quoteCount = record.value.quoteCount,
-                indexedAt = record.value.indexedAt,
-                viewer = null,
-                labels = record.value.labels,
-                threadgate = null,
-            ),
+            postView = postView,
+        )
+        add(
+            entity = MessagePostEntity(
+                messageId = messageId,
+                postId = postView.cid.cid.let(::PostId),
+            )
         )
     }
 }
