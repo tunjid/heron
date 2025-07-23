@@ -55,6 +55,7 @@ import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
 import dev.zacsweers.metro.Inject
 import kotlinx.datetime.Instant
+import kotlin.jvm.JvmInline
 
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
@@ -102,70 +103,49 @@ internal class MultipleEntitySaver(
     private val messageDao: MessageDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    private val timelineItemEntities = mutableListOf<TimelineItemEntity>()
+    private val timelineItemEntities = LazyList<TimelineItemEntity>()
 
-    private val postEntities =
-        mutableListOf<PostEntity>()
+    private val postEntities = LazyList<PostEntity>()
 
-    private val profileEntities =
-        mutableListOf<ProfileEntity>()
+    private val profileEntities = LazyList<ProfileEntity>()
 
-    private val postPostEntities =
-        mutableListOf<PostPostEntity>()
+    private val postPostEntities = LazyList<PostPostEntity>()
 
-    private val externalEmbedEntities =
-        mutableListOf<ExternalEmbedEntity>()
+    private val externalEmbedEntities = LazyList<ExternalEmbedEntity>()
 
-    private val postExternalEmbedEntities =
-        mutableListOf<PostExternalEmbedEntity>()
+    private val postExternalEmbedEntities = LazyList<PostExternalEmbedEntity>()
 
-    private val imageEntities =
-        mutableListOf<ImageEntity>()
+    private val imageEntities = LazyList<ImageEntity>()
 
-    private val postImageEntities =
-        mutableListOf<PostImageEntity>()
+    private val postImageEntities = LazyList<PostImageEntity>()
 
-    private val videoEntities =
-        mutableListOf<VideoEntity>()
+    private val videoEntities = LazyList<VideoEntity>()
 
-    private val postVideoEntities =
-        mutableListOf<PostVideoEntity>()
+    private val postVideoEntities = LazyList<PostVideoEntity>()
 
-    private val postThreadEntities =
-        mutableListOf<PostThreadEntity>()
+    private val postThreadEntities = LazyList<PostThreadEntity>()
 
-    private val postViewerStatisticsEntities =
-        mutableListOf<PostViewerStatisticsEntity>()
+    private val postViewerStatisticsEntities = LazyList<PostViewerStatisticsEntity>()
 
-    private val postLikeEntities =
-        mutableListOf<PostLikeEntity>()
+    private val postLikeEntities = LazyList<PostLikeEntity>()
 
-    private val profileViewerEntities =
-        mutableListOf<ProfileViewerStateEntity>()
+    private val profileViewerEntities = LazyList<ProfileViewerStateEntity>()
 
-    private val listEntities =
-        mutableListOf<ListEntity>()
+    private val listEntities = LazyList<ListEntity>()
 
-    private val feedGeneratorEntities =
-        mutableListOf<FeedGeneratorEntity>()
+    private val feedGeneratorEntities = LazyList<FeedGeneratorEntity>()
 
-    private val notificationEntities =
-        mutableListOf<NotificationEntity>()
+    private val notificationEntities = LazyList<NotificationEntity>()
 
-    private val starterPackEntities =
-        mutableListOf<StarterPackEntity>()
+    private val starterPackEntities = LazyList<StarterPackEntity>()
 
-    private val listItemEntities =
-        mutableListOf<ListMemberEntity>()
+    private val listItemEntities = LazyList<ListMemberEntity>()
 
-    private val conversationEntities =
-        mutableListOf<ConversationEntity>()
+    private val conversationEntities = LazyList<ConversationEntity>()
 
-    private val conversationMemberEntities =
-        mutableListOf<ConversationMembersEntity>()
+    private val conversationMemberEntities = LazyList<ConversationMembersEntity>()
 
-    private val messageEntities =
-        mutableListOf<MessageEntity>()
+    private val messageEntities = LazyList<MessageEntity>()
 
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
@@ -173,7 +153,7 @@ internal class MultipleEntitySaver(
      */
     suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
-        val (fullProfileEntities, partialProfileEntities) = profileEntities.partition {
+        val (fullProfileEntities, partialProfileEntities) = profileEntities.list.partition {
             it.handle != Constants.unknownAuthorHandle
                     && it.followersCount != null
                     && it.followsCount != null
@@ -187,23 +167,24 @@ internal class MultipleEntitySaver(
         profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
         profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
 
-        postDao.upsertPosts(postEntities)
+        postDao.upsertPosts(postEntities.list)
 
-        embedDao.upsertExternalEmbeds(externalEmbedEntities)
-        embedDao.upsertImages(imageEntities)
-        embedDao.upsertVideos(videoEntities)
+        embedDao.upsertExternalEmbeds(externalEmbedEntities.list)
+        embedDao.upsertImages(imageEntities.list)
+        embedDao.upsertVideos(videoEntities.list)
 
-        postDao.insertOrIgnorePostPosts(postPostEntities)
+        postDao.insertOrIgnorePostPosts(postPostEntities.list)
 
-        postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities)
-        postDao.insertOrIgnorePostImages(postImageEntities)
-        postDao.insertOrIgnorePostVideos(postVideoEntities)
+        postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
+        postDao.insertOrIgnorePostImages(postImageEntities.list)
+        postDao.insertOrIgnorePostVideos(postVideoEntities.list)
 
-        postDao.upsertPostThreads(postThreadEntities)
-        postDao.upsertPostStatistics(postViewerStatisticsEntities)
-        postDao.upsertPostLikes(postLikeEntities)
+        postDao.upsertPostThreads(postThreadEntities.list)
+        postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
+        postDao.upsertPostLikes(postLikeEntities.list)
 
-        val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.partition {
+        val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
+            .partition {
             it.commonFollowersCount != null
         }
         profileDao.upsertProfileViewers(
@@ -213,25 +194,25 @@ internal class MultipleEntitySaver(
             partialProfileViewerEntities
         )
 
-        notificationsDao.upsertNotifications(notificationEntities)
+        notificationsDao.upsertNotifications(notificationEntities.list)
 
         // Order matters to satisfy foreign key constraints
-        val (fullListEntities, partialListEntities) = listEntities.partition {
+        val (fullListEntities, partialListEntities) = listEntities.list.partition {
             it.description != null && it.indexedAt != Instant.DISTANT_PAST
         }
         listDao.upsertLists(fullListEntities)
         listDao.insertOrPartiallyUpdateLists(partialListEntities)
 
-        listDao.upsertListItems(listItemEntities)
-        starterPackDao.upsertStarterPacks(starterPackEntities)
+        listDao.upsertListItems(listItemEntities.list)
+        starterPackDao.upsertStarterPacks(starterPackEntities.list)
 
-        feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities)
+        feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
 
-        timelineDao.upsertTimelineItems(timelineItemEntities)
+        timelineDao.upsertTimelineItems(timelineItemEntities.list)
 
-        messageDao.upsertConversations(conversationEntities)
-        messageDao.upsertConversationMembers(conversationMemberEntities)
-        messageDao.upsertMessages(messageEntities)
+        messageDao.upsertConversations(conversationEntities.list)
+        messageDao.upsertConversationMembers(conversationMemberEntities.list)
+        messageDao.upsertMessages(messageEntities.list)
     }
 
     fun MultipleEntitySaver.associatePostEmbeds(
@@ -301,4 +282,24 @@ internal class MultipleEntitySaver(
 
     private fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
 
+}
+
+/**
+ * A memory-efficient list implementation that defers memory allocation
+ * for the list storage until the first element is explicitly added.
+ *
+ * @param T The type of elements contained in the list.
+ */
+@JvmInline
+private value class LazyList<T>(
+    val lazyList: Lazy<MutableList<T>> = lazy(
+        mode = LazyThreadSafetyMode.SYNCHRONIZED,
+        initializer = ::mutableListOf,
+    )
+) {
+    val list: List<T>
+        get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
+
+    fun add(element: T): Boolean =
+        lazyList.value.add(element)
 }
