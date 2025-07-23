@@ -36,7 +36,7 @@ interface FeedGeneratorDao {
             WHERE uri IN (:feedUris)
         """
     )
-    fun feedGenerators(
+    fun feedGeneratorsByUri(
         feedUris: Collection<FeedGeneratorUri>,
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 

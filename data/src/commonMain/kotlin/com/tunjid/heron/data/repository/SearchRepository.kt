@@ -295,7 +295,7 @@ internal class OfflineSearchRepository @Inject constructor(
             val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
 
             emitAll(
-                feedGeneratorDao.feedGenerators(
+                feedGeneratorDao.feedGeneratorsByUri(
                     feedUris = feedUris
                 )
                     .map { populatedFeedGeneratorEntities ->
@@ -447,7 +447,7 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
         emitAll(
-            feedGeneratorDao.feedGenerators(
+            feedGeneratorDao.feedGeneratorsByUri(
                 generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) }
             )
                 .map { populatedFeedGeneratorEntities ->
