@@ -61,6 +61,7 @@ internal fun MultipleEntitySaver.add(
         is ConvoViewLastMessageUnion.MessageView -> lastMessage.value
     }?.also {
         add(
+            viewingProfileId = viewingProfileId,
             conversationId = convoView.id.let(::ConversationId),
             messageView = it,
         )
@@ -77,6 +78,7 @@ internal fun MultipleEntitySaver.add(
         }
     }?.also {
         add(
+            viewingProfileId = viewingProfileId,
             conversationId = convoView.id.let(::ConversationId),
             messageView = it,
         )

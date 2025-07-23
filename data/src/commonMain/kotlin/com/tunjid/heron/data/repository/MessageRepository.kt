@@ -144,6 +144,8 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = GetMessagesResponse::cursor,
                 onResponse = {
+                    val signedInProfileId = savedStateRepository.signedInProfileId
+
                     multipleEntitySaverProvider.saveInTransaction {
                         messages.forEach {
                             when (it) {
@@ -153,6 +155,7 @@ internal class OfflineMessageRepository @Inject constructor(
                                 )
 
                                 is GetMessagesResponseMessageUnion.MessageView -> add(
+                                    viewingProfileId = signedInProfileId,
                                     conversationId = query.conversationId,
                                     messageView = it.value,
                                 )

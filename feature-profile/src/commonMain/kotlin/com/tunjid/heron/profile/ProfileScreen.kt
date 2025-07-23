@@ -321,7 +321,7 @@ private fun ProfileHeader(
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
+    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
     onProfileAvatarClicked: () -> Unit,
 ) {
     Box(
@@ -559,7 +559,7 @@ private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
     followsSignInProfile: Boolean,
-    onNavigateToProfiles: (NavigationAction.Common.ToProfiles.Profile) -> Unit,
+    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
