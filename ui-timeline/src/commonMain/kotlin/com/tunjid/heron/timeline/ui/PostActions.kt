@@ -16,9 +16,7 @@
 
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -34,60 +32,57 @@ interface PostActions {
     fun onPostMetadataClicked(metadata: Post.Metadata)
 }
 
-@Composable
-fun rememberPostActions(
+fun postActions(
     onProfileClicked: (profile: Profile, post: Post, quotingPostId: PostId?) -> Unit,
     onPostClicked: (post: Post, quotingPostId: PostId?) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
     onPostMetadataClicked: (metadata: Post.Metadata) -> Unit = {},
-) = remember {
-    object : PostActions {
-        override fun onProfileClicked(
-            profile: Profile,
-            post: Post,
-            quotingPostId: PostId?,
-        ) = onProfileClicked(
-            profile,
-            post,
-            quotingPostId
-        )
+) = object : PostActions {
+    override fun onProfileClicked(
+        profile: Profile,
+        post: Post,
+        quotingPostId: PostId?,
+    ) = onProfileClicked(
+        profile,
+        post,
+        quotingPostId
+    )
 
-        override fun onPostClicked(
-            post: Post,
-            quotingPostId: PostId?,
-        ) = onPostClicked(
-            post,
-            quotingPostId
-        )
+    override fun onPostClicked(
+        post: Post,
+        quotingPostId: PostId?,
+    ) = onPostClicked(
+        post,
+        quotingPostId
+    )
 
-        override fun onPostMediaClicked(
-            media: Embed.Media,
-            index: Int,
-            post: Post,
-            quotingPostId: PostId?,
-        ) = onPostMediaClicked(
-            media,
-            index,
-            post,
-            quotingPostId
-        )
+    override fun onPostMediaClicked(
+        media: Embed.Media,
+        index: Int,
+        post: Post,
+        quotingPostId: PostId?,
+    ) = onPostMediaClicked(
+        media,
+        index,
+        post,
+        quotingPostId
+    )
 
-        override fun onReplyToPost(
-            post: Post,
-        ) = onReplyToPost(post)
+    override fun onReplyToPost(
+        post: Post,
+    ) = onReplyToPost(post)
 
-        override fun onPostInteraction(
-            interaction: Post.Interaction,
-        ) = onPostInteraction(
-            interaction
-        )
+    override fun onPostInteraction(
+        interaction: Post.Interaction,
+    ) = onPostInteraction(
+        interaction
+    )
 
-        override fun onPostMetadataClicked(
-            metadata: Post.Metadata,
-        ) = onPostMetadataClicked(
-            metadata
-        )
-    }
+    override fun onPostMetadataClicked(
+        metadata: Post.Metadata,
+    ) = onPostMetadataClicked(
+        metadata
+    )
 }
