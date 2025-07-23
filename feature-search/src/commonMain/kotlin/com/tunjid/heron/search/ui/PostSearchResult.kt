@@ -19,13 +19,14 @@ package com.tunjid.heron.search.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -63,19 +64,21 @@ internal fun PostSearchResult(
                 sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
-                postActions = rememberPostActions(
-                    onPostClicked = { _, _ ->
-                        onPostClicked(result)
-                    },
-                    onProfileClicked = { _, _, _ ->
-                        onProfileClicked(result)
-                    },
-                    onPostMediaClicked = { _, _, _, _ ->
+                postActions = remember(result, onPostInteraction) {
+                    postActions(
+                        onPostClicked = { _, _ ->
+                            onPostClicked(result)
+                        },
+                        onProfileClicked = { _, _, _ ->
+                            onProfileClicked(result)
+                        },
+                        onPostMediaClicked = { _, _, _, _ ->
 
-                    },
-                    onReplyToPost = {},
-                    onPostInteraction = onPostInteraction,
-                ),
+                        },
+                        onReplyToPost = {},
+                        onPostInteraction = onPostInteraction,
+                    )
+                },
             )
         },
     )

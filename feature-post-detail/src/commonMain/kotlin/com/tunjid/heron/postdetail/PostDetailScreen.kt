@@ -53,7 +53,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
@@ -104,85 +104,87 @@ internal fun PostDetailScreen(
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
                     presentation = Timeline.Presentation.Text.WithEmbed,
-                    postActions = rememberPostActions(
-                        onPostClicked = { post: Post, quotingPostId: PostId? ->
-                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                            actions(
-                                Action.Navigate.To(
-                                    post(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                        sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
-                                            quotingPostId = quotingPostId,
-                                        ),
-                                        post = post,
-                                    )
-                                )
-                            )
-                        },
-                        onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                            actions(
-                                Action.Navigate.To(
-                                    profile(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                        profile = profile,
-                                        avatarSharedElementKey = post.avatarSharedElementKey(
-                                            prefix = state.sharedElementPrefix,
-                                            quotingPostId = quotingPostId,
-                                        ).takeIf { post.author.did == profile.did }
-                                    )
-                                )
-                            )
-                        },
-                        onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                            actions(
-                                Action.Navigate.To(
-                                    NavigationAction.Destination.ToMedia(
-                                        post = post,
-                                        media = media,
-                                        startIndex = index,
-                                        sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
-                                            quotingPostId = quotingPostId,
-                                        ),
-                                    )
-                                )
-                            )
-                        },
-                        onReplyToPost = { post: Post ->
-                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                            actions(
-                                Action.Navigate.To(
-                                    NavigationAction.Destination.ComposePost(
-                                        type = Post.Create.Reply(
-                                            parent = post,
-                                        ),
-                                        sharedElementPrefix = state.sharedElementPrefix,
-                                    )
-                                )
-                            )
-                        },
-                        onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
-                            pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                            actions(
-                                Action.Navigate.To(
-                                    when (postMetadata) {
-                                        is Post.Metadata.Likes -> NavigationAction.Destination.ToProfiles.Post.Likes(
-                                            profileId = postMetadata.profileId,
-                                            postRecordKey = postMetadata.postRecordKey,
+                    postActions = remember(state.sharedElementPrefix) {
+                        postActions(
+                            onPostClicked = { post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.To(
+                                        post(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                            post = post,
                                         )
+                                    )
+                                )
+                            },
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.To(
+                                        profile(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                            profile = profile,
+                                            avatarSharedElementKey = post.avatarSharedElementKey(
+                                                prefix = state.sharedElementPrefix,
+                                                quotingPostId = quotingPostId,
+                                            ).takeIf { post.author.did == profile.did }
+                                        )
+                                    )
+                                )
+                            },
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.To(
+                                        NavigationAction.Destination.ToMedia(
+                                            post = post,
+                                            media = media,
+                                            startIndex = index,
+                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
+                                                quotingPostId = quotingPostId,
+                                            ),
+                                        )
+                                    )
+                                )
+                            },
+                            onReplyToPost = { post: Post ->
+                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.To(
+                                        NavigationAction.Destination.ComposePost(
+                                            type = Post.Create.Reply(
+                                                parent = post,
+                                            ),
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        )
+                                    )
+                                )
+                            },
+                            onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
+                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                actions(
+                                    Action.Navigate.To(
+                                        when (postMetadata) {
+                                            is Post.Metadata.Likes -> NavigationAction.Destination.ToProfiles.Post.Likes(
+                                                profileId = postMetadata.profileId,
+                                                postRecordKey = postMetadata.postRecordKey,
+                                            )
 
-                                        is Post.Metadata.Quotes -> return@onPostMetadataClicked
-                                        is Post.Metadata.Reposts -> NavigationAction.Destination.ToProfiles.Post.Repost(
-                                            profileId = postMetadata.profileId,
-                                            postRecordKey = postMetadata.postRecordKey,
-                                        )
-                                    }
+                                            is Post.Metadata.Quotes -> return@onPostMetadataClicked
+                                            is Post.Metadata.Reposts -> NavigationAction.Destination.ToProfiles.Post.Repost(
+                                                profileId = postMetadata.profileId,
+                                                postRecordKey = postMetadata.postRecordKey,
+                                            )
+                                        }
+                                    )
                                 )
-                            )
-                        },
-                        onPostInteraction = postInteractionState::onInteraction,
-                    ),
+                            },
+                            onPostInteraction = postInteractionState::onInteraction,
+                        )
+                    },
                 )
             }
         )

@@ -67,7 +67,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.timeline.ui.rememberPostActions
+import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.UiTokens
@@ -338,46 +338,48 @@ private fun PostMessage(
         sharedElementPrefix = message.id.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
-        postActions = rememberPostActions(
-            onPostClicked = { post, quotingPostId ->
-                actions(
-                    Action.Navigate.To(
-                        post(
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
-                                quotingPostId = quotingPostId,
-                            ),
-                            post = post,
-                        )
-                    )
-                )
-            },
-            onProfileClicked = { profile, post, quotingPostId ->
-                actions(
-                    Action.Navigate.To(
-                        profile(
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            profile = profile,
-                            avatarSharedElementKey = post.avatarSharedElementKey(
-                                prefix = message.id.id.withQuotingPostIdPrefix(
+        postActions = remember(message.id, actions) {
+            postActions(
+                onPostClicked = { post, quotingPostId ->
+                    actions(
+                        Action.Navigate.To(
+                            post(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
                                     quotingPostId = quotingPostId,
                                 ),
-                                quotingPostId = quotingPostId,
-                            ),
+                                post = post,
+                            )
                         )
                     )
-                )
-            },
-            onPostMediaClicked = { _, _, _, _ ->
+                },
+                onProfileClicked = { profile, post, quotingPostId ->
+                    actions(
+                        Action.Navigate.To(
+                            profile(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                profile = profile,
+                                avatarSharedElementKey = post.avatarSharedElementKey(
+                                    prefix = message.id.id.withQuotingPostIdPrefix(
+                                        quotingPostId = quotingPostId,
+                                    ),
+                                    quotingPostId = quotingPostId,
+                                ),
+                            )
+                        )
+                    )
+                },
+                onPostMediaClicked = { _, _, _, _ ->
 
-            },
-            onReplyToPost = {
+                },
+                onReplyToPost = {
 
-            },
-            onPostInteraction = {
-                actions(Action.SendPostInteraction(it))
-            },
-        )
+                },
+                onPostInteraction = {
+                    actions(Action.SendPostInteraction(it))
+                },
+            )
+        }
     )
 }
 

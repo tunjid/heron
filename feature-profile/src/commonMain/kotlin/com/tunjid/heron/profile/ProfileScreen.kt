@@ -111,10 +111,10 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
-import com.tunjid.heron.timeline.ui.rememberPostActions
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
@@ -796,68 +796,70 @@ private fun ProfileTimeline(
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         presentation = presentation,
-                        postActions = rememberPostActions(
-                            onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                                actions(
-                                    Action.Navigate.To(
-                                        post(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
-                                            post = post,
-                                        )
-                                    )
-                                )
-                            },
-                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                                actions(
-                                    Action.Navigate.To(
-                                        profile(
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                            profile = profile,
-                                            avatarSharedElementKey = post
-                                                .avatarSharedElementKey(
-                                                    prefix = timelineState.timeline.sourceId,
+                        postActions = remember(timelineState.timeline.sourceId) {
+                            postActions(
+                                onPostClicked = { post: Post, quotingPostId: PostId? ->
+                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    actions(
+                                        Action.Navigate.To(
+                                            post(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                     quotingPostId = quotingPostId,
-                                                )
-                                                .takeIf { post.author.did == profile.did }
+                                                ),
+                                                post = post,
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                                actions(
-                                    Action.Navigate.To(
-                                        NavigationAction.Destination.ToMedia(
-                                            post = post,
-                                            media = media,
-                                            startIndex = index,
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                quotingPostId = quotingPostId,
-                                            ),
+                                },
+                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    actions(
+                                        Action.Navigate.To(
+                                            profile(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                                profile = profile,
+                                                avatarSharedElementKey = post
+                                                    .avatarSharedElementKey(
+                                                        prefix = timelineState.timeline.sourceId,
+                                                        quotingPostId = quotingPostId,
+                                                    )
+                                                    .takeIf { post.author.did == profile.did }
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onReplyToPost = { post: Post ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
-                                actions(
-                                    Action.Navigate.To(
-                                        NavigationAction.Destination.ComposePost(
-                                            type = Post.Create.Reply(
-                                                parent = post,
-                                            ),
-                                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                },
+                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    actions(
+                                        Action.Navigate.To(
+                                            NavigationAction.Destination.ToMedia(
+                                                post = post,
+                                                media = media,
+                                                startIndex = index,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                    quotingPostId = quotingPostId,
+                                                ),
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onPostInteraction = postInteractionState::onInteraction,
-                        ),
+                                },
+                                onReplyToPost = { post: Post ->
+                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    actions(
+                                        Action.Navigate.To(
+                                            NavigationAction.Destination.ComposePost(
+                                                type = Post.Create.Reply(
+                                                    parent = post,
+                                                ),
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                            )
+                                        )
+                                    )
+                                },
+                                onPostInteraction = postInteractionState::onInteraction,
+                            )
+                        },
                     )
                 }
             )
