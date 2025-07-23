@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
@@ -94,7 +94,7 @@ internal val Route.profileHandleOrId by mappedRoutePath(
 
 internal val Route.avatarSharedElementKey by optionalRouteQuery()
 
-internal val Route.profile: Profile? by optionalMappedRouteQuery(
+internal val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
@@ -180,8 +180,8 @@ class ProfileBindings(
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ComposePost(
+                                Action.Navigate.To(
+                                    NavigationAction.Destination.ComposePost(
                                         type =
                                             if (state.isSignedInProfile) Post.Create.Timeline
                                             else Post.Create.Mention(state.profile),

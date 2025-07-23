@@ -25,19 +25,20 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.tunjid.heron.data.core.models.ByteSerializable
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.scaffold.navigation.NavigationAction.Destination
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -78,64 +79,47 @@ import org.jetbrains.compose.resources.StringResource
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
+fun profile(
+    profile: Profile,
+    avatarSharedElementKey: String?,
+    referringRouteOption: NavigationAction.ReferringRouteOption,
+): Destination = Destination.ToRawUrl(
+    path = "/profile/${profile.did.id}",
+    model = profile,
+    sharedElementPrefix = null,
+    avatarSharedElementKey = avatarSharedElementKey,
+    referringRouteOption = referringRouteOption,
+)
+
+fun post(
+    post: Post,
+    sharedElementPrefix: String,
+    referringRouteOption: NavigationAction.ReferringRouteOption,
+): Destination = Destination.ToRawUrl(
+    path = post.uri.path,
+    model = post,
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = referringRouteOption,
+)
+
 /**
  * An action that causes mutations to navigation
  */
 interface NavigationAction {
     val navigationMutation: NavigationMutation
 
-    sealed class Common : NavigationAction {
-        data object Pop : Common() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
+    data object Pop : NavigationAction {
+        override val navigationMutation: NavigationMutation = {
+            navState.pop()
         }
+    }
 
-        data class ToProfile(
-            val profile: Profile,
-            val avatarSharedElementKey: String?,
-            val referringRouteOption: ReferringRouteOption,
-        ) : Common() {
-            override val navigationMutation: NavigationMutation = {
-                routeString(
-                    path = "/profile/${profile.did.id}",
-                    queryParams = mapOf(
-                        "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
-                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                        referringRouteQueryParams(referringRouteOption),
-                    )
-                )
-                    .toRoute
-                    .takeIf { it.id != currentRoute.id }
-                    ?.let(navState::push)
-                    ?: navState
-            }
-        }
-
-        data class ToPost(
-            val post: Post,
-            val sharedElementPrefix: String,
-            val referringRouteOption: ReferringRouteOption,
-        ) : Common() {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/profile/${post.author.did.id}/post/${post.uri.recordKey}",
-                        queryParams = mapOf(
-                            "post" to listOf(post.toUrlEncodedBase64()),
-                            "postUri" to listOf(post.uri.uri),
-                            "sharedElementPrefix" to listOf(sharedElementPrefix),
-                            referringRouteQueryParams(referringRouteOption),
-                        )
-                    ).toRoute
-                )
-            }
-        }
+    sealed interface Destination : NavigationAction {
 
         data class ComposePost(
             val type: Post.Create,
             val sharedElementPrefix: String?,
-        ) : Common() {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -154,7 +138,7 @@ interface NavigationAction {
             val media: Embed.Media,
             val startIndex: Int,
             val sharedElementPrefix: String,
-        ) : Common() {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -172,21 +156,24 @@ interface NavigationAction {
 
         data class ToRawUrl(
             val path: String,
-            val model: ByteSerializable? = null,
+            val model: UrlEncodableModel? = null,
             val sharedElementPrefix: String? = null,
+            val avatarSharedElementKey: String? = null,
             val referringRouteOption: ReferringRouteOption,
-        ) : Common() {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = path,
-                        queryParams = mapOf(
-                            "model" to listOfNotNull(model?.toUrlEncodedBase64()),
-                            "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
-                            referringRouteQueryParams(referringRouteOption),
-                        )
-                    ).toRoute
-                )
+                routeString(
+                    path = path,
+                    queryParams = mapOf(
+                        "model" to listOfNotNull(model?.toUrlEncodedBase64()),
+                        "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
+                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        referringRouteQueryParams(referringRouteOption),
+                    )
+                ).toRoute
+                    .takeIf { it.id != currentRoute.id }
+                    ?.let(navState::push)
+                    ?: navState
             }
         }
 
@@ -195,7 +182,7 @@ interface NavigationAction {
             val members: List<Profile> = emptyList(),
             val sharedElementPrefix: String? = null,
             val referringRouteOption: ReferringRouteOption,
-        ) : Common() {
+        ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
@@ -210,39 +197,39 @@ interface NavigationAction {
             }
         }
 
-        sealed class ToProfiles : Common() {
+        sealed class ToProfiles : Destination {
             abstract val profileId: ProfileId
 
             sealed class Post : ToProfiles() {
                 data class Likes(
                     override val profileId: ProfileId,
                     val postRecordKey: RecordKey,
-                ) : Post()
+                ) : ToProfiles.Post()
 
                 data class Repost(
                     override val profileId: ProfileId,
                     val postRecordKey: RecordKey,
-                ) : Post()
+                ) : ToProfiles.Post()
             }
 
             sealed class Profile : ToProfiles() {
                 data class Followers(
                     override val profileId: ProfileId,
-                ) : Profile()
+                ) : ToProfiles.Profile()
 
                 data class Following(
                     override val profileId: ProfileId,
-                ) : Profile()
+                ) : ToProfiles.Profile()
             }
 
             override val navigationMutation: NavigationMutation = {
                 navState.push(
                     routeString(
                         path = when (this@ToProfiles) {
-                            is Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
-                            is Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
-                            is Profile.Followers -> "/profile/${profileId.id}/followers"
-                            is Profile.Following -> "/profile/${profileId.id}/follows"
+                            is ToProfiles.Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
+                            is ToProfiles.Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
+                            is ToProfiles.Profile.Followers -> "/profile/${profileId.id}/followers"
+                            is ToProfiles.Profile.Following -> "/profile/${profileId.id}/follows"
                         },
                         queryParams = mapOf(
                             referringRouteQueryParams(ReferringRouteOption.Current),
@@ -251,6 +238,7 @@ interface NavigationAction {
                 )
             }
         }
+
     }
 
     /**

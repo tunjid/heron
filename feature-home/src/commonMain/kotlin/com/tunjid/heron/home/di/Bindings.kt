@@ -44,6 +44,7 @@ import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.timelinePreferenceExpansionEffect
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -156,8 +157,8 @@ class HomeBindings(
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
-                                Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ToProfile(
+                                Action.Navigate.To(
+                                    profile(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
@@ -187,8 +188,8 @@ class HomeBindings(
                         onClick = {
                             viewModel.accept(
                                 if (state.timelinePreferencesExpanded) Action.UpdateTimeline.RequestUpdate
-                                else Action.Navigate.DelegateTo(
-                                    NavigationAction.Common.ComposePost(
+                                else Action.Navigate.To(
+                                    NavigationAction.Destination.ComposePost(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,
                                     )

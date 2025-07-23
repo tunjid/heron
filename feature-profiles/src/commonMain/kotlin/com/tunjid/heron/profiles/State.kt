@@ -23,9 +23,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -82,14 +80,11 @@ sealed class Action(val key: String) {
     ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class DelegateTo(
-            val delegate: NavigationAction.Common,
+
+        data class To(
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

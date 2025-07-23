@@ -30,6 +30,6 @@ data class State(
 sealed class Action(val key: String) {
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 }

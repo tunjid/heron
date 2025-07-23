@@ -22,8 +22,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.treenav.pop
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import kotlinx.serialization.Serializable
@@ -145,10 +143,7 @@ sealed class Action(val key: String) {
     }
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
+
     }
 }

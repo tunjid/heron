@@ -47,10 +47,10 @@ sealed class Action(val key: String) {
     ) : Action(key = "Tile")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate(), NavigationAction by NavigationAction.Common.Pop
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class DelegateTo(
-            val delegate: NavigationAction.Common,
+        data class To(
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
     }
 }

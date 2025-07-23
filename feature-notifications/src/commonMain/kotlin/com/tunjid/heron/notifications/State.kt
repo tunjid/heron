@@ -91,8 +91,8 @@ sealed class Action(val key: String) {
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
-        data class DelegateTo(
-            val delegate: NavigationAction.Common,
+        data class To(
+            val delegate: NavigationAction.Destination,
         ) : Navigate(), NavigationAction by delegate
 
     }

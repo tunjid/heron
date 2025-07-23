@@ -30,8 +30,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlin.jvm.JvmInline
@@ -126,11 +124,5 @@ sealed class Action(val key: String) {
         val message: String,
     ) : Action("MessageConsumed")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate() {
-            override val navigationMutation: NavigationMutation = {
-                navState.pop()
-            }
-        }
-    }
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction
 }

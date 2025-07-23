@@ -84,8 +84,8 @@ internal fun ProfileCollection(
                     collection = profileCollection,
                     onCollectionClicked = { collection ->
                         actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToRawUrl(
+                            Action.Navigate.To(
+                                NavigationAction.Destination.ToRawUrl(
                                     path = collection.uriPath,
                                     model = when (collection) {
                                         is OfFeedGenerators -> collection.feedGenerator

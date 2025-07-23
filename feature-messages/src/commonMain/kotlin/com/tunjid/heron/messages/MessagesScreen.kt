@@ -84,8 +84,8 @@ internal fun MessagesScreen(
                     conversation = conversation,
                     onConversationClicked = {
                         actions(
-                            Action.Navigate.DelegateTo(
-                                NavigationAction.Common.ToConversation(
+                            Action.Navigate.To(
+                                NavigationAction.Destination.ToConversation(
                                     id = conversation.id,
                                     members = conversation.members,
                                     sharedElementPrefix = conversation.id.id,

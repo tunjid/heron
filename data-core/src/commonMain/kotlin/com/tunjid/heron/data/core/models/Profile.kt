@@ -40,7 +40,7 @@ data class Profile(
     val indexedAt: Instant?,
     val createdAt: Instant?,
     val metadata: Metadata,
-) : ByteSerializable {
+) : UrlEncodableModel {
 
     @Serializable
     sealed class Connection {

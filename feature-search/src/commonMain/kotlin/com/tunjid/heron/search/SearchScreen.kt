@@ -68,6 +68,8 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.post
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
@@ -121,8 +123,8 @@ internal fun SearchScreen(
         val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
             { profileWithViewerState ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToProfile(
+                    Action.Navigate.To(
+                        profile(
                             profile = profileWithViewerState.profile,
                             avatarSharedElementKey = profileWithViewerState
                                 .profile
@@ -151,8 +153,8 @@ internal fun SearchScreen(
         val onProfileSearchResultClicked: (SearchResult.OfProfile) -> Unit = remember {
             { profileSearchResult ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToProfile(
+                    Action.Navigate.To(
+                        profile(
                             profile = profileSearchResult.profileWithViewerState.profile,
                             avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
@@ -164,8 +166,8 @@ internal fun SearchScreen(
         val onPostSearchResultProfileClicked = remember {
             { result: SearchResult.OfPost ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToProfile(
+                    Action.Navigate.To(
+                        profile(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = result.post.author,
                             avatarSharedElementKey = result.post.avatarSharedElementKey(
@@ -179,8 +181,8 @@ internal fun SearchScreen(
         val onListMemberClicked = remember {
             { listMember: ListMember ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToProfile(
+                    Action.Navigate.To(
+                        profile(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = listMember.subject,
                             avatarSharedElementKey = listMember.avatarSharedElementKey()
@@ -192,8 +194,8 @@ internal fun SearchScreen(
         val onTrendClicked = remember {
             { trend: Trend ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToRawUrl(
+                    Action.Navigate.To(
+                        NavigationAction.Destination.ToRawUrl(
                             path = trend.link,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )
@@ -204,8 +206,8 @@ internal fun SearchScreen(
         val onFeedGeneratorClicked = remember {
             { feedGenerator: FeedGenerator ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToRawUrl(
+                    Action.Navigate.To(
+                        NavigationAction.Destination.ToRawUrl(
                             path = feedGenerator.uri.path,
                             model = feedGenerator,
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
@@ -218,8 +220,8 @@ internal fun SearchScreen(
         val onPostSearchResultClicked = remember {
             { result: SearchResult.OfPost ->
                 actions(
-                    Action.Navigate.DelegateTo(
-                        NavigationAction.Common.ToPost(
+                    Action.Navigate.To(
+                        post(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             sharedElementPrefix = result.sharedElementPrefix,
                             post = result.post,
@@ -288,8 +290,8 @@ internal fun SearchScreen(
         },
         onQuotePostClicked = { repost ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
+                Action.Navigate.To(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )

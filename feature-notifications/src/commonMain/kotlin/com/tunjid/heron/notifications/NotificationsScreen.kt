@@ -19,11 +19,7 @@ package com.tunjid.heron.notifications
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -55,6 +51,8 @@ import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.post
+import com.tunjid.heron.scaffold.navigation.profile
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -82,8 +80,8 @@ internal fun NotificationsScreen(
     val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
         { notification, profile ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToProfile(
+                Action.Navigate.To(
+                    profile(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile)
@@ -95,8 +93,8 @@ internal fun NotificationsScreen(
     val onProfileClicked: (Notification.PostAssociated, Profile) -> Unit = remember {
         { notification, profile ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToProfile(
+                Action.Navigate.To(
+                    profile(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
@@ -110,8 +108,8 @@ internal fun NotificationsScreen(
     val onPostClicked = remember {
         { notification: Notification.PostAssociated ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ToPost(
+                Action.Navigate.To(
+                    post(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
                         post = notification.associatedPost,
@@ -123,8 +121,8 @@ internal fun NotificationsScreen(
     val onReplyToPost = remember {
         { notification: Notification.PostAssociated ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
+                Action.Navigate.To(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Reply(
                             parent = notification.associatedPost,
                         ),
@@ -291,8 +289,8 @@ internal fun NotificationsScreen(
         },
         onQuotePostClicked = { repost ->
             actions(
-                Action.Navigate.DelegateTo(
-                    NavigationAction.Common.ComposePost(
+                Action.Navigate.To(
+                    NavigationAction.Destination.ComposePost(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )

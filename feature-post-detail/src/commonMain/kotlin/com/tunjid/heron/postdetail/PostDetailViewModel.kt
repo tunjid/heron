@@ -25,9 +25,7 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.postdetail.di.post
 import com.tunjid.heron.postdetail.di.postRecordKey
-import com.tunjid.heron.postdetail.di.postUri
 import com.tunjid.heron.postdetail.di.profileHandleOrId
 import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -71,10 +69,7 @@ class ActualPostDetailViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), PostDetailStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        anchorPost = route.post,
-        sharedElementPrefix = route.sharedElementPrefix,
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         postThreadsMutations(
@@ -105,7 +100,7 @@ fun postThreadsMutations(
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> = flow {
-    val postUri = route.postUri ?: profileRepository.profile(route.profileHandleOrId)
+    val postUri = profileRepository.profile(route.profileHandleOrId)
         .first()
         .let {
             PostUri(
