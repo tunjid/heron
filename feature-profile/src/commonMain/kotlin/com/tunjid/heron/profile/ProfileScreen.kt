@@ -99,6 +99,8 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
+import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -243,8 +245,8 @@ internal fun ProfileScreen(
                         )
                     }
                 },
-                onNavigateToProfiles = { navigationAction ->
-                    actions(Action.Navigate.To(navigationAction))
+                onNavigate = { destination ->
+                    actions(Action.Navigate.To(destination))
                 },
                 onProfileAvatarClicked = {
                     actions(
@@ -323,7 +325,7 @@ private fun ProfileHeader(
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
 ) {
     Box(
@@ -372,7 +374,7 @@ private fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     followsSignInProfile = viewerState?.followedBy != null,
-                    onNavigateToProfiles = onNavigateToProfiles,
+                    onNavigateToProfiles = onNavigate,
                 )
                 Text(text = profile.description ?: "")
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
@@ -561,7 +563,7 @@ private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
     followsSignInProfile: Boolean,
-    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
+    onNavigateToProfiles: (NavigationAction.Destination) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -573,7 +575,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.followers),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Destination.ToProfiles.Profile.Followers(
+                    profileFollowersDestination(
                         profileId = profile.did,
                     ),
                 )
@@ -584,7 +586,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.following),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Destination.ToProfiles.Profile.Following(
+                    profileFollowsDestination(
                         profileId = profile.did,
                     ),
                 )

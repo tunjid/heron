@@ -46,6 +46,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.postLikesDestination
+import com.tunjid.heron.scaffold.navigation.postRepostsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -170,13 +172,13 @@ internal fun PostDetailScreen(
                                 actions(
                                     Action.Navigate.To(
                                         when (postMetadata) {
-                                            is Post.Metadata.Likes -> NavigationAction.Destination.ToProfiles.Post.Likes(
+                                            is Post.Metadata.Likes -> postLikesDestination(
                                                 profileId = postMetadata.profileId,
                                                 postRecordKey = postMetadata.postRecordKey,
                                             )
 
                                             is Post.Metadata.Quotes -> return@onPostMetadataClicked
-                                            is Post.Metadata.Reposts -> NavigationAction.Destination.ToProfiles.Post.Repost(
+                                            is Post.Metadata.Reposts -> postRepostsDestination(
                                                 profileId = postMetadata.profileId,
                                                 postRecordKey = postMetadata.postRecordKey,
                                             )

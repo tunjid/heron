@@ -156,6 +156,36 @@ fun galleryDestination(
     ),
 )
 
+fun postLikesDestination(
+    profileId: ProfileId,
+    postRecordKey: RecordKey,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by",
+    referringRouteOption = ReferringRouteOption.Current
+)
+
+fun postRepostsDestination(
+    profileId: ProfileId,
+    postRecordKey: RecordKey,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by",
+    referringRouteOption = ReferringRouteOption.Current
+)
+
+fun profileFollowsDestination(
+    profileId: ProfileId,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profileId.id}/follows",
+    referringRouteOption = ReferringRouteOption.Current
+)
+
+fun profileFollowersDestination(
+    profileId: ProfileId,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profileId.id}/followers",
+    referringRouteOption = ReferringRouteOption.Current
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),
@@ -184,16 +214,16 @@ interface NavigationAction {
         }
     }
 
-    sealed interface Destination : NavigationAction {
+    sealed class Destination : NavigationAction {
 
-        data class ToRawUrl(
+        internal data class ToRawUrl(
             val path: String,
             val sharedElementPrefix: String? = null,
             val avatarSharedElementKey: String? = null,
             val models: List<UrlEncodableModel> = emptyList(),
             val miscQueries: Map<String, List<String>> = emptyMap(),
             val referringRouteOption: ReferringRouteOption,
-        ) : Destination {
+        ) : Destination() {
             override val navigationMutation: NavigationMutation = {
                 routeString(
                     path = path,
@@ -209,49 +239,6 @@ interface NavigationAction {
                     ?: navState
             }
         }
-
-        sealed class ToProfiles : Destination {
-            abstract val profileId: ProfileId
-
-            sealed class Post : ToProfiles() {
-                data class Likes(
-                    override val profileId: ProfileId,
-                    val postRecordKey: RecordKey,
-                ) : ToProfiles.Post()
-
-                data class Repost(
-                    override val profileId: ProfileId,
-                    val postRecordKey: RecordKey,
-                ) : ToProfiles.Post()
-            }
-
-            sealed class Profile : ToProfiles() {
-                data class Followers(
-                    override val profileId: ProfileId,
-                ) : ToProfiles.Profile()
-
-                data class Following(
-                    override val profileId: ProfileId,
-                ) : ToProfiles.Profile()
-            }
-
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = when (this@ToProfiles) {
-                            is ToProfiles.Post.Likes -> "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by"
-                            is ToProfiles.Post.Repost -> "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by"
-                            is ToProfiles.Profile.Followers -> "/profile/${profileId.id}/followers"
-                            is ToProfiles.Profile.Following -> "/profile/${profileId.id}/follows"
-                        },
-                        queryParams = mapOf(
-                            referringRouteQueryParams(ReferringRouteOption.Current),
-                        )
-                    ).toRoute
-                )
-            }
-        }
-
     }
 
     /**
@@ -276,11 +263,9 @@ interface NavigationAction {
         data object ParentOrCurrent : ReferringRouteOption()
 
         companion object {
-            private const val QueryParam = "referringRoute"
-
             fun NavigationContext.referringRouteQueryParams(
                 option: ReferringRouteOption,
-            ): Pair<String, List<String>> = QueryParam to when (option) {
+            ): Pair<String, List<String>> = ReferringRouteQueryParam to when (option) {
                 Current -> listOf(
                     currentRoute.encodeToQueryParam()
                 )
@@ -289,7 +274,7 @@ interface NavigationAction {
                     .routeParams
                     .queryParams
                     .getOrElse(
-                        key = QueryParam,
+                        key = ReferringRouteQueryParam,
                         defaultValue = ::emptyList,
                     )
 
@@ -299,7 +284,7 @@ interface NavigationAction {
             }
 
             fun RouteParams.decodeReferringRoute() =
-                queryParams[QueryParam]?.firstOrNull()
+                queryParams[ReferringRouteQueryParam]?.firstOrNull()
                     ?.decodeRoutePathAndQueriesFromQueryParam()
                     ?.let(::routeOf)
 
@@ -514,3 +499,5 @@ private fun AppStack.toStackNav() = StackNav(
     name = stackName,
     children = listOf(rootRoute)
 )
+
+private const val ReferringRouteQueryParam = "referringRoute"
