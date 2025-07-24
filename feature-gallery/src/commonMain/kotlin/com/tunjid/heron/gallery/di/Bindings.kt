@@ -22,8 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.gallery.ActualGalleryViewModel
@@ -43,9 +41,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.mappedRouteQuery
-import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -61,10 +57,6 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.media: Embed.Media? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl
-)
-
 internal val Route.postId by mappedRoutePath(
     mapper = ::PostId,
 )
@@ -72,10 +64,6 @@ internal val Route.postId by mappedRoutePath(
 internal val Route.startIndex by mappedRouteQuery(
     default = 0,
     mapper = String::toInt,
-)
-
-internal val Route.sharedElementPrefix by routeQuery(
-    default = ""
 )
 
 @BindingContainer

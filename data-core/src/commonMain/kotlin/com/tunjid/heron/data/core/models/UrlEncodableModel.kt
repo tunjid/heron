@@ -77,11 +77,16 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(FeedGenerator::class)
             subclass(FeedList::class)
             subclass(StarterPack::class)
+
             subclass(Post.Create::class)
             subclass(Post.Create.Reply::class)
             subclass(Post.Create.Mention::class)
             subclass(Post.Create.Quote::class)
             subclass(Post.Create.Timeline::class)
+
+            subclass(Embed.Media::class)
+            subclass(Video::class)
+            subclass(ImageList::class)
         }
         polymorphic(Id::class) {
             subclass(PostId::class)

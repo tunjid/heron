@@ -44,6 +44,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -140,7 +141,7 @@ internal fun PostDetailScreen(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        NavigationAction.Destination.ToMedia(
+                                        galleryDestination(
                                             post = post,
                                             media = media,
                                             startIndex = index,

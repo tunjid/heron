@@ -89,6 +89,8 @@ val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl
 )
 
+inline fun <reified T> Route.model(): T? = model as? T
+
 val Route.avatarSharedElementKey by optionalRouteQuery()
 
 @OptIn(ExperimentalUuidApi::class)
@@ -99,7 +101,7 @@ val Route.sharedElementPrefix by routeQuery(
 fun profileDestination(
     profile: Profile,
     avatarSharedElementKey: String?,
-    referringRouteOption: NavigationAction.ReferringRouteOption,
+    referringRouteOption: ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profile.did.id}",
     models = listOf(profile),
@@ -111,7 +113,7 @@ fun profileDestination(
 fun postDestination(
     post: Post,
     sharedElementPrefix: String,
-    referringRouteOption: NavigationAction.ReferringRouteOption,
+    referringRouteOption: ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = post.uri.path,
     models = listOf(post),
@@ -140,17 +142,33 @@ fun conversationDestination(
     referringRouteOption = referringRouteOption,
 )
 
+fun galleryDestination(
+    post: Post,
+    media: Embed.Media,
+    startIndex: Int,
+    sharedElementPrefix: String,
+): NavigationAction.Destination = pathDestination(
+    path = "/post/${post.cid.id}/gallery",
+    models = listOf(media),
+    sharedElementPrefix = sharedElementPrefix,
+    miscQueryParams = mapOf(
+        "startIndex" to listOf(startIndex.toString()),
+    ),
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),
     sharedElementPrefix: String? = null,
     avatarSharedElementKey: String? = null,
+    miscQueryParams: Map<String, List<String>> = emptyMap(),
     referringRouteOption: ReferringRouteOption = ReferringRouteOption.Current,
 ): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
     path = path,
     models = models,
     sharedElementPrefix = sharedElementPrefix,
     avatarSharedElementKey = avatarSharedElementKey,
+    miscQueries = miscQueryParams,
     referringRouteOption = referringRouteOption,
 )
 
@@ -168,38 +186,18 @@ interface NavigationAction {
 
     sealed interface Destination : NavigationAction {
 
-        data class ToMedia(
-            val post: Post,
-            val media: Embed.Media,
-            val startIndex: Int,
-            val sharedElementPrefix: String,
-        ) : Destination {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/post/${post.cid.id}/gallery",
-                        queryParams = mapOf(
-                            "post" to listOf(post.toUrlEncodedBase64()),
-                            "media" to listOf(media.toUrlEncodedBase64()),
-                            "startIndex" to listOf(startIndex.toString()),
-                            "sharedElementPrefix" to listOf(sharedElementPrefix),
-                        )
-                    ).toRoute
-                )
-            }
-        }
-
         data class ToRawUrl(
             val path: String,
             val sharedElementPrefix: String? = null,
             val avatarSharedElementKey: String? = null,
             val models: List<UrlEncodableModel> = emptyList(),
+            val miscQueries: Map<String, List<String>> = emptyMap(),
             val referringRouteOption: ReferringRouteOption,
         ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 routeString(
                     path = path,
-                    queryParams = mapOf(
+                    queryParams = miscQueries + mapOf(
                         "model" to models.map { it.toUrlEncodedBase64() },
                         "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
