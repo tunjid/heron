@@ -18,9 +18,9 @@ package com.tunjid.heron.postdetail
 
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.postdetail.di.model
-import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -46,6 +46,10 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
+fun State(route: Route) = State(
+    anchorPost = route.model as? Post,
+    sharedElementPrefix = route.sharedElementPrefix,
+)
 
 sealed class Action(val key: String) {
 
@@ -61,8 +65,3 @@ sealed class Action(val key: String) {
         ) : Navigate(), NavigationAction by delegate
     }
 }
-
-fun State(route: Route) = State(
-    anchorPost = route.model as? Post,
-    sharedElementPrefix = route.sharedElementPrefix,
-)

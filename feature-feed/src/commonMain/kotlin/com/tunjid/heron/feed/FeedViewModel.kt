@@ -26,8 +26,6 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.feed.di.model
-import com.tunjid.heron.feed.di.sharedElementPrefix
 import com.tunjid.heron.feed.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -74,10 +72,7 @@ class ActualFeedViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), FeedStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        model = route.model,
-        sharedElementPrefix = route.sharedElementPrefix,
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     actionTransform = transform@{ actions ->
         merge(

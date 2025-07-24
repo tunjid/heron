@@ -21,12 +21,14 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -44,28 +46,11 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
-
-sealed class Action(val key: String) {
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
-
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
-    }
-}
-
 fun State(
-    model: UrlEncodableModel?,
-    sharedElementPrefix: String?,
+    route: Route,
 ) = State(
-    sharedElementPrefix = sharedElementPrefix,
-    timelineState = model?.let { model ->
+    sharedElementPrefix = route.sharedElementPrefix,
+    timelineState = route.model?.let { model ->
         if (model !is FeedGenerator) return@let null
         val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
         TimelineState(
@@ -83,3 +68,18 @@ fun State(
         )
     }
 )
+
+sealed class Action(val key: String) {
+
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
+
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
+
+        data class To(
+            val delegate: NavigationAction.Destination,
+        ) : Navigate(), NavigationAction by delegate
+    }
+}

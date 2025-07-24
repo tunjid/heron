@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.UrlEncodableModel
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -38,8 +39,6 @@ import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.scaffold.navigation.NavigationAction.Destination
-import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -52,7 +51,10 @@ import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
@@ -76,15 +78,28 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
+
+val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
+    mapper = String::fromBase64EncodedUrl
+)
+
+val Route.avatarSharedElementKey by optionalRouteQuery()
+
+@OptIn(ExperimentalUuidApi::class)
+val Route.sharedElementPrefix by routeQuery(
+    default = Uuid.random().toHexString(),
+)
 
 fun profileDestination(
     profile: Profile,
     avatarSharedElementKey: String?,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): Destination = pathDestination(
+): NavigationAction.Destination = pathDestination(
     path = "/profile/${profile.did.id}",
     model = profile,
     sharedElementPrefix = null,
@@ -96,7 +111,7 @@ fun postDestination(
     post: Post,
     sharedElementPrefix: String,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): Destination = pathDestination(
+): NavigationAction.Destination = pathDestination(
     path = post.uri.path,
     model = post,
     sharedElementPrefix = sharedElementPrefix,
@@ -108,8 +123,8 @@ fun pathDestination(
     model: UrlEncodableModel? = null,
     sharedElementPrefix: String? = null,
     avatarSharedElementKey: String? = null,
-    referringRouteOption: ReferringRouteOption,
-): Destination = Destination.ToRawUrl(
+    referringRouteOption: NavigationAction.ReferringRouteOption,
+): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
     path = path,
     model = model,
     sharedElementPrefix = sharedElementPrefix,

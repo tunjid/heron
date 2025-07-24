@@ -19,31 +19,24 @@ package com.tunjid.heron.list
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.list.di.model
-import com.tunjid.heron.list.di.sharedElementPrefix
 import com.tunjid.heron.list.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -92,10 +85,7 @@ class ActualListViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ListStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        model = route.model,
-        sharedElementPrefix = route.sharedElementPrefix,
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     actionTransform = transform@{ actions ->
         merge(

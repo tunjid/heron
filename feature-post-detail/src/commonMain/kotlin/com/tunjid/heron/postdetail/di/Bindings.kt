@@ -28,8 +28,6 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.UrlEncodableModel
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
@@ -62,9 +60,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
-import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -74,8 +70,6 @@ import dev.zacsweers.metro.StringKey
 import heron.feature_post_detail.generated.resources.Res
 import heron.feature_post_detail.generated.resources.reply
 import org.jetbrains.compose.resources.stringResource
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
 private const val RouteUriPattern = "/{profileHandleOrId}/app.bsky.feed.post/{postRecordKey}"
@@ -89,21 +83,12 @@ private fun createRoute(
     )
 )
 
-internal val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl,
-)
-
 internal val Route.postRecordKey by mappedRoutePath(
     mapper = ::RecordKey,
 )
 
 internal val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId,
-)
-
-@OptIn(ExperimentalUuidApi::class)
-internal val Route.sharedElementPrefix by routeQuery(
-    default = Uuid.random().toHexString(),
 )
 
 @BindingContainer
