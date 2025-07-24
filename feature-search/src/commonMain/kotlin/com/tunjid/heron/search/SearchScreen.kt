@@ -68,8 +68,9 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
@@ -124,7 +125,7 @@ internal fun SearchScreen(
             { profileWithViewerState ->
                 actions(
                     Action.Navigate.To(
-                        profile(
+                        profileDestination(
                             profile = profileWithViewerState.profile,
                             avatarSharedElementKey = profileWithViewerState
                                 .profile
@@ -154,7 +155,7 @@ internal fun SearchScreen(
             { profileSearchResult ->
                 actions(
                     Action.Navigate.To(
-                        profile(
+                        profileDestination(
                             profile = profileSearchResult.profileWithViewerState.profile,
                             avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
@@ -167,7 +168,7 @@ internal fun SearchScreen(
             { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.To(
-                        profile(
+                        profileDestination(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = result.post.author,
                             avatarSharedElementKey = result.post.avatarSharedElementKey(
@@ -182,7 +183,7 @@ internal fun SearchScreen(
             { listMember: ListMember ->
                 actions(
                     Action.Navigate.To(
-                        profile(
+                        profileDestination(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = listMember.subject,
                             avatarSharedElementKey = listMember.avatarSharedElementKey()
@@ -195,7 +196,7 @@ internal fun SearchScreen(
             { trend: Trend ->
                 actions(
                     Action.Navigate.To(
-                        NavigationAction.Destination.ToRawUrl(
+                        pathDestination(
                             path = trend.link,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )
@@ -207,7 +208,7 @@ internal fun SearchScreen(
             { feedGenerator: FeedGenerator ->
                 actions(
                     Action.Navigate.To(
-                        NavigationAction.Destination.ToRawUrl(
+                        pathDestination(
                             path = feedGenerator.uri.path,
                             model = feedGenerator,
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
@@ -221,7 +222,7 @@ internal fun SearchScreen(
             { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.To(
-                        post(
+                        postDestination(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             sharedElementPrefix = result.sharedElementPrefix,
                             post = result.post,

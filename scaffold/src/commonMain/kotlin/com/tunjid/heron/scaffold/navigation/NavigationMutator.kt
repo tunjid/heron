@@ -39,6 +39,7 @@ import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.Destination
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -79,11 +80,11 @@ import org.jetbrains.compose.resources.StringResource
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
-fun profile(
+fun profileDestination(
     profile: Profile,
     avatarSharedElementKey: String?,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): Destination = Destination.ToRawUrl(
+): Destination = pathDestination(
     path = "/profile/${profile.did.id}",
     model = profile,
     sharedElementPrefix = null,
@@ -91,14 +92,28 @@ fun profile(
     referringRouteOption = referringRouteOption,
 )
 
-fun post(
+fun postDestination(
     post: Post,
     sharedElementPrefix: String,
     referringRouteOption: NavigationAction.ReferringRouteOption,
-): Destination = Destination.ToRawUrl(
+): Destination = pathDestination(
     path = post.uri.path,
     model = post,
     sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = referringRouteOption,
+)
+
+fun pathDestination(
+    path: String,
+    model: UrlEncodableModel? = null,
+    sharedElementPrefix: String? = null,
+    avatarSharedElementKey: String? = null,
+    referringRouteOption: ReferringRouteOption,
+): Destination = Destination.ToRawUrl(
+    path = path,
+    model = model,
+    sharedElementPrefix = sharedElementPrefix,
+    avatarSharedElementKey = avatarSharedElementKey,
     referringRouteOption = referringRouteOption,
 )
 

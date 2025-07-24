@@ -43,8 +43,8 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -110,7 +110,7 @@ internal fun PostDetailScreen(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        post(
+                                        postDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
                                                 quotingPostId = quotingPostId,
@@ -124,7 +124,7 @@ internal fun PostDetailScreen(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        profile(
+                                        profileDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                             profile = profile,
                                             avatarSharedElementKey = post.avatarSharedElementKey(

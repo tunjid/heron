@@ -51,8 +51,8 @@ import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -81,7 +81,7 @@ internal fun NotificationsScreen(
         { notification, profile ->
             actions(
                 Action.Navigate.To(
-                    profile(
+                    profileDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile)
@@ -94,7 +94,7 @@ internal fun NotificationsScreen(
         { notification, profile ->
             actions(
                 Action.Navigate.To(
-                    profile(
+                    profileDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
@@ -109,7 +109,7 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    post(
+                    postDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
                         post = notification.associatedPost,
