@@ -118,12 +118,21 @@ fun postDestination(
     referringRouteOption = referringRouteOption,
 )
 
+fun composePostDestination(
+    type: Post.Create? = null,
+    sharedElementPrefix: String? = null,
+): NavigationAction.Destination = pathDestination(
+    path = "/compose",
+    model = type,
+    sharedElementPrefix = sharedElementPrefix,
+)
+
 fun pathDestination(
     path: String,
     model: UrlEncodableModel? = null,
     sharedElementPrefix: String? = null,
     avatarSharedElementKey: String? = null,
-    referringRouteOption: NavigationAction.ReferringRouteOption,
+    referringRouteOption: NavigationAction.ReferringRouteOption = NavigationAction.ReferringRouteOption.Current,
 ): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
     path = path,
     model = model,
@@ -145,23 +154,6 @@ interface NavigationAction {
     }
 
     sealed interface Destination : NavigationAction {
-
-        data class ComposePost(
-            val type: Post.Create,
-            val sharedElementPrefix: String?,
-        ) : Destination {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/compose",
-                        queryParams = mapOf(
-                            "creationType" to listOf(type.toUrlEncodedBase64()),
-                            "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
-                        )
-                    ).toRoute
-                )
-            }
-        }
 
         data class ToMedia(
             val post: Post,

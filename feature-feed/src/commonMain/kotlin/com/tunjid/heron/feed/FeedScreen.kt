@@ -50,6 +50,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -237,7 +238,7 @@ private fun FeedTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                NavigationAction.Destination.ComposePost(
+                                                composePostDestination(
                                                     type = Post.Create.Reply(
                                                         parent = post,
                                                     ),

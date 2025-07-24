@@ -62,6 +62,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -351,7 +352,7 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                NavigationAction.Destination.ComposePost(
+                                                composePostDestination(
                                                     type = Post.Create.Reply(
                                                         parent = post,
                                                     ),
@@ -380,7 +381,7 @@ private fun HomeTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )

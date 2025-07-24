@@ -17,12 +17,8 @@
 package com.tunjid.heron.compose
 
 
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.compose.di.creationType
-import com.tunjid.heron.compose.di.sharedElementPrefix
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostId
@@ -34,6 +30,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -78,35 +75,16 @@ class ActualComposeViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ComposeStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        postText = TextFieldValue(
-            AnnotatedString(
-                when (val postType = route.creationType) {
-                    is Post.Create.Mention -> "@${postType.profile.handle}"
-                    is Post.Create.Reply,
-                    is Post.Create.Quote,
-                    Post.Create.Timeline,
-                    null,
-                        -> ""
-                }
-            )
-        ),
-        sharedElementPrefix = route.sharedElementPrefix,
-        postType = route.creationType,
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadSignedInProfileMutations(
             authRepository = authRepository,
         ),
         quotedPostMutations(
-            quotedPostId = when (val creationType = route.creationType) {
+            quotedPostId = when (val creationType = route.model) {
                 is Post.Create.Quote -> creationType.interaction.postId
-                is Post.Create.Mention,
-                is Post.Create.Reply,
-                Post.Create.Timeline,
-                null,
-                    -> null
+                else -> null
             },
             postRepository = postRepository,
         )

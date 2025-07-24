@@ -68,6 +68,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
@@ -292,7 +293,7 @@ internal fun SearchScreen(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )

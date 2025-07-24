@@ -37,9 +37,9 @@ import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -171,7 +171,7 @@ class ProfileBindings(
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    NavigationAction.Destination.ComposePost(
+                                    composePostDestination(
                                         type =
                                             if (state.isSignedInProfile) Post.Create.Timeline
                                             else Post.Create.Mention(state.profile),

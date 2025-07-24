@@ -36,9 +36,9 @@ import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -191,7 +191,7 @@ class PostDetailBindings(
                             val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    NavigationAction.Destination.ComposePost(
+                                    composePostDestination(
                                         type = Post.Create.Reply(
                                             parent = anchorPost,
                                         ),

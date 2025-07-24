@@ -95,6 +95,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -799,7 +800,8 @@ private fun ProfileTimeline(
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
                                 onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             postDestination(
@@ -813,7 +815,8 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             profileDestination(
@@ -830,7 +833,8 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             NavigationAction.Destination.ToMedia(
@@ -845,10 +849,11 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Destination.ComposePost(
+                                            composePostDestination(
                                                 type = Post.Create.Reply(
                                                     parent = post,
                                                 ),
@@ -876,7 +881,7 @@ private fun ProfileTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )

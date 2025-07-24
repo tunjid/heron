@@ -51,6 +51,7 @@ import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -122,7 +123,7 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Reply(
                             parent = notification.associatedPost,
                         ),
@@ -290,7 +291,7 @@ internal fun NotificationsScreen(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
                     )
