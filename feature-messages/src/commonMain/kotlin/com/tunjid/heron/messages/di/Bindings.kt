@@ -39,7 +39,7 @@ import com.tunjid.heron.messages.MessagesScreen
 import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -145,7 +145,7 @@ class MessagesBindings(
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    profile(
+                                    profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,

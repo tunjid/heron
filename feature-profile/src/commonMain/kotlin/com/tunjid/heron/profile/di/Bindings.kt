@@ -30,8 +30,6 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.UrlEncodableModel
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.profile.Action
@@ -39,9 +37,9 @@ import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -63,8 +61,6 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
-import com.tunjid.treenav.strings.optionalMappedRouteQuery
-import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -90,12 +86,6 @@ private fun createRoute(
 
 internal val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId
-)
-
-internal val Route.avatarSharedElementKey by optionalRouteQuery()
-
-internal val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl,
 )
 
 @BindingContainer
@@ -181,7 +171,7 @@ class ProfileBindings(
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    NavigationAction.Destination.ComposePost(
+                                    composePostDestination(
                                         type =
                                             if (state.isSignedInProfile) Post.Create.Timeline
                                             else Post.Create.Mention(state.profile),

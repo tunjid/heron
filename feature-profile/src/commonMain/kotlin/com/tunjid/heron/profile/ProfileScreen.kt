@@ -95,8 +95,12 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.galleryDestination
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
+import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -241,8 +245,8 @@ internal fun ProfileScreen(
                         )
                     }
                 },
-                onNavigateToProfiles = { navigationAction ->
-                    actions(Action.Navigate.To(navigationAction))
+                onNavigate = { destination ->
+                    actions(Action.Navigate.To(destination))
                 },
                 onProfileAvatarClicked = {
                     actions(
@@ -321,7 +325,7 @@ private fun ProfileHeader(
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
 ) {
     Box(
@@ -370,7 +374,7 @@ private fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     followsSignInProfile = viewerState?.followedBy != null,
-                    onNavigateToProfiles = onNavigateToProfiles,
+                    onNavigateToProfiles = onNavigate,
                 )
                 Text(text = profile.description ?: "")
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
@@ -559,7 +563,7 @@ private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
     followsSignInProfile: Boolean,
-    onNavigateToProfiles: (NavigationAction.Destination.ToProfiles.Profile) -> Unit,
+    onNavigateToProfiles: (NavigationAction.Destination) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -571,7 +575,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.followers),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Destination.ToProfiles.Profile.Followers(
+                    profileFollowersDestination(
                         profileId = profile.did,
                     ),
                 )
@@ -582,7 +586,7 @@ private fun ProfileStats(
             description = stringResource(Res.string.following),
             onClick = {
                 onNavigateToProfiles(
-                    NavigationAction.Destination.ToProfiles.Profile.Following(
+                    profileFollowsDestination(
                         profileId = profile.did,
                     ),
                 )
@@ -799,10 +803,11 @@ private fun ProfileTimeline(
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
                                 onPostClicked = { post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            post(
+                                            postDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                     quotingPostId = quotingPostId,
@@ -813,10 +818,11 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            profile(
+                                            profileDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                                 profile = profile,
                                                 avatarSharedElementKey = post
@@ -830,10 +836,11 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Destination.ToMedia(
+                                            galleryDestination(
                                                 post = post,
                                                 media = media,
                                                 startIndex = index,
@@ -845,10 +852,11 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            NavigationAction.Destination.ComposePost(
+                                            composePostDestination(
                                                 type = Post.Create.Reply(
                                                     parent = post,
                                                 ),
@@ -876,7 +884,7 @@ private fun ProfileTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )

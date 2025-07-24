@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -85,7 +86,7 @@ internal fun MessagesScreen(
                     onConversationClicked = {
                         actions(
                             Action.Navigate.To(
-                                NavigationAction.Destination.ToConversation(
+                                conversationDestination(
                                     id = conversation.id,
                                     members = conversation.members,
                                     sharedElementPrefix = conversation.id.id,

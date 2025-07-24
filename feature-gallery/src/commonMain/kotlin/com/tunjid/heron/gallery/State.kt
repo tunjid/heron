@@ -16,10 +16,16 @@
 
 package com.tunjid.heron.gallery
 
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.gallery.di.postId
+import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.treenav.pop
+import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
@@ -35,6 +41,19 @@ data class State(
     val items: List<GalleryItem> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
+)
+
+fun State(
+    route: Route
+) = State(
+    startIndex = route.startIndex,
+    postId = route.postId,
+    sharedElementPrefix = route.sharedElementPrefix,
+    items = when (val media = route.model<Embed.Media>()) {
+        is ImageList -> media.images.map(GalleryItem::Photo)
+        is Video -> listOf(GalleryItem.Video(media))
+        null -> emptyList()
+    }
 )
 
 sealed class GalleryItem {

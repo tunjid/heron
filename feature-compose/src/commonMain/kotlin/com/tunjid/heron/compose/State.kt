@@ -16,12 +16,16 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.treenav.strings.Route
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import kotlinx.serialization.Serializable
@@ -44,6 +48,28 @@ data class State(
     @Transient
     val messages: List<String> = emptyList(),
 )
+
+fun State(route: Route): State = when (val model = route.model) {
+    is Post.Create -> State(
+        postText = TextFieldValue(
+            AnnotatedString(
+                when (model) {
+                    is Post.Create.Mention -> "@${model.profile.handle}"
+                    is Post.Create.Reply,
+                    is Post.Create.Quote,
+                    Post.Create.Timeline,
+                        -> ""
+                }
+            )
+        ),
+        sharedElementPrefix = route.sharedElementPrefix,
+        postType = model,
+    )
+
+    else -> State(
+        sharedElementPrefix = route.sharedElementPrefix,
+    )
+}
 
 val State.hasLongPost
     get() = when (val type = postType) {
@@ -144,6 +170,5 @@ sealed class Action(val key: String) {
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
-
     }
 }

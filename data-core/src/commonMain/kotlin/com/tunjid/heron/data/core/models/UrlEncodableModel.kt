@@ -55,10 +55,6 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  */
 sealed interface UrlEncodableModel
 
-
-inline fun <reified T : UrlEncodableModel> ByteArray.fromBytes(): T =
-    ModelSerializerFormat.decodeFromByteArray(this)
-
 inline fun <reified T : UrlEncodableModel> T.toBytes(): ByteArray =
     ModelSerializerFormat.encodeToByteArray(value = this)
 
@@ -71,6 +67,7 @@ inline fun <reified T : UrlEncodableModel> T.toUrlEncodedBase64(): String =
     ModelUrlSafeBase64.encode(toBytes())
 
 
+// This is brittle. Code gen should do this
 val ModelSerializerFormat: BinaryFormat = Cbor {
     ignoreUnknownKeys = true
     serializersModule = SerializersModule {
@@ -80,6 +77,16 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(FeedGenerator::class)
             subclass(FeedList::class)
             subclass(StarterPack::class)
+
+            subclass(Post.Create::class)
+            subclass(Post.Create.Reply::class)
+            subclass(Post.Create.Mention::class)
+            subclass(Post.Create.Quote::class)
+            subclass(Post.Create.Timeline::class)
+
+            subclass(Embed.Media::class)
+            subclass(Video::class)
+            subclass(ImageList::class)
         }
         polymorphic(Id::class) {
             subclass(PostId::class)

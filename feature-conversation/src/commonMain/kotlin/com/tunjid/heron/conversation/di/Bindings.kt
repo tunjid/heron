@@ -39,7 +39,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -76,11 +76,6 @@ private fun createRoute(
 internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
 )
-
-internal val Route.members: List<Profile>
-    get() = routeParams.queryParams["model"]
-        ?.map { it.fromBase64EncodedUrl() }
-        ?: emptyList()
 
 @BindingContainer
 object ConversationNavigationBindings {
@@ -160,7 +155,7 @@ class ConversationBindings(
                                 onProfileClicked = { profile ->
                                     viewModel.accept(
                                         Action.Navigate.To(
-                                            profile(
+                                            profileDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 profile = profile,
                                                 avatarSharedElementKey = profile.conversationSharedElementKey(

@@ -60,8 +60,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -170,7 +170,7 @@ private fun Message(
                     .clickable {
                         actions(
                             Action.Navigate.To(
-                                profile(
+                                profileDestination(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = message.sender,
                                     avatarSharedElementKey = message.avatarSharedElementKey(),
@@ -343,7 +343,7 @@ private fun PostMessage(
                 onPostClicked = { post, quotingPostId ->
                     actions(
                         Action.Navigate.To(
-                            post(
+                            postDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
                                     quotingPostId = quotingPostId,
@@ -356,7 +356,7 @@ private fun PostMessage(
                 onProfileClicked = { profile, post, quotingPostId ->
                     actions(
                         Action.Navigate.To(
-                            profile(
+                            profileDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = profile,
                                 avatarSharedElementKey = post.avatarSharedElementKey(

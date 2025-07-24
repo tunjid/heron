@@ -41,6 +41,7 @@ import com.tunjid.heron.profile.ProfileCollection.OfLists
 import com.tunjid.heron.profile.ProfileCollection.OfStarterPacks
 import com.tunjid.heron.profile.ProfileCollectionStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -85,13 +86,15 @@ internal fun ProfileCollection(
                     onCollectionClicked = { collection ->
                         actions(
                             Action.Navigate.To(
-                                NavigationAction.Destination.ToRawUrl(
+                                pathDestination(
                                     path = collection.uriPath,
-                                    model = when (collection) {
-                                        is OfFeedGenerators -> collection.feedGenerator
-                                        is OfLists -> collection.list
-                                        is OfStarterPacks -> collection.starterPack
-                                    },
+                                    models = listOf(
+                                        when (collection) {
+                                            is OfFeedGenerators -> collection.feedGenerator
+                                            is OfLists -> collection.list
+                                            is OfStarterPacks -> collection.starterPack
+                                        }
+                                    ),
                                     sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 )
@@ -123,10 +126,10 @@ private fun ProfileCollection(
     title: StringResource,
     collection: ProfileCollection,
     onCollectionClicked: (ProfileCollection) -> Unit,
-) = with(movableElementSharedTransitionScope){
+) = with(movableElementSharedTransitionScope) {
     CollectionLayout(
         modifier = modifier,
-        movableElementSharedTransitionScope=movableElementSharedTransitionScope,
+        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = collection.title,
         subtitle = stringResource(
             Res.string.collection_by,
@@ -210,9 +213,11 @@ private val ProfileCollection.avatarSharedElementKey: String
         is OfFeedGenerators -> feedGenerator.avatarSharedElementKey(
             ProfileCollectionSharedElementPrefix
         )
+
         is OfLists -> list.avatarSharedElementKey(
             ProfileCollectionSharedElementPrefix
         )
+
         is OfStarterPacks -> starterPack.avatarSharedElementKey(
             ProfileCollectionSharedElementPrefix
         )

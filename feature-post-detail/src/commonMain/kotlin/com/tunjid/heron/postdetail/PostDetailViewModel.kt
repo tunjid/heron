@@ -27,7 +27,6 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.postRecordKey
 import com.tunjid.heron.postdetail.di.profileHandleOrId
-import com.tunjid.heron.postdetail.di.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator

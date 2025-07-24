@@ -42,8 +42,6 @@ import com.tunjid.heron.compose.RouteViewModelInitializer
 import com.tunjid.heron.compose.ui.BottomAppBarFab
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.TopAppBarFab
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -59,8 +57,6 @@ import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
-import com.tunjid.treenav.strings.optionalMappedRouteQuery
-import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -76,12 +72,6 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
 )
-
-internal val Route.creationType: Post.Create? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl
-)
-
-internal val Route.sharedElementPrefix by optionalRouteQuery()
 
 @BindingContainer
 object ComposeNavigationBindings {

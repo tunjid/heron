@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation
 
+import com.tunjid.heron.conversation.di.conversationId
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
@@ -23,10 +24,13 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.collections.filterIsInstance
 
 
 @Serializable
@@ -40,6 +44,22 @@ data class State(
     val messages: List<String> = emptyList(),
 ) : TilingState<MessageQuery, Message>
 
+fun State(
+ route: Route
+) = State(
+    id = route.conversationId,
+    members = route.models.filterIsInstance<Profile>(),
+    tilingData = TilingState.Data(
+        currentQuery = MessageQuery(
+            conversationId = route.conversationId,
+            data = CursorQuery.Data(
+                page = 0,
+                cursorAnchor = Clock.System.now(),
+                limit = 15
+            )
+        )
+    )
+)
 
 sealed class Action(val key: String) {
 
@@ -59,21 +79,3 @@ sealed class Action(val key: String) {
         ) : Navigate(), NavigationAction by delegate
     }
 }
-
-fun State(
-    conversationId: ConversationId,
-    members: List<Profile>,
-) = State(
-    id = conversationId,
-    members = members,
-    tilingData = TilingState.Data(
-        currentQuery = MessageQuery(
-            conversationId = conversationId,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15
-            )
-        )
-    )
-)

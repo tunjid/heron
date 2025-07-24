@@ -112,20 +112,20 @@ data class Post(
         @Serializable
         data class Reply(
             val parent: Post,
-        ) : Create()
+        ) : Create(), UrlEncodableModel
 
         @Serializable
         data class Mention(
             val profile: Profile,
-        ) : Create()
+        ) : Create(), UrlEncodableModel
 
         @Serializable
         data class Quote(
             val interaction: Interaction.Create.Repost,
-        ) : Create()
+        ) : Create(), UrlEncodableModel
 
         @Serializable
-        data object Timeline : Create()
+        data object Timeline : Create(), UrlEncodableModel
 
         @Serializable
         data class Request(

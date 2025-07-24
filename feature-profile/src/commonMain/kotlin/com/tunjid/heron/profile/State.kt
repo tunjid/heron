@@ -28,14 +28,14 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
-import com.tunjid.heron.profile.di.avatarSharedElementKey
-import com.tunjid.heron.profile.di.model
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.currentRoute
+import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -63,6 +63,15 @@ data class State(
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
     @Transient
     val messages: List<String> = emptyList(),
+)
+
+fun State(route: Route) = State(
+    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+    profile = (route.model as? Profile) ?: stubProfile(
+        did = ProfileId(route.profileHandleOrId.id),
+        handle = ProfileHandle(route.profileHandleOrId.id),
+        avatar = null,
+    ),
 )
 
 sealed class ProfileScreenStateHolders {
@@ -177,12 +186,3 @@ sealed class Action(val key: String) {
         }
     }
 }
-
-internal fun State(route: Route) = State(
-    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    profile = (route.model as? Profile) ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-)

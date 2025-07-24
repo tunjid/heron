@@ -62,8 +62,10 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.post
-import com.tunjid.heron.scaffold.navigation.profile
+import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.galleryDestination
+import com.tunjid.heron.scaffold.navigation.postDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -302,7 +304,7 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                post(
+                                                postDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostId = quotingPostId,
@@ -317,7 +319,7 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                profile(
+                                                profileDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                                     profile = profile,
                                                     avatarSharedElementKey = post
@@ -335,7 +337,7 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                NavigationAction.Destination.ToMedia(
+                                                galleryDestination(
                                                     post = post,
                                                     media = media,
                                                     startIndex = index,
@@ -351,7 +353,7 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                NavigationAction.Destination.ComposePost(
+                                                composePostDestination(
                                                     type = Post.Create.Reply(
                                                         parent = post,
                                                     ),
@@ -380,7 +382,7 @@ private fun HomeTimeline(
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
-                    NavigationAction.Destination.ComposePost(
+                    composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                     )
