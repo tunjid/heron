@@ -88,11 +88,13 @@ internal fun ProfileCollection(
                             Action.Navigate.To(
                                 pathDestination(
                                     path = collection.uriPath,
-                                    model = when (collection) {
-                                        is OfFeedGenerators -> collection.feedGenerator
-                                        is OfLists -> collection.list
-                                        is OfStarterPacks -> collection.starterPack
-                                    },
+                                    models = listOf(
+                                        when (collection) {
+                                            is OfFeedGenerators -> collection.feedGenerator
+                                            is OfLists -> collection.list
+                                            is OfStarterPacks -> collection.starterPack
+                                        }
+                                    ),
                                     sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 )

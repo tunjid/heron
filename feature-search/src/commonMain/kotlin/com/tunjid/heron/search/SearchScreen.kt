@@ -211,7 +211,7 @@ internal fun SearchScreen(
                     Action.Navigate.To(
                         pathDestination(
                             path = feedGenerator.uri.path,
-                            model = feedGenerator,
+                            models = listOf(feedGenerator),
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )

@@ -39,6 +39,7 @@ import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -101,7 +102,7 @@ fun profileDestination(
     referringRouteOption: NavigationAction.ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profile.did.id}",
-    model = profile,
+    models = listOf(profile),
     sharedElementPrefix = null,
     avatarSharedElementKey = avatarSharedElementKey,
     referringRouteOption = referringRouteOption,
@@ -113,7 +114,7 @@ fun postDestination(
     referringRouteOption: NavigationAction.ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = post.uri.path,
-    model = post,
+    models = listOf(post),
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = referringRouteOption,
 )
@@ -123,19 +124,31 @@ fun composePostDestination(
     sharedElementPrefix: String? = null,
 ): NavigationAction.Destination = pathDestination(
     path = "/compose",
-    model = type,
+    models = listOfNotNull(type),
     sharedElementPrefix = sharedElementPrefix,
+)
+
+fun conversationDestination(
+    id: ConversationId,
+    members: List<Profile> = emptyList(),
+    sharedElementPrefix: String? = null,
+    referringRouteOption: ReferringRouteOption,
+): NavigationAction.Destination = pathDestination(
+    path = "/messages/${id.id}",
+    models = members,
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = referringRouteOption,
 )
 
 fun pathDestination(
     path: String,
-    model: UrlEncodableModel? = null,
+    models: List<UrlEncodableModel> = emptyList(),
     sharedElementPrefix: String? = null,
     avatarSharedElementKey: String? = null,
-    referringRouteOption: NavigationAction.ReferringRouteOption = NavigationAction.ReferringRouteOption.Current,
+    referringRouteOption: ReferringRouteOption = ReferringRouteOption.Current,
 ): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
     path = path,
-    model = model,
+    models = models,
     sharedElementPrefix = sharedElementPrefix,
     avatarSharedElementKey = avatarSharedElementKey,
     referringRouteOption = referringRouteOption,
@@ -178,16 +191,16 @@ interface NavigationAction {
 
         data class ToRawUrl(
             val path: String,
-            val model: UrlEncodableModel? = null,
             val sharedElementPrefix: String? = null,
             val avatarSharedElementKey: String? = null,
+            val models: List<UrlEncodableModel> = emptyList(),
             val referringRouteOption: ReferringRouteOption,
         ) : Destination {
             override val navigationMutation: NavigationMutation = {
                 routeString(
                     path = path,
                     queryParams = mapOf(
-                        "model" to listOfNotNull(model?.toUrlEncodedBase64()),
+                        "model" to models.map { it.toUrlEncodedBase64() },
                         "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
                         referringRouteQueryParams(referringRouteOption),
@@ -196,26 +209,6 @@ interface NavigationAction {
                     .takeIf { it.id != currentRoute.id }
                     ?.let(navState::push)
                     ?: navState
-            }
-        }
-
-        data class ToConversation(
-            val id: ConversationId,
-            val members: List<Profile> = emptyList(),
-            val sharedElementPrefix: String? = null,
-            val referringRouteOption: ReferringRouteOption,
-        ) : Destination {
-            override val navigationMutation: NavigationMutation = {
-                navState.push(
-                    routeString(
-                        path = "/messages/${id.id}",
-                        queryParams = mapOf(
-                            "model" to members.map { it.toUrlEncodedBase64() },
-                            "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
-                            referringRouteQueryParams(referringRouteOption),
-                        )
-                    ).toRoute
-                )
             }
         }
 
