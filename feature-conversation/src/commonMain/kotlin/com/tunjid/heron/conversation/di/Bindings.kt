@@ -77,11 +77,6 @@ internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
 )
 
-internal val Route.members: List<Profile>
-    get() = routeParams.queryParams["model"]
-        ?.map { it.fromBase64EncodedUrl() }
-        ?: emptyList()
-
 @BindingContainer
 object ConversationNavigationBindings {
 

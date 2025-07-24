@@ -91,6 +91,11 @@ val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
 
 inline fun <reified T> Route.model(): T? = model as? T
 
+val Route.models: List<UrlEncodableModel>
+    get() = routeParams.queryParams["model"]
+        ?.map(String::fromBase64EncodedUrl)
+        ?: emptyList()
+
 val Route.avatarSharedElementKey by optionalRouteQuery()
 
 @OptIn(ExperimentalUuidApi::class)
@@ -228,7 +233,7 @@ interface NavigationAction {
                 routeString(
                     path = path,
                     queryParams = miscQueries + mapOf(
-                        "model" to models.map { it.toUrlEncodedBase64() },
+                        "model" to models.map(UrlEncodableModel::toUrlEncodedBase64),
                         "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
                         referringRouteQueryParams(referringRouteOption),

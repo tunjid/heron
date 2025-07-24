@@ -18,8 +18,6 @@ package com.tunjid.heron.conversation
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.conversation.di.conversationId
-import com.tunjid.heron.conversation.di.members
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -70,10 +68,7 @@ class ActualConversationViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), ConversationStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        conversationId = route.conversationId,
-        members = route.members,
-    ),
+    initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadProfileMutations(
