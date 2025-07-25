@@ -29,7 +29,6 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 
 @Dao
 interface MessageDao {
@@ -67,7 +66,6 @@ interface MessageDao {
         """
             SELECT * FROM messages
             WHERE conversationId = :conversationId
-            AND sentAt < :before
             ORDER BY sentAt
             DESC
             LIMIT :limit
@@ -76,7 +74,6 @@ interface MessageDao {
     )
     fun messages(
         conversationId: String,
-        before: Instant,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedMessageEntity>>

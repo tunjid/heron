@@ -150,7 +150,6 @@ internal class OfflineMessageRepository @Inject constructor(
         combine(
             messageDao.messages(
                 conversationId = query.conversationId.id,
-                before = query.data.cursorAnchor,
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
