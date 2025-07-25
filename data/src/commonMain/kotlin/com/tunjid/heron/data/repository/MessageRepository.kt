@@ -16,11 +16,19 @@
 
 package com.tunjid.heron.data.repository
 
+import chat.bsky.convo.DeletedMessageView
+import chat.bsky.convo.GetLogQueryParams
+import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
 import chat.bsky.convo.GetMessagesResponse
 import chat.bsky.convo.GetMessagesResponseMessageUnion
 import chat.bsky.convo.ListConvosQueryParams
 import chat.bsky.convo.ListConvosResponse
+import chat.bsky.convo.LogAddReactionMessageUnion
+import chat.bsky.convo.LogCreateMessageMessageUnion
+import chat.bsky.convo.LogDeleteMessageMessageUnion
+import chat.bsky.convo.LogRemoveReactionMessageUnion
+import chat.bsky.convo.MessageView
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -37,18 +45,25 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class ConversationQuery(
@@ -74,6 +89,7 @@ interface MessageRepository {
         cursor: Cursor,
     ): Flow<CursorList<Message>>
 
+    suspend fun monitorConversationLogs()
 }
 
 internal class OfflineMessageRepository @Inject constructor(
@@ -231,6 +247,72 @@ internal class OfflineMessageRepository @Inject constructor(
             ::CursorList
         )
             .distinctUntilChanged()
+
+    override suspend fun monitorConversationLogs() {
+        flow {
+            while (true) {
+                emit(Unit)
+                delay(4.seconds)
+            }
+        }
+            .scan<Unit, String?>(null) { latestCursor, _ ->
+                val response = runCatchingWithNetworkRetry {
+                    networkService.api.getLog(GetLogQueryParams(latestCursor))
+                }
+                    .getOrNull()
+                    ?: return@scan latestCursor
+
+                if (latestCursor == null) {
+                    // First run. Api sets the cursor
+                    return@scan response.cursor
+                }
+
+                val logs = response.logs
+
+                val messages = LazyList<Pair<ConversationId, MessageView>>()
+                val deletedMessages = LazyList<Pair<ConversationId, DeletedMessageView>>()
+
+                val currentCursor = logs.fold(latestCursor) { cursor, union ->
+                    when (union) {
+                        is Log.AcceptConvo -> maxOf(cursor, union.value.rev)
+                        is Log.AddReaction -> union.maxCursor(deletedMessages, messages, cursor)
+                        is Log.BeginConvo -> maxOf(cursor, union.value.rev)
+                        is Log.CreateMessage -> union.maxCursor(deletedMessages, messages, cursor)
+                        is Log.DeleteMessage -> union.maxCursor(deletedMessages, messages, cursor)
+                        is Log.LeaveConvo -> maxOf(cursor, union.value.rev)
+                        is Log.MuteConvo -> maxOf(cursor, union.value.rev)
+                        is Log.ReadMessage -> maxOf(cursor, union.value.rev)
+                        is Log.RemoveReaction -> union.maxCursor(deletedMessages, messages, cursor)
+                        is Log.Unknown -> cursor
+                        is Log.UnmuteConvo -> maxOf(cursor, union.value.rev)
+                    }
+                }
+
+                // No changes
+                if (currentCursor <= latestCursor) return@scan latestCursor
+
+                val signedInProfileId = savedStateRepository.signedInProfileId
+
+                multipleEntitySaverProvider.saveInTransaction {
+                    deletedMessages.list.forEach { (conversationId, message) ->
+                        add(
+                            conversationId = conversationId,
+                            deletedMessageView = message,
+                        )
+                    }
+                    messages.list.forEach { (conversationId, message) ->
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            conversationId = conversationId,
+                            messageView = message,
+                        )
+                    }
+                }
+                return@scan currentCursor
+            }
+
+            .collect()
+    }
 }
 
 private inline fun <T, R> Collection<T>.toFlowOrEmpty(
@@ -240,3 +322,73 @@ private inline fun <T, R> Collection<T>.toFlowOrEmpty(
         isEmpty() -> emptyFlow()
         else -> block(this)
     }.onStart { emit(emptyList()) }
+
+private fun Log.AddReaction.maxCursor(
+    deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
+    messages: LazyList<Pair<ConversationId, MessageView>>,
+    logRev: String
+): String {
+    when (val message = value.message) {
+        is LogAddReactionMessageUnion.DeletedMessageView ->
+            deletedMessages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogAddReactionMessageUnion.MessageView ->
+            messages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogAddReactionMessageUnion.Unknown -> Unit
+    }
+    return maxOf(logRev, value.rev)
+}
+
+private fun Log.CreateMessage.maxCursor(
+    deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
+    messages: LazyList<Pair<ConversationId, MessageView>>,
+    logRev: String
+): String {
+    when (val message = value.message) {
+        is LogCreateMessageMessageUnion.DeletedMessageView ->
+            deletedMessages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogCreateMessageMessageUnion.MessageView ->
+            messages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogCreateMessageMessageUnion.Unknown -> Unit
+    }
+    return maxOf(logRev, value.rev)
+}
+
+private fun Log.DeleteMessage.maxCursor(
+    deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
+    messages: LazyList<Pair<ConversationId, MessageView>>,
+    logRev: String
+): String {
+    when (val message = value.message) {
+        is LogDeleteMessageMessageUnion.DeletedMessageView ->
+            deletedMessages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogDeleteMessageMessageUnion.MessageView ->
+            messages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogDeleteMessageMessageUnion.Unknown -> Unit
+
+    }
+    return maxOf(logRev, value.rev)
+}
+
+private fun Log.RemoveReaction.maxCursor(
+    deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
+    messages: LazyList<Pair<ConversationId, MessageView>>,
+    logRev: String
+): String {
+    when (val message = value.message) {
+        is LogRemoveReactionMessageUnion.DeletedMessageView ->
+            deletedMessages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogRemoveReactionMessageUnion.MessageView ->
+            messages.add(value.convoId.let(::ConversationId) to message.value)
+
+        is LogRemoveReactionMessageUnion.Unknown -> Unit
+
+    }
+    return maxOf(logRev, value.rev)
+}

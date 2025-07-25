@@ -57,9 +57,9 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import com.tunjid.heron.data.utilities.LazyList
 import dev.zacsweers.metro.Inject
 import kotlinx.datetime.Instant
-import kotlin.jvm.JvmInline
 
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
@@ -309,22 +309,3 @@ internal class MultipleEntitySaver(
 
 }
 
-/**
- * A memory-efficient list implementation that defers memory allocation
- * for the list storage until the first element is explicitly added.
- *
- * @param T The type of elements contained in the list.
- */
-@JvmInline
-private value class LazyList<T>(
-    val lazyList: Lazy<MutableList<T>> = lazy(
-        mode = LazyThreadSafetyMode.SYNCHRONIZED,
-        initializer = ::mutableListOf,
-    )
-) {
-    val list: List<T>
-        get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
-
-    fun add(element: T): Boolean =
-        lazyList.value.add(element)
-}

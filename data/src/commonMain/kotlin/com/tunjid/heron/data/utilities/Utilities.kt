@@ -21,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
+import kotlin.jvm.JvmInline
 
 internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     return try {
@@ -65,6 +66,26 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
     }
     // TODO: Be more descriptive with this error
     return Result.failure(Exception("There was an error")) // last attempt
+}
+
+/**
+ * A memory-efficient list implementation that defers memory allocation
+ * for the list storage until the first element is explicitly added.
+ *
+ * @param T The type of elements contained in the list.
+ */
+@JvmInline
+internal value class LazyList<T>(
+    val lazyList: Lazy<MutableList<T>> = lazy(
+        mode = LazyThreadSafetyMode.SYNCHRONIZED,
+        initializer = ::mutableListOf,
+    )
+) {
+    val list: List<T>
+        get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
+
+    fun add(element: T): Boolean =
+        lazyList.value.add(element)
 }
 
 // Heuristically defined method for debouncing flows produced by
