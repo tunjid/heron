@@ -44,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 internal typealias ConversationStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -74,6 +75,9 @@ class ActualConversationViewModel(
         loadProfileMutations(
             authRepository
         ),
+        flow {
+            messagesRepository.monitorConversationLogs()
+        },
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
