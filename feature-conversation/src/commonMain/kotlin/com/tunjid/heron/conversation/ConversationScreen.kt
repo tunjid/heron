@@ -41,9 +41,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +76,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -107,6 +110,8 @@ internal fun ConversationScreen(
             val isLastMessageByAuthor = nextAuthor != content.sender
 
             Message(
+                modifier = Modifier
+                    .animateItem(),
                 message = content,
                 side = when {
                     content.sender.did == state.signedInProfile?.did -> Side.Sender
@@ -133,11 +138,25 @@ internal fun ConversationScreen(
             )
         }
     )
+
+    LaunchedEffect(listState) {
+        snapshotFlow { items.firstOrNull()?.id }
+            .drop(1)
+            .collect {
+                // User has scrolled to see earlier chats
+                if (listState.lastScrolledForward) return@collect
+                // Not close enough to the bottom
+                if (listState.firstVisibleItemIndex !in 0..4) return@collect
+                // Scroll to bottom
+                listState.animateScrollToItem(0)
+            }
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun Message(
+    modifier: Modifier = Modifier,
     message: Message,
     side: Side,
     isFirstMessageByAuthor: Boolean,
@@ -151,7 +170,7 @@ private fun Message(
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .padding(
                 top = if (isLastMessageByAuthor) 8.dp else 0.dp,
                 start = 16.dp,

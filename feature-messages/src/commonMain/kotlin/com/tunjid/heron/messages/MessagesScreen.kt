@@ -80,6 +80,8 @@ internal fun MessagesScreen(
             key = { it.id.id },
             itemContent = { conversation ->
                 Conversation(
+                    modifier = Modifier
+                        .animateItem(),
                     paneScaffoldState = paneScaffoldState,
                     signedInProfileId = state.signedInProfile?.did,
                     conversation = conversation,

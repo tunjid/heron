@@ -16,10 +16,10 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import app.bsky.embed.RecordViewRecordEmbedUnion
+import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
-import app.bsky.feed.PostViewEmbedUnion
+import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
@@ -132,29 +132,12 @@ private fun MultipleEntitySaver.add(
             author = record.value.author,
             record = record.value.value,
             embed = when (embed) {
-                is RecordViewRecordEmbedUnion.ExternalView -> PostViewEmbedUnion.ExternalView(
-                    value = embed.value
-                )
-
-                is RecordViewRecordEmbedUnion.ImagesView -> PostViewEmbedUnion.ImagesView(
-                    value = embed.value
-                )
-
-                is RecordViewRecordEmbedUnion.RecordView -> PostViewEmbedUnion.RecordView(
-                    value = embed.value
-                )
-
-                is RecordViewRecordEmbedUnion.RecordWithMediaView -> PostViewEmbedUnion.RecordWithMediaView(
-                    value = embed.value
-                )
-
-                is RecordViewRecordEmbedUnion.Unknown -> PostViewEmbedUnion.Unknown(
-                    value = embed.value
-                )
-
-                is RecordViewRecordEmbedUnion.VideoView -> PostViewEmbedUnion.VideoView(
-                    value = embed.value
-                )
+                is MessagePost.ExternalView -> TimelinePost.ExternalView(embed.value)
+                is MessagePost.ImagesView -> TimelinePost.ImagesView(embed.value)
+                is MessagePost.RecordView -> TimelinePost.RecordView(embed.value)
+                is MessagePost.RecordWithMediaView -> TimelinePost.RecordWithMediaView(embed.value)
+                is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
+                is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
             },
             replyCount = record.value.replyCount,
             repostCount = record.value.repostCount,
