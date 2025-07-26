@@ -33,12 +33,14 @@ sealed interface LinkTarget {
     @Serializable
     data class UserHandleMention(
         val handle: ProfileHandle,
-    ) : LinkTarget
+    ) : OfProfile
 
     @Serializable
     data class UserDidMention(
         val did: ProfileId,
-    ) : LinkTarget
+    ) : OfProfile
+
+    sealed interface OfProfile: LinkTarget
 
     @Serializable
     data class ExternalLink(
