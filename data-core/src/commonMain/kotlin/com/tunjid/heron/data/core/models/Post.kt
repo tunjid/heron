@@ -19,7 +19,6 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import kotlinx.datetime.Instant
@@ -62,42 +61,12 @@ data class Post(
     )
 
     @Serializable
-    data class Link(
-        val start: Int,
-        val end: Int,
-        val target: LinkTarget,
-    )
-
-    @Serializable
     data class ReplyRef(
         val rootCid: PostId,
         val rootUri: PostUri,
         val parentCid: PostId,
         val parentUri: PostUri,
     )
-
-    @Serializable
-    sealed interface LinkTarget {
-        @Serializable
-        data class UserHandleMention(
-            val handle: ProfileHandle,
-        ) : LinkTarget
-
-        @Serializable
-        data class UserDidMention(
-            val did: ProfileId,
-        ) : LinkTarget
-
-        @Serializable
-        data class ExternalLink(
-            val uri: GenericUri,
-        ) : LinkTarget
-
-        @Serializable
-        data class Hashtag(
-            val tag: String,
-        ) : LinkTarget
-    }
 
     @Serializable
     sealed class Create : UrlEncodableModel {

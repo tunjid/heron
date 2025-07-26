@@ -26,7 +26,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.stubProfile
 
@@ -34,7 +35,7 @@ import com.tunjid.heron.data.core.models.stubProfile
 @Composable
 fun rememberFormattedTextPost(
     text: String,
-    textLinks: List<Post.Link>,
+    textLinks: List<Link>,
     onProfileClicked: (Profile) -> Unit,
 ): AnnotatedString = remember(text) {
     formatTextPost(
@@ -46,7 +47,7 @@ fun rememberFormattedTextPost(
 
 fun formatTextPost(
     text: String,
-    textLinks: List<Post.Link>,
+    textLinks: List<Link>,
     onProfileClicked: (Profile) -> Unit,
 ): AnnotatedString = buildAnnotatedString {
     append(text)
@@ -78,7 +79,7 @@ fun formatTextPost(
             )
 
             when (val target = link.target) {
-                is Post.LinkTarget.ExternalLink -> {
+                is LinkTarget.ExternalLink -> {
                     addLink(
                         url = LinkAnnotation.Url(target.uri.uri),
                         start = start,
@@ -86,7 +87,7 @@ fun formatTextPost(
                     )
                 }
 
-                is Post.LinkTarget.Hashtag -> {
+                is LinkTarget.Hashtag -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.tag) {
 
@@ -96,7 +97,7 @@ fun formatTextPost(
                     )
                 }
 
-                is Post.LinkTarget.UserDidMention -> {
+                is LinkTarget.UserDidMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.did.id) {
                             onProfileClicked(
@@ -111,7 +112,7 @@ fun formatTextPost(
                     )
                 }
 
-                is Post.LinkTarget.UserHandleMention -> {
+                is LinkTarget.UserHandleMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.handle.id) {
                             onProfileClicked(

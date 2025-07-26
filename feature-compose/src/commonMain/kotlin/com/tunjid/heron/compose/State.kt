@@ -19,6 +19,7 @@ package com.tunjid.heron.compose
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
+import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileId
@@ -142,7 +143,7 @@ sealed class Action(val key: String) {
         val postType: Post.Create?,
         val authorId: ProfileId,
         val text: String,
-        val links: List<Post.Link>,
+        val links: List<Link>,
         val media: List<MediaItem>,
     ) : Action("CreatePost")
 

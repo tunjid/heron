@@ -125,11 +125,11 @@ val ModelSerializerFormat: BinaryFormat = Cbor {
             subclass(Video::class)
             subclass(ImageList::class)
         }
-        polymorphic(Post.LinkTarget::class) {
-            subclass(Post.LinkTarget.UserHandleMention::class)
-            subclass(Post.LinkTarget.UserDidMention::class)
-            subclass(Post.LinkTarget.ExternalLink::class)
-            subclass(Post.LinkTarget.Hashtag::class)
+        polymorphic(LinkTarget::class) {
+            subclass(LinkTarget.UserHandleMention::class)
+            subclass(LinkTarget.UserDidMention::class)
+            subclass(LinkTarget.ExternalLink::class)
+            subclass(LinkTarget.Hashtag::class)
         }
         polymorphic(Post.Create::class) {
             subclass(Post.Create.Reply::class)

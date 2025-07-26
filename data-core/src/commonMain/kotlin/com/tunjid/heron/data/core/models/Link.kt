@@ -16,29 +16,37 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.models.Post.Create.Metadata
-import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.MessageId
-import kotlinx.datetime.Instant
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Message(
-    val id: MessageId,
-    val conversationId: ConversationId,
-    val text: String,
-    val sender: Profile,
-    val isDeleted: Boolean,
-    val sentAt: Instant,
-    val feedGenerator: FeedGenerator?,
-    val list: FeedList?,
-    val starterPack: StarterPack?,
-    val post: Post?,
-) {
+data class Link(
+    val start: Int,
+    val end: Int,
+    val target: LinkTarget,
+)
+
+@Serializable
+sealed interface LinkTarget {
     @Serializable
-    data class Create(
-        val conversationId: ConversationId,
-        val text: String,
-        val links: List<Link>,
-    )
+    data class UserHandleMention(
+        val handle: ProfileHandle,
+    ) : LinkTarget
+
+    @Serializable
+    data class UserDidMention(
+        val did: ProfileId,
+    ) : LinkTarget
+
+    @Serializable
+    data class ExternalLink(
+        val uri: GenericUri,
+    ) : LinkTarget
+
+    @Serializable
+    data class Hashtag(
+        val tag: String,
+    ) : LinkTarget
 }

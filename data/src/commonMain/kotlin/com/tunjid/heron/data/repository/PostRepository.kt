@@ -27,9 +27,9 @@ import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetByteSlice
-import app.bsky.richtext.FacetFeatureUnion.Link
-import app.bsky.richtext.FacetFeatureUnion.Mention
-import app.bsky.richtext.FacetFeatureUnion.Tag
+import app.bsky.richtext.FacetFeatureUnion.Link as FacetFeatureLink
+import app.bsky.richtext.FacetFeatureUnion.Mention as FacetFeatureMention
+import app.bsky.richtext.FacetFeatureUnion.Tag as FacetFeatureTag
 import app.bsky.richtext.FacetLink
 import app.bsky.richtext.FacetMention
 import app.bsky.richtext.FacetTag
@@ -42,6 +42,8 @@ import com.atproto.repo.UploadBlobResponse
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -283,20 +285,20 @@ internal class OfflinePostRepository @Inject constructor(
     override suspend fun createPost(
         request: Post.Create.Request,
     ) {
-        val resolvedLinks: List<Post.Link> = coroutineScope {
+        val resolvedLinks: List<Link> = coroutineScope {
             request.links.map { link ->
                 async {
                     when (val target = link.target) {
-                        is Post.LinkTarget.ExternalLink -> link
-                        is Post.LinkTarget.UserDidMention -> link
-                        is Post.LinkTarget.Hashtag -> link
-                        is Post.LinkTarget.UserHandleMention -> {
+                        is LinkTarget.ExternalLink -> link
+                        is LinkTarget.UserDidMention -> link
+                        is LinkTarget.Hashtag -> link
+                        is LinkTarget.UserHandleMention -> {
                             profileDao.profiles(ids = listOf(target.handle))
                                 .first()
                                 .firstOrNull()
                                 ?.let { profile ->
                                     link.copy(
-                                        target = Post.LinkTarget.UserDidMention(profile.did)
+                                        target = LinkTarget.UserDidMention(profile.did)
                                     )
                                 }
                         }
@@ -364,19 +366,19 @@ internal class OfflinePostRepository @Inject constructor(
                             byteEnd = link.end.toLong(),
                         ),
                         features = when (val target = link.target) {
-                            is Post.LinkTarget.ExternalLink -> listOf(
-                                Link(FacetLink(target.uri.uri.let(::BskyUri)))
+                            is LinkTarget.ExternalLink -> listOf(
+                                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri)))
                             )
 
-                            is Post.LinkTarget.UserDidMention -> listOf(
-                                Mention(FacetMention(target.did.id.let(::Did)))
+                            is LinkTarget.UserDidMention -> listOf(
+                                FacetFeatureMention(FacetMention(target.did.id.let(::Did)))
                             )
 
-                            is Post.LinkTarget.Hashtag -> listOf(
-                                Tag(FacetTag(target.tag))
+                            is LinkTarget.Hashtag -> listOf(
+                                FacetFeatureTag(FacetTag(target.tag))
                             )
 
-                            is Post.LinkTarget.UserHandleMention -> emptyList()
+                            is LinkTarget.UserHandleMention -> emptyList()
                         },
                     )
                 },
