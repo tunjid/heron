@@ -25,30 +25,27 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.em
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.stubProfile
 
 
 @Composable
 fun rememberFormattedTextPost(
     text: String,
     textLinks: List<Link>,
-    onProfileClicked: (Profile) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ): AnnotatedString = remember(text) {
     formatTextPost(
         text = text,
         textLinks = textLinks,
-        onProfileClicked = onProfileClicked,
+        onLinkTargetClicked = onLinkTargetClicked,
     )
 }
 
 fun formatTextPost(
     text: String,
     textLinks: List<Link>,
-    onProfileClicked: (Profile) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ): AnnotatedString = buildAnnotatedString {
     append(text)
 
@@ -90,7 +87,7 @@ fun formatTextPost(
                 is LinkTarget.Hashtag -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.tag) {
-
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,
@@ -100,12 +97,7 @@ fun formatTextPost(
                 is LinkTarget.UserDidMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.did.id) {
-                            onProfileClicked(
-                                stubProfile(
-                                    did = target.did,
-                                    handle = Constants.unknownAuthorHandle,
-                                )
-                            )
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,
@@ -115,12 +107,7 @@ fun formatTextPost(
                 is LinkTarget.UserHandleMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.handle.id) {
-                            onProfileClicked(
-                                stubProfile(
-                                    did = Constants.unknownAuthorId,
-                                    handle = target.handle,
-                                )
-                            )
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,

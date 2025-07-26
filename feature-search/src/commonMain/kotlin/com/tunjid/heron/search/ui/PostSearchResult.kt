@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.search.SearchResult
@@ -37,6 +38,7 @@ internal fun PostSearchResult(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     result: SearchResult.OfPost,
+    onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -66,6 +68,9 @@ internal fun PostSearchResult(
                 presentation = Timeline.Presentation.Text.WithEmbed,
                 postActions = remember(result, onPostInteraction) {
                     postActions(
+                        onLinkTargetClicked = { _, linkTarget ->
+                            onLinkTargetClicked(result, linkTarget)
+                        },
                         onPostClicked = { _, _ ->
                             onPostClicked(result)
                         },

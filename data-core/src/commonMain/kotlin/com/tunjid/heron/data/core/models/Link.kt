@@ -52,3 +52,9 @@ sealed interface LinkTarget {
         val tag: String,
     ) : LinkTarget
 }
+
+val LinkTarget.OfProfile.path: String
+    get() = when(this) {
+        is LinkTarget.UserDidMention -> "/profile/${did.id}"
+        is LinkTarget.UserHandleMention -> "/profile/${handle.id}"
+    }

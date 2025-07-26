@@ -221,11 +221,10 @@ private fun TextContent(
                     quotingPostId = null,
                 )
             },
-            onProfileClicked = { post, profile ->
-                data.postActions.onProfileClicked(
-                    profile = profile,
+            onLinkTargetClicked = { post, linkTarget ->
+                data.postActions.onLinkTargetClicked(
                     post = post,
-                    quotingPostId = null
+                    linkTarget = linkTarget,
                 )
             }
         )
@@ -258,6 +257,7 @@ private fun EmbedContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+        onLinkTargetClicked = data.postActions::onLinkTargetClicked,
         onPostMediaClicked = { media, index, quote ->
             data.postActions.onPostMediaClicked(
                 media = media,

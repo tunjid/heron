@@ -18,6 +18,7 @@ package com.tunjid.heron.notifications.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -31,6 +32,7 @@ fun MentionRow(
     now: Instant,
     isRead: Boolean,
     notification: Notification.Mentioned,
+    onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -41,6 +43,7 @@ fun MentionRow(
         now = now,
         isRead = isRead,
         notification = notification,
+        onLinkTargetClicked = onLinkTargetClicked,
         onProfileClicked = onProfileClicked,
         onPostClicked = onPostClicked,
         onPostMediaClicked = { _, _, _ -> },

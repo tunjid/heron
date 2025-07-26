@@ -37,9 +37,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
@@ -52,6 +54,7 @@ import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -86,6 +89,18 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile)
+                    )
+                )
+            )
+        }
+    }
+    val onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = remember {
+        { notification, linkTarget ->
+            if (linkTarget is LinkTarget.OfProfile) actions(
+                Action.Navigate.To(
+                    pathDestination(
+                        path = linkTarget.path,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                     )
                 )
             )
@@ -216,6 +231,7 @@ internal fun NotificationsScreen(
                             now = now,
                             isRead = item.isRead,
                             notification = notification,
+                            onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
@@ -227,6 +243,7 @@ internal fun NotificationsScreen(
                             now = now,
                             isRead = item.isRead,
                             notification = notification,
+                            onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
@@ -238,6 +255,7 @@ internal fun NotificationsScreen(
                             now = now,
                             isRead = item.isRead,
                             notification = notification,
+                            onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onReplyToPost = onReplyToPost,

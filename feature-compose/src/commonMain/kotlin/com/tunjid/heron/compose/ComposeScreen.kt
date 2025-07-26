@@ -187,6 +187,7 @@ private fun Post(
             sharedElementPrefix = NeverMatchedSharedElementPrefix,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onClick = {},
+            onLinkTargetClicked = { _, _ -> },
             onProfileClicked = { _, _ -> },
             onPostMediaClicked = { _, _, _ -> },
         )
@@ -282,7 +283,7 @@ private fun PostComposition(
                     annotatedString = formatTextPost(
                         text = it.text,
                         textLinks = it.annotatedString.links(),
-                        onProfileClicked = {
+                        onLinkTargetClicked = {
 
                         }
                     )

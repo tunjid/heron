@@ -61,11 +61,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -160,6 +162,18 @@ internal fun SearchScreen(
                             profile = profileSearchResult.profileWithViewerState.profile,
                             avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
+                        )
+                    )
+                )
+            }
+        }
+        val onLinkTargetClicked = remember {
+            { result: SearchResult.OfPost, linkTarget: LinkTarget ->
+                if (linkTarget is LinkTarget.OfProfile) actions(
+                    Action.Navigate.To(
+                        pathDestination(
+                            path = linkTarget.path,
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         )
                     )
                 )
@@ -274,6 +288,7 @@ internal fun SearchScreen(
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     onProfileClicked = onProfileSearchResultClicked,
                     onViewerStateClicked = onViewerStateClicked,
+                    onLinkTargetClicked = onLinkTargetClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onPostInteraction = onPostInteraction,
@@ -507,6 +522,7 @@ private fun TabbedSearchResults(
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
+    onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -564,6 +580,7 @@ private fun TabbedSearchResults(
                     onProfileClicked = onProfileClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
+                    onLinkTargetClicked = onLinkTargetClicked,
                     onPostInteraction = onPostInteraction,
                     onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
@@ -580,6 +597,7 @@ private fun SearchResults(
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
+    onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -605,6 +623,7 @@ private fun SearchResults(
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             now = now,
                             result = result,
+                            onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onPostSearchResultProfileClicked,
                             onPostClicked = onPostSearchResultClicked,
                             onPostInteraction = onPostInteraction,

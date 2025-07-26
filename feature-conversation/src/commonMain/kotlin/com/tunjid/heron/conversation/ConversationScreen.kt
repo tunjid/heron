@@ -56,12 +56,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -359,6 +362,16 @@ private fun PostMessage(
         presentation = Timeline.Presentation.Text.WithEmbed,
         postActions = remember(message.id, actions) {
             postActions(
+                onLinkTargetClicked = { post, linkTarget ->
+                    if (linkTarget is LinkTarget.OfProfile) actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = linkTarget.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            )
+                        )
+                    )
+                },
                 onPostClicked = { post, quotingPostId ->
                     actions(
                         Action.Navigate.To(

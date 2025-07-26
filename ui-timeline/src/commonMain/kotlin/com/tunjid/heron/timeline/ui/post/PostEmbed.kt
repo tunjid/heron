@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -50,6 +51,7 @@ internal fun PostEmbed(
     postId: PostId,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onQuotedPostClicked: (Post) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
@@ -110,6 +112,7 @@ internal fun PostEmbed(
                         quotingPostId = postId,
                     ),
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    onLinkTargetClicked = onLinkTargetClicked,
                     onProfileClicked = onQuotedProfileClicked,
                     onPostMediaClicked = onPostMediaClicked,
                     onClick = {

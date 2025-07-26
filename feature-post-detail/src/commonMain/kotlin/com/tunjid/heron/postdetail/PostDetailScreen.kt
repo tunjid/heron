@@ -35,16 +35,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.postLikesDestination
 import com.tunjid.heron.scaffold.navigation.postRepostsDestination
@@ -110,6 +113,16 @@ internal fun PostDetailScreen(
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = remember(state.sharedElementPrefix) {
                         postActions(
+                            onLinkTargetClicked = { post, linkTarget ->
+                                if (linkTarget is LinkTarget.OfProfile) actions(
+                                    Action.Navigate.To(
+                                        pathDestination(
+                                            path = linkTarget.path,
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                        )
+                                    )
+                                )
+                            },
                             onPostClicked = { post: Post, quotingPostId: PostId? ->
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
