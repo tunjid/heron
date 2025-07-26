@@ -131,8 +131,12 @@ fun formatTextPost(
     }
 }
 
-
-private fun String.byteOffsets(): List<Int> = buildList {
+/**
+ * Returns a mapping of byte offsets to character offsets.
+ * Assumes that you are providing a valid UTF-8 string as input.
+ * Text encodings are really a lot of fun.
+ */
+internal fun String.byteOffsets(): List<Int> = buildList {
     var i = 0
     var lastWas4Bytes = false
 
