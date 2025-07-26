@@ -51,6 +51,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.text.formatTextPost
+import com.tunjid.heron.ui.text.links
 import heron.feature_conversation.generated.resources.Res
 import heron.feature_conversation.generated.resources.textfield_desc
 import heron.feature_conversation.generated.resources.textfield_hint
@@ -81,7 +83,15 @@ fun UserInput(
     ) {
         UserInputText(
             textFieldValue = textState,
-            onTextChanged = { textState = it },
+            onTextChanged = {
+                textState = it.copy(
+                    annotatedString = formatTextPost(
+                        text = it.text,
+                        textLinks = it.annotatedString.links(),
+                        onLinkTargetClicked = {}
+                    ),
+                )
+            },
             // Only show the keyboard if there's no input selector and text field has focus
             keyboardShown = textFieldFocusState,
             // Close extended selector if text field receives focus

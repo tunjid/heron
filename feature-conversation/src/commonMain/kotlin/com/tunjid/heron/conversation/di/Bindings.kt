@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -71,6 +72,9 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    )
 )
 
 internal val Route.conversationId by mappedRoutePath(
@@ -109,6 +113,12 @@ class ConversationBindings(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         contentTransform = predictiveBackContentTransform,
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val viewModel = viewModel<ActualConversationViewModel> {
                 viewModelInitializer.invoke(
