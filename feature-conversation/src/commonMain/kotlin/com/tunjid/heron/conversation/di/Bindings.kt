@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,18 +33,17 @@ import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.ui.ConversationTitle
+import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.conversation.ui.conversationSharedElementKey
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -171,11 +171,15 @@ class ConversationBindings(
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar(
+                    UserInput(
                         modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
+                            .padding(
+                                start = 16.dp,
+                                end = 16.dp,
+                                bottom = UiTokens.navigationBarHeight + 8.dp
+                            )
+                            .bottomNavigationSharedBounds(this),
+                        onMessageSent = {},
                     )
                 },
                 navigationRail = {

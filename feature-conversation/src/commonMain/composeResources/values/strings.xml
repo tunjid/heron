@@ -16,4 +16,9 @@
 
 <resources>
     <string name="heron">Heron</string>
+
+    <string name="send">Send</string>
+    <string name="textfield_desc">Text input</string>
+    <string name="textfield_hint">Type a message</string>
+
 </resources>
