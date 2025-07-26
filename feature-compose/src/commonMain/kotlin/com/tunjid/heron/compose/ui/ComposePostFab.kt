@@ -28,6 +28,7 @@ import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.utilities.links
 import heron.feature_compose.generated.resources.Res
 import heron.feature_compose.generated.resources.post
 import org.jetbrains.compose.resources.stringResource

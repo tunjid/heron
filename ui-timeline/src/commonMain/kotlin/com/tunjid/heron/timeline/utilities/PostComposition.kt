@@ -14,17 +14,16 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.compose.ui
+package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.ui.text.AnnotatedString
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.timeline.utilities.byteOffsets
 
 
-internal fun AnnotatedString.links(): List<Link> {
+fun AnnotatedString.links(): List<Link> {
     val byteOffsets = text.byteOffsets()
 
     val mentions = handleRegex.findAll(text)
