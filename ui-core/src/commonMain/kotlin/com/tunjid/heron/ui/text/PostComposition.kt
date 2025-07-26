@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.utilities
+package com.tunjid.heron.ui.text
 
 import androidx.compose.ui.text.AnnotatedString
 import com.tunjid.heron.data.core.models.Link

@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.utilities
+package com.tunjid.heron.ui.text
 
 /**
  * Returns a mapping of byte offsets to character offsets.
