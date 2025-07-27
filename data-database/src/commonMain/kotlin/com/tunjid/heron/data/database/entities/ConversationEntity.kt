@@ -46,6 +46,8 @@ data class PopulatedConversationEntity(
     val entity: ConversationEntity,
     @Embedded(prefix = "lastMessage_")
     val lastMessageEntity: MessageEntity?,
+    @Embedded(prefix = "lastMessageReactedTo_")
+    val lastMessageReactedToEntity: MessageEntity?,
     @Relation(
         parentColumn = "id",
         entityColumn = "did",
@@ -64,24 +66,28 @@ fun PopulatedConversationEntity.asExternalModel() =
         muted = entity.muted,
         unreadCount = entity.unreadCount,
         members = memberEntities.map(ProfileEntity::asExternalModel),
-        lastMessage = lastMessageEntity?.let { message ->
-            memberEntities.firstOrNull {
-                it.did == message.senderId
-            }
-                ?.let { sender ->
-                    Message(
-                        id = message.id,
-                        conversationId = message.conversationId,
-                        text = message.text,
-                        sentAt = message.sentAt,
-                        isDeleted = message.isDeleted,
-                        sender = sender.asExternalModel(),
-                        feedGenerator = null,
-                        list = null,
-                        starterPack = null,
-                        post = null,
-                        reactions = emptyList(),
-                    )
-                }
-        },
+        lastMessage = lastMessageEntity?.let(::conversationMessage),
+        lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
     )
+
+private fun PopulatedConversationEntity.conversationMessage(
+    message: MessageEntity
+): Message? =
+    memberEntities.firstOrNull {
+        it.did == message.senderId
+    }
+        ?.let { sender ->
+            Message(
+                id = message.id,
+                conversationId = message.conversationId,
+                text = message.text,
+                sentAt = message.sentAt,
+                isDeleted = message.isDeleted,
+                sender = sender.asExternalModel(),
+                feedGenerator = null,
+                list = null,
+                starterPack = null,
+                post = null,
+                reactions = emptyList(),
+            )
+        }

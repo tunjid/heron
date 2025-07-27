@@ -45,7 +45,14 @@ interface MessageDao {
                 lastMessage.conversationId AS lastMessage_conversationId, 
                 lastMessage.isDeleted AS lastMessage_isDeleted,
                 lastMessage.sentAt AS lastMessage_sentAt,
-                lastMessageReactedTo.sentAt FROM conversations
+                lastMessageReactedTo.id AS lastMessageReactedTo_id, 
+                lastMessageReactedTo.rev AS lastMessageReactedTo_rev, 
+                lastMessageReactedTo.text AS lastMessageReactedTo_text, 
+                lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId, 
+                lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId, 
+                lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
+                lastMessageReactedTo.sentAt lastMessageReactedTo_sentAt
+                FROM conversations
             LEFT JOIN messages AS lastMessage
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
