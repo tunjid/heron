@@ -19,10 +19,12 @@ package com.tunjid.heron.conversation.ui
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.SemanticsPropertyKey
@@ -52,16 +55,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.scaffold.scaffold.PaneFab
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
 import heron.feature_conversation.generated.resources.Res
 import heron.feature_conversation.generated.resources.textfield_desc
 import heron.feature_conversation.generated.resources.textfield_hint
+import heron.feature_conversation.generated.resources.textfield_send
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun UserInput(
+fun PaneScaffoldState.UserInput(
     onMessageSent: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
     resetScroll: () -> Unit = {}
@@ -74,15 +80,19 @@ fun UserInput(
     var textFieldFocusState by remember { mutableStateOf(false) }
 
     Row(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = UserInputShape,
-            )
-            .padding(vertical = 16.dp)
-            .heightIn(max = 80.dp)
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         UserInputText(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = UserInputShape,
+                )
+                .padding(vertical = 16.dp)
+                .weight(1f)
+                .heightIn(max = 80.dp),
             textFieldValue = textState,
             onTextChanged = {
                 textState = it.copy(
@@ -111,6 +121,12 @@ fun UserInput(
             },
             focusState = textFieldFocusState,
         )
+        SendButton(
+            modifier = Modifier
+                .height(36.dp),
+            textFieldValue = textState,
+            onMessageSent = onMessageSent,
+        )
     }
 }
 
@@ -121,6 +137,7 @@ var SemanticsPropertyReceiver.keyboardShownProperty by KeyboardShownKey
 @ExperimentalFoundationApi
 @Composable
 private fun UserInputText(
+    modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
     onTextChanged: (TextFieldValue) -> Unit,
     textFieldValue: TextFieldValue,
@@ -132,8 +149,7 @@ private fun UserInputText(
     val a11ylabel = stringResource(Res.string.textfield_desc)
 
     Box(
-        Modifier
-            .fillMaxWidth()
+        modifier = modifier
     ) {
         UserInputTextField(
             textFieldValue = textFieldValue,
@@ -195,6 +211,25 @@ private fun BoxScope.UserInputTextField(
             style = MaterialTheme.typography.bodyLarge.copy(color = disableContentColor),
         )
     }
+}
+
+@Composable
+fun PaneScaffoldState.SendButton(
+    modifier: Modifier = Modifier,
+    textFieldValue: TextFieldValue,
+    onMessageSent: (AnnotatedString) -> Unit,
+) {
+    PaneFab(
+        modifier = modifier
+            .alpha(if (textFieldValue.text.isNotBlank()) 1f else 0.6f),
+        expanded = true,
+        text = stringResource(Res.string.textfield_send),
+        icon = null,
+        visible = true,
+        onClick = onClick@{
+            onMessageSent(textFieldValue.annotatedString)
+        }
+    )
 }
 
 private val UserInputShape = RoundedCornerShape(32.dp)
