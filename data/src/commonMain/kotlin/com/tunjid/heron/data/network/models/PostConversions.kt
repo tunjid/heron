@@ -25,6 +25,8 @@ import app.bsky.feed.ViewerState
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.GenericId
@@ -269,17 +271,17 @@ private fun BskyPost.toPostRecord() =
         },
     )
 
-private fun Facet.toLinkOrNull(): Post.Link? {
-    return if (features.isEmpty()) null else Post.Link(
+private fun Facet.toLinkOrNull(): Link? {
+    return if (features.isEmpty()) null else Link(
         start = index.byteStart.toInt(),
         end = index.byteEnd.toInt(),
         target = when (val feature = features.first()) {
-            is FacetFeatureUnion.Link -> Post.LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
-            is FacetFeatureUnion.Mention -> Post.LinkTarget.UserDidMention(
+            is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
+            is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
                 feature.value.did.did.let(::ProfileId)
             )
 
-            is FacetFeatureUnion.Tag -> Post.LinkTarget.Hashtag(feature.value.tag)
+            is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
             is FacetFeatureUnion.Unknown -> return null
         },
     )

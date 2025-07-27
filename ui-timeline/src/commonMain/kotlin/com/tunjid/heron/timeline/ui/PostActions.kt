@@ -18,12 +18,15 @@ package com.tunjid.heron.timeline.ui
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.PostId
 
 @Stable
 interface PostActions {
+    fun onLinkTargetClicked(post: Post, linkTarget: LinkTarget)
+
     fun onProfileClicked(profile: Profile, post: Post, quotingPostId: PostId?)
     fun onPostClicked(post: Post, quotingPostId: PostId?)
     fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?)
@@ -33,6 +36,7 @@ interface PostActions {
 }
 
 fun postActions(
+    onLinkTargetClicked: (post: Post, linkTarget: LinkTarget) -> Unit,
     onProfileClicked: (profile: Profile, post: Post, quotingPostId: PostId?) -> Unit,
     onPostClicked: (post: Post, quotingPostId: PostId?) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?) -> Unit,
@@ -84,5 +88,13 @@ fun postActions(
         metadata: Post.Metadata,
     ) = onPostMetadataClicked(
         metadata
+    )
+
+    override fun onLinkTargetClicked(
+        post: Post,
+        linkTarget: LinkTarget
+    ) = onLinkTargetClicked(
+        post,
+        linkTarget,
     )
 }

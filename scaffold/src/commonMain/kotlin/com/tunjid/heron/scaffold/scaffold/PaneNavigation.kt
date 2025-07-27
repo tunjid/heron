@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.Adaptation
+import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -172,6 +173,23 @@ internal fun AppState.PaneNavigationRail(
                 }
             )
         }
+    }
+}
+
+@Composable
+fun Modifier.bottomNavigationSharedBounds(
+    paneScaffoldState: PaneScaffoldState
+): Modifier = with(paneScaffoldState) {
+    when (paneState.pane) {
+        ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
+            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+            animatedVisibilityScope = this,
+        )
+
+        ThreePane.Secondary,
+        ThreePane.Tertiary,
+        ThreePane.Overlay,
+        null -> this@bottomNavigationSharedBounds
     }
 }
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -66,6 +67,7 @@ internal fun NotificationPostScaffold(
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: (Notification.PostAssociated) -> Unit,
+    onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     Column(
@@ -108,8 +110,8 @@ internal fun NotificationPostScaffold(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
-                    onProfileClicked = { _, profile ->
-                        onProfileClicked(notification, profile)
+                    onLinkTargetClicked = { _, linkTarget ->
+                        onLinkTargetClicked(notification, linkTarget)
                     }
                 )
 //                PostEmbed(

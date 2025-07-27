@@ -25,29 +25,27 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.em
-import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 
 
 @Composable
 fun rememberFormattedTextPost(
     text: String,
-    textLinks: List<Post.Link>,
-    onProfileClicked: (Profile) -> Unit,
+    textLinks: List<Link>,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ): AnnotatedString = remember(text) {
     formatTextPost(
         text = text,
         textLinks = textLinks,
-        onProfileClicked = onProfileClicked,
+        onLinkTargetClicked = onLinkTargetClicked,
     )
 }
 
 fun formatTextPost(
     text: String,
-    textLinks: List<Post.Link>,
-    onProfileClicked: (Profile) -> Unit,
+    textLinks: List<Link>,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ): AnnotatedString = buildAnnotatedString {
     append(text)
 
@@ -78,7 +76,7 @@ fun formatTextPost(
             )
 
             when (val target = link.target) {
-                is Post.LinkTarget.ExternalLink -> {
+                is LinkTarget.ExternalLink -> {
                     addLink(
                         url = LinkAnnotation.Url(target.uri.uri),
                         start = start,
@@ -86,40 +84,30 @@ fun formatTextPost(
                     )
                 }
 
-                is Post.LinkTarget.Hashtag -> {
+                is LinkTarget.Hashtag -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.tag) {
-
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,
                     )
                 }
 
-                is Post.LinkTarget.UserDidMention -> {
+                is LinkTarget.UserDidMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.did.id) {
-                            onProfileClicked(
-                                stubProfile(
-                                    did = target.did,
-                                    handle = Constants.unknownAuthorHandle,
-                                )
-                            )
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,
                     )
                 }
 
-                is Post.LinkTarget.UserHandleMention -> {
+                is LinkTarget.UserHandleMention -> {
                     addLink(
                         clickable = LinkAnnotation.Clickable(target.handle.id) {
-                            onProfileClicked(
-                                stubProfile(
-                                    did = Constants.unknownAuthorId,
-                                    handle = target.handle,
-                                )
-                            )
+                            onLinkTargetClicked(target)
                         },
                         start = start,
                         end = end,
@@ -130,8 +118,12 @@ fun formatTextPost(
     }
 }
 
-
-private fun String.byteOffsets(): List<Int> = buildList {
+/**
+ * Returns a mapping of byte offsets to character offsets.
+ * Assumes that you are providing a valid UTF-8 string as input.
+ * Text encodings are really a lot of fun.
+ */
+internal fun String.byteOffsets(): List<Int> = buildList {
     var i = 0
     var lastWas4Bytes = false
 

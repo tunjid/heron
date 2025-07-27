@@ -14,34 +14,34 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.compose.ui
+package com.tunjid.heron.ui.text
 
 import androidx.compose.ui.text.AnnotatedString
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.timeline.utilities.byteOffsets
 
 
-internal fun AnnotatedString.links(): List<Post.Link> {
+fun AnnotatedString.links(): List<Link> {
     val byteOffsets = text.byteOffsets()
 
     val mentions = handleRegex.findAll(text)
         .map {
-            Post.Link(
+            Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
                 // Ok this is actually a handle for now, but it is resolved to a Did later on.
-                target = Post.LinkTarget.UserHandleMention(ProfileHandle(it.groupValues[3])),
+                target = LinkTarget.UserHandleMention(ProfileHandle(it.groupValues[3])),
             )
         }
 
     val hashtags = hashtagRegex.findAll(text)
         .map {
-            Post.Link(
+            Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
-                target = Post.LinkTarget.Hashtag(it.groupValues[3]),
+                target = LinkTarget.Hashtag(it.groupValues[3]),
             )
         }
 
@@ -56,10 +56,10 @@ internal fun AnnotatedString.links(): List<Post.Link> {
                 url = url.dropLast(1)
             }
 
-            Post.Link(
+            Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
-                target = Post.LinkTarget.ExternalLink(GenericUri(url)),
+                target = LinkTarget.ExternalLink(GenericUri(url)),
             )
         }
 

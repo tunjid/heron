@@ -16,13 +16,18 @@
 
 package com.tunjid.heron.conversation.di
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,24 +37,26 @@ import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.ui.ConversationTitle
+import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.conversation.ui.conversationSharedElementKey
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -71,6 +78,9 @@ private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute()
+    )
 )
 
 internal val Route.conversationId by mappedRoutePath(
@@ -109,6 +119,12 @@ class ConversationBindings(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         contentTransform = predictiveBackContentTransform,
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route
+            )
+        },
         render = { route ->
             val viewModel = viewModel<ActualConversationViewModel> {
                 viewModelInitializer.invoke(
@@ -171,11 +187,23 @@ class ConversationBindings(
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar(
+                    UserInput(
                         modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
+                            .padding(horizontal = 8.dp)
+                            .imePadding()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .bottomNavigationSharedBounds(this),
+                        onMessageSent = { annotatedString ->
+                            viewModel.accept(
+                                Action.SendMessage(
+                                    Message.Create(
+                                        conversationId = state.id,
+                                        text = annotatedString.text,
+                                        links = annotatedString.links(),
+                                    )
+                                )
+                            )
+                        },
                     )
                 },
                 navigationRail = {
@@ -187,7 +215,8 @@ class ConversationBindings(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = paddingValues.calculateTopPadding()),
+                            .padding(top = paddingValues.calculateTopPadding())
+                            .imePadding(),
                     )
                 }
             )

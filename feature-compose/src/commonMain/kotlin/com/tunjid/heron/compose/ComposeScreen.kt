@@ -50,7 +50,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
-import com.tunjid.heron.compose.ui.links
+import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
@@ -187,6 +187,7 @@ private fun Post(
             sharedElementPrefix = NeverMatchedSharedElementPrefix,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onClick = {},
+            onLinkTargetClicked = { _, _ -> },
             onProfileClicked = { _, _ -> },
             onPostMediaClicked = { _, _, _ -> },
         )
@@ -282,7 +283,7 @@ private fun PostComposition(
                     annotatedString = formatTextPost(
                         text = it.text,
                         textLinks = it.annotatedString.links(),
-                        onProfileClicked = {
+                        onLinkTargetClicked = {
 
                         }
                     )

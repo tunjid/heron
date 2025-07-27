@@ -30,8 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
@@ -44,7 +44,7 @@ fun PostText(
     maxLines: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    onProfileClicked: (Post, Profile) -> Unit,
+    onLinkTargetClicked: (Post, LinkTarget) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record
@@ -70,7 +70,7 @@ fun PostText(
         text = rememberFormattedTextPost(
             text = text,
             textLinks = post.record?.links ?: emptyList(),
-            onProfileClicked = { onProfileClicked(post, it) }
+            onLinkTargetClicked = { onLinkTargetClicked(post, it) }
         ),
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,

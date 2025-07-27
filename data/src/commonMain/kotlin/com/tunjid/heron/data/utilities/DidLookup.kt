@@ -18,6 +18,8 @@ package com.tunjid.heron.data.utilities
 
 import app.bsky.actor.GetProfileQueryParams
 import com.atproto.identity.ResolveHandleQueryParams
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
@@ -32,6 +34,9 @@ import com.tunjid.heron.data.repository.SavedStateRepository
 import com.tunjid.heron.data.repository.signedInProfileId
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -39,6 +44,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
+import kotlin.collections.map
 
 internal suspend fun lookupProfileDid(
     profileId: Id.Profile,
@@ -70,6 +76,34 @@ internal suspend fun lookupProfileDid(
         else -> null
     }
 }
+
+internal suspend fun resolveLinks(
+    profileDao: ProfileDao,
+    networkService: NetworkService,
+    links: List<Link>,
+): List<Link> =
+    coroutineScope {
+        links.map { link ->
+            async {
+                when (val target = link.target) {
+                    is LinkTarget.ExternalLink -> link
+                    is LinkTarget.UserDidMention -> link
+                    is LinkTarget.Hashtag -> link
+                    is LinkTarget.UserHandleMention -> {
+                        lookupProfileDid(
+                            profileId = target.handle,
+                            profileDao = profileDao,
+                            networkService = networkService,
+                        )?.let { did ->
+                            link.copy(
+                                target = LinkTarget.UserDidMention(did.did.let(::ProfileId))
+                            )
+                        }
+                    }
+                }
+            }
+        }.awaitAll()
+    }.filterNotNull()
 
 internal suspend fun refreshProfile(
     profileId: Id.Profile,

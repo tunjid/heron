@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -62,6 +63,7 @@ fun QuotedPost(
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClick: () -> Unit,
+    onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
@@ -112,7 +114,7 @@ fun QuotedPost(
                 maxLines = 3,
                 modifier = Modifier,
                 onClick = onClick,
-                onProfileClicked = onProfileClicked,
+                onLinkTargetClicked = onLinkTargetClicked,
             )
 
             Spacer(Modifier.height(8.dp))

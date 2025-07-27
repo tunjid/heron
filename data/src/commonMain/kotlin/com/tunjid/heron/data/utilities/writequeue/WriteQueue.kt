@@ -18,21 +18,29 @@ package com.tunjid.heron.data.utilities.writequeue
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 sealed class WriteQueue {
 
     internal abstract val postRepository: PostRepository
     internal abstract val profileRepository: ProfileRepository
+
+    internal abstract val messageRepository: MessageRepository
+
     internal abstract val timelineRepository: TimelineRepository
+
+   abstract val queueChanges: Flow<Unit>
 
     abstract suspend fun enqueue(
         writable: Writable,
@@ -42,16 +50,22 @@ sealed class WriteQueue {
         writable: Writable,
     )
 
+    abstract fun contains(writable: Writable): Boolean
+
     abstract suspend fun drain()
 }
 
 internal class SnapshotWriteQueue @Inject constructor(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
+    override val messageRepository: MessageRepository,
     override val timelineRepository: TimelineRepository,
 ) : WriteQueue() {
     // At some point this queue should be persisted to disk
     private val queue = mutableStateListOf<Writable>()
+
+    override val queueChanges: Flow<Unit>
+        get() = snapshotFlow { queue.size }.map {  }
 
     override suspend fun enqueue(
         writable: Writable,
@@ -68,6 +82,10 @@ internal class SnapshotWriteQueue @Inject constructor(
         snapshotFlow {
             queue.firstOrNull { it.queueId == writable.queueId }
         }.first { it == null }
+    }
+
+    override fun contains(writable: Writable): Boolean {
+        return queue.contains(writable)
     }
 
     override suspend fun drain() {

@@ -28,6 +28,7 @@ import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlin.collections.filterIsInstance
@@ -39,10 +40,11 @@ data class State(
     val signedInProfile: Profile? = null,
     val id: ConversationId,
     val members: List<Profile> = emptyList(),
-    override val tilingData: TilingState.Data<MessageQuery, Message>,
+    val pendingItems: List<MessageItem.Pending> = emptyList(),
+    override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Transient
     val messages: List<String> = emptyList(),
-) : TilingState<MessageQuery, Message>
+) : TilingState<MessageQuery, MessageItem>
 
 fun State(
  route: Route
@@ -61,6 +63,53 @@ fun State(
     )
 )
 
+@Serializable
+sealed class MessageItem {
+    @Serializable
+    data class Sent(
+        val message: Message,
+    ): MessageItem()
+
+    @Serializable
+    data class Pending(
+        val sender: Profile,
+        val message: Message.Create,
+        val sentAt: Instant,
+    ): MessageItem()
+
+}
+
+val MessageItem.sender
+    get() = when(this) {
+        is MessageItem.Pending -> sender
+        is MessageItem.Sent -> message.sender
+    }
+
+val MessageItem.id
+    get() = when(this) {
+        is MessageItem.Pending -> sentAt.toString()
+        is MessageItem.Sent -> message.id.id
+    }
+
+val MessageItem.text
+    get() = when(this) {
+        is MessageItem.Pending -> message.text
+        is MessageItem.Sent -> message.text
+    }
+
+val MessageItem.conversationId
+    get() = when(this) {
+        is MessageItem.Pending -> message.conversationId
+        is MessageItem.Sent -> message.conversationId
+    }
+
+val MessageItem.sentAt
+    get() = when(this) {
+        is MessageItem.Pending -> sentAt
+        is MessageItem.Sent -> message.sentAt
+    }
+
+
 sealed class Action(val key: String) {
 
     data class Tile(
@@ -70,6 +119,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class SendMessage(
+        val message: Message.Create,
+    ) : Action(key = "SendMessage")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop

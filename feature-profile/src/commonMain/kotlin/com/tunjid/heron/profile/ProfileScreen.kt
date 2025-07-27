@@ -84,10 +84,12 @@ import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -97,6 +99,7 @@ import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
@@ -802,6 +805,16 @@ private fun ProfileTimeline(
                         presentation = presentation,
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
+                                onLinkTargetClicked = { post, linkTarget ->
+                                    if (linkTarget is LinkTarget.OfProfile) actions(
+                                        Action.Navigate.To(
+                                            pathDestination(
+                                                path = linkTarget.path,
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                            )
+                                        )
+                                    )
+                                },
                                 onPostClicked = { post: Post, quotingPostId: PostId? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)

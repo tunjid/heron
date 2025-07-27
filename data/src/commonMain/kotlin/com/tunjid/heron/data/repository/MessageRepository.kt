@@ -18,7 +18,6 @@ package com.tunjid.heron.data.repository
 
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.GetLogQueryParams
-import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
 import chat.bsky.convo.GetMessagesResponse
 import chat.bsky.convo.GetMessagesResponseMessageUnion
@@ -28,11 +27,14 @@ import chat.bsky.convo.LogAddReactionMessageUnion
 import chat.bsky.convo.LogCreateMessageMessageUnion
 import chat.bsky.convo.LogDeleteMessageMessageUnion
 import chat.bsky.convo.LogRemoveReactionMessageUnion
+import chat.bsky.convo.MessageInput
 import chat.bsky.convo.MessageView
+import chat.bsky.convo.SendMessageRequest
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -41,14 +43,17 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
+import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
@@ -64,6 +69,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
+import chat.bsky.convo.GetLogResponseLogUnion as Log
 
 @Serializable
 data class ConversationQuery(
@@ -90,12 +96,17 @@ interface MessageRepository {
     ): Flow<CursorList<Message>>
 
     suspend fun monitorConversationLogs()
+
+    suspend fun sendMessage(
+        message: Message.Create,
+    )
 }
 
 internal class OfflineMessageRepository @Inject constructor(
     private val messageDao: MessageDao,
     private val postDao: PostDao,
     private val feedDao: FeedGeneratorDao,
+    private val profileDao: ProfileDao,
     private val listDao: ListDao,
     private val starterPackDao: StarterPackDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -311,6 +322,38 @@ internal class OfflineMessageRepository @Inject constructor(
             }
 
             .collect()
+    }
+
+    override suspend fun sendMessage(
+        message: Message.Create,
+    ) {
+        val resolvedLinks: List<Link> = resolveLinks(
+            profileDao = profileDao,
+            networkService = networkService,
+            links = message.links,
+        )
+        val sentMessage = runCatchingWithNetworkRetry {
+            networkService.api.sendMessage(
+                SendMessageRequest(
+                    convoId = message.conversationId.id,
+                    message = MessageInput(
+                        text = message.text,
+                        facets = resolvedLinks.facet(),
+                        embed = null,
+                    )
+                )
+            )
+        }.getOrNull() ?: return
+
+        val signedInProfileId = savedStateRepository.signedInProfileId
+
+        multipleEntitySaverProvider.saveInTransaction {
+            add(
+                viewingProfileId = signedInProfileId,
+                conversationId = message.conversationId,
+                messageView = sentMessage,
+            )
+        }
     }
 }
 

@@ -22,11 +22,23 @@ import app.bsky.embed.Record
 import app.bsky.embed.RecordWithMedia
 import app.bsky.embed.RecordWithMediaMediaUnion
 import app.bsky.feed.PostEmbedUnion
+import app.bsky.richtext.Facet
+import app.bsky.richtext.FacetByteSlice
+import app.bsky.richtext.FacetFeatureUnion.Link as FacetFeatureLink
+import app.bsky.richtext.FacetFeatureUnion.Mention as FacetFeatureMention
+import app.bsky.richtext.FacetFeatureUnion.Tag as FacetFeatureTag
+import app.bsky.richtext.FacetLink
+import app.bsky.richtext.FacetMention
+import app.bsky.richtext.FacetTag
 import com.atproto.repo.StrongRef
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
+import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Uri as BskyUri
 import sh.christian.ozone.api.model.Blob
 import app.bsky.embed.Images as BskyImages
 import app.bsky.embed.Video as BskyVideo
@@ -82,6 +94,30 @@ internal fun postEmbedUnion(
         images != null -> PostEmbedUnion.Images(images)
         else -> null
     }
+}
+
+internal fun List<Link>.facet(): List<Facet> = map { link ->
+    Facet(
+        index = FacetByteSlice(
+            byteStart = link.start.toLong(),
+            byteEnd = link.end.toLong(),
+        ),
+        features = when (val target = link.target) {
+            is LinkTarget.ExternalLink -> listOf(
+                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri)))
+            )
+
+            is LinkTarget.UserDidMention -> listOf(
+                FacetFeatureMention(FacetMention(target.did.id.let(::Did)))
+            )
+
+            is LinkTarget.Hashtag -> listOf(
+                FacetFeatureTag(FacetTag(target.tag))
+            )
+
+            is LinkTarget.UserHandleMention -> emptyList()
+        },
+    )
 }
 
 private fun Post.Interaction.Create.Repost.toRecord(): Record =
