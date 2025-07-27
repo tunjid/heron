@@ -19,6 +19,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
@@ -50,7 +51,7 @@ import kotlinx.datetime.Instant
 )
 data class MessageReactionEntity(
     val value: String,
-    val messageId: ProfileId,
+    val messageId: MessageId,
     val senderId: ProfileId,
     val createdAt: Instant,
 )

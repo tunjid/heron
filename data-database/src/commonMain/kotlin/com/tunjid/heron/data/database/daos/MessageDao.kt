@@ -19,9 +19,11 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
@@ -94,6 +96,11 @@ interface MessageDao {
     )
 
     @Upsert
+    suspend fun upsertMessageReactions(
+        entities: List<MessageReactionEntity>,
+    )
+
+    @Upsert
     suspend fun upsertMessageFeeds(
         entities: List<MessageFeedGeneratorEntity>,
     )
@@ -127,5 +134,15 @@ interface MessageDao {
     )
     suspend fun deleteAllMessages(
         conversationId: String,
+    )
+
+    @Query(
+        """
+        DELETE FROM messageReactions
+        WHERE messageId in (:messageIds)
+    """
+    )
+    suspend fun deleteMessageReactions(
+        messageIds: Collection<MessageId>,
     )
 }

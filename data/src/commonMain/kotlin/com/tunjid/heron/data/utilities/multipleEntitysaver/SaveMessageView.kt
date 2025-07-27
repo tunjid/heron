@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
@@ -59,6 +60,16 @@ internal fun MultipleEntitySaver.add(
             sentAt = messageView.sentAt,
         )
     )
+    messageView.reactions.forEach { reactionView ->
+        add(
+            MessageReactionEntity(
+                value = reactionView.value,
+                messageId = messageView.id.let(::MessageId),
+                senderId = reactionView.sender.did.did.let(::ProfileId),
+                createdAt = reactionView.createdAt,
+            )
+        )
+    }
 
     when (val embed = messageView.embed) {
         is MessageViewEmbedUnion.Unknown -> Unit
