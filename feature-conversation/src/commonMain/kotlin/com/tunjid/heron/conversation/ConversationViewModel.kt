@@ -31,6 +31,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
@@ -42,7 +43,6 @@ import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.buildTiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.filter
 import com.tunjid.tiler.plus
 import com.tunjid.tiler.tiledListOf
 import com.tunjid.treenav.strings.Route
@@ -82,12 +82,9 @@ class ActualConversationViewModel(
     initialState = State(route),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
-        loadProfileMutations(
-            authRepository
-        ),
-        flow {
-            messagesRepository.monitorConversationLogs()
-        },
+        loadProfileMutations(authRepository),
+        pendingMessageFlushMutations(writeQueue),
+        flow { messagesRepository.monitorConversationLogs() },
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -120,6 +117,19 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun pendingMessageFlushMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    writeQueue.queueChanges.mapToMutation {
+        val updatedPendingMessages = pendingItems.filter {
+            writeQueue.contains(Writable.Send(it.message))
+        }
+        copy(
+            pendingItems = updatedPendingMessages,
+            tilingData = tilingData.updatePendingMessages(updatedPendingMessages)
+        )
     }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
@@ -161,22 +171,7 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
         }
 
         // Write the message
-        val writable = Writable.Send(action.message)
-        writeQueue.enqueue(writable)
-        writeQueue.awaitDequeue(writable)
-
-        // Remove the pending message
-        emit {
-            copy(
-                pendingItems = pendingItems.filter { it.message != writable.request },
-                tilingData = tilingData.copy(
-                    items = tilingData.items.filter { item ->
-                        if (item is MessageItem.Pending) item != action.message
-                        else true
-                    }
-                )
-            )
-        }
+        writeQueue.enqueue(Writable.Send(action.message))
     }
 
 private suspend fun Flow<Action.Tile>.messagingTilingMutations(
@@ -195,39 +190,43 @@ private suspend fun Flow<Action.Tile>.messagingTilingMutations(
                 items.distinctBy(MessageItem::id)
             },
             onTilingDataUpdated = tilingDataUpdated@{ updatedTilingData ->
-                if (pendingItems.isEmpty()) return@tilingDataUpdated copy(
-                    tilingData = updatedTilingData
-                )
-
-                // Database refreshes can happen at any time. Add pending items.
-                val updatedItems = updatedTilingData.items
-                val tilingDataWithPendingItems = updatedTilingData.copy(
-                    items = when {
-                        updatedItems.isEmpty() -> buildTiledList {
-                            addAll(
-                                query = updatedTilingData.currentQuery,
-                                items = pendingItems,
-                            )
-                        }
-
-                        else -> buildTiledList {
-                            (0..<updatedItems.tileCount).forEach { tileIndex ->
-                                val tile = updatedItems.tileAt(tileIndex)
-                                val lastTileIndex = updatedItems.tileCount - 1
-                                val tileSublist = updatedItems.subList(tile.start, tile.end)
-                                if (tileIndex == lastTileIndex) addAll(
-                                    query = updatedItems.queryAtTile(tileIndex),
-                                    // Add pending items to the last chunk and sort
-                                    items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
-                                )
-                                else addAll(
-                                    query = updatedItems.queryAtTile(tileIndex),
-                                    items = tileSublist,
-                                )
-                            }
-                        }
+                copy(
+                    tilingData = when {
+                        pendingItems.isEmpty() -> updatedTilingData
+                        // Database refreshes can happen at any time. Add pending items.
+                        else -> updatedTilingData.updatePendingMessages(pendingItems)
                     }
                 )
-                copy(tilingData = tilingDataWithPendingItems)
             },
         )
+
+private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
+    pendingItems: List<MessageItem.Pending>
+): TilingState.Data<MessageQuery, MessageItem> =
+    copy(
+        items = when {
+            items.isEmpty() -> buildTiledList {
+                addAll(
+                    query = currentQuery,
+                    items = pendingItems,
+                )
+            }
+
+            else -> buildTiledList {
+                (0..<items.tileCount).forEach { tileIndex ->
+                    val tile = items.tileAt(tileIndex)
+                    val lastTileIndex = items.tileCount - 1
+                    val tileSublist = items.subList(tile.start, tile.end)
+                    if (tileIndex == lastTileIndex) addAll(
+                        query = items.queryAtTile(tileIndex),
+                        // Add pending items to the last chunk and sort
+                        items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
+                    )
+                    else addAll(
+                        query = items.queryAtTile(tileIndex),
+                        items = tileSublist,
+                    )
+                }
+            }
+        }
+    )
