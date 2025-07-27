@@ -17,6 +17,7 @@
 package com.tunjid.heron.conversation.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
@@ -35,6 +36,7 @@ import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.ui.ConversationTitle
 import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.conversation.ui.conversationSharedElementKey
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -51,6 +53,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -188,8 +191,19 @@ class ConversationBindings(
                                 end = 16.dp,
                                 bottom = UiTokens.navigationBarHeight + 8.dp
                             )
+                            .imePadding()
                             .bottomNavigationSharedBounds(this),
-                        onMessageSent = {},
+                        onMessageSent = { annotatedString ->
+                            viewModel.accept(
+                                Action.SendMessage(
+                                    Message.Create(
+                                        conversationId = state.id,
+                                        text = annotatedString.text,
+                                        links = annotatedString.links(),
+                                    )
+                                )
+                            )
+                        },
                     )
                 },
                 navigationRail = {
@@ -201,7 +215,8 @@ class ConversationBindings(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = paddingValues.calculateTopPadding()),
+                            .padding(top = paddingValues.calculateTopPadding())
+                            .imePadding(),
                     )
                 }
             )

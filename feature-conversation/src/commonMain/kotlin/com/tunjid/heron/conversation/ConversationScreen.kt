@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.path
@@ -104,7 +103,7 @@ internal fun ConversationScreen(
     ) {
         items(
             count = items.size,
-            key = { items[it].id.id }
+            key = { items[it].id }
         ) { index ->
             val prevAuthor = items.getOrNull(index - 1)?.sender
             val nextAuthor = items.getOrNull(index + 1)?.sender
@@ -115,7 +114,7 @@ internal fun ConversationScreen(
             Message(
                 modifier = Modifier
                     .animateItem(),
-                message = content,
+                item = content,
                 side = when {
                     content.sender.did == state.signedInProfile?.did -> Side.Sender
                     else -> Side.Receiver
@@ -160,7 +159,7 @@ internal fun ConversationScreen(
 @Composable
 private fun Message(
     modifier: Modifier = Modifier,
-    message: Message,
+    item: MessageItem,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -194,13 +193,13 @@ private fun Message(
                             Action.Navigate.To(
                                 profileDestination(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = message.sender,
-                                    avatarSharedElementKey = message.avatarSharedElementKey(),
+                                    profile = item.sender,
+                                    avatarSharedElementKey = item.avatarSharedElementKey(),
                                 )
                             )
                         )
                     },
-                message = message,
+                item = item,
                 paneScaffoldState = paneScaffoldState
             )
         }
@@ -210,20 +209,23 @@ private fun Message(
         )
 
         AuthorAndTextMessage(
-            message = message,
+            item = item,
             side = side,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier
         )
 
-        message.post?.let { post ->
-            PostMessage(
-                post = post,
-                message = message,
-                paneScaffoldState = paneScaffoldState,
-                actions = actions,
-            )
+        when(item) {
+            is MessageItem.Pending -> Unit
+            is MessageItem.Sent -> item.message.post?.let { post ->
+                PostMessage(
+                    post = post,
+                    item = item,
+                    paneScaffoldState = paneScaffoldState,
+                    actions = actions,
+                )
+            }
         }
     }
 }
@@ -232,7 +234,7 @@ private fun Message(
 @Composable
 private fun MessageAvatar(
     modifier: Modifier = Modifier,
-    message: Message,
+    item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
 ) {
     Box(
@@ -240,11 +242,11 @@ private fun MessageAvatar(
     ) {
         paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = paneScaffoldState.rememberSharedContentState(
-                key = message.avatarSharedElementKey()
+                key = item.avatarSharedElementKey()
             ),
-            state = remember(message.sender.avatar) {
+            state = remember(item.sender.avatar) {
                 ImageArgs(
-                    url = message.sender.avatar?.uri,
+                    url = item.sender.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                     shape = RoundedPolygonShape.Circle,
@@ -260,21 +262,21 @@ private fun MessageAvatar(
 
 @Composable
 private fun AuthorAndTextMessage(
-    message: Message,
+    item: MessageItem,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     modifier: Modifier = Modifier
 ) {
-    if (message.text.isNotBlank()) Column(
+    if (item.text.isNotBlank()) Column(
         modifier = modifier,
         horizontalAlignment = side,
     ) {
         if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(message)
+            AuthorNameTimestamp(item)
         }
         ChatItemBubble(
-            message = message,
+            message = item,
             side = side,
         )
         if (isFirstMessageByAuthor) {
@@ -289,7 +291,7 @@ private fun AuthorAndTextMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-    item: Message
+    item: MessageItem
 ) {
     // Combine author and timestamp for a11y.
     Row(
@@ -313,7 +315,7 @@ private fun AuthorNameTimestamp(
 
 @Composable
 private fun ChatItemBubble(
-    message: Message,
+    message: MessageItem,
     side: Side,
 ) {
     val backgroundBubbleColor = when (side) {
@@ -338,7 +340,7 @@ private fun ChatItemBubble(
 @Composable
 private fun PostMessage(
     post: Post,
-    message: Message,
+    item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit
 ) {
@@ -357,10 +359,10 @@ private fun PostMessage(
         post = post,
         isAnchoredInTimeline = false,
         avatarShape = RoundedPolygonShape.Circle,
-        sharedElementPrefix = message.id.id,
+        sharedElementPrefix = item.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
-        postActions = remember(message.id, actions) {
+        postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { post, linkTarget ->
                     if (linkTarget is LinkTarget.OfProfile) actions(
@@ -377,7 +379,7 @@ private fun PostMessage(
                         Action.Navigate.To(
                             postDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = message.id.id.withQuotingPostIdPrefix(
+                                sharedElementPrefix = item.id.withQuotingPostIdPrefix(
                                     quotingPostId = quotingPostId,
                                 ),
                                 post = post,
@@ -392,7 +394,7 @@ private fun PostMessage(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = profile,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = message.id.id.withQuotingPostIdPrefix(
+                                    prefix = item.id.withQuotingPostIdPrefix(
                                         quotingPostId = quotingPostId,
                                     ),
                                     quotingPostId = quotingPostId,
@@ -415,8 +417,8 @@ private fun PostMessage(
     )
 }
 
-private fun Message.avatarSharedElementKey(): String {
-    return "${id.id}-${conversationId.id}-${sender.did.id}"
+private fun MessageItem.avatarSharedElementKey(): String {
+    return "${id}-${conversationId.id}-${sender.did.id}"
 }
 
 private fun Instant.toTimestamp(): String {

@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -61,7 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun UserInput(
-    onMessageSent: (String) -> Unit,
+    onMessageSent: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
     resetScroll: () -> Unit = {}
 ) {
@@ -102,7 +103,7 @@ fun UserInput(
                 textFieldFocusState = focused
             },
             onMessageSent = {
-                onMessageSent(textState.text)
+                onMessageSent(it)
                 // Reset text field and close keyboard
                 textState = TextFieldValue()
                 // Move scroll to bottom
@@ -125,7 +126,7 @@ private fun UserInputText(
     textFieldValue: TextFieldValue,
     keyboardShown: Boolean,
     onTextFieldFocused: (Boolean) -> Unit,
-    onMessageSent: (String) -> Unit,
+    onMessageSent: (AnnotatedString) -> Unit,
     focusState: Boolean,
 ) {
     val a11ylabel = stringResource(Res.string.textfield_desc)
@@ -156,7 +157,7 @@ private fun BoxScope.UserInputTextField(
     onTextFieldFocused: (Boolean) -> Unit,
     keyboardType: KeyboardType,
     focusState: Boolean,
-    onMessageSent: (String) -> Unit,
+    onMessageSent: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var lastFocusState by remember { mutableStateOf(false) }
@@ -177,7 +178,7 @@ private fun BoxScope.UserInputTextField(
             imeAction = ImeAction.Send,
         ),
         keyboardActions = KeyboardActions {
-            if (textFieldValue.text.isNotBlank()) onMessageSent(textFieldValue.text)
+            if (textFieldValue.text.isNotBlank()) onMessageSent(textFieldValue.annotatedString)
         },
         cursorBrush = SolidColor(LocalContentColor.current),
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
