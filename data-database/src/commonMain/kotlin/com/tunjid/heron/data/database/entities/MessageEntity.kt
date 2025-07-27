@@ -84,7 +84,7 @@ data class PopulatedMessageEntity(
         parentColumn = "id",
         entityColumn = "messageId",
     )
-    val reactions: MessageReactionEntity?,
+    val reactions: List<MessageReactionEntity>,
     @Relation(
         parentColumn = "id",
         entityColumn = "messageId",
@@ -123,5 +123,11 @@ fun PopulatedMessageEntity.asExternalModel(
     list = list,
     starterPack = starterPack,
     post = post,
+    reactions = reactions.map {
+        Message.Reaction(
+            value = it.value,
+            sender = it.senderId
+        )
+    }
 )
 

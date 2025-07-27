@@ -80,6 +80,7 @@ fun PopulatedConversationEntity.asExternalModel() =
                         list = null,
                         starterPack = null,
                         post = null,
+                        reactions = emptyList(),
                     )
                 }
         },
