@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -57,6 +58,19 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write() {
             postRepository.createPost(request)
+        }
+    }
+
+    @Serializable
+    data class Send(
+        val request: Message.Create,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "send-message-$request"
+
+        override suspend fun WriteQueue.write() {
+            messageRepository.sendMessage(request)
         }
     }
 

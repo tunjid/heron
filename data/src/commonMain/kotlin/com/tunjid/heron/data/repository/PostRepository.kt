@@ -25,14 +25,6 @@ import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
-import app.bsky.richtext.Facet
-import app.bsky.richtext.FacetByteSlice
-import app.bsky.richtext.FacetFeatureUnion.Link as FacetFeatureLink
-import app.bsky.richtext.FacetFeatureUnion.Mention as FacetFeatureMention
-import app.bsky.richtext.FacetFeatureUnion.Tag as FacetFeatureTag
-import app.bsky.richtext.FacetLink
-import app.bsky.richtext.FacetMention
-import app.bsky.richtext.FacetTag
 import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
@@ -53,6 +45,7 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -68,11 +61,14 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.facet
+import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.refreshProfile
+import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
@@ -102,7 +98,6 @@ import sh.christian.ozone.api.response.AtpResponse
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.Repost as BskyRepost
-import sh.christian.ozone.api.Uri as BskyUri
 
 @Serializable
 data class PostDataQuery(
@@ -285,27 +280,11 @@ internal class OfflinePostRepository @Inject constructor(
     override suspend fun createPost(
         request: Post.Create.Request,
     ) {
-        val resolvedLinks: List<Link> = coroutineScope {
-            request.links.map { link ->
-                async {
-                    when (val target = link.target) {
-                        is LinkTarget.ExternalLink -> link
-                        is LinkTarget.UserDidMention -> link
-                        is LinkTarget.Hashtag -> link
-                        is LinkTarget.UserHandleMention -> {
-                            profileDao.profiles(ids = listOf(target.handle))
-                                .first()
-                                .firstOrNull()
-                                ?.let { profile ->
-                                    link.copy(
-                                        target = LinkTarget.UserDidMention(profile.did)
-                                    )
-                                }
-                        }
-                    }
-                }
-            }.awaitAll()
-        }.filterNotNull()
+        val resolvedLinks: List<Link> = resolveLinks(
+            profileDao = profileDao,
+            networkService = networkService,
+            links = request.links,
+        )
 
         val reply = request.metadata.reply?.parent?.let { parent ->
             val parentRef = StrongRef(
@@ -359,29 +338,7 @@ internal class OfflinePostRepository @Inject constructor(
                     repost = request.metadata.quote?.interaction,
                     mediaBlobs = blobs,
                 ),
-                facets = resolvedLinks.map { link ->
-                    Facet(
-                        index = FacetByteSlice(
-                            byteStart = link.start.toLong(),
-                            byteEnd = link.end.toLong(),
-                        ),
-                        features = when (val target = link.target) {
-                            is LinkTarget.ExternalLink -> listOf(
-                                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri)))
-                            )
-
-                            is LinkTarget.UserDidMention -> listOf(
-                                FacetFeatureMention(FacetMention(target.did.id.let(::Did)))
-                            )
-
-                            is LinkTarget.Hashtag -> listOf(
-                                FacetFeatureTag(FacetTag(target.tag))
-                            )
-
-                            is LinkTarget.UserHandleMention -> emptyList()
-                        },
-                    )
-                },
+                facets = resolvedLinks.facet(),
                 createdAt = Clock.System.now(),
             )
                 .asJsonContent(BskyPost.serializer()),

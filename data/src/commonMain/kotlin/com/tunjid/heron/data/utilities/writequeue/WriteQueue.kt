@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities.writequeue
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -32,6 +33,9 @@ sealed class WriteQueue {
 
     internal abstract val postRepository: PostRepository
     internal abstract val profileRepository: ProfileRepository
+
+    internal abstract val messageRepository: MessageRepository
+
     internal abstract val timelineRepository: TimelineRepository
 
     abstract suspend fun enqueue(
@@ -48,6 +52,7 @@ sealed class WriteQueue {
 internal class SnapshotWriteQueue @Inject constructor(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
+    override val messageRepository: MessageRepository,
     override val timelineRepository: TimelineRepository,
 ) : WriteQueue() {
     // At some point this queue should be persisted to disk
