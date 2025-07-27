@@ -68,9 +68,8 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PaneScaffoldState.UserInput(
-    onMessageSent: (AnnotatedString) -> Unit,
+    sendMessage: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
-    resetScroll: () -> Unit = {}
 ) {
     var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
@@ -78,6 +77,14 @@ fun PaneScaffoldState.UserInput(
 
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
+
+    val onSendMessage = remember {
+        { text: AnnotatedString ->
+            sendMessage(text)
+            // Reset text field and close keyboard
+            textState = TextFieldValue()
+        }
+    }
 
     Row(
         modifier = modifier,
@@ -107,25 +114,16 @@ fun PaneScaffoldState.UserInput(
             keyboardShown = textFieldFocusState,
             // Close extended selector if text field receives focus
             onTextFieldFocused = { focused ->
-                if (focused) {
-                    resetScroll()
-                }
                 textFieldFocusState = focused
             },
-            onMessageSent = {
-                onMessageSent(it)
-                // Reset text field and close keyboard
-                textState = TextFieldValue()
-                // Move scroll to bottom
-                resetScroll()
-            },
+            onMessageSent = onSendMessage,
             focusState = textFieldFocusState,
         )
         SendButton(
             modifier = Modifier
                 .height(36.dp),
             textFieldValue = textState,
-            onMessageSent = onMessageSent,
+            onMessageSent = onSendMessage,
         )
     }
 }
