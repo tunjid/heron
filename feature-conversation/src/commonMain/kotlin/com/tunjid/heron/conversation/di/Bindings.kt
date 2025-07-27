@@ -16,10 +16,13 @@
 
 package com.tunjid.heron.conversation.di
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -186,12 +189,9 @@ class ConversationBindings(
                 navigationBar = {
                     UserInput(
                         modifier = Modifier
-                            .padding(
-                                start = 16.dp,
-                                end = 16.dp,
-                                bottom = UiTokens.navigationBarHeight + 8.dp
-                            )
+                            .padding(horizontal = 8.dp)
                             .imePadding()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
                         onMessageSent = { annotatedString ->
                             viewModel.accept(

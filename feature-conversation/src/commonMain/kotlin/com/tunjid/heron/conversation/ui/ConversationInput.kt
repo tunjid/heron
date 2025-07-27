@@ -79,7 +79,7 @@ fun UserInput(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shape = UserInputShape,
             )
-            .padding(vertical = 8.dp)
+            .padding(vertical = 16.dp)
             .heightIn(max = 80.dp)
     ) {
         UserInputText(
