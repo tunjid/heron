@@ -20,6 +20,7 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
+import dev.jordond.connectivity.Connectivity
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
@@ -39,6 +40,7 @@ fun createAppState(): AppState =
         args = { appScope ->
             DataBindingArgs(
                 appScope = appScope,
+                connectivity = Connectivity(),
                 savedStatePath = savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 databaseBuilder = getDatabaseBuilder(),

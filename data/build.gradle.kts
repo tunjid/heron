@@ -52,6 +52,8 @@ kotlin {
                 implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.androidx.datastore.core.okio)
 
+                implementation(libs.connectivity.core)
+
                 implementation(libs.okio)
                 implementation(libs.ozone.bluesky.api)
 

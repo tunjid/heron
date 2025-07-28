@@ -50,6 +50,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(compose.preview)
+            implementation(libs.connectivity.device)
             implementation(libs.androidx.activity.compose)
             implementation(libs.filekit.dialogs)
         }
@@ -82,6 +83,8 @@ kotlin {
             implementation(libs.compose.material)
             implementation(libs.compose.ui.ui)
 
+            implementation(libs.connectivity.core)
+
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
@@ -95,7 +98,11 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.connectivity.http)
             implementation(libs.kotlinx.coroutines.swing)
+        }
+        iosMain.dependencies {
+            implementation(libs.connectivity.device)
         }
     }
 }

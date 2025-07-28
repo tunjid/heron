@@ -51,6 +51,7 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import dev.jordond.connectivity.Connectivity
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
@@ -65,6 +66,7 @@ import sh.christian.ozone.BlueskyJson
 
 class DataBindingArgs(
     val appScope: CoroutineScope,
+    val connectivity: Connectivity,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
