@@ -120,36 +120,28 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    signingConfigs {
-        getByName("debug") {
-            if (file("debugKeystore.properties").exists()) {
-                val props = Properties()
-                props.load(FileInputStream(file("debugKeystore.properties")))
-                storeFile = file(props["keystore"] as String)
-                storePassword = props["keystore.password"] as String
-                keyAlias = props["keyAlias"] as String
-                keyPassword = props["keyPassword"] as String
-            }
+    val releaseSigning = if (file("debugKeystore.properties").exists()) {
+        signingConfigs.create("release") {
+            val props = Properties()
+            props.load(FileInputStream(file("debugKeystore.properties")))
+            storeFile = file(props["keystore"] as String)
+            storePassword = props["keystore.password"] as String
+            keyAlias = props["keyAlias"] as String
+            keyPassword = props["keyPassword"] as String
         }
-        create("release") {
-            if (file("debugKeystore.properties").exists()) {
-                val props = Properties()
-                props.load(FileInputStream(file("debugKeystore.properties")))
-                storeFile = file(props["keystore"] as String)
-                storePassword = props["keystore.password"] as String
-                keyAlias = props["keyAlias"] as String
-                keyPassword = props["keyPassword"] as String
-            }
-        }
+    } else {
+        signingConfigs["debug"]
     }
     buildTypes {
+        all {
+            signingConfig = releaseSigning
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

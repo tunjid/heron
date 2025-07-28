@@ -26,7 +26,7 @@ android {
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data"))
                 implementation(project(":di"))
@@ -35,15 +35,7 @@ kotlin {
                 implementation(libs.tunjid.composables)
             }
         }
-        named("androidMain") {
-            dependencies {
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-            }
-        }
-        named("commonTest") {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }

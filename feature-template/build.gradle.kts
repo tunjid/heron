@@ -27,7 +27,7 @@ android {
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data"))
                 implementation(project(":di"))
@@ -44,15 +44,7 @@ kotlin {
                 api(libs.tunjid.treenav.strings)
             }
         }
-        named("androidMain") {
-            dependencies {
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-            }
-        }
-        named("commonTest") {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }

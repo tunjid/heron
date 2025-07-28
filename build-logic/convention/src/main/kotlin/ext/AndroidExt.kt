@@ -33,9 +33,6 @@ fun org.gradle.api.Project.commonConfiguration(
         minSdk = 30
     }
 
-    buildFeatures {
-        compose = true
-    }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = ProjectJavaVersion

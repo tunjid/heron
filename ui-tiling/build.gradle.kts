@@ -21,14 +21,11 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.ui.tiling"
-    buildFeatures {
-        compose = false
-    }
 }
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data-core"))
 
