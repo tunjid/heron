@@ -26,7 +26,7 @@ android {
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data"))
                 implementation(project(":ui-tiling"))

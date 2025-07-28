@@ -26,7 +26,7 @@ android {
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data-core"))
                 implementation(project(":ui-core"))
@@ -51,7 +51,7 @@ kotlin {
                 implementation(libs.tunjid.composables)
             }
         }
-        named("androidMain") {
+        androidMain {
             dependencies {
                 implementation(libs.ktor.client.android)
                 implementation(libs.androidx.media3.datasource.okhttp)
@@ -62,12 +62,12 @@ kotlin {
                 implementation(libs.andrew.bailey.difference)
             }
         }
-        named("desktopMain") {
+        desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
             }
         }
-//        named("iosMain") {
+//        iosMain {
 //            dependencies {
 //                implementation(libs.ktor.client.darwin)
 //            }

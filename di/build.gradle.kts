@@ -21,26 +21,11 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.di"
-    buildFeatures {
-        compose = false
-    }
 }
 
 kotlin {
     sourceSets {
-        named("commonMain") {
-            dependencies {
-            }
-        }
-        named("androidMain") {
-            dependencies {
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-            }
-        }
-        named("commonTest") {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }

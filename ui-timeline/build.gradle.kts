@@ -22,14 +22,11 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.ui.feed"
-    buildFeatures {
-        compose = true
-    }
 }
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data-core"))
                 implementation(project(":data"))

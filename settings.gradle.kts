@@ -15,6 +15,7 @@
  */
 
 rootProject.name = "heron"
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
@@ -44,8 +45,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 include(
     ":composeApp",

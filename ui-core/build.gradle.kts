@@ -26,7 +26,7 @@ android {
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data-core"))
 
@@ -54,17 +54,17 @@ kotlin {
                 implementation(libs.tunjid.treenav.strings)
             }
         }
-        named("androidMain") {
+        androidMain {
             dependencies {
                 implementation(libs.ktor.client.android)
             }
         }
-        named("desktopMain") {
+        desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
             }
         }
-//        named("iosMain") {
+//        iosMain {
 //            dependencies {
 //                implementation(libs.ktor.client.darwin)
 //            }

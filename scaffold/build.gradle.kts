@@ -24,20 +24,17 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.domain.navigation"
-    buildFeatures {
-        compose = true
-    }
 }
 
 kotlin {
     sourceSets {
-        named("androidMain") {
+        androidMain {
             dependencies {
                 implementation(libs.androidx.activity.compose)
                 implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
             }
         }
-        named("commonMain") {
+        commonMain {
             dependencies {
                 implementation(project(":data-core"))
                 implementation(project(":data"))

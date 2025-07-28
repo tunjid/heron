@@ -23,17 +23,11 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.data"
-    buildFeatures {
-        compose = false
-    }
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
 }
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 api(project(":di"))
                 api(project(":data-core"))
@@ -47,27 +41,24 @@ kotlin {
                 implementation(libs.okio)
             }
         }
-        named("androidMain") {
-            dependencies {
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-            }
-        }
-        named("commonTest") {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
     }
 }
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     implementation(project(":di"))
-//    add("kspCommonMainMetadata", libs.androidx.room.compiler)
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspDesktop", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
+//    kspCommonMainMetadata(libs.androidx.room.compiler)
+    kspAndroid(libs.androidx.room.compiler)
+    kspDesktop(libs.androidx.room.compiler)
+    kspIosSimulatorArm64(libs.androidx.room.compiler)
+    kspIosX64(libs.androidx.room.compiler)
+    kspIosArm64(libs.androidx.room.compiler)
 }

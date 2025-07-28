@@ -22,14 +22,11 @@ plugins {
 }
 android {
     namespace = "com.tunjid.heron.data"
-    buildFeatures {
-        compose = false
-    }
 }
 
 kotlin {
     sourceSets {
-        named("commonMain") {
+        commonMain {
             dependencies {
                 api(project(":di"))
                 implementation(project(":data-core"))
@@ -60,19 +57,19 @@ kotlin {
                 implementation(libs.tunjid.mutator.coroutines.common)
             }
         }
-        named("androidMain") {
+        androidMain {
             dependencies {
                 implementation(libs.androidx.core.ktx)
 
                 implementation(libs.ktor.client.android)
             }
         }
-        named("desktopMain") {
+        desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
             }
         }
-        named("commonTest") {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
