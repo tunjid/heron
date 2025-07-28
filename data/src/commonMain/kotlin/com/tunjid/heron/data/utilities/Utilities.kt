@@ -16,9 +16,13 @@
 
 package com.tunjid.heron.data.utilities
 
+import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
 import kotlin.jvm.JvmInline
@@ -33,17 +37,22 @@ internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     }
 }
 
-internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
+internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
     times: Int = 3,
     initialDelay: Long = 100, // 0.1 second
     maxDelay: Long = 5000,    // 1 second
     factor: Double = 2.0,
-    block: () -> AtpResponse<T>,
-): Result<T> {
+    crossinline block: suspend () -> AtpResponse<T>,
+): Result<T> = coroutineScope scope@{
+    var connected = true
+    // Monitor connection status async
+    val connectivityJob = launch {
+        isConnected.collect { connected = it }
+    }
     var currentDelay = initialDelay
     repeat(times) { retry ->
         try {
-            return when (val atpResponse = block()) {
+            return@scope when (val atpResponse = block()) {
                 is AtpResponse.Failure -> Result.failure(
                     Exception(atpResponse.error?.message)
                 )
@@ -51,7 +60,7 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
                 is AtpResponse.Success -> Result.success(
                     atpResponse.response
                 )
-            }
+            }.also { connectivityJob.cancel() }
         } catch (e: IOException) {
             // TODO: Log this exception
             e.printStackTrace()
@@ -60,12 +69,16 @@ internal suspend inline fun <T : Any> runCatchingWithNetworkRetry(
             e.printStackTrace()
         }
         if (retry != times) {
-            delay(currentDelay)
+            if (connected) delay(currentDelay)
+            // Wait for a network connection
+            else isConnected.first(true::equals)
             currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
         }
     }
+    // Cancel the connectivity bob before returning
+    connectivityJob.cancel()
     // TODO: Be more descriptive with this error
-    return Result.failure(Exception("There was an error")) // last attempt
+    return@scope Result.failure(Exception("There was an error")) // last attempt
 }
 
 /**

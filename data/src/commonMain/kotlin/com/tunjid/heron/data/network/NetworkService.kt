@@ -97,13 +97,11 @@ class KtorNetworkService(
         maxDelay: Long,    // 1 second
         factor: Double,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
-    ): Result<T> {
-        return runCatchingWithNetworkRetry(
-            times,
-            initialDelay,
-            maxDelay,
-            factor,
-            block = { block(api) }
-        )
-    }
+    ): Result<T> = networkMonitor.runCatchingWithNetworkRetry(
+        times,
+        initialDelay,
+        maxDelay,
+        factor,
+        block = { block(api) }
+    )
 }

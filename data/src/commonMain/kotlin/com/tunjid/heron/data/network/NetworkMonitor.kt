@@ -43,11 +43,8 @@ internal class ConnectivityNetworkMonitor @Inject constructor(
         connectivity.start()
         try {
             emitAll(
-                connectivity.statusUpdates.map { status ->
-                    when (status) {
-                        is Connectivity.Status.Connected -> true
-                        Connectivity.Status.Disconnected -> false
-                    }
+                connectivity.statusUpdates.map {
+                    it.isConnected
                 }
             )
         } finally {
@@ -57,6 +54,8 @@ internal class ConnectivityNetworkMonitor @Inject constructor(
         .stateIn(
             scope = appScope,
             initialValue = true,
-            started = SharingStarted.WhileSubscribed(3000),
+            // TODO: Can this be WhileSubscribed?
+            //  The backing library isn't thread safe for start / stop.
+            started = SharingStarted.Lazily,
         )
 }
