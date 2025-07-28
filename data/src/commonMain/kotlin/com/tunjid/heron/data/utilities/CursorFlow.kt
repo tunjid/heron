@@ -17,13 +17,15 @@
 package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.network.NetworkService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.response.AtpResponse
 
-internal fun <NetworkResponse : Any> nextCursorFlow(
+internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
     currentCursor: Cursor,
-    currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
+    currentRequestWithNextCursor: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
     nextCursor: NetworkResponse.() -> String?,
     onResponse: suspend NetworkResponse.() -> Unit,
 ): Flow<Cursor> = flow {
@@ -33,7 +35,7 @@ internal fun <NetworkResponse : Any> nextCursorFlow(
     // Do nothing, can't tell what the next items are
     if (currentCursor == Cursor.Pending) return@flow
 
-    runCatchingWithNetworkRetry {
+    runCatchingWithMonitoredNetworkRetry {
         currentRequestWithNextCursor()
     }
         .getOrNull()

@@ -17,7 +17,7 @@
 package com.tunjid.heron.data.network
 
 import dev.jordond.connectivity.Connectivity
-import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +34,7 @@ interface NetworkMonitor {
     val isConnected: Flow<Boolean>
 }
 
-internal class ConnectivityNetworkMonitor(
+internal class ConnectivityNetworkMonitor @Inject constructor(
     @Named("AppScope")
     appScope: CoroutineScope,
     private val connectivity: Connectivity,

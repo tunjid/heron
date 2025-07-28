@@ -37,7 +37,6 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
@@ -127,8 +126,8 @@ internal class AuthTokenRepository(
 
 
     override suspend fun updateSignedInUser(): Boolean {
-        return runCatchingWithNetworkRetry {
-            networkService.api.getSession()
+        return networkService.runCatchingWithMonitoredNetworkRetry {
+            getSession()
         }
             .getOrNull()
             ?.did
@@ -138,16 +137,16 @@ internal class AuthTokenRepository(
     private suspend fun updateSignedInUser(did: Did) = supervisorScope {
         listOf(
             async {
-                runCatchingWithNetworkRetry {
-                    networkService.api.getProfile(GetProfileQueryParams(actor = did))
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getProfile(GetProfileQueryParams(actor = did))
                 }
                     .getOrNull()
                     ?.profileEntity()
                     ?.let { profileDao.upsertProfiles(listOf(it)) } != null
             },
             async {
-                runCatchingWithNetworkRetry {
-                    networkService.api.getPreferences()
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPreferences()
                 }
                     .getOrNull()
                     ?.let { savePreferences(it) } != null

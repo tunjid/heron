@@ -63,8 +63,8 @@ internal suspend fun lookupProfileDid(
             ?.did
             ?.id
             ?.let(::Did)
-            ?: runCatchingWithNetworkRetry {
-                networkService.api.resolveHandle(
+            ?: networkService.runCatchingWithMonitoredNetworkRetry {
+                resolveHandle(
                     params = ResolveHandleQueryParams(
                         Handle(profileHandleOrId)
                     )
@@ -117,8 +117,8 @@ internal suspend fun refreshProfile(
         profileDao = profileDao,
         networkService = networkService,
     ) ?: return
-    runCatchingWithNetworkRetry {
-        networkService.api.getProfile(
+    networkService.runCatchingWithMonitoredNetworkRetry {
+        getProfile(
             GetProfileQueryParams(actor = profileDid)
         )
     }

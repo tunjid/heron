@@ -35,7 +35,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
@@ -82,8 +81,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
     override val unreadCount: Flow<Long> =
         flow {
             while (true) {
-                val unreadCount = runCatchingWithNetworkRetry {
-                    networkService.api.getUnreadCount(
+                val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getUnreadCount(
                         params = GetUnreadCountQueryParams()
                     )
                 }
@@ -108,7 +107,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     ): Flow<CursorList<Notification>> =
         observeAndRefreshNotifications(
             query = query,
-            nextCursorFlow = nextCursorFlow(
+            nextCursorFlow = networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
                     val notificationsAtpResponse = networkService.api
@@ -173,8 +172,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
         val lastReadAt = savedStateRepository.savedState.value.notifications?.lastRead
         if (lastReadAt != null && lastReadAt > at) return
 
-        val isSuccess = runCatchingWithNetworkRetry {
-            networkService.api.updateSeen(
+        val isSuccess = networkService.runCatchingWithMonitoredNetworkRetry {
+            updateSeen(
                 // Add 1 millisecond to the request to be past the time on the backend
                 request = UpdateSeenRequest(at + 1.milliseconds)
             )
