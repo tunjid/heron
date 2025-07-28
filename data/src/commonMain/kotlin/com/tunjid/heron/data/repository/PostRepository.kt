@@ -66,7 +66,6 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -85,7 +84,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
@@ -312,7 +310,7 @@ internal class OfflinePostRepository @Inject constructor(
                             is MediaFile.Photo -> uploadBlob(file.data)
                                 .map(UploadBlobResponse::blob)
 
-                            is MediaFile.Video -> uploadVideoBlob(file.data)
+                            is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
                         }
                     }
                         .map(file::with)
@@ -500,10 +498,10 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
         )
     }
 
-private suspend fun BlueskyApi.uploadVideoBlob(
+private suspend fun NetworkService.uploadVideoBlob(
     data: ByteArray,
 ): AtpResponse<Blob> {
-    val uploadResponse = uploadVideo(data)
+    val uploadResponse = api.uploadVideo(data)
     val status = uploadResponse.requireResponse().jobStatus
 
     // Fail fast here if the upload failed
@@ -515,7 +513,7 @@ private suspend fun BlueskyApi.uploadVideoBlob(
         }
 
     repeat(20) {
-        val statusResponse = runCatchingWithNetworkRetry {
+        val statusResponse = runCatchingWithMonitoredNetworkRetry {
             getJobStatus(GetJobStatusQueryParams(status.jobId))
         }
         statusResponse

@@ -32,7 +32,7 @@ import kotlinx.serialization.json.Json
 import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.XrpcBlueskyApi
 import sh.christian.ozone.api.response.AtpResponse
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry as utility
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 
 interface NetworkService {
     val api: BlueskyApi
@@ -98,7 +98,7 @@ class KtorNetworkService(
         factor: Double,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T> {
-        return utility(
+        return runCatchingWithNetworkRetry(
             times,
             initialDelay,
             maxDelay,
