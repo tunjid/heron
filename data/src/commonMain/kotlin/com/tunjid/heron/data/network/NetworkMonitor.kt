@@ -16,11 +16,47 @@
 
 package com.tunjid.heron.data.network
 
-//import kotlinx.coroutines.flow.Flow
-//
-///**
-// * An interface that reports if there's a network connection
-// */
-//expect class NetworkMonitor {
-//    val isConnected: Flow<Boolean>
-//}
+import dev.jordond.connectivity.Connectivity
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
+/**
+ * An interface that reports if there's a network connection
+ */
+interface NetworkMonitor {
+    val isConnected: Flow<Boolean>
+}
+
+internal class ConnectivityNetworkMonitor(
+    @Named("AppScope")
+    appScope: CoroutineScope,
+    private val connectivity: Connectivity,
+) : NetworkMonitor {
+    override val isConnected: Flow<Boolean> = flow {
+        connectivity.start()
+        try {
+            emitAll(
+                connectivity.statusUpdates.map { status ->
+                    when (status) {
+                        is Connectivity.Status.Connected -> true
+                        Connectivity.Status.Disconnected -> false
+                    }
+                }
+            )
+        } finally {
+            connectivity.stop()
+        }
+    }
+        .stateIn(
+            scope = appScope,
+            initialValue = true,
+            started = SharingStarted.WhileSubscribed(3000),
+        )
+}
