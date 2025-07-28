@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.media.video
 
-import androidx.compose.foundation.AndroidEmbeddedExternalSurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +58,7 @@ internal fun VideoSurface(
         )
     }
 
-    AndroidEmbeddedExternalSurface(
+    EmbeddedExternalSurface(
         modifier = modifier
             .clip(shape)
             .onSizeChanged { surfaceSize = it },
