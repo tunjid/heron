@@ -74,8 +74,8 @@ import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
@@ -98,6 +98,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
@@ -222,11 +223,11 @@ internal class OfflineTimelineRepository(
     ): Flow<CursorList<TimelineItem>> = when (val timeline = query.timeline) {
         is Timeline.Home.Following -> observeAndRefreshTimeline(
             query = query,
-            nextCursorFlow = nextCursorFlow(
+            nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getTimeline(
+                    getTimeline(
                         GetTimelineQueryParams(
                             limit = query.data.limit,
                             cursor = cursor.value,
@@ -240,11 +241,11 @@ internal class OfflineTimelineRepository(
 
         is Timeline.Home.Feed -> observeAndRefreshTimeline(
             query = query,
-            nextCursorFlow = nextCursorFlow(
+            nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getFeed(
+                    getFeed(
                         GetFeedQueryParams(
                             feed = AtUri(timeline.source.uri),
                             limit = query.data.limit,
@@ -259,11 +260,11 @@ internal class OfflineTimelineRepository(
 
         is Timeline.Home.List -> observeAndRefreshTimeline(
             query = query,
-            nextCursorFlow = nextCursorFlow(
+            nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getListFeed(
+                    getListFeed(
                         GetListFeedQueryParams(
                             list = AtUri(timeline.source.uri),
                             limit = query.data.limit,
@@ -279,11 +280,11 @@ internal class OfflineTimelineRepository(
         is Timeline.Profile -> when (timeline.type) {
             Timeline.Profile.Type.Likes -> observeAndRefreshTimeline(
                 query = query,
-                nextCursorFlow = nextCursorFlow(
+                nextCursorFlow = networkService.nextTimelineCursorFlow(
                     query = query,
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getActorLikes(
+                        getActorLikes(
                             GetActorLikesQueryParams(
                                 actor = Did(timeline.profileId.id),
                                 limit = query.data.limit,
@@ -298,11 +299,11 @@ internal class OfflineTimelineRepository(
 
             Timeline.Profile.Type.Media -> observeAndRefreshTimeline(
                 query = query,
-                nextCursorFlow = nextCursorFlow(
+                nextCursorFlow = networkService.nextTimelineCursorFlow(
                     query = query,
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getAuthorFeed(
+                        getAuthorFeed(
                             GetAuthorFeedQueryParams(
                                 actor = Did(timeline.profileId.id),
                                 limit = query.data.limit,
@@ -318,11 +319,11 @@ internal class OfflineTimelineRepository(
 
             Timeline.Profile.Type.Posts -> observeAndRefreshTimeline(
                 query = query,
-                nextCursorFlow = nextCursorFlow(
+                nextCursorFlow = networkService.nextTimelineCursorFlow(
                     query = query,
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getAuthorFeed(
+                        getAuthorFeed(
                             GetAuthorFeedQueryParams(
                                 actor = Did(timeline.profileId.id),
                                 limit = query.data.limit,
@@ -338,11 +339,11 @@ internal class OfflineTimelineRepository(
 
             Timeline.Profile.Type.Replies -> observeAndRefreshTimeline(
                 query = query,
-                nextCursorFlow = nextCursorFlow(
+                nextCursorFlow = networkService.nextTimelineCursorFlow(
                     query = query,
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getAuthorFeed(
+                        getAuthorFeed(
                             GetAuthorFeedQueryParams(
                                 actor = Did(timeline.profileId.id),
                                 limit = query.data.limit,
@@ -358,11 +359,11 @@ internal class OfflineTimelineRepository(
 
             Timeline.Profile.Type.Videos -> observeAndRefreshTimeline(
                 query = query,
-                nextCursorFlow = nextCursorFlow(
+                nextCursorFlow = networkService.nextTimelineCursorFlow(
                     query = query,
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getAuthorFeed(
+                        getAuthorFeed(
                             GetAuthorFeedQueryParams(
                                 actor = Did(timeline.profileId.id),
                                 limit = query.data.limit,
@@ -394,7 +395,7 @@ internal class OfflineTimelineRepository(
             timeline = timeline,
             pollInterval = 10.seconds,
             networkRequestBlock = {
-                networkService.api.getFeed(
+                getFeed(
                     GetFeedQueryParams(
                         feed = AtUri(timeline.source.uri),
                         limit = 1,
@@ -409,7 +410,7 @@ internal class OfflineTimelineRepository(
             timeline = timeline,
             pollInterval = 10.seconds,
             networkRequestBlock = {
-                networkService.api.getTimeline(
+                getTimeline(
                     GetTimelineQueryParams(
                         limit = 1,
                         cursor = null,
@@ -423,7 +424,7 @@ internal class OfflineTimelineRepository(
             timeline = timeline,
             pollInterval = 10.seconds,
             networkRequestBlock = {
-                networkService.api.getListFeed(
+                getListFeed(
                     GetListFeedQueryParams(
                         list = AtUri(timeline.source.uri),
                         limit = 1,
@@ -439,7 +440,7 @@ internal class OfflineTimelineRepository(
                 timeline = timeline,
                 pollInterval = 15.seconds,
                 networkRequestBlock = {
-                    networkService.api.getActorLikes(
+                    getActorLikes(
                         GetActorLikesQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
@@ -454,7 +455,7 @@ internal class OfflineTimelineRepository(
                 timeline = timeline,
                 pollInterval = 15.seconds,
                 networkRequestBlock = {
-                    networkService.api.getAuthorFeed(
+                    getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
@@ -470,7 +471,7 @@ internal class OfflineTimelineRepository(
                 timeline = timeline,
                 pollInterval = 15.seconds,
                 networkRequestBlock = {
-                    networkService.api.getAuthorFeed(
+                    getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
@@ -486,7 +487,7 @@ internal class OfflineTimelineRepository(
                 timeline = timeline,
                 pollInterval = 15.seconds,
                 networkRequestBlock = {
-                    networkService.api.getAuthorFeed(
+                    getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
@@ -502,7 +503,7 @@ internal class OfflineTimelineRepository(
                 timeline = timeline,
                 pollInterval = 15.seconds,
                 networkRequestBlock = {
-                    networkService.api.getAuthorFeed(
+                    getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
                             limit = 1,
@@ -567,8 +568,8 @@ internal class OfflineTimelineRepository(
                     }
             }
             .withRefresh {
-                runCatchingWithNetworkRetry {
-                    networkService.api.getPostThread(
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPostThread(
                         GetPostThreadQueryParams(
                             uri = AtUri(postUri.uri)
                         )
@@ -787,15 +788,15 @@ internal class OfflineTimelineRepository(
     override suspend fun updateHomeTimelines(
         timelines: List<Timeline.Home>,
     ): Boolean {
-        val existing = runCatchingWithNetworkRetry {
-            networkService.api.getPreferences()
+        val existing = networkService.runCatchingWithMonitoredNetworkRetry {
+            getPreferences()
         }
             .getOrNull()
             ?.preferences
             ?: return false
 
-        runCatchingWithNetworkRetry {
-            networkService.api.putPreferences(
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            putPreferences(
                 PutPreferencesRequest(
                     preferences = existing.map { preference ->
                         when (preference) {
@@ -813,13 +814,13 @@ internal class OfflineTimelineRepository(
         return authRepository.updateSignedInUser()
     }
 
-    private fun <NetworkResponse : Any> nextCursorFlow(
+    private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
         currentCursor: Cursor,
-        currentRequestWithNextCursor: suspend () -> AtpResponse<NetworkResponse>,
+        currentRequestWithNextCursor: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<Cursor> = com.tunjid.heron.data.utilities.nextCursorFlow(
+    ): Flow<Cursor> = nextCursorFlow(
         currentCursor = currentCursor,
         currentRequestWithNextCursor = currentRequestWithNextCursor,
         nextCursor = nextCursor,
@@ -849,12 +850,12 @@ internal class OfflineTimelineRepository(
     private fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
         pollInterval: Duration,
-        networkRequestBlock: suspend () -> AtpResponse<T>,
+        networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = flow {
         while (true) {
             val pollInstant = Clock.System.now()
-            runCatchingWithNetworkRetry { networkRequestBlock() }
+            networkService.runCatchingWithMonitoredNetworkRetry { networkRequestBlock() }
                 .getOrNull()
                 ?.let(networkResponseToFeedViews)
                 ?.let { fetchedFeedViewPosts ->
@@ -1058,8 +1059,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getFeedGenerator(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getFeedGenerator(
                     GetFeedGeneratorQueryParams(
                         feed = uri.uri.let(::AtUri)
                     )
@@ -1093,8 +1094,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getList(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getList(
                     GetListQueryParams(
                         cursor = null,
                         limit = 1,
@@ -1130,8 +1131,8 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getStarterPack(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getStarterPack(
                     GetStarterPackQueryParams(
                         starterPack = uri.uri.let(::AtUri)
                     )

@@ -31,7 +31,9 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
+import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -51,6 +53,7 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import dev.jordond.connectivity.Connectivity
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
@@ -65,6 +68,7 @@ import sh.christian.ozone.BlueskyJson
 
 class DataBindingArgs(
     val appScope: CoroutineScope,
+    val connectivity: Connectivity,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
@@ -82,6 +86,10 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    fun provideConnectivity(): Connectivity = args.connectivity
+
+    @SingleIn(AppScope::class)
+    @Provides
     fun provideSavedStatePath(): Path = args.savedStatePath
 
     @SingleIn(AppScope::class)
@@ -91,6 +99,12 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideNetworkMonitor(
+        connectivityNetworkMonitor: ConnectivityNetworkMonitor,
+    ): NetworkMonitor = connectivityNetworkMonitor
 
     @SingleIn(AppScope::class)
     @Provides

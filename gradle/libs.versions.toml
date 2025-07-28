@@ -20,6 +20,7 @@ lifecycle = "2.9.1"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 coil = "3.2.0"
+connectivity = "2.1.0"
 compose-multiplatform = "1.8.2"
 # See https://github.com/JetBrains/compose-multiplatform-core/pull/1868
 compose-multiplatform-material3 = "1.9.0-alpha03"
@@ -92,6 +93,9 @@ compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-to
 compose-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 compose-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
 codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.9.0" }
+connectivity-core = { module = "dev.jordond.connectivity:connectivity-core", version.ref = "connectivity" }
+connectivity-device = { module = "dev.jordond.connectivity:connectivity-device", version.ref = "connectivity" }
+connectivity-http = { module = "dev.jordond.connectivity:connectivity-http", version.ref = "connectivity" }
 filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "vinceglb-filekit" }
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "vinceglb-filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }

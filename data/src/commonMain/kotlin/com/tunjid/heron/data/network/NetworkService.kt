@@ -31,15 +31,26 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.XrpcBlueskyApi
+import sh.christian.ozone.api.response.AtpResponse
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 
 interface NetworkService {
     val api: BlueskyApi
+
+    suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
+        times: Int = 3,
+        initialDelay: Long = 100, // 0.1 second
+        maxDelay: Long = 5000,    // 1 second
+        factor: Double = 2.0,
+        block: suspend BlueskyApi.() -> AtpResponse<T>,
+    ): Result<T>
 }
 
 @Inject
 class KtorNetworkService(
     private val json: Json,
     savedStateRepository: SavedStateRepository,
+    private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
     override val api = XrpcBlueskyApi(
         HttpClient {
@@ -78,5 +89,19 @@ class KtorNetworkService(
                 }
             }
         }
+    )
+
+    override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
+        times: Int,
+        initialDelay: Long, // 0.1 second
+        maxDelay: Long,    // 1 second
+        factor: Double,
+        block: suspend BlueskyApi.() -> AtpResponse<T>,
+    ): Result<T> = networkMonitor.runCatchingWithNetworkRetry(
+        times,
+        initialDelay,
+        maxDelay,
+        factor,
+        block = { block(api) }
     )
 }

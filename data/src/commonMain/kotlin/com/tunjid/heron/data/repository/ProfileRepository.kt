@@ -70,7 +70,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
 import com.tunjid.heron.data.utilities.refreshProfile
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -240,10 +239,10 @@ internal class OfflineProfileRepository @Inject constructor(
                         .map {
                             it.map(PopulatedListMemberEntity::asExternalModel)
                         },
-                    nextCursorFlow(
+                    networkService.nextCursorFlow(
                         currentCursor = cursor,
                         currentRequestWithNextCursor = {
-                            networkService.api.getList(
+                            getList(
                                 GetListQueryParams(
                                     list = query.listUri.uri.let(::AtUri),
                                     limit = query.data.limit,
@@ -279,8 +278,8 @@ internal class OfflineProfileRepository @Inject constructor(
             networkService = networkService,
         ) ?: return@flow
 
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.getFollowers(
+        val response = networkService.runCatchingWithMonitoredNetworkRetry {
+            getFollowers(
                 GetFollowersQueryParams(
                     actor = profileDid,
                     limit = query.data.limit,
@@ -347,8 +346,8 @@ internal class OfflineProfileRepository @Inject constructor(
             networkService = networkService,
         ) ?: return@flow
 
-        val response = runCatchingWithNetworkRetry {
-            networkService.api.getFollows(
+        val response = networkService.runCatchingWithMonitoredNetworkRetry {
+            getFollows(
                 GetFollowsQueryParams(
                     actor = profileDid,
                     limit = query.data.limit,
@@ -425,10 +424,10 @@ internal class OfflineProfileRepository @Inject constructor(
                     .map { populatedStarterPackEntities ->
                         populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                     },
-                nextCursorFlow(
+                networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getActorStarterPacks(
+                        getActorStarterPacks(
                             params = GetActorStarterPacksQueryParams(
                                 actor = profileDid,
                                 limit = query.data.limit,
@@ -469,10 +468,10 @@ internal class OfflineProfileRepository @Inject constructor(
                     .map { populatedListEntities ->
                         populatedListEntities.map(PopulatedListEntity::asExternalModel)
                     },
-                nextCursorFlow(
+                networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getLists(
+                        getLists(
                             params = GetListsQueryParams(
                                 actor = profileDid,
                                 limit = query.data.limit,
@@ -513,10 +512,10 @@ internal class OfflineProfileRepository @Inject constructor(
                     .map { populatedFeedGeneratorEntities ->
                         populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                     },
-                nextCursorFlow(
+                networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        networkService.api.getActorFeeds(
+                        getActorFeeds(
                             params = GetActorFeedsQueryParams(
                                 actor = profileDid,
                                 limit = query.data.limit,
@@ -541,8 +540,8 @@ internal class OfflineProfileRepository @Inject constructor(
         connection: Profile.Connection,
     ) {
         when (connection) {
-            is Profile.Connection.Follow -> runCatchingWithNetworkRetry {
-                networkService.api.createRecord(
+            is Profile.Connection.Follow -> networkService.runCatchingWithMonitoredNetworkRetry {
+                createRecord(
                     CreateRecordRequest(
                         repo = connection.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.Follow),
@@ -568,8 +567,8 @@ internal class OfflineProfileRepository @Inject constructor(
                     )
                 }
 
-            is Profile.Connection.Unfollow -> runCatchingWithNetworkRetry {
-                networkService.api.deleteRecord(
+            is Profile.Connection.Unfollow -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteRecord(
                     DeleteRecordRequest(
                         repo = connection.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.Follow),

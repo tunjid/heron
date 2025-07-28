@@ -35,7 +35,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -45,7 +44,6 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -62,14 +60,12 @@ import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
-import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -88,7 +84,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
@@ -159,10 +154,10 @@ internal class OfflinePostRepository @Inject constructor(
                 limit = query.data.limit,
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),
-            nextCursorFlow(
+            networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getLikes(
+                    getLikes(
                         GetLikesQueryParams(
                             uri = postEntity.uri.uri.let(::AtUri),
                             limit = query.data.limit,
@@ -204,10 +199,10 @@ internal class OfflinePostRepository @Inject constructor(
             )
                 .map(List<PopulatedProfileEntity>::asExternalModels),
 
-            nextCursorFlow(
+            networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getRepostedBy(
+                    getRepostedBy(
                         GetRepostedByQueryParams(
                             uri = postEntity.uri.uri.let(::AtUri),
                             limit = query.data.limit,
@@ -241,10 +236,10 @@ internal class OfflinePostRepository @Inject constructor(
                         it.asExternalModel(quote = null)
                     }
                 },
-            nextCursorFlow(
+            networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getQuotes(
+                    getQuotes(
                         GetQuotesQueryParams(
                             uri = postEntity.uri.uri.let(::AtUri),
                             limit = query.data.limit,
@@ -310,14 +305,12 @@ internal class OfflinePostRepository @Inject constructor(
         val blobs = if (request.metadata.mediaFiles.isNotEmpty()) coroutineScope {
             request.metadata.mediaFiles.map { file ->
                 async {
-                    runCatchingWithNetworkRetry {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
                         when (file) {
-                            is MediaFile.Photo -> networkService.api
-                                .uploadBlob(file.data)
+                            is MediaFile.Photo -> uploadBlob(file.data)
                                 .map(UploadBlobResponse::blob)
 
-                            is MediaFile.Video -> networkService.api
-                                .uploadVideoBlob(file.data)
+                            is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
                         }
                     }
                         .map(file::with)
@@ -344,8 +337,8 @@ internal class OfflinePostRepository @Inject constructor(
                 .asJsonContent(BskyPost.serializer()),
         )
 
-        runCatchingWithNetworkRetry {
-            networkService.api.createRecord(createRecordRequest)
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(createRecordRequest)
         }
     }
 
@@ -354,8 +347,8 @@ internal class OfflinePostRepository @Inject constructor(
     ) {
         val authorId = savedStateRepository.signedInProfileId ?: return
         when (interaction) {
-            is Post.Interaction.Create -> runCatchingWithNetworkRetry {
-                networkService.api.createRecord(
+            is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
+                createRecord(
                     CreateRecordRequest(
                         repo = authorId.id.let(::Did),
                         collection = Nsid(
@@ -402,8 +395,8 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                 }
 
-            is Post.Interaction.Delete -> runCatchingWithNetworkRetry {
-                networkService.api.deleteRecord(
+            is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteRecord(
                     DeleteRecordRequest(
                         repo = authorId.id.let(::Did),
                         collection = Nsid(
@@ -505,10 +498,10 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
         )
     }
 
-private suspend fun BlueskyApi.uploadVideoBlob(
+private suspend fun NetworkService.uploadVideoBlob(
     data: ByteArray,
 ): AtpResponse<Blob> {
-    val uploadResponse = uploadVideo(data)
+    val uploadResponse = api.uploadVideo(data)
     val status = uploadResponse.requireResponse().jobStatus
 
     // Fail fast here if the upload failed
@@ -520,7 +513,7 @@ private suspend fun BlueskyApi.uploadVideoBlob(
         }
 
     repeat(20) {
-        val statusResponse = runCatchingWithNetworkRetry {
+        val statusResponse = runCatchingWithMonitoredNetworkRetry {
             getJobStatus(GetJobStatusQueryParams(status.jobId))
         }
         statusResponse

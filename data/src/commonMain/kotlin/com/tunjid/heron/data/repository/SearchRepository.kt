@@ -55,7 +55,6 @@ import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -159,8 +158,8 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<Post>> =
         if (query.query.isBlank()) emptyFlow()
         else flow {
-            val response = runCatchingWithNetworkRetry {
-                networkService.api.searchPosts(
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                searchPosts(
                     params = SearchPostsQueryParams(
                         q = query.query,
                         limit = query.data.limit,
@@ -204,8 +203,8 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<ProfileWithViewerState>> =
         if (query.query.isBlank()) emptyFlow()
         else flow {
-            val response = runCatchingWithNetworkRetry {
-                networkService.api.searchActors(
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                searchActors(
                     params = SearchActorsQueryParams(
                         q = query.query,
                         limit = query.data.limit,
@@ -268,8 +267,8 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
         else flow {
-            val response = runCatchingWithNetworkRetry {
-                networkService.api.getPopularFeedGeneratorsUnspecced(
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                getPopularFeedGeneratorsUnspecced(
                     params = GetPopularFeedGeneratorsQueryParams(
                         query = query.query,
                         limit = query.data.limit,
@@ -313,8 +312,8 @@ internal class OfflineSearchRepository @Inject constructor(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
     ): Flow<List<ProfileWithViewerState>> = flow {
-        val profileViews = runCatchingWithNetworkRetry {
-            networkService.api.searchActorsTypeahead(
+        val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
+            searchActorsTypeahead(
                 params = SearchActorsTypeaheadQueryParams(
                     q = query.query,
                     limit = query.data.limit,
@@ -355,8 +354,8 @@ internal class OfflineSearchRepository @Inject constructor(
     }
 
     override fun trends(): Flow<List<Trend>> = flow {
-        runCatchingWithNetworkRetry {
-            networkService.api.getTrendsUnspecced(
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getTrendsUnspecced(
                 GetTrendsQueryParams()
             )
         }
@@ -371,8 +370,8 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun suggestedProfiles(
         category: String?,
     ): Flow<List<ProfileWithViewerState>> = flow {
-        val profileViews = runCatchingWithNetworkRetry {
-            networkService.api.getSuggestedUsersUnspecced(
+        val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
+            getSuggestedUsersUnspecced(
                 GetSuggestedUsersQueryParams(
                     category = category
                 )
@@ -404,8 +403,8 @@ internal class OfflineSearchRepository @Inject constructor(
     }
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> = flow {
-        val starterPackViews = runCatchingWithNetworkRetry {
-            networkService.api.getSuggestedStarterPacksUnspecced(
+        val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
+            getSuggestedStarterPacksUnspecced(
                 GetSuggestedStarterPacksQueryParams()
             )
         }
@@ -431,8 +430,8 @@ internal class OfflineSearchRepository @Inject constructor(
     }
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> = flow {
-        val generatorViews = runCatchingWithNetworkRetry {
-            networkService.api.getSuggestedFeeds(
+        val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
+            getSuggestedFeeds(
                 GetSuggestedFeedsQueryParams()
             )
         }

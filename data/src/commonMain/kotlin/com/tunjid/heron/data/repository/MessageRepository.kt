@@ -54,7 +54,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.resolveLinks
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -126,10 +125,10 @@ internal class OfflineMessageRepository @Inject constructor(
                 .map { populatedConversationEntities ->
                     populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
                 },
-            nextCursorFlow(
+            networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.listConvos(
+                    listConvos(
                         params = ListConvosQueryParams(
                             limit = query.data.limit,
                             cursor = cursor.value,
@@ -219,10 +218,10 @@ internal class OfflineMessageRepository @Inject constructor(
                         }
                     }
                 },
-            nextCursorFlow(
+            networkService.nextCursorFlow(
                 currentCursor = cursor,
                 currentRequestWithNextCursor = {
-                    networkService.api.getMessages(
+                    getMessages(
                         params = GetMessagesQueryParams(
                             convoId = query.conversationId.id,
                             limit = query.data.limit,
@@ -266,8 +265,8 @@ internal class OfflineMessageRepository @Inject constructor(
             }
         }
             .scan<Unit, String?>(null) { latestCursor, _ ->
-                val response = runCatchingWithNetworkRetry {
-                    networkService.api.getLog(GetLogQueryParams(latestCursor))
+                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getLog(GetLogQueryParams(latestCursor))
                 }
                     .getOrNull()
                     ?: return@scan latestCursor
@@ -332,8 +331,8 @@ internal class OfflineMessageRepository @Inject constructor(
             networkService = networkService,
             links = message.links,
         )
-        val sentMessage = runCatchingWithNetworkRetry {
-            networkService.api.sendMessage(
+        val sentMessage = networkService.runCatchingWithMonitoredNetworkRetry {
+            sendMessage(
                 SendMessageRequest(
                     convoId = message.conversationId.id,
                     message = MessageInput(
