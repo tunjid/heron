@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -193,16 +194,18 @@ class ConversationBindings(
                             .imePadding()
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
-                        onMessageSent = { annotatedString ->
-                            viewModel.accept(
-                                Action.SendMessage(
-                                    Message.Create(
-                                        conversationId = state.id,
-                                        text = annotatedString.text,
-                                        links = annotatedString.links(),
+                        sendMessage = remember(viewModel, state.id) {
+                            { annotatedString ->
+                                viewModel.accept(
+                                    Action.SendMessage(
+                                        Message.Create(
+                                            conversationId = state.id,
+                                            text = annotatedString.text,
+                                            links = annotatedString.links(),
+                                        )
                                     )
                                 )
-                            )
+                            }
                         },
                     )
                 },

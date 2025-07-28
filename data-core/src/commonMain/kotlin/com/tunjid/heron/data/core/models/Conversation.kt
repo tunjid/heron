@@ -26,4 +26,5 @@ data class Conversation(
     val muted: Boolean,
     val unreadCount: Long,
     val lastMessage: Message?,
+    val lastMessageReactedTo: Message?,
 )

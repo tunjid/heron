@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.models.Post.Create.Metadata
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -34,11 +34,19 @@ data class Message(
     val list: FeedList?,
     val starterPack: StarterPack?,
     val post: Post?,
+    val reactions: List<Reaction>,
 ) {
     @Serializable
     data class Create(
         val conversationId: ConversationId,
         val text: String,
         val links: List<Link>,
+    )
+
+    @Serializable
+    data class Reaction(
+        val value: String,
+        val senderId: ProfileId,
+        val createdAt: Instant,
     )
 }

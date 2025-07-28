@@ -19,9 +19,11 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
@@ -43,15 +45,31 @@ interface MessageDao {
                 lastMessage.conversationId AS lastMessage_conversationId, 
                 lastMessage.isDeleted AS lastMessage_isDeleted,
                 lastMessage.sentAt AS lastMessage_sentAt,
-                lastMessageReactedTo.sentAt FROM conversations
+                lastMessageReactedTo.id AS lastMessageReactedTo_id, 
+                lastMessageReactedTo.rev AS lastMessageReactedTo_rev, 
+                lastMessageReactedTo.text AS lastMessageReactedTo_text, 
+                lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId, 
+                lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId, 
+                lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
+                lastMessageReactedTo.sentAt AS lastMessageReactedTo_sentAt,
+                lastReaction.messageId AS lastReaction_messageId,
+                lastReaction.value AS lastReaction_value,
+                lastReaction.senderId AS lastReaction_senderId,
+                lastReaction.createdAt AS lastReaction_createdAt,
+                MAX(COALESCE(lastReaction.createdAt, lastMessage.sentAt), lastMessage.sentAt) AS sort
+                FROM conversations
             LEFT JOIN messages AS lastMessage
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
-            ON lastMessageId = lastMessageReactedTo.id
-            ORDER BY COALESCE(
-                lastMessageReactedTo.sentAt,
-                lastMessage.sentAt
-            )
+            ON lastReactedToMessageId = lastMessageReactedTo.id
+            LEFT JOIN (
+                SELECT * FROM messageReactions AS lastReaction
+                ORDER BY createdAt
+                DESC
+                LIMIT 1
+            ) AS lastReaction
+            ON lastReactedToMessageId = lastReaction.messageId
+            ORDER BY sort
             DESC
             LIMIT :limit
             OFFSET :offset
@@ -94,6 +112,11 @@ interface MessageDao {
     )
 
     @Upsert
+    suspend fun upsertMessageReactions(
+        entities: List<MessageReactionEntity>,
+    )
+
+    @Upsert
     suspend fun upsertMessageFeeds(
         entities: List<MessageFeedGeneratorEntity>,
     )
@@ -127,5 +150,15 @@ interface MessageDao {
     )
     suspend fun deleteAllMessages(
         conversationId: String,
+    )
+
+    @Query(
+        """
+        DELETE FROM messageReactions
+        WHERE messageId in (:messageIds)
+    """
+    )
+    suspend fun deleteMessageReactions(
+        messageIds: Collection<MessageId>,
     )
 }

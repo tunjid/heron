@@ -46,6 +46,10 @@ data class PopulatedConversationEntity(
     val entity: ConversationEntity,
     @Embedded(prefix = "lastMessage_")
     val lastMessageEntity: MessageEntity?,
+    @Embedded(prefix = "lastMessageReactedTo_")
+    val lastMessageReactedToEntity: MessageEntity?,
+    @Embedded(prefix = "lastReaction_")
+    val lastReactionEntity: MessageReactionEntity?,
     @Relation(
         parentColumn = "id",
         entityColumn = "did",
@@ -64,23 +68,38 @@ fun PopulatedConversationEntity.asExternalModel() =
         muted = entity.muted,
         unreadCount = entity.unreadCount,
         members = memberEntities.map(ProfileEntity::asExternalModel),
-        lastMessage = lastMessageEntity?.let { message ->
-            memberEntities.firstOrNull {
-                it.did == message.senderId
-            }
-                ?.let { sender ->
-                    Message(
-                        id = message.id,
-                        conversationId = message.conversationId,
-                        text = message.text,
-                        sentAt = message.sentAt,
-                        isDeleted = message.isDeleted,
-                        sender = sender.asExternalModel(),
-                        feedGenerator = null,
-                        list = null,
-                        starterPack = null,
-                        post = null,
-                    )
-                }
-        },
+        lastMessage = lastMessageEntity?.let(::conversationMessage),
+        lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
     )
+
+private fun PopulatedConversationEntity.conversationMessage(
+    message: MessageEntity
+): Message? =
+    memberEntities.firstOrNull {
+        it.did == message.senderId
+    }
+        ?.let { sender ->
+            Message(
+                id = message.id,
+                conversationId = message.conversationId,
+                text = message.text,
+                sentAt = message.sentAt,
+                isDeleted = message.isDeleted,
+                sender = sender.asExternalModel(),
+                feedGenerator = null,
+                list = null,
+                starterPack = null,
+                post = null,
+                reactions = listOfNotNull(
+                    lastReactionEntity
+                        ?.takeIf { message.id == lastMessageReactedToEntity?.id }
+                        ?.let { reactionValue ->
+                            Message.Reaction(
+                                value = lastReactionEntity.value,
+                                senderId = lastReactionEntity.senderId,
+                                createdAt = lastReactionEntity.createdAt,
+                            )
+                        }
+                ),
+            )
+        }

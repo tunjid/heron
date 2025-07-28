@@ -47,7 +47,7 @@ data class State(
 ) : TilingState<MessageQuery, MessageItem>
 
 fun State(
- route: Route
+    route: Route
 ) = State(
     id = route.conversationId,
     members = route.models.filterIsInstance<Profile>(),
@@ -68,45 +68,55 @@ sealed class MessageItem {
     @Serializable
     data class Sent(
         val message: Message,
-    ): MessageItem()
+    ) : MessageItem()
 
     @Serializable
     data class Pending(
         val sender: Profile,
         val message: Message.Create,
         val sentAt: Instant,
-    ): MessageItem()
+    ) : MessageItem()
 
 }
 
 val MessageItem.sender
-    get() = when(this) {
+    get() = when (this) {
         is MessageItem.Pending -> sender
         is MessageItem.Sent -> message.sender
     }
 
 val MessageItem.id
-    get() = when(this) {
+    get() = when (this) {
         is MessageItem.Pending -> sentAt.toString()
         is MessageItem.Sent -> message.id.id
     }
 
 val MessageItem.text
-    get() = when(this) {
+    get() = when (this) {
         is MessageItem.Pending -> message.text
         is MessageItem.Sent -> message.text
     }
 
 val MessageItem.conversationId
-    get() = when(this) {
+    get() = when (this) {
         is MessageItem.Pending -> message.conversationId
         is MessageItem.Sent -> message.conversationId
     }
 
 val MessageItem.sentAt
-    get() = when(this) {
+    get() = when (this) {
         is MessageItem.Pending -> sentAt
         is MessageItem.Sent -> message.sentAt
+    }
+
+val MessageItem.reactions
+    get() = when (this) {
+        is MessageItem.Pending -> ""
+        is MessageItem.Sent -> message.reactions
+            .joinToString(
+                separator = " ",
+                transform = Message.Reaction::value,
+            )
     }
 
 

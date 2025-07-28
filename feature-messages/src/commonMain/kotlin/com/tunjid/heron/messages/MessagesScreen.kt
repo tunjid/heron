@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,7 +43,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -55,10 +56,16 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
+import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.feature_messages.generated.resources.Res
+import heron.feature_messages.generated.resources.sender_reacted
+import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun MessagesScreen(
@@ -74,6 +81,7 @@ internal fun MessagesScreen(
         modifier = modifier
             .fillMaxSize(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         items(
             items = items,
@@ -150,12 +158,11 @@ fun Conversation(
             members = participants,
             conversationId = conversation.id,
         )
-        Column {
-            Text(
-                text = conversation.lastMessage?.text ?: "",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+        ConversationDetails(
+            participants = participants,
+            signedInProfileId = signedInProfileId,
+            conversationSummary = conversation.summary(),
+        )
     }
 }
 
@@ -189,7 +196,7 @@ fun ConversationMembers(
                 modifier = Modifier
                     .padding(horizontal = 2.dp)
                     .size(
-                        if (membersSize == 1) 44.dp else 28.dp
+                        if (membersSize == 1) 48.dp else 28.dp
                     )
                     .offset(
                         x = if (membersSize == 2 && index == 1) -(4).dp else 0.dp,
@@ -204,6 +211,69 @@ fun ConversationMembers(
                     AsyncImage(args, innerModifier)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun ConversationDetails(
+    participants: List<Profile>,
+    signedInProfileId: ProfileId?,
+    conversationSummary: String,
+) {
+    val profile = remember(participants, signedInProfileId) {
+        participants.firstOrNull { it.did != signedInProfileId }
+    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        profile?.let {
+            ProfileName(profile = it)
+            ProfileHandle(profile = it)
+        }
+        Text(
+            text = conversationSummary,
+            fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+private fun Conversation.summary(): String {
+    val lastMessage = lastMessage
+    val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
+
+    return when {
+        lastMessageReactedTo == null -> lastMessage?.text ?: ""
+        // Invalid state.
+        // A reaction should not be able to occur if there's no message to react to.
+        lastMessage == null -> ""
+        else -> maxOf(
+            a = lastMessage,
+            b = lastMessageReactedTo,
+            comparator = { a, b ->
+                val lastMessageSent = a.sentAt
+                val lastMessageReactedToAt = b.reactions.maxOfOrNull(
+                    Message.Reaction::createdAt
+                ) ?: Instant.DISTANT_PAST
+
+                lastMessageSent.compareTo(lastMessageReactedToAt)
+            }
+        ).let { mostRecent ->
+            when (mostRecent) {
+                lastMessageReactedTo -> mostRecent.reactions.first().let { reaction ->
+                    stringResource(
+                        Res.string.sender_reacted,
+                        members.firstOrNull {
+                            it.did == reaction.senderId
+                        }?.displayName ?: "",
+                        reaction.value,
+                        mostRecent.text
+                    )
+                }
+                lastMessage -> mostRecent.text
+                else -> ""
+            }
         }
     }
 }

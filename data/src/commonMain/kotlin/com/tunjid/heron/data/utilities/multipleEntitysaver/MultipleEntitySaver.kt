@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
@@ -151,6 +152,8 @@ internal class MultipleEntitySaver(
 
     private val messageEntities = LazyList<MessageEntity>()
 
+    private val messageReactionEntities = LazyList<MessageReactionEntity>()
+
     private val messageFeedGeneratorEntities = LazyList<MessageFeedGeneratorEntity>()
 
     private val messageListEntities = LazyList<MessageListEntity>()
@@ -198,8 +201,8 @@ internal class MultipleEntitySaver(
 
         val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
             .partition {
-            it.commonFollowersCount != null
-        }
+                it.commonFollowersCount != null
+            }
         profileDao.upsertProfileViewers(
             fullProfileViewerEntities
         )
@@ -226,6 +229,13 @@ internal class MultipleEntitySaver(
         messageDao.upsertConversations(conversationEntities.list)
         messageDao.upsertConversationMembers(conversationMemberEntities.list)
         messageDao.upsertMessages(messageEntities.list)
+        messageDao.deleteMessageReactions(
+            messageEntities.list.mapTo(
+                mutableSetOf(),
+                MessageEntity::id
+            )
+        )
+        messageDao.upsertMessageReactions(messageReactionEntities.list)
         messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
         messageDao.upsertMessageLists(messageListEntities.list)
         messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
@@ -286,6 +296,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ConversationMembersEntity) = conversationMemberEntities.add(entity)
 
     fun add(entity: MessageEntity) = messageEntities.add(entity)
+
+    fun add(entity: MessageReactionEntity) = messageReactionEntities.add(entity)
 
     fun add(entity: MessageFeedGeneratorEntity) = messageFeedGeneratorEntities.add(entity)
 

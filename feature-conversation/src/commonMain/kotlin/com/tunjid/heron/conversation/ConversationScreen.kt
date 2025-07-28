@@ -17,6 +17,7 @@
 package com.tunjid.heron.conversation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
@@ -56,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
@@ -216,7 +219,7 @@ private fun Message(
             modifier = Modifier
         )
 
-        when(item) {
+        when (item) {
             is MessageItem.Pending -> Unit
             is MessageItem.Sent -> item.message.post?.let { post ->
                 PostMessage(
@@ -322,7 +325,9 @@ private fun ChatItemBubble(
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
     }
-    Column {
+    Column(
+        horizontalAlignment = side,
+    ) {
         Surface(
             color = backgroundBubbleColor,
             shape = side.bubbleShape
@@ -330,9 +335,36 @@ private fun ChatItemBubble(
             Text(
                 text = message.text,
                 style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(
+                    vertical = 8.dp,
+                    horizontal = 16.dp,
+                ),
             )
         }
+        message.reactions
+            .takeUnless(String::isNullOrBlank)
+            ?.let {
+                Text(
+                    modifier = Modifier
+                        .offset(
+                            x = when (side) {
+                                Side.Receiver -> 16.dp
+                                Side.Sender -> (-16).dp
+                            },
+                            y = (-8).dp
+                        )
+                        .background(
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = ReactionsChipShape,
+                        )
+                        .padding(
+                            horizontal = 4.dp,
+                            vertical = 2.dp,
+                        ),
+                    text = it,
+                    fontSize = 12.sp,
+                )
+            }
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
@@ -490,3 +522,5 @@ private sealed interface Side :
         )
     }
 }
+
+private val ReactionsChipShape = RoundedCornerShape(16.dp)
