@@ -126,7 +126,8 @@ fun PopulatedMessageEntity.asExternalModel(
     reactions = reactions.map {
         Message.Reaction(
             value = it.value,
-            sender = it.senderId
+            senderId = it.senderId,
+            createdAt = it.createdAt,
         )
     }
 )

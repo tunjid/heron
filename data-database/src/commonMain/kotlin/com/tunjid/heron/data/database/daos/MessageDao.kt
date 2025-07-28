@@ -51,16 +51,25 @@ interface MessageDao {
                 lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId, 
                 lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId, 
                 lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
-                lastMessageReactedTo.sentAt lastMessageReactedTo_sentAt
+                lastMessageReactedTo.sentAt AS lastMessageReactedTo_sentAt,
+                lastReaction.messageId AS lastReaction_messageId,
+                lastReaction.value AS lastReaction_value,
+                lastReaction.senderId AS lastReaction_senderId,
+                lastReaction.createdAt AS lastReaction_createdAt,
+                MAX(COALESCE(lastReaction.createdAt, lastMessage.sentAt), lastMessage.sentAt) AS sort
                 FROM conversations
             LEFT JOIN messages AS lastMessage
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
-            ON lastMessageId = lastMessageReactedTo.id
-            ORDER BY COALESCE(
-                lastMessageReactedTo.sentAt,
-                lastMessage.sentAt
-            )
+            ON lastReactedToMessageId = lastMessageReactedTo.id
+            LEFT JOIN (
+                SELECT * FROM messageReactions AS lastReaction
+                ORDER BY createdAt
+                DESC
+                LIMIT 1
+            ) AS lastReaction
+            ON lastReactedToMessageId = lastReaction.messageId
+            ORDER BY sort
             DESC
             LIMIT :limit
             OFFSET :offset

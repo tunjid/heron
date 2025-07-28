@@ -46,6 +46,7 @@ data class Message(
     @Serializable
     data class Reaction(
         val value: String,
-        val sender: ProfileId,
+        val senderId: ProfileId,
+        val createdAt: Instant,
     )
 }

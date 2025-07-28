@@ -48,6 +48,8 @@ data class PopulatedConversationEntity(
     val lastMessageEntity: MessageEntity?,
     @Embedded(prefix = "lastMessageReactedTo_")
     val lastMessageReactedToEntity: MessageEntity?,
+    @Embedded(prefix = "lastReaction_")
+    val lastReactionEntity: MessageReactionEntity?,
     @Relation(
         parentColumn = "id",
         entityColumn = "did",
@@ -88,6 +90,16 @@ private fun PopulatedConversationEntity.conversationMessage(
                 list = null,
                 starterPack = null,
                 post = null,
-                reactions = emptyList(),
+                reactions = listOfNotNull(
+                    lastReactionEntity
+                        ?.takeIf { message.id == lastMessageReactedToEntity?.id }
+                        ?.let { reactionValue ->
+                            Message.Reaction(
+                                value = lastReactionEntity.value,
+                                senderId = lastReactionEntity.senderId,
+                                createdAt = lastReactionEntity.createdAt,
+                            )
+                        }
+                ),
             )
         }
