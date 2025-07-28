@@ -75,7 +75,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
             currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
         }
     }
-    // Cancel the connectivity bob before returning
+    // Cancel the connectivity job before returning
     connectivityJob.cancel()
     // TODO: Be more descriptive with this error
     return@scope Result.failure(Exception("There was an error")) // last attempt
