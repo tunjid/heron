@@ -99,8 +99,8 @@ internal class AuthTokenRepository(
 
     override suspend fun createSession(
         request: SessionRequest,
-    ): Result<Unit> = runCatchingWithNetworkRetry(times = 2) {
-        networkService.api.createSession(
+    ): Result<Unit> = networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+        createSession(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
@@ -207,8 +207,8 @@ internal class AuthTokenRepository(
         )
         val feeds = types[Type.Feed]?.map {
             async {
-                runCatchingWithNetworkRetry(times = 2) {
-                    networkService.api.getFeedGenerator(
+                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                    getFeedGenerator(
                         GetFeedGeneratorQueryParams(
                             feed = AtUri(it.value)
                         )
@@ -218,8 +218,8 @@ internal class AuthTokenRepository(
         } ?: emptyList()
         val lists = types[Type.List]?.map {
             async {
-                runCatchingWithNetworkRetry(times = 2) {
-                    networkService.api.getList(
+                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                    getList(
                         GetListQueryParams(
                             cursor = null,
                             limit = 1,

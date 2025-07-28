@@ -1058,8 +1058,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getFeedGenerator(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getFeedGenerator(
                     GetFeedGeneratorQueryParams(
                         feed = uri.uri.let(::AtUri)
                     )
@@ -1093,8 +1093,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getList(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getList(
                     GetListQueryParams(
                         cursor = null,
                         limit = 1,
@@ -1130,8 +1130,8 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            runCatchingWithNetworkRetry(times = 2) {
-                networkService.api.getStarterPack(
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getStarterPack(
                     GetStarterPackQueryParams(
                         starterPack = uri.uri.let(::AtUri)
                     )
