@@ -145,6 +145,8 @@ private val ChatProxyPaths = listOf(
     "chat.bsky.convo.getMessages",
     "chat.bsky.convo.getLog",
     "chat.bsky.convo.sendMessage",
+    "chat.bsky.convo.addReaction",
+    "chat.bsky.convo.removeReaction",
 )
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"

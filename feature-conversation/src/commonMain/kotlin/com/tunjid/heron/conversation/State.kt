@@ -111,14 +111,15 @@ val MessageItem.sentAt
 
 val MessageItem.reactions
     get() = when (this) {
-        is MessageItem.Pending -> ""
+        is MessageItem.Pending -> emptyList()
         is MessageItem.Sent -> message.reactions
-            .joinToString(
-                separator = " ",
-                transform = Message.Reaction::value,
-            )
     }
 
+fun Message.hasEmojiReaction(
+    emoji: String
+): Boolean = reactions.any {
+    it.value == emoji
+}
 
 sealed class Action(val key: String) {
 
@@ -133,6 +134,10 @@ sealed class Action(val key: String) {
     data class SendMessage(
         val message: Message.Create,
     ) : Action(key = "SendMessage")
+
+    data class UpdateMessageReaction(
+        val reaction: Message.UpdateReaction,
+    ) : Action(key = "UpdateMessageReaction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop

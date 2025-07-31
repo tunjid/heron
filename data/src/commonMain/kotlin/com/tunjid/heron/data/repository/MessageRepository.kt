@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.repository
 
+import chat.bsky.convo.AddReactionRequest
+import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.GetLogQueryParams
 import chat.bsky.convo.GetMessagesQueryParams
@@ -29,6 +31,8 @@ import chat.bsky.convo.LogDeleteMessageMessageUnion
 import chat.bsky.convo.LogRemoveReactionMessageUnion
 import chat.bsky.convo.MessageInput
 import chat.bsky.convo.MessageView
+import chat.bsky.convo.RemoveReactionRequest
+import chat.bsky.convo.RemoveReactionResponse
 import chat.bsky.convo.SendMessageRequest
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
@@ -98,6 +102,10 @@ interface MessageRepository {
 
     suspend fun sendMessage(
         message: Message.Create,
+    )
+
+    suspend fun updateReaction(
+        reaction: Message.UpdateReaction,
     )
 }
 
@@ -351,6 +359,39 @@ internal class OfflineMessageRepository @Inject constructor(
                 viewingProfileId = signedInProfileId,
                 conversationId = message.conversationId,
                 messageView = sentMessage,
+            )
+        }
+    }
+
+    override suspend fun updateReaction(
+        reaction: Message.UpdateReaction,
+    ) {
+        val message = networkService.runCatchingWithMonitoredNetworkRetry {
+            when (reaction) {
+                is Message.UpdateReaction.Add -> addReaction(
+                    AddReactionRequest(
+                        convoId = reaction.convoId.id,
+                        messageId = reaction.messageId.id,
+                        value = reaction.value,
+                    )
+                ).map(AddReactionResponse::message)
+
+                is Message.UpdateReaction.Remove -> removeReaction(
+                    RemoveReactionRequest(
+                        convoId = reaction.convoId.id,
+                        messageId = reaction.messageId.id,
+                        value = reaction.value,
+                    )
+                ).map(RemoveReactionResponse::message)
+            }
+        }.getOrNull() ?: return
+        val signedInProfileId = savedStateRepository.signedInProfileId
+
+        multipleEntitySaverProvider.saveInTransaction {
+            add(
+                viewingProfileId = signedInProfileId,
+                conversationId = reaction.convoId,
+                messageView = message,
             )
         }
     }

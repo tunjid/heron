@@ -103,6 +103,10 @@ class ActualConversationViewModel(
                     writeQueue = writeQueue,
                 )
 
+                is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
+                    writeQueue = writeQueue,
+                )
+
                 is Action.Tile -> action.flow.messagingTilingMutations(
                     currentState = { state() },
                     messagesRepository = messagesRepository
@@ -137,6 +141,13 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Reaction(action.reaction))
     }
 
 private fun Flow<Action.SendMessage>.sendMessageMutations(

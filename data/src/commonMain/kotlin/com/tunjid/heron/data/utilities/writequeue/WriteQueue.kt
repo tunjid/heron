@@ -85,7 +85,7 @@ internal class SnapshotWriteQueue @Inject constructor(
     }
 
     override fun contains(writable: Writable): Boolean {
-        return queue.contains(writable)
+        return queue.any { it.queueId == writable.queueId }
     }
 
     override suspend fun drain() {

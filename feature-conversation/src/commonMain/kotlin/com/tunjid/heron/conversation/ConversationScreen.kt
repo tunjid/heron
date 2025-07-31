@@ -17,9 +17,11 @@
 package com.tunjid.heron.conversation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -52,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
@@ -59,7 +63,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
+import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.path
@@ -97,6 +104,8 @@ internal fun ConversationScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.tiledItems)
 
+    val emojiPickerSheetState = rememberEmojiPickerState()
+
     LazyColumn(
         state = listState,
         reverseLayout = true,
@@ -126,10 +135,38 @@ internal fun ConversationScreen(
                 isLastMessageByAuthor = isLastMessageByAuthor,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
+                onMessageLongPressed = { item ->
+                    when (item) {
+                        is MessageItem.Pending -> Unit
+                        is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
+                    }
+                }
             )
         }
     }
 
+    EmojiPickerBottomSheet(
+        state = emojiPickerSheetState,
+        onEmojiSelected = { message, emoji ->
+            actions(
+                Action.UpdateMessageReaction(
+                    when {
+                        message.hasEmojiReaction(emoji) -> Message.UpdateReaction.Remove(
+                            value = emoji,
+                            messageId = message.id,
+                            convoId = message.conversationId,
+                        )
+
+                        else -> Message.UpdateReaction.Add(
+                            value = emoji,
+                            messageId = message.id,
+                            convoId = message.conversationId,
+                        )
+                    }
+                )
+            )
+        }
+    )
 
     listState.PivotedTilingEffect(
         items = items,
@@ -168,6 +205,7 @@ private fun Message(
     isLastMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
+    onMessageLongPressed: (MessageItem) -> Unit,
 ) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -216,7 +254,9 @@ private fun Message(
             side = side,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
-            modifier = Modifier
+            modifier = Modifier,
+            onMessageLongPressed = onMessageLongPressed,
+            paneScaffoldState = paneScaffoldState,
         )
 
         when (item) {
@@ -265,11 +305,13 @@ private fun MessageAvatar(
 
 @Composable
 private fun AuthorAndTextMessage(
+    modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    modifier: Modifier = Modifier
+    paneScaffoldState: PaneScaffoldState,
+    onMessageLongPressed: (MessageItem) -> Unit,
 ) {
     if (item.text.isNotBlank()) Column(
         modifier = modifier,
@@ -279,8 +321,17 @@ private fun AuthorAndTextMessage(
             AuthorNameTimestamp(item)
         }
         ChatItemBubble(
+            modifier = Modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            onMessageLongPressed(item)
+                        }
+                    )
+                },
             message = item,
             side = side,
+            paneScaffoldState = paneScaffoldState,
         )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
@@ -316,16 +367,20 @@ private fun AuthorNameTimestamp(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ChatItemBubble(
+    modifier: Modifier = Modifier,
     message: MessageItem,
     side: Side,
+    paneScaffoldState: PaneScaffoldState,
 ) {
     val backgroundBubbleColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
     }
     Column(
+        modifier = modifier,
         horizontalAlignment = side,
     ) {
         Surface(
@@ -341,30 +396,37 @@ private fun ChatItemBubble(
                 ),
             )
         }
-        message.reactions
-            .takeUnless(String::isNullOrBlank)
-            ?.let {
-                Text(
-                    modifier = Modifier
-                        .offset(
-                            x = when (side) {
-                                Side.Receiver -> 16.dp
-                                Side.Sender -> (-16).dp
-                            },
-                            y = (-8).dp
-                        )
-                        .background(
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = ReactionsChipShape,
-                        )
-                        .padding(
-                            horizontal = 4.dp,
-                            vertical = 2.dp,
-                        ),
-                    text = it,
-                    fontSize = 12.sp,
+
+        if (message.reactions.isNotEmpty()) Row(
+            modifier = Modifier
+                .offset(
+                    x = when (side) {
+                        Side.Receiver -> 16.dp
+                        Side.Sender -> (-16).dp
+                    },
+                    y = (-8).dp
                 )
+                .background(
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = ReactionsChipShape,
+                )
+                .padding(
+                    horizontal = 4.dp,
+                    vertical = 2.dp,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            message.reactions.forEach { reaction ->
+                key(reaction.value) {
+                    Text(
+                        modifier = Modifier
+                            .animateBounds(paneScaffoldState),
+                        text = reaction.value,
+                        fontSize = 12.sp,
+                    )
+                }
             }
+        }
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
