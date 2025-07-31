@@ -39,7 +39,7 @@ data class Post(
     val record: Record?,
     val viewerStats: ViewerStats?,
 //    public val viewer: ViewerState? = null,
-//    public val labels: List<Label> = emptyList(),
+    val labels: List<Label>,
 //    public val threadgate: ThreadgateView? = null,
 ) : UrlEncodableModel {
     @Serializable
