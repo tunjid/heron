@@ -25,12 +25,14 @@ import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     postView: PostView,
 ) {
     val postEntity = postView.postEntity().also(::add)
+    postView.labels.forEach(::add)
 
     add(
         viewingProfileId = viewingProfileId,

@@ -14,38 +14,26 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities
+package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
+import com.atproto.label.Label
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
-import kotlinx.datetime.Instant
+import com.tunjid.heron.data.database.entities.LabelEntity
 
+internal fun MultipleEntitySaver.add(
+    label: Label,
+) {
+    emptyProfileEntity(label.src).let(::add)
+    add(
+        LabelEntity(
+            cid = label.cid?.cid,
+            uri = label.uri.uri.let(::GenericUri),
+            creatorId = label.src.did.let(::ProfileId),
+            value = label.`val`,
+            version = label.ver,
+            createdAt = label.cts,
+        )
+    )
+}
 
-@Entity(
-    tableName = "labels",
-    primaryKeys = [
-        "uri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["createdAt"]),
-    ],
-)
-data class LabelEntity(
-    val cid: String?,
-    val uri: GenericUri,
-    val creatorId: ProfileId,
-    val value: String,
-    val version: Long?,
-    val createdAt: Instant,
-)
