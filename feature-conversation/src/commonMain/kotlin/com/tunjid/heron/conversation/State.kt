@@ -111,12 +111,8 @@ val MessageItem.sentAt
 
 val MessageItem.reactions
     get() = when (this) {
-        is MessageItem.Pending -> ""
+        is MessageItem.Pending -> emptyList()
         is MessageItem.Sent -> message.reactions
-            .joinToString(
-                separator = " ",
-                transform = Message.Reaction::value,
-            )
     }
 
 fun Message.hasEmojiReaction(

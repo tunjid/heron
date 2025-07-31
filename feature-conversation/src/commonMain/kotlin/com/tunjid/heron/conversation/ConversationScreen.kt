@@ -17,6 +17,7 @@
 package com.tunjid.heron.conversation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -154,6 +156,7 @@ internal fun ConversationScreen(
                             messageId = message.id,
                             convoId = message.conversationId,
                         )
+
                         else -> Message.UpdateReaction.Add(
                             value = emoji,
                             messageId = message.id,
@@ -253,6 +256,7 @@ private fun Message(
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier,
             onMessageLongPressed = onMessageLongPressed,
+            paneScaffoldState = paneScaffoldState,
         )
 
         when (item) {
@@ -306,6 +310,7 @@ private fun AuthorAndTextMessage(
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
+    paneScaffoldState: PaneScaffoldState,
     onMessageLongPressed: (MessageItem) -> Unit,
 ) {
     if (item.text.isNotBlank()) Column(
@@ -326,6 +331,7 @@ private fun AuthorAndTextMessage(
                 },
             message = item,
             side = side,
+            paneScaffoldState = paneScaffoldState,
         )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
@@ -361,11 +367,13 @@ private fun AuthorNameTimestamp(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ChatItemBubble(
     modifier: Modifier = Modifier,
     message: MessageItem,
     side: Side,
+    paneScaffoldState: PaneScaffoldState,
 ) {
     val backgroundBubbleColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -388,30 +396,37 @@ private fun ChatItemBubble(
                 ),
             )
         }
-        message.reactions
-            .takeUnless(String::isNullOrBlank)
-            ?.let {
-                Text(
-                    modifier = Modifier
-                        .offset(
-                            x = when (side) {
-                                Side.Receiver -> 16.dp
-                                Side.Sender -> (-16).dp
-                            },
-                            y = (-8).dp
-                        )
-                        .background(
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = ReactionsChipShape,
-                        )
-                        .padding(
-                            horizontal = 4.dp,
-                            vertical = 2.dp,
-                        ),
-                    text = it,
-                    fontSize = 12.sp,
+
+        if (message.reactions.isNotEmpty()) Row(
+            modifier = Modifier
+                .offset(
+                    x = when (side) {
+                        Side.Receiver -> 16.dp
+                        Side.Sender -> (-16).dp
+                    },
+                    y = (-8).dp
                 )
+                .background(
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = ReactionsChipShape,
+                )
+                .padding(
+                    horizontal = 4.dp,
+                    vertical = 2.dp,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            message.reactions.forEach { reaction ->
+                key(reaction.value) {
+                    Text(
+                        modifier = Modifier
+                            .animateBounds(paneScaffoldState),
+                        text = reaction.value,
+                        fontSize = 12.sp,
+                    )
+                }
             }
+        }
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
