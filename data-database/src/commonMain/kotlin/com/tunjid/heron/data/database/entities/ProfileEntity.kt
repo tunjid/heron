@@ -19,7 +19,6 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
@@ -100,11 +99,6 @@ data class PopulatedProfileEntity(
     val profileEntity: ProfileEntity,
     @Embedded
     val relationship: ProfileViewerStateEntity?,
-    @Relation(
-        parentColumn = "uri",
-        entityColumn = "uri",
-    )
-    val labelEntities: List<LabelEntity>,
 )
 
 private fun emptyProfile() = Profile(
