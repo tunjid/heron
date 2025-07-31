@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.path
@@ -132,8 +133,11 @@ internal fun ConversationScreen(
                 isLastMessageByAuthor = isLastMessageByAuthor,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
-                onMessageLongPressed = {
-                    emojiPickerSheetState.showSheet()
+                onMessageLongPressed = { item ->
+                    when (item) {
+                        is MessageItem.Pending -> Unit
+                        is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
+                    }
                 }
             )
         }
@@ -141,8 +145,23 @@ internal fun ConversationScreen(
 
     EmojiPickerBottomSheet(
         state = emojiPickerSheetState,
-        onEmojiSelected = {
-
+        onEmojiSelected = { message, emoji ->
+            actions(
+                Action.UpdateMessageReaction(
+                    when {
+                        message.hasEmojiReaction(emoji) -> Message.UpdateReaction.Remove(
+                            value = emoji,
+                            messageId = message.id,
+                            convoId = message.conversationId,
+                        )
+                        else -> Message.UpdateReaction.Add(
+                            value = emoji,
+                            messageId = message.id,
+                            convoId = message.conversationId,
+                        )
+                    }
+                )
+            )
         }
     )
 
@@ -183,7 +202,7 @@ private fun Message(
     isLastMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
-    onMessageLongPressed: () -> Unit,
+    onMessageLongPressed: (MessageItem) -> Unit,
 ) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -287,7 +306,7 @@ private fun AuthorAndTextMessage(
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    onMessageLongPressed: () -> Unit,
+    onMessageLongPressed: (MessageItem) -> Unit,
 ) {
     if (item.text.isNotBlank()) Column(
         modifier = modifier,
@@ -300,7 +319,9 @@ private fun AuthorAndTextMessage(
             modifier = Modifier
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onLongPress = { onMessageLongPressed() }
+                        onLongPress = {
+                            onMessageLongPressed(item)
+                        }
                     )
                 },
             message = item,

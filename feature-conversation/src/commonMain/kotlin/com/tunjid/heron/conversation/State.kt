@@ -119,6 +119,11 @@ val MessageItem.reactions
             )
     }
 
+fun Message.hasEmojiReaction(
+    emoji: String
+): Boolean = reactions.any {
+    it.value == emoji
+}
 
 sealed class Action(val key: String) {
 
@@ -133,6 +138,10 @@ sealed class Action(val key: String) {
     data class SendMessage(
         val message: Message.Create,
     ) : Action(key = "SendMessage")
+
+    data class UpdateMessageReaction(
+        val reaction: Message.UpdateReaction,
+    ) : Action(key = "UpdateMessageReaction")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
