@@ -35,6 +35,7 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.LabelEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -66,7 +67,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 16,
+    version = 17,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -83,6 +84,7 @@ import kotlinx.coroutines.IO
         ProfileEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
+        LabelEntity::class,
         ListEntity::class,
         ListMemberEntity::class,
         FeedGeneratorEntity::class,
@@ -139,6 +141,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 14, to = 15),
         // Add ConversationEntity, MessagesEntity and other messaging related entities
         AutoMigration(from = 15, to = 16),
+        // Add LabelEntity and index uris for many entities
+        AutoMigration(from = 16, to = 17),
     ],
     exportSchema = true,
 )
