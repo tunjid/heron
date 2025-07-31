@@ -174,15 +174,7 @@ fun PopulatedPostEntity.asExternalModel(
     quote = quote,
     record = entity.record?.asExternalModel(),
     viewerStats = viewerStats?.asExternalModel(),
-    labels = labelEntities.map { labelEntity ->
-        Label(
-            uri = labelEntity.uri,
-            creatorId = labelEntity.creatorId,
-            value = labelEntity.value,
-            version = labelEntity.version,
-            createdAt = labelEntity.createdAt,
-        )
-    }
+    labels = labelEntities.map(LabelEntity::asExternalModel)
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =

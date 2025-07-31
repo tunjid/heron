@@ -32,4 +32,5 @@ data class StarterPack(
     val joinedWeekCount: Long?,
     val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
-): UrlEncodableModel
+    val labels: List<Label>,
+) : UrlEncodableModel

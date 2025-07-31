@@ -35,4 +35,5 @@ data class FeedGenerator(
     val contentMode: String?,
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
-): UrlEncodableModel
+    val labels: List<Label>,
+) : UrlEncodableModel

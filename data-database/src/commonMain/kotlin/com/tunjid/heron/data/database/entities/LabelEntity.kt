@@ -19,6 +19,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
@@ -49,3 +50,12 @@ data class LabelEntity(
     val version: Long?,
     val createdAt: Instant,
 )
+
+fun LabelEntity.asExternalModel() =
+    Label(
+        uri = uri,
+        creatorId = creatorId,
+        value = value,
+        version = version,
+        createdAt = createdAt,
+    )
