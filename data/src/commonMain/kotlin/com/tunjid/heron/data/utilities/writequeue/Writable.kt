@@ -75,6 +75,19 @@ sealed interface Writable {
     }
 
     @Serializable
+    data class Reaction(
+        val update: Message.UpdateReaction,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "update-reaction-$update"
+
+        override suspend fun WriteQueue.write() {
+            messageRepository.updateReaction(update)
+        }
+    }
+
+    @Serializable
     data class Connection(
         val connection: Profile.Connection,
     ) : Writable {

@@ -49,4 +49,25 @@ data class Message(
         val senderId: ProfileId,
         val createdAt: Instant,
     )
+
+    @Serializable
+    sealed class UpdateReaction {
+        abstract val convoId: ConversationId
+        abstract val messageId: MessageId
+        abstract val value: String
+
+        @Serializable
+        data class Add(
+            override val value: String,
+            override val messageId: MessageId,
+            override val convoId: ConversationId,
+        ) : UpdateReaction()
+
+        @Serializable
+        data class Remove(
+            override val value: String,
+            override val messageId: MessageId,
+            override val convoId: ConversationId,
+        ) : UpdateReaction()
+    }
 }
