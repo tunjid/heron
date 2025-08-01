@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -85,6 +87,8 @@ data class State(
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
+    val labelPreferences: ContentLabelPreferences,
+    val labelers: List<Labeler>,
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient

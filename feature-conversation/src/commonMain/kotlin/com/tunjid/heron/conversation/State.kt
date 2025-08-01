@@ -17,7 +17,9 @@
 package com.tunjid.heron.conversation
 
 import com.tunjid.heron.conversation.di.conversationId
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -40,6 +42,8 @@ data class State(
     val signedInProfile: Profile? = null,
     val id: ConversationId,
     val members: List<Profile> = emptyList(),
+    val labelPreferences: ContentLabelPreferences,
+    val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Transient
@@ -51,6 +55,8 @@ fun State(
 ) = State(
     id = route.conversationId,
     members = route.models.filterIsInstance<Profile>(),
+    labelPreferences = emptyList(),
+    labelers = emptyList(),
     tilingData = TilingState.Data(
         currentQuery = MessageQuery(
             conversationId = route.conversationId,
