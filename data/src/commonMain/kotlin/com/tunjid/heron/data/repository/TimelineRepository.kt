@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
@@ -192,6 +193,8 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: PostUri,
     ): Flow<List<TimelineItem>>
+
+    fun preferences(): Flow<Preferences>
 
     suspend fun updatePreferredPresentation(
         timeline: Timeline,
@@ -769,6 +772,11 @@ internal class OfflineTimelineRepository(
 
                 }
             }
+        }
+
+    override fun preferences(): Flow<Preferences> =
+        savedStateRepository.savedState.map {
+            it.preferences ?: Preferences.EmptyPreferences
         }
 
     override suspend fun updatePreferredPresentation(

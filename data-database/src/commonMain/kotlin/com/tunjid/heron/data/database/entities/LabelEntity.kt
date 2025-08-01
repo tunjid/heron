@@ -55,7 +55,7 @@ fun LabelEntity.asExternalModel() =
     Label(
         uri = uri,
         creatorId = creatorId,
-        value = value,
+        value = Label.Value(value),
         version = version,
         createdAt = createdAt,
     )

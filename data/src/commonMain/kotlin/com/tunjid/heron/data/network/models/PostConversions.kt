@@ -95,7 +95,7 @@ internal fun PostView.post(): Post {
             Label(
                 uri = atProtoLabel.uri.uri.let(::GenericUri),
                 creatorId = atProtoLabel.src.did.let(::ProfileId),
-                value = atProtoLabel.`val`,
+                value = Label.Value(atProtoLabel.`val`),
                 version = atProtoLabel.ver,
                 createdAt = atProtoLabel.cts,
             )
