@@ -16,7 +16,10 @@
 
 package com.tunjid.heron.data.utilities
 
+import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import kotlinx.datetime.Instant
@@ -39,6 +42,8 @@ internal object Collections {
     fun rKey(uri: GenericUri) = RKey(
         rkey = uri.recordKey.value,
     )
+
+    val DefaultLabelers = BlueSkuLabelersStub
 }
 
 // TODO: This should be more specific
@@ -110,3 +115,166 @@ private const val QueryDelimiter = "?"
 private const val LeadingSlash = "/"
 
 private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"
+
+private val BlueSkuLabelersStub = listOf(
+    Labeler(
+        uri = GenericUri(uri = "at://did:plc:ar7c4by46qjdydhdevvrndac/app.bsky.labeler.service/self"),
+        creatorId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac"),
+        definitions = listOf(
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("spam"),
+                severity = Label.Severity.Inform,
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.None,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("impersonation"),
+                severity = Label.Severity.Inform,
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("scam"),
+                severity = Label.Severity.Alert,
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("intolerant"),
+                severity = Label.Severity.Alert,
+            ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("self-harm"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("security"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("misleading"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("threat"),
+                severity = Label.Severity.Inform
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("unsafe-link"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("illicit"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("misinformation"),
+                severity = Label.Severity.Inform
+            ),
+            Label.Definition(
+
+                adultOnly = false,
+                blurs = Label.BlurTarget.None,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("rumor"),
+                severity = Label.Severity.Inform
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("rude"),
+                severity = Label.Severity.Inform
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("extremist"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("warn"),
+                identifier = Label.Value("sensitive"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("engagement-farming"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = false,
+                blurs = Label.BlurTarget.Content,
+                defaultSetting = Label.Value("hide"),
+                identifier = Label.Value("inauthentic"),
+                severity = Label.Severity.Alert
+            ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Media,
+                defaultSetting = Label.Value("show"),
+                identifier = Label.Value("sexual-figurative"),
+                severity = Label.Severity.None,
+            ),
+        ),
+        values = listOf(
+            Label.Value(value = "!hide"),
+            Label.Value(value = "!warn"),
+            Label.Value(value = "porn"),
+            Label.Value(value = "sexual"),
+            Label.Value(value = "nudity"),
+            Label.Value(value = "sexual-figurative"),
+            Label.Value(value = "graphic-media"),
+            Label.Value(value = "self-harm"),
+            Label.Value(value = "sensitive"),
+            Label.Value(value = "extremist"),
+            Label.Value(value = "intolerant"),
+            Label.Value(value = "threat"),
+            Label.Value(value = "rude"),
+            Label.Value(value = "illicit"),
+            Label.Value(value = "security"),
+            Label.Value(value = "unsafe-link"),
+            Label.Value(value = "impersonation"),
+            Label.Value(value = "misinformation"),
+            Label.Value(value = "scam"),
+            Label.Value(value = "engagement-farming"),
+            Label.Value(value = "spam"),
+            Label.Value(value = "rumor"),
+            Label.Value(value = "misleading"),
+            Label.Value(value = "inauthentic"),
+        ),
+    ),
+)

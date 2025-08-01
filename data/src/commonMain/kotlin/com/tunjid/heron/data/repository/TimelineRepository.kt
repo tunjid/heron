@@ -43,6 +43,7 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
@@ -92,6 +93,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -175,6 +177,11 @@ class TimelineQuery(
 }
 
 interface TimelineRepository {
+
+    fun preferences(): Flow<Preferences>
+
+    fun labelers(): Flow<List<Labeler>>
+
     fun homeTimelines(): Flow<List<Timeline.Home>>
 
     fun timeline(
@@ -193,8 +200,6 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: PostUri,
     ): Flow<List<TimelineItem>>
-
-    fun preferences(): Flow<Preferences>
 
     suspend fun updatePreferredPresentation(
         timeline: Timeline,
@@ -219,6 +224,15 @@ internal class OfflineTimelineRepository(
     private val savedStateRepository: SavedStateRepository,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
+
+    override fun preferences(): Flow<Preferences> =
+        savedStateRepository.savedState.map {
+            it.preferences ?: Preferences.EmptyPreferences
+        }
+
+    override fun labelers(): Flow<List<Labeler>> =
+        // TODO: Get labeler from bluesky moderation service
+        flowOf(Collections.DefaultLabelers)
 
     override fun timelineItems(
         query: TimelineQuery,
@@ -772,11 +786,6 @@ internal class OfflineTimelineRepository(
 
                 }
             }
-        }
-
-    override fun preferences(): Flow<Preferences> =
-        savedStateRepository.savedState.map {
-            it.preferences ?: Preferences.EmptyPreferences
         }
 
     override suspend fun updatePreferredPresentation(
