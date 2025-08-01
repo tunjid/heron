@@ -140,6 +140,8 @@ fun TimelineItem(
                     sharedElementPrefix = sharedElementPrefix,
                     now = now,
                     presentation = presentation,
+                    labelers = labelers,
+                    contentPreferences = contentPreferences,
                     postActions = postActions,
                 ) else Post(
                     modifier = Modifier
@@ -154,6 +156,8 @@ fun TimelineItem(
                     sharedElementPrefix = sharedElementPrefix,
                     createdAt = item.post.createdAt,
                     presentation = presentation,
+                    labelers = labelers,
+                    contentPreferences = contentPreferences,
                     postActions = postActions,
                 )
             }
@@ -170,6 +174,8 @@ private fun ThreadedPost(
     sharedElementPrefix: String,
     now: Instant,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     postActions: PostActions,
 ) {
     var maxPosts by rememberSaveable {
@@ -211,6 +217,8 @@ private fun ThreadedPost(
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = post.createdAt,
                         presentation = presentation,
+                        labelers = labelers,
+                        contentPreferences = contentPreferences,
                         postActions = postActions,
                         timeline = {
                             if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(

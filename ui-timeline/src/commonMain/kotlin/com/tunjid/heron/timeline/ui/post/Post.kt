@@ -44,9 +44,11 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -77,6 +79,8 @@ fun Post(
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {

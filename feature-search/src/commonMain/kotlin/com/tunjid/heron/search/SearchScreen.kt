@@ -60,7 +60,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
@@ -575,6 +577,8 @@ private fun TabbedSearchResults(
             pageContent = { page ->
                 val searchResultStateHolder = remember { state.searchStateHolders[page] }
                 SearchResults(
+                    labelers = state.labelers,
+                    contentPreferences = state.labelPreferences,
                     paneScaffoldState = paneMovableElementSharedTransitionScope,
                     searchResultStateHolder = searchResultStateHolder,
                     onProfileClicked = onProfileClicked,
@@ -593,6 +597,8 @@ private fun TabbedSearchResults(
 @Composable
 private fun SearchResults(
     modifier: Modifier = Modifier,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
@@ -623,6 +629,8 @@ private fun SearchResults(
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             now = now,
                             result = result,
+                            labelers = labelers,
+                            contentPreferences = contentPreferences,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onPostSearchResultProfileClicked,
                             onPostClicked = onPostSearchResultClicked,

@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 
 @Serializable
 data class Label(
@@ -29,6 +30,7 @@ data class Label(
     val version: Long?,
     val createdAt: Instant,
 ) {
+    @JvmInline
     @Serializable
     value class Value(
         val value: String,
