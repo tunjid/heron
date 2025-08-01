@@ -46,8 +46,6 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.findLibrary("compose-material3").get())
                 api(libs.findLibrary("compose-foundation-layout").get())
 
-                api(libs.findLibrary("androidx-graphics-core").get())
-                api(libs.findLibrary("androidx-graphics-path").get())
                 api(libs.findLibrary("androidx-graphics-shapes").get())
 
                 api(libs.findLibrary("kotlinx-coroutines-core").get())

@@ -42,8 +42,6 @@ kotlin {
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui.ui)
 
-                implementation(libs.androidx.graphics.core)
-                implementation(libs.androidx.graphics.path)
                 implementation(libs.androidx.graphics.shapes)
 
                 implementation(libs.kotlinx.coroutines.core)
