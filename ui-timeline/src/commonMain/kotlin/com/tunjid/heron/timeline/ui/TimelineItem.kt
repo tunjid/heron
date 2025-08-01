@@ -55,9 +55,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -86,6 +89,8 @@ fun TimelineItem(
     item: TimelineItem,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     postActions: PostActions,
 ) {
     TimelineCard(

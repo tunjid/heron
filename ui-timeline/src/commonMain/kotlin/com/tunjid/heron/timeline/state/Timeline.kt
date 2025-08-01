@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.state
 
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Preferences
@@ -46,7 +47,7 @@ import kotlinx.datetime.Clock
 data class TimelineState(
     val timeline: Timeline,
     val hasUpdates: Boolean,
-    val preferences: Preferences,
+    val labelPreferences: ContentLabelPreferences,
     val labelers: List<Labeler>,
     override val tilingData: TilingState.Data<TimelineQuery, TimelineItem>,
 ) : TilingState<TimelineQuery, TimelineItem> {
@@ -76,7 +77,7 @@ fun timelineStateHolder(
     initialState = TimelineState(
         timeline = timeline,
         hasUpdates = false,
-        preferences = Preferences.EmptyPreferences,
+        labelPreferences = Preferences.EmptyPreferences.contentLabelPreferences,
         labelers = emptyList(),
         tilingData = TilingState.Data(
             numColumns = startNumColumns,
@@ -105,7 +106,7 @@ fun timelineStateHolder(
             timeline = timeline,
             timelineRepository = timelineRepository,
         ),
-        preferencesMutations(
+        labelPreferencesMutations(
             timelineRepository = timelineRepository,
         ),
         labelerMutations(
@@ -180,11 +181,11 @@ private fun timelineUpdateMutations(
     )
         .mapToMutation { copy(timeline = it) }
 
-private fun preferencesMutations(
+private fun labelPreferencesMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.preferences()
-        .mapToMutation { copy(preferences = it) }
+        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
 
 private fun labelerMutations(
     timelineRepository: TimelineRepository,

@@ -54,7 +54,6 @@ import com.tunjid.heron.scaffold.navigation.postRepostsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
@@ -111,6 +110,8 @@ internal fun PostDetailScreen(
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
                     presentation = Timeline.Presentation.Text.WithEmbed,
+                    labelers = timelineState.labelers,
+                    contentPreferences = timelineState.labelPreferences,
                     postActions = remember(state.sharedElementPrefix) {
                         postActions(
                             onLinkTargetClicked = { post, linkTarget ->

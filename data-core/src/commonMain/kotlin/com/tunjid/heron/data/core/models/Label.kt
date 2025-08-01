@@ -63,3 +63,5 @@ data class Labeler(
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
 )
+
+typealias Labelers = List<Labeler>
