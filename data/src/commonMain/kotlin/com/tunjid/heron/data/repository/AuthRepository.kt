@@ -19,11 +19,11 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.PreferencesUnion
-import app.bsky.actor.SavedFeed
 import app.bsky.actor.Type
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.atproto.server.CreateSessionRequest
+import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -156,55 +156,19 @@ internal class AuthTokenRepository(
 
     private suspend fun savePreferences(
         preferencesResponse: GetPreferencesResponse,
-    ) = preferencesResponse.preferences.map { preferencesUnion ->
-        when (preferencesUnion) {
-            is PreferencesUnion.AdultContentPref -> Unit
-            is PreferencesUnion.BskyAppStatePref -> Unit
-            is PreferencesUnion.ContentLabelPref -> Unit
-            is PreferencesUnion.FeedViewPref -> Unit
-            is PreferencesUnion.HiddenPostsPref -> Unit
-            is PreferencesUnion.InterestsPref -> Unit
-            is PreferencesUnion.LabelersPref -> Unit
-            is PreferencesUnion.MutedWordsPref -> Unit
-            is PreferencesUnion.PersonalDetailsPref -> Unit
-            is PreferencesUnion.SavedFeedsPref -> Unit
-            is PreferencesUnion.SavedFeedsPrefV2 ->
-                saveFeedPreferences(preferencesUnion)
-
-            is PreferencesUnion.ThreadViewPref -> Unit
-            is PreferencesUnion.Unknown -> Unit
-            is PreferencesUnion.PostInteractionSettingsPref -> Unit
-            is PreferencesUnion.VerificationPrefs -> Unit
-        }
-    }
-
-
-    private suspend fun saveFeedPreferences(
-        preferencesUnion: PreferencesUnion.SavedFeedsPrefV2,
     ) = supervisorScope {
+        val preferences = preferencesResponse.toExternalModel()
+
         val saveTimelinePreferences = async {
             savedStateRepository.updateState {
-                val timelinePreferences = preferencesUnion.value.items.map {
-                    TimelinePreference(
-                        id = it.id,
-                        type = it.type.value,
-                        value = it.value,
-                        pinned = it.pinned,
-                    )
-                }
-                copy(
-                    preferences = preferences?.copy(
-                        timelinePreferences = timelinePreferences
-                    ) ?: Preferences(
-                        timelinePreferences = timelinePreferences
-                    )
-                )
+                copy(preferences = preferences)
             }
         }
-        val types = preferencesUnion.value.items.groupBy(
-            SavedFeed::type
+        val types = preferences.timelinePreferences.groupBy(
+            keySelector = TimelinePreference::type,
         )
-        val feeds = types[Type.Feed]?.map {
+
+        val feeds = types[Type.Feed.value]?.map {
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getFeedGenerator(
@@ -215,7 +179,7 @@ internal class AuthTokenRepository(
                 }
             }
         } ?: emptyList()
-        val lists = types[Type.List]?.map {
+        val lists = types[Type.List.value]?.map {
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getList(
@@ -235,5 +199,50 @@ internal class AuthTokenRepository(
             lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
         }
     }
-
 }
+
+private fun GetPreferencesResponse.toExternalModel() =
+    preferences.fold(
+        initial = Preferences.EmptyPreferences,
+        operation = { preferences, preferencesUnion ->
+            when (preferencesUnion) {
+                is PreferencesUnion.AdultContentPref -> preferences
+                is PreferencesUnion.BskyAppStatePref -> preferences
+                is PreferencesUnion.ContentLabelPref -> preferences.copy(
+                    contentLabelPreferences = preferences.contentLabelPreferences
+                            + preferencesUnion.asExternalModel()
+                )
+
+                is PreferencesUnion.FeedViewPref -> preferences
+                is PreferencesUnion.HiddenPostsPref -> preferences
+                is PreferencesUnion.InterestsPref -> preferences
+                is PreferencesUnion.LabelersPref -> preferences
+                is PreferencesUnion.MutedWordsPref -> preferences
+                is PreferencesUnion.PersonalDetailsPref -> preferences
+                is PreferencesUnion.SavedFeedsPref -> preferences
+                is PreferencesUnion.SavedFeedsPrefV2 -> preferences.copy(
+                    timelinePreferences = preferencesUnion.value.items.map {
+                        TimelinePreference(
+                            id = it.id,
+                            type = it.type.value,
+                            value = it.value,
+                            pinned = it.pinned,
+                        )
+                    }
+                )
+
+                is PreferencesUnion.ThreadViewPref -> preferences
+                is PreferencesUnion.Unknown -> preferences
+                is PreferencesUnion.PostInteractionSettingsPref -> preferences
+                is PreferencesUnion.VerificationPrefs -> preferences
+            }
+        }
+    )
+
+private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
+    labelerId = value.labelerDid?.did?.let(::ProfileId),
+    label = value.label,
+    visibility = ContentLabelPreference.Visibility(
+        value = value.visibility.value,
+    ),
+)

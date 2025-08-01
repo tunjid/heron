@@ -16,12 +16,24 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.serialization.Serializable
+
+typealias ContentLabelPreferences = List<ContentLabelPreference>
 
 @Serializable
 data class Preferences(
     val timelinePreferences: List<TimelinePreference>,
-) : UrlEncodableModel
+    // Needs default value for serialization to disk
+    val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+) : UrlEncodableModel {
+    companion object {
+        val EmptyPreferences = Preferences(
+            timelinePreferences = emptyList(),
+            contentLabelPreferences = emptyList(),
+        )
+    }
+}
 
 @Serializable
 data class TimelinePreference(
@@ -30,3 +42,15 @@ data class TimelinePreference(
     val value: String,
     val pinned: Boolean,
 )
+
+@Serializable
+data class ContentLabelPreference(
+    val labelerId: ProfileId?,
+    val label: String,
+    val visibility: Visibility,
+) {
+    @Serializable
+    class Visibility(
+        val value: String,
+    )
+}
