@@ -36,13 +36,26 @@ data class State(
     @Transient
     val timelines: List<Timeline.Home> = emptyList(),
     @Transient
-    val timelineStateHolders: List<TimelineStateHolder> = emptyList(),
+    val timelineStateHolders: List<HomeScreenStateHolders> = emptyList(),
     @Transient
     val signedInProfile: Profile? = null,
     @Transient
     val messages: List<String> = emptyList(),
 )
 
+
+sealed class HomeScreenStateHolders : TimelineStateHolder {
+
+    data class Pinned(
+        val mutator: TimelineStateHolder
+    ) : HomeScreenStateHolders(),
+        TimelineStateHolder by mutator
+
+    data class Saved(
+        val mutator: TimelineStateHolder,
+    ) : HomeScreenStateHolders(),
+        TimelineStateHolder by mutator
+}
 
 sealed class Action(val key: String) {
 
