@@ -243,5 +243,5 @@ private fun GetPreferencesResponse.toExternalModel() =
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
     labelerId = value.labelerDid?.did?.let(::ProfileId),
     label = Label.Value(value = value.label),
-    visibility = ContentLabelPreference.Visibility(value = value.visibility.value),
+    visibility = Label.Visibility(value = value.visibility.value),
 )
