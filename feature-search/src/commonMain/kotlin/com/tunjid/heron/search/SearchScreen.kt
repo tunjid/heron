@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -70,9 +71,11 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
@@ -89,6 +92,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -248,6 +252,36 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onReplyToPost = remember {
+            { result: SearchResult.OfPost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Reply(
+                                parent = result.post,
+                            ),
+                            sharedElementPrefix = result.sharedElementPrefix,
+                        )
+                    )
+                )
+            }
+        }
+        val onMediaClicked = remember {
+            { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId? ->
+                actions(
+                    Action.Navigate.To(
+                        galleryDestination(
+                            post = result.post,
+                            media = media,
+                            startIndex = index,
+                            sharedElementPrefix = result.sharedElementPrefix.withQuotingPostIdPrefix(
+                                quotingPostId = quotingPostId,
+                            ),
+                        )
+                    )
+                )
+            }
+        }
         val onPostInteraction = postInteractionState::onInteraction
 
         AnimatedContent(
@@ -293,6 +327,8 @@ internal fun SearchScreen(
                     onLinkTargetClicked = onLinkTargetClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
+                    onReplyToPost = onReplyToPost,
+                    onMediaClicked = onMediaClicked,
                     onPostInteraction = onPostInteraction,
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
@@ -527,6 +563,8 @@ private fun TabbedSearchResults(
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
+    onReplyToPost: (SearchResult.OfPost) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
@@ -585,6 +623,8 @@ private fun TabbedSearchResults(
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
                     onLinkTargetClicked = onLinkTargetClicked,
+                    onReplyToPost = onReplyToPost,
+                    onMediaClicked = onMediaClicked,
                     onPostInteraction = onPostInteraction,
                     onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
@@ -606,6 +646,8 @@ private fun SearchResults(
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
+    onReplyToPost: (SearchResult.OfPost) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) {
@@ -634,6 +676,8 @@ private fun SearchResults(
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onPostSearchResultProfileClicked,
                             onPostClicked = onPostSearchResultClicked,
+                            onReplyToPost = onReplyToPost,
+                            onMediaClicked = onMediaClicked,
                             onPostInteraction = onPostInteraction,
                         )
                     }
