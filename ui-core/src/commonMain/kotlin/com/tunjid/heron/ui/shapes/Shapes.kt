@@ -158,6 +158,8 @@ sealed class RoundedPolygonShape : Shape {
             density: Density,
         ): CornerRounding {
             val maxDimension = max(size.width, size.height)
+            if (maxDimension == 0f) return CornerRounding(radius = 0f)
+
             val absoluteCornerSize = toPx(
                 shapeSize = size,
                 density = density,

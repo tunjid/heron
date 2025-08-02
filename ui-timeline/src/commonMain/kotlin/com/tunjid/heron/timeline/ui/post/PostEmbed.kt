@@ -120,6 +120,7 @@ internal fun PostEmbed(
                     postId = postId,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
+                    isBlurred = isBlurred,
                     presentation = presentation,
                     onClicked = {
                         onPostMediaClicked(embed, 0, null)

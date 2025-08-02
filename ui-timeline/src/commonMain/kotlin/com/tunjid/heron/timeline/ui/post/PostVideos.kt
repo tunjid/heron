@@ -43,6 +43,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,7 @@ internal fun PostVideo(
     video: Video,
     postId: PostId,
     sharedElementPrefix: String,
+    isBlurred: Boolean,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClicked: () -> Unit,
@@ -91,7 +94,15 @@ internal fun PostVideo(
             .fillMaxWidth()
             .aspectRatio(video.aspectRatioOrSquare)
     ) {
-        val videoModifier = Modifier
+        val videoModifier = when {
+            isBlurred -> Modifier
+                .blur(
+                    radius = 120.dp,
+                    edgeTreatment = BlurredEdgeTreatment(videoPlayerState.shape)
+                )
+
+            else -> Modifier
+        }
             .fillMaxSize()
             .clickable {
                 videoPlayerController.play(videoId = video.playlist.uri)
