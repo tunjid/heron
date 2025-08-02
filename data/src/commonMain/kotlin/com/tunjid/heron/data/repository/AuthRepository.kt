@@ -24,6 +24,7 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -241,8 +242,6 @@ private fun GetPreferencesResponse.toExternalModel() =
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
     labelerId = value.labelerDid?.did?.let(::ProfileId),
-    label = value.label,
-    visibility = ContentLabelPreference.Visibility(
-        value = value.visibility.value,
-    ),
+    label = Label.Value(value = value.label),
+    visibility = ContentLabelPreference.Visibility(value = value.visibility.value),
 )

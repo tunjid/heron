@@ -46,7 +46,7 @@ data class TimelinePreference(
 @Serializable
 data class ContentLabelPreference(
     val labelerId: ProfileId?,
-    val label: String,
+    val label: Label.Value,
     val visibility: Visibility,
 ) {
     @Serializable
