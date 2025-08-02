@@ -19,6 +19,8 @@ package com.tunjid.heron.compose
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -40,6 +42,8 @@ data class State(
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
     val quotedPost: Post? = null,
+    val labelPreferences: ContentLabelPreferences,
+    val labelers: List<Labeler>,
     @Transient // TODO: Write a custom serializer for this
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
@@ -64,11 +68,15 @@ fun State(route: Route): State = when (val model = route.model) {
             )
         ),
         sharedElementPrefix = route.sharedElementPrefix,
+        labelers = emptyList(),
+        labelPreferences = emptyList(),
         postType = model,
     )
 
     else -> State(
         sharedElementPrefix = route.sharedElementPrefix,
+        labelers = emptyList(),
+        labelPreferences = emptyList(),
     )
 }
 

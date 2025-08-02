@@ -61,6 +61,7 @@ fun QuotedPost(
     now: Instant,
     quotedPost: Post,
     sharedElementPrefix: String,
+    isBlurred: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClick: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
@@ -137,6 +138,7 @@ fun QuotedPost(
                     feature = embed,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
+                    isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, quotedPost)

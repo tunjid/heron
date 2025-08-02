@@ -50,6 +50,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: PostId,
     sharedElementPrefix: String,
+    isBlurred: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
@@ -79,6 +80,7 @@ internal fun PostEmbed(
                 sharedElementPrefix = sharedElementPrefix,
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 presentation = presentation,
+                isBlurred = isBlurred,
                 onImageClicked = { index ->
                     onPostMediaClicked(embed, index, null)
                 }
@@ -111,6 +113,7 @@ internal fun PostEmbed(
                     sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
                         quotingPostId = postId,
                     ),
+                    isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onLinkTargetClicked = onLinkTargetClicked,
                     onProfileClicked = onQuotedProfileClicked,

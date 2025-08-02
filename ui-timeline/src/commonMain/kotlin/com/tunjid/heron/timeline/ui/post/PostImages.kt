@@ -28,6 +28,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
@@ -47,10 +49,28 @@ internal fun PostImages(
     feature: ImageList,
     postId: PostId,
     sharedElementPrefix: String,
+    isBlurred: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
+
+    val shape = animateDpAsState(
+        when (presentation) {
+            Timeline.Presentation.Text.WithEmbed -> 16.dp
+            Timeline.Presentation.Media.Condensed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 0.dp
+        }
+    ).value
+        .let(::RoundedCornerShape)
+        .toRoundedPolygonShape()
+
+    val itemModifier = if (isBlurred) Modifier.blur(
+        radius = 80.dp,
+        edgeTreatment = BlurredEdgeTreatment(shape)
+    )
+    else Modifier
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth(),
@@ -64,18 +84,18 @@ internal fun PostImages(
                 paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
                     modifier = when (presentation) {
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
-                            1 -> Modifier
+                            1 -> itemModifier
                                 .fillParentMaxWidth()
                                 .aspectRatio(image.aspectRatioOrSquare)
 
-                            else -> Modifier
+                            else -> itemModifier
                                 .height(200.dp)
                                 .aspectRatio(image.aspectRatioOrSquare)
                         }
 
                         Timeline.Presentation.Media.Condensed,
                         Timeline.Presentation.Media.Expanded,
-                            -> Modifier
+                            -> itemModifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
                     }
@@ -94,13 +114,7 @@ internal fun PostImages(
                         contentScale =
                             if (presentation == Timeline.Presentation.Media.Expanded)
                                 ContentScale.Crop else ContentScale.Fit,
-                        shape = animateDpAsState(
-                            when (presentation) {
-                                Timeline.Presentation.Text.WithEmbed -> 16.dp
-                                Timeline.Presentation.Media.Condensed -> 8.dp
-                                Timeline.Presentation.Media.Expanded -> 0.dp
-                            }
-                        ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
+                        shape = shape,
                     ),
                     sharedElement = { state, innerModifier ->
                         AsyncImage(

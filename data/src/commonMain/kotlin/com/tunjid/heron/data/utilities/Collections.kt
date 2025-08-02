@@ -249,6 +249,27 @@ private val BlueSkuLabelersStub = listOf(
                 identifier = Label.Value("sexual-figurative"),
                 severity = Label.Severity.None,
             ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Media,
+                defaultSetting = Label.Value("show"),
+                identifier = Label.Value("porn"),
+                severity = Label.Severity.None,
+            ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Media,
+                defaultSetting = Label.Value("show"),
+                identifier = Label.Value("nudity"),
+                severity = Label.Severity.None,
+            ),
+            Label.Definition(
+                adultOnly = true,
+                blurs = Label.BlurTarget.Media,
+                defaultSetting = Label.Value("show"),
+                identifier = Label.Value("sexual"),
+                severity = Label.Severity.None,
+            ),
         ),
         values = listOf(
             Label.Value(value = "!hide"),

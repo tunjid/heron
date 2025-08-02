@@ -50,6 +50,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -59,6 +61,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.timeline.ui.post.blurredMediaLabels
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
@@ -94,6 +97,8 @@ internal fun ComposeScreen(
             signedInProfile = state.signedInProfile,
             postText = postText,
             quotedPost = state.quotedPost,
+            labelPreferences = state.labelPreferences,
+            labelers = state.labelers,
             paneMovableElementSharedTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onCreatePost = onCreatePost@{
@@ -142,6 +147,8 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     quotedPost: Post?,
+    labelPreferences: ContentLabelPreferences,
+    labelers: List<Labeler>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
@@ -178,6 +185,16 @@ private fun Post(
             },
         )
 
+        val isBlurred = remember(
+            key1 = quotedPost,
+            key2 = labelers,
+            key3 = labelPreferences
+        ) {
+            quotedPost?.blurredMediaLabels(
+                labelers = labelers,
+                contentPreferences = labelPreferences,
+            )?.isNotEmpty() ?: false
+        }
         if (quotedPost != null) QuotedPost(
             modifier = Modifier.padding(
                 horizontal = 24.dp,
@@ -185,6 +202,7 @@ private fun Post(
             now = remember { Clock.System.now() },
             quotedPost = quotedPost,
             sharedElementPrefix = NeverMatchedSharedElementPrefix,
+            isBlurred = isBlurred,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onClick = {},
             onLinkTargetClicked = { _, _ -> },

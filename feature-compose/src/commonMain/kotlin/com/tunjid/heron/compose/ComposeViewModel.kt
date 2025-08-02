@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -69,6 +70,7 @@ class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     postRepository: PostRepository,
+    timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -87,7 +89,13 @@ class ActualComposeViewModel(
                 else -> null
             },
             postRepository = postRepository,
-        )
+        ),
+        labelPreferencesMutations(
+            timelineRepository = timelineRepository,
+        ),
+        labelerMutations(
+            timelineRepository = timelineRepository,
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -127,6 +135,18 @@ private fun quotedPostMutations(
         }
     }
         ?: emptyFlow()
+
+private fun labelPreferencesMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.preferences()
+        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
+
+private fun labelerMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.labelers()
+        .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(
 ): Flow<Mutation<State>> =

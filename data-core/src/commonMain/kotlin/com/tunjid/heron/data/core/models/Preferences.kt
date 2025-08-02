@@ -54,3 +54,10 @@ data class ContentLabelPreference(
         val value: String,
     )
 }
+
+val ContentLabelPreference.Visibility.shouldBlurMedia
+    get() = when (value) {
+        "hide" -> true
+        "warn" -> true
+        else -> false
+    }
