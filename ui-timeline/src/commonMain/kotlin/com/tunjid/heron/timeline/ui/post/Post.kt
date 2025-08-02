@@ -59,7 +59,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.blurredMediaLabels
+import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
@@ -503,7 +503,7 @@ private class PostData(
     var presentationChanged by mutableStateOf(false)
 
     val blurredMediaLabels by derivedStateOf {
-        post.blurredMediaLabels(
+        post.blurredMediaDefinitions(
             labelers = labelers,
             contentPreferences = contentPreferences,
         )

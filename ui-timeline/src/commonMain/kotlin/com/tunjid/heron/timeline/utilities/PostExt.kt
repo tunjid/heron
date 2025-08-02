@@ -24,37 +24,33 @@ import com.tunjid.heron.data.core.models.Post
 
 val Post.createdAt get() = record?.createdAt ?: indexedAt
 
-fun Post.blurredMediaLabels(
+fun Post.blurredMediaDefinitions(
     labelers: Labelers,
     contentPreferences: ContentLabelPreferences,
-): List<Label.Value> {
+): List<Label.Definition> {
     if (labels.isEmpty()) return emptyList()
 
-    val contentPreferenceMap = contentPreferences.associateBy(
+    val labelsVisibilityMap = contentPreferences.associateBy(
         keySelector = ContentLabelPreference::label,
-        valueTransform = { it.visibility }
+        valueTransform = ContentLabelPreference::visibility,
+    )
+    val postLabels = labels.mapTo(
+        destination = mutableSetOf(),
+        transform = Label::value,
     )
 
-    val mediaBlurLabels = labelers.flatMapTo(mutableSetOf()) { labeler ->
+    return labelers.flatMap { labeler ->
         labeler.definitions.mapNotNull { definition ->
-            when {
-                definition.adultOnly -> definition.identifier
-                definition.blurs == Label.BlurTarget.Media -> definition.identifier
-                else -> null
-            }
-        }
-    }
-    val postBlurredLabels = labels.mapNotNull { label ->
-        if (mediaBlurLabels.contains(label.value)) when (
-            val visibility = contentPreferenceMap[label.value]
-        ) {
-            null -> label.value
-            else -> label.value.takeIf { visibility.shouldBlurMedia }
-        }
-        else null
-    }
+            // Not applicable to this post
+            if (!postLabels.contains(definition.identifier)) return@mapNotNull null
 
-    return postBlurredLabels
+            val mayBlur = definition.adultOnly || definition.blurs == Label.BlurTarget.Media
+            if (!mayBlur) return@mapNotNull null
+
+            val visibility = labelsVisibilityMap[definition.identifier] ?: definition.defaultSetting
+            definition.takeIf { visibility.shouldBlurMedia }
+        }
+    }
 }
 
 val Label.Visibility.shouldBlurMedia

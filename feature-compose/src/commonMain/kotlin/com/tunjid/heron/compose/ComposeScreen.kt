@@ -61,7 +61,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.utilities.blurredMediaLabels
+import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -190,7 +190,7 @@ private fun Post(
             key2 = labelers,
             key3 = labelPreferences
         ) {
-            quotedPost?.blurredMediaLabels(
+            quotedPost?.blurredMediaDefinitions(
                 labelers = labelers,
                 contentPreferences = labelPreferences,
             )?.isNotEmpty() ?: false
