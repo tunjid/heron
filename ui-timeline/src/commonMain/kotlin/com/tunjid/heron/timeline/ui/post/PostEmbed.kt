@@ -26,8 +26,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -159,6 +159,11 @@ internal fun PostEmbed(
             it.severity == Label.Severity.None
         }
         if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+//                    .background(Color.Black.copy(alpha = 0.6f))
+            )
             SensitiveContentButton(
                 modifier = Modifier
                     .align(Alignment.Center),
@@ -177,7 +182,7 @@ private fun SensitiveContentButton(
     blurredMediaDefinitions: List<Label.Definition>,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(
+    FilledTonalButton(
         modifier = modifier,
         onClick = {
             onClick()

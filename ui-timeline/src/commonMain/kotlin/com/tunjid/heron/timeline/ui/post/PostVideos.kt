@@ -61,6 +61,7 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -95,12 +96,7 @@ internal fun PostVideo(
             .aspectRatio(video.aspectRatioOrSquare)
     ) {
         val videoModifier = when {
-            isBlurred -> Modifier
-                .blur(
-                    radius = 120.dp,
-                    edgeTreatment = BlurredEdgeTreatment(videoPlayerState.shape)
-                )
-
+            isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
             else -> Modifier
         }
             .fillMaxSize()
@@ -148,7 +144,13 @@ internal fun PostVideo(
         )
 
         if (presentation != Timeline.Presentation.Media.Condensed) PlayButton(
-            modifier = Modifier
+            modifier = when {
+                isBlurred -> Modifier.blur(
+                    radius = 2.dp,
+                    edgeTreatment = BlurredEdgeTreatment(CircleShape)
+                )
+                else -> Modifier
+            }
                 .align(Alignment.Center),
             videoPlayerState = videoPlayerState,
             videoPlayerController = videoPlayerController,
