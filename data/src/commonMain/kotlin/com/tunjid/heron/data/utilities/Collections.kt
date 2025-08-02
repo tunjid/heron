@@ -154,35 +154,35 @@ private val BlueSkuLabelersStub = listOf(
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Warn,
                 identifier = Label.Value("self-harm"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("security"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Warn,
                 identifier = Label.Value("misleading"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("threat"),
-                severity = Label.Severity.Inform
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("unsafe-link"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
 
@@ -190,14 +190,14 @@ private val BlueSkuLabelersStub = listOf(
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("illicit"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Warn,
                 identifier = Label.Value("misinformation"),
-                severity = Label.Severity.Inform
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
 
@@ -205,70 +205,70 @@ private val BlueSkuLabelersStub = listOf(
                 blurs = Label.BlurTarget.None,
                 defaultSetting = Label.Visibility.Warn,
                 identifier = Label.Value("rumor"),
-                severity = Label.Severity.Inform
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("rude"),
-                severity = Label.Severity.Inform
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("extremist"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = true,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Warn,
                 identifier = Label.Value("sensitive"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("engagement-farming"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = false,
                 blurs = Label.BlurTarget.Content,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("inauthentic"),
-                severity = Label.Severity.Alert
+                severity = Label.Severity.Alert,
             ),
             Label.Definition(
                 adultOnly = true,
                 blurs = Label.BlurTarget.Media,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("sexual-figurative"),
-                severity = Label.Severity.None,
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = true,
                 blurs = Label.BlurTarget.Media,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("porn"),
-                severity = Label.Severity.None,
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = true,
                 blurs = Label.BlurTarget.Media,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("nudity"),
-                severity = Label.Severity.None,
+                severity = Label.Severity.Inform,
             ),
             Label.Definition(
                 adultOnly = true,
                 blurs = Label.BlurTarget.Media,
                 defaultSetting = Label.Visibility.Hide,
                 identifier = Label.Value("sexual"),
-                severity = Label.Severity.None,
+                severity = Label.Severity.Inform,
             ),
         ),
         values = listOf(

@@ -16,12 +16,25 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Report
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -43,7 +56,10 @@ import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import heron.ui_timeline.generated.resources.Res
+import heron.ui_timeline.generated.resources.sensitive_content
 import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PostEmbed(
@@ -62,6 +78,11 @@ internal fun PostEmbed(
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
+    var hasClickedThroughBlurredMedia by rememberSaveable(postId) {
+        mutableStateOf(false)
+    }
+    val isBlurred = blurredMediaDefinitions.isNotEmpty() && !hasClickedThroughBlurredMedia
+
     Box(
         modifier = modifier
     ) {
@@ -87,7 +108,7 @@ internal fun PostEmbed(
                     sharedElementPrefix = sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentation = presentation,
-                    isBlurred = blurredMediaDefinitions.isNotEmpty(),
+                    isBlurred = isBlurred,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, null)
                     }
@@ -132,5 +153,58 @@ internal fun PostEmbed(
                 }
             }
         }
+
+        val canClickThrough = blurredMediaDefinitions.none {
+            it.severity == Label.Severity.None
+        }
+        if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
+            SensitiveContentButton(
+                modifier = Modifier
+                    .align(Alignment.Center),
+                blurredMediaDefinitions = blurredMediaDefinitions,
+                onClick = {
+                    hasClickedThroughBlurredMedia = true
+                },
+            )
+        }
     }
 }
+
+@Composable
+private fun SensitiveContentButton(
+    modifier: Modifier,
+    blurredMediaDefinitions: List<Label.Definition>,
+    onClick: () -> Unit,
+) {
+    OutlinedButton(
+        modifier = modifier,
+        onClick = {
+            onClick()
+        },
+        content = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                when (blurredMediaDefinitions.firstOrNull()?.severity) {
+                    Label.Severity.Alert -> Icon(
+                        imageVector = Icons.Rounded.Report,
+                        contentDescription = "",
+                    )
+
+                    Label.Severity.Inform -> Icon(
+                        imageVector = Icons.Rounded.Warning,
+                        contentDescription = "",
+                    )
+
+                    Label.Severity.None,
+                    null -> Unit
+                }
+                Text(
+                    text = stringResource(Res.string.sensitive_content)
+                )
+            }
+        },
+    )
+}
+
