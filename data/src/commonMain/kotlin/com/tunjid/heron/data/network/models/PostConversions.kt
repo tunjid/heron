@@ -25,6 +25,7 @@ import app.bsky.feed.ViewerState
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -88,7 +89,17 @@ internal fun PostView.post(): Post {
             embeds = quotedPostEmbedEntities(),
             viewerStatisticsEntity = null,
             quote = null,
-        ) else null
+            labels = emptyList(),
+        ) else null,
+        labels = labels.map { atProtoLabel ->
+            Label(
+                uri = atProtoLabel.uri.uri.let(::GenericUri),
+                creatorId = atProtoLabel.src.did.let(::ProfileId),
+                value = Label.Value(atProtoLabel.`val`),
+                version = atProtoLabel.ver,
+                createdAt = atProtoLabel.cts,
+            )
+        }
     )
 }
 
@@ -98,6 +109,7 @@ private fun post(
     embeds: List<PostEmbed>,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
     quote: Post?,
+    labels: List<Label>,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -119,7 +131,8 @@ private fun post(
         null -> null
     },
     quote = quote,
-    viewerStats = viewerStatisticsEntity?.asExternalModel()
+    viewerStats = viewerStatisticsEntity?.asExternalModel(),
+    labels = labels,
 )
 
 internal fun PostView.postEntity() =
@@ -252,7 +265,7 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
             base64EncodedRecord = bskyPost.toPostRecord().toUrlEncodedBase64(),
             createdAt = bskyPost.createdAt,
         )
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 

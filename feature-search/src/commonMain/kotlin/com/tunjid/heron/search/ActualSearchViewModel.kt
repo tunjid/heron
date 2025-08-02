@@ -26,6 +26,7 @@ import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -79,6 +80,7 @@ class ActualSearchViewModel(
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
+    timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -87,6 +89,8 @@ class ActualSearchViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope), SearchStateHolder by scope.actionStateFlowMutator(
     initialState = State(
+        labelPreferences = emptyList(),
+        labelers = emptyList(),
         searchStateHolders = searchStateHolders(
             coroutineScope = scope,
             searchRepository = searchRepository,
@@ -102,6 +106,12 @@ class ActualSearchViewModel(
         ),
         suggestedFeedGeneratorMutations(
             searchRepository = searchRepository
+        ),
+        labelPreferencesMutations(
+            timelineRepository = timelineRepository,
+        ),
+        labelerMutations(
+            timelineRepository = timelineRepository,
         ),
     ),
     actionTransform = transform@{ actions ->
@@ -196,6 +206,17 @@ private fun suggestedFeedGeneratorMutations(
     searchRepository.suggestedFeeds()
         .mapToMutation { copy(feedGenerators = it) }
 
+private fun labelPreferencesMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.preferences()
+        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
+
+private fun labelerMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.labelers()
+        .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
     searchRepository: SearchRepository,

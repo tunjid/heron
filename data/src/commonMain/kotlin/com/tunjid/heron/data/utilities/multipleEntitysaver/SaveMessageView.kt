@@ -16,14 +16,11 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
-import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.ListId
@@ -33,12 +30,12 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
-import sh.christian.ozone.api.Did
+import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
+import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -192,25 +189,3 @@ internal fun MultipleEntitySaver.add(
         )
     )
 }
-
-private fun emptyProfileEntity(
-    did: Did,
-) = ProfileEntity(
-    did = ProfileId(did.did),
-    handle = Constants.unknownAuthorHandle,
-    displayName = null,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    associated = ProfileEntity.Associated(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-    ),
-)

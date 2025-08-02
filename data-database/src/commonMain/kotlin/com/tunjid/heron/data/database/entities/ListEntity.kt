@@ -23,6 +23,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
@@ -80,6 +81,11 @@ data class PopulatedListEntity(
         entityColumn = "did"
     )
     val creator: ProfileEntity,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "uri",
+    )
+    val labelEntities: List<LabelEntity>,
 )
 
 fun ListEntity.partial() =
@@ -94,7 +100,8 @@ fun ListEntity.partial() =
     )
 
 fun ListEntity.asExternalModel(
-    creator: Profile
+    creator: Profile,
+    labels: List<Label>,
 ): FeedList {
     check(creator.did == creatorId) {
         "passed in creator does not match creator Id"
@@ -109,11 +116,13 @@ fun ListEntity.asExternalModel(
         listItemCount = listItemCount,
         purpose = purpose,
         indexedAt = indexedAt,
+        labels = labels,
     )
 }
 
 fun PopulatedListEntity.asExternalModel(): FeedList =
     entity.asExternalModel(
-        creator = creator.asExternalModel()
+        creator = creator.asExternalModel(),
+        labels = labelEntities.map(LabelEntity::asExternalModel),
     )
 

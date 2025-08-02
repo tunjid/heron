@@ -43,6 +43,7 @@ import kotlinx.datetime.Instant
     indices = [
         Index(value = ["indexedAt"]),
         Index(value = ["createdAt"]),
+        Index(value = ["uri"]),
     ],
 )
 data class FeedGeneratorEntity(
@@ -69,6 +70,11 @@ data class PopulatedFeedGeneratorEntity(
         entityColumn = "did"
     )
     val creator: ProfileEntity?,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "uri",
+    )
+    val labelEntities: List<LabelEntity>,
 )
 
 fun PopulatedFeedGeneratorEntity.asExternalModel() =
@@ -84,4 +90,5 @@ fun PopulatedFeedGeneratorEntity.asExternalModel() =
         acceptsInteractions = entity.acceptsInteractions,
         contentMode = entity.contentMode,
         indexedAt = entity.indexedAt,
+        labels = labelEntities.map(LabelEntity::asExternalModel),
     )

@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.graph.ListView
 import app.bsky.graph.ListViewBasic
+import com.atproto.label.Label
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
@@ -32,6 +33,7 @@ internal fun MultipleEntitySaver.add(
     listView: ListView,
 ) {
     listView.creator.profileEntity().let(::add)
+    listView.labels.forEach(::add)
     add(
         ListEntity(
             cid = listView.cid.cid.let(::ListId),

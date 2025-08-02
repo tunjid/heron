@@ -111,6 +111,8 @@ internal fun PostDetailScreen(
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
                     presentation = Timeline.Presentation.Text.WithEmbed,
+                    labelers = state.labelers,
+                    contentPreferences = state.labelPreferences,
                     postActions = remember(state.sharedElementPrefix) {
                         postActions(
                             onLinkTargetClicked = { post, linkTarget ->

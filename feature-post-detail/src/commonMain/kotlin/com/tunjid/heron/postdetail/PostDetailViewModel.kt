@@ -75,7 +75,13 @@ class ActualPostDetailViewModel(
             route = route,
             profileRepository = profileRepository,
             timelineRepository = timelineRepository,
-        )
+        ),
+        labelPreferencesMutations(
+            timelineRepository = timelineRepository,
+        ),
+        labelerMutations(
+            timelineRepository = timelineRepository,
+        ),
     ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream(
@@ -115,6 +121,18 @@ fun postThreadsMutations(
             }
     )
 }
+
+private fun labelPreferencesMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.preferences()
+        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
+
+private fun labelerMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.labelers()
+        .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

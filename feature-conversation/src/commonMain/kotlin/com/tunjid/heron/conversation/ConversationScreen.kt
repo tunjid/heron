@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
@@ -135,6 +137,8 @@ internal fun ConversationScreen(
                 isLastMessageByAuthor = isLastMessageByAuthor,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
+                labelers = state.labelers,
+                contentPreferences = state.labelPreferences,
                 onMessageLongPressed = { item ->
                     when (item) {
                         is MessageItem.Pending -> Unit
@@ -203,6 +207,8 @@ private fun Message(
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
     onMessageLongPressed: (MessageItem) -> Unit,
@@ -266,6 +272,8 @@ private fun Message(
                     post = post,
                     item = item,
                     paneScaffoldState = paneScaffoldState,
+                    labelers = labelers,
+                    contentPreferences = contentPreferences,
                     actions = actions,
                 )
             }
@@ -435,6 +443,8 @@ private fun ChatItemBubble(
 private fun PostMessage(
     post: Post,
     item: MessageItem,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit
 ) {
@@ -456,6 +466,8 @@ private fun PostMessage(
         sharedElementPrefix = item.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
+        labelers = labelers,
+        contentPreferences = contentPreferences,
         postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { post, linkTarget ->

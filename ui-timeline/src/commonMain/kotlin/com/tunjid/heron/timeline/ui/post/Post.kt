@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -44,9 +45,11 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -56,6 +59,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
@@ -77,6 +81,8 @@ fun Post(
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
@@ -93,6 +99,8 @@ fun Post(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
+            labelers = labelers,
+            contentPreferences = contentPreferences,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -254,6 +262,7 @@ private fun EmbedContent(
         embed = data.post.embed,
         quote = data.post.quote,
         postId = data.post.cid,
+        blurredMediaDefinitions = data.blurredMediaDefinitions,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
@@ -426,6 +435,8 @@ private fun rememberUpdatedPostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -438,6 +449,8 @@ private fun rememberUpdatedPostData(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
+            labelers = labelers,
+            contentPreferences = contentPreferences,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -450,6 +463,8 @@ private fun rememberUpdatedPostData(
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.presentation = presentation
+        it.labelers = labelers
+        it.contentPreferences = contentPreferences
         it.sharedElementPrefix = sharedElementPrefix
         it.avatarShape = avatarShape
         it.now = now
@@ -464,6 +479,8 @@ private class PostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -476,12 +493,21 @@ private class PostData(
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)
+    var labelers by mutableStateOf(labelers)
+    var contentPreferences by mutableStateOf(contentPreferences)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
     var createdAt by mutableStateOf(created)
 
     var presentationChanged by mutableStateOf(false)
+
+    val blurredMediaDefinitions by derivedStateOf {
+        post.blurredMediaDefinitions(
+            labelers = labelers,
+            contentPreferences = contentPreferences,
+        )
+    }
 
     @OptIn(ExperimentalSharedTransitionApi::class)
     val boundsTransform = BoundsTransform { _, _ ->

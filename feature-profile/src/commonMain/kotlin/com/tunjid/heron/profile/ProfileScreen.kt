@@ -803,6 +803,8 @@ private fun ProfileTimeline(
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         presentation = presentation,
+                        labelers = timelineState.labelers,
+                        contentPreferences = timelineState.labelPreferences,
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
                                 onLinkTargetClicked = { post, linkTarget ->

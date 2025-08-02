@@ -18,10 +18,12 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
@@ -40,6 +42,9 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "posts",
+    indices = [
+        Index(value = ["uri"]),
+    ],
 )
 data class PostEntity(
     @PrimaryKey
@@ -122,6 +127,11 @@ data class PopulatedPostEntity(
         ),
     )
     val externalEmbeds: List<ExternalEmbedEntity>,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "uri",
+    )
+    val labelEntities: List<LabelEntity>,
 )
 
 data class EmbeddedPopulatedPostEntity(
@@ -164,6 +174,7 @@ fun PopulatedPostEntity.asExternalModel(
     quote = quote,
     record = entity.record?.asExternalModel(),
     viewerStats = viewerStats?.asExternalModel(),
+    labels = labelEntities.map(LabelEntity::asExternalModel)
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =
