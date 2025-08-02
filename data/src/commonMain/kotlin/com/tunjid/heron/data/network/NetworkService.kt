@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.data.network
 
-import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -49,7 +49,7 @@ interface NetworkService {
 @Inject
 class KtorNetworkService(
     private val json: Json,
-    savedStateRepository: SavedStateRepository,
+    savedStateDataSource: SavedStateDataSource,
     private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
     override val api = XrpcBlueskyApi(
@@ -72,10 +72,10 @@ class KtorNetworkService(
                     json.decodeFromString(it)
                 }
                 this.readAuth = {
-                    savedStateRepository.savedState.first().auth
+                    savedStateDataSource.savedState.first().auth
                 }
                 this.saveAuth = {
-                    savedStateRepository.updateState {
+                    savedStateDataSource.updateState {
                         copy(auth = it)
                     }
                 }

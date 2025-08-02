@@ -70,14 +70,14 @@ internal class AuthTokenRepository(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
 ) : AuthRepository {
 
     override val isSignedIn: Flow<Boolean> =
-        savedStateRepository.savedState.map { it.auth != null }
+        savedStateDataSource.savedState.map { it.auth != null }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateRepository.savedState
+        savedStateDataSource.savedState
             .distinctUntilChangedBy { it.auth?.authProfileId }
             .flatMapLatest { savedState ->
                 val signeInUserFlow = savedState.auth
@@ -93,7 +93,7 @@ internal class AuthTokenRepository(
             }
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
-        savedStateRepository.savedState
+        savedStateDataSource.savedState
             .distinctUntilChangedBy { it.auth?.authProfileId }
             .map { id == it.auth?.authProfileId }
 
@@ -108,7 +108,7 @@ internal class AuthTokenRepository(
         )
     }
         .mapCatching { result ->
-            savedStateRepository.updateState {
+            savedStateDataSource.updateState {
                 copy(
                     auth = SavedState.AuthTokens(
                         authProfileId = ProfileId(result.did.did),
@@ -121,7 +121,7 @@ internal class AuthTokenRepository(
                 )
             }
             // Suspend till auth token has been saved and is readable
-            savedStateRepository.savedState.first { it.auth != null }
+            savedStateDataSource.savedState.first { it.auth != null }
             updateSignedInUser(result.did)
         }
 
@@ -161,7 +161,7 @@ internal class AuthTokenRepository(
         val preferences = preferencesResponse.toExternalModel()
 
         val saveTimelinePreferences = async {
-            savedStateRepository.updateState {
+            savedStateDataSource.updateState {
                 copy(preferences = preferences)
             }
         }

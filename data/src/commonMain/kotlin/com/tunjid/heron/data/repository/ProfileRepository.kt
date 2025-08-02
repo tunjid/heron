@@ -159,7 +159,7 @@ internal class OfflineProfileRepository @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
 ) : ProfileRepository {
 
     override fun signedInProfile(): Flow<Profile> =
@@ -180,7 +180,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     profileDao = profileDao,
                     networkService = networkService,
                     multipleEntitySaverProvider = multipleEntitySaverProvider,
-                    savedStateRepository = savedStateRepository,
+                    savedStateDataSource = savedStateDataSource,
                 )
             }
             .distinctUntilChanged()
@@ -294,7 +294,7 @@ internal class OfflineProfileRepository @Inject constructor(
             .getOrNull()
             ?: return@flow
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             response.followers
@@ -362,7 +362,7 @@ internal class OfflineProfileRepository @Inject constructor(
             .getOrNull()
             ?: return@flow
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             response.follows
@@ -592,7 +592,7 @@ internal class OfflineProfileRepository @Inject constructor(
         }
     }
 
-    private fun signedInProfileId() = savedStateRepository.savedState
+    private fun signedInProfileId() = savedStateDataSource.savedState
         .mapNotNull { it.auth?.authProfileId }
         .distinctUntilChanged()
 }

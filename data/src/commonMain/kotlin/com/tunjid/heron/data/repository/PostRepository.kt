@@ -137,7 +137,7 @@ internal class OfflinePostRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val transactionWriter: TransactionWriter,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
 ) : PostRepository {
     override fun likedBy(
         query: PostDataQuery,
@@ -149,7 +149,7 @@ internal class OfflinePostRepository @Inject constructor(
         combine(
             postDao.likedBy(
                 postId = postEntity.cid.id,
-                viewingProfileId = savedStateRepository.signedInProfileId?.id,
+                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
@@ -170,7 +170,7 @@ internal class OfflinePostRepository @Inject constructor(
                     multipleEntitySaverProvider.saveInTransaction {
                         likes.forEach {
                             add(
-                                viewingProfileId = savedStateRepository.signedInProfileId,
+                                viewingProfileId = savedStateDataSource.signedInProfileId,
                                 postId = postEntity.cid,
                                 like = it,
                             )
@@ -193,7 +193,7 @@ internal class OfflinePostRepository @Inject constructor(
         combine(
             postDao.repostedBy(
                 postId = postEntity.cid.id,
-                viewingProfileId = savedStateRepository.signedInProfileId?.id,
+                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
@@ -252,7 +252,7 @@ internal class OfflinePostRepository @Inject constructor(
                     multipleEntitySaverProvider.saveInTransaction {
                         posts.forEach {
                             add(
-                                viewingProfileId = savedStateRepository.signedInProfileId,
+                                viewingProfileId = savedStateDataSource.signedInProfileId,
                                 postView = it,
                             )
                         }
@@ -345,7 +345,7 @@ internal class OfflinePostRepository @Inject constructor(
     override suspend fun sendInteraction(
         interaction: Post.Interaction,
     ) {
-        val authorId = savedStateRepository.signedInProfileId ?: return
+        val authorId = savedStateDataSource.signedInProfileId ?: return
         when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
                 createRecord(
@@ -485,7 +485,7 @@ internal class OfflinePostRepository @Inject constructor(
                 profileDao = profileDao,
                 networkService = networkService,
                 multipleEntitySaverProvider = multipleEntitySaverProvider,
-                savedStateRepository = savedStateRepository,
+                savedStateDataSource = savedStateDataSource,
             )
         }
 }

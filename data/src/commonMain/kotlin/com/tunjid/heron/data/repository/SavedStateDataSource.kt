@@ -115,24 +115,24 @@ val EmptySavedState = SavedState(
     notifications = null,
 )
 
-val SavedStateRepository.signedInProfileId
+val SavedStateDataSource.signedInProfileId
     get() = savedState
         .value
         .auth
         ?.authProfileId
 
-interface SavedStateRepository {
+interface SavedStateDataSource {
     val savedState: StateFlow<SavedState>
     suspend fun updateState(update: SavedState.() -> SavedState)
 }
 
 @Inject
-internal class DataStoreSavedStateRepository(
+internal class DataStoreSavedStateDataSource(
     path: Path,
     fileSystem: FileSystem,
     @Named("AppScope") appScope: CoroutineScope,
     protoBuf: ProtoBuf,
-) : SavedStateRepository {
+) : SavedStateDataSource {
 
     private val dataStore: DataStore<SavedState> = DataStoreFactory.create(
         storage = OkioStorage(
