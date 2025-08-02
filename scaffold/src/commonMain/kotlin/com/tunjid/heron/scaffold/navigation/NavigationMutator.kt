@@ -37,7 +37,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
-import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -305,19 +305,19 @@ interface NavigationAction {
 @Inject
 class PersistedNavigationStateHolder(
     @Named("AppScope") appScope: CoroutineScope,
-    savedStateRepository: SavedStateRepository,
+    savedStateDataSource: SavedStateDataSource,
     routeParser: RouteParser,
 ) : NavigationStateHolder,
     ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
         initialState = InitialNavigationState,
         started = SharingStarted.Eagerly,
         inputs = listOf(
-            savedStateRepository.forceSignOutMutations()
+            savedStateDataSource.forceSignOutMutations()
         ),
         actionTransform = { navActions ->
             flow {
                 // Restore saved nav from disk first
-                val savedState = savedStateRepository.savedState
+                val savedState = savedStateDataSource.savedState
                     // Wait for a non empty saved state to be read
                     .first { it != InitialSavedState }
 
@@ -346,7 +346,7 @@ class PersistedNavigationStateHolder(
             navigationStateFlow.onEach { navigationState ->
                 appScope.persistNavigationState(
                     navigationState = navigationState,
-                    savedStateRepository = savedStateRepository
+                    savedStateDataSource = savedStateDataSource
                 )
             }
         }
@@ -366,7 +366,7 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun SavedStateRepository.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> =
+private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> =
     savedState
         // No auth token and is displaying main navigation
         .filter { it.auth == null && it != EmptySavedState }
@@ -376,9 +376,9 @@ private fun SavedStateRepository.forceSignOutMutations(): Flow<Mutation<MultiSta
 
 private fun CoroutineScope.persistNavigationState(
     navigationState: MultiStackNav,
-    savedStateRepository: SavedStateRepository,
+    savedStateDataSource: SavedStateDataSource,
 ) = launch {
-    if (navigationState != InitialNavigationState) savedStateRepository.updateState {
+    if (navigationState != InitialNavigationState) savedStateDataSource.updateState {
         this.copy(navigation = navigationState.toSavedState())
     }
 }

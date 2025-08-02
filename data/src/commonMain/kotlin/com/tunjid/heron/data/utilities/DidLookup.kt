@@ -30,7 +30,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInProfileId
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -110,7 +110,7 @@ internal suspend fun refreshProfile(
     profileDao: ProfileDao,
     networkService: NetworkService,
     multipleEntitySaverProvider: MultipleEntitySaverProvider,
-    savedStateRepository: SavedStateRepository,
+    savedStateDataSource: SavedStateDataSource,
 ) {
     val profileDid = lookupProfileDid(
         profileId = profileId,
@@ -126,7 +126,7 @@ internal suspend fun refreshProfile(
         ?.let { response ->
             multipleEntitySaverProvider.saveInTransaction {
                 add(
-                    viewingProfileId = savedStateRepository.signedInProfileId,
+                    viewingProfileId = savedStateDataSource.signedInProfileId,
                     profileView = response,
                 )
             }

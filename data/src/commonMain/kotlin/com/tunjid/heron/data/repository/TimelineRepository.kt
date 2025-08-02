@@ -221,12 +221,12 @@ internal class OfflineTimelineRepository(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
 
     override fun preferences(): Flow<Preferences> =
-        savedStateRepository.savedState.map {
+        savedStateDataSource.savedState.map {
             it.preferences ?: Preferences.EmptyPreferences
         }
 
@@ -602,7 +602,7 @@ internal class OfflineTimelineRepository(
                                 multipleEntitySaverProvider
                                     .saveInTransaction {
                                         add(
-                                            viewingProfileId = savedStateRepository.signedInProfileId,
+                                            viewingProfileId = savedStateDataSource.signedInProfileId,
                                             threadViewPost = thread.value,
                                         )
                                     }
@@ -615,7 +615,7 @@ internal class OfflineTimelineRepository(
             .distinctUntilChanged()
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
-        savedStateRepository.savedState
+        savedStateDataSource.savedState
             .mapNotNull { it.preferences?.timelinePreferences }
             .distinctUntilChanged()
             .flatMapLatest { timelinePreferences ->
@@ -663,7 +663,7 @@ internal class OfflineTimelineRepository(
 
     override fun timeline(
         request: TimelineRequest,
-    ): Flow<Timeline> = savedStateRepository.savedState
+    ): Flow<Timeline> = savedStateDataSource.savedState
         .mapNotNull { it.preferences?.timelinePreferences }
         .distinctUntilChanged()
         .flatMapLatest { preferences ->
@@ -856,7 +856,7 @@ internal class OfflineTimelineRepository(
                     )
                 }
                 add(
-                    viewingProfileId = savedStateRepository.signedInProfileId,
+                    viewingProfileId = savedStateDataSource.signedInProfileId,
                     timeline = query.timeline,
                     feedViewPosts = networkFeed(),
                 )
@@ -878,7 +878,7 @@ internal class OfflineTimelineRepository(
                 ?.let { fetchedFeedViewPosts ->
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            viewingProfileId = savedStateRepository.signedInProfileId,
+                            viewingProfileId = savedStateDataSource.signedInProfileId,
                             timeline = timeline,
                             feedViewPosts = fetchedFeedViewPosts,
                         )
@@ -1027,7 +1027,7 @@ internal class OfflineTimelineRepository(
         name: String,
         position: Int,
         isPinned: Boolean,
-    ) = savedStateRepository.savedState
+    ) = savedStateDataSource.savedState
         .mapNotNull { it.auth?.authProfileId }
         .distinctUntilChanged()
         .flatMapLatest { signedInProfileId ->
