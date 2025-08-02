@@ -45,23 +45,21 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
-import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.models.shouldBlurMedia
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.blurredMediaLabels
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
@@ -515,38 +513,6 @@ private class PostData(
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
     }
-}
-
-fun Post.blurredMediaLabels(
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
-): List<Label.Value> {
-    if (labels.isEmpty()) return emptyList()
-
-    val contentPreferenceMap = contentPreferences.associateBy(
-        keySelector = ContentLabelPreference::label,
-        valueTransform = { it.visibility }
-    )
-
-    val mediaBlurLabels = labelers.flatMapTo(mutableSetOf()) { labeler ->
-        labeler.definitions.mapNotNull { definition ->
-            when {
-                definition.adultOnly -> definition.identifier
-                definition.blurs == Label.BlurTarget.Media -> definition.identifier
-                else -> null
-            }
-        }
-    }
-    val postBlurredLabels = labels.mapNotNull { label ->
-        if (mediaBlurLabels.contains(label.value)) when (val visibility =
-            contentPreferenceMap[label.value]) {
-            null -> label.value
-            else -> label.value.takeIf { visibility.shouldBlurMedia }
-        }
-        else null
-    }
-
-    return postBlurredLabels
 }
 
 private sealed class PostContent(val key: String) {

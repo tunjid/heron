@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
@@ -61,12 +60,13 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
-import com.tunjid.heron.timeline.ui.post.blurredMediaLabels
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.utilities.blurredMediaLabels
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
+import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlinx.coroutines.launch

@@ -37,10 +37,21 @@ data class Label(
     )
 
     @Serializable
+    data class Visibility(
+        val value: String,
+    ) {
+        companion object {
+            val Hide = Visibility("hide")
+            val Show = Visibility("show")
+            val Warn = Visibility("warn")
+        }
+    }
+
+    @Serializable
     data class Definition(
         val adultOnly: Boolean,
         val blurs: BlurTarget,
-        val defaultSetting: Value,
+        val defaultSetting: Visibility,
         val identifier: Value,
         val severity: Severity,
     )

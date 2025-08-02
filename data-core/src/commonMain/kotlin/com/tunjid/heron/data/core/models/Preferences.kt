@@ -47,17 +47,5 @@ data class TimelinePreference(
 data class ContentLabelPreference(
     val labelerId: ProfileId?,
     val label: Label.Value,
-    val visibility: Visibility,
-) {
-    @Serializable
-    class Visibility(
-        val value: String,
-    )
-}
-
-val ContentLabelPreference.Visibility.shouldBlurMedia
-    get() = when (value) {
-        "hide" -> true
-        "warn" -> true
-        else -> false
-    }
+    val visibility: Label.Visibility,
+)
