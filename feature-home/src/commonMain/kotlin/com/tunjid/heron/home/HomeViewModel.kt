@@ -130,7 +130,7 @@ private fun timelineMutations(
                     ?.sourceId,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
-                timelineStateHolders
+                val timelineStateHolder = timelineStateHolders
                     // Preserve the existing state holder or create a new one
                     .firstOrNull { holder ->
                         holder.state.value.timeline.sourceId == timeline.sourceId
@@ -142,6 +142,9 @@ private fun timelineMutations(
                         scope = scope,
                         timelineRepository = timelineRepository,
                     )
+
+                if (timeline.isPinned) HomeScreenStateHolders.Pinned(timelineStateHolder)
+                else HomeScreenStateHolders.Saved(timelineStateHolder)
             }
         )
     }
