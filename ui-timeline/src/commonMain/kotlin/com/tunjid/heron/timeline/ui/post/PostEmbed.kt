@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Constants
@@ -78,14 +80,11 @@ internal fun PostEmbed(
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
-    var hasClickedThroughBlurredMedia by rememberSaveable(postId) {
-        mutableStateOf(false)
-    }
-    val isBlurred = blurredMediaDefinitions.isNotEmpty() && !hasClickedThroughBlurredMedia
-
-    Box(
-        modifier = modifier
-    ) {
+    SensitiveContentBox(
+        modifier = modifier,
+        postId = postId,
+        blurredMediaDefinitions = blurredMediaDefinitions
+    ) { isBlurred ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -120,6 +119,7 @@ internal fun PostEmbed(
                     postId = postId,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
+                    isBlurred = isBlurred,
                     presentation = presentation,
                     onClicked = {
                         onPostMediaClicked(embed, 0, null)
@@ -153,21 +153,50 @@ internal fun PostEmbed(
                 }
             }
         }
+    }
+}
 
-        val canClickThrough = blurredMediaDefinitions.none {
-            it.severity == Label.Severity.None
-        }
-        if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
-            SensitiveContentButton(
-                modifier = Modifier
-                    .align(Alignment.Center),
-                blurredMediaDefinitions = blurredMediaDefinitions,
-                onClick = {
-                    hasClickedThroughBlurredMedia = true
+@Composable
+private fun SensitiveContentBox(
+    modifier: Modifier,
+    postId: PostId,
+    blurredMediaDefinitions: List<Label.Definition>,
+    content: @Composable (isBlurred: Boolean) -> Unit,
+) {
+    var hasClickedThroughBlurredMedia by rememberSaveable(postId) {
+        mutableStateOf(false)
+    }
+    val isBlurred = blurredMediaDefinitions.isNotEmpty() && !hasClickedThroughBlurredMedia
+
+    Box(
+        modifier = modifier,
+        content = {
+            Box(
+                modifier = when {
+                    // Prevent clicks on other things
+                    isBlurred -> Modifier.pointerInput(Unit) { detectTapGestures() }
+                    else -> Modifier
+                },
+                content = {
+                    content(isBlurred)
                 },
             )
+
+            val canClickThrough = blurredMediaDefinitions.none {
+                it.severity == Label.Severity.None
+            }
+            if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
+                SensitiveContentButton(
+                    modifier = Modifier
+                        .align(Alignment.Center),
+                    blurredMediaDefinitions = blurredMediaDefinitions,
+                    onClick = {
+                        hasClickedThroughBlurredMedia = true
+                    },
+                )
+            }
         }
-    }
+    )
 }
 
 @Composable
@@ -176,7 +205,7 @@ private fun SensitiveContentButton(
     blurredMediaDefinitions: List<Label.Definition>,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(
+    FilledTonalButton(
         modifier = modifier,
         onClick = {
             onClick()

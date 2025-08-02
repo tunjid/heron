@@ -28,8 +28,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
@@ -39,6 +37,7 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
@@ -65,11 +64,7 @@ internal fun PostImages(
         .let(::RoundedCornerShape)
         .toRoundedPolygonShape()
 
-    val itemModifier = if (isBlurred) Modifier
-        .blur(
-            radius = 120.dp,
-            edgeTreatment = BlurredEdgeTreatment(shape)
-        )
+    val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
     else Modifier
 
     LazyRow(

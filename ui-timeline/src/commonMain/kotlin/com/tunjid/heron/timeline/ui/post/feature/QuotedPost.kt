@@ -153,6 +153,7 @@ fun QuotedPost(
                     postId = quotedPost.cid,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
+                    isBlurred = isBlurred,
                     // Quote videos only show in text and embeds
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     onClicked = {

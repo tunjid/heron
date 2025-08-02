@@ -43,6 +43,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -70,6 +73,7 @@ internal fun PostVideo(
     video: Video,
     postId: PostId,
     sharedElementPrefix: String,
+    isBlurred: Boolean,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClicked: () -> Unit,
@@ -91,7 +95,10 @@ internal fun PostVideo(
             .fillMaxWidth()
             .aspectRatio(video.aspectRatioOrSquare)
     ) {
-        val videoModifier = Modifier
+        val videoModifier = when {
+            isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
+            else -> Modifier
+        }
             .fillMaxSize()
             .clickable {
                 videoPlayerController.play(videoId = video.playlist.uri)
@@ -137,7 +144,13 @@ internal fun PostVideo(
         )
 
         if (presentation != Timeline.Presentation.Media.Condensed) PlayButton(
-            modifier = Modifier
+            modifier = when {
+                isBlurred -> Modifier.blur(
+                    radius = 2.dp,
+                    edgeTreatment = BlurredEdgeTreatment(CircleShape)
+                )
+                else -> Modifier
+            }
                 .align(Alignment.Center),
             videoPlayerState = videoPlayerState,
             videoPlayerController = videoPlayerController,
