@@ -146,7 +146,7 @@ interface SearchRepository {
 internal class OfflineSearchRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
     private val profileDao: ProfileDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
@@ -178,7 +178,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 .getOrNull()
                 ?: return@flow
 
-            val authProfileId = savedStateRepository.signedInProfileId
+            val authProfileId = savedStateDataSource.signedInProfileId
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.posts.forEach { postView ->
@@ -219,7 +219,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 .getOrNull()
                 ?: return@flow
 
-            val signedInProfileId = savedStateRepository.signedInProfileId
+            val signedInProfileId = savedStateDataSource.signedInProfileId
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.actors
@@ -323,7 +323,7 @@ internal class OfflineSearchRepository @Inject constructor(
             .getOrNull()
             ?.actors ?: return@flow
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             profileViews.forEach { profileView ->
@@ -381,7 +381,7 @@ internal class OfflineSearchRepository @Inject constructor(
             ?.actors
             ?: return@flow
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             profileViews.forEach { profileView ->

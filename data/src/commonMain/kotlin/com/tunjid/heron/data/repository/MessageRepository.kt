@@ -118,7 +118,7 @@ internal class OfflineMessageRepository @Inject constructor(
     private val starterPackDao: StarterPackDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
 ) : MessageRepository {
 
     override fun conversations(
@@ -145,7 +145,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = ListConvosResponse::cursor,
                 onResponse = {
-                    val signedInProfileId = savedStateRepository.signedInProfileId
+                    val signedInProfileId = savedStateDataSource.signedInProfileId
 
                     multipleEntitySaverProvider.saveInTransaction {
                         convos.forEach {
@@ -239,7 +239,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = GetMessagesResponse::cursor,
                 onResponse = {
-                    val signedInProfileId = savedStateRepository.signedInProfileId
+                    val signedInProfileId = savedStateDataSource.signedInProfileId
 
                     multipleEntitySaverProvider.saveInTransaction {
                         messages.forEach {
@@ -308,7 +308,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 // No changes
                 if (currentCursor <= latestCursor) return@scan latestCursor
 
-                val signedInProfileId = savedStateRepository.signedInProfileId
+                val signedInProfileId = savedStateDataSource.signedInProfileId
 
                 multipleEntitySaverProvider.saveInTransaction {
                     deletedMessages.list.forEach { (conversationId, message) ->
@@ -352,7 +352,7 @@ internal class OfflineMessageRepository @Inject constructor(
             )
         }.getOrNull() ?: return
 
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             add(
@@ -385,7 +385,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 ).map(RemoveReactionResponse::message)
             }
         }.getOrNull() ?: return
-        val signedInProfileId = savedStateRepository.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {
             add(

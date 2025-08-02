@@ -75,7 +75,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val notificationsDao: NotificationsDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val savedStateRepository: SavedStateRepository,
+    private val savedStateDataSource: SavedStateDataSource,
 ) : NotificationsRepository {
 
     override val unreadCount: Flow<Long> =
@@ -97,7 +97,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 initialValue = 0,
             )
 
-    override val lastRefreshed: Flow<Instant?> = savedStateRepository.savedState
+    override val lastRefreshed: Flow<Instant?> = savedStateDataSource.savedState
         .map { it.notifications?.lastRefreshed }
         .distinctUntilChanged()
 
@@ -147,7 +147,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     first.cursor
                 },
                 onResponse = {
-                    val authProfileId = savedStateRepository.savedState.value.auth?.authProfileId
+                    val authProfileId = savedStateDataSource.savedState.value.auth?.authProfileId
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         if (query.data.page == 0) {
                             notificationsDao.deleteAllNotifications()
@@ -169,7 +169,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             .distinctUntilChanged()
 
     override suspend fun markRead(at: Instant) {
-        val lastReadAt = savedStateRepository.savedState.value.notifications?.lastRead
+        val lastReadAt = savedStateDataSource.savedState.value.notifications?.lastRead
         if (lastReadAt != null && lastReadAt > at) return
 
         val isSuccess = networkService.runCatchingWithMonitoredNetworkRetry {
@@ -227,7 +227,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private suspend inline fun updateNotifications(
         crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
     ) {
-        savedStateRepository.updateState {
+        savedStateDataSource.updateState {
             copy(
                 notifications = (notifications ?: SavedState.Notifications()).block()
             )

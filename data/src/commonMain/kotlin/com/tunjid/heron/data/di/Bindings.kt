@@ -38,7 +38,7 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
-import com.tunjid.heron.data.repository.DataStoreSavedStateRepository
+import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.OfflineMessageRepository
@@ -49,7 +49,7 @@ import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.SavedStateRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
@@ -203,8 +203,8 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     private fun provideDataStoreSavedStateRepository(
-        dataStoreSavedStateRepository: DataStoreSavedStateRepository
-    ): SavedStateRepository = dataStoreSavedStateRepository
+        dataStoreSavedStateRepository: DataStoreSavedStateDataSource
+    ): SavedStateDataSource = dataStoreSavedStateRepository
 
     @SingleIn(AppScope::class)
     @Provides
