@@ -262,7 +262,7 @@ private fun EmbedContent(
         embed = data.post.embed,
         quote = data.post.quote,
         postId = data.post.cid,
-        isBlurred = data.blurredMediaLabels.isNotEmpty(),
+        blurredMediaDefinitions = data.blurredMediaDefinitions,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
@@ -502,7 +502,7 @@ private class PostData(
 
     var presentationChanged by mutableStateOf(false)
 
-    val blurredMediaLabels by derivedStateOf {
+    val blurredMediaDefinitions by derivedStateOf {
         post.blurredMediaDefinitions(
             labelers = labelers,
             contentPreferences = contentPreferences,

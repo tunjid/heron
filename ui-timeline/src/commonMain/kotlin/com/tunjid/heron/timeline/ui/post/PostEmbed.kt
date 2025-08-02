@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +29,7 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -50,7 +53,7 @@ internal fun PostEmbed(
     quote: Post?,
     postId: PostId,
     sharedElementPrefix: String,
-    isBlurred: Boolean,
+    blurredMediaDefinitions: List<Label.Definition>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
@@ -59,69 +62,74 @@ internal fun PostEmbed(
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
-    Column(
+    Box(
         modifier = modifier
     ) {
-        when (embed) {
-            is ExternalEmbed -> PostExternal(
-                feature = embed,
-                postId = postId,
-                sharedElementPrefix = sharedElementPrefix,
-                presentation = presentation,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                onClick = {
-                    uriHandler.openUri(embed.uri.uri)
-                },
-            )
-
-            is ImageList -> PostImages(
-                feature = embed,
-                postId = postId,
-                sharedElementPrefix = sharedElementPrefix,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentation = presentation,
-                isBlurred = isBlurred,
-                onImageClicked = { index ->
-                    onPostMediaClicked(embed, index, null)
-                }
-            )
-
-            UnknownEmbed -> UnknownPostPost(onClick = {})
-            is Video -> PostVideo(
-                video = embed,
-                postId = postId,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                sharedElementPrefix = sharedElementPrefix,
-                presentation = presentation,
-                onClicked = {
-                    onPostMediaClicked(embed, 0, null)
-                }
-            )
-
-            null -> Unit
-        }
-        if (presentation == Timeline.Presentation.Text.WithEmbed) {
-            if (quote != null) Spacer(Modifier.height(16.dp))
-            when (quote?.cid) {
-                null -> Unit
-                Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
-                Constants.blockedPostId -> BlockedPostPost(onClick = {})
-                Constants.unknownPostId -> UnknownPostPost(onClick = {})
-                else -> QuotedPost(
-                    now = now,
-                    quotedPost = quote,
-                    sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
-                        quotingPostId = postId,
-                    ),
-                    isBlurred = isBlurred,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            when (embed) {
+                is ExternalEmbed -> PostExternal(
+                    feature = embed,
+                    postId = postId,
+                    sharedElementPrefix = sharedElementPrefix,
+                    presentation = presentation,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onLinkTargetClicked = onLinkTargetClicked,
-                    onProfileClicked = onQuotedProfileClicked,
-                    onPostMediaClicked = onPostMediaClicked,
                     onClick = {
-                        onQuotedPostClicked(quote)
+                        uriHandler.openUri(embed.uri.uri)
+                    },
+                )
+
+                is ImageList -> PostImages(
+                    feature = embed,
+                    postId = postId,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentation = presentation,
+                    isBlurred = blurredMediaDefinitions.isNotEmpty(),
+                    onImageClicked = { index ->
+                        onPostMediaClicked(embed, index, null)
                     }
                 )
+
+                UnknownEmbed -> UnknownPostPost(onClick = {})
+                is Video -> PostVideo(
+                    video = embed,
+                    postId = postId,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    sharedElementPrefix = sharedElementPrefix,
+                    presentation = presentation,
+                    onClicked = {
+                        onPostMediaClicked(embed, 0, null)
+                    }
+                )
+
+                null -> Unit
+            }
+            if (presentation == Timeline.Presentation.Text.WithEmbed) {
+                if (quote != null) Spacer(Modifier.height(16.dp))
+                when (quote?.cid) {
+                    null -> Unit
+                    Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
+                    Constants.blockedPostId -> BlockedPostPost(onClick = {})
+                    Constants.unknownPostId -> UnknownPostPost(onClick = {})
+                    else -> QuotedPost(
+                        now = now,
+                        quotedPost = quote,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
+                            quotingPostId = postId,
+                        ),
+                        isBlurred = blurredMediaDefinitions.isNotEmpty(),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        onLinkTargetClicked = onLinkTargetClicked,
+                        onProfileClicked = onQuotedProfileClicked,
+                        onPostMediaClicked = onPostMediaClicked,
+                        onClick = {
+                            onQuotedPostClicked(quote)
+                        }
+                    )
+                }
             }
         }
     }
