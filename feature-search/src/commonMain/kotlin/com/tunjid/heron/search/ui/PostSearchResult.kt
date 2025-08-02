@@ -23,10 +23,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
@@ -45,6 +47,8 @@ internal fun PostSearchResult(
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostClicked: (SearchResult.OfPost) -> Unit,
+    onReplyToPost: (SearchResult.OfPost) -> Unit,
+    onMediaClicked: ( media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     ElevatedCard(
@@ -83,10 +87,12 @@ internal fun PostSearchResult(
                         onProfileClicked = { _, _, _ ->
                             onProfileClicked(result)
                         },
-                        onPostMediaClicked = { _, _, _, _ ->
-
+                        onPostMediaClicked = { media, index, _, quotingPostId ->
+                            onMediaClicked(media, index, result, quotingPostId)
                         },
-                        onReplyToPost = {},
+                        onReplyToPost = {
+                            onReplyToPost(result)
+                        },
                         onPostInteraction = onPostInteraction,
                     )
                 },
