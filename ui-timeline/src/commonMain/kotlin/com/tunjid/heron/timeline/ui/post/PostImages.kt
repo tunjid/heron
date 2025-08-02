@@ -18,7 +18,6 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
@@ -31,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
@@ -71,10 +69,6 @@ internal fun PostImages(
         .blur(
             radius = 120.dp,
             edgeTreatment = BlurredEdgeTreatment(shape)
-        )
-        .background(
-            color = Color.Black.copy(alpha = 0.6f),
-            shape = shape,
         )
     else Modifier
 
