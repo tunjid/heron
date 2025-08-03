@@ -388,7 +388,8 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp)
+                    .animateItem(),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
             )
@@ -401,7 +402,8 @@ private fun SuggestedContent(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .clickable { onTrendClicked(trend) }
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     index = index,
                     now = now,
                     trend = trend,
@@ -409,10 +411,11 @@ private fun SuggestedContent(
                 )
             }
         )
-        item {
+        if (suggestedProfiles.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.AccountCircle,
                 title = stringResource(Res.string.suggested_accounts),
             )
@@ -424,7 +427,8 @@ private fun SuggestedContent(
                 ProfileWithViewerState(
                     modifier = Modifier
                         .clickable { onProfileClicked(suggestedProfile) }
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     signedInProfileId = null,
                     profile = suggestedProfile.profile,
@@ -435,10 +439,11 @@ private fun SuggestedContent(
                 )
             }
         )
-        item {
+        if (starterPacksWithMembers.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.JoinFull,
                 title = stringResource(Res.string.starter_packs),
             )
@@ -450,17 +455,19 @@ private fun SuggestedContent(
                 SuggestedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
             }
         )
-        item {
+        if (feedGenerators.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.RssFeed,
                 title = stringResource(Res.string.discover_feeds),
             )
@@ -471,7 +478,8 @@ private fun SuggestedContent(
             itemContent = { feedGenerator ->
                 FeedGeneratorSearchResult(
                     modifier = Modifier
-                        .fillParentMaxWidth(),
+                        .fillParentMaxWidth()
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = feedGenerator,
