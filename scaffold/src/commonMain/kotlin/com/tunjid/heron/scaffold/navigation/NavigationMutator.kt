@@ -192,6 +192,10 @@ fun profileFollowersDestination(
     referringRouteOption = ReferringRouteOption.Current
 )
 
+fun signInDestination(): NavigationAction.Destination = pathDestination(
+    path = "/auth",
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),
