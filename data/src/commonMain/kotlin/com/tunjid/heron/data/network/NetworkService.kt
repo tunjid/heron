@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.signedInAuth
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -72,7 +73,8 @@ class KtorNetworkService(
                     json.decodeFromString(it)
                 }
                 this.readAuth = {
-                    savedStateDataSource.savedState.first().auth
+                    // Must be signed in to use
+                    savedStateDataSource.signedInAuth.first()
                 }
                 this.saveAuth = {
                     savedStateDataSource.updateState {

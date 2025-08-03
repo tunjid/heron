@@ -31,7 +31,7 @@ object Constants {
     val unknownPostId = PostId(UNKNOWN)
     val unknownPostUri = PostUri(UNKNOWN)
     val unknownGenericUri = GenericUri(UNKNOWN)
-    val unknownAuthorId = ProfileId(UNKNOWN)
+    val unknownAuthorId = ProfileId(id = "did:web:heron.app.unknown.user")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }
 

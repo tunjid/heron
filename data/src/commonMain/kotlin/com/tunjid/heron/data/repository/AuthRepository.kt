@@ -62,6 +62,10 @@ interface AuthRepository {
 
     suspend fun createSession(request: SessionRequest): Result<Unit>
 
+    suspend fun guestSignIn()
+
+    suspend fun signOut()
+
     suspend fun updateSignedInUser(): Boolean
 }
 
@@ -74,13 +78,15 @@ internal class AuthTokenRepository(
 ) : AuthRepository {
 
     override val isSignedIn: Flow<Boolean> =
-        savedStateDataSource.savedState.map { it.auth != null }
+        savedStateDataSource.signedInAuth.map {
+            it != null
+        }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.savedState
-            .distinctUntilChangedBy { it.auth?.authProfileId }
-            .flatMapLatest { savedState ->
-                val signeInUserFlow = savedState.auth
+        savedStateDataSource.signedInAuth
+            .distinctUntilChangedBy { it?.authProfileId }
+            .flatMapLatest { authTokens ->
+                val signeInUserFlow = authTokens
                     ?.authProfileId
                     ?.let(::listOf)
                     ?.let(profileDao::profiles)
@@ -125,6 +131,15 @@ internal class AuthTokenRepository(
             updateSignedInUser(result.did)
         }
 
+    override suspend fun guestSignIn() {
+        savedStateDataSource.guestSignIn()
+    }
+
+    override suspend fun signOut() {
+        savedStateDataSource.updateState {
+            copy(auth = null)
+        }
+    }
 
     override suspend fun updateSignedInUser(): Boolean {
         return networkService.runCatchingWithMonitoredNetworkRetry {
@@ -245,3 +260,4 @@ private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPr
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
+

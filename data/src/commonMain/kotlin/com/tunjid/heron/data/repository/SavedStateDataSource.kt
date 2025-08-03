@@ -21,6 +21,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
 import dev.zacsweers.metro.Inject
@@ -103,6 +104,13 @@ data class SavedState(
     )
 }
 
+private val GuestAuth = SavedState.AuthTokens(
+    authProfileId = Constants.unknownAuthorId,
+    auth = "",
+    refresh = "",
+    didDoc = SavedState.AuthTokens.DidDoc()
+)
+
 val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
@@ -127,6 +135,14 @@ internal val SavedStateDataSource.observedSignedInProfileId
     get() = savedState
         .map { it.auth?.authProfileId }
         .distinctUntilChanged()
+
+internal val SavedStateDataSource.signedInAuth
+    get() = savedState
+        .map { it.auth?.takeUnless(GuestAuth::equals) }
+        .distinctUntilChanged()
+
+internal suspend fun SavedStateDataSource.guestSignIn() =
+    updateState { copy(auth = GuestAuth) }
 
 interface SavedStateDataSource {
     val savedState: StateFlow<SavedState>

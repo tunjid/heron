@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.Dp
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -43,10 +44,10 @@ import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.navItemSelected
-import com.tunjid.heron.scaffold.navigation.navItems
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
+import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.compose.MultiPaneDisplayState
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.PaneNavigationState
@@ -60,14 +61,14 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
-import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Stable
-class AppState @Inject constructor(
+class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
+    private val authRepository: AuthRepository,
     private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
     internal val videoPlayerController: VideoPlayerController,
@@ -77,14 +78,15 @@ class AppState @Inject constructor(
     private var density = Density(1f)
     private var hasNotifications by mutableStateOf(false)
 
+    private var isSignedIn by mutableStateOf(false)
+
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
     internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf {
-        multiStackNavState.value.navItems { stack ->
-            stack == AppStack.Notifications && hasNotifications
-        }
+        currentNavItems()
     }
+
     internal val navigation by multiStackNavState
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
@@ -155,6 +157,11 @@ class AppState @Inject constructor(
                 hasNotifications = count != 0L
             }
         }
+        LaunchedEffect(Unit) {
+            authRepository.isSignedIn.collect { signedIn ->
+                isSignedIn = signedIn
+            }
+        }
 
         return displayState
     }
@@ -173,6 +180,32 @@ class AppState @Inject constructor(
         navigationStateHolder.accept {
             navState.push(uri.uri.toRoute)
         }
+
+    private fun currentNavItems(): List<NavItem> {
+        val multiStackNav = multiStackNavState.value
+        return multiStackNav.stacks
+            .map(StackNav::name)
+            .mapIndexedNotNull { index, name ->
+                val stack = AppStack.entries.firstOrNull { stack ->
+                    when (stack) {
+                        AppStack.Home -> stack.stackName == name
+                        AppStack.Search -> stack.stackName == name
+                        AppStack.Messages -> isSignedIn && stack.stackName == name
+                        AppStack.Notifications -> isSignedIn && stack.stackName == name
+                        AppStack.Auth -> stack.stackName == name
+                        AppStack.Splash -> stack.stackName == name
+                    }
+
+                } ?: return@mapIndexedNotNull null
+
+                NavItem(
+                    stack = stack,
+                    index = index,
+                    selected = multiStackNav.currentIndex == index,
+                    hasBadge = stack == AppStack.Notifications && hasNotifications,
+                )
+            }
+    }
 
     sealed class DismissBehavior {
         data object None : DismissBehavior()

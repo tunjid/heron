@@ -19,6 +19,7 @@ package com.tunjid.heron.di
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedBindings
@@ -81,12 +82,14 @@ interface AppGraph {
     @SingleIn(AppScope::class)
     @Provides
     fun appState(
+        authRepository: AuthRepository,
         notificationsRepository: NotificationsRepository,
         navigationStateHolder: NavigationStateHolder,
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
     ): AppState = AppState(
         entryMap = entryMap,
+        authRepository = authRepository,
         notificationsRepository = notificationsRepository,
         navigationStateHolder = navigationStateHolder,
         videoPlayerController = videoPlayerController,

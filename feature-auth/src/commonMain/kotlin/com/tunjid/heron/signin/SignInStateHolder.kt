@@ -106,9 +106,18 @@ private fun Flow<Action.Submit>.submissionMutations(
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     debounce(200)
-        .mapLatestToManyMutations { (request) ->
+        .mapLatestToManyMutations { action ->
             emit { copy(isSubmitting = true) }
-            when (val exception = authRepository.createSession(request).exceptionOrNull()) {
+            val exception = when (action) {
+                is Action.Submit.Auth -> {
+                    authRepository.createSession(action.request).exceptionOrNull()
+                }
+                Action.Submit.GuestAuth -> {
+                    authRepository.guestSignIn()
+                    null
+                }
+            }
+            when (exception) {
                 null -> navActions(NavigationContext::resetAuthNavigation)
 
                 else -> emit {
