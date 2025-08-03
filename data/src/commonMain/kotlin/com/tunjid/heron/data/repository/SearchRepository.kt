@@ -21,7 +21,6 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
-import app.bsky.feed.PostView
 import app.bsky.feed.SearchPostsQueryParams
 import app.bsky.feed.SearchPostsSort
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
@@ -191,7 +190,9 @@ internal class OfflineSearchRepository @Inject constructor(
 
             emit(
                 CursorList(
-                    items = response.posts.map(PostView::post),
+                    items = response.posts.map { postView ->
+                        postView.post(authProfileId)
+                    },
                     nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
                 )
             )

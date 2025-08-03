@@ -28,6 +28,8 @@ import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -115,11 +117,16 @@ val EmptySavedState = SavedState(
     notifications = null,
 )
 
-val SavedStateDataSource.signedInProfileId
+internal val SavedStateDataSource.signedInProfileId
     get() = savedState
         .value
         .auth
         ?.authProfileId
+
+internal val SavedStateDataSource.observedSignedInProfileId
+    get() = savedState
+        .map { it.auth?.authProfileId }
+        .distinctUntilChanged()
 
 interface SavedStateDataSource {
     val savedState: StateFlow<SavedState>

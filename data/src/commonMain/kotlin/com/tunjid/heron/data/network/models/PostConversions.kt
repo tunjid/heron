@@ -73,7 +73,9 @@ internal fun PostEntity.postExternalEmbedEntity(
     externalEmbedUri = embedEntity.uri,
 )
 
-internal fun PostView.post(): Post {
+internal fun PostView.post(
+    viewingProfileId: ProfileId?,
+): Post {
     val postEntity = postEntity()
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileEntity = quotedPostProfileEntity()
@@ -82,7 +84,10 @@ internal fun PostView.post(): Post {
         profileEntity = profileEntity(),
         embeds = embedEntities(),
         viewerStatisticsEntity = viewer
-            ?.postViewerStatisticsEntity(postEntity.cid),
+            ?.postViewerStatisticsEntity(
+                postId = postEntity.cid,
+                viewingProfileId = viewingProfileId,
+            ),
         quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
             postEntity = quotedPostEntity,
             profileEntity = quotedPostProfileEntity,
@@ -224,19 +229,26 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
 
 internal fun ViewerState.postViewerStatisticsEntity(
     postId: PostId,
-) = PostViewerStatisticsEntity(
-    postId = postId,
-    likeUri = like?.atUri?.let(::GenericUri),
-    repostUri = repost?.atUri?.let(::GenericUri),
-    threadMuted = threadMuted == true,
-    replyDisabled = replyDisabled == true,
-    embeddingDisabled = embeddingDisabled == true,
-    pinned = pinned == true,
-)
+    viewingProfileId: ProfileId?,
+) =
+    if (viewingProfileId == null) null
+    else PostViewerStatisticsEntity(
+        postId = postId,
+        viewingProfileId = viewingProfileId,
+        likeUri = like?.atUri?.let(::GenericUri),
+        repostUri = repost?.atUri?.let(::GenericUri),
+        threadMuted = threadMuted == true,
+        replyDisabled = replyDisabled == true,
+        embeddingDisabled = embeddingDisabled == true,
+        pinned = pinned == true,
+    )
 
-internal fun ReplyRefRootUnion.postViewerStatisticsEntity() = when (this) {
+internal fun ReplyRefRootUnion.postViewerStatisticsEntity(
+    viewingProfileId: ProfileId?,
+) = when (this) {
     is ReplyRefRootUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
         postId = PostId(value.cid.cid),
+        viewingProfileId = viewingProfileId,
     )
 
     is ReplyRefRootUnion.BlockedPost,
@@ -245,9 +257,12 @@ internal fun ReplyRefRootUnion.postViewerStatisticsEntity() = when (this) {
         -> null
 }
 
-internal fun ReplyRefParentUnion.postViewerStatisticsEntity() = when (this) {
+internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
+    viewingProfileId: ProfileId?,
+) = when (this) {
     is ReplyRefParentUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
         postId = PostId(value.cid.cid),
+        viewingProfileId = viewingProfileId,
     )
 
     is ReplyRefParentUnion.BlockedPost,

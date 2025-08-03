@@ -544,78 +544,85 @@ internal class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: PostUri,
     ): Flow<List<TimelineItem>> =
-        postDao.postEntitiesByUri(postUris = setOf(postUri))
-            .mapNotNull(List<PostEntity>::firstOrNull)
-            .take(1)
-            .flatMapLatest { postEntity ->
-                postDao.postThread(
-                    postId = postEntity.cid.id
-                )
-                    .flatMapLatest { postThread ->
-                        val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
-                        combine(
-                            flow = postDao.posts(
-                                postIds = postIds
-                            ),
-                            flow2 = postDao.embeddedPosts(
-                                postIds = postIds
-                            ),
-                            transform = { posts, embeddedPosts ->
-                                val idsToPosts = posts.associateBy { it.entity.cid }
-                                val idsToEmbeddedPosts = embeddedPosts.associateBy(
-                                    EmbeddedPopulatedPostEntity::postId
-                                )
-
-                                postThread.fold(
-                                    initial = emptyList<TimelineItem.Thread>(),
-                                    operation = { list, thread ->
-                                        val populatedPostEntity =
-                                            idsToPosts.getValue(thread.entity.cid)
-                                        val post = populatedPostEntity.asExternalModel(
-                                            quote = idsToEmbeddedPosts[thread.entity.cid]
-                                                ?.entity
-                                                ?.asExternalModel(quote = null)
-                                        )
-                                        spinThread(
-                                            list = list,
-                                            thread = thread,
-                                            post = post,
-                                        )
-                                    },
-                                )
-                            }
-                        )
-                    }
-            }
-            .withRefresh {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPostThread(
-                        GetPostThreadQueryParams(
-                            uri = AtUri(postUri.uri)
-                        )
+        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+            postDao.postEntitiesByUri(
+                viewingProfileId = signedInProfileId?.id,
+                postUris = setOf(postUri),
+            )
+                .mapNotNull(List<PostEntity>::firstOrNull)
+                .take(1)
+                .flatMapLatest { postEntity ->
+                    postDao.postThread(
+                        postId = postEntity.cid.id
                     )
-                }
-                    .getOrNull()
-                    ?.thread
-                    ?.let { thread ->
-                        when (thread) {
-                            is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
-                            is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
-                            is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                                multipleEntitySaverProvider
-                                    .saveInTransaction {
-                                        add(
-                                            viewingProfileId = savedStateDataSource.signedInProfileId,
-                                            threadViewPost = thread.value,
-                                        )
-                                    }
-                            }
+                        .flatMapLatest { postThread ->
+                            val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
+                            combine(
+                                flow = postDao.posts(
+                                    viewingProfileId = signedInProfileId?.id,
+                                    postIds = postIds
+                                ),
+                                flow2 = postDao.embeddedPosts(
+                                    viewingProfileId = signedInProfileId?.id,
+                                    postIds = postIds
+                                ),
+                                transform = { posts, embeddedPosts ->
+                                    val idsToPosts = posts.associateBy { it.entity.cid }
+                                    val idsToEmbeddedPosts = embeddedPosts.associateBy(
+                                        EmbeddedPopulatedPostEntity::parentPostId
+                                    )
 
-                            is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                                    postThread.fold(
+                                        initial = emptyList<TimelineItem.Thread>(),
+                                        operation = { list, thread ->
+                                            val populatedPostEntity =
+                                                idsToPosts.getValue(thread.entity.cid)
+                                            val post = populatedPostEntity.asExternalModel(
+                                                quote = idsToEmbeddedPosts[thread.entity.cid]
+                                                    ?.entity
+                                                    ?.asExternalModel(quote = null)
+                                            )
+                                            spinThread(
+                                                list = list,
+                                                thread = thread,
+                                                post = post,
+                                            )
+                                        },
+                                    )
+                                }
+                            )
                         }
+                }
+                .withRefresh {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getPostThread(
+                            GetPostThreadQueryParams(
+                                uri = AtUri(postUri.uri)
+                            )
+                        )
                     }
-            }
-            .distinctUntilChanged()
+                        .getOrNull()
+                        ?.thread
+                        ?.let { thread ->
+                            when (thread) {
+                                is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
+                                is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
+                                is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                                    multipleEntitySaverProvider
+                                        .saveInTransaction {
+                                            add(
+                                                viewingProfileId = savedStateDataSource.signedInProfileId,
+                                                threadViewPost = thread.value,
+                                            )
+                                        }
+                                }
+
+                                is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                            }
+                        }
+                }
+                .distinctUntilChanged()
+        }
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateDataSource.savedState
@@ -967,17 +974,19 @@ internal class OfflineTimelineRepository(
                     .toSet()
                 combine(
                     postDao.posts(
-                        postIds
+                        viewingProfileId = query.timeline.signedInProfileId?.id,
+                        postIds = postIds
                     ),
                     postDao.embeddedPosts(
-                        postIds
+                        viewingProfileId = query.timeline.signedInProfileId?.id,
+                        postIds = postIds
                     ),
                     profileDao.profiles(
                         itemEntities.mapNotNull { it.reposter }
                     )
                 ) { posts, embeddedPosts, repostProfiles ->
                     val idsToPosts = posts.associateBy { it.entity.cid }
-                    val idsToEmbeddedPosts = embeddedPosts.associateBy { it.postId }
+                    val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
                     val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                     itemEntities.map { entity ->

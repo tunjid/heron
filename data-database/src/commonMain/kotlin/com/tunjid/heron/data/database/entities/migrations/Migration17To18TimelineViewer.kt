@@ -20,7 +20,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-internal object TimelineViewerMigration : Migration(17, 18) {
+internal object Migration17To18TimelineViewer : Migration(17, 18) {
     override fun migrate(connection: SQLiteConnection) {
         // Migrate timelineItems
 
