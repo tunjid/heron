@@ -49,11 +49,11 @@ internal fun MultipleEntitySaver.add(
         feedView.reply?.let {
             it.root.postEntity().let(::add)
             it.root.profileEntity()?.let(::add)
-            it.root.postViewerStatisticsEntity()?.let(::add)
+            it.root.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
 
             val parentPostEntity = it.parent.postEntity().also(::add)
             it.parent.profileEntity()?.let(::add)
-            it.parent.postViewerStatisticsEntity()?.let(::add)
+            it.parent.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
 
             it.grandparentAuthor?.profileEntity()?.let(::add)
 

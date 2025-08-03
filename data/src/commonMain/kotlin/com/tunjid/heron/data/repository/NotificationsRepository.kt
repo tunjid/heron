@@ -202,26 +202,30 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private fun observeNotifications(
         query: NotificationsQuery,
     ): Flow<List<Notification>> =
-        notificationsDao.notifications(
-            before = query.data.cursorAnchor,
-            offset = query.data.offset,
-            limit = query.data.limit,
-        )
-            .flatMapLatest { populatedNotificationEntities ->
-                postDao.posts(
-                    populatedNotificationEntities
-                        .mapNotNull { it.entity.associatedPostId }
-                        .toSet()
-                ).map { posts ->
-                    val idsToPosts = posts.associateBy { it.entity.cid }
-                    populatedNotificationEntities.map {
-                        it.asExternalModel(
-                            associatedPost = it.entity.associatedPostId
-                                ?.let(idsToPosts::get)
-                                ?.asExternalModel(quote = null)
-                        )
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                notificationsDao.notifications(
+                    before = query.data.cursorAnchor,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .flatMapLatest { populatedNotificationEntities ->
+                        postDao.posts(
+                            viewingProfileId = signedInProfileId?.id,
+                            postIds = populatedNotificationEntities
+                                .mapNotNull { it.entity.associatedPostId }
+                                .toSet(),
+                        ).map { posts ->
+                            val idsToPosts = posts.associateBy { it.entity.cid }
+                            populatedNotificationEntities.map {
+                                it.asExternalModel(
+                                    associatedPost = it.entity.associatedPostId
+                                        ?.let(idsToPosts::get)
+                                        ?.asExternalModel(quote = null)
+                                )
+                            }
+                        }
                     }
-                }
             }
 
     private suspend inline fun updateNotifications(

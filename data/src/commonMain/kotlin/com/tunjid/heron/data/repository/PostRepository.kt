@@ -76,10 +76,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
@@ -224,52 +223,62 @@ internal class OfflinePostRepository @Inject constructor(
         query: PostDataQuery,
         cursor: Cursor,
     ): Flow<CursorList<Post>> = withPostEntity(
-        query.profileId,
-        query.postRecordKey,
+        profileId = query.profileId,
+        postRecordKey = query.postRecordKey,
     ) { postEntity ->
-        combine(
-            postDao.quotedPosts(
-                quotedPostId = postEntity.cid.id,
-            )
-                .map { populatedPostEntities ->
-                    populatedPostEntities.map {
-                        it.asExternalModel(quote = null)
-                    }
-                },
-            networkService.nextCursorFlow(
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    getQuotes(
-                        GetQuotesQueryParams(
-                            uri = postEntity.uri.uri.let(::AtUri),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        )
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                combine(
+                    postDao.quotedPosts(
+                        viewingProfileId = signedInProfileId?.id,
+                        quotedPostId = postEntity.cid.id,
                     )
-                },
-                nextCursor = GetQuotesResponse::cursor,
-                onResponse = {
-                    multipleEntitySaverProvider.saveInTransaction {
-                        posts.forEach {
-                            add(
-                                viewingProfileId = savedStateDataSource.signedInProfileId,
-                                postView = it,
+                        .map { populatedPostEntities ->
+                            populatedPostEntities.map {
+                                it.asExternalModel(quote = null)
+                            }
+                        },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            getQuotes(
+                                GetQuotesQueryParams(
+                                    uri = postEntity.uri.uri.let(::AtUri),
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
+                                )
                             )
-                        }
-                    }
-                },
-            ),
-            ::CursorList,
-        )
-            .distinctUntilChanged()
+                        },
+                        nextCursor = GetQuotesResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                posts.forEach {
+                                    add(
+                                        viewingProfileId = savedStateDataSource.signedInProfileId,
+                                        postView = it,
+                                    )
+                                }
+                            }
+                        },
+                    ),
+                    ::CursorList,
+                )
+                    .distinctUntilChanged()
+            }
     }
 
     override fun post(
         id: PostId,
     ): Flow<Post> =
-        postDao.posts(setOf(id))
-            .mapNotNull {
-                it.firstOrNull()?.asExternalModel(quote = null)
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                postDao.posts(
+                    viewingProfileId = signedInProfileId?.id,
+                    postIds = setOf(id),
+                )
+                    .mapNotNull {
+                        it.firstOrNull()?.asExternalModel(quote = null)
+                    }
             }
 
     override suspend fun createPost(
@@ -385,11 +394,13 @@ internal class OfflinePostRepository @Inject constructor(
                             is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
                                 likeUri = it.uri.atUri.let(::GenericUri),
                                 postId = interaction.postId,
+                                viewingProfileId = authorId,
                             )
 
                             is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = it.uri.atUri.let(::GenericUri),
                                 postId = interaction.postId,
+                                viewingProfileId = authorId,
                             )
                         }
                     )
@@ -421,11 +432,13 @@ internal class OfflinePostRepository @Inject constructor(
                             is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
                                 likeUri = null,
                                 postId = interaction.postId,
+                                viewingProfileId = authorId,
                             )
 
                             is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = null,
                                 postId = interaction.postId,
+                                viewingProfileId = authorId,
                             )
                         }
                     )
@@ -457,10 +470,11 @@ internal class OfflinePostRepository @Inject constructor(
         profileId: Id.Profile,
         postRecordKey: RecordKey,
         block: (PostEntity) -> Flow<T>,
-    ): Flow<T> = flow {
-        emitAll(
+    ): Flow<T> = savedStateDataSource.observedSignedInProfileId
+        .flatMapLatest { signedInProfileId ->
             postDao.postEntitiesByUri(
-                setOf(
+                viewingProfileId = signedInProfileId?.id,
+                postUris = setOf(
                     profileDao.profiles(listOf(profileId))
                         .filter(List<ProfileEntity>::isNotEmpty)
                         .map(List<ProfileEntity>::first)
@@ -477,8 +491,7 @@ internal class OfflinePostRepository @Inject constructor(
                 .first(List<PostEntity>::isNotEmpty)
                 .first()
                 .let(block)
-        )
-    }
+        }
         .withRefresh {
             refreshProfile(
                 profileId = profileId,

@@ -90,10 +90,16 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
+            LEFT JOIN (
+                SELECT * FROM postViewerStatistics
+                WHERE viewingProfileId = :viewingProfileId
+            )
+            ON cid = postId
             WHERE cid IN (:postIds)
         """
     )
     fun posts(
+        viewingProfileId: String?,
         postIds: Collection<PostId>,
     ): Flow<List<PopulatedPostEntity>>
 
@@ -101,37 +107,64 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
+            LEFT JOIN (
+                SELECT * FROM postViewerStatistics
+                WHERE viewingProfileId = :viewingProfileId
+            )
+            ON cid = postId            
 	        WHERE uri IN (:postUris)
         """
     )
     fun postEntitiesByUri(
+        viewingProfileId: String?,
         postUris: Set<PostUri>,
     ): Flow<List<PostEntity>>
 
     @Transaction
     @Query(
         """
-            SELECT * FROM posts
-            INNER JOIN postPosts
-            ON cid = postPosts.embeddedPostId
-	        WHERE postId IN (:postIds)
+            SELECT 
+                posts.*,
+                postViewerStatistics.*, 
+                postPosts.postId AS parentPostId,
+                postPosts.embeddedPostId AS embeddedPostId
+            FROM posts AS posts
+            LEFT JOIN (
+                SELECT * FROM postViewerStatistics
+                WHERE viewingProfileId = :viewingProfileId
+            ) AS postViewerStatistics
+            ON posts.cid = postViewerStatistics.postId
+            INNER JOIN postPosts AS postPosts
+            ON posts.cid = postPosts.embeddedPostId
+	        WHERE postPosts.postId IN (:postIds)
         """
     )
     fun embeddedPosts(
+        viewingProfileId: String?,
         postIds: Collection<PostId>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
 
     @Transaction
     @Query(
         """
-            SELECT * FROM posts
-            INNER JOIN postPosts
-            ON cid = postPosts.embeddedPostId
-	        WHERE embeddedPostId = :quotedPostId
-            ORDER BY indexedAt
+            SELECT
+                posts.*, 
+                postViewerStatistics.*,
+                postPosts.postId AS parentPostId
+            FROM posts AS posts
+            LEFT JOIN (
+                SELECT * FROM postViewerStatistics
+                WHERE viewingProfileId = :viewingProfileId
+            ) AS postViewerStatistics
+            ON posts.cid = postViewerStatistics.postId
+            INNER JOIN postPosts AS postPosts
+            ON posts.cid = postPosts.embeddedPostId
+	        WHERE postPosts.embeddedPostId = :quotedPostId
+            ORDER BY posts.indexedAt
         """
     )
     fun quotedPosts(
+        viewingProfileId: String?,
         quotedPostId: String,
     ): Flow<List<PopulatedPostEntity>>
 

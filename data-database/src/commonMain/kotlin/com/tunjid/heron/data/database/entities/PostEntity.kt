@@ -23,7 +23,6 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
@@ -92,10 +91,7 @@ data class PopulatedPostEntity(
         entityColumn = "did"
     )
     val author: ProfileEntity?,
-    @Relation(
-        parentColumn = "cid",
-        entityColumn = "postId",
-    )
+    @Embedded
     val viewerStats: PostViewerStatisticsEntity?,
     @Relation(
         parentColumn = "cid",
@@ -137,7 +133,7 @@ data class PopulatedPostEntity(
 data class EmbeddedPopulatedPostEntity(
     @Embedded
     val entity: PopulatedPostEntity,
-    val postId: PostId,
+    val parentPostId: PostId,
     val embeddedPostId: PostId,
 )
 
