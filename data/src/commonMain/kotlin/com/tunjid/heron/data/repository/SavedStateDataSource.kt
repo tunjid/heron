@@ -48,8 +48,6 @@ import sh.christian.ozone.api.model.JsonContent
 data class SavedState(
     val auth: AuthTokens?,
     val navigation: Navigation,
-    val preferences: Preferences?,
-    val notifications: Notifications?,
     val profileData: Map<ProfileId, ProfileData>,
 ) {
 
@@ -121,16 +119,12 @@ private val GuestAuth = SavedState.AuthTokens(
 val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
-    preferences = null,
-    notifications = null,
     profileData = emptyMap(),
 )
 
 val EmptySavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = 0),
-    preferences = null,
-    notifications = null,
     profileData = emptyMap(),
 )
 
