@@ -61,9 +61,12 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
+import heron.scaffold.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+typealias ScaffoldStrings = Res.string
 
 @Stable
 class AppState(
@@ -78,7 +81,7 @@ class AppState(
     private var density = Density(1f)
     private var hasNotifications by mutableStateOf(false)
 
-    private var isSignedIn by mutableStateOf(false)
+    internal var isSignedIn by mutableStateOf(false)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 

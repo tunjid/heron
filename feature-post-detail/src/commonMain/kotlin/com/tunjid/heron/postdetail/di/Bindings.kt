@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -39,11 +40,13 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
@@ -69,6 +72,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature_post_detail.generated.resources.Res
 import heron.feature_post_detail.generated.resources.reply
+import heron.scaffold.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
@@ -185,18 +189,29 @@ class PostDetailBindings(
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        text = stringResource(Res.string.reply),
-                        icon = Icons.AutoMirrored.Rounded.Reply,
+                        text = stringResource(
+                            when {
+                                isSignedOut -> ScaffoldStrings.sign_in
+                                else -> Res.string.reply
+                            }
+                        ),
+                        icon = when {
+                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                            else -> Icons.AutoMirrored.Rounded.Reply
+                        },
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Reply(
-                                            parent = anchorPost,
-                                        ),
-                                        sharedElementPrefix = state.sharedElementPrefix,
-                                    )
+                                    when {
+                                        isSignedOut -> signInDestination()
+                                        else -> composePostDestination(
+                                            type = Post.Create.Reply(
+                                                parent = anchorPost,
+                                            ),
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        )
+                                    }
                                 )
                             )
                         }

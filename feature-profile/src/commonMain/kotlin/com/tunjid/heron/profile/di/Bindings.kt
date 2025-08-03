@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
@@ -40,11 +41,13 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
@@ -71,6 +74,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature_profile.generated.resources.Res
 import heron.feature_profile.generated.resources.mention
 import heron.feature_profile.generated.resources.post
+import heron.scaffold.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}"
@@ -121,7 +125,7 @@ class ProfileBindings(
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry<Route>(
+    ) = threePaneEntry(
         contentTransform = predictiveBackContentTransform,
         paneMapping = { route ->
             mapOf(
@@ -161,22 +165,30 @@ class ProfileBindings(
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(
-                            if (state.isSignedInProfile) Res.string.post
-                            else Res.string.mention
+                            when {
+                                isSignedOut -> ScaffoldStrings.sign_in
+                                state.isSignedInProfile -> Res.string.post
+                                else -> Res.string.mention
+                            }
                         ),
-                        icon =
-                            if (state.isSignedInProfile) Icons.Rounded.Edit
-                            else Icons.Rounded.AlternateEmail,
+                        icon = when {
+                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                            state.isSignedInProfile -> Icons.Rounded.Edit
+                            else -> Icons.Rounded.AlternateEmail
+                        },
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    composePostDestination(
-                                        type =
-                                            if (state.isSignedInProfile) Post.Create.Timeline
-                                            else Post.Create.Mention(state.profile),
-                                        sharedElementPrefix = null,
-                                    )
+                                    when {
+                                        isSignedOut -> signInDestination()
+                                        else -> composePostDestination(
+                                            type =
+                                                if (state.isSignedInProfile) Post.Create.Timeline
+                                                else Post.Create.Mention(state.profile),
+                                            sharedElementPrefix = null,
+                                        )
+                                    }
                                 )
                             )
                         }
