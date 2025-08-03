@@ -176,9 +176,7 @@ internal class AuthTokenRepository(
         val preferences = preferencesResponse.toExternalModel()
 
         val saveTimelinePreferences = async {
-            savedStateDataSource.updateState {
-                copy(preferences = preferences)
-            }
+            savedStateDataSource.updateSignedInUserPreferences(preferences)
         }
         val types = preferences.timelinePreferences.groupBy(
             keySelector = TimelinePreference::type,
@@ -219,7 +217,7 @@ internal class AuthTokenRepository(
 
 private fun GetPreferencesResponse.toExternalModel() =
     preferences.fold(
-        initial = Preferences.EmptyPreferences,
+        initial = Preferences.DefaultPreferences,
         operation = { preferences, preferencesUnion ->
             when (preferencesUnion) {
                 is PreferencesUnion.AdultContentPref -> preferences

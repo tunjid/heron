@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -79,18 +80,22 @@ internal class OfflineNotificationsRepository @Inject constructor(
 ) : NotificationsRepository {
 
     override val unreadCount: Flow<Long> =
-        flow {
-            while (true) {
-                val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
-                    getUnreadCount(
-                        params = GetUnreadCountQueryParams()
-                    )
+        savedStateDataSource.observedSignedInProfileId
+            .filterNotNull()
+            .flatMapLatest {
+                flow {
+                    while (true) {
+                        val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
+                            getUnreadCount(
+                                params = GetUnreadCountQueryParams()
+                            )
+                        }
+                            .getOrNull()?.count ?: 0
+                        emit(unreadCount)
+                        kotlinx.coroutines.delay(30_000)
+                    }
                 }
-                    .getOrNull()?.count ?: 0
-                emit(unreadCount)
-                kotlinx.coroutines.delay(30_000)
             }
-        }
             .stateIn(
                 scope = appScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -98,7 +103,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             )
 
     override val lastRefreshed: Flow<Instant?> = savedStateDataSource.savedState
-        .map { it.notifications?.lastRefreshed }
+        .map { it.signedInProfileNotifications()?.lastRefreshed }
         .distinctUntilChanged()
 
     override fun notifications(
@@ -159,7 +164,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         )
                     }
                     if (query.data.page == 0) {
-                        updateNotifications {
+                        savedStateDataSource.updateSignedInUserNotifications {
                             copy(lastRefreshed = query.data.cursorAnchor)
                         }
                     }
@@ -169,7 +174,10 @@ internal class OfflineNotificationsRepository @Inject constructor(
             .distinctUntilChanged()
 
     override suspend fun markRead(at: Instant) {
-        val lastReadAt = savedStateDataSource.savedState.value.notifications?.lastRead
+        val lastReadAt = savedStateDataSource.savedState
+            .value
+            .signedInProfileNotifications()
+            ?.lastRead
         if (lastReadAt != null && lastReadAt > at) return
 
         val isSuccess = networkService.runCatchingWithMonitoredNetworkRetry {
@@ -178,7 +186,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 request = UpdateSeenRequest(at + 1.milliseconds)
             )
         }.isSuccess
-        if (isSuccess) updateNotifications {
+        if (isSuccess) savedStateDataSource.updateSignedInUserNotifications {
             // Try to always make this increment
             copy(
                 lastRead = maxOf(
@@ -227,14 +235,4 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         }
                     }
             }
-
-    private suspend inline fun updateNotifications(
-        crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
-    ) {
-        savedStateDataSource.updateState {
-            copy(
-                notifications = (notifications ?: SavedState.Notifications()).block()
-            )
-        }
-    }
 }

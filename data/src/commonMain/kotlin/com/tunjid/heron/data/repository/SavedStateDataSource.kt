@@ -50,6 +50,7 @@ data class SavedState(
     val navigation: Navigation,
     val preferences: Preferences?,
     val notifications: Notifications?,
+    val profileData: Map<ProfileId, ProfileData>,
 ) {
 
     @Serializable
@@ -102,6 +103,12 @@ data class SavedState(
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
     )
+
+    @Serializable
+    data class ProfileData(
+        val preferences: Preferences,
+        val notifications: Notifications,
+    )
 }
 
 private val GuestAuth = SavedState.AuthTokens(
@@ -115,7 +122,8 @@ val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
     preferences = null,
-    notifications = null
+    notifications = null,
+    profileData = emptyMap(),
 )
 
 val EmptySavedState = SavedState(
@@ -123,6 +131,7 @@ val EmptySavedState = SavedState(
     navigation = SavedState.Navigation(activeNav = 0),
     preferences = null,
     notifications = null,
+    profileData = emptyMap(),
 )
 
 internal val SavedStateDataSource.signedInProfileId
@@ -144,6 +153,20 @@ internal val SavedStateDataSource.signedInAuth
 
 private fun SavedState.AuthTokens?.ifSignedIn() =
     this?.takeUnless(GuestAuth::equals)
+
+fun SavedState.signedProfilePreferencesOrDefault() =
+    auth.ifSignedIn()
+        ?.let { profileData[it.authProfileId] }
+        ?.preferences
+        ?: Preferences.DefaultPreferences
+
+fun SavedState.signedInProfileNotifications() =
+    auth.ifSignedIn()
+        ?.let { profileData[it.authProfileId] }
+        ?.notifications
+
+fun SavedState.isSignedIn() =
+    auth.ifSignedIn() != null
 
 internal suspend fun SavedStateDataSource.guestSignIn() =
     updateState { copy(auth = GuestAuth) }
@@ -191,5 +214,36 @@ private class SavedStateOkioSerializer(
 
     override suspend fun writeTo(t: SavedState, sink: BufferedSink) {
         sink.write(protoBuf.encodeToByteArray(value = t))
+    }
+}
+
+internal suspend inline fun SavedStateDataSource.updateSignedInUserPreferences(
+    preferences: Preferences,
+) {
+    updateSignedInProfileData {
+        copy(preferences = preferences)
+    }
+}
+
+internal suspend inline fun SavedStateDataSource.updateSignedInUserNotifications(
+    crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
+) {
+    updateSignedInProfileData {
+        copy(notifications = notifications.block())
+    }
+}
+
+private suspend inline fun SavedStateDataSource.updateSignedInProfileData(
+    crossinline block: SavedState.ProfileData.() -> SavedState.ProfileData,
+) {
+    updateState {
+        val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
+        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
+            notifications = SavedState.Notifications(),
+            preferences = Preferences.DefaultPreferences,
+        )
+        copy(
+            profileData = profileData + (signedInProfileId to signedInProfileData.block())
+        )
     }
 }
