@@ -17,37 +17,70 @@
 package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity.Partial.FetchedAt
 import kotlinx.datetime.Instant
 
 
 @Entity(
     tableName = "timelinePreferences",
+    indices = [
+        Index(value = ["viewingProfileId"]),
+        Index(value = ["sourceId"]),
+    ],
 )
 data class TimelinePreferencesEntity(
-    @PrimaryKey
     val sourceId: String,
+    val viewingProfileId: ProfileId?,
     val lastFetchedAt: Instant,
     val preferredPresentation: String?,
+    // Timeline items are unique to the profile viewing them
+    @PrimaryKey
+    val id: String = timelinePreferenceId(
+        viewingProfileId = viewingProfileId,
+        sourceId = sourceId,
+    ),
 ) {
     sealed class Partial {
+        abstract val id: String
         abstract val sourceId: String
 
         data class FetchedAt(
+            override val id: String,
             override val sourceId: String,
             val lastFetchedAt: Instant,
         ) : Partial()
 
         data class PreferredPresentation(
+            override val id: String,
             override val sourceId: String,
             val preferredPresentation: String?,
         ) : Partial()
     }
 }
 
+fun Timeline.preferredPresentationPartial(
+    presentation: Timeline.Presentation
+) = TimelinePreferencesEntity.Partial.PreferredPresentation(
+    id = timelinePreferenceId(
+        viewingProfileId = signedInProfileId,
+        sourceId = sourceId,
+    ),
+    sourceId = sourceId,
+    preferredPresentation = presentation.key,
+)
+
 fun TimelinePreferencesEntity.fetchedAtPartial() = FetchedAt(
+    id = id,
     sourceId = sourceId,
     lastFetchedAt = lastFetchedAt,
 )
+
+private fun timelinePreferenceId(
+    viewingProfileId: ProfileId?,
+    sourceId: String
+): String = "${viewingProfileId?.id}-$sourceId"
 

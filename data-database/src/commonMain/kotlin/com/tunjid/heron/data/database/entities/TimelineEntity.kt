@@ -30,10 +30,13 @@ import kotlinx.datetime.Instant
     tableName = "timelineItems",
     indices = [
         Index(value = ["indexedAt"]),
+        Index(value = ["viewingProfileId"]),
+        Index(value = ["sourceId"]),
     ],
 )
 data class TimelineItemEntity(
     val postId: PostId,
+    val viewingProfileId: ProfileId?,
     val sourceId: String,
     @Embedded
     val reply: FeedReplyEntity?,
@@ -44,9 +47,9 @@ data class TimelineItemEntity(
     val hasMedia: Boolean,
     val isPinned: Boolean,
     val indexedAt: Instant,
-    // TODO: Figure out a better ID for this
+    // Timeline items are unique to the profile viewing them, and these other fields
     @PrimaryKey
-    val id: String = "$sourceId-${postId.id}-${reposter?.id}",
+    val id: String = "${viewingProfileId?.id}-$sourceId-${postId.id}-${reposter?.id}",
 )
 
 data class FeedReplyEntity(

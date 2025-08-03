@@ -52,6 +52,10 @@ interface TimelineDao {
             SELECT * FROM timelineItems
             WHERE sourceId = :sourceId
             AND indexedAt < :before
+            AND CASE WHEN :viewingProfileId IS NOT NULL
+                THEN viewingProfileId = :viewingProfileId
+                ELSE viewingProfileId IS NULL
+            END
             ORDER BY indexedAt
             DESC
             LIMIT :limit
@@ -59,6 +63,7 @@ interface TimelineDao {
         """
     )
     fun feedItems(
+        viewingProfileId: String?,
         sourceId: String,
         before: Instant,
         limit: Long,
@@ -69,10 +74,15 @@ interface TimelineDao {
         """
             SELECT * FROM timelinePreferences
             WHERE sourceId = :sourceId
+            AND CASE WHEN :viewingProfileId IS NOT NULL
+                THEN viewingProfileId = :viewingProfileId
+                ELSE viewingProfileId IS NULL
+            END
             LIMIT 1
         """
     )
     fun lastFetchKey(
+        viewingProfileId: String?,
         sourceId: String,
     ): Flow<TimelinePreferencesEntity?>
 

@@ -48,12 +48,14 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -70,6 +72,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
@@ -616,24 +619,27 @@ internal class OfflineTimelineRepository(
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateDataSource.savedState
-            .mapNotNull { it.preferences?.timelinePreferences }
+            .mapNotNull(::timelineInfo)
             .distinctUntilChanged()
-            .flatMapLatest { timelinePreferences ->
+            .flatMapLatest { (signedInProfileId, timelinePreferences) ->
                 timelinePreferences.mapIndexed { index, preference ->
                     when (Type.safeValueOf(preference.type)) {
                         Type.Feed -> feedGeneratorTimeline(
+                            signedInProfileId = signedInProfileId,
                             uri = FeedGeneratorUri(preference.value),
                             position = index,
                             isPinned = preference.pinned,
                         )
 
                         Type.List -> listTimeline(
+                            signedInProfileId = signedInProfileId,
                             uri = ListUri(preference.value),
                             position = index,
                             isPinned = preference.pinned,
                         )
 
                         Type.Timeline -> followingTimeline(
+                            signedInProfileId = signedInProfileId,
                             name = preference.value,
                             position = index,
                             isPinned = preference.pinned,
@@ -664,13 +670,14 @@ internal class OfflineTimelineRepository(
     override fun timeline(
         request: TimelineRequest,
     ): Flow<Timeline> = savedStateDataSource.savedState
-        .mapNotNull { it.preferences?.timelinePreferences }
+        .mapNotNull(::timelineInfo)
         .distinctUntilChanged()
-        .flatMapLatest { preferences ->
+        .flatMapLatest { (signedInProfileId, preferences) ->
             flow {
                 when (request) {
                     is TimelineRequest.OfFeed.WithUri -> emitAll(
                         feedGeneratorTimeline(
+                            signedInProfileId = signedInProfileId,
                             uri = request.uri,
                             position = 0,
                             isPinned = preferences.firstOrNull {
@@ -681,6 +688,7 @@ internal class OfflineTimelineRepository(
 
                     is TimelineRequest.OfList.WithUri -> emitAll(
                         listTimeline(
+                            signedInProfileId = signedInProfileId,
                             uri = request.uri,
                             position = 0,
                             isPinned = preferences.firstOrNull {
@@ -700,6 +708,7 @@ internal class OfflineTimelineRepository(
                         )
                         emitAll(
                             feedGeneratorTimeline(
+                                signedInProfileId = signedInProfileId,
                                 uri = uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
@@ -720,6 +729,7 @@ internal class OfflineTimelineRepository(
                         )
                         emitAll(
                             listTimeline(
+                                signedInProfileId = signedInProfileId,
                                 uri = uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
@@ -737,11 +747,13 @@ internal class OfflineTimelineRepository(
                             .distinctUntilChangedBy(ProfileEntity::did)
                             .flatMapLatest { profile ->
                                 timelineDao.lastFetchKey(
+                                    viewingProfileId = signedInProfileId?.id,
                                     sourceId = request.type.sourceId(profile.did)
                                 )
                                     .distinctUntilChanged()
                                     .map { timelinePreferenceEntity ->
                                         Timeline.Profile(
+                                            signedInProfileId = signedInProfileId,
                                             profileId = profile.did,
                                             type = request.type,
                                             lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
@@ -762,6 +774,7 @@ internal class OfflineTimelineRepository(
                         )
                         emitAll(
                             starterPackTimeline(
+                                signedInProfileId = signedInProfileId,
                                 uri = uri,
                             )
                         )
@@ -769,6 +782,7 @@ internal class OfflineTimelineRepository(
 
                     is TimelineRequest.OfStarterPack.WithUri -> emitAll(
                         starterPackTimeline(
+                            signedInProfileId = signedInProfileId,
                             uri = request.uri,
                         )
                     )
@@ -777,6 +791,7 @@ internal class OfflineTimelineRepository(
                         followingTimeline(
                             // TODO: Get a string resource for this
                             name = "",
+                            signedInProfileId = signedInProfileId,
                             position = 0,
                             isPinned = preferences.firstOrNull {
                                 Type.safeValueOf(it.type) is Type.Timeline
@@ -794,9 +809,8 @@ internal class OfflineTimelineRepository(
     ): Boolean {
         return runCatchingUnlessCancelled {
             timelineDao.updatePreferredTimelinePresentation(
-                TimelinePreferencesEntity.Partial.PreferredPresentation(
-                    sourceId = timeline.sourceId,
-                    preferredPresentation = presentation.key,
+                partial = timeline.preferredPresentationPartial(
+                    presentation = presentation,
                 )
             )
         }.isSuccess
@@ -848,6 +862,7 @@ internal class OfflineTimelineRepository(
                     timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
                         listOf(
                             TimelinePreferencesEntity(
+                                viewingProfileId = query.timeline.signedInProfileId,
                                 sourceId = query.timeline.sourceId,
                                 lastFetchedAt = query.data.cursorAnchor,
                                 preferredPresentation = null,
@@ -892,11 +907,15 @@ internal class OfflineTimelineRepository(
     }
         .flatMapLatest { pollInstant ->
             combine(
-                timelineDao.lastFetchKey(timeline.sourceId)
+                timelineDao.lastFetchKey(
+                    viewingProfileId = timeline.signedInProfileId?.id,
+                    sourceId = timeline.sourceId,
+                )
                     .map { it?.lastFetchedAt ?: pollInstant }
                     .distinctUntilChangedBy(Instant::toEpochMilliseconds)
                     .flatMapLatest {
                         timelineDao.feedItems(
+                            viewingProfileId = timeline.signedInProfileId?.id,
                             sourceId = timeline.sourceId,
                             before = it,
                             limit = 1,
@@ -904,6 +923,7 @@ internal class OfflineTimelineRepository(
                         )
                     },
                 timelineDao.feedItems(
+                    viewingProfileId = timeline.signedInProfileId?.id,
                     sourceId = timeline.sourceId,
                     before = pollInstant,
                     limit = 1,
@@ -921,15 +941,16 @@ internal class OfflineTimelineRepository(
         nextCursorFlow: Flow<Cursor>,
     ): Flow<CursorList<TimelineItem>> =
         combine(
-            observeTimeline(query),
-            nextCursorFlow,
-            ::CursorList,
+            flow = observeTimeline(query),
+            flow2 = nextCursorFlow,
+            transform = ::CursorList,
         )
 
     private fun observeTimeline(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
+            viewingProfileId = query.timeline.signedInProfileId?.id,
             sourceId = query.timeline.sourceId,
             before = query.data.cursorAnchor,
             offset = query.data.offset,
@@ -1024,28 +1045,28 @@ internal class OfflineTimelineRepository(
             }
 
     private fun followingTimeline(
+        signedInProfileId: ProfileId?,
         name: String,
         position: Int,
         isPinned: Boolean,
-    ) = savedStateDataSource.savedState
-        .mapNotNull { it.auth?.authProfileId }
+    ) = timelineDao.lastFetchKey(
+        viewingProfileId = signedInProfileId?.id,
+        sourceId = Constants.timelineFeed.uri,
+    )
         .distinctUntilChanged()
-        .flatMapLatest { signedInProfileId ->
-            timelineDao.lastFetchKey(Constants.timelineFeed.uri)
-                .distinctUntilChanged()
-                .map { timelinePreferenceEntity ->
-                    Timeline.Home.Following(
-                        name = name,
-                        position = position,
-                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
-                        presentation = timelinePreferenceEntity.preferredPresentation(),
-                        signedInProfileId = signedInProfileId,
-                        isPinned = isPinned,
-                    )
-                }
+        .map { timelinePreferenceEntity ->
+            Timeline.Home.Following(
+                name = name,
+                position = position,
+                lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                presentation = timelinePreferenceEntity.preferredPresentation(),
+                signedInProfileId = signedInProfileId,
+                isPinned = isPinned,
+            )
         }
 
     private fun feedGeneratorTimeline(
+        signedInProfileId: ProfileId?,
         uri: FeedGeneratorUri,
         position: Int,
         isPinned: Boolean,
@@ -1054,11 +1075,15 @@ internal class OfflineTimelineRepository(
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest { populatedFeedGeneratorEntity ->
-            timelineDao.lastFetchKey(populatedFeedGeneratorEntity.entity.uri.uri)
+            timelineDao.lastFetchKey(
+                viewingProfileId = signedInProfileId?.id,
+                sourceId = populatedFeedGeneratorEntity.entity.uri.uri,
+            )
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
                         position = position,
+                        signedInProfileId = signedInProfileId,
                         feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
@@ -1091,6 +1116,7 @@ internal class OfflineTimelineRepository(
         }
 
     private fun listTimeline(
+        signedInProfileId: ProfileId?,
         uri: ListUri,
         position: Int,
         isPinned: Boolean,
@@ -1098,11 +1124,15 @@ internal class OfflineTimelineRepository(
         .filterNotNull()
         .distinctUntilChangedBy(PopulatedListEntity::entity)
         .flatMapLatest {
-            timelineDao.lastFetchKey(it.entity.uri.uri)
+            timelineDao.lastFetchKey(
+                viewingProfileId = signedInProfileId?.id,
+                sourceId = it.entity.uri.uri
+            )
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.List(
                         position = position,
+                        signedInProfileId = signedInProfileId,
                         feedList = it.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
@@ -1128,6 +1158,7 @@ internal class OfflineTimelineRepository(
         }
 
     private fun starterPackTimeline(
+        signedInProfileId: ProfileId?,
         uri: StarterPackUri,
     ) = starterPackDao.starterPack(uri.uri)
         .mapNotNull { populatedStarterPackEntity ->
@@ -1137,6 +1168,7 @@ internal class OfflineTimelineRepository(
         .distinctUntilChangedBy { it.first.entity }
         .flatMapLatest { (populatedStarterPackEntity, listEntity) ->
             listTimeline(
+                signedInProfileId = signedInProfileId,
                 uri = listEntity.uri,
                 position = 0,
                 isPinned = false,
@@ -1193,6 +1225,12 @@ internal class OfflineTimelineRepository(
     }
 }
 
+private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>>? =
+    when (val timelinePreferences = savedState.preferences?.timelinePreferences) {
+        null -> null
+        else -> savedState.auth?.authProfileId to timelinePreferences
+    }
+
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
@@ -1204,7 +1242,10 @@ private fun TimelinePreferencesEntity?.preferredPresentation() =
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
-    val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
+    val lastFetchedAt = lastFetchKey(
+        viewingProfileId = query.timeline.signedInProfileId?.id,
+        sourceId = query.timeline.sourceId,
+    ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
 
