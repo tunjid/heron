@@ -129,17 +129,21 @@ internal val SavedStateDataSource.signedInProfileId
     get() = savedState
         .value
         .auth
+        .ifSignedIn()
         ?.authProfileId
 
 internal val SavedStateDataSource.observedSignedInProfileId
     get() = savedState
-        .map { it.auth?.authProfileId }
+        .map { it.auth.ifSignedIn()?.authProfileId }
         .distinctUntilChanged()
 
 internal val SavedStateDataSource.signedInAuth
     get() = savedState
-        .map { it.auth?.takeUnless(GuestAuth::equals) }
+        .map { it.auth.ifSignedIn() }
         .distinctUntilChanged()
+
+private fun SavedState.AuthTokens?.ifSignedIn() =
+    this?.takeUnless(GuestAuth::equals)
 
 internal suspend fun SavedStateDataSource.guestSignIn() =
     updateState { copy(auth = GuestAuth) }
