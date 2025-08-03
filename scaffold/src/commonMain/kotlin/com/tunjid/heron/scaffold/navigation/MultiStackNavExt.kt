@@ -17,7 +17,6 @@
 package com.tunjid.heron.scaffold.navigation
 
 import com.tunjid.treenav.MultiStackNav
-import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.popToRoot
 import com.tunjid.treenav.switch
 
@@ -27,22 +26,6 @@ internal data class NavItem(
     val selected: Boolean,
     val hasBadge: Boolean,
 )
-
-internal fun MultiStackNav.navItems(
-    hasBadge: (AppStack) -> Boolean,
-) = stacks
-    .map(StackNav::name)
-    .mapIndexedNotNull { index, name ->
-        val stack = AppStack.entries.firstOrNull {
-            it.stackName == name
-        } ?: return@mapIndexedNotNull null
-        NavItem(
-            stack = stack,
-            index = index,
-            selected = currentIndex == index,
-            hasBadge = hasBadge(stack),
-        )
-    }
 
 internal fun MultiStackNav.navItemSelected(item: NavItem) =
     if (item.selected) popToRoot(indexToPop = item.index)

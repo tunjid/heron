@@ -77,7 +77,7 @@ fun timelineStateHolder(
     initialState = TimelineState(
         timeline = timeline,
         hasUpdates = false,
-        labelPreferences = Preferences.EmptyPreferences.contentLabelPreferences,
+        labelPreferences = Preferences.DefaultPreferences.contentLabelPreferences,
         labelers = emptyList(),
         tilingData = TilingState.Data(
             numColumns = startNumColumns,

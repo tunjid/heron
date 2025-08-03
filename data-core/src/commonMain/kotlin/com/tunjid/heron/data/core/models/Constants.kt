@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
@@ -26,12 +27,14 @@ object Constants {
     const val UNKNOWN = "at://unknown"
 
     val timelineFeed = GenericUri("at://self")
+
+    val discoverFeed = FeedGeneratorUri("at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot")
     val blockedPostId = PostId("at://blocked")
     val notFoundPostId = PostId("at://not_found")
     val unknownPostId = PostId(UNKNOWN)
     val unknownPostUri = PostUri(UNKNOWN)
     val unknownGenericUri = GenericUri(UNKNOWN)
-    val unknownAuthorId = ProfileId(UNKNOWN)
+    val unknownAuthorId = ProfileId(id = "did:web:heron.app.unknown.user")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }
 

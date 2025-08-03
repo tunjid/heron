@@ -229,9 +229,8 @@ internal class OfflineTimelineRepository(
 ) : TimelineRepository {
 
     override fun preferences(): Flow<Preferences> =
-        savedStateDataSource.savedState.map {
-            it.preferences ?: Preferences.EmptyPreferences
-        }
+        savedStateDataSource.savedState
+            .map(SavedState::signedProfilePreferencesOrDefault)
 
     override fun labelers(): Flow<List<Labeler>> =
         // TODO: Get labeler from bluesky moderation service
@@ -626,7 +625,7 @@ internal class OfflineTimelineRepository(
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateDataSource.savedState
-            .mapNotNull(::timelineInfo)
+            .map(::timelineInfo)
             .distinctUntilChanged()
             .flatMapLatest { (signedInProfileId, timelinePreferences) ->
                 timelinePreferences.mapIndexed { index, preference ->
@@ -677,7 +676,7 @@ internal class OfflineTimelineRepository(
     override fun timeline(
         request: TimelineRequest,
     ): Flow<Timeline> = savedStateDataSource.savedState
-        .mapNotNull(::timelineInfo)
+        .map(::timelineInfo)
         .distinctUntilChanged()
         .flatMapLatest { (signedInProfileId, preferences) ->
             flow {
@@ -1234,12 +1233,8 @@ internal class OfflineTimelineRepository(
     }
 }
 
-private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>>? =
-    when (val timelinePreferences = savedState.preferences?.timelinePreferences) {
-        null -> null
-        else -> savedState.auth?.authProfileId to timelinePreferences
-    }
-
+private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
+    savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {

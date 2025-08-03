@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -46,6 +47,7 @@ import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
+import com.tunjid.heron.signin.canSignInLater
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.treenav.compose.PaneEntry
@@ -64,6 +66,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature_auth.generated.resources.Res
 import heron.feature_auth.generated.resources.create_an_account
 import heron.feature_auth.generated.resources.sign_in
+import heron.feature_auth.generated.resources.sign_in_later
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
@@ -134,11 +137,24 @@ class SignInBindings(
                             .animateBounds(lookaheadScope = this)
                             .windowInsetsPadding(WindowInsets.ime)
                             .alpha(if (state.submitButtonEnabled) 1f else 0.6f),
-                        text = stringResource(Res.string.sign_in),
-                        icon = Icons.Rounded.Check,
+                        text = stringResource(
+                            when {
+                                state.canSignInLater -> Res.string.sign_in_later
+                                else -> Res.string.sign_in
+                            }
+                        ),
+                        icon = when {
+                            state.canSignInLater -> Icons.Rounded.Timer
+                            else -> Icons.Rounded.Check
+                        },
                         expanded = true,
                         onClick = {
-                            if (state.submitButtonEnabled) viewModel.accept(Action.Submit(state.sessionRequest))
+                            if (state.submitButtonEnabled) viewModel.accept(
+                                when {
+                                    state.canSignInLater -> Action.Submit.GuestAuth
+                                    else -> Action.Submit.Auth(state.sessionRequest)
+                                }
+                            )
                         }
                     )
                 },

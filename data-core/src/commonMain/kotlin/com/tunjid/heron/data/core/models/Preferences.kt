@@ -28,8 +28,15 @@ data class Preferences(
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
 ) : UrlEncodableModel {
     companion object {
-        val EmptyPreferences = Preferences(
-            timelinePreferences = emptyList(),
+        val DefaultPreferences = Preferences(
+            timelinePreferences = listOf(
+                TimelinePreference(
+                    id = Constants.discoverFeed.uri,
+                    type = "feed",
+                    value = Constants.discoverFeed.uri,
+                    pinned = true,
+                ),
+            ),
             contentLabelPreferences = emptyList(),
         )
     }

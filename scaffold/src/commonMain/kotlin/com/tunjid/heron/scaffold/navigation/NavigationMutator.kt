@@ -38,6 +38,7 @@ import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.isSignedIn
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -323,7 +324,7 @@ class PersistedNavigationStateHolder(
 
                 val multiStackNav = when {
                     savedState == EmptySavedState -> SignedOutNavigationState
-                    savedState.auth == null -> SignedOutNavigationState
+                    !savedState.isSignedIn() -> SignedOutNavigationState
                     else -> routeParser.parseMultiStackNav(savedState)
                 }
 
@@ -383,13 +384,11 @@ private fun CoroutineScope.persistNavigationState(
     }
 }
 
-private val SavedState.isSignedIn get() = auth != null
-
 private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
     savedState.navigation.backStacks
         .foldIndexed(
             initial = MultiStackNav(
-                name = if (savedState.isSignedIn) SignedInNavigationState.name
+                name = if (savedState.isSignedIn()) SignedInNavigationState.name
                 else SignedOutNavigationState.name
             ),
             operation = { index, multiStackNav, routesForStack ->
@@ -398,7 +397,7 @@ private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
                             routesForStack.fold(
                                 initial = StackNav(
                                     name = when {
-                                        savedState.isSignedIn -> SignedInNavigationState
+                                        savedState.isSignedIn() -> SignedInNavigationState
                                         else -> SignedOutNavigationState
                                     }.stacks.getOrNull(index)?.name ?: "Unknown"
                                 ),

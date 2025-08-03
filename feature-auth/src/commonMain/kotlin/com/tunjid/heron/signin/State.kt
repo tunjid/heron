@@ -29,7 +29,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.local.models.SessionRequest
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlin.jvm.JvmInline
@@ -109,6 +111,10 @@ data class State(
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 
+val State.canSignInLater: Boolean get() = fields.all{ field ->
+    field.value.isBlank()
+}
+
 val State.sessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
         SessionRequest(
@@ -119,10 +125,19 @@ val State.sessionRequest: SessionRequest
 
 sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
-    data class Submit(val request: SessionRequest) : Action("Submit")
+    sealed class Submit : Action("Submit") {
+        data object GuestAuth: Submit()
+        data class Auth(
+            val request: SessionRequest
+        ): Submit()
+    }
     data class MessageConsumed(
         val message: String,
     ) : Action("MessageConsumed")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data object Home : Navigate(), NavigationAction by pathDestination(
+            path = AppStack.Home.rootRoute.routeParams.pathAndQueries,
+        )
+    }
 }

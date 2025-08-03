@@ -21,6 +21,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
 import dev.zacsweers.metro.Inject
@@ -47,8 +48,7 @@ import sh.christian.ozone.api.model.JsonContent
 data class SavedState(
     val auth: AuthTokens?,
     val navigation: Navigation,
-    val preferences: Preferences?,
-    val notifications: Notifications?,
+    val profileData: Map<ProfileId, ProfileData>,
 ) {
 
     @Serializable
@@ -101,32 +101,71 @@ data class SavedState(
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
     )
+
+    @Serializable
+    data class ProfileData(
+        val preferences: Preferences,
+        val notifications: Notifications,
+    )
 }
+
+private val GuestAuth = SavedState.AuthTokens(
+    authProfileId = Constants.unknownAuthorId,
+    auth = "",
+    refresh = "",
+    didDoc = SavedState.AuthTokens.DidDoc()
+)
 
 val InitialSavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = -1),
-    preferences = null,
-    notifications = null
+    profileData = emptyMap(),
 )
 
 val EmptySavedState = SavedState(
     auth = null,
     navigation = SavedState.Navigation(activeNav = 0),
-    preferences = null,
-    notifications = null,
+    profileData = emptyMap(),
 )
 
 internal val SavedStateDataSource.signedInProfileId
     get() = savedState
         .value
         .auth
+        .ifSignedIn()
         ?.authProfileId
 
 internal val SavedStateDataSource.observedSignedInProfileId
     get() = savedState
-        .map { it.auth?.authProfileId }
+        .map { it.auth.ifSignedIn()?.authProfileId }
         .distinctUntilChanged()
+
+internal val SavedStateDataSource.signedInAuth
+    get() = savedState
+        .map { it.auth.ifSignedIn() }
+        .distinctUntilChanged()
+
+private fun SavedState.AuthTokens?.ifSignedIn() =
+    this?.takeUnless(GuestAuth::equals)
+
+fun SavedState.signedProfilePreferencesOrDefault() =
+    auth.ifSignedIn()
+        ?.let { profileData[it.authProfileId] }
+        ?.preferences
+        ?: Preferences.DefaultPreferences
+
+fun SavedState.signedInProfileNotifications() =
+    auth.ifSignedIn()
+        ?.let { profileData[it.authProfileId] }
+        ?.notifications
+
+internal val SavedState.signedInProfileId get() =
+    auth.ifSignedIn()?.authProfileId
+fun SavedState.isSignedIn() =
+    auth.ifSignedIn() != null
+
+internal suspend fun SavedStateDataSource.guestSignIn() =
+    updateState { copy(auth = GuestAuth) }
 
 interface SavedStateDataSource {
     val savedState: StateFlow<SavedState>
@@ -171,5 +210,36 @@ private class SavedStateOkioSerializer(
 
     override suspend fun writeTo(t: SavedState, sink: BufferedSink) {
         sink.write(protoBuf.encodeToByteArray(value = t))
+    }
+}
+
+internal suspend inline fun SavedStateDataSource.updateSignedInUserPreferences(
+    preferences: Preferences,
+) {
+    updateSignedInProfileData {
+        copy(preferences = preferences)
+    }
+}
+
+internal suspend inline fun SavedStateDataSource.updateSignedInUserNotifications(
+    crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
+) {
+    updateSignedInProfileData {
+        copy(notifications = notifications.block())
+    }
+}
+
+private suspend inline fun SavedStateDataSource.updateSignedInProfileData(
+    crossinline block: SavedState.ProfileData.() -> SavedState.ProfileData,
+) {
+    updateState {
+        val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
+        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
+            notifications = SavedState.Notifications(),
+            preferences = Preferences.DefaultPreferences,
+        )
+        copy(
+            profileData = profileData + (signedInProfileId to signedInProfileData.block())
+        )
     }
 }

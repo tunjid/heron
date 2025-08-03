@@ -43,7 +43,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -62,6 +62,10 @@ interface AuthRepository {
 
     suspend fun createSession(request: SessionRequest): Result<Unit>
 
+    suspend fun guestSignIn()
+
+    suspend fun signOut()
+
     suspend fun updateSignedInUser(): Boolean
 }
 
@@ -74,28 +78,28 @@ internal class AuthTokenRepository(
 ) : AuthRepository {
 
     override val isSignedIn: Flow<Boolean> =
-        savedStateDataSource.savedState.map { it.auth != null }
+        savedStateDataSource.signedInAuth.map {
+            it != null
+        }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.savedState
-            .distinctUntilChangedBy { it.auth?.authProfileId }
-            .flatMapLatest { savedState ->
-                val signeInUserFlow = savedState.auth
-                    ?.authProfileId
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                val signedInUserFlow = signedInProfileId
                     ?.let(::listOf)
                     ?.let(profileDao::profiles)
                     ?.filter(List<ProfileEntity>::isNotEmpty)
                     ?.map { it.first().asExternalModel() }
                     ?: flowOf(null)
-                signeInUserFlow.withRefresh {
-                    updateSignedInUser()
+                signedInUserFlow.withRefresh {
+                    if (signedInProfileId != null) updateSignedInUser()
                 }
             }
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
         savedStateDataSource.savedState
-            .distinctUntilChangedBy { it.auth?.authProfileId }
-            .map { id == it.auth?.authProfileId }
+            .map { it.signedInProfileId == id }
+            .distinctUntilChanged()
 
     override suspend fun createSession(
         request: SessionRequest,
@@ -125,6 +129,15 @@ internal class AuthTokenRepository(
             updateSignedInUser(result.did)
         }
 
+    override suspend fun guestSignIn() {
+        savedStateDataSource.guestSignIn()
+    }
+
+    override suspend fun signOut() {
+        savedStateDataSource.updateState {
+            copy(auth = null)
+        }
+    }
 
     override suspend fun updateSignedInUser(): Boolean {
         return networkService.runCatchingWithMonitoredNetworkRetry {
@@ -161,9 +174,7 @@ internal class AuthTokenRepository(
         val preferences = preferencesResponse.toExternalModel()
 
         val saveTimelinePreferences = async {
-            savedStateDataSource.updateState {
-                copy(preferences = preferences)
-            }
+            savedStateDataSource.updateSignedInUserPreferences(preferences)
         }
         val types = preferences.timelinePreferences.groupBy(
             keySelector = TimelinePreference::type,
@@ -204,7 +215,7 @@ internal class AuthTokenRepository(
 
 private fun GetPreferencesResponse.toExternalModel() =
     preferences.fold(
-        initial = Preferences.EmptyPreferences,
+        initial = Preferences.DefaultPreferences,
         operation = { preferences, preferencesUnion ->
             when (preferencesUnion) {
                 is PreferencesUnion.AdultContentPref -> preferences
@@ -245,3 +256,4 @@ private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPr
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
+

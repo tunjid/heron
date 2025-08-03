@@ -20,4 +20,5 @@
     <string name="sign_in">Sign In</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="sign_in_later">Sign in later</string>
 </resources>

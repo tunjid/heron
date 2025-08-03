@@ -88,6 +88,12 @@ internal class AuthPlugin(
                         }
                 }
 
+                if (authTokens == null && SignedOutPaths.any(predicate = context.url.encodedPath::endsWith)) {
+                    context.url.set(
+                        host = Url(urlString = SignedOutUrl).host
+                    )
+                }
+
                 if (!context.headers.contains(Authorization)) {
                     authTokens?.auth?.let { context.bearerAuth(it) }
                 }
@@ -148,7 +154,18 @@ private val ChatProxyPaths = listOf(
     "chat.bsky.convo.addReaction",
     "chat.bsky.convo.removeReaction",
 )
+
+private val SignedOutPaths = listOf(
+    "app.bsky.actor.getProfile",
+    "app.bsky.feed.getAuthorFeed",
+    "app.bsky.feed.getFeed",
+    "app.bsky.feed.getPostThread",
+    "app.bsky.feed.getFeedGenerator",
+    "app.bsky.unspecced.getPopularFeedGenerators",
+    "app.bsky.unspecced.getTrends",
+)
+
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
-
+private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"

@@ -78,7 +78,12 @@ internal fun SignInScreen(
                         )
 
                         Password -> if (state.submitButtonEnabled) {
-                            actions(Action.Submit(state.sessionRequest))
+                            actions(
+                                when {
+                                    state.canSignInLater -> Action.Submit.GuestAuth
+                                    else -> Action.Submit.Auth(state.sessionRequest)
+                                }
+                            )
                             keyboardController?.hide()
                         }
                     }
