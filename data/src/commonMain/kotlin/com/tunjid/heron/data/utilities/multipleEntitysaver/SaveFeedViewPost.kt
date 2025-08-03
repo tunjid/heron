@@ -32,7 +32,12 @@ internal fun MultipleEntitySaver.add(
 ) {
     for (feedView in feedViewPosts) {
         // Extract data from feed
-        add(feedView.feedItemEntity(timeline.sourceId))
+        add(
+            feedView.feedItemEntity(
+                sourceId = timeline.sourceId,
+                viewingProfileId = viewingProfileId,
+            )
+        )
 
         // Extract data from post
         add(

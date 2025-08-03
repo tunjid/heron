@@ -35,8 +35,10 @@ import kotlinx.datetime.Instant
 
 internal fun FeedViewPost.feedItemEntity(
     sourceId: String,
+    viewingProfileId: ProfileId?,
 ) = TimelineItemEntity(
     postId = PostId(post.cid.cid),
+    viewingProfileId = viewingProfileId,
     sourceId = sourceId,
     reply = reply?.let {
         FeedReplyEntity(

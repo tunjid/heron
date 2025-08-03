@@ -55,6 +55,7 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
+import com.tunjid.heron.data.database.entities.migrations.TimelineViewerMigration
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -68,7 +69,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 17,
+    version = 18,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -144,6 +145,7 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 15, to = 16),
         // Add LabelEntity and index uris for many entities
         AutoMigration(from = 16, to = 17),
+        // Migration 17 - 18 is a manual migration
     ],
     exportSchema = true,
 )
@@ -184,6 +186,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
         .addMigrations(
             NonNullPostUriAndAuthorMigration,
             FeedAndListsCreatedAtAutoMigration,
+            TimelineViewerMigration,
         )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)

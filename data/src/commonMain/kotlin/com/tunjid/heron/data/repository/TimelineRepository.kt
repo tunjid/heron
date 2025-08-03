@@ -72,6 +72,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
@@ -746,6 +747,7 @@ internal class OfflineTimelineRepository(
                             .distinctUntilChangedBy(ProfileEntity::did)
                             .flatMapLatest { profile ->
                                 timelineDao.lastFetchKey(
+                                    viewingProfileId = signedInProfileId?.id,
                                     sourceId = request.type.sourceId(profile.did)
                                 )
                                     .distinctUntilChanged()
@@ -807,9 +809,8 @@ internal class OfflineTimelineRepository(
     ): Boolean {
         return runCatchingUnlessCancelled {
             timelineDao.updatePreferredTimelinePresentation(
-                TimelinePreferencesEntity.Partial.PreferredPresentation(
-                    sourceId = timeline.sourceId,
-                    preferredPresentation = presentation.key,
+                partial = timeline.preferredPresentationPartial(
+                    presentation = presentation,
                 )
             )
         }.isSuccess
@@ -861,6 +862,7 @@ internal class OfflineTimelineRepository(
                     timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
                         listOf(
                             TimelinePreferencesEntity(
+                                viewingProfileId = query.timeline.signedInProfileId,
                                 sourceId = query.timeline.sourceId,
                                 lastFetchedAt = query.data.cursorAnchor,
                                 preferredPresentation = null,
@@ -905,11 +907,15 @@ internal class OfflineTimelineRepository(
     }
         .flatMapLatest { pollInstant ->
             combine(
-                timelineDao.lastFetchKey(timeline.sourceId)
+                timelineDao.lastFetchKey(
+                    viewingProfileId = timeline.signedInProfileId?.id,
+                    sourceId = timeline.sourceId,
+                )
                     .map { it?.lastFetchedAt ?: pollInstant }
                     .distinctUntilChangedBy(Instant::toEpochMilliseconds)
                     .flatMapLatest {
                         timelineDao.feedItems(
+                            viewingProfileId = timeline.signedInProfileId?.id,
                             sourceId = timeline.sourceId,
                             before = it,
                             limit = 1,
@@ -917,6 +923,7 @@ internal class OfflineTimelineRepository(
                         )
                     },
                 timelineDao.feedItems(
+                    viewingProfileId = timeline.signedInProfileId?.id,
                     sourceId = timeline.sourceId,
                     before = pollInstant,
                     limit = 1,
@@ -934,15 +941,16 @@ internal class OfflineTimelineRepository(
         nextCursorFlow: Flow<Cursor>,
     ): Flow<CursorList<TimelineItem>> =
         combine(
-            observeTimeline(query),
-            nextCursorFlow,
-            ::CursorList,
+            flow = observeTimeline(query),
+            flow2 = nextCursorFlow,
+            transform = ::CursorList,
         )
 
     private fun observeTimeline(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         timelineDao.feedItems(
+            viewingProfileId = query.timeline.signedInProfileId?.id,
             sourceId = query.timeline.sourceId,
             before = query.data.cursorAnchor,
             offset = query.data.offset,
@@ -1041,7 +1049,10 @@ internal class OfflineTimelineRepository(
         name: String,
         position: Int,
         isPinned: Boolean,
-    ) = timelineDao.lastFetchKey(Constants.timelineFeed.uri)
+    ) = timelineDao.lastFetchKey(
+        viewingProfileId = signedInProfileId?.id,
+        sourceId = Constants.timelineFeed.uri,
+    )
         .distinctUntilChanged()
         .map { timelinePreferenceEntity ->
             Timeline.Home.Following(
@@ -1064,7 +1075,10 @@ internal class OfflineTimelineRepository(
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest { populatedFeedGeneratorEntity ->
-            timelineDao.lastFetchKey(populatedFeedGeneratorEntity.entity.uri.uri)
+            timelineDao.lastFetchKey(
+                viewingProfileId = signedInProfileId?.id,
+                sourceId = populatedFeedGeneratorEntity.entity.uri.uri,
+            )
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
@@ -1110,7 +1124,10 @@ internal class OfflineTimelineRepository(
         .filterNotNull()
         .distinctUntilChangedBy(PopulatedListEntity::entity)
         .flatMapLatest {
-            timelineDao.lastFetchKey(it.entity.uri.uri)
+            timelineDao.lastFetchKey(
+                viewingProfileId = signedInProfileId?.id,
+                sourceId = it.entity.uri.uri
+            )
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.List(
@@ -1225,7 +1242,10 @@ private fun TimelinePreferencesEntity?.preferredPresentation() =
 
 private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
     if (query.data.page != 0) return false
-    val lastFetchedAt = lastFetchKey(query.timeline.sourceId).first()?.lastFetchedAt
+    val lastFetchedAt = lastFetchKey(
+        viewingProfileId = query.timeline.signedInProfileId?.id,
+        sourceId = query.timeline.sourceId,
+    ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
 
