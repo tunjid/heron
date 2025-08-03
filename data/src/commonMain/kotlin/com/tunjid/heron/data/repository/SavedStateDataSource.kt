@@ -159,6 +159,8 @@ fun SavedState.signedInProfileNotifications() =
         ?.let { profileData[it.authProfileId] }
         ?.notifications
 
+internal val SavedState.signedInProfileId get() =
+    auth.ifSignedIn()?.authProfileId
 fun SavedState.isSignedIn() =
     auth.ifSignedIn() != null
 

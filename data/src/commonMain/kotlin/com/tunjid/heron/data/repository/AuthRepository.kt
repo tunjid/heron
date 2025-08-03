@@ -43,7 +43,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -83,25 +83,23 @@ internal class AuthTokenRepository(
         }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.signedInAuth
-            .distinctUntilChangedBy { it?.authProfileId }
-            .flatMapLatest { authTokens ->
-                val signeInUserFlow = authTokens
-                    ?.authProfileId
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                val signedInUserFlow = signedInProfileId
                     ?.let(::listOf)
                     ?.let(profileDao::profiles)
                     ?.filter(List<ProfileEntity>::isNotEmpty)
                     ?.map { it.first().asExternalModel() }
                     ?: flowOf(null)
-                signeInUserFlow.withRefresh {
-                    updateSignedInUser()
+                signedInUserFlow.withRefresh {
+                    if (signedInProfileId != null) updateSignedInUser()
                 }
             }
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
         savedStateDataSource.savedState
-            .distinctUntilChangedBy { it.auth?.authProfileId }
-            .map { id == it.auth?.authProfileId }
+            .map { it.signedInProfileId == id }
+            .distinctUntilChanged()
 
     override suspend fun createSession(
         request: SessionRequest,

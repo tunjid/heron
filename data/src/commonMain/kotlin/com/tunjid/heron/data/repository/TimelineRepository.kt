@@ -39,6 +39,7 @@ import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
+import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -1109,7 +1110,19 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+            if (signedInProfileId == null) networkService.runCatchingWithMonitoredNetworkRetry {
+                getPopularFeedGeneratorsUnspecced(
+                    params = GetPopularFeedGeneratorsQueryParams()
+                )
+            }
+                .getOrNull()
+                ?.feeds
+                ?.forEach {
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(feedGeneratorView = it)
+                    }
+                }
+            else networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getFeedGenerator(
                     GetFeedGeneratorQueryParams(
                         feed = uri.uri.let(::AtUri)
@@ -1234,7 +1247,7 @@ internal class OfflineTimelineRepository(
 }
 
 private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
-    savedState.auth?.authProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
+    savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
