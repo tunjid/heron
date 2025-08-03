@@ -71,11 +71,11 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualSearchViewModel
+    ): SearchViewModel
 }
 
 @Inject
-class ActualSearchViewModel(
+class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
