@@ -583,23 +583,8 @@ private fun TabbedSearchResults(
         Tabs(
             modifier = Modifier.fillMaxWidth(),
             tabsState = rememberTabsState(
-                tabs = listOf(
-                    Tab(
-                        title = stringResource(resource = Res.string.top),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.latest),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.people),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.feeds),
-                        hasUpdate = false
-                    ),
+                tabs = searchTabs(
+                    isSignedIn = state.signedInProfile != null
                 ),
                 selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
@@ -641,6 +626,16 @@ private fun TabbedSearchResults(
         )
     }
 }
+
+@Composable
+private fun searchTabs(isSignedIn: Boolean): List<Tab> = listOf(
+    stringResource(resource = Res.string.top),
+    stringResource(resource = Res.string.latest),
+    stringResource(resource = Res.string.people),
+    stringResource(resource = Res.string.feeds),
+)
+    .takeLast(if (isSignedIn) 4 else 2)
+    .map { Tab(title = it, hasUpdate = false) }
 
 @Composable
 private fun SearchResults(

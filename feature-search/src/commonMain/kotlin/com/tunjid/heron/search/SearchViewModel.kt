@@ -147,8 +147,18 @@ class SearchViewModel(
 private fun loadProfileMutations(
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
+    authRepository.signedInUser.mapToMutation { signedInProfile ->
+        val isSignedIn = signedInProfile != null
+        copy(
+            signedInProfile = signedInProfile,
+            searchStateHolders = searchStateHolders.filter { mutator ->
+                when (mutator.state.value) {
+                    is SearchState.OfFeedGenerators -> true
+                    is SearchState.OfPosts -> isSignedIn
+                    is SearchState.OfProfiles -> true
+                }
+            }
+        )
     }
 
 private fun trendsMutations(
