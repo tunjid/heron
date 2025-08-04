@@ -127,9 +127,7 @@ internal fun SearchScreen(
         modifier = modifier
     ) {
         Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
-        val pagerState = rememberPagerState {
-            4
-        }
+        val pagerState = rememberPagerState { state.searchStateHolders.size }
         val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
             { profileWithViewerState ->
                 actions(
