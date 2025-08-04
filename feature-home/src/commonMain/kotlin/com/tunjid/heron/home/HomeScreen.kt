@@ -69,6 +69,7 @@ import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -80,7 +81,7 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -91,7 +92,6 @@ import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -142,7 +142,7 @@ internal fun HomeScreen(
             pageContent = { page ->
                 val timelineStateHolder = updatedTimelineStateHolders[page]
                 HomeTimeline(
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    paneScaffoldState = paneScaffoldState,
                     timelineStateHolder = timelineStateHolder,
                     actions = actions,
                 )
@@ -220,7 +220,7 @@ internal fun HomeScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTimeline(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -232,9 +232,11 @@ private fun HomeTimeline(
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
-    val postInteractionState = rememberPostInteractionState()
     val presentation = timelineState.timeline.presentation
     val pullToRefreshState = rememberPullToRefreshState()
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
 
     PullToRefreshBox(
         modifier = Modifier
@@ -283,7 +285,7 @@ private fun HomeTimeline(
                 verticalItemSpacing = 8.dp,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
+                userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
                     items = items,
@@ -296,7 +298,7 @@ private fun HomeTimeline(
                                 .threadedVideoPosition(
                                     state = videoStates.getOrCreateStateFor(item)
                                 ),
-                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = remember { Clock.System.now() },
                             item = item,
@@ -370,7 +372,8 @@ private fun HomeTimeline(
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                composePostDestination(
+                                                if (paneScaffoldState.isSignedOut) signInDestination()
+                                                else composePostDestination(
                                                     type = Post.Create.Reply(
                                                         parent = post,
                                                     ),
@@ -391,6 +394,11 @@ private fun HomeTimeline(
 
     PostInteractionsBottomSheet(
         state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
         onInteractionConfirmed = {
             actions(
                 Action.SendPostInteraction(it)
@@ -407,7 +415,7 @@ private fun HomeTimeline(
             )
         }
     )
-    if (paneMovableElementSharedTransitionScope.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

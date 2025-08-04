@@ -57,13 +57,14 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
@@ -78,7 +79,9 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val postInteractionState = rememberPostInteractionState()
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
     val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
@@ -138,7 +141,8 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    composePostDestination(
+                    if (paneScaffoldState.isSignedOut) signInDestination()
+                    else composePostDestination(
                         type = Post.Create.Reply(
                             parent = notification.associatedPost,
                         ),
@@ -301,6 +305,11 @@ internal fun NotificationsScreen(
 
     PostInteractionsBottomSheet(
         state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
         onInteractionConfirmed = {
             actions(
                 Action.SendPostInteraction(it)

@@ -67,6 +67,9 @@ class PaneScaffoldState internal constructor(
     val isSignedOut get() =
         !appState.isSignedIn
 
+    val isSignedIn get() =
+        appState.isSignedIn
+
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
 

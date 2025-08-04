@@ -72,6 +72,7 @@ import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
@@ -82,6 +83,8 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
+import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -97,7 +100,6 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_list.generated.resources.Res
 import heron.feature_list.generated.resources.people
@@ -216,7 +218,7 @@ internal fun ListScreen(
                             )
 
                             is ListScreenStateHolders.Timeline -> ListTimeline(
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
                             )
@@ -331,7 +333,7 @@ private fun ListMembers(
 
 @Composable
 private fun ListTimeline(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
@@ -343,7 +345,9 @@ private fun ListTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates() }
     val presentation = timelineState.timeline.presentation
-
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
     LookaheadScope {
         LazyVerticalStaggeredGrid(
             modifier = Modifier
@@ -371,7 +375,7 @@ private fun ListTimeline(
             verticalItemSpacing = 8.dp,
             contentPadding = bottomNavAndInsetPaddingValues(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = !paneMovableElementSharedTransitionScope.isTransitionActive,
+            userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
             items(
                 items = items,
@@ -384,7 +388,7 @@ private fun ListTimeline(
                             .threadedVideoPosition(
                                 state = videoStates.getOrCreateStateFor(item)
                             ),
-                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        paneMovableElementSharedTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = remember { Clock.System.now() },
                         item = item,
@@ -458,7 +462,8 @@ private fun ListTimeline(
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            composePostDestination(
+                                            if (paneScaffoldState.isSignedOut) signInDestination()
+                                            else composePostDestination(
                                                 type = Post.Create.Reply(
                                                     parent = post,
                                                 ),
@@ -467,11 +472,7 @@ private fun ListTimeline(
                                         )
                                     )
                                 },
-                                onPostInteraction = {
-                                    actions(
-                                        Action.SendPostInteraction(it)
-                                    )
-                                }
+                                onPostInteraction = postInteractionState::onInteraction,
                             )
                         }
                     )
@@ -480,7 +481,31 @@ private fun ListTimeline(
         }
     }
 
-    if (paneMovableElementSharedTransitionScope.paneState.pane == ThreePane.Primary) {
+    PostInteractionsBottomSheet(
+        state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
+        onInteractionConfirmed = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    )
+                )
+            )
+        }
+    )
+
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

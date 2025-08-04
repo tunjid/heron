@@ -79,6 +79,7 @@ import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
@@ -90,7 +91,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.Tab
@@ -121,7 +122,9 @@ internal fun SearchScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val postInteractionState = rememberPostInteractionState()
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
 
     Column(
         modifier = modifier
@@ -254,7 +257,8 @@ internal fun SearchScreen(
             { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.To(
-                        composePostDestination(
+                        if (paneScaffoldState.isSignedOut) signInDestination()
+                        else composePostDestination(
                             type = Post.Create.Reply(
                                 parent = result.post,
                             ),
@@ -336,6 +340,11 @@ internal fun SearchScreen(
 
     PostInteractionsBottomSheet(
         state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
         onInteractionConfirmed = {
             actions(
                 Action.SendPostInteraction(it)
