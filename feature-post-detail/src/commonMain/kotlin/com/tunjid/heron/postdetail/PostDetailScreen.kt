@@ -52,12 +52,13 @@ import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.postLikesDestination
 import com.tunjid.heron.scaffold.navigation.postRepostsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -80,7 +81,9 @@ internal fun PostDetailScreen(
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val videoStates = remember { ThreadedVideoPositionStates() }
-    val postInteractionState = rememberPostInteractionState()
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
 
     LazyVerticalStaggeredGrid(
         modifier = modifier
@@ -173,7 +176,8 @@ internal fun PostDetailScreen(
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
-                                        composePostDestination(
+                                        if (paneScaffoldState.isSignedOut) signInDestination()
+                                        else composePostDestination(
                                             type = Post.Create.Reply(
                                                 parent = post,
                                             ),
@@ -217,6 +221,11 @@ internal fun PostDetailScreen(
 
     PostInteractionsBottomSheet(
         state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
         onInteractionConfirmed = {
             actions(
                 Action.SendPostInteraction(it)

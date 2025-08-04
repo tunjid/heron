@@ -83,6 +83,7 @@ import heron.ui_timeline.generated.resources.liked
 import heron.ui_timeline.generated.resources.quote
 import heron.ui_timeline.generated.resources.reply
 import heron.ui_timeline.generated.resources.repost
+import heron.ui_timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -241,6 +242,7 @@ private fun PostInteraction(
 
 @Stable
 class PostInteractionsSheetState private constructor(
+    isSignedIn: Boolean,
     internal val sheetState: SheetState,
     internal val scope: CoroutineScope,
 ) {
@@ -249,6 +251,8 @@ class PostInteractionsSheetState private constructor(
 
     var showBottomSheet by mutableStateOf(false)
         internal set
+
+    internal var isSignedIn by mutableStateOf(isSignedIn)
 
     fun onInteraction(interaction: Post.Interaction) {
         currentInteraction = interaction
@@ -265,16 +269,19 @@ class PostInteractionsSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberPostInteractionState(): PostInteractionsSheetState {
+        fun rememberUpdatedPostInteractionState(
+            isSignedIn: Boolean,
+        ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
 
-            return remember {
+            return remember(sheetState, scope) {
                 PostInteractionsSheetState(
+                    isSignedIn = isSignedIn,
                     sheetState = sheetState,
                     scope = scope,
                 )
-            }
+            }.also { it.isSignedIn = isSignedIn }
         }
     }
 }
@@ -282,6 +289,7 @@ class PostInteractionsSheetState private constructor(
 @Composable
 fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
+    onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
@@ -294,8 +302,12 @@ fun PostInteractionsBottomSheet(
             is Post.Interaction.Delete.RemoveRepost,
             is Post.Interaction.Delete.Unlike,
                 -> {
-                onInteractionConfirmed(interaction)
-                state.currentInteraction = null
+                if (state.isSignedIn) {
+                    onInteractionConfirmed(interaction)
+                    state.currentInteraction = null
+                } else {
+                    state.showBottomSheet = true
+                }
             }
         }
     }
@@ -311,8 +323,7 @@ fun PostInteractionsBottomSheet(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                repeat(2) { index ->
-
+                if (state.isSignedIn) repeat(2) { index ->
                     val contentDescription = stringResource(
                         if (index == 0) Res.string.repost
                         else Res.string.quote
@@ -322,10 +333,13 @@ fun PostInteractionsBottomSheet(
                             .fillMaxWidth()
                             .clip(CircleShape)
                             .clickable {
-                                if (index == 0) state.currentInteraction
-                                    ?.let(onInteractionConfirmed)
-                                else (state.currentInteraction as? Post.Interaction.Create.Repost)
-                                    ?.let(onQuotePostClicked)
+                                when (index) {
+                                    0 -> state.currentInteraction
+                                        ?.let(onInteractionConfirmed)
+
+                                    else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                        ?.let(onQuotePostClicked)
+                                }
                                 state.hideSheet()
                             }
                             .padding(
@@ -358,10 +372,16 @@ fun PostInteractionsBottomSheet(
                 OutlinedButton(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = state::hideSheet,
+                    onClick = {
+                        if (!state.isSignedIn) onSignInClicked()
+                        state.hideSheet()
+                    },
                     content = {
                         Text(
-                            text = stringResource(Res.string.cancel)
+                            text = stringResource(
+                                if (state.isSignedIn) Res.string.cancel
+                                else Res.string.sign_in
+                            )
                                 .capitalize(Locale.current),
                             style = MaterialTheme.typography.bodyLarge
                         )

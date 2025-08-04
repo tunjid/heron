@@ -48,4 +48,5 @@
     <string name="starter_pack_by">Starter Pack by %1$s</string>
     <string name="list_by">List by %1$s</string>
     <string name="show_more">Show More</string>
+    <string name="sign_in">Sign In</string>
 </resources>
