@@ -127,9 +127,7 @@ internal fun SearchScreen(
         modifier = modifier
     ) {
         Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
-        val pagerState = rememberPagerState {
-            4
-        }
+        val pagerState = rememberPagerState { state.searchStateHolders.size }
         val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
             { profileWithViewerState ->
                 actions(
@@ -388,7 +386,8 @@ private fun SuggestedContent(
         item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp)
+                    .animateItem(),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
             )
@@ -401,7 +400,8 @@ private fun SuggestedContent(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .clickable { onTrendClicked(trend) }
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     index = index,
                     now = now,
                     trend = trend,
@@ -409,10 +409,11 @@ private fun SuggestedContent(
                 )
             }
         )
-        item {
+        if (suggestedProfiles.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.AccountCircle,
                 title = stringResource(Res.string.suggested_accounts),
             )
@@ -424,7 +425,8 @@ private fun SuggestedContent(
                 ProfileWithViewerState(
                     modifier = Modifier
                         .clickable { onProfileClicked(suggestedProfile) }
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     signedInProfileId = null,
                     profile = suggestedProfile.profile,
@@ -435,10 +437,11 @@ private fun SuggestedContent(
                 )
             }
         )
-        item {
+        if (starterPacksWithMembers.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.JoinFull,
                 title = stringResource(Res.string.starter_packs),
             )
@@ -450,17 +453,19 @@ private fun SuggestedContent(
                 SuggestedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
             }
         )
-        item {
+        if (feedGenerators.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 icon = Icons.Rounded.RssFeed,
                 title = stringResource(Res.string.discover_feeds),
             )
@@ -471,7 +476,8 @@ private fun SuggestedContent(
             itemContent = { feedGenerator ->
                 FeedGeneratorSearchResult(
                     modifier = Modifier
-                        .fillParentMaxWidth(),
+                        .fillParentMaxWidth()
+                        .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = feedGenerator,
@@ -575,23 +581,8 @@ private fun TabbedSearchResults(
         Tabs(
             modifier = Modifier.fillMaxWidth(),
             tabsState = rememberTabsState(
-                tabs = listOf(
-                    Tab(
-                        title = stringResource(resource = Res.string.top),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.latest),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.people),
-                        hasUpdate = false
-                    ),
-                    Tab(
-                        title = stringResource(resource = Res.string.feeds),
-                        hasUpdate = false
-                    ),
+                tabs = searchTabs(
+                    isSignedIn = state.signedInProfile != null
                 ),
                 selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
@@ -633,6 +624,16 @@ private fun TabbedSearchResults(
         )
     }
 }
+
+@Composable
+private fun searchTabs(isSignedIn: Boolean): List<Tab> = listOf(
+    stringResource(resource = Res.string.top),
+    stringResource(resource = Res.string.latest),
+    stringResource(resource = Res.string.people),
+    stringResource(resource = Res.string.feeds),
+)
+    .takeLast(if (isSignedIn) 4 else 2)
+    .map { Tab(title = it, hasUpdate = false) }
 
 @Composable
 private fun SearchResults(

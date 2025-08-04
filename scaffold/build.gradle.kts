@@ -22,8 +22,13 @@ plugins {
     alias(libs.plugins.composeCompiler)
     id("org.jetbrains.compose")
 }
+
 android {
     namespace = "com.tunjid.heron.domain.navigation"
+}
+
+compose.resources {
+    publicResClass = true
 }
 
 kotlin {

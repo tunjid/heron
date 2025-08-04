@@ -38,7 +38,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
-import com.tunjid.heron.search.ActualSearchViewModel
+import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.ui.SearchBar
@@ -97,7 +97,7 @@ class SearchBindings(
     ) = threePaneEntry(
         contentTransform = predictiveBackContentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualSearchViewModel> {
+            val viewModel = viewModel<SearchViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,

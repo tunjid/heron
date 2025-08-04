@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.MaterialTheme
@@ -46,11 +47,13 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
@@ -75,6 +78,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature_home.generated.resources.Res
 import heron.feature_home.generated.resources.create_post
 import heron.feature_home.generated.resources.save
+import heron.scaffold.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 internal const val RoutePattern = "/home"
@@ -181,20 +185,34 @@ class HomeBindings(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = if (state.timelinePreferencesExpanded) stringResource(Res.string.save)
-                        else stringResource(Res.string.create_post),
-                        icon = if (state.timelinePreferencesExpanded) Icons.Rounded.Save
-                        else Icons.Rounded.Edit,
+                        text = stringResource(
+                            when {
+                                isSignedOut -> ScaffoldStrings.sign_in
+                                state.timelinePreferencesExpanded -> Res.string.save
+                                else -> Res.string.create_post
+                            }
+                        ),
+                        icon = when {
+                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                            state.timelinePreferencesExpanded -> Icons.Rounded.Save
+                            else -> Icons.Rounded.Edit
+                        },
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
-                                if (state.timelinePreferencesExpanded) Action.UpdateTimeline.RequestUpdate
-                                else Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
+                                when {
+                                    isSignedOut -> Action.Navigate.To(
+                                        signInDestination()
                                     )
-                                )
+
+                                    state.timelinePreferencesExpanded -> Action.UpdateTimeline.RequestUpdate
+                                    else -> Action.Navigate.To(
+                                        composePostDestination(
+                                            type = Post.Create.Timeline,
+                                            sharedElementPrefix = null,
+                                        )
+                                    )
+                                }
                             )
                         }
                     )

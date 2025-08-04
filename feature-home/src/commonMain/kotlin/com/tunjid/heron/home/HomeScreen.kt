@@ -150,6 +150,7 @@ internal fun HomeScreen(
         )
         HomeTabs(
             modifier = Modifier
+                .padding(horizontal = 8.dp)
                 .offset {
                     tabsOffsetNestedScrollConnection.offset.round()
                 },
@@ -157,6 +158,7 @@ internal fun HomeScreen(
             selectedTabIndex = pagerState::tabIndex,
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentSourceId = state.currentSourceId,
+            isSignedIn = state.signedInProfile != null,
             isExpanded = state.timelinePreferencesExpanded,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
