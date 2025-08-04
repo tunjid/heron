@@ -157,10 +157,13 @@ private val ChatProxyPaths = listOf(
 
 private val SignedOutPaths = listOf(
     "app.bsky.actor.getProfile",
+    "app.bsky.actor.searchActors",
+    "app.bsky.actor.searchActorsTypeahead",
     "app.bsky.feed.getAuthorFeed",
     "app.bsky.feed.getFeed",
     "app.bsky.feed.getPostThread",
     "app.bsky.feed.getFeedGenerator",
+    "app.bsky.feed.searchPosts",
     "app.bsky.unspecced.getPopularFeedGenerators",
     "app.bsky.unspecced.getTrends",
 )
