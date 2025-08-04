@@ -21,9 +21,11 @@ import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
+import app.bsky.feed.GetSuggestedFeedsResponse
 import app.bsky.feed.SearchPostsQueryParams
 import app.bsky.feed.SearchPostsSort
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
+import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetTrendsQueryParams
@@ -60,6 +62,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -370,56 +373,56 @@ internal class OfflineSearchRepository @Inject constructor(
 
     override fun suggestedProfiles(
         category: String?,
-    ): Flow<List<ProfileWithViewerState>> = flow {
-        val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
-            getSuggestedUsersUnspecced(
-                GetSuggestedUsersQueryParams(
-                    category = category
-                )
-            )
-        }
-            .getOrNull()
-            ?.actors
-            ?: return@flow
-
-        val signedInProfileId = savedStateDataSource.signedInProfileId
-
-        multipleEntitySaverProvider.saveInTransaction {
-            profileViews.forEach { profileView ->
-                add(
-                    viewingProfileId = signedInProfileId,
-                    profileView = profileView,
+    ): Flow<List<ProfileWithViewerState>> =
+        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+            if (signedInProfileId == null) return@flatMapLatest emptyFlow()
+            val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                getSuggestedUsersUnspecced(
+                    GetSuggestedUsersQueryParams(
+                        category = category
+                    )
                 )
             }
-        }
+                .getOrNull()
+                ?.actors
+                ?: return@flatMapLatest emptyFlow()
 
-        emitAll(
+            multipleEntitySaverProvider.saveInTransaction {
+                profileViews.forEach { profileView ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        profileView = profileView,
+                    )
+                }
+            }
+
             profileViews.observeProfileWithViewerStates(
                 profileDao = profileDao,
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
                 idMapper = { did.did.let(::ProfileId) },
             )
-        )
-    }
-
-    override fun suggestedStarterPacks(): Flow<List<StarterPack>> = flow {
-        val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
-            getSuggestedStarterPacksUnspecced(
-                GetSuggestedStarterPacksQueryParams()
-            )
         }
-            .getOrNull()
-            ?.starterPacks
-            ?: return@flow
 
-        multipleEntitySaverProvider.saveInTransaction {
-            starterPackViews.forEach { starterPack ->
-                add(starterPack = starterPack)
+    override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
+        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+            if (signedInProfileId == null) return@flatMapLatest emptyFlow()
+
+            val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                getSuggestedStarterPacksUnspecced(
+                    GetSuggestedStarterPacksQueryParams()
+                )
             }
-        }
+                .getOrNull()
+                ?.starterPacks
+                ?: return@flatMapLatest emptyFlow()
 
-        emitAll(
+            multipleEntitySaverProvider.saveInTransaction {
+                starterPackViews.forEach { starterPack ->
+                    add(starterPack = starterPack)
+                }
+            }
+
             starterPackDao.starterPacks(
                 starterPackViews.mapTo(mutableSetOf()) { it.cid.cid.let(::StarterPackId) }
             )
@@ -427,26 +430,28 @@ internal class OfflineSearchRepository @Inject constructor(
                     populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
-        )
-    }
-
-    override fun suggestedFeeds(): Flow<List<FeedGenerator>> = flow {
-        val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
-            getSuggestedFeeds(
-                GetSuggestedFeedsQueryParams()
-            )
         }
-            .getOrNull()
-            ?.feeds
-            ?: return@flow
 
-        multipleEntitySaverProvider.saveInTransaction {
-            generatorViews.forEach { generatorView ->
-                add(feedGeneratorView = generatorView)
+    override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
+        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+
+            val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                if (signedInProfileId == null) getPopularFeedGeneratorsUnspecced(
+                    params = GetPopularFeedGeneratorsQueryParams()
+                ).map(GetPopularFeedGeneratorsResponse::feeds)
+                else getSuggestedFeeds(
+                    params = GetSuggestedFeedsQueryParams()
+                ).map(GetSuggestedFeedsResponse::feeds)
             }
-        }
+                .getOrNull()
+                ?: return@flatMapLatest emptyFlow()
 
-        emitAll(
+            multipleEntitySaverProvider.saveInTransaction {
+                generatorViews.forEach { generatorView ->
+                    add(feedGeneratorView = generatorView)
+                }
+            }
+
             feedGeneratorDao.feedGeneratorsByUri(
                 generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) }
             )
@@ -454,8 +459,8 @@ internal class OfflineSearchRepository @Inject constructor(
                     populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
-        )
-    }
+
+        }
 }
 
 private fun TrendView.trend() = Trend(
