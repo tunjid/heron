@@ -28,8 +28,6 @@ sealed interface Timeline {
 
     val sourceId: String
 
-    val signedInProfileId: ProfileId?
-
     val lastRefreshed: Instant?
 
     val presentation: Presentation
@@ -57,7 +55,6 @@ sealed interface Timeline {
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
             override val isPinned: Boolean,
-            override val signedInProfileId: ProfileId?,
         ) : Home(
             source = Constants.timelineFeed,
         ) {
@@ -70,7 +67,6 @@ sealed interface Timeline {
             override val lastRefreshed: Instant?,
             override val presentation: Presentation,
             override val isPinned: Boolean,
-            override val signedInProfileId: ProfileId?,
             val feedList: FeedList,
         ) : Home(
             source = feedList.uri,
@@ -89,7 +85,6 @@ sealed interface Timeline {
                     presentation = Text.WithEmbed,
                     isPinned = false,
                     feedList = list,
-                    signedInProfileId = null,
                 )
             }
         }
@@ -101,7 +96,6 @@ sealed interface Timeline {
             override val presentation: Presentation,
             override val supportedPresentations: kotlin.collections.List<Presentation>,
             override val isPinned: Boolean,
-            override val signedInProfileId: ProfileId?,
             val feedGenerator: FeedGenerator,
         ) : Home(
             source = feedGenerator.uri,
@@ -119,7 +113,6 @@ sealed interface Timeline {
                     supportedPresentations = emptyList(),
                     isPinned = false,
                     feedGenerator = feedGenerator,
-                    signedInProfileId = null,
                 )
             }
         }
@@ -130,7 +123,6 @@ sealed interface Timeline {
     data class Profile(
         val profileId: ProfileId,
         val type: Type,
-        override val signedInProfileId: ProfileId?,
         override val lastRefreshed: Instant?,
         override val presentation: Presentation,
     ) : Timeline {

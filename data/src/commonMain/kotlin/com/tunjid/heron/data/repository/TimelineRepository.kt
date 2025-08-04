@@ -759,7 +759,6 @@ internal class OfflineTimelineRepository(
                                     .distinctUntilChanged()
                                     .map { timelinePreferenceEntity ->
                                         Timeline.Profile(
-                                            signedInProfileId = signedInProfileId,
                                             profileId = profile.did,
                                             type = request.type,
                                             lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
@@ -815,7 +814,9 @@ internal class OfflineTimelineRepository(
     ): Boolean {
         return runCatchingUnlessCancelled {
             timelineDao.updatePreferredTimelinePresentation(
-                partial = timeline.preferredPresentationPartial(
+                partial = preferredPresentationPartial(
+                    signedInProfileId = savedStateDataSource.signedInProfileId,
+                    sourceId = timeline.sourceId,
                     presentation = presentation,
                 )
             )
@@ -857,71 +858,79 @@ internal class OfflineTimelineRepository(
         currentRequestWithNextCursor: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
-    ): Flow<Cursor> = nextCursorFlow(
-        currentCursor = currentCursor,
-        currentRequestWithNextCursor = currentRequestWithNextCursor,
-        nextCursor = nextCursor,
-        onResponse = {
-            multipleEntitySaverProvider.saveInTransaction {
-                if (timelineDao.isFirstRequest(query)) {
-                    timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
-                    timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
-                        listOf(
-                            TimelinePreferencesEntity(
-                                viewingProfileId = query.timeline.signedInProfileId,
-                                sourceId = query.timeline.sourceId,
-                                lastFetchedAt = query.data.cursorAnchor,
-                                preferredPresentation = null,
+    ): Flow<Cursor> = savedStateDataSource
+        .observedSignedInProfileId
+        .flatMapLatest { signedInProfileId ->
+            nextCursorFlow(
+                currentCursor = currentCursor,
+                currentRequestWithNextCursor = currentRequestWithNextCursor,
+                nextCursor = nextCursor,
+                onResponse = {
+                    multipleEntitySaverProvider.saveInTransaction {
+                        if (timelineDao.isFirstRequest(signedInProfileId, query)) {
+                            timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                            timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
+                                listOf(
+                                    TimelinePreferencesEntity(
+                                        viewingProfileId = signedInProfileId,
+                                        sourceId = query.timeline.sourceId,
+                                        lastFetchedAt = query.data.cursorAnchor,
+                                        preferredPresentation = null,
+                                    )
+                                )
                             )
+                        }
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            timeline = query.timeline,
+                            feedViewPosts = networkFeed(),
                         )
-                    )
+                    }
                 }
-                add(
-                    viewingProfileId = savedStateDataSource.signedInProfileId,
-                    timeline = query.timeline,
-                    feedViewPosts = networkFeed(),
-                )
-            }
+            )
         }
-    )
 
     private fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
         pollInterval: Duration,
         networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
-    ) = flow {
-        while (true) {
-            val pollInstant = Clock.System.now()
-            networkService.runCatchingWithMonitoredNetworkRetry { networkRequestBlock() }
-                .getOrNull()
-                ?.let(networkResponseToFeedViews)
-                ?.let { fetchedFeedViewPosts ->
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            viewingProfileId = savedStateDataSource.signedInProfileId,
-                            timeline = timeline,
-                            feedViewPosts = fetchedFeedViewPosts,
-                        )
+    ) = combine(
+        flow = savedStateDataSource.observedSignedInProfileId,
+        flow2 = flow {
+            while (true) {
+                val pollInstant = Clock.System.now()
+                networkService.runCatchingWithMonitoredNetworkRetry { networkRequestBlock() }
+                    .getOrNull()
+                    ?.let(networkResponseToFeedViews)
+                    ?.let { fetchedFeedViewPosts ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(
+                                viewingProfileId = savedStateDataSource.signedInProfileId,
+                                timeline = timeline,
+                                feedViewPosts = fetchedFeedViewPosts,
+                            )
+                        }
                     }
-                }
-                ?: continue
+                    ?: continue
 
-            emit(pollInstant)
-            delay(pollInterval.inWholeMilliseconds)
-        }
-    }
-        .flatMapLatest { pollInstant ->
+                emit(pollInstant)
+                delay(pollInterval.inWholeMilliseconds)
+            }
+        },
+        transform = ::Pair,
+    )
+        .flatMapLatest { (signedInProfileId, pollInstant) ->
             combine(
                 timelineDao.lastFetchKey(
-                    viewingProfileId = timeline.signedInProfileId?.id,
+                    viewingProfileId = signedInProfileId?.id,
                     sourceId = timeline.sourceId,
                 )
                     .map { it?.lastFetchedAt ?: pollInstant }
                     .distinctUntilChangedBy(Instant::toEpochMilliseconds)
                     .flatMapLatest {
                         timelineDao.feedItems(
-                            viewingProfileId = timeline.signedInProfileId?.id,
+                            viewingProfileId = signedInProfileId?.id,
                             sourceId = timeline.sourceId,
                             before = it,
                             limit = 1,
@@ -929,7 +938,7 @@ internal class OfflineTimelineRepository(
                         )
                     },
                 timelineDao.feedItems(
-                    viewingProfileId = timeline.signedInProfileId?.id,
+                    viewingProfileId = signedInProfileId?.id,
                     sourceId = timeline.sourceId,
                     before = pollInstant,
                     limit = 1,
@@ -955,101 +964,104 @@ internal class OfflineTimelineRepository(
     private fun observeTimeline(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
-        timelineDao.feedItems(
-            viewingProfileId = query.timeline.signedInProfileId?.id,
-            sourceId = query.timeline.sourceId,
-            before = query.data.cursorAnchor,
-            offset = query.data.offset,
-            limit = query.data.limit,
-        )
-            .flatMapLatest { itemEntities ->
-                val postIds = itemEntities.flatMap {
-                    listOfNotNull(
-                        it.postId,
-                        it.reply?.parentPostId,
-                        it.reply?.rootPostId
-                    )
-                }
-                    .toSet()
-                combine(
-                    postDao.posts(
-                        viewingProfileId = query.timeline.signedInProfileId?.id,
-                        postIds = postIds
-                    ),
-                    postDao.embeddedPosts(
-                        viewingProfileId = query.timeline.signedInProfileId?.id,
-                        postIds = postIds
-                    ),
-                    profileDao.profiles(
-                        itemEntities.mapNotNull { it.reposter }
-                    )
-                ) { posts, embeddedPosts, repostProfiles ->
-                    val idsToPosts = posts.associateBy { it.entity.cid }
-                    val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
-                    val idsToRepostProfiles = repostProfiles.associateBy { it.did }
-
-                    itemEntities.map { entity ->
-                        val mainPost = idsToPosts.getValue(entity.postId)
-                        val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
-                        val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
-                        val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
-
-                        when {
-                            replyRoot != null && replyParent != null -> TimelineItem.Thread(
-                                id = entity.id,
-                                generation = null,
-                                anchorPostIndex = 2,
-                                hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                posts = listOf(
-                                    replyRoot.asExternalModel(
-                                        quote = idsToEmbeddedPosts[replyRoot.entity.cid]
-                                            ?.entity
-                                            ?.asExternalModel(quote = null)
-                                    ),
-                                    replyParent.asExternalModel(
-                                        quote = idsToEmbeddedPosts[replyParent.entity.cid]
-                                            ?.entity
-                                            ?.asExternalModel(quote = null)
-                                    ),
-                                    mainPost.asExternalModel(
-                                        quote = idsToEmbeddedPosts[entity.postId]
-                                            ?.entity
-                                            ?.asExternalModel(quote = null)
-                                    )
-                                ),
-                            )
-
-                            repostedBy != null -> TimelineItem.Repost(
-                                id = entity.id,
-                                post = mainPost.asExternalModel(
-                                    quote = idsToEmbeddedPosts[entity.postId]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
-                                ),
-                                by = repostedBy.asExternalModel(),
-                                at = entity.indexedAt,
-                            )
-
-                            entity.isPinned -> TimelineItem.Pinned(
-                                id = entity.id,
-                                post = mainPost.asExternalModel(
-                                    quote = idsToEmbeddedPosts[entity.postId]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
-                                ),
-                            )
-
-                            else -> TimelineItem.Single(
-                                id = entity.id,
-                                post = mainPost.asExternalModel(
-                                    quote = idsToEmbeddedPosts[entity.postId]
-                                        ?.entity
-                                        ?.asExternalModel(quote = null)
-                                ),
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                timelineDao.feedItems(
+                    viewingProfileId = signedInProfileId?.id,
+                    sourceId = query.timeline.sourceId,
+                    before = query.data.cursorAnchor,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .flatMapLatest { itemEntities ->
+                        val postIds = itemEntities.flatMap {
+                            listOfNotNull(
+                                it.postId,
+                                it.reply?.parentPostId,
+                                it.reply?.rootPostId
                             )
                         }
+                            .toSet()
+                        combine(
+                            postDao.posts(
+                                viewingProfileId = signedInProfileId?.id,
+                                postIds = postIds
+                            ),
+                            postDao.embeddedPosts(
+                                viewingProfileId = signedInProfileId?.id,
+                                postIds = postIds
+                            ),
+                            profileDao.profiles(
+                                itemEntities.mapNotNull { it.reposter }
+                            )
+                        ) { posts, embeddedPosts, repostProfiles ->
+                            val idsToPosts = posts.associateBy { it.entity.cid }
+                            val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
+                            val idsToRepostProfiles = repostProfiles.associateBy { it.did }
+
+                            itemEntities.map { entity ->
+                                val mainPost = idsToPosts.getValue(entity.postId)
+                                val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
+                                val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
+                                val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
+
+                                when {
+                                    replyRoot != null && replyParent != null -> TimelineItem.Thread(
+                                        id = entity.id,
+                                        generation = null,
+                                        anchorPostIndex = 2,
+                                        hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                        posts = listOf(
+                                            replyRoot.asExternalModel(
+                                                quote = idsToEmbeddedPosts[replyRoot.entity.cid]
+                                                    ?.entity
+                                                    ?.asExternalModel(quote = null)
+                                            ),
+                                            replyParent.asExternalModel(
+                                                quote = idsToEmbeddedPosts[replyParent.entity.cid]
+                                                    ?.entity
+                                                    ?.asExternalModel(quote = null)
+                                            ),
+                                            mainPost.asExternalModel(
+                                                quote = idsToEmbeddedPosts[entity.postId]
+                                                    ?.entity
+                                                    ?.asExternalModel(quote = null)
+                                            )
+                                        ),
+                                    )
+
+                                    repostedBy != null -> TimelineItem.Repost(
+                                        id = entity.id,
+                                        post = mainPost.asExternalModel(
+                                            quote = idsToEmbeddedPosts[entity.postId]
+                                                ?.entity
+                                                ?.asExternalModel(quote = null)
+                                        ),
+                                        by = repostedBy.asExternalModel(),
+                                        at = entity.indexedAt,
+                                    )
+
+                                    entity.isPinned -> TimelineItem.Pinned(
+                                        id = entity.id,
+                                        post = mainPost.asExternalModel(
+                                            quote = idsToEmbeddedPosts[entity.postId]
+                                                ?.entity
+                                                ?.asExternalModel(quote = null)
+                                        ),
+                                    )
+
+                                    else -> TimelineItem.Single(
+                                        id = entity.id,
+                                        post = mainPost.asExternalModel(
+                                            quote = idsToEmbeddedPosts[entity.postId]
+                                                ?.entity
+                                                ?.asExternalModel(quote = null)
+                                        ),
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
             }
 
     private fun followingTimeline(
@@ -1068,7 +1080,6 @@ internal class OfflineTimelineRepository(
                 position = position,
                 lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                 presentation = timelinePreferenceEntity.preferredPresentation(),
-                signedInProfileId = signedInProfileId,
                 isPinned = isPinned,
             )
         }
@@ -1091,7 +1102,6 @@ internal class OfflineTimelineRepository(
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.Feed(
                         position = position,
-                        signedInProfileId = signedInProfileId,
                         feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
@@ -1140,7 +1150,6 @@ internal class OfflineTimelineRepository(
                 .map { timelinePreferenceEntity ->
                     Timeline.Home.List(
                         position = position,
-                        signedInProfileId = signedInProfileId,
                         feedList = it.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
@@ -1244,10 +1253,13 @@ private fun TimelinePreferencesEntity?.preferredPresentation() =
         else -> Timeline.Presentation.Text.WithEmbed
     }
 
-private suspend fun TimelineDao.isFirstRequest(query: TimelineQuery): Boolean {
+private suspend fun TimelineDao.isFirstRequest(
+    signedInProfileId: ProfileId?,
+    query: TimelineQuery,
+): Boolean {
     if (query.data.page != 0) return false
     val lastFetchedAt = lastFetchKey(
-        viewingProfileId = query.timeline.signedInProfileId?.id,
+        viewingProfileId = signedInProfileId?.id,
         sourceId = query.timeline.sourceId,
     ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
