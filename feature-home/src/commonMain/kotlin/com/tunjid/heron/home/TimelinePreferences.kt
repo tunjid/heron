@@ -116,6 +116,7 @@ expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modif
 internal fun HomeTabs(
     modifier: Modifier = Modifier,
     isExpanded: Boolean,
+    isSignedIn: Boolean,
     currentSourceId: String?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
@@ -187,15 +188,12 @@ internal fun HomeTabs(
                 onTimelinePresentationUpdated = onTimelinePresentationUpdated,
             )
         }
-        Row(
+        if (isSignedIn) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
                     start = 8.dp,
                     end = 8.dp,
-                )
-                .renderInSharedTransitionScopeOverlay(
-                    renderInOverlay = this@with::isTransitionActive
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
