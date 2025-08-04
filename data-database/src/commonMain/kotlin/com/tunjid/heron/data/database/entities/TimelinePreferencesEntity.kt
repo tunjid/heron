@@ -62,8 +62,10 @@ data class TimelinePreferencesEntity(
     }
 }
 
-fun Timeline.preferredPresentationPartial(
-    presentation: Timeline.Presentation
+fun preferredPresentationPartial(
+    signedInProfileId: ProfileId?,
+    sourceId: String,
+    presentation: Timeline.Presentation,
 ) = TimelinePreferencesEntity.Partial.PreferredPresentation(
     id = timelinePreferenceId(
         viewingProfileId = signedInProfileId,
