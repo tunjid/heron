@@ -121,6 +121,7 @@ class GalleryBindings(
                         paneScaffoldState = this,
                         modifier = Modifier,
                         state = state,
+                        actions = viewModel.accept,
                     )
                 }
             )

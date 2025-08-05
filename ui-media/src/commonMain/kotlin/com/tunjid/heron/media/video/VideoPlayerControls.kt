@@ -16,23 +16,16 @@
 
 package com.tunjid.heron.media.video
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Forward5
@@ -58,7 +51,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -77,44 +69,6 @@ import kotlinx.coroutines.flow.merge
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
-
-@Composable
-fun PlayerControls(
-    modifier: Modifier = Modifier,
-    state: PlayerControlsUiState,
-    videoPlayerState: VideoPlayerState,
-) {
-    AnimatedVisibility(
-        modifier = modifier
-            .fillMaxSize(),
-        visible = state.playerControlsVisible,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color.Black.copy(alpha = 0.6f))
-        ) {
-            PlaybackControls(
-                modifier = Modifier
-                    .align(Alignment.Center),
-                videoPlayerState = videoPlayerState,
-                controlsState = state,
-            )
-
-            PlaybackStatus(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(
-                        vertical = 16.dp,
-                    )
-                    .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                videoPlayerState = videoPlayerState,
-                controlsState = state,
-            )
-        }
-    }
-}
 
 @Composable
 private fun PlaybackControls(
@@ -139,6 +93,7 @@ private fun PlaybackControls(
                         )
                     },
                 imageVector = state.icon,
+                tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(state.stringRes),
             )
         }
@@ -146,7 +101,7 @@ private fun PlaybackControls(
 }
 
 @Composable
-private fun PlaybackStatus(
+fun PlaybackStatus(
     modifier: Modifier = Modifier,
     controlsState: PlayerControlsUiState,
     videoPlayerState: VideoPlayerState,
@@ -192,17 +147,29 @@ private fun PlaybackStatus(
                 )
             },
         )
-        Text(
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp),
-            text = buildAnnotatedString {
-                append(videoPlayerState.lastPositionMs.formatVideoDuration())
-                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
-                    append(" • ")
-                    append(videoPlayerState.totalDuration.formatVideoDuration())
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = videoPlayerState.lastPositionMs.formatVideoDuration()
+            )
+            PlaybackControls(
+                modifier = Modifier,
+                videoPlayerState = videoPlayerState,
+                controlsState = controlsState,
+            )
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
+                        append(videoPlayerState.totalDuration.formatVideoDuration())
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -215,9 +182,9 @@ class PlayerControlsUiState(
     var interactionCount by mutableLongStateOf(0)
 
     internal val playerControlStates = mutableStateListOf(
-        PlayerControlState(Icons.Rounded.Replay5, 36.dp),
-        PlayerControlState(Icons.Rounded.PlayCircle, 48.dp),
-        PlayerControlState(Icons.Rounded.Forward5, 36.dp),
+        PlayerControlState(Icons.Rounded.Replay5, 30.dp),
+        PlayerControlState(Icons.Rounded.PlayCircle, 30.dp),
+        PlayerControlState(Icons.Rounded.Forward5, 30.dp),
     )
 
     fun toggleVisibility() {

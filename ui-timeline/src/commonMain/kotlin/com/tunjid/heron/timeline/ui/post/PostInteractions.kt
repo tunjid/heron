@@ -19,6 +19,7 @@ package com.tunjid.heron.timeline.ui.post
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,6 +78,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.actionIconSize
+import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.cancel
@@ -89,7 +92,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostInteractions(
     replyCount: String?,
@@ -111,13 +113,82 @@ fun PostInteractions(
         Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
         Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
     }
-    val iconSize = animateDpAsState(presentation.actionIconSize).value
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = arrangement.animate(),
     ) {
-        PostInteractionButton.All.forEach { button ->
+        PostInteractionsButtons(
+            replyCount = replyCount,
+            repostCount = repostCount,
+            likeCount = likeCount,
+            repostUri = repostUri,
+            likeUri = likeUri,
+            postId = postId,
+            postUri = postUri,
+            sharedElementPrefix = sharedElementPrefix,
+            iconSize = animateDpAsState(presentation.actionIconSize).value,
+            orientation = Orientation.Horizontal,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            onReplyToPost = onReplyToPost,
+            onPostInteraction = onPostInteraction
+        )
+        Spacer(Modifier.width(0.dp))
+    }
+}
+
+@Composable
+fun MediaPostInteractions(
+    post: Post,
+    sharedElementPrefix: String,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    modifier: Modifier = Modifier,
+    onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
+) = with(paneMovableElementSharedTransitionScope) {
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        PostInteractionsButtons(
+            replyCount = format(post.replyCount),
+            repostCount = format(post.repostCount),
+            likeCount = format(post.likeCount),
+            repostUri = post.viewerStats?.repostUri,
+            likeUri = post.viewerStats?.likeUri,
+            postId = post.cid,
+            postUri = post.uri,
+            sharedElementPrefix = sharedElementPrefix,
+            iconSize = 40.dp,
+            orientation = Orientation.Vertical,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            onReplyToPost = onReplyToPost,
+            onPostInteraction = onPostInteraction
+        )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private inline fun PostInteractionsButtons(
+    replyCount: String?,
+    repostCount: String?,
+    likeCount: String?,
+    repostUri: GenericUri?,
+    likeUri: GenericUri?,
+    postId: PostId,
+    postUri: PostUri,
+    sharedElementPrefix: String,
+    iconSize: Dp,
+    orientation: Orientation,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    crossinline onReplyToPost: () -> Unit,
+    crossinline onPostInteraction: (Post.Interaction) -> Unit,
+) = with(paneMovableElementSharedTransitionScope) {
+    PostInteractionButton.All.forEach { button ->
+        key(button) {
             PostInteraction(
                 modifier = Modifier
                     .paneStickySharedElement(
@@ -135,6 +206,7 @@ fun PostInteractions(
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                 },
                 iconSize = iconSize,
+                orientation = orientation,
                 contentDescription = stringResource(button.stringResource),
                 text = when (button) {
                     PostInteractionButton.Comment -> replyCount
@@ -189,7 +261,6 @@ fun PostInteractions(
                 },
             )
         }
-        Spacer(Modifier.width(0.dp))
     }
 }
 
@@ -199,44 +270,79 @@ private fun PostInteraction(
     iconSize: Dp,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    orientation: Orientation,
     text: String?,
     onClick: () -> Unit,
     tint: Color = MaterialTheme.colorScheme.outline,
 ) {
-    Row(
-        modifier = modifier
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = false),
-                onClick = onClick,
-            )
-            .padding(
-                top = 4.dp,
-                bottom = 2.dp,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(
-            modifier = Modifier.size(iconSize),
-            painter = rememberVectorPainter(icon),
-            contentDescription = contentDescription,
-            tint = tint,
+    val itemModifier = modifier
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = ripple(bounded = false),
+            onClick = onClick,
+        )
+        .padding(
+            top = 4.dp,
+            bottom = 2.dp,
         )
 
-        if (text != null) {
-            BasicText(
-                modifier = Modifier
-                    .padding(vertical = 1.dp),
+    when(orientation) {
+        Orientation.Vertical -> Column(
+            modifier = itemModifier,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            PostInteractionElements(
+                icon = icon,
+                iconSize = iconSize,
+                contentDescription = contentDescription,
                 text = text,
-                maxLines = 1,
-                color = { tint },
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 4.sp,
-                    maxFontSize = 16.sp,
-                ),
+                tint = tint,
             )
         }
+        Orientation.Horizontal -> Row(
+            modifier = itemModifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            PostInteractionElements(
+                icon = icon,
+                iconSize = iconSize,
+                contentDescription = contentDescription,
+                text = text,
+                tint = tint,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PostInteractionElements(
+    icon: ImageVector,
+    iconSize: Dp,
+    contentDescription: String,
+    text: String?,
+    tint: Color,
+) {
+    Icon(
+        modifier = Modifier.size(iconSize),
+        painter = rememberVectorPainter(icon),
+        contentDescription = contentDescription,
+        tint = tint,
+    )
+
+    if (text != null) {
+        BasicText(
+            modifier = Modifier
+                .padding(vertical = 1.dp),
+            text = text,
+            maxLines = 1,
+            color = { tint },
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 4.sp,
+                maxFontSize = 16.sp,
+            ),
+        )
     }
 }
 
