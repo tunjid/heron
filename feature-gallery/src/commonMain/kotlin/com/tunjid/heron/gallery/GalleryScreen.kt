@@ -18,15 +18,21 @@ package com.tunjid.heron.gallery
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -40,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
@@ -47,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostId
@@ -55,15 +63,19 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.media.video.PlayerControls
+import com.tunjid.heron.media.video.PlaybackControls
+import com.tunjid.heron.media.video.PlaybackStatus
 import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
+import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
@@ -100,7 +112,8 @@ internal fun GalleryScreen(
         }
 
         HorizontalPager(
-            modifier = Modifier,
+            modifier = Modifier
+                .fillMaxSize(),
             state = pagerState,
             key = { page -> updatedItems[page].key },
             pageContent = { page ->
@@ -156,55 +169,78 @@ internal fun GalleryScreen(
             }
         )
 
-        when (
-            val currentItem = updatedItems.getOrNull(pagerState.currentPage)
-        ) {
-            null -> Unit
-            is GalleryItem.Photo -> Unit
-            is GalleryItem.Video -> {
-                val videoPlayerState = videoPlayerController.getVideoStateById(
-                    currentItem.video.playlist.uri
-                )
-                if (videoPlayerState != null) {
-                    PlayerControls(
-                        videoPlayerState = videoPlayerState,
-                        state = playerControlsUiState,
-                    )
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { videoPlayerState.status }
-                            .collectLatest {
-                                playerControlsUiState.update(it)
-                            }
-                    }
-                }
-            }
-        }
-
-        MediaCreator(
+        videoPlayerController.VideoOverlay(
             modifier = Modifier
-                .statusBarsPadding()
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 20.dp,
-                ),
-            post = state.post,
-            sharedElementPrefix = state.sharedElementPrefix,
-            visible = playerControlsUiState.playerControlsVisible,
-            paneScaffoldState = paneScaffoldState,
-            onProfileClicked = { post ->
-                actions(
-                    Action.Navigate.To(
-                        profileDestination(
-                            profile = post.author,
-                            avatarSharedElementKey = post.avatarSharedElementKey(
-                                prefix = state.sharedElementPrefix,
-                            ),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current
+                .fillMaxSize(),
+            galleryItem = updatedItems.getOrNull(pagerState.currentPage),
+            isVisible = playerControlsUiState.playerControlsVisible,
+        ) { videoPlayerState ->
+            VideoPoster(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 20.dp,
+                    ),
+                post = state.post,
+                sharedElementPrefix = state.sharedElementPrefix,
+                paneScaffoldState = paneScaffoldState,
+                onProfileClicked = { post ->
+                    actions(
+                        Action.Navigate.To(
+                            profileDestination(
+                                profile = post.author,
+                                avatarSharedElementKey = post.avatarSharedElementKey(
+                                    prefix = state.sharedElementPrefix,
+                                ),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current
+                            )
                         )
                     )
+                },
+            )
+
+            PlaybackControls(
+                modifier = Modifier
+                    .align(Alignment.Center),
+                videoPlayerState = videoPlayerState,
+                controlsState = playerControlsUiState,
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .windowInsetsPadding(insets = WindowInsets.navigationBars),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                VideoText(
+                    post = state.post,
+                    sharedElementPrefix = state.sharedElementPrefix,
+                    paneScaffoldState = paneScaffoldState,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    onClick = {},
+                    onLinkTargetClicked = { post, target -> },
                 )
-            },
-        )
+                PlaybackStatus(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
+                    videoPlayerState = videoPlayerState,
+                    controlsState = playerControlsUiState,
+                )
+            }
+
+            LaunchedEffect(Unit) {
+                snapshotFlow { videoPlayerState.status }
+                    .collectLatest {
+                        playerControlsUiState.update(it)
+                    }
+            }
+        }
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
@@ -320,9 +356,40 @@ private fun Modifier.aspectRatioFor(
 }
 
 @Composable
-fun MediaCreator(
+fun VideoPlayerController.VideoOverlay(
+    modifier: Modifier = Modifier,
+    galleryItem: GalleryItem?,
+    isVisible: Boolean,
+    content: @Composable BoxScope.(VideoPlayerState) -> Unit,
+) {
+    when (galleryItem) {
+        null -> Unit
+        is GalleryItem.Photo -> Unit
+        is GalleryItem.Video -> {
+            val videoPlayerState = getVideoStateById(
+                videoId = galleryItem.video.playlist.uri
+            )
+
+            if (videoPlayerState != null) AnimatedVisibility(
+                modifier = modifier,
+                visible = isVisible,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.Black.copy(alpha = 0.6f)),
+                    content = {
+                        content(videoPlayerState)
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoPoster(
     post: Post?,
-    visible: Boolean,
     sharedElementPrefix: String,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
@@ -330,28 +397,42 @@ fun MediaCreator(
 ) {
     if (post == null) return
 
-    AnimatedVisibility(
-        modifier= modifier,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        visible = visible
-    ) {
-        ProfileWithViewerState(
-            modifier = Modifier,
-            movableElementSharedTransitionScope = paneScaffoldState,
-            signedInProfileId = null,
-            profile = post.author,
-            viewerState = null,
-            profileSharedElementKey = {
-                post.avatarSharedElementKey(sharedElementPrefix)
-            },
-            onProfileClicked = {
-                onProfileClicked(post)
-            },
-            onViewerStateClicked = {
+    ProfileWithViewerState(
+        modifier = modifier,
+        movableElementSharedTransitionScope = paneScaffoldState,
+        signedInProfileId = null,
+        profile = post.author,
+        viewerState = null,
+        profileSharedElementKey = {
+            post.avatarSharedElementKey(sharedElementPrefix)
+        },
+        onProfileClicked = {
+            onProfileClicked(post)
+        },
+        onViewerStateClicked = {
 
-            },
-        )
+        },
+    )
+}
 
-    }
+@Composable
+fun VideoText(
+    post: Post?,
+    sharedElementPrefix: String,
+    paneScaffoldState: PaneScaffoldState,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLinkTargetClicked: (Post, LinkTarget) -> Unit,
+) {
+    if (post == null) return
+
+    PostText(
+        modifier = modifier,
+        post = post,
+        sharedElementPrefix = sharedElementPrefix,
+        paneMovableElementSharedTransitionScope = paneScaffoldState,
+        maxLines = 3,
+        onClick = onClick,
+        onLinkTargetClicked = onLinkTargetClicked,
+    )
 }
