@@ -50,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,7 +90,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostInteractions(
     replyCount: String?,
@@ -111,13 +111,47 @@ fun PostInteractions(
         Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
         Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
     }
-    val iconSize = animateDpAsState(presentation.actionIconSize).value
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = arrangement.animate(),
     ) {
-        PostInteractionButton.All.forEach { button ->
+        PostInteractionsButtons(
+            replyCount = replyCount,
+            repostCount = repostCount,
+            likeCount = likeCount,
+            repostUri = repostUri,
+            likeUri = likeUri,
+            postId = postId,
+            postUri = postUri,
+            sharedElementPrefix = sharedElementPrefix,
+            iconSize = animateDpAsState(presentation.actionIconSize).value,
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            onReplyToPost = onReplyToPost,
+            onPostInteraction = onPostInteraction
+        )
+        Spacer(Modifier.width(0.dp))
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private inline fun PostInteractionsButtons(
+    replyCount: String?,
+    repostCount: String?,
+    likeCount: String?,
+    repostUri: GenericUri?,
+    likeUri: GenericUri?,
+    postId: PostId,
+    postUri: PostUri,
+    sharedElementPrefix: String,
+    iconSize: Dp,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    crossinline onReplyToPost: () -> Unit,
+    crossinline onPostInteraction: (Post.Interaction) -> Unit,
+) = with(paneMovableElementSharedTransitionScope) {
+    PostInteractionButton.All.forEach { button ->
+        key(button) {
             PostInteraction(
                 modifier = Modifier
                     .paneStickySharedElement(
@@ -189,7 +223,6 @@ fun PostInteractions(
                 },
             )
         }
-        Spacer(Modifier.width(0.dp))
     }
 }
 
