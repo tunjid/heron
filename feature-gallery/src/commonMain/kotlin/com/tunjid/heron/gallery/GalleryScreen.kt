@@ -222,18 +222,18 @@ internal fun GalleryScreen(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(horizontal = 16.dp),
-                onReplyToPost = {
+                onReplyToPost = { post ->
                     actions(
-                                            Action.Navigate.To(
-                                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                                else composePostDestination(
-                                                    type = Post.Create.Reply(
-                                                        parent = state.post,
-                                                    ),
-                                                    sharedElementPrefix = state.sharedElementPrefix,
-                                                )
-                                            )
-                                        )
+                        Action.Navigate.To(
+                            if (paneScaffoldState.isSignedOut) signInDestination()
+                            else composePostDestination(
+                                type = Post.Create.Reply(
+                                    parent = post,
+                                ),
+                                sharedElementPrefix = state.sharedElementPrefix,
+                            )
+                        )
+                    )
                 },
                 onPostInteraction = postInteractionState::onInteraction,
             )
@@ -272,28 +272,28 @@ internal fun GalleryScreen(
         }
 
         PostInteractionsBottomSheet(
-        state = postInteractionState,
-        onSignInClicked = {
-            actions(
-                Action.Navigate.To(signInDestination())
-            )
-        },
-        onInteractionConfirmed = {
-            actions(
-                Action.SendPostInteraction(it)
-            )
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = state.sharedElementPrefix,
+            state = postInteractionState,
+            onSignInClicked = {
+                actions(
+                    Action.Navigate.To(signInDestination())
+                )
+            },
+            onInteractionConfirmed = {
+                actions(
+                    Action.SendPostInteraction(it)
+                )
+            },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = state.sharedElementPrefix,
+                        )
                     )
                 )
-            )
-        }
-    )
+            }
+        )
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
@@ -494,7 +494,7 @@ fun VideoInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
-    onReplyToPost: () -> Unit,
+    onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     if (post == null) return
@@ -504,7 +504,9 @@ fun VideoInteractions(
         sharedElementPrefix = UnmatchedPrefix,
         paneMovableElementSharedTransitionScope = paneScaffoldState,
         modifier = modifier,
-        onReplyToPost = onReplyToPost,
+        onReplyToPost = {
+            onReplyToPost(post)
+        },
         onPostInteraction = onPostInteraction,
     )
 }
