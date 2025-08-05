@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities
 
+import androidx.collection.MutableObjectIntMap
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.CancellationException
@@ -99,6 +100,18 @@ internal value class LazyList<T>(
 
     fun add(element: T): Boolean =
         lazyList.value.add(element)
+}
+
+internal fun <T, R, K> List<T>.sortedWithNetworkList(
+    networkList: List<R>,
+    databaseId: (T) -> K,
+    networkId: (R) -> K,
+): List<T> {
+    val idToIndices = networkList.foldIndexed(MutableObjectIntMap<K>()) { index, map, networkItem ->
+        map[networkId(networkItem)] = index
+        map
+    }
+    return sortedBy { idToIndices[databaseId(it)] }
 }
 
 // Heuristically defined method for debouncing flows produced by
