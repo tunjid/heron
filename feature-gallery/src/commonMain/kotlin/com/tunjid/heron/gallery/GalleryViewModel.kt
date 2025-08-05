@@ -20,6 +20,8 @@ package com.tunjid.heron.gallery
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postId
@@ -28,6 +30,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -53,6 +56,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     postRepository: PostRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -71,6 +75,10 @@ class ActualGalleryViewModel(
             keySelector = Action::key
         ) {
             when (val action = type()) {
+                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    writeQueue = writeQueue,
+                )
+
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -85,3 +93,10 @@ private fun loadPostMutations(
 ): Flow<Mutation<State>> =
     postRepository.post(postId)
         .mapToMutation { copy(post = it) }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }

@@ -77,6 +77,10 @@ val GalleryItem.key
 
 sealed class Action(val key: String) {
 
+    data class SendPostInteraction(
+        val interaction: Post.Interaction,
+    ) : Action(key = "SendPostInteraction")
+
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data class To(
             val delegate: NavigationAction.Destination,

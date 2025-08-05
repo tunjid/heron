@@ -72,9 +72,14 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
+import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
@@ -96,6 +101,9 @@ internal fun GalleryScreen(
     val playerControlsUiState = remember(videoPlayerController) {
         PlayerControlsUiState(videoPlayerController)
     }
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+    )
 
     Box(
         modifier = modifier
@@ -208,6 +216,28 @@ internal fun GalleryScreen(
                 controlsState = playerControlsUiState,
             )
 
+            VideoInteractions(
+                post = state.post,
+                paneScaffoldState = paneScaffoldState,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(horizontal = 16.dp),
+                onReplyToPost = {
+                    actions(
+                                            Action.Navigate.To(
+                                                if (paneScaffoldState.isSignedOut) signInDestination()
+                                                else composePostDestination(
+                                                    type = Post.Create.Reply(
+                                                        parent = state.post,
+                                                    ),
+                                                    sharedElementPrefix = state.sharedElementPrefix,
+                                                )
+                                            )
+                                        )
+                },
+                onPostInteraction = postInteractionState::onInteraction,
+            )
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -227,7 +257,7 @@ internal fun GalleryScreen(
                 PlaybackStatus(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
+                        .fillMaxWidth(),
                     videoPlayerState = videoPlayerState,
                     controlsState = playerControlsUiState,
                 )
@@ -240,6 +270,30 @@ internal fun GalleryScreen(
                     }
             }
         }
+
+        PostInteractionsBottomSheet(
+        state = postInteractionState,
+        onSignInClicked = {
+            actions(
+                Action.Navigate.To(signInDestination())
+            )
+        },
+        onInteractionConfirmed = {
+            actions(
+                Action.SendPostInteraction(it)
+            )
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = state.sharedElementPrefix,
+                    )
+                )
+            )
+        }
+    )
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
@@ -432,6 +486,26 @@ fun VideoText(
         maxLines = 3,
         onClick = onClick,
         onLinkTargetClicked = onLinkTargetClicked,
+    )
+}
+
+@Composable
+fun VideoInteractions(
+    post: Post?,
+    paneScaffoldState: PaneScaffoldState,
+    modifier: Modifier = Modifier,
+    onReplyToPost: () -> Unit,
+    onPostInteraction: (Post.Interaction) -> Unit,
+) {
+    if (post == null) return
+
+    MediaPostInteractions(
+        post = post,
+        sharedElementPrefix = UnmatchedPrefix,
+        paneMovableElementSharedTransitionScope = paneScaffoldState,
+        modifier = modifier,
+        onReplyToPost = onReplyToPost,
+        onPostInteraction = onPostInteraction,
     )
 }
 
