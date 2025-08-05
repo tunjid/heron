@@ -56,6 +56,7 @@ import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
+import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -305,7 +306,11 @@ internal class OfflineSearchRepository @Inject constructor(
                         CursorList(
                             items = populatedFeedGeneratorEntities
                                 .map(PopulatedFeedGeneratorEntity::asExternalModel)
-                                .sortedBy { feedUris.indexOf(it.uri) },
+                                .sortedWithNetworkList(
+                                    networkList = feedUris,
+                                    databaseId = { it.uri.uri },
+                                    networkId = { it.uri }
+                                ),
                             nextCursor = nextCursor,
                         )
                     }
@@ -427,7 +432,13 @@ internal class OfflineSearchRepository @Inject constructor(
                 starterPackViews.mapTo(mutableSetOf()) { it.cid.cid.let(::StarterPackId) }
             )
                 .map { populatedStarterPackEntities ->
-                    populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
+                    populatedStarterPackEntities
+                        .sortedWithNetworkList(
+                            networkList = starterPackViews,
+                            databaseId = { it.entity.uri.uri },
+                            networkId = { it.uri.atUri }
+                        )
+                        .map(PopulatedStarterPackEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
         }
@@ -456,7 +467,13 @@ internal class OfflineSearchRepository @Inject constructor(
                 generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) }
             )
                 .map { populatedFeedGeneratorEntities ->
-                    populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
+                    populatedFeedGeneratorEntities
+                        .sortedWithNetworkList(
+                            networkList = generatorViews,
+                            databaseId = { it.entity.uri.uri },
+                            networkId = { it.uri.atUri }
+                        )
+                        .map(PopulatedFeedGeneratorEntity::asExternalModel)
                 }
                 .distinctUntilChanged()
 
