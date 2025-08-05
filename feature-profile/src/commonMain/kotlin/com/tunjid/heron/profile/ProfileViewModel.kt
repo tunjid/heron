@@ -173,8 +173,10 @@ private fun loadSignedInProfileMutations(
     authRepository.signedInUser
         .distinctUntilChangedBy { it?.handle }
         .mapToManyMutations { signedInProfile ->
-            val isSignedInProfile = signedInProfile?.did?.id == profileId.id ||
-                    signedInProfile?.handle?.id == profileId.id
+            val isSignedIn = signedInProfile != null
+            val isSignedInProfile = isSignedIn &&
+                    (signedInProfile.did.id == profileId.id ||
+                    signedInProfile.handle.id == profileId.id)
             emit {
                 copy(
                     signedInProfileId = signedInProfile?.did,
@@ -193,7 +195,7 @@ private fun loadSignedInProfileMutations(
                     .filter {
                         when (it) {
                             Timeline.Profile.Type.Posts -> true
-                            Timeline.Profile.Type.Replies -> true
+                            Timeline.Profile.Type.Replies -> isSignedIn
                             Timeline.Profile.Type.Likes -> isSignedInProfile
                             Timeline.Profile.Type.Media -> true
                             Timeline.Profile.Type.Videos -> true
