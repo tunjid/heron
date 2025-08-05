@@ -218,7 +218,6 @@ internal fun GalleryScreen(
             ) {
                 VideoText(
                     post = state.post,
-                    sharedElementPrefix = state.sharedElementPrefix,
                     paneScaffoldState = paneScaffoldState,
                     modifier = Modifier
                         .padding(horizontal = 16.dp),
@@ -418,7 +417,6 @@ fun VideoPoster(
 @Composable
 fun VideoText(
     post: Post?,
-    sharedElementPrefix: String,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -429,10 +427,12 @@ fun VideoText(
     PostText(
         modifier = modifier,
         post = post,
-        sharedElementPrefix = sharedElementPrefix,
+        sharedElementPrefix = UnmatchedPrefix,
         paneMovableElementSharedTransitionScope = paneScaffoldState,
         maxLines = 3,
         onClick = onClick,
         onLinkTargetClicked = onLinkTargetClicked,
     )
 }
+
+private const val UnmatchedPrefix = "UnmatchedPrefix"
