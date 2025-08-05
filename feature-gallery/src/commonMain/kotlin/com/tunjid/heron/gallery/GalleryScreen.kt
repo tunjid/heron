@@ -16,12 +16,17 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -38,9 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.images.AsyncImage
@@ -53,8 +60,12 @@ import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
+import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
@@ -67,6 +78,7 @@ internal fun GalleryScreen(
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     state: State,
+    actions: (Action) -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
     val playerControlsUiState = remember(videoPlayerController) {
@@ -167,6 +179,32 @@ internal fun GalleryScreen(
                 }
             }
         }
+
+        MediaCreator(
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 20.dp,
+                ),
+            post = state.post,
+            sharedElementPrefix = state.sharedElementPrefix,
+            visible = playerControlsUiState.playerControlsVisible,
+            paneScaffoldState = paneScaffoldState,
+            onProfileClicked = { post ->
+                actions(
+                    Action.Navigate.To(
+                        profileDestination(
+                            profile = post.author,
+                            avatarSharedElementKey = post.avatarSharedElementKey(
+                                prefix = state.sharedElementPrefix,
+                            ),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current
+                        )
+                    )
+                )
+            },
+        )
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
@@ -279,4 +317,41 @@ private fun Modifier.aspectRatioFor(
             ratio = aspectRatio.aspectRatioOrSquare,
             matchHeightConstraintsFirst = isWiderAspectRatioThanMedia
         )
+}
+
+@Composable
+fun MediaCreator(
+    post: Post?,
+    visible: Boolean,
+    sharedElementPrefix: String,
+    paneScaffoldState: PaneScaffoldState,
+    modifier: Modifier = Modifier,
+    onProfileClicked: (Post) -> Unit,
+) {
+    if (post == null) return
+
+    AnimatedVisibility(
+        modifier= modifier,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        visible = visible
+    ) {
+        ProfileWithViewerState(
+            modifier = Modifier,
+            movableElementSharedTransitionScope = paneScaffoldState,
+            signedInProfileId = null,
+            profile = post.author,
+            viewerState = null,
+            profileSharedElementKey = {
+                post.avatarSharedElementKey(sharedElementPrefix)
+            },
+            onProfileClicked = {
+                onProfileClicked(post)
+            },
+            onViewerStateClicked = {
+
+            },
+        )
+
+    }
 }

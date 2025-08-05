@@ -18,6 +18,7 @@ package com.tunjid.heron.gallery
 
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.gallery.di.postId
@@ -37,6 +38,7 @@ data class State(
     val startIndex: Int,
     val postId: PostId,
     val sharedElementPrefix: String,
+    val post: Post?,
     @Transient
     val items: List<GalleryItem> = emptyList(),
     @Transient
@@ -48,6 +50,7 @@ fun State(
 ) = State(
     startIndex = route.startIndex,
     postId = route.postId,
+    post = null,
     sharedElementPrefix = route.sharedElementPrefix,
     items = when (val media = route.model<Embed.Media>()) {
         is ImageList -> media.images.map(GalleryItem::Photo)
@@ -74,5 +77,9 @@ val GalleryItem.key
 
 sealed class Action(val key: String) {
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data class To(
+            val delegate: NavigationAction.Destination,
+        ) : Navigate(), NavigationAction by delegate
+    }
 }

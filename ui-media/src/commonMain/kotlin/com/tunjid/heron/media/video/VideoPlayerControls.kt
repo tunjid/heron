@@ -139,6 +139,7 @@ private fun PlaybackControls(
                         )
                     },
                 imageVector = state.icon,
+                tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(state.stringRes),
             )
         }
