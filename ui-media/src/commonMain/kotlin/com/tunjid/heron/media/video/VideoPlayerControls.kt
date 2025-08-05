@@ -71,7 +71,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun PlaybackControls(
+private fun PlaybackControls(
     modifier: Modifier = Modifier,
     controlsState: PlayerControlsUiState,
     videoPlayerState: VideoPlayerState,
@@ -147,17 +147,29 @@ fun PlaybackStatus(
                 )
             },
         )
-        Text(
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp),
-            text = buildAnnotatedString {
-                append(videoPlayerState.lastPositionMs.formatVideoDuration())
-                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
-                    append(" • ")
-                    append(videoPlayerState.totalDuration.formatVideoDuration())
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = videoPlayerState.lastPositionMs.formatVideoDuration()
+            )
+            PlaybackControls(
+                modifier = Modifier,
+                videoPlayerState = videoPlayerState,
+                controlsState = controlsState,
+            )
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
+                        append(videoPlayerState.totalDuration.formatVideoDuration())
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -170,9 +182,9 @@ class PlayerControlsUiState(
     var interactionCount by mutableLongStateOf(0)
 
     internal val playerControlStates = mutableStateListOf(
-        PlayerControlState(Icons.Rounded.Replay5, 36.dp),
-        PlayerControlState(Icons.Rounded.PlayCircle, 48.dp),
-        PlayerControlState(Icons.Rounded.Forward5, 36.dp),
+        PlayerControlState(Icons.Rounded.Replay5, 30.dp),
+        PlayerControlState(Icons.Rounded.PlayCircle, 30.dp),
+        PlayerControlState(Icons.Rounded.Forward5, 30.dp),
     )
 
     fun toggleVisibility() {

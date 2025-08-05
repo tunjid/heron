@@ -63,7 +63,6 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.media.video.PlaybackControls
 import com.tunjid.heron.media.video.PlaybackStatus
 import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
@@ -207,13 +206,6 @@ internal fun GalleryScreen(
                         )
                     )
                 },
-            )
-
-            PlaybackControls(
-                modifier = Modifier
-                    .align(Alignment.Center),
-                videoPlayerState = videoPlayerState,
-                controlsState = playerControlsUiState,
             )
 
             VideoInteractions(
