@@ -70,6 +70,7 @@ import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
+import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
@@ -81,6 +82,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
@@ -982,18 +984,26 @@ internal class OfflineTimelineRepository(
                             )
                         }
                             .toSet()
+                        val profileIds = itemEntities.mapNotNullTo(
+                            destination = mutableSetOf(),
+                            transform = TimelineItemEntity::reposter
+                        )
                         combine(
-                            postDao.posts(
-                                viewingProfileId = signedInProfileId?.id,
-                                postIds = postIds
+                            flow = postIds.toFlowOrEmpty { postIds ->
+                                postDao.posts(
+                                    viewingProfileId = signedInProfileId?.id,
+                                    postIds = postIds,
+                                )
+                            },
+                            flow2 = postIds.toFlowOrEmpty { postIds ->
+                                postDao.embeddedPosts(
+                                    viewingProfileId = signedInProfileId?.id,
+                                    postIds = postIds,
+                                )
+                            },
+                            flow3 = profileIds.toFlowOrEmpty(
+                                block = profileDao::profiles
                             ),
-                            postDao.embeddedPosts(
-                                viewingProfileId = signedInProfileId?.id,
-                                postIds = postIds
-                            ),
-                            profileDao.profiles(
-                                itemEntities.mapNotNull { it.reposter }
-                            )
                         ) { posts, embeddedPosts, repostProfiles ->
                             val idsToPosts = posts.associateBy { it.entity.cid }
                             val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }

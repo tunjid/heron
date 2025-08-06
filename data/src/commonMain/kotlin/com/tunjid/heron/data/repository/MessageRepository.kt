@@ -58,17 +58,16 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.resolveLinks
+import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
@@ -408,14 +407,6 @@ internal class OfflineMessageRepository @Inject constructor(
         }
     }
 }
-
-private inline fun <T, R> Collection<T>.toFlowOrEmpty(
-    block: (Collection<T>) -> Flow<List<R>>
-): Flow<List<R>> =
-    when {
-        isEmpty() -> emptyFlow()
-        else -> block(this)
-    }.onStart { emit(emptyList()) }
 
 private fun Log.AddReaction.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
