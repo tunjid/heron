@@ -990,6 +990,8 @@ internal class OfflineTimelineRepository(
                     limit = query.data.limit,
                 )
                     .flatMapLatest { itemEntities ->
+                        if (itemEntities.isEmpty()) return@flatMapLatest emptyFlow()
+
                         val postIds = itemEntities.flatMap {
                             listOfNotNull(
                                 it.postId,
@@ -1087,7 +1089,12 @@ internal class OfflineTimelineRepository(
                                 // Posts are available, but all need to be hidden based on content
                                 // preferences. This can break tiling, so add a single
                                 // content break item.
-                                emptyList()
+                                listOf(
+                                    TimelineItem.NoContent(
+                                        id = itemEntities.first().id,
+                                        post = posts.first().asExternalModel(quote = null)
+                                    )
+                                )
                             }
                         }
                             .filter(List<TimelineItem>::isNotEmpty)
