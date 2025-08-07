@@ -41,7 +41,7 @@ interface ProfileDao {
         """
     )
     fun profiles(
-        ids: List<Id.Profile>,
+        ids: Collection<Id.Profile>,
     ): Flow<List<ProfileEntity>>
 
     @Query(

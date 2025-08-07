@@ -22,7 +22,10 @@ import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
@@ -102,10 +105,19 @@ internal value class LazyList<T>(
         lazyList.value.add(element)
 }
 
-internal fun <T, R, K> List<T>.sortedWithNetworkList(
+internal inline fun <T, R> Collection<T>.toFlowOrEmpty(
+    crossinline block: (Collection<T>) -> Flow<List<R>>
+): Flow<List<R>> =
+    when {
+        isEmpty() -> emptyFlow()
+        else -> block(this)
+    }
+        .onStart { emit(emptyList()) }
+
+internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     networkList: List<R>,
-    databaseId: (T) -> K,
-    networkId: (R) -> K,
+    crossinline databaseId: (T) -> K,
+    crossinline networkId: (R) -> K,
 ): List<T> {
     val idToIndices = networkList.foldIndexed(MutableObjectIntMap<K>()) { index, map, networkItem ->
         map[networkId(networkItem)] = index

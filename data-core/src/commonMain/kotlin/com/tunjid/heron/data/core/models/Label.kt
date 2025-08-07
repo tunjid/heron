@@ -67,6 +67,11 @@ data class Label(
         Inform,
         None,
     }
+
+    companion object {
+        val Hidden = Value("!hide")
+        val NonAuthenticated = Value("!no-unauthenticated ")
+    }
 }
 
 @Serializable

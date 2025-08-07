@@ -20,6 +20,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Commit
 import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material3.ElevatedCard
@@ -60,7 +62,6 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -114,6 +115,7 @@ fun TimelineItem(
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
                         else 8.dp,
                     ),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
@@ -131,35 +133,39 @@ fun TimelineItem(
                         },
                     )
                 }
-                if (item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed) ThreadedPost(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    item = item,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    presentation = presentation,
-                    labelers = labelers,
-                    contentPreferences = contentPreferences,
-                    postActions = postActions,
-                ) else Post(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .childThreadNode(videoId = item.post.videoId),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    now = now,
-                    post = item.post,
-                    isAnchoredInTimeline = false,
-                    avatarShape = RoundedPolygonShape.Circle,
-                    sharedElementPrefix = sharedElementPrefix,
-                    createdAt = item.post.createdAt,
-                    presentation = presentation,
-                    labelers = labelers,
-                    contentPreferences = contentPreferences,
-                    postActions = postActions,
-                )
+                when {
+                    item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        item = item,
+                        sharedElementPrefix = sharedElementPrefix,
+                        now = now,
+                        presentation = presentation,
+                        labelers = labelers,
+                        contentPreferences = contentPreferences,
+                        postActions = postActions,
+                    )
+
+                    else -> Post(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .childThreadNode(videoId = item.post.videoId),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        now = now,
+                        post = item.post,
+                        isAnchoredInTimeline = false,
+                        avatarShape = RoundedPolygonShape.Circle,
+                        sharedElementPrefix = sharedElementPrefix,
+                        createdAt = item.post.createdAt,
+                        presentation = presentation,
+                        labelers = labelers,
+                        contentPreferences = contentPreferences,
+                        postActions = postActions,
+                    )
+                }
             }
         },
     )
