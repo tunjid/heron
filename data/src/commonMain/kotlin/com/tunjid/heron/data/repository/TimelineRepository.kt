@@ -1005,12 +1005,14 @@ internal class OfflineTimelineRepository(
                                 block = profileDao::profiles
                             ),
                         ) { posts, embeddedPosts, repostProfiles ->
+                            if (posts.isEmpty()) return@combine emptyList()
+
                             val idsToPosts = posts.associateBy { it.entity.cid }
                             val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
                             val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
-                            itemEntities.map { entity ->
-                                val mainPost = idsToPosts.getValue(entity.postId)
+                            itemEntities.mapNotNull { entity ->
+                                val mainPost = idsToPosts[entity.postId] ?: return@mapNotNull null
                                 val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
                                 val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
                                 val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
@@ -1071,6 +1073,7 @@ internal class OfflineTimelineRepository(
                                 }
                             }
                         }
+                            .filter(List<TimelineItem>::isNotEmpty)
                     }
             }
 
