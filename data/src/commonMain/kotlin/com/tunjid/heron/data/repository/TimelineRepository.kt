@@ -41,7 +41,6 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -979,6 +978,10 @@ internal class OfflineTimelineRepository(
             }
             .distinctUntilChanged()
             .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
+                val labelsVisibilityMap = contentLabelPreferences.associateBy(
+                    keySelector = ContentLabelPreference::label,
+                    valueTransform = ContentLabelPreference::visibility,
+                )
                 timelineDao.feedItems(
                     viewingProfileId = signedInProfileId?.id,
                     sourceId = query.timeline.sourceId,
@@ -1033,7 +1036,7 @@ internal class OfflineTimelineRepository(
                                         post.shouldBeHidden(
                                             isSignedIn = signedInProfileId != null,
                                             labelers = labelers,
-                                            contentPreferences = contentLabelPreferences,
+                                            labelsVisibilityMap = labelsVisibilityMap,
                                         )
                                     }
                                     ?: return@mapNotNull null
@@ -1356,14 +1359,10 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 private fun Post.shouldBeHidden(
     isSignedIn: Boolean,
     labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
+    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
 ): Boolean {
     if (labels.isEmpty()) return false
 
-    val labelsVisibilityMap = contentPreferences.associateBy(
-        keySelector = ContentLabelPreference::label,
-        valueTransform = ContentLabelPreference::visibility,
-    )
     val postLabels = labels.mapTo(
         destination = mutableSetOf(),
         transform = Label::value,
