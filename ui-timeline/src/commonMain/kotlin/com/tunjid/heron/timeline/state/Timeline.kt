@@ -229,6 +229,7 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
+            is TimelineItem.NoContent -> !threadRootIds.contains(item.post.cid)
         }
     }
         .distinctBy(TimelineItem::id)

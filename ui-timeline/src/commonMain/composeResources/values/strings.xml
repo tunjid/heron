@@ -49,4 +49,5 @@
     <string name="list_by">List by %1$s</string>
     <string name="show_more">Show More</string>
     <string name="sign_in">Sign In</string>
+    <string name="no_content_preferences">No content</string>
 </resources>

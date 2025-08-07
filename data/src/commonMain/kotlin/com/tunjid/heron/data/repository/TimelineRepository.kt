@@ -1080,6 +1080,11 @@ internal class OfflineTimelineRepository(
                                         post = mainPost,
                                     )
                                 }
+                            }.ifEmpty {
+                                // Posts are available, but all need to be hidden based on content
+                                // preferences. This can break tiling, so add a single
+                                // content break item.
+                                emptyList()
                             }
                         }
                             .filter(List<TimelineItem>::isNotEmpty)

@@ -197,6 +197,7 @@ sealed class TimelineItem {
 
     val indexedAt
         get() = when (this) {
+            is NoContent,
             is Pinned,
             is Thread,
             is Single,
@@ -227,6 +228,11 @@ sealed class TimelineItem {
         override val post: Post
             get() = posts[anchorPostIndex]
     }
+
+    data class NoContent(
+        override val id: String,
+        override val post: Post,
+    ) : TimelineItem()
 
     data class Single(
         override val id: String,
