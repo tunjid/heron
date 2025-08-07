@@ -40,10 +40,14 @@ import app.bsky.feed.Token
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
@@ -966,8 +970,15 @@ internal class OfflineTimelineRepository(
     private fun observeTimeline(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.observedSignedInProfileId
-            .flatMapLatest { signedInProfileId ->
+        savedStateDataSource.savedState
+            .map { state ->
+                Pair(
+                    first = state.signedInProfileId,
+                    second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
+                )
+            }
+            .distinctUntilChanged()
+            .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
                 timelineDao.feedItems(
                     viewingProfileId = signedInProfileId?.id,
                     sourceId = query.timeline.sourceId,
@@ -1004,15 +1015,29 @@ internal class OfflineTimelineRepository(
                             flow3 = profileIds.toFlowOrEmpty(
                                 block = profileDao::profiles
                             ),
-                        ) { posts, embeddedPosts, repostProfiles ->
+                            flow4 = labelers(),
+                        ) { posts, embeddedPosts, repostProfiles, labelers ->
                             if (posts.isEmpty()) return@combine emptyList()
-
                             val idsToPosts = posts.associateBy { it.entity.cid }
                             val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
                             val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                             itemEntities.mapNotNull { entity ->
-                                val mainPost = idsToPosts[entity.postId] ?: return@mapNotNull null
+                                val mainPost = idsToPosts[entity.postId]
+                                    ?.asExternalModel(
+                                        quote = idsToEmbeddedPosts[entity.postId]
+                                            ?.entity
+                                            ?.asExternalModel(quote = null)
+                                    )
+                                    ?.takeUnless { post ->
+                                        post.shouldBeHidden(
+                                            isSignedIn = signedInProfileId != null,
+                                            labelers = labelers,
+                                            contentPreferences = contentLabelPreferences,
+                                        )
+                                    }
+                                    ?: return@mapNotNull null
+
                                 val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
                                 val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
                                 val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
@@ -1034,41 +1059,25 @@ internal class OfflineTimelineRepository(
                                                     ?.entity
                                                     ?.asExternalModel(quote = null)
                                             ),
-                                            mainPost.asExternalModel(
-                                                quote = idsToEmbeddedPosts[entity.postId]
-                                                    ?.entity
-                                                    ?.asExternalModel(quote = null)
-                                            )
+                                            mainPost,
                                         ),
                                     )
 
                                     repostedBy != null -> TimelineItem.Repost(
                                         id = entity.id,
-                                        post = mainPost.asExternalModel(
-                                            quote = idsToEmbeddedPosts[entity.postId]
-                                                ?.entity
-                                                ?.asExternalModel(quote = null)
-                                        ),
+                                        post = mainPost,
                                         by = repostedBy.asExternalModel(),
                                         at = entity.indexedAt,
                                     )
 
                                     entity.isPinned -> TimelineItem.Pinned(
                                         id = entity.id,
-                                        post = mainPost.asExternalModel(
-                                            quote = idsToEmbeddedPosts[entity.postId]
-                                                ?.entity
-                                                ?.asExternalModel(quote = null)
-                                        ),
+                                        post = mainPost,
                                     )
 
                                     else -> TimelineItem.Single(
                                         id = entity.id,
-                                        post = mainPost.asExternalModel(
-                                            quote = idsToEmbeddedPosts[entity.postId]
-                                                ?.entity
-                                                ?.asExternalModel(quote = null)
-                                        ),
+                                        post = mainPost,
                                     )
                                 }
                             }
@@ -1338,3 +1347,43 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
         else -> false
     }
+
+private fun Post.shouldBeHidden(
+    isSignedIn: Boolean,
+    labelers: Labelers,
+    contentPreferences: ContentLabelPreferences,
+): Boolean {
+    if (labels.isEmpty()) return false
+
+    val labelsVisibilityMap = contentPreferences.associateBy(
+        keySelector = ContentLabelPreference::label,
+        valueTransform = ContentLabelPreference::visibility,
+    )
+    val postLabels = labels.mapTo(
+        destination = mutableSetOf(),
+        transform = Label::value,
+    )
+
+    // Check for global hidden label
+    if (labelsVisibilityMap.contains(Label.Hidden)) return true
+
+    // Check for global non authenticated label
+    if (!isSignedIn && labelsVisibilityMap.contains(Label.NonAuthenticated)) return true
+
+    labelers.forEach forEachLabel@{ labeler ->
+        labeler.definitions.forEach forEachDefinition@{ definition ->
+            // Not applicable to this post
+            if (!postLabels.contains(definition.identifier)) return@forEachDefinition
+
+            val mayBlur = definition.adultOnly
+                    || definition.blurs == Label.BlurTarget.Media
+                    || definition.blurs == Label.BlurTarget.Content
+            if (!mayBlur) return@forEachDefinition
+
+            val visibility = labelsVisibilityMap[definition.identifier] ?: definition.defaultSetting
+
+            if (visibility == Label.Visibility.Hide) return true
+        }
+    }
+    return false
+}
