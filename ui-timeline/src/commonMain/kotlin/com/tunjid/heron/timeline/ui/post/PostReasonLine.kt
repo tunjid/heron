@@ -58,7 +58,6 @@ internal fun PostReasonLine(
             }
         )
 
-        is TimelineItem.NoContent,
         is TimelineItem.Thread,
         is TimelineItem.Single,
             -> Unit

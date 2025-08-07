@@ -1085,16 +1085,6 @@ internal class OfflineTimelineRepository(
                                         post = mainPost,
                                     )
                                 }
-                            }.ifEmpty {
-                                // Posts are available, but all need to be hidden based on content
-                                // preferences. This can break tiling, so add a single
-                                // content break item.
-                                listOf(
-                                    TimelineItem.NoContent(
-                                        id = itemEntities.first().id,
-                                        post = posts.first().asExternalModel(quote = null)
-                                    )
-                                )
                             }
                         }
                             .filter(List<TimelineItem>::isNotEmpty)

@@ -76,7 +76,6 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
-import heron.ui_timeline.generated.resources.no_content_preferences
 import heron.ui_timeline.generated.resources.see_more_posts
 import heron.ui_timeline.generated.resources.show_more
 import kotlinx.datetime.Instant
@@ -135,23 +134,6 @@ fun TimelineItem(
                     )
                 }
                 when {
-                    item is TimelineItem.NoContent -> Row(
-                        modifier = Modifier.padding(
-                            horizontal = 16.dp,
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        val text = stringResource(Res.string.no_content_preferences)
-                        Icon(
-                            imageVector = Icons.Rounded.Block,
-                            contentDescription = text,
-                        )
-                        Text(
-                            text = text,
-                        )
-                    }
-
                     item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),
