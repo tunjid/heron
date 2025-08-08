@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
@@ -50,6 +51,7 @@ internal fun PostExternal(
     postId: PostId,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
+    isBlurred: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClick: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
@@ -67,8 +69,12 @@ internal fun PostExternal(
     ) {
         Column(verticalArrangement = spacedBy(8.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
+                val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
+                    RoundedPolygonShape.Rectangle
+                )
+                else Modifier
                 AsyncImage(
-                    modifier = Modifier
+                    modifier = itemModifier
                         .fillMaxWidth()
                         .aspectRatio(2f / 1)
                         .paneStickySharedElement(

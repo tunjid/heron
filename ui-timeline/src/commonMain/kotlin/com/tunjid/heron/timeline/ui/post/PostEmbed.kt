@@ -98,6 +98,7 @@ internal fun PostEmbed(
                     postId = postId,
                     sharedElementPrefix = sharedElementPrefix,
                     presentation = presentation,
+                    isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
