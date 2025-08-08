@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
@@ -58,13 +59,22 @@ internal fun PostSearchResult(
             onPostClicked(result)
         },
         content = {
+            val labelVisibilitiesToDefinitions = remember(
+                result.post.labels,
+                labelers,
+                contentPreferences
+            ) {
+                result.post.labelVisibilitiesToDefinitions(
+                    labelers = labelers,
+                    labelPreferences = contentPreferences,
+                )
+            }
             Post(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(
                         top = 16.dp,
                         bottom = 8.dp,
-                        start = 16.dp,
-                        end = 16.dp
                     ),
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 presentationLookaheadScope = paneMovableElementSharedTransitionScope,
@@ -75,10 +85,7 @@ internal fun PostSearchResult(
                 sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
-                labelVisibilitiesToDefinitions = result.post.labelVisibilitiesToDefinitions(
-                    labelers = labelers,
-                    labelPreferences = contentPreferences,
-                ),
+                labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
                 postActions = remember(result, onPostInteraction) {
                     postActions(
                         onLinkTargetClicked = { _, linkTarget ->

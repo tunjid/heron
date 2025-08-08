@@ -467,10 +467,16 @@ private fun PostMessage(
         sharedElementPrefix = item.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
-        labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
-            labelers = labelers,
-            labelPreferences = contentPreferences,
-        ),
+        labelVisibilitiesToDefinitions = remember(
+            post.labels,
+            labelers,
+            contentPreferences
+        ) {
+            post.labelVisibilitiesToDefinitions(
+                labelers = labelers,
+                labelPreferences = contentPreferences,
+            )
+        },
         postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { post, linkTarget ->

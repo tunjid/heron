@@ -109,7 +109,6 @@ fun TimelineItem(
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
                         else 8.dp,
                     ),
-                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
