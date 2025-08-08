@@ -126,6 +126,7 @@ fun QuotedPost(
                     feature = embed,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
+                    isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     // Quotes are exclusively in blog view types
                     presentation = Timeline.Presentation.Text.WithEmbed,
