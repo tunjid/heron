@@ -64,8 +64,6 @@ fun State(
                 TimelineState(
                     timeline = timeline,
                     hasUpdates = false,
-                    labelers = emptyList(),
-                    labelPreferences = emptyList(),
                     tilingData = TilingState.Data(
                         currentQuery = TimelineQuery(
                             data = CursorQuery.Data(
@@ -88,8 +86,6 @@ fun State(
                     TimelineState(
                         timeline = timeline,
                         hasUpdates = false,
-                        labelers = emptyList(),
-                        labelPreferences = emptyList(),
                         tilingData = TilingState.Data(
                             currentQuery = TimelineQuery(
                                 data = CursorQuery.Data(

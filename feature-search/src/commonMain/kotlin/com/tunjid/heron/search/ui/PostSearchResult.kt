@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
@@ -48,7 +49,7 @@ internal fun PostSearchResult(
     onProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostClicked: (SearchResult.OfPost) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
-    onMediaClicked: ( media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     ElevatedCard(
@@ -74,8 +75,10 @@ internal fun PostSearchResult(
                 sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
-                labelers = labelers,
-                contentPreferences = contentPreferences,
+                labelVisibilitiesToDefinitions = result.post.labelVisibilitiesToDefinitions(
+                    labelers = labelers,
+                    labelPreferences = contentPreferences,
+                ),
                 postActions = remember(result, onPostInteraction) {
                     postActions(
                         onLinkTargetClicked = { _, linkTarget ->

@@ -55,6 +55,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
+import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -190,10 +191,11 @@ private fun Post(
             key2 = labelers,
             key3 = labelPreferences
         ) {
-            quotedPost?.blurredMediaDefinitions(
+            val visibilitiesToDefinitions = quotedPost?.labelVisibilitiesToDefinitions(
                 labelers = labelers,
-                contentPreferences = labelPreferences,
-            )?.isNotEmpty() ?: false
+                labelPreferences = labelPreferences,
+            ) ?: emptyMap()
+            visibilitiesToDefinitions.blurredMediaDefinitions.isNotEmpty()
         }
         if (quotedPost != null) QuotedPost(
             modifier = Modifier.padding(
