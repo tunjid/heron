@@ -30,5 +30,5 @@ val Map<Label.Visibility, List<Label.Definition>>.blurredMediaDefinitions
         defaultValue = ::emptyList,
     ).filter(Label.Definition::blursMedia)
 
-private val Label.Definition.blursMedia
+val Label.Definition.blursMedia
     get() = adultOnly || blurs == Label.BlurTarget.Media

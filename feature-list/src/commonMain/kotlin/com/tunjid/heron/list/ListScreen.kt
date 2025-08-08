@@ -88,6 +88,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.description
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
@@ -512,6 +513,7 @@ private fun ListTimeline(
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
             items.getOrNull(flooredIndex)
+                ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
                 ?.let(videoPlayerController::play)

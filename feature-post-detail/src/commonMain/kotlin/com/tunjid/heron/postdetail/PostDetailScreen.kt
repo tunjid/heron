@@ -63,6 +63,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -250,6 +251,7 @@ internal fun PostDetailScreen(
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
             items.getOrNull(flooredIndex)
+                ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
                 ?.let(videoPlayerController::play)
