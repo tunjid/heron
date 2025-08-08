@@ -16,10 +16,7 @@
 
 package com.tunjid.heron.timeline.state
 
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostId
@@ -47,8 +44,6 @@ import kotlinx.datetime.Clock
 data class TimelineState(
     val timeline: Timeline,
     val hasUpdates: Boolean,
-    val labelPreferences: ContentLabelPreferences,
-    val labelers: List<Labeler>,
     override val tilingData: TilingState.Data<TimelineQuery, TimelineItem>,
 ) : TilingState<TimelineQuery, TimelineItem> {
     sealed class Action(
@@ -77,8 +72,6 @@ fun timelineStateHolder(
     initialState = TimelineState(
         timeline = timeline,
         hasUpdates = false,
-        labelPreferences = Preferences.DefaultPreferences.contentLabelPreferences,
-        labelers = emptyList(),
         tilingData = TilingState.Data(
             numColumns = startNumColumns,
             currentQuery = TimelineQuery(
@@ -104,12 +97,6 @@ fun timelineStateHolder(
         ),
         timelineUpdateMutations(
             timeline = timeline,
-            timelineRepository = timelineRepository,
-        ),
-        labelPreferencesMutations(
-            timelineRepository = timelineRepository,
-        ),
-        labelerMutations(
             timelineRepository = timelineRepository,
         ),
     ),
@@ -180,18 +167,6 @@ private fun timelineUpdateMutations(
         }
     )
         .mapToMutation { copy(timeline = it) }
-
-private fun labelPreferencesMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<TimelineState>> =
-    timelineRepository.preferences()
-        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
-
-private fun labelerMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<TimelineState>> =
-    timelineRepository.labelers()
-        .mapToMutation { copy(labelers = it) }
 
 private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,

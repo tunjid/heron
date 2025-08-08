@@ -163,3 +163,21 @@ data class Post(
         ) : Metadata()
     }
 }
+
+fun Post.labelVisibilitiesToDefinitions(
+    labelers: List<Labeler>,
+    labelPreferences: ContentLabelPreferences
+): Map<Label.Visibility, List<Label.Definition>> = labelVisibilitiesToDefinitions(
+    postLabels = when {
+        labels.isEmpty() -> emptySet()
+        else -> labels.mapTo(
+            destination = mutableSetOf(),
+            transform = Label::value,
+        )
+    },
+    labelers = labelers,
+    labelsVisibilityMap = labelPreferences.associateBy(
+        keySelector = ContentLabelPreference::label,
+        valueTransform = ContentLabelPreference::visibility,
+    ),
+)

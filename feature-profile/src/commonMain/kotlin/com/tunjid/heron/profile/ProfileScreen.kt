@@ -123,6 +123,7 @@ import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
@@ -805,8 +806,6 @@ private fun ProfileTimeline(
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         presentation = presentation,
-                        labelers = timelineState.labelers,
-                        contentPreferences = timelineState.labelPreferences,
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
                                 onLinkTargetClicked = { post, linkTarget ->
@@ -924,6 +923,7 @@ private fun ProfileTimeline(
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
             items.getOrNull(flooredIndex)
+                ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
                 ?.let(videoPlayerController::play)

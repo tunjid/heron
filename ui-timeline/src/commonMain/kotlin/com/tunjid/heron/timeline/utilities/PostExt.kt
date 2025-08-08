@@ -16,46 +16,19 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import com.tunjid.heron.data.core.models.ContentLabelPreference
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 
 val Post.createdAt get() = record?.createdAt ?: indexedAt
 
-fun Post.blurredMediaDefinitions(
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
-): List<Label.Definition> {
-    if (labels.isEmpty()) return emptyList()
+val Map<Label.Visibility, List<Label.Definition>>.blurredMediaDefinitions
+    get(): List<Label.Definition> = getOrElse(
+        key = Label.Visibility.Warn,
+        defaultValue = ::emptyList,
+    ).filter(Label.Definition::blursMedia) + getOrElse(
+        key = Label.Visibility.Hide,
+        defaultValue = ::emptyList,
+    ).filter(Label.Definition::blursMedia)
 
-    val labelsVisibilityMap = contentPreferences.associateBy(
-        keySelector = ContentLabelPreference::label,
-        valueTransform = ContentLabelPreference::visibility,
-    )
-    val postLabels = labels.mapTo(
-        destination = mutableSetOf(),
-        transform = Label::value,
-    )
-
-    return labelers.flatMap { labeler ->
-        labeler.definitions.mapNotNull { definition ->
-            // Not applicable to this post
-            if (!postLabels.contains(definition.identifier)) return@mapNotNull null
-
-            val mayBlur = definition.adultOnly || definition.blurs == Label.BlurTarget.Media
-            if (!mayBlur) return@mapNotNull null
-
-            val visibility = labelsVisibilityMap[definition.identifier] ?: definition.defaultSetting
-            definition.takeIf { visibility.shouldBlurMedia }
-        }
-    }
-}
-
-val Label.Visibility.shouldBlurMedia
-    get() = when (this) {
-        Label.Visibility.Hide -> true
-        Label.Visibility.Warn -> true
-        else -> false
-    }
+val Label.Definition.blursMedia
+    get() = adultOnly || blurs == Label.BlurTarget.Media

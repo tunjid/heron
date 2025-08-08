@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.postdetail
 
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -32,8 +30,6 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
-    val labelPreferences: ContentLabelPreferences,
-    val labelers: List<Labeler>,
     @Transient
     val items: List<TimelineItem> = listOfNotNull(
         anchorPost?.let {
@@ -43,6 +39,7 @@ data class State(
                 posts = listOf(it),
                 generation = 0,
                 hasBreak = false,
+                labelVisibilitiesToDefinitions = emptyMap(),
             )
         }
     ),
@@ -53,8 +50,6 @@ data class State(
 fun State(route: Route) = State(
     anchorPost = route.model as? Post,
     sharedElementPrefix = route.sharedElementPrefix,
-    labelPreferences = emptyList(),
-    labelers = emptyList(),
 )
 
 sealed class Action(val key: String) {

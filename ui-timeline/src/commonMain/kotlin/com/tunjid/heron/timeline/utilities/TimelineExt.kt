@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ImageUri
@@ -238,6 +239,14 @@ fun LazyStaggeredGridState.pendingOffsetFor(
     .y
     .toFloat()
 
+val TimelineItem.canAutoPlayVideo: Boolean
+    get() = labelVisibilitiesToDefinitions.getOrElse(
+        key = Label.Visibility.Warn,
+        defaultValue = ::emptyList,
+    ).none(Label.Definition::blursMedia) && labelVisibilitiesToDefinitions.getOrElse(
+        key = Label.Visibility.Hide,
+        defaultValue = ::emptyList,
+    ).none(Label.Definition::blursMedia)
 
 private val Timeline.avatar: ImageUri
     get() = when (this) {

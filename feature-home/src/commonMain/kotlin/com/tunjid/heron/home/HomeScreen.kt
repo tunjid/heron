@@ -85,6 +85,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
@@ -304,8 +305,6 @@ private fun HomeTimeline(
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             presentation = presentation,
-                            labelers = timelineState.labelers,
-                            contentPreferences = timelineState.labelPreferences,
                             postActions = remember(timelineState.timeline.sourceId) {
                                 postActions(
                                     onLinkTargetClicked = { post, linkTarget ->
@@ -424,6 +423,7 @@ private fun HomeTimeline(
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
             items.getOrNull(flooredIndex)
+                ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
                 ?.let(videoPlayerController::play)

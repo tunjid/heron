@@ -41,17 +41,18 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -548,7 +549,10 @@ internal class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: PostUri,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+        savedStateDataSource.savedState
+            .map(::signedInProfileIdToContentLabelPreferences)
+            .distinctUntilChanged()
+            .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
             postDao.postEntitiesByUri(
                 viewingProfileId = signedInProfileId?.id,
                 postUris = setOf(postUri),
@@ -570,7 +574,8 @@ internal class OfflineTimelineRepository(
                                     viewingProfileId = signedInProfileId?.id,
                                     postIds = postIds
                                 ),
-                                transform = { posts, embeddedPosts ->
+                                flow3 = labelers(),
+                                transform = { posts, embeddedPosts, labelers ->
                                     val idsToPosts = posts.associateBy { it.entity.cid }
                                     val idsToEmbeddedPosts = embeddedPosts.associateBy(
                                         EmbeddedPopulatedPostEntity::parentPostId
@@ -590,6 +595,8 @@ internal class OfflineTimelineRepository(
                                                 list = list,
                                                 thread = thread,
                                                 post = post,
+                                                labelers = labelers,
+                                                labelPreferences = contentLabelPreferences,
                                             )
                                         },
                                     )
@@ -970,12 +977,7 @@ internal class OfflineTimelineRepository(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         savedStateDataSource.savedState
-            .map { state ->
-                Pair(
-                    first = state.signedInProfileId,
-                    second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
-                )
-            }
+            .map(::signedInProfileIdToContentLabelPreferences)
             .distinctUntilChanged()
             .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
                 val labelsVisibilityMap = contentLabelPreferences.associateBy(
@@ -1033,15 +1035,35 @@ internal class OfflineTimelineRepository(
                                         quote = idsToEmbeddedPosts[entity.postId]
                                             ?.entity
                                             ?.asExternalModel(quote = null)
+                                    ) ?: return@mapNotNull null
+
+                                val postLabels = when {
+                                    mainPost.labels.isEmpty() -> emptySet()
+                                    else -> mainPost.labels.mapTo(
+                                        destination = mutableSetOf(),
+                                        transform = Label::value,
                                     )
-                                    ?.takeUnless { post ->
-                                        post.shouldBeHidden(
-                                            isSignedIn = signedInProfileId != null,
-                                            labelers = labelers,
-                                            labelsVisibilityMap = labelsVisibilityMap,
-                                        )
-                                    }
-                                    ?: return@mapNotNull null
+                                }
+
+                                // Check for global hidden label
+                                if (postLabels.contains(Label.Hidden)) return@mapNotNull null
+
+                                // Check for global non authenticated label
+                                val isSignedIn = signedInProfileId != null
+                                if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
+
+                                val visibilitiesToDefinitions = labelVisibilitiesToDefinitions(
+                                    postLabels = postLabels,
+                                    labelers = labelers,
+                                    labelsVisibilityMap = labelsVisibilityMap,
+                                )
+
+                                val shouldHide = visibilitiesToDefinitions.getOrElse(
+                                    key = Label.Visibility.Hide,
+                                    defaultValue = ::emptyList,
+                                ).isNotEmpty()
+
+                                if (shouldHide) return@mapNotNull null
 
                                 val replyParent = entity.reply?.let { idsToPosts[it.parentPostId] }
                                 val replyRoot = entity.reply?.let { idsToPosts[it.rootPostId] }
@@ -1053,6 +1075,7 @@ internal class OfflineTimelineRepository(
                                         generation = null,
                                         anchorPostIndex = 2,
                                         hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                         posts = listOf(
                                             replyRoot.asExternalModel(
                                                 quote = idsToEmbeddedPosts[replyRoot.entity.cid]
@@ -1073,16 +1096,19 @@ internal class OfflineTimelineRepository(
                                         post = mainPost,
                                         by = repostedBy.asExternalModel(),
                                         at = entity.indexedAt,
+                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                     )
 
                                     entity.isPinned -> TimelineItem.Pinned(
                                         id = entity.id,
                                         post = mainPost,
+                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                     )
 
                                     else -> TimelineItem.Single(
                                         id = entity.id,
                                         post = mainPost,
+                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                     )
                                 }
                             }
@@ -1239,6 +1265,8 @@ internal class OfflineTimelineRepository(
         }
 
     private fun spinThread(
+        labelers: List<Labeler>,
+        labelPreferences: ContentLabelPreferences,
         list: List<TimelineItem.Thread>,
         thread: ThreadedPostEntity,
         post: Post,
@@ -1249,6 +1277,10 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+                labelers = labelers,
+                labelPreferences = labelPreferences,
+            ),
         )
 
         thread.generation <= -1L -> list.dropLast(1) + list.last().let {
@@ -1261,6 +1293,10 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+                labelers = labelers,
+                labelPreferences = labelPreferences,
+            ),
         )
 
         else -> list.dropLast(1) + list.last().let {
@@ -1268,6 +1304,11 @@ internal class OfflineTimelineRepository(
         }
     }
 }
+
+private fun signedInProfileIdToContentLabelPreferences(state: SavedState): Pair<ProfileId?, ContentLabelPreferences> = Pair(
+    first = state.signedInProfileId,
+    second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
+)
 
 private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
     savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
@@ -1352,39 +1393,3 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
         else -> false
     }
-
-private fun Post.shouldBeHidden(
-    isSignedIn: Boolean,
-    labelers: Labelers,
-    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-): Boolean {
-    if (labels.isEmpty()) return false
-
-    val postLabels = labels.mapTo(
-        destination = mutableSetOf(),
-        transform = Label::value,
-    )
-
-    // Check for global hidden label
-    if (labelsVisibilityMap.contains(Label.Hidden)) return true
-
-    // Check for global non authenticated label
-    if (!isSignedIn && labelsVisibilityMap.contains(Label.NonAuthenticated)) return true
-
-    labelers.forEach forEachLabel@{ labeler ->
-        labeler.definitions.forEach forEachDefinition@{ definition ->
-            // Not applicable to this post
-            if (!postLabels.contains(definition.identifier)) return@forEachDefinition
-
-            val mayBlur = definition.adultOnly
-                    || definition.blurs == Label.BlurTarget.Media
-                    || definition.blurs == Label.BlurTarget.Content
-            if (!mayBlur) return@forEachDefinition
-
-            val visibility = labelsVisibilityMap[definition.identifier] ?: definition.defaultSetting
-
-            if (visibility == Label.Visibility.Hide) return true
-        }
-    }
-    return false
-}

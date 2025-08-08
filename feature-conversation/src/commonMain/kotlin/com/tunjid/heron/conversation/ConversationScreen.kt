@@ -71,6 +71,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -466,8 +467,10 @@ private fun PostMessage(
         sharedElementPrefix = item.id,
         createdAt = post.createdAt,
         presentation = Timeline.Presentation.Text.WithEmbed,
-        labelers = labelers,
-        contentPreferences = contentPreferences,
+        labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+            labelers = labelers,
+            labelPreferences = contentPreferences,
+        ),
         postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { post, linkTarget ->

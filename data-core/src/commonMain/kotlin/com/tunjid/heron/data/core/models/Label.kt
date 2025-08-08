@@ -83,3 +83,35 @@ data class Labeler(
 )
 
 typealias Labelers = List<Labeler>
+
+fun labelVisibilitiesToDefinitions(
+    postLabels: Set<Label.Value>,
+    labelers: Labelers,
+    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+): Map<Label.Visibility, List<Label.Definition>> = when {
+    postLabels.isEmpty() -> emptyMap()
+    else -> labelers.fold(
+        mutableMapOf<Label.Visibility, MutableList<Label.Definition>>()
+    ) { destination, labeler ->
+        labeler.definitions.fold(destination) innerFold@{ innerDestination, definition ->
+            // Not applicable to this post
+            if (!postLabels.contains(definition.identifier)) return@innerFold innerDestination
+
+            val mayBlur = definition.adultOnly
+                    || definition.blurs == Label.BlurTarget.Media
+                    || definition.blurs == Label.BlurTarget.Content
+
+            if (!mayBlur) return@innerFold innerDestination
+
+            val visibility = labelsVisibilityMap[definition.identifier]
+                ?: definition.defaultSetting
+
+            innerDestination.getOrPut(
+                key = visibility,
+                defaultValue = ::mutableListOf,
+            ).add(definition)
+
+            innerDestination
+        }
+    }
+}

@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -95,6 +98,7 @@ internal fun PostEmbed(
                     postId = postId,
                     sharedElementPrefix = sharedElementPrefix,
                     presentation = presentation,
+                    isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
@@ -174,7 +178,7 @@ private fun SensitiveContentBox(
             Box(
                 modifier = when {
                     // Prevent clicks on other things
-                    isBlurred -> Modifier.pointerInput(Unit) { detectTapGestures() }
+                    isBlurred -> Modifier.blockClickEvents()
                     else -> Modifier
                 },
                 content = {
@@ -237,3 +241,11 @@ private fun SensitiveContentButton(
     )
 }
 
+private fun Modifier.blockClickEvents() =
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(pass = PointerEventPass.Initial)
+            down.consume()
+            waitForUpOrCancellation(PointerEventPass.Initial)?.consume()
+        }
+    }

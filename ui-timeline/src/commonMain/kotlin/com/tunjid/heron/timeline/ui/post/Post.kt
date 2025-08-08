@@ -45,11 +45,10 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Labelers
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -81,8 +80,7 @@ fun Post(
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
+    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
@@ -99,8 +97,7 @@ fun Post(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
-            labelers = labelers,
-            contentPreferences = contentPreferences,
+            labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -435,8 +432,7 @@ private fun rememberUpdatedPostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
+    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -449,8 +445,7 @@ private fun rememberUpdatedPostData(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
-            labelers = labelers,
-            contentPreferences = contentPreferences,
+            labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -463,8 +458,7 @@ private fun rememberUpdatedPostData(
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.presentation = presentation
-        it.labelers = labelers
-        it.contentPreferences = contentPreferences
+        it.labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions
         it.sharedElementPrefix = sharedElementPrefix
         it.avatarShape = avatarShape
         it.now = now
@@ -479,8 +473,7 @@ private class PostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
+    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -493,8 +486,7 @@ private class PostData(
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)
-    var labelers by mutableStateOf(labelers)
-    var contentPreferences by mutableStateOf(contentPreferences)
+    var labelVisibilitiesToDefinitions by mutableStateOf(labelVisibilitiesToDefinitions)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
@@ -503,10 +495,7 @@ private class PostData(
     var presentationChanged by mutableStateOf(false)
 
     val blurredMediaDefinitions by derivedStateOf {
-        post.blurredMediaDefinitions(
-            labelers = labelers,
-            contentPreferences = contentPreferences,
-        )
+        labelVisibilitiesToDefinitions.blurredMediaDefinitions
     }
 
     @OptIn(ExperimentalSharedTransitionApi::class)
