@@ -344,7 +344,7 @@ private fun ListTimeline(
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val density = LocalDensity.current
-    val videoStates = remember { ThreadedVideoPositionStates() }
+    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
@@ -397,7 +397,7 @@ private fun ListTimeline(
                         presentation = presentation,
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
-                                onLinkTargetClicked = { post, linkTarget ->
+                                onLinkTargetClicked = { _, linkTarget ->
                                     if (linkTarget is LinkTarget.OfProfile) actions(
                                         Action.Navigate.To(
                                             pathDestination(

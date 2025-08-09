@@ -60,10 +60,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
@@ -73,6 +71,8 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
@@ -92,6 +92,8 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
 import com.tunjid.heron.ui.Tab
@@ -102,6 +104,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature_search.generated.resources.Res
 import heron.feature_search.generated.resources.discover_feeds
 import heron.feature_search.generated.resources.feeds
@@ -114,6 +117,7 @@ import heron.feature_search.generated.resources.trending_title
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.floor
 
 @Composable
 internal fun SearchScreen(
@@ -175,7 +179,7 @@ internal fun SearchScreen(
             }
         }
         val onLinkTargetClicked = remember {
-            { result: SearchResult.OfPost, linkTarget: LinkTarget ->
+            { _: SearchResult.OfPost, linkTarget: LinkTarget ->
                 if (linkTarget is LinkTarget.OfProfile) actions(
                     Action.Navigate.To(
                         pathDestination(
@@ -615,8 +619,6 @@ private fun TabbedSearchResults(
             pageContent = { page ->
                 val searchResultStateHolder = remember { state.searchStateHolders[page] }
                 SearchResults(
-                    labelers = state.labelers,
-                    contentPreferences = state.labelPreferences,
                     paneScaffoldState = paneMovableElementSharedTransitionScope,
                     searchResultStateHolder = searchResultStateHolder,
                     onProfileClicked = onProfileClicked,
@@ -647,8 +649,6 @@ private fun searchTabs(isSignedIn: Boolean): List<Tab> = listOf(
 @Composable
 private fun SearchResults(
     modifier: Modifier = Modifier,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
@@ -663,6 +663,8 @@ private fun SearchResults(
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
+
     when (val state = searchState.value) {
         is SearchState.OfPosts -> {
             val now = remember { Clock.System.now() }
@@ -678,11 +680,13 @@ private fun SearchResults(
                     key = { it.post.cid.id },
                     itemContent = { result ->
                         PostSearchResult(
+                            modifier = Modifier
+                                .threadedVideoPosition(
+                                    state = videoStates.getOrCreateStateFor(result)
+                                ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             now = now,
                             result = result,
-                            labelers = labelers,
-                            contentPreferences = contentPreferences,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onPostSearchResultProfileClicked,
                             onPostClicked = onPostSearchResultClicked,
@@ -692,6 +696,22 @@ private fun SearchResults(
                         )
                     }
                 )
+            }
+            if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+                val videoPlayerController = LocalVideoPlayerController.current
+                listState.interpolatedVisibleIndexEffect(
+                    denominator = 10,
+                    itemsAvailable = results.size,
+                ) { interpolatedIndex ->
+                    val flooredIndex = floor(interpolatedIndex).toInt()
+                    val fraction = interpolatedIndex - flooredIndex
+                    results.getOrNull(flooredIndex)
+                        ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
+                        ?.let(videoStates::retrieveStateFor)
+                        ?.videoIdAt(fraction)
+                        ?.let(videoPlayerController::play)
+                        ?: videoPlayerController.pauseActiveVideo()
+                }
             }
             listState.PivotedTilingEffect(
                 items = results,

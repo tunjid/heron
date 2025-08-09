@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -53,7 +54,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -89,11 +92,10 @@ class SearchViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope), SearchStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        labelPreferences = emptyList(),
-        labelers = emptyList(),
         searchStateHolders = searchStateHolders(
             coroutineScope = scope,
             searchRepository = searchRepository,
+            timelineRepository = timelineRepository,
         )
     ),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -106,12 +108,6 @@ class SearchViewModel(
         ),
         suggestedFeedGeneratorMutations(
             searchRepository = searchRepository
-        ),
-        labelPreferencesMutations(
-            timelineRepository = timelineRepository,
-        ),
-        labelerMutations(
-            timelineRepository = timelineRepository,
         ),
     ),
     actionTransform = transform@{ actions ->
@@ -215,18 +211,6 @@ private fun suggestedFeedGeneratorMutations(
 ): Flow<Mutation<State>> =
     searchRepository.suggestedFeeds()
         .mapToMutation { copy(feedGenerators = it) }
-
-private fun labelPreferencesMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.preferences()
-        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
-
-private fun labelerMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.labelers()
-        .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
     searchRepository: SearchRepository,
@@ -368,6 +352,7 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 private fun searchStateHolders(
     coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
+    timelineRepository: TimelineRepository,
 ): List<SearchResultStateHolder> = listOf(
     SearchState.OfPosts(
         tilingData = TilingState.Data(
@@ -405,7 +390,7 @@ private fun searchStateHolders(
             ),
         ),
     ),
-).map { searchState ->
+).map { searchState: SearchState ->
     when (searchState) {
         is SearchState.OfPosts -> coroutineScope.actionStateFlowMutator(
             initialState = searchState,
@@ -426,11 +411,26 @@ private fun searchStateHolders(
                                     is SearchQuery.OfPosts.Top -> copy(data = data.reset())
                                 }
                             },
-                            cursorListLoader = searchRepository::postSearch.mapCursorList {
-                                SearchResult.OfPost(
-                                    post = it,
-                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                            cursorListLoader = { query, cursor ->
+                                combine(
+                                    timelineRepository.labelers(),
+                                    timelineRepository.preferences()
+                                        .map { it.contentLabelPreferences },
+                                    ::Pair
                                 )
+                                    .distinctUntilChanged()
+                                    .flatMapLatest { (labelers, contentLabelPreferences) ->
+                                        searchRepository::postSearch.mapCursorList { post ->
+                                            SearchResult.OfPost(
+                                                post = post,
+                                                sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                                labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+                                                    labelers = labelers,
+                                                    labelPreferences = contentLabelPreferences,
+                                                )
+                                            )
+                                        }.invoke(query, cursor)
+                                    }
                             },
                             onNewItems = { items ->
                                 items.distinctBy { it.post.cid }

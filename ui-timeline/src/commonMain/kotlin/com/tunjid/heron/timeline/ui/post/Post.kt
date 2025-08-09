@@ -58,6 +58,8 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
+import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
@@ -84,7 +86,10 @@ fun Post(
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier
+            .childThreadNode(videoId = post.videoId)
+    ) {
         if (presentation == Timeline.Presentation.Text.WithEmbed) Box(
             modifier = Modifier
                 .matchParentSize()

@@ -81,7 +81,7 @@ internal fun PostDetailScreen(
     val items by rememberUpdatedState(state.items)
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
-    val videoStates = remember { ThreadedVideoPositionStates() }
+    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
     )
@@ -117,7 +117,7 @@ internal fun PostDetailScreen(
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = remember(state.sharedElementPrefix) {
                         postActions(
-                            onLinkTargetClicked = { post, linkTarget ->
+                            onLinkTargetClicked = { _, linkTarget ->
                                 if (linkTarget is LinkTarget.OfProfile) actions(
                                     Action.Navigate.To(
                                         pathDestination(

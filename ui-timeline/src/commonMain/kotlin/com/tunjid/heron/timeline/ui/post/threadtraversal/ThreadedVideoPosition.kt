@@ -39,23 +39,25 @@ import kotlin.jvm.JvmInline
  * Class for inferring the position of a video in a column of [TimelineItem.Thread] [Post]s.
  */
 @Stable
-class ThreadedVideoPositionStates {
+class ThreadedVideoPositionStates<T>(
+    private val id: T.() -> String,
+) {
     private val itemIdsToStates = mutableStateMapOf<String, ThreadedVideoPositionState>()
 
     @Composable
-    fun getOrCreateStateFor(item: TimelineItem): ThreadedVideoPositionState {
+    fun getOrCreateStateFor(item: T): ThreadedVideoPositionState {
         val state = itemIdsToStates.getOrPut(
-            key = item.id,
+            key = item.id(),
             defaultValue = ::ThreadedVideoPositionState
         )
         DisposableEffect(Unit) {
-            onDispose { itemIdsToStates.remove(item.id) }
+            onDispose { itemIdsToStates.remove(item.id()) }
         }
         return state
     }
 
-    fun retrieveStateFor(item: TimelineItem): ThreadedVideoPositionState? =
-        itemIdsToStates[item.id]
+    fun retrieveStateFor(item: T): ThreadedVideoPositionState? =
+        itemIdsToStates[item.id()]
 }
 
 @Stable

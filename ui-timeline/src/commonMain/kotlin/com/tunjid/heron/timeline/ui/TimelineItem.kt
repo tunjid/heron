@@ -109,7 +109,6 @@ fun TimelineItem(
                         bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
                         else 8.dp,
                     ),
-                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
@@ -142,8 +141,7 @@ fun TimelineItem(
 
                     else -> Post(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .childThreadNode(videoId = item.post.videoId),
+                            .fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         now = now,
@@ -186,8 +184,7 @@ private fun ThreadedPost(
             key(post.cid.id) {
                 if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
                     Post(
-                        modifier = Modifier
-                            .childThreadNode(videoId = post.videoId),
+                        modifier = Modifier,
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         now = now,
