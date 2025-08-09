@@ -16,9 +16,8 @@
 
 package com.tunjid.heron.search
 
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -29,6 +28,7 @@ import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -58,9 +58,16 @@ sealed interface SearchResult {
 
     data class OfPost(
         val post: Post,
+        val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
         override val sharedElementPrefix: String,
     ) : SearchResult
 }
+
+val SearchResult.OfPost.id: String
+    get() = post.uri.uri
+
+val SearchResult.OfPost.canAutoPlayVideo: Boolean
+    get() = labelVisibilitiesToDefinitions.canAutoPlayVideo
 
 sealed class SearchState {
     data class OfPosts(
@@ -87,8 +94,6 @@ data class State(
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
-    val labelPreferences: ContentLabelPreferences,
-    val labelers: List<Labeler>,
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
