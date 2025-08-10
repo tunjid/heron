@@ -36,4 +36,10 @@ data class FeedGenerator(
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel
+) : UrlEncodableModel {
+    enum class Status {
+        Pinned,
+        Saved,
+        None,
+    }
+}

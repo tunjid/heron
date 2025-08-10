@@ -77,12 +77,12 @@ fun State(route: Route) = State(
 sealed class ProfileScreenStateHolders {
 
     class Collections(
-        val mutator: ProfileCollectionStateHolder
+        private val mutator: ProfileCollectionStateHolder
     ) : ProfileScreenStateHolders(),
         ProfileCollectionStateHolder by mutator
 
     class Timeline(
-        val mutator: TimelineStateHolder,
+        private val mutator: TimelineStateHolder,
     ) : ProfileScreenStateHolders(),
         TimelineStateHolder by mutator
 
@@ -129,6 +129,7 @@ sealed class ProfileCollection {
 
     data class OfFeedGenerators(
         val feedGenerator: FeedGenerator,
+        val status: FeedGenerator.Status,
     ) : ProfileCollection()
 
     data class OfStarterPacks(
