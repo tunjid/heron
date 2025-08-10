@@ -202,7 +202,8 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
         val currentState = stateHolder.state()
         currentState.timelineStateHolders
             .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
-            ?.accept(
+            ?.accept
+            ?.invoke(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.Refresh,
                 ),
