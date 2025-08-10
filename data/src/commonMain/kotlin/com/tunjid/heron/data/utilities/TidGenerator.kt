@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities
 
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.atomics.AtomicLong
@@ -39,7 +40,7 @@ import kotlin.time.ExperimentalTime
     ExperimentalAtomicApi::class,
     ExperimentalTime::class,
 )
-class TidGenerator {
+class TidGenerator @Inject constructor() {
 
     private val mutex = Mutex()
 

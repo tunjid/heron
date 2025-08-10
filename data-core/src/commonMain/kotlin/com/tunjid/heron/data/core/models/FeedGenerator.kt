@@ -18,7 +18,9 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -36,4 +38,21 @@ data class FeedGenerator(
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel
+) : UrlEncodableModel {
+    @Serializable
+    sealed class Update {
+        abstract val uri: FeedGeneratorUri
+
+        data class Pin(
+            override val uri: FeedGeneratorUri
+        ) : Update()
+
+        data class Save(
+            override val uri: FeedGeneratorUri
+        ) : Update()
+
+        data class Remove(
+            override val uri: FeedGeneratorUri
+        ) : Update()
+    }
+}

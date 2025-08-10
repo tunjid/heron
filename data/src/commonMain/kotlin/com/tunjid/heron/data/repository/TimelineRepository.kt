@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
@@ -81,6 +82,7 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
+import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -218,6 +220,10 @@ interface TimelineRepository {
     suspend fun updateHomeTimelines(
         timelines: List<Timeline.Home>,
     ): Boolean
+
+    suspend fun updateFeed(
+        update: FeedGenerator.Update,
+    ): Boolean
 }
 
 @Inject
@@ -231,6 +237,7 @@ internal class OfflineTimelineRepository(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
+    private val tidGenerator: TidGenerator,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
 
@@ -553,87 +560,87 @@ internal class OfflineTimelineRepository(
             .map(::signedInProfileIdToContentLabelPreferences)
             .distinctUntilChanged()
             .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
-            postDao.postEntitiesByUri(
-                viewingProfileId = signedInProfileId?.id,
-                postUris = setOf(postUri),
-            )
-                .mapNotNull(List<PostEntity>::firstOrNull)
-                .take(1)
-                .flatMapLatest { postEntity ->
-                    postDao.postThread(
-                        postId = postEntity.cid.id
-                    )
-                        .flatMapLatest { postThread ->
-                            val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
-                            combine(
-                                flow = postDao.posts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postIds = postIds
-                                ),
-                                flow2 = postDao.embeddedPosts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postIds = postIds
-                                ),
-                                flow3 = labelers(),
-                                transform = { posts, embeddedPosts, labelers ->
-                                    val idsToPosts = posts.associateBy { it.entity.cid }
-                                    val idsToEmbeddedPosts = embeddedPosts.associateBy(
-                                        EmbeddedPopulatedPostEntity::parentPostId
-                                    )
-
-                                    postThread.fold(
-                                        initial = emptyList<TimelineItem.Thread>(),
-                                        operation = { list, thread ->
-                                            val populatedPostEntity =
-                                                idsToPosts.getValue(thread.entity.cid)
-                                            val post = populatedPostEntity.asExternalModel(
-                                                quote = idsToEmbeddedPosts[thread.entity.cid]
-                                                    ?.entity
-                                                    ?.asExternalModel(quote = null)
-                                            )
-                                            spinThread(
-                                                list = list,
-                                                thread = thread,
-                                                post = post,
-                                                labelers = labelers,
-                                                labelPreferences = contentLabelPreferences,
-                                            )
-                                        },
-                                    )
-                                }
-                            )
-                        }
-                }
-                .withRefresh {
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        getPostThread(
-                            GetPostThreadQueryParams(
-                                uri = AtUri(postUri.uri)
-                            )
+                postDao.postEntitiesByUri(
+                    viewingProfileId = signedInProfileId?.id,
+                    postUris = setOf(postUri),
+                )
+                    .mapNotNull(List<PostEntity>::firstOrNull)
+                    .take(1)
+                    .flatMapLatest { postEntity ->
+                        postDao.postThread(
+                            postId = postEntity.cid.id
                         )
-                    }
-                        .getOrNull()
-                        ?.thread
-                        ?.let { thread ->
-                            when (thread) {
-                                is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
-                                is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
-                                is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                                    multipleEntitySaverProvider
-                                        .saveInTransaction {
-                                            add(
-                                                viewingProfileId = savedStateDataSource.signedInProfileId,
-                                                threadViewPost = thread.value,
-                                            )
-                                        }
-                                }
+                            .flatMapLatest { postThread ->
+                                val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
+                                combine(
+                                    flow = postDao.posts(
+                                        viewingProfileId = signedInProfileId?.id,
+                                        postIds = postIds
+                                    ),
+                                    flow2 = postDao.embeddedPosts(
+                                        viewingProfileId = signedInProfileId?.id,
+                                        postIds = postIds
+                                    ),
+                                    flow3 = labelers(),
+                                    transform = { posts, embeddedPosts, labelers ->
+                                        val idsToPosts = posts.associateBy { it.entity.cid }
+                                        val idsToEmbeddedPosts = embeddedPosts.associateBy(
+                                            EmbeddedPopulatedPostEntity::parentPostId
+                                        )
 
-                                is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                                        postThread.fold(
+                                            initial = emptyList<TimelineItem.Thread>(),
+                                            operation = { list, thread ->
+                                                val populatedPostEntity =
+                                                    idsToPosts.getValue(thread.entity.cid)
+                                                val post = populatedPostEntity.asExternalModel(
+                                                    quote = idsToEmbeddedPosts[thread.entity.cid]
+                                                        ?.entity
+                                                        ?.asExternalModel(quote = null)
+                                                )
+                                                spinThread(
+                                                    list = list,
+                                                    thread = thread,
+                                                    post = post,
+                                                    labelers = labelers,
+                                                    labelPreferences = contentLabelPreferences,
+                                                )
+                                            },
+                                        )
+                                    }
+                                )
                             }
+                    }
+                    .withRefresh {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            getPostThread(
+                                GetPostThreadQueryParams(
+                                    uri = AtUri(postUri.uri)
+                                )
+                            )
                         }
-                }
-                .distinctUntilChanged()
-        }
+                            .getOrNull()
+                            ?.thread
+                            ?.let { thread ->
+                                when (thread) {
+                                    is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
+                                    is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
+                                    is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                                        multipleEntitySaverProvider
+                                            .saveInTransaction {
+                                                add(
+                                                    viewingProfileId = savedStateDataSource.signedInProfileId,
+                                                    threadViewPost = thread.value,
+                                                )
+                                            }
+                                    }
+
+                                    is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                                }
+                            }
+                    }
+                    .distinctUntilChanged()
+            }
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateDataSource.savedState
@@ -838,24 +845,13 @@ internal class OfflineTimelineRepository(
     override suspend fun updateHomeTimelines(
         timelines: List<Timeline.Home>,
     ): Boolean {
-        val existing = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferences()
-        }
-            .getOrNull()
-            ?.preferences
-            ?: return false
+        val existing = getNetworkPreferences() ?: return false
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             putPreferences(
                 PutPreferencesRequest(
-                    preferences = existing.map { preference ->
-                        when (preference) {
-                            is PreferencesUnion.SavedFeedsPrefV2 -> {
-                                preference.updateFeedPreferencesFrom(timelines)
-                            }
-
-                            else -> preference
-                        }
+                    preferences = existing.updateFeed {
+                        updateFeedPreferencesFrom(timelines)
                     }
                 )
             )
@@ -863,6 +859,33 @@ internal class OfflineTimelineRepository(
 
         return authRepository.updateSignedInUser()
     }
+
+    override suspend fun updateFeed(
+        update: FeedGenerator.Update,
+    ): Boolean {
+        val existing = getNetworkPreferences() ?: return false
+
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            putPreferences(
+                PutPreferencesRequest(
+                    preferences = existing.updateFeed {
+                        updateFeedPreferencesFrom(
+                            tidGenerator = tidGenerator,
+                            update = update,
+                        )
+                    }
+                )
+            )
+        }.getOrNull() ?: return false
+
+        return authRepository.updateSignedInUser()
+    }
+
+    private suspend fun getNetworkPreferences() = networkService.runCatchingWithMonitoredNetworkRetry {
+        getPreferences()
+    }
+        .getOrNull()
+        ?.preferences
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -991,8 +1014,8 @@ internal class OfflineTimelineRepository(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .flatMapLatest { itemEntities ->
-                        if (itemEntities.isEmpty()) return@flatMapLatest emptyFlow()
+                    .flatMapLatest latestFeedItems@{ itemEntities ->
+                        if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
 
                         val postIds = itemEntities.flatMap {
                             listOfNotNull(
@@ -1007,16 +1030,16 @@ internal class OfflineTimelineRepository(
                             transform = TimelineItemEntity::reposter
                         )
                         combine(
-                            flow = postIds.toFlowOrEmpty { postIds ->
+                            flow = postIds.toFlowOrEmpty { ids ->
                                 postDao.posts(
                                     viewingProfileId = signedInProfileId?.id,
-                                    postIds = postIds,
+                                    postIds = ids,
                                 )
                             },
-                            flow2 = postIds.toFlowOrEmpty { postIds ->
+                            flow2 = postIds.toFlowOrEmpty { ids ->
                                 postDao.embeddedPosts(
                                     viewingProfileId = signedInProfileId?.id,
-                                    postIds = postIds,
+                                    postIds = ids,
                                 )
                             },
                             flow3 = profileIds.toFlowOrEmpty(
@@ -1305,10 +1328,11 @@ internal class OfflineTimelineRepository(
     }
 }
 
-private fun signedInProfileIdToContentLabelPreferences(state: SavedState): Pair<ProfileId?, ContentLabelPreferences> = Pair(
-    first = state.signedInProfileId,
-    second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
-)
+private fun signedInProfileIdToContentLabelPreferences(state: SavedState): Pair<ProfileId?, ContentLabelPreferences> =
+    Pair(
+        first = state.signedInProfileId,
+        second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
+    )
 
 private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
     savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
@@ -1381,6 +1405,48 @@ private fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
         )
     )
 }
+
+private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
+    tidGenerator: TidGenerator,
+    update: FeedGenerator.Update,
+): PreferencesUnion.SavedFeedsPrefV2 = PreferencesUnion.SavedFeedsPrefV2(
+    SavedFeedsPrefV2(
+        items = when (update) {
+            is FeedGenerator.Update.Pin -> value.items.partition(SavedFeed::pinned)
+                .let { (pinned, saved) ->
+                    pinned + SavedFeed(
+                        id = tidGenerator.generate(),
+                        type = Type.Feed,
+                        value = update.uri.uri,
+                        pinned = true,
+                    ) + saved
+                }
+
+            is FeedGenerator.Update.Remove -> value.items.filter { savedFeed ->
+                if (savedFeed.type != Type.Feed) return@filter true
+                savedFeed.value != update.uri.uri
+            }
+
+            is FeedGenerator.Update.Save -> value.items + SavedFeed(
+                id = tidGenerator.generate(),
+                type = Type.Feed,
+                value = update.uri.uri,
+                pinned = false,
+            )
+        }
+    )
+)
+
+private inline fun List<PreferencesUnion>.updateFeed(
+    block: PreferencesUnion.SavedFeedsPrefV2.() -> PreferencesUnion.SavedFeedsPrefV2
+): List<PreferencesUnion> =
+    map { preference ->
+        when (preference) {
+            is PreferencesUnion.SavedFeedsPrefV2 -> preference.block()
+            else -> preference
+        }
+    }
+
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
     when (contentMode) {
