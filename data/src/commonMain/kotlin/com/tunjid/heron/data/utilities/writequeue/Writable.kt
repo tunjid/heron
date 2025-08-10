@@ -120,7 +120,7 @@ sealed interface Writable {
             }
 
         override suspend fun WriteQueue.write() {
-            timelineRepository.updateTimeline(update)
+            timelineRepository.updateHomeTimelines(update)
         }
     }
 }

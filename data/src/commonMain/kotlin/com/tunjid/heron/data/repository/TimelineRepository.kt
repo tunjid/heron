@@ -216,7 +216,7 @@ interface TimelineRepository {
         presentation: Timeline.Presentation,
     ): Boolean
 
-    suspend fun updateTimeline(
+    suspend fun updateHomeTimelines(
         update: Timeline.Update,
     ): Boolean
 }
@@ -837,7 +837,7 @@ internal class OfflineTimelineRepository(
         }.isSuccess
     }
 
-    override suspend fun updateTimeline(
+    override suspend fun updateHomeTimelines(
         update: Timeline.Update,
     ): Boolean {
         val existing = networkService.runCatchingWithMonitoredNetworkRetry {
