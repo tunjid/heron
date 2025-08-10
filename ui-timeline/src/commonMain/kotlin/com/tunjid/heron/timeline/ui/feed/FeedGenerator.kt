@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.search.ui
+package com.tunjid.heron.timeline.ui.feed
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
@@ -32,14 +32,14 @@ import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature_search.generated.resources.Res
-import heron.feature_search.generated.resources.feed_by
-import heron.feature_search.generated.resources.liked_by
+import heron.ui_timeline.generated.resources.Res
+import heron.ui_timeline.generated.resources.feed_by
+import heron.ui_timeline.generated.resources.liked_by
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun FeedGeneratorSearchResult(
+fun FeedGenerator(
     modifier: Modifier = Modifier,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,

@@ -81,7 +81,6 @@ import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.search.ui.FeedGeneratorSearchResult
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.SuggestedStarterPack
@@ -90,6 +89,7 @@ import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
@@ -487,7 +487,7 @@ private fun SuggestedContent(
             items = feedGenerators.take(5),
             key = { feedGenerator -> feedGenerator.cid.id },
             itemContent = { feedGenerator ->
-                FeedGeneratorSearchResult(
+                FeedGenerator(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .animateItem(),
@@ -774,7 +774,7 @@ private fun SearchResults(
                     items = results,
                     key = { it.feedGenerator.cid.id },
                     itemContent = { result ->
-                        FeedGeneratorSearchResult(
+                        FeedGenerator(
                             movableElementSharedTransitionScope = paneScaffoldState,
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             feedGenerator = result.feedGenerator,

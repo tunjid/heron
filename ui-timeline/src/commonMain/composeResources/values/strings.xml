@@ -45,6 +45,7 @@
     <string name="expanded_media">expanded media</string>
     <string name="sensitive_content">Sensitive Content</string>
     <string name="feed_by">Feed by %1$s</string>
+    <string name="liked_by">Liked by %1$s users</string>
     <string name="starter_pack_by">Starter Pack by %1$s</string>
     <string name="list_by">List by %1$s</string>
     <string name="show_more">Show More</string>

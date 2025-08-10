@@ -53,7 +53,6 @@ sealed interface SearchResult {
 
     data class OfFeedGenerator(
         val feedGenerator: FeedGenerator,
-        val status: FeedGenerator.Status,
         override val sharedElementPrefix: String,
     ) : SearchResult
 
