@@ -52,6 +52,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
@@ -100,6 +101,11 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideTidGenerator(
+    ): TidGenerator = TidGenerator()
 
     @SingleIn(AppScope::class)
     @Provides

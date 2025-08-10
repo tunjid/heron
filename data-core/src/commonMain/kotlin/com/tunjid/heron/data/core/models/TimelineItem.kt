@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
@@ -165,6 +166,30 @@ sealed interface Timeline {
                 starterPack = starterPack,
                 listTimeline = Home.List.stub(list),
             )
+        }
+    }
+
+    @Serializable
+    sealed class Update {
+        data class Bulk(
+            val timelines: List<Home>,
+        ) : Update()
+
+        @Serializable
+        sealed class OfFeedGenerator : Update() {
+            abstract val uri: FeedGeneratorUri
+
+            data class Pin(
+                override val uri: FeedGeneratorUri
+            ) : OfFeedGenerator()
+
+            data class Save(
+                override val uri: FeedGeneratorUri
+            ) : OfFeedGenerator()
+
+            data class Remove(
+                override val uri: FeedGeneratorUri
+            ) : OfFeedGenerator()
         }
     }
 

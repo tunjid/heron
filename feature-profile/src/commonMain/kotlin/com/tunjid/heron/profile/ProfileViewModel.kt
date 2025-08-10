@@ -18,9 +18,15 @@ package com.tunjid.heron.profile
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -61,6 +67,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -94,6 +101,7 @@ class ActualProfileViewModel(
             profileId = route.profileHandleOrId,
             scope = scope,
             profileRepository = profileRepository,
+            timelineRepository = timelineRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileHandleOrId,
@@ -135,6 +143,7 @@ private fun loadProfileMutations(
     profileId: Id.Profile,
     scope: CoroutineScope,
     profileRepository: ProfileRepository,
+    timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     merge(
         profileRepository.profile(profileId).mapToMutation { profile ->
@@ -149,6 +158,7 @@ private fun loadProfileMutations(
                         profileId = profileId,
                         metadata = profile.metadata,
                         profileRepository = profileRepository,
+                        timelineRepository = timelineRepository,
                     )
 
                     else -> stateHolders
@@ -174,9 +184,9 @@ private fun loadSignedInProfileMutations(
         .distinctUntilChangedBy { it?.handle }
         .mapToManyMutations { signedInProfile ->
             val isSignedIn = signedInProfile != null
-            val isSignedInProfile = isSignedIn &&
+            val isSignedInProfile = signedInProfile != null &&
                     (signedInProfile.did.id == profileId.id ||
-                    signedInProfile.handle.id == profileId.id)
+                            signedInProfile.handle.id == profileId.id)
             emit {
                 copy(
                     signedInProfileId = signedInProfile?.did,
@@ -290,60 +300,83 @@ private fun profileCollectionStateHolders(
     coroutineScope: CoroutineScope,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
+    timelineRepository: TimelineRepository,
     metadata: Profile.Metadata,
-): List<ProfileScreenStateHolders.Collections> = listOfNotNull(
-    if (metadata.createdFeedGeneratorCount > 0) ProfileCollectionState(
-        stringResource = Res.string.feed,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = defaultQueryData(),
+): List<ProfileScreenStateHolders.Collections> =
+    listOfNotNull<Pair<ProfileCollectionState, (ProfilesQuery, Cursor) -> Flow<CursorList<ProfileCollection>>>>(
+        if (metadata.createdFeedGeneratorCount > 0) ProfileCollectionState(
+            stringResource = Res.string.feed,
+            tilingData = TilingState.Data(
+                currentQuery = ProfilesQuery(
+                    profileId = profileId,
+                    data = defaultQueryData(),
+                ),
             ),
-        ),
-    ) to profileRepository::feedGenerators.mapCursorList(ProfileCollection::OfFeedGenerators)
-    else null,
-    if (metadata.createdStarterPackCount > 0) ProfileCollectionState(
-        stringResource = Res.string.starter_pack,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = defaultQueryData(),
-            ),
-        ),
-    ) to profileRepository::starterPacks.mapCursorList(ProfileCollection::OfStarterPacks)
-    else null,
-    if (metadata.createdListCount > 0) ProfileCollectionState(
-        stringResource = Res.string.list,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = defaultQueryData(),
-            ),
-        ),
-    ) to profileRepository::lists.mapCursorList(ProfileCollection::OfLists)
-    else null,
-).map { (state, cursorListLoader) ->
-    ProfileScreenStateHolders.Collections(
-        mutator = coroutineScope.actionStateFlowMutator(
-            initialState = state,
-            actionTransform = transform@{ actions ->
-                actions.toMutationStream {
-                    type().flow
-                        .tilingMutations(
-                            currentState = { state() },
-                            updateQueryData = { copy(data = it) },
-                            refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = cursorListLoader,
-                            onNewItems = { items ->
-                                items.distinctBy(ProfileCollection::id)
-                            },
-                            onTilingDataUpdated = { copy(tilingData = it) },
-                        )
+        ) to { query, cursor ->
+            combine(
+                timelineRepository.preferences()
+                    .distinctUntilChangedBy(Preferences::timelinePreferences)
+                    .map {
+                        it.timelinePreferences
+                            .associateBy(TimelinePreference::value)
+                    },
+                profileRepository.feedGenerators(query, cursor),
+            ) { timelineIdsToPinned, feedGenerators ->
+                feedGenerators.mapCursorList {
+                    ProfileCollection.OfFeedGenerators(
+                        feedGenerator = it,
+                        status = when (timelineIdsToPinned[it.uri.uri]?.pinned) {
+                            true -> FeedGenerator.Status.Pinned
+                            false -> FeedGenerator.Status.Saved
+                            null -> FeedGenerator.Status.None
+                        },
+                    )
                 }
             }
+        }
+        else null,
+        if (metadata.createdStarterPackCount > 0) ProfileCollectionState(
+            stringResource = Res.string.starter_pack,
+            tilingData = TilingState.Data(
+                currentQuery = ProfilesQuery(
+                    profileId = profileId,
+                    data = defaultQueryData(),
+                ),
+            ),
+        ) to profileRepository::starterPacks.mapCursorList(ProfileCollection::OfStarterPacks)
+        else null,
+        if (metadata.createdListCount > 0) ProfileCollectionState(
+            stringResource = Res.string.list,
+            tilingData = TilingState.Data(
+                currentQuery = ProfilesQuery(
+                    profileId = profileId,
+                    data = defaultQueryData(),
+                ),
+            ),
+        ) to profileRepository::lists.mapCursorList(ProfileCollection::OfLists)
+        else null,
+    ).map { (state, cursorListLoader) ->
+        ProfileScreenStateHolders.Collections(
+            mutator = coroutineScope.actionStateFlowMutator(
+                initialState = state,
+                actionTransform = transform@{ actions ->
+                    actions.toMutationStream {
+                        type().flow
+                            .tilingMutations(
+                                currentState = { state() },
+                                updateQueryData = { copy(data = it) },
+                                refreshQuery = { copy(data = data.reset()) },
+                                cursorListLoader = cursorListLoader,
+                                onNewItems = { items ->
+                                    items.distinctBy(ProfileCollection::id)
+                                },
+                                onTilingDataUpdated = { copy(tilingData = it) },
+                            )
+                    }
+                }
+            )
         )
-    )
-}
+    }
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,
