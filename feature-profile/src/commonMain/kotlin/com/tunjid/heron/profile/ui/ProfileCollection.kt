@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
@@ -77,31 +78,47 @@ internal fun ProfileCollection(
             items = updatedItems,
             key = ProfileCollection::id,
             itemContent = { profileCollection ->
-                ProfileCollection(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                    title = collectionState.stringResource,
-                    collection = profileCollection,
-                    onCollectionClicked = { collection ->
-                        actions(
-                            Action.Navigate.To(
-                                pathDestination(
-                                    path = collection.uriPath,
-                                    models = listOf(
-                                        when (collection) {
-                                            is OfFeedGenerators -> collection.feedGenerator
-                                            is OfLists -> collection.list
-                                            is OfStarterPacks -> collection.starterPack
-                                        }
-                                    ),
-                                    sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                )
+                val onCollectionClicked = { collection: ProfileCollection ->
+                    actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = collection.uriPath,
+                                models = listOf(
+                                    when (collection) {
+                                        is OfFeedGenerators -> collection.feedGenerator
+                                        is OfLists -> collection.list
+                                        is OfStarterPacks -> collection.starterPack
+                                    }
+                                ),
+                                sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             )
                         )
-                    },
-                )
+                    )
+                }
+                when (profileCollection) {
+                    is OfFeedGenerators -> FeedGenerator(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .animateItem(),
+                        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                        feedGenerator = profileCollection.feedGenerator,
+                        onFeedGeneratorClicked = {
+                            onCollectionClicked(profileCollection)
+                        },
+                    )
+
+                    is OfLists,
+                    is OfStarterPacks -> ProfileCollection(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                        title = collectionState.stringResource,
+                        collection = profileCollection,
+                        onCollectionClicked = onCollectionClicked,
+                    )
+                }
             }
         )
     }
