@@ -105,16 +105,22 @@ sealed interface Writable {
 
     @Serializable
     data class TimelineUpdate(
-        val timelines: List<Timeline.Home>,
+        val update: Timeline.Update,
     ) : Writable {
         override val queueId: String
-            get() = timelines.joinToString(
-                separator = "-",
-                transform = Timeline.Home::sourceId,
-            )
+            get() = when (update) {
+                is Timeline.Update.Bulk -> update.timelines.joinToString(
+                    separator = "-",
+                    transform = Timeline.Home::sourceId,
+                )
+
+                is Timeline.Update.OfFeedGenerator.Pin -> "pin-${update.uri}"
+                is Timeline.Update.OfFeedGenerator.Remove -> "remove-${update.uri}"
+                is Timeline.Update.OfFeedGenerator.Save -> "save-${update.uri}"
+            }
 
         override suspend fun WriteQueue.write() {
-            timelineRepository.updateHomeTimelines(timelines)
+            timelineRepository.updateTimeline(update)
         }
     }
 }

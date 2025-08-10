@@ -18,6 +18,7 @@ package com.tunjid.heron.home
 
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -165,7 +166,7 @@ private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
             }
 
             is Action.UpdateTimeline.Update -> {
-                val writable = Writable.TimelineUpdate(it.timelines)
+                val writable = Writable.TimelineUpdate(Timeline.Update.Bulk(it.timelines))
                 writeQueue.enqueue(writable)
                 writeQueue.awaitDequeue(writable)
                 emit {

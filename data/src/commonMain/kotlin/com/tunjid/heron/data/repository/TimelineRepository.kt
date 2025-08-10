@@ -45,7 +45,6 @@ import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
@@ -217,12 +216,8 @@ interface TimelineRepository {
         presentation: Timeline.Presentation,
     ): Boolean
 
-    suspend fun updateHomeTimelines(
-        timelines: List<Timeline.Home>,
-    ): Boolean
-
-    suspend fun updateFeed(
-        update: FeedGenerator.Update,
+    suspend fun updateTimeline(
+        update: Timeline.Update,
     ): Boolean
 }
 
@@ -842,28 +837,14 @@ internal class OfflineTimelineRepository(
         }.isSuccess
     }
 
-    override suspend fun updateHomeTimelines(
-        timelines: List<Timeline.Home>,
+    override suspend fun updateTimeline(
+        update: Timeline.Update,
     ): Boolean {
-        val existing = getNetworkPreferences() ?: return false
-
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = existing.updateFeed {
-                        updateFeedPreferencesFrom(timelines)
-                    }
-                )
-            )
-        }.getOrNull() ?: return false
-
-        return authRepository.updateSignedInUser()
-    }
-
-    override suspend fun updateFeed(
-        update: FeedGenerator.Update,
-    ): Boolean {
-        val existing = getNetworkPreferences() ?: return false
+        val existing = networkService.runCatchingWithMonitoredNetworkRetry {
+            getPreferences()
+        }
+            .getOrNull()
+            ?.preferences ?: return false
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             putPreferences(
@@ -880,12 +861,6 @@ internal class OfflineTimelineRepository(
 
         return authRepository.updateSignedInUser()
     }
-
-    private suspend fun getNetworkPreferences() = networkService.runCatchingWithMonitoredNetworkRetry {
-        getPreferences()
-    }
-        .getOrNull()
-        ?.preferences
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -1357,62 +1332,55 @@ private suspend fun TimelineDao.isFirstRequest(
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
 
-private fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
-    timelines: List<Timeline.Home>
-): PreferencesUnion.SavedFeedsPrefV2 {
-    val savedFeedValuesToIds = value.items.associateBy(
-        keySelector = SavedFeed::value,
-        valueTransform = SavedFeed::id
-    )
-    return PreferencesUnion.SavedFeedsPrefV2(
-        SavedFeedsPrefV2(
-            timelines.mapNotNull { timeline ->
-                when (timeline) {
-                    is Timeline.Home.Feed -> savedFeedValuesToIds[
-                        timeline.feedGenerator.uri.uri
-                    ]?.let { id ->
-                        SavedFeed(
-                            id = id,
-                            type = Type.Feed,
-                            value = timeline.feedGenerator.uri.uri,
-                            pinned = timeline.isPinned,
-                        )
-                    }
-
-                    is Timeline.Home.Following -> savedFeedValuesToIds[
-                        "following"
-                    ]?.let { id ->
-                        SavedFeed(
-                            id = id,
-                            type = Type.Timeline,
-                            value = "following",
-                            pinned = timeline.isPinned,
-                        )
-                    }
-
-                    is Timeline.Home.List -> savedFeedValuesToIds[
-                        timeline.feedList.uri.uri
-                    ]?.let { id ->
-                        SavedFeed(
-                            id = id,
-                            type = Type.List,
-                            value = timeline.feedList.uri.uri,
-                            pinned = timeline.isPinned,
-                        )
-                    }
-                }
-            }
-        )
-    )
-}
-
 private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
     tidGenerator: TidGenerator,
-    update: FeedGenerator.Update,
+    update: Timeline.Update,
 ): PreferencesUnion.SavedFeedsPrefV2 = PreferencesUnion.SavedFeedsPrefV2(
     SavedFeedsPrefV2(
         items = when (update) {
-            is FeedGenerator.Update.Pin -> value.items.partition(SavedFeed::pinned)
+            is Timeline.Update.Bulk -> value.items.associateBy(
+                keySelector = SavedFeed::value,
+                valueTransform = SavedFeed::id
+            ).let { savedFeedValuesToIds ->
+                update.timelines.mapNotNull { timeline ->
+                    when (timeline) {
+                        is Timeline.Home.Feed -> savedFeedValuesToIds[
+                            timeline.feedGenerator.uri.uri
+                        ]?.let { id ->
+                            SavedFeed(
+                                id = id,
+                                type = Type.Feed,
+                                value = timeline.feedGenerator.uri.uri,
+                                pinned = timeline.isPinned,
+                            )
+                        }
+
+                        is Timeline.Home.Following -> savedFeedValuesToIds[
+                            "following"
+                        ]?.let { id ->
+                            SavedFeed(
+                                id = id,
+                                type = Type.Timeline,
+                                value = "following",
+                                pinned = timeline.isPinned,
+                            )
+                        }
+
+                        is Timeline.Home.List -> savedFeedValuesToIds[
+                            timeline.feedList.uri.uri
+                        ]?.let { id ->
+                            SavedFeed(
+                                id = id,
+                                type = Type.List,
+                                value = timeline.feedList.uri.uri,
+                                pinned = timeline.isPinned,
+                            )
+                        }
+                    }
+                }
+            }
+
+            is Timeline.Update.OfFeedGenerator.Pin -> value.items.partition(SavedFeed::pinned)
                 .let { (pinned, saved) ->
                     pinned + SavedFeed(
                         id = tidGenerator.generate(),
@@ -1422,12 +1390,12 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                     ) + saved
                 }
 
-            is FeedGenerator.Update.Remove -> value.items.filter { savedFeed ->
+            is Timeline.Update.OfFeedGenerator.Remove -> value.items.filter { savedFeed ->
                 if (savedFeed.type != Type.Feed) return@filter true
                 savedFeed.value != update.uri.uri
             }
 
-            is FeedGenerator.Update.Save -> value.items + SavedFeed(
+            is Timeline.Update.OfFeedGenerator.Save -> value.items + SavedFeed(
                 id = tidGenerator.generate(),
                 type = Type.Feed,
                 value = update.uri.uri,
