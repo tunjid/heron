@@ -26,6 +26,8 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -98,12 +100,14 @@ class ActualProfileViewModel(
             profileId = route.profileHandleOrId,
             scope = scope,
             profileRepository = profileRepository,
-            timelineRepository = timelineRepository,
         ),
         profileRelationshipMutations(
             profileId = route.profileHandleOrId,
             profileRepository = profileRepository,
-        )
+        ),
+        feedGeneratorUrisToStatusMutations(
+            timelineRepository = timelineRepository,
+        ),
     ),
     actionTransform = transform@{ actions ->
         merge(
@@ -140,7 +144,6 @@ private fun loadProfileMutations(
     profileId: Id.Profile,
     scope: CoroutineScope,
     profileRepository: ProfileRepository,
-    timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     merge(
         profileRepository.profile(profileId).mapToMutation { profile ->
@@ -256,6 +259,21 @@ private fun profileRelationshipMutations(
         copy(viewerState = it.firstOrNull())
     }
 
+private fun feedGeneratorUrisToStatusMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.preferences()
+        .distinctUntilChangedBy { it.timelinePreferences }
+        .mapToMutation { preferences ->
+            copy(
+                feedGeneratorUrisToPinnedStatus = preferences.timelinePreferences
+                    .associateBy(
+                        keySelector = TimelinePreference::feedGeneratorUri,
+                        valueTransform = TimelinePreference::pinned,
+                    )
+            )
+        }
+
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
         copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
@@ -301,7 +319,7 @@ private fun profileCollectionStateHolders(
     listOfNotNull(
         if (metadata.createdFeedGeneratorCount > 0) ProfileScreenStateHolders.Collections.Feeds(
             mutator = coroutineScope.profileCollectionStateHolder(
-                initialState = ProfileCollectionState<FeedGenerator>(
+                initialState = ProfileCollectionState(
                     stringResource = Res.string.feed,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -311,13 +329,13 @@ private fun profileCollectionStateHolders(
                     ),
                 ),
                 itemId = FeedGenerator::cid,
-                cursorListLoader = profileRepository::feedGenerators
+                cursorListLoader = profileRepository::feedGenerators,
             )
         )
         else null,
         if (metadata.createdStarterPackCount > 0) ProfileScreenStateHolders.Collections.StarterPacks(
             mutator = coroutineScope.profileCollectionStateHolder(
-                initialState = ProfileCollectionState<StarterPack>(
+                initialState = ProfileCollectionState(
                     stringResource = Res.string.starter_pack,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -327,13 +345,13 @@ private fun profileCollectionStateHolders(
                     ),
                 ),
                 itemId = StarterPack::cid,
-                cursorListLoader = profileRepository::starterPacks
+                cursorListLoader = profileRepository::starterPacks,
             )
         )
         else null,
         if (metadata.createdListCount > 0) ProfileScreenStateHolders.Collections.Lists(
             mutator = coroutineScope.profileCollectionStateHolder(
-                initialState = ProfileCollectionState<FeedList>(
+                initialState = ProfileCollectionState(
                     stringResource = Res.string.list,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -343,7 +361,7 @@ private fun profileCollectionStateHolders(
                     ),
                 ),
                 itemId = FeedList::cid,
-                cursorListLoader = profileRepository::lists
+                cursorListLoader = profileRepository::lists,
             )
         )
         else null,

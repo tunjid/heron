@@ -84,6 +84,7 @@ import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -290,7 +291,11 @@ internal fun ProfileScreen(
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
-                                        status = com.tunjid.heron.data.core.models.FeedGenerator.Status.None,
+                                        status = when (state.feedGeneratorUrisToPinnedStatus[feedGenerator.uri]) {
+                                            true -> FeedGenerator.Status.Pinned
+                                            false -> FeedGenerator.Status.Saved
+                                            null -> FeedGenerator.Status.None
+                                        },
                                         onFeedGeneratorClicked = {
                                             actions(
                                                 Action.Navigate.To(

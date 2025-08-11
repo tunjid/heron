@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -57,6 +58,7 @@ data class State(
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
+    val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
