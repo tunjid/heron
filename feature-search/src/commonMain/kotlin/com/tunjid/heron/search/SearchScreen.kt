@@ -69,6 +69,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -304,6 +305,7 @@ internal fun SearchScreen(
                         ?: emptyList(),
                     starterPacksWithMembers = state.starterPacksWithMembers,
                     feedGenerators = state.feedGenerators,
+                    feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
                     onProfileClicked = onProfileClicked,
                     onViewerStateClicked = onViewerStateClicked,
                     onListMemberClicked = onListMemberClicked,
@@ -384,6 +386,7 @@ private fun SuggestedContent(
     suggestedProfiles: List<ProfileWithViewerState>,
     starterPacksWithMembers: List<SuggestedStarterPack>,
     feedGenerators: List<FeedGenerator>,
+    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
@@ -494,6 +497,11 @@ private fun SuggestedContent(
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = feedGenerator,
+                    status = when (feedGeneratorUrisToPinnedStatus[feedGenerator.uri]) {
+                        true -> FeedGenerator.Status.Pinned
+                        false -> FeedGenerator.Status.Saved
+                        null -> FeedGenerator.Status.None
+                    },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
                 )
             }
@@ -621,6 +629,7 @@ private fun TabbedSearchResults(
                 SearchResults(
                     paneScaffoldState = paneMovableElementSharedTransitionScope,
                     searchResultStateHolder = searchResultStateHolder,
+                    feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
                     onProfileClicked = onProfileClicked,
                     onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                     onPostSearchResultClicked = onPostSearchResultClicked,
@@ -651,6 +660,7 @@ private fun SearchResults(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
     searchResultStateHolder: SearchResultStateHolder,
+    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
@@ -778,6 +788,11 @@ private fun SearchResults(
                             movableElementSharedTransitionScope = paneScaffoldState,
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             feedGenerator = result.feedGenerator,
+                            status = when (feedGeneratorUrisToPinnedStatus[result.feedGenerator.uri]) {
+                                true -> FeedGenerator.Status.Pinned
+                                false -> FeedGenerator.Status.Saved
+                                null -> FeedGenerator.Status.None
+                            },
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                         )
                     }

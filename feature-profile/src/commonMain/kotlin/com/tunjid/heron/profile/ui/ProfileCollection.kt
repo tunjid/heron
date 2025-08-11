@@ -88,6 +88,7 @@ internal fun ProfileCollection(
                         movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                         feedGenerator = profileCollection.feedGenerator,
+                        status = com.tunjid.heron.data.core.models.FeedGenerator.Status.None,
                         onFeedGeneratorClicked = {
                             onCollectionClicked(profileCollection)
                         },

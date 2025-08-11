@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.serialization.Serializable
 
@@ -49,6 +50,12 @@ data class TimelinePreference(
     val value: String,
     val pinned: Boolean,
 )
+
+val TimelinePreference.feedGeneratorUri: FeedGeneratorUri?
+    get() = when(type) {
+        "feed" -> FeedGeneratorUri(value)
+        else -> null
+    }
 
 @Serializable
 data class ContentLabelPreference(

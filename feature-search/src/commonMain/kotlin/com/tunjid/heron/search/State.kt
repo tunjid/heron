@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
@@ -94,6 +95,7 @@ data class State(
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
+    val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
