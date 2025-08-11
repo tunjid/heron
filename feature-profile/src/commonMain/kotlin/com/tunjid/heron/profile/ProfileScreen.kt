@@ -308,6 +308,9 @@ internal fun ProfileScreen(
                                                 )
                                             )
                                         },
+                                        onFeedGeneratorStatusUpdated = { update ->
+                                            actions(Action.UpdateFeedGeneratorStatus(update))
+                                        },
                                     )
                                 },
                             )

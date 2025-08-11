@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -153,6 +154,10 @@ sealed class Action(val key: String) {
         val following: GenericUri?,
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
+
+    data class UpdateFeedGeneratorStatus(
+        val update: Timeline.Update,
+    ) : Action(key = "UpdateFeedGeneratorStatus")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop

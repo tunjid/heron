@@ -124,6 +124,10 @@ class ActualProfileViewModel(
                         writeQueue = writeQueue,
                     )
 
+                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                        writeQueue = writeQueue,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions
                     )
@@ -308,6 +312,13 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
                 }
             )
         )
+    }
+
+private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.TimelineUpdate(action.update))
     }
 
 private fun profileCollectionStateHolders(
