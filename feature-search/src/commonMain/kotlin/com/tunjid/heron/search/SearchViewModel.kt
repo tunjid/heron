@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -57,6 +59,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -108,6 +111,9 @@ class SearchViewModel(
         ),
         suggestedFeedGeneratorMutations(
             searchRepository = searchRepository
+        ),
+        feedGeneratorUrisToStatusMutations(
+            timelineRepository = timelineRepository,
         ),
     ),
     actionTransform = transform@{ actions ->
@@ -211,6 +217,21 @@ private fun suggestedFeedGeneratorMutations(
 ): Flow<Mutation<State>> =
     searchRepository.suggestedFeeds()
         .mapToMutation { copy(feedGenerators = it) }
+
+private fun feedGeneratorUrisToStatusMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.preferences()
+        .distinctUntilChangedBy { it.timelinePreferences }
+        .mapToMutation { preferences ->
+            copy(
+                feedGeneratorUrisToPinnedStatus = preferences.timelinePreferences
+                    .associateBy(
+                        keySelector = TimelinePreference::feedGeneratorUri,
+                        valueTransform = TimelinePreference::pinned,
+                    )
+            )
+        }
 
 private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
     searchRepository: SearchRepository,

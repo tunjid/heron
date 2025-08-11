@@ -44,6 +44,7 @@ fun FeedGenerator(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
+    status: FeedGenerator.Status,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     CollectionLayout(
