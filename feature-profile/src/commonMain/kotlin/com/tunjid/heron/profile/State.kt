@@ -22,8 +22,10 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -57,6 +59,7 @@ data class State(
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
+    val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
@@ -76,10 +79,24 @@ fun State(route: Route) = State(
 
 sealed class ProfileScreenStateHolders {
 
-    class Collections(
-        private val mutator: ProfileCollectionStateHolder
+    sealed class Collections<T>(
+        private val mutator: ProfileCollectionStateHolder<T>
     ) : ProfileScreenStateHolders(),
-        ProfileCollectionStateHolder by mutator
+        ProfileCollectionStateHolder<T> by mutator {
+
+        class Feeds(
+            mutator: ProfileCollectionStateHolder<FeedGenerator>
+        ) : Collections<FeedGenerator>(mutator)
+
+        class Lists(
+            mutator: ProfileCollectionStateHolder<FeedList>
+        ) : Collections<FeedList>(mutator)
+
+        class StarterPacks(
+            mutator: ProfileCollectionStateHolder<StarterPack>
+        ) : Collections<StarterPack>(mutator)
+
+    }
 
     class Timeline(
         private val mutator: TimelineStateHolder,
@@ -88,18 +105,20 @@ sealed class ProfileScreenStateHolders {
 
     val key
         get() = when (this) {
-            is Collections -> state.value.stringResource.toString()
+            is Collections.Feeds -> "Feeds"
+            is Collections.Lists -> "Lists"
+            is Collections.StarterPacks -> "StarterPacks"
             is Timeline -> state.value.timeline.sourceId
         }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
-            is Collections -> state
+            is Collections<*> -> state
             is Timeline -> state
         }
 
     fun refresh() = when (this) {
-        is Collections -> accept(
+        is Collections<*> -> accept(
             TilingState.Action.Refresh
         )
 
@@ -111,35 +130,12 @@ sealed class ProfileScreenStateHolders {
     }
 }
 
-typealias ProfileCollectionStateHolder = ActionStateMutator<TilingState.Action, StateFlow<ProfileCollectionState>>
+typealias ProfileCollectionStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<ProfileCollectionState<T>>>
 
-data class ProfileCollectionState(
+data class ProfileCollectionState<T>(
     val stringResource: StringResource,
-    override val tilingData: TilingState.Data<ProfilesQuery, ProfileCollection>,
-) : TilingState<ProfilesQuery, ProfileCollection>
-
-sealed class ProfileCollection {
-
-    val id
-        get() = when (this) {
-            is OfFeedGenerators -> feedGenerator.cid.id
-            is OfLists -> list.cid.id
-            is OfStarterPacks -> starterPack.cid.id
-        }
-
-    data class OfFeedGenerators(
-        val feedGenerator: FeedGenerator,
-        val status: FeedGenerator.Status,
-    ) : ProfileCollection()
-
-    data class OfStarterPacks(
-        val starterPack: StarterPack,
-    ) : ProfileCollection()
-
-    data class OfLists(
-        val list: FeedList,
-    ) : ProfileCollection()
-}
+    override val tilingData: TilingState.Data<ProfilesQuery, T>,
+) : TilingState<ProfilesQuery, T>
 
 sealed class Action(val key: String) {
 
@@ -158,6 +154,10 @@ sealed class Action(val key: String) {
         val following: GenericUri?,
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
+
+    data class UpdateFeedGeneratorStatus(
+        val update: Timeline.Update,
+    ) : Action(key = "UpdateFeedGeneratorStatus")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop

@@ -503,6 +503,9 @@ private fun SuggestedContent(
                         null -> FeedGenerator.Status.None
                     },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
+                    onFeedGeneratorStatusUpdated = { update ->
+
+                    },
                 )
             }
         )
@@ -794,6 +797,9 @@ private fun SearchResults(
                                 null -> FeedGenerator.Status.None
                             },
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
+                            onFeedGeneratorStatusUpdated = { update ->
+
+                            },
                         )
                     }
                 )

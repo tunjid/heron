@@ -84,6 +84,7 @@ import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -91,11 +92,13 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.ProfileCollection
+import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
@@ -115,6 +118,9 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
+import com.tunjid.heron.timeline.ui.feed.FeedGenerator
+import com.tunjid.heron.timeline.ui.list.FeedList
+import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
@@ -274,11 +280,94 @@ internal fun ProfileScreen(
                     contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
-                            is ProfileScreenStateHolders.Collections -> ProfileCollection(
-                                movableElementSharedTransitionScope = paneScaffoldState,
+                            is ProfileScreenStateHolders.Collections.Feeds -> ProfileCollection(
                                 collectionStateHolder = stateHolder,
-                                actions = actions,
+                                itemKey = { it.cid.id },
+                                itemContent = { feedGenerator ->
+                                    FeedGenerator(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .animateItem(),
+                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                        feedGenerator = feedGenerator,
+                                        status = when (state.feedGeneratorUrisToPinnedStatus[feedGenerator.uri]) {
+                                            true -> FeedGenerator.Status.Pinned
+                                            false -> FeedGenerator.Status.Saved
+                                            null -> FeedGenerator.Status.None
+                                        },
+                                        onFeedGeneratorClicked = {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = it.uri.path,
+                                                        models = listOf(it),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    )
+                                                )
+                                            )
+                                        },
+                                        onFeedGeneratorStatusUpdated = { update ->
+                                            actions(Action.UpdateFeedGeneratorStatus(update))
+                                        },
+                                    )
+                                },
                             )
+
+                            is ProfileScreenStateHolders.Collections.StarterPacks -> ProfileCollection(
+                                collectionStateHolder = stateHolder,
+                                itemKey = { it.cid.id },
+                                itemContent = { starterPack ->
+                                    StarterPack(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                        starterPack = starterPack,
+                                        onStarterPackClicked = {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = it.uri.path,
+                                                        models = listOf(it),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    )
+                                                )
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+
+                            is ProfileScreenStateHolders.Collections.Lists -> ProfileCollection(
+                                collectionStateHolder = stateHolder,
+                                itemKey = { it.cid.id },
+                                itemContent = { list ->
+                                    FeedList(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .animateItem(),
+                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                        list = list,
+                                        onListClicked = {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = it.uri.path,
+                                                        models = listOf(it),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    )
+                                                )
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 paneScaffoldState = paneScaffoldState,
@@ -299,7 +388,7 @@ private fun timelineTabs(
     sourceIdsToHasUpdates: Map<String, Boolean>,
 ): List<Tab> = updatedStateHolders.map { holder ->
     when (holder) {
-        is ProfileScreenStateHolders.Collections -> Tab(
+        is ProfileScreenStateHolders.Collections<*> -> Tab(
             title = stringResource(remember(holder.state.value::stringResource)),
             hasUpdate = false,
         )

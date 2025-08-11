@@ -17,8 +17,8 @@
 package com.tunjid.heron.profile.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -26,28 +26,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.profile.Action
-import com.tunjid.heron.profile.ProfileCollection
-import com.tunjid.heron.profile.ProfileCollection.OfFeedGenerators
-import com.tunjid.heron.profile.ProfileCollection.OfLists
-import com.tunjid.heron.profile.ProfileCollection.OfStarterPacks
-import com.tunjid.heron.profile.ProfileCollectionStateHolder
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.feed.FeedGenerator
-import com.tunjid.heron.timeline.ui.list.FeedList
-import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @Composable
-internal fun ProfileCollection(
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    collectionStateHolder: ProfileCollectionStateHolder,
-    actions: (Action) -> Unit,
+internal fun <T> ProfileCollection(
+    collectionStateHolder: ProfileScreenStateHolders.Collections<T>,
+    itemKey: (T) -> Any,
+    itemContent: @Composable (LazyItemScope.(T) -> Unit),
 ) {
     val listState = rememberLazyListState()
     val collectionState by collectionStateHolder.state.collectAsStateWithLifecycle()
@@ -60,64 +48,8 @@ internal fun ProfileCollection(
     ) {
         items(
             items = updatedItems,
-            key = ProfileCollection::id,
-            itemContent = { profileCollection ->
-                val onCollectionClicked = { collection: ProfileCollection ->
-                    actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = collection.uriPath,
-                                models = listOf(
-                                    when (collection) {
-                                        is OfFeedGenerators -> collection.feedGenerator
-                                        is OfLists -> collection.list
-                                        is OfStarterPacks -> collection.starterPack
-                                    }
-                                ),
-                                sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            )
-                        )
-                    )
-                }
-                when (profileCollection) {
-                    is OfFeedGenerators -> FeedGenerator(
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .animateItem(),
-                        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                        feedGenerator = profileCollection.feedGenerator,
-                        status = com.tunjid.heron.data.core.models.FeedGenerator.Status.None,
-                        onFeedGeneratorClicked = {
-                            onCollectionClicked(profileCollection)
-                        },
-                    )
-
-                    is OfLists -> FeedList(
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .animateItem(),
-                        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                        list = profileCollection.list,
-                        onListClicked = {
-                            onCollectionClicked(profileCollection)
-                        },
-                    )
-
-                    is OfStarterPacks -> StarterPack(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                        starterPack = profileCollection.starterPack,
-                        onStarterPackClicked = {
-                            onCollectionClicked(profileCollection)
-                        },
-                    )
-                }
-            }
+            key = itemKey,
+            itemContent = itemContent
         )
     }
 
@@ -133,11 +65,4 @@ internal fun ProfileCollection(
     )
 }
 
-private val ProfileCollection.uriPath
-    get() = when (this) {
-        is OfFeedGenerators -> feedGenerator.uri.path
-        is OfLists -> list.uri.path
-        is OfStarterPacks -> starterPack.uri.path
-    }
-
-private const val ProfileCollectionSharedElementPrefix = "profile-collection"
+internal const val ProfileCollectionSharedElementPrefix = "profile-collection"
