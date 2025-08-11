@@ -20,12 +20,8 @@ package com.tunjid.heron.search
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
-import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -61,7 +57,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -485,28 +480,11 @@ private fun searchStateHolders(
                             currentState = { state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = { query, cursor ->
-                                combine(
-                                    timelineRepository.preferences()
-                                        .distinctUntilChangedBy(Preferences::timelinePreferences)
-                                        .map {
-                                            it.timelinePreferences
-                                                .associateBy(TimelinePreference::value)
-                                        },
-                                    searchRepository.feedGeneratorSearch(query, cursor),
-                                ) { timelineIdsToPinned, feedGenerators ->
-                                    feedGenerators.mapCursorList {
-                                        SearchResult.OfFeedGenerator(
-                                            feedGenerator = it,
-                                            status = when (timelineIdsToPinned[it.uri.uri]?.pinned) {
-                                                true -> FeedGenerator.Status.Pinned
-                                                false -> FeedGenerator.Status.Saved
-                                                null -> FeedGenerator.Status.None
-                                            },
-                                            sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
-                                        )
-                                    }
-                                }
+                            cursorListLoader = searchRepository::feedGeneratorSearch.mapCursorList {
+                                SearchResult.OfFeedGenerator(
+                                    feedGenerator = it,
+                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                )
                             },
                             onNewItems = { items ->
                                 items.distinctBy { it.feedGenerator.cid }

@@ -34,5 +34,4 @@
     <string name="feed">Feed</string>
     <string name="starter_pack">Starter Pack</string>
     <string name="list">List</string>
-    <string name="collection_by">%1$s by %2$s</string>
 </resources>

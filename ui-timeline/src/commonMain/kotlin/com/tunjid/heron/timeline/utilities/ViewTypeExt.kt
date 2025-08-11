@@ -75,19 +75,19 @@ internal fun Modifier.sensitiveContentBlur(
         )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
+internal val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Square,
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-val ListCollectionShape = RoundedPolygonShape.Custom(
+internal val ListCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Pill,
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-val StarterPackCollectionShape = RoundedPolygonShape.Custom(
+internal val StarterPackCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Cookie9Sided,
 )
 
-val BlueskyClouds =
+internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")

@@ -65,7 +65,6 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
-import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.presentationPadding
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -430,15 +429,15 @@ fun Post.avatarSharedElementKey(
     return "$finalPrefix-${cid.id}-${author.did.id}"
 }
 
-fun FeedGenerator.avatarSharedElementKey(
+internal fun FeedGenerator.avatarSharedElementKey(
     prefix: String?,
 ): String = "$prefix-${uri.uri}-avatar"
 
-fun FeedList.avatarSharedElementKey(
+internal fun FeedList.avatarSharedElementKey(
     prefix: String?,
 ): String = "$prefix-${uri.uri}-avatar"
 
-fun StarterPack.avatarSharedElementKey(
+internal fun StarterPack.avatarSharedElementKey(
     prefix: String?,
 ): String = "$prefix-${uri.uri}-avatar"
 
