@@ -17,6 +17,14 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -45,11 +53,18 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -62,6 +77,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -201,6 +217,9 @@ internal fun ProfileScreen(
             }
     }
 
+    var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
+
+
     CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
@@ -266,6 +285,17 @@ internal fun ProfileScreen(
                         )
                     )
                 },
+                onShowSignOutDialog = { showSignOutDialog = true }
+            )
+
+            ThemedSignOutDialog(
+                showSignOutDialog = showSignOutDialog,
+                onDismiss = { showSignOutDialog = false },
+                onConfirmSignOut = {
+                    showSignOutDialog = false
+                    actions(Action.Navigate.To(signInDestination()))
+                    actions(Action.SignOut)
+                }
             )
         },
         body = {
@@ -420,7 +450,10 @@ private fun ProfileHeader(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
+    onShowSignOutDialog: () -> Unit, // NEW
 ) {
+
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -431,6 +464,31 @@ private fun ProfileHeader(
             headerState = headerState,
             profile = profile,
         )
+
+        // Logout Icon - fades out when avatar moves to top right
+        if (isSignedInProfile) {
+            val alpha by animateFloatAsState(
+                targetValue = if (headerState.avatarAlignmentLerp > 0.7f) 0f else 1f
+            )
+            if (alpha > 0f) {
+                IconButton(
+                    onClick = { onShowSignOutDialog() },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = UiTokens.statusBarHeight, end = 8.dp)
+                        .graphicsLayer { this.alpha = alpha }
+                        .clip(CircleShape)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.MoreVert,
+                        contentDescription = "Sign out"
+                    )
+                }
+            }
+        }
+
+
         Column(
             modifier = modifier
                 .padding(top = headerState.bioTopPadding)
@@ -511,6 +569,55 @@ private fun ProfileHeader(
         )
     }
 }
+
+@Composable
+fun ThemedSignOutDialog(
+    showSignOutDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirmSignOut: () -> Unit
+) {
+    if (!showSignOutDialog) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Sign out",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Text(
+                text = "Are you sure you want to sign out?",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmSignOut) {
+                Text(
+                    "Sign Out",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Cancel",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        shape = MaterialTheme.shapes.medium
+    )
+}
+
 
 @Composable
 private fun ProfileBanner(
