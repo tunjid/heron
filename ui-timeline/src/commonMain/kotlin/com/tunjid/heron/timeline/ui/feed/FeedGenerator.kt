@@ -16,36 +16,19 @@
 
 package com.tunjid.heron.timeline.ui.feed
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateBounds
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ItemSelection
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.images.AsyncImage
@@ -62,6 +45,7 @@ import heron.ui_timeline.generated.resources.liked_by
 import heron.ui_timeline.generated.resources.pin_feed
 import heron.ui_timeline.generated.resources.remove_feed
 import heron.ui_timeline.generated.resources.save_feed
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -111,9 +95,13 @@ fun FeedGenerator(
             )
         },
         action = {
-            FeedStatusSelector(
-                selected = status,
-                onStatusSelected = { status ->
+            ItemSelection(
+                selectedItem = status,
+                availableItems = remember { FeedGenerator.Status.entries },
+                key = FeedGenerator.Status::name,
+                icon = FeedGenerator.Status::icon,
+                stringResource = FeedGenerator.Status::textResource,
+                onItemSelected = { status ->
                     val update = when (status) {
                         FeedGenerator.Status.Pinned -> Update.OfFeedGenerator.Pin(feedGenerator.uri)
                         FeedGenerator.Status.Saved -> Update.OfFeedGenerator.Save(feedGenerator.uri)
@@ -129,87 +117,14 @@ fun FeedGenerator(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun FeedStatusSelector(
-    modifier: Modifier = Modifier,
-    alwaysExpanded: Boolean = false,
-    selected: FeedGenerator.Status,
-    onStatusSelected: (FeedGenerator.Status) -> Unit,
-) {
-    var expanded by remember {
-        mutableStateOf(
-            if (alwaysExpanded) selected
-            else null
-        )
-    }
-    LookaheadScope {
-        ElevatedCard(
-            modifier = modifier,
-            shape = CircleShape,
-        ) {
-            Row(
-                modifier = Modifier.animateBounds(
-                    lookaheadScope = this@LookaheadScope,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FeedGenerator.Status.entries.forEach { status ->
-                    val isSelected = selected == status
-                    key(status.name) {
-                        AnimatedVisibility(
-                            modifier = Modifier.animateBounds(
-                                lookaheadScope = this@LookaheadScope,
-                            ),
-                            visible = isSelected || expanded != null,
-                            enter = fadeIn() + scaleIn(),
-                            exit = fadeOut() + scaleOut(),
-                        ) {
-                            IconButton(
-                                modifier = Modifier
-                                    .size(40.dp),
-                                onClick = {
-                                    when (expanded) {
-                                        null -> expanded = status
-                                        status -> if (!alwaysExpanded) expanded = null
-                                        else -> onStatusSelected(status)
-                                    }
-                                },
-                                content = {
-                                    Icon(
-                                        imageVector = status.icon,
-                                        contentDescription = stringResource(status.textResource()),
-                                        tint =
-                                            if (status == selected) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    DisposableEffect(expanded, selected, alwaysExpanded) {
-        if (!alwaysExpanded) {
-            if (expanded != null && expanded != selected) {
-                expanded = null
-            }
-        }
-        onDispose { }
-    }
-}
-
-private fun FeedGenerator.Status.textResource() =
+private fun FeedGenerator.Status.textResource(): StringResource =
     when (this) {
         FeedGenerator.Status.Pinned -> Res.string.pin_feed
         FeedGenerator.Status.Saved -> Res.string.save_feed
         FeedGenerator.Status.None -> Res.string.remove_feed
     }
 
-private val FeedGenerator.Status.icon
+private val FeedGenerator.Status.icon: ImageVector
     get() = when (this) {
         FeedGenerator.Status.Pinned -> Icons.Rounded.Star
         FeedGenerator.Status.Saved -> Icons.Rounded.Bookmark
