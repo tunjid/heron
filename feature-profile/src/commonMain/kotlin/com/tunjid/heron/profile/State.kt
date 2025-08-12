@@ -186,4 +186,6 @@ sealed class Action(val key: String) {
             }
         }
     }
+
+    data object SignOut : Action(key = "SignOut")
 }
