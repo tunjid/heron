@@ -23,6 +23,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
@@ -113,6 +114,7 @@ internal inline fun <T, R> Collection<T>.toFlowOrEmpty(
         else -> block(this)
     }
         .onStart { emit(emptyList()) }
+        .distinctUntilChanged()
 
 internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     networkList: List<R>,
