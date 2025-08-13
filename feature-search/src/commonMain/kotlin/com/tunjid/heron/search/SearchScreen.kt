@@ -67,6 +67,7 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -311,6 +312,9 @@ internal fun SearchScreen(
                     onListMemberClicked = onListMemberClicked,
                     onTrendClicked = onTrendClicked,
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
+                    onUpdateTimelineClicked = {
+                        actions(Action.UpdateFeedGeneratorStatus(it))
+                    },
                 )
 
                 ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
@@ -392,6 +396,7 @@ private fun SuggestedContent(
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onListMemberClicked: (ListMember) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
+    onUpdateTimelineClicked: (Timeline.Update) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
@@ -503,9 +508,7 @@ private fun SuggestedContent(
                         null -> FeedGenerator.Status.None
                     },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
-                    onFeedGeneratorStatusUpdated = { update ->
-
-                    },
+                    onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
                 )
             }
         )
