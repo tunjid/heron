@@ -71,7 +71,8 @@ inline fun <T> ItemSelection(
                 modifier = Modifier.animateBounds(
                     lookaheadScope = this@LookaheadScope,
                 ),
-                horizontalArrangement = Arrangement.aligned(Alignment.End)
+                horizontalArrangement = Arrangement.aligned(Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (availableItems.size > 1) availableItems.forEach { item ->
                     androidx.compose.runtime.key(item.key()) {
@@ -97,7 +98,9 @@ inline fun <T> ItemSelection(
                                 content = {
                                     Icon(
                                         imageVector = item.icon(),
-                                        contentDescription = org.jetbrains.compose.resources.stringResource(item.stringResource()),
+                                        contentDescription = org.jetbrains.compose.resources.stringResource(
+                                            item.stringResource()
+                                        ),
                                         tint =
                                             if (item == selectedItem) MaterialTheme.colorScheme.primary
                                             else MaterialTheme.colorScheme.onSurface
