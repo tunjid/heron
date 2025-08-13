@@ -760,26 +760,11 @@ internal class OfflineTimelineRepository(
                     }
 
                     is TimelineRequest.OfProfile -> emitAll(
-                        profileDao.profiles(
-                            ids = listOf(request.profileHandleOrDid)
+                        profileTimeline(
+                            signedInProfileId = signedInProfileId,
+                            profileHandleOrDid = request.profileHandleOrDid,
+                            type = request.type,
                         )
-                            .mapNotNull(List<ProfileEntity>::firstOrNull)
-                            .distinctUntilChangedBy(ProfileEntity::did)
-                            .flatMapLatest { profile ->
-                                timelineDao.lastFetchKey(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    sourceId = request.type.sourceId(profile.did)
-                                )
-                                    .distinctUntilChanged()
-                                    .map { timelinePreferenceEntity ->
-                                        Timeline.Profile(
-                                            profileId = profile.did,
-                                            type = request.type,
-                                            lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
-                                            presentation = timelinePreferenceEntity.preferredPresentation(),
-                                        )
-                                    }
-                            }
                     )
 
                     is TimelineRequest.OfStarterPack.WithProfile -> {
@@ -989,6 +974,7 @@ internal class OfflineTimelineRepository(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
+                    .distinctUntilChanged()
                     .flatMapLatest latestFeedItems@{ itemEntities ->
                         if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
 
@@ -1120,7 +1106,7 @@ internal class OfflineTimelineRepository(
         name: String,
         position: Int,
         isPinned: Boolean,
-    ) = timelineDao.lastFetchKey(
+    ): Flow<Timeline.Home.Following> = timelineDao.lastFetchKey(
         viewingProfileId = signedInProfileId?.id,
         sourceId = Constants.timelineFeed.uri,
     )
@@ -1135,12 +1121,38 @@ internal class OfflineTimelineRepository(
             )
         }
 
+
+    private fun profileTimeline(
+        signedInProfileId: ProfileId?,
+        profileHandleOrDid: Id.Profile,
+        type: Timeline.Profile.Type,
+    ): Flow<Timeline.Profile> = profileDao.profiles(
+        ids = listOf(profileHandleOrDid)
+    )
+        .mapNotNull(List<ProfileEntity>::firstOrNull)
+        .distinctUntilChangedBy(ProfileEntity::did)
+        .flatMapLatest { profile ->
+            timelineDao.lastFetchKey(
+                viewingProfileId = signedInProfileId?.id,
+                sourceId = type.sourceId(profile.did)
+            )
+                .distinctUntilChanged()
+                .map { timelinePreferenceEntity ->
+                    Timeline.Profile(
+                        profileId = profile.did,
+                        type = type,
+                        lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        presentation = timelinePreferenceEntity.preferredPresentation(),
+                    )
+                }
+        }
+
     private fun feedGeneratorTimeline(
         signedInProfileId: ProfileId?,
         uri: FeedGeneratorUri,
         position: Int,
         isPinned: Boolean,
-    ) = feedGeneratorDao.feedGeneratorsByUri(listOf(uri))
+    ): Flow<Timeline.Home.Feed> = feedGeneratorDao.feedGeneratorsByUri(listOf(uri))
         .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
         .distinctUntilChanged()
@@ -1189,7 +1201,7 @@ internal class OfflineTimelineRepository(
         uri: ListUri,
         position: Int,
         isPinned: Boolean,
-    ) = listDao.list(uri.uri)
+    ): Flow<Timeline.Home.List> = listDao.list(uri.uri)
         .filterNotNull()
         .distinctUntilChangedBy(PopulatedListEntity::entity)
         .flatMapLatest {
@@ -1228,7 +1240,7 @@ internal class OfflineTimelineRepository(
     private fun starterPackTimeline(
         signedInProfileId: ProfileId?,
         uri: StarterPackUri,
-    ) = starterPackDao.starterPack(uri.uri)
+    ): Flow<Timeline.StarterPack> = starterPackDao.starterPack(uri.uri)
         .mapNotNull { populatedStarterPackEntity ->
             populatedStarterPackEntity?.list?.let { populatedStarterPackEntity to it }
         }

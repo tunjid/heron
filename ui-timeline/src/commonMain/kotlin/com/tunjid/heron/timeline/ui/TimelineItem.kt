@@ -35,10 +35,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Commit
 import androidx.compose.material.icons.rounded.LinearScale
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -375,21 +374,23 @@ fun TimelineCard(
     onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    if (item.isThreadedAncestorOrAnchor) Surface(
-        modifier = modifier,
-        shape = RectangleShape,
-        onClick = { onPostClicked(item.post) },
-        content = { content() },
-    )
-    else ElevatedCard(
+    val isFlat = item.isThreadedAncestorOrAnchor
+            || presentation == Timeline.Presentation.Media.Expanded
+
+    ElevatedCard(
         modifier = modifier,
         shape = animateDpAsState(
-            when (presentation) {
+            if (isFlat) 0.dp
+            else when (presentation) {
                 Timeline.Presentation.Text.WithEmbed -> 8.dp
                 Timeline.Presentation.Media.Condensed -> 8.dp
                 Timeline.Presentation.Media.Expanded -> 0.dp
             }
         ).value.let(::RoundedCornerShape),
+        colors = if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        else CardDefaults.elevatedCardColors(),
+        elevation = if (isFlat) CardDefaults.cardElevation()
+        else CardDefaults.elevatedCardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )
