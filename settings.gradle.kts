@@ -69,6 +69,7 @@ include(
     ":feature-profiles",
     ":feature-search",
     ":feature-splash",
+    ":feature-settings",
     ":feature-template",
     ":ui-core",
     ":ui-media",
