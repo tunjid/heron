@@ -83,7 +83,6 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
-import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -348,6 +347,22 @@ private fun ListTimeline(
     val presentation = timelineState.timeline.presentation
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
+        onSignInClicked = {
+            actions(Action.Navigate.To(signInDestination()))
+        },
+        onInteractionConfirmed = {
+            actions(Action.SendPostInteraction(it))
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    )
+                )
+            )
+        }
     )
     LookaheadScope {
         LazyVerticalStaggeredGrid(
@@ -479,30 +494,6 @@ private fun ListTimeline(
             )
         }
     }
-
-    PostInteractionsBottomSheet(
-        state = postInteractionState,
-        onSignInClicked = {
-            actions(
-                Action.Navigate.To(signInDestination())
-            )
-        },
-        onInteractionConfirmed = {
-            actions(
-                Action.SendPostInteraction(it)
-            )
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    )
-                )
-            )
-        }
-    )
 
     if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
         val videoPlayerController = LocalVideoPlayerController.current

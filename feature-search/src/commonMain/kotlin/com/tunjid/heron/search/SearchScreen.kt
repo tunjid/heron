@@ -93,7 +93,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
-import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -134,6 +133,22 @@ internal fun SearchScreen(
     }
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
+        onSignInClicked = {
+            actions(Action.Navigate.To(signInDestination()))
+        },
+        onInteractionConfirmed = {
+            actions(Action.SendPostInteraction(it))
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = null,
+                    )
+                )
+            )
+        }
     )
 
     Column(
@@ -356,30 +371,6 @@ internal fun SearchScreen(
             }
         }
     }
-
-    PostInteractionsBottomSheet(
-        state = postInteractionState,
-        onSignInClicked = {
-            actions(
-                Action.Navigate.To(signInDestination())
-            )
-        },
-        onInteractionConfirmed = {
-            actions(
-                Action.SendPostInteraction(it)
-            )
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    )
-                )
-            )
-        }
-    )
 
     LifecycleStartEffect(Unit) {
         actions(

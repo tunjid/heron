@@ -77,7 +77,6 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
-import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
@@ -102,6 +101,22 @@ internal fun GalleryScreen(
     }
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
+        onSignInClicked = {
+            actions(Action.Navigate.To(signInDestination()))
+        },
+        onInteractionConfirmed = {
+            actions(Action.SendPostInteraction(it))
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = state.sharedElementPrefix,
+                    )
+                )
+            )
+        }
     )
 
     Box(
@@ -244,7 +259,9 @@ internal fun GalleryScreen(
                     modifier = Modifier
                         .padding(horizontal = 16.dp),
                     onClick = {},
-                    onLinkTargetClicked = { post, target -> },
+                    onLinkTargetClicked = { post, target ->
+
+                    },
                 )
                 PlaybackStatus(
                     modifier = Modifier
@@ -262,30 +279,6 @@ internal fun GalleryScreen(
                     }
             }
         }
-
-        PostInteractionsBottomSheet(
-            state = postInteractionState,
-            onSignInClicked = {
-                actions(
-                    Action.Navigate.To(signInDestination())
-                )
-            },
-            onInteractionConfirmed = {
-                actions(
-                    Action.SendPostInteraction(it)
-                )
-            },
-            onQuotePostClicked = { repost ->
-                actions(
-                    Action.Navigate.To(
-                        composePostDestination(
-                            type = Post.Create.Quote(repost),
-                            sharedElementPrefix = state.sharedElementPrefix,
-                        )
-                    )
-                )
-            }
-        )
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,

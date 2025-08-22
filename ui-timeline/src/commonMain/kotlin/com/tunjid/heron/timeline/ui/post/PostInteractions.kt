@@ -107,7 +107,7 @@ fun PostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) {
     val arrangement: Arrangement.Horizontal = when (presentation) {
         Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
         Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
@@ -145,7 +145,7 @@ fun MediaPostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) {
 
     Column(
         modifier = modifier,
@@ -364,7 +364,7 @@ class PostInteractionsSheetState private constructor(
         currentInteraction = interaction
     }
 
-    fun hideSheet() {
+    internal fun hideSheet() {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
                 showBottomSheet = false
@@ -377,23 +377,35 @@ class PostInteractionsSheetState private constructor(
         @Composable
         fun rememberUpdatedPostInteractionState(
             isSignedIn: Boolean,
+            onSignInClicked: () -> Unit,
+            onInteractionConfirmed: (Post.Interaction) -> Unit,
+            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
 
-            return remember(sheetState, scope) {
+            val state = remember(sheetState, scope) {
                 PostInteractionsSheetState(
                     isSignedIn = isSignedIn,
                     sheetState = sheetState,
                     scope = scope,
                 )
             }.also { it.isSignedIn = isSignedIn }
+
+            PostInteractionsBottomSheet(
+                state = state,
+                onSignInClicked = onSignInClicked,
+                onInteractionConfirmed = onInteractionConfirmed,
+                onQuotePostClicked = onQuotePostClicked
+            )
+
+            return state
         }
     }
 }
 
 @Composable
-fun PostInteractionsBottomSheet(
+private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
