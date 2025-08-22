@@ -78,6 +78,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("DROP TABLE posts")
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
 
+        connection.execSQL("CREATE INDEX `index_posts_uri` ON posts (`uri`);")
         connection.execSQL("CREATE INDEX `index_posts_cid` ON posts (`cid`);")
 
         // Migrate lists
@@ -133,6 +134,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("DROP TABLE lists")
         connection.execSQL("ALTER TABLE lists_new RENAME TO lists")
 
+        connection.execSQL("CREATE INDEX `index_lists_uri` ON lists (`uri`);")
         connection.execSQL("CREATE INDEX `index_lists_cid` ON lists (`cid`);")
         connection.execSQL("CREATE INDEX `index_lists_indexedAt` ON lists (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_lists_createdAt` ON lists (`createdAt`);")
@@ -196,6 +198,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("DROP TABLE feedGenerators")
         connection.execSQL("ALTER TABLE feedGenerators_new RENAME TO feedGenerators")
 
+        connection.execSQL("CREATE INDEX `index_feedGenerators_uri` ON feedGenerators (`uri`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_cid` ON feedGenerators (`cid`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_indexedAt` ON feedGenerators (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);")
@@ -253,6 +256,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("DROP TABLE starterPacks")
         connection.execSQL("ALTER TABLE starterPacks_new RENAME TO starterPacks")
 
+        connection.execSQL("CREATE INDEX `index_starterPacks_uri` ON starterPacks (`uri`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_cid` ON starterPacks (`cid`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_indexedAt` ON starterPacks (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);")
@@ -284,6 +288,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("DROP TABLE notifications")
         connection.execSQL("ALTER TABLE notifications_new RENAME TO notifications")
 
+        connection.execSQL("CREATE INDEX `index_notifications_uri` ON notifications (`uri`);")
         connection.execSQL("CREATE INDEX `index_notifications_cid` ON notifications (`cid`);")
         connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
 

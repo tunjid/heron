@@ -51,6 +51,7 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
+        Index(value = ["uri"]),
         Index(value = ["cid"]),
     ],
 )
