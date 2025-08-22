@@ -63,7 +63,6 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.PostInteractionsBottomSheet
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -81,6 +80,22 @@ internal fun NotificationsScreen(
     val listState = rememberLazyListState()
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
+        onSignInClicked = {
+            actions(Action.Navigate.To(signInDestination()))
+        },
+        onInteractionConfirmed = {
+            actions(Action.SendPostInteraction(it))
+        },
+        onQuotePostClicked = { repost ->
+            actions(
+                Action.Navigate.To(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = null,
+                    )
+                )
+            )
+        }
     )
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
@@ -98,7 +113,7 @@ internal fun NotificationsScreen(
         }
     }
     val onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = remember {
-        { notification, linkTarget ->
+        { _, linkTarget ->
             if (linkTarget is LinkTarget.OfProfile) actions(
                 Action.Navigate.To(
                     pathDestination(
@@ -302,30 +317,6 @@ internal fun NotificationsScreen(
             )
         }
     }
-
-    PostInteractionsBottomSheet(
-        state = postInteractionState,
-        onSignInClicked = {
-            actions(
-                Action.Navigate.To(signInDestination())
-            )
-        },
-        onInteractionConfirmed = {
-            actions(
-                Action.SendPostInteraction(it)
-            )
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    )
-                )
-            )
-        }
-    )
 
     listState.PivotedTilingEffect(
         items = items,
