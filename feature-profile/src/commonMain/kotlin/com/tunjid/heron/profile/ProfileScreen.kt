@@ -109,6 +109,7 @@ import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
@@ -170,6 +171,10 @@ internal fun ProfileScreen(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
+
+    val signInPopUpState = rememberSignInPopUpState {
+        actions(Action.Navigate.To(signInDestination()))
+    }
 
     val collapsedHeight = with(density) {
         (UiTokens.toolbarHeight + UiTokens.statusBarHeight).toPx()
@@ -309,7 +314,8 @@ internal fun ProfileScreen(
                                             )
                                         },
                                         onFeedGeneratorStatusUpdated = { update ->
-                                            actions(Action.UpdateFeedGeneratorStatus(update))
+                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+                                            else actions(Action.UpdateFeedGeneratorStatus(update))
                                         },
                                     )
                                 },
