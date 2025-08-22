@@ -46,13 +46,15 @@ data class State(
 
 sealed class HomeScreenStateHolders : TimelineStateHolder {
 
+    abstract val mutator: TimelineStateHolder
+
     data class Pinned(
-        val mutator: TimelineStateHolder
+        override val mutator: TimelineStateHolder
     ) : HomeScreenStateHolders(),
         TimelineStateHolder by mutator
 
     data class Saved(
-        val mutator: TimelineStateHolder,
+        override val mutator: TimelineStateHolder,
     ) : HomeScreenStateHolders(),
         TimelineStateHolder by mutator
 }

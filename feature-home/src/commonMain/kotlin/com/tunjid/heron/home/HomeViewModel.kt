@@ -125,10 +125,7 @@ private fun timelineMutations(
 ): Flow<Mutation<State>> =
     timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
         copy(
-            currentSourceId = currentSourceId
-                ?: homeTimelines
-                    .firstOrNull()
-                    ?.sourceId,
+            currentSourceId = currentSourceId ?: homeTimelines.firstOrNull()?.sourceId,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
@@ -136,11 +133,11 @@ private fun timelineMutations(
                     .firstOrNull { holder ->
                         holder.state.value.timeline.sourceId == timeline.sourceId
                     }
-                    ?: timelineStateHolder(
+                    ?.mutator
+                    ?: scope.timelineStateHolder(
                         refreshOnStart = false,
                         timeline = timeline,
                         startNumColumns = startNumColumns,
-                        scope = scope,
                         timelineRepository = timelineRepository,
                     )
 

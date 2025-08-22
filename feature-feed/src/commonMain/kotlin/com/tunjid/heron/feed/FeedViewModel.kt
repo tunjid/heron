@@ -118,11 +118,10 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
 
     val timeline = timelineRepository.timeline(request)
         .first()
-    val createdHolder = timelineStateHolder(
+    val createdHolder = scope.timelineStateHolder(
         refreshOnStart = true,
         timeline = timeline,
         startNumColumns = 1,
-        scope = scope,
         timelineRepository = timelineRepository,
     )
     emit {

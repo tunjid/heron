@@ -80,7 +80,6 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.InvalidationTrackerDebounceMillis
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -683,9 +682,12 @@ internal class OfflineTimelineRepository(
                         )
                     }
                     .filter(List<Timeline.Home>::isNotEmpty)
+                    .debounce { timelines ->
+                        if (timelines.size == timelinePreferences.size) 0.seconds
+                        else 5.seconds
+                    }
             }
             .distinctUntilChanged()
-            .debounce(InvalidationTrackerDebounceMillis)
 
     override fun timeline(
         request: TimelineRequest,

@@ -62,13 +62,12 @@ data class TimelineState(
 
 typealias TimelineStateHolder = ActionStateMutator<TimelineState.Action, StateFlow<TimelineState>>
 
-fun timelineStateHolder(
+fun CoroutineScope.timelineStateHolder(
     refreshOnStart: Boolean,
     timeline: Timeline,
     startNumColumns: Int,
-    scope: CoroutineScope,
     timelineRepository: TimelineRepository,
-): TimelineStateHolder = scope.actionStateFlowMutator(
+): TimelineStateHolder = actionStateFlowMutator(
     initialState = TimelineState(
         timeline = timeline,
         hasUpdates = false,
@@ -108,7 +107,7 @@ fun timelineStateHolder(
                     .tilingMutations(
                         // This is determined by State.hasUpdates
                         isRefreshedOnNewItems = false,
-                        currentState = { state() },
+                        currentState = { this@transform.state() },
                         updateQueryData = TimelineQuery::updateData,
                         refreshQuery = TimelineQuery::refresh,
                         cursorListLoader = timelineRepository::timelineItems,
