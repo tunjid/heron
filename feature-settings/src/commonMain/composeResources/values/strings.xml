@@ -17,4 +17,7 @@
 <resources>
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="cancel">Cancel</string>
+    <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
 </resources>

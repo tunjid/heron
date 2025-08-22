@@ -33,6 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import heron.feature_settings.generated.resources.Res
+import heron.feature_settings.generated.resources.cancel
+import heron.feature_settings.generated.resources.sign_out
+import heron.feature_settings.generated.resources.sign_out_confirmation
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SettingsScreen(
@@ -82,14 +87,14 @@ fun SignOutDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Sign out",
+                text = stringResource(Res.string.sign_out),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
             Text(
-                text = "Are you sure you want to sign out?",
+                text = stringResource(Res.string.sign_out_confirmation),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -97,7 +102,7 @@ fun SignOutDialog(
         confirmButton = {
             TextButton(onClick = onConfirmSignOut) {
                 Text(
-                    "Sign Out",
+                    text = stringResource(Res.string.sign_out),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelLarge
                 )
@@ -106,7 +111,7 @@ fun SignOutDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    "Cancel",
+                    stringResource(Res.string.cancel),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelLarge
                 )
