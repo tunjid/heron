@@ -266,7 +266,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 `authorDid` TEXT NOT NULL,
                 `reason` TEXT NOT NULL,
                 `reasonSubject` TEXT,
-                `associatedPostId` TEXT,
+                `associatedPostUri` TEXT,
                 `isRead` INTEGER NOT NULL,
                 `indexedAt` INTEGER NOT NULL,
                 PRIMARY KEY(`uri`),
