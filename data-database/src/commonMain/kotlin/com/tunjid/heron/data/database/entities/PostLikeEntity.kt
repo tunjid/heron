@@ -20,17 +20,18 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "postLikes",
-    primaryKeys = ["postId", "authorId"],
+    primaryKeys = ["postUri", "authorId"],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -41,13 +42,14 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
+        Index(value = ["postUri"]),
         Index(value = ["authorId"]),
+        Index(value = ["createdAt"]),
         Index(value = ["indexedAt"]),
     ],
 )
 data class PostLikeEntity(
-    val postId: PostId,
+    val postUri: PostUri,
     val authorId: ProfileId,
     val createdAt: Instant,
     val indexedAt: Instant,

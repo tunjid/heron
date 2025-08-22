@@ -28,7 +28,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     add(
         PostLikeEntity(
-            postId = postId,
+            postUri = postId,
             authorId = like.actor.did.did.let(::ProfileId),
             createdAt = like.createdAt,
             indexedAt = like.indexedAt,

@@ -43,7 +43,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -118,7 +118,7 @@ interface PostRepository {
     ): Flow<CursorList<Post>>
 
     fun post(
-        id: PostId,
+        uri: PostUri,
     ): Flow<Post>
 
     suspend fun sendInteraction(
@@ -147,7 +147,7 @@ internal class OfflinePostRepository @Inject constructor(
     ) { postEntity ->
         combine(
             postDao.likedBy(
-                postId = postEntity.cid.id,
+                postUri = postEntity.cid.id,
                 viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
@@ -191,7 +191,7 @@ internal class OfflinePostRepository @Inject constructor(
     ) { postEntity ->
         combine(
             postDao.repostedBy(
-                postId = postEntity.cid.id,
+                postUri = postEntity.cid.id,
                 viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
@@ -268,13 +268,13 @@ internal class OfflinePostRepository @Inject constructor(
     }
 
     override fun post(
-        id: PostId,
+        uri: PostUri,
     ): Flow<Post> =
         savedStateDataSource.observedSignedInProfileId
             .flatMapLatest { signedInProfileId ->
                 postDao.posts(
                     viewingProfileId = signedInProfileId?.id,
-                    postUris = setOf(id),
+                    postUris = setOf(uri),
                 )
                     .mapNotNull {
                         it.firstOrNull()?.asExternalModel(quote = null)
@@ -393,13 +393,13 @@ internal class OfflinePostRepository @Inject constructor(
                         partial = when (interaction) {
                             is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
                                 likeUri = it.uri.atUri.let(::GenericUri),
-                                postId = interaction.postId,
+                                postUri = interaction.postUri,
                                 viewingProfileId = authorId,
                             )
 
                             is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = it.uri.atUri.let(::GenericUri),
-                                postId = interaction.postId,
+                                postUri = interaction.postUri,
                                 viewingProfileId = authorId,
                             )
                         }
@@ -431,13 +431,13 @@ internal class OfflinePostRepository @Inject constructor(
                         partial = when (interaction) {
                             is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
                                 likeUri = null,
-                                postId = interaction.postId,
+                                postUri = interaction.postUri,
                                 viewingProfileId = authorId,
                             )
 
                             is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = null,
-                                postId = interaction.postId,
+                                postUri = interaction.postUri,
                                 viewingProfileId = authorId,
                             )
                         }

@@ -233,7 +233,7 @@ internal fun ViewerState.postViewerStatisticsEntity(
 ) =
     if (viewingProfileId == null) null
     else PostViewerStatisticsEntity(
-        postId = postId,
+        postUri = postId,
         viewingProfileId = viewingProfileId,
         likeUri = like?.atUri?.let(::GenericUri),
         repostUri = repost?.atUri?.let(::GenericUri),

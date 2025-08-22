@@ -82,8 +82,8 @@ private fun MultipleEntitySaver.addThreadParent(
     )
     if (childPost is ThreadViewPost) add(
         PostThreadEntity(
-            postId = childPost.post.cid.cid.let(::PostId),
-            parentPostId = parentPost.post.cid.cid.let(::PostId),
+            postUri = childPost.post.cid.cid.let(::PostId),
+            parentPostUri = parentPost.post.cid.cid.let(::PostId),
         )
     )
     parentPost.replies
@@ -109,8 +109,8 @@ private fun MultipleEntitySaver.addThreadReply(
     )
     add(
         PostThreadEntity(
-            postId = reply.post.cid.cid.let(::PostId),
-            parentPostId = parent.post.cid.cid.let(::PostId),
+            postUri = reply.post.cid.cid.let(::PostId),
+            parentPostUri = parent.post.cid.cid.let(::PostId),
         )
     )
     reply.replies

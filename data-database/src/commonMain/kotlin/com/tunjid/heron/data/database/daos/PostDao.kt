@@ -23,7 +23,6 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
@@ -94,8 +93,8 @@ interface PostDao {
                 SELECT * FROM postViewerStatistics
                 WHERE viewingProfileId = :viewingProfileId
             )
-            ON cid = postId
-            WHERE cid IN (:postUris)
+            ON uri = postUri
+            WHERE uri IN (:postUris)
         """
     )
     fun posts(
@@ -111,7 +110,7 @@ interface PostDao {
                 SELECT * FROM postViewerStatistics
                 WHERE viewingProfileId = :viewingProfileId
             )
-            ON cid = postId            
+            ON uri = postUri            
 	        WHERE uri IN (:postUris)
         """
     )
@@ -126,22 +125,22 @@ interface PostDao {
             SELECT 
                 posts.*,
                 postViewerStatistics.*, 
-                postPosts.postId AS parentPostId,
-                postPosts.embeddedPostId AS embeddedPostId
+                postPosts.postUri AS parentPostId,
+                postPosts.embeddedPostUri AS embeddedPostId
             FROM posts AS posts
             LEFT JOIN (
                 SELECT * FROM postViewerStatistics
                 WHERE viewingProfileId = :viewingProfileId
             ) AS postViewerStatistics
-            ON posts.cid = postViewerStatistics.postId
+            ON posts.uri = postViewerStatistics.postUri
             INNER JOIN postPosts AS postPosts
-            ON posts.cid = postPosts.embeddedPostId
-	        WHERE postPosts.postId IN (:postIds)
+            ON posts.uri = postPosts.embeddedPostUri
+	        WHERE postPosts.postUri IN (:postUris)
         """
     )
     fun embeddedPosts(
         viewingProfileId: String?,
-        postIds: Collection<PostId>,
+        postUris: Collection<PostUri>,
     ): Flow<List<EmbeddedPopulatedPostEntity>>
 
     @Transaction
@@ -150,16 +149,16 @@ interface PostDao {
             SELECT
                 posts.*, 
                 postViewerStatistics.*,
-                postPosts.postId AS parentPostId
+                postPosts.postUri AS parentPostId
             FROM posts AS posts
             LEFT JOIN (
                 SELECT * FROM postViewerStatistics
                 WHERE viewingProfileId = :viewingProfileId
             ) AS postViewerStatistics
-            ON posts.cid = postViewerStatistics.postId
+            ON posts.uri = postViewerStatistics.postUri
             INNER JOIN postPosts AS postPosts
-            ON posts.cid = postPosts.embeddedPostId
-	        WHERE postPosts.embeddedPostId = :quotedPostId
+            ON posts.uri = postPosts.embeddedPostUri
+	        WHERE postPosts.embeddedPostUri = :quotedPostId
             ORDER BY posts.indexedAt
         """
     )
@@ -177,7 +176,7 @@ interface PostDao {
             LEFT JOIN profileViewerStates
                 ON profileViewerStates.profileId = :viewingProfileId
                 AND profileViewerStates.otherProfileId = authorId
-	        WHERE postId = :postId
+	        WHERE postUri = :postUri
             ORDER BY indexedAt
             DESC
             LIMIT :limit
@@ -185,7 +184,7 @@ interface PostDao {
         """
     )
     fun likedBy(
-        postId: String,
+        postUri: String,
         viewingProfileId: String?,
         limit: Long,
         offset: Long,
@@ -200,7 +199,7 @@ interface PostDao {
             LEFT JOIN profileViewerStates
                 ON profileViewerStates.profileId = :viewingProfileId
                 AND profileViewerStates.otherProfileId = authorId
-	        WHERE postId = :postId
+	        WHERE postUri = :postUri
             ORDER BY indexedAt
             DESC
             LIMIT :limit
@@ -208,7 +207,7 @@ interface PostDao {
         """
     )
     fun repostedBy(
-        postId: String,
+        postUri: String,
         viewingProfileId: String?,
         limit: Long,
         offset: Long,
@@ -244,70 +243,70 @@ interface PostDao {
         """
             WITH RECURSIVE 
             parentGeneration AS (
-                SELECT postId,
-                    parentPostId,
+                SELECT postUri,
+                    parentPostUri,
                     -1 AS generation,
-                    postId AS rootPostId,
+                    postUri AS rootPostId,
                     -1 AS sort1
                 FROM postThreads
-                WHERE postId = :postId
+                WHERE postUri = :postUri
             ),
             parents AS (
                 SELECT * FROM parentGeneration
                 UNION ALL
-                SELECT parent.postId,
-                    parent.parentPostId,
+                SELECT parent.postUri,
+                    parent.parentPostUri,
                     generation-1 AS generation,
                     rootPostId,
                     sort1-1 AS sort1
                 FROM postThreads parent
                 JOIN parentGeneration g
-                  ON parent.postId = g.parentPostId 
+                  ON parent.postUri = g.parentPostUri 
             ),
             replyGeneration AS (
-                SELECT postId,
-                    parentPostId,
+                SELECT postUri,
+                    parentPostUri,
                     1 AS generation,
-                    postId AS rootPostId,
+                    postUri AS rootPostId,
                     posts.createdAt AS sort1
                 FROM postThreads
                 INNER JOIN posts
-                ON postId = posts.cid
-                WHERE parentPostId = :postId
+                ON postUri = posts.uri
+                WHERE parentPostUri = :postUri
             ),
             replies AS (
                 SELECT * FROM replyGeneration
                 UNION ALL
-                SELECT reply.postId,
-                    reply.parentPostId,
+                SELECT reply.postUri,
+                    reply.parentPostUri,
                     generation+1 AS generation,
                     rootPostId,
                     sort1 AS sort1
                 FROM postThreads reply
                 JOIN replyGeneration g
-                  ON reply.parentPostId = g.postId
+                  ON reply.parentPostUri = g.postUri
             )
 
             SELECT * FROM(
                 SELECT *
                 FROM posts
                 INNER JOIN parents
-                ON cid = parents.postId
-                WHERE cid != :postId
+                ON uri = parents.postUri
+                WHERE uri != :postUri
             )
             
             UNION
             
             SELECT * FROM(
                 SELECT posts.*,
-                posts.cid,
-                postThreads.parentPostId,
+                posts.uri,
+                postThreads.parentPostUri,
                 0,
                 NULL,
                 0 AS sort1
                 FROM posts
                 INNER JOIN postThreads
-                WHERE cid == :postId
+                WHERE uri == :postUri
                 LIMIT 1
             )
             
@@ -317,14 +316,14 @@ interface PostDao {
                 SELECT *
                 FROM posts
                 INNER JOIN replies
-                ON cid = replies.postId
-                WHERE cid != :postId
+                ON uri = replies.postUri
+                WHERE uri != :postUri
             )
             
             ORDER BY sort1, generation
         """
     )
     fun postThread(
-        postId: String,
+        postUri: String,
     ): Flow<List<ThreadedPostEntity>>
 }

@@ -108,20 +108,20 @@ data class Post(
     @Serializable
     sealed class Interaction {
 
-        abstract val postId: PostId
+        abstract val postUri: PostUri
 
         @Serializable
         sealed class Create : Interaction() {
             @Serializable
             data class Like(
-                override val postId: PostId,
-                val postUri: PostUri,
+                val postId: PostId,
+                override val postUri: PostUri,
             ) : Create()
 
             @Serializable
             data class Repost(
-                override val postId: PostId,
-                val postUri: PostUri,
+                val postId: PostId,
+                override val postUri: PostUri,
             ) : Create()
         }
 
@@ -130,13 +130,13 @@ data class Post(
 
             @Serializable
             data class Unlike(
-                override val postId: PostId,
+                override val postUri: PostUri,
                 val likeUri: GenericUri,
             ) : Delete()
 
             @Serializable
             data class RemoveRepost(
-                override val postId: PostId,
+                override val postUri: PostUri,
                 val repostUri: GenericUri,
             ) : Delete()
         }

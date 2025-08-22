@@ -34,9 +34,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     `likeCount` INTEGER,
                     `quoteCount` INTEGER,
                     `indexedAt` INTEGER NOT NULL,
-                    `text` TEXT,
-                    `base64EncodedRecord` TEXT,
-                    `createdAt` INTEGER,
+                    `record.text` TEXT,
+                    `record.base64EncodedRecord` TEXT,
+                    `record.createdAt` INTEGER,
                     PRIMARY KEY(`uri`),
                     FOREIGN KEY(`authorId`) 
                         REFERENCES `profiles`(`did`) 
@@ -56,9 +56,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     likeCount, 
                     quoteCount, 
                     indexedAt, 
-                    text, 
-                    base64EncodedRecord, 
-                    createdAt
+                    record.text, 
+                    record.base64EncodedRecord, 
+                    record.createdAt
                 )
                 SELECT 
                     cid, 
@@ -69,9 +69,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     likeCount, 
                     quoteCount, 
                     indexedAt, 
-                    text, 
-                    base64EncodedRecord, 
-                    createdAt 
+                    record.text, 
+                    record.base64EncodedRecord, 
+                    record.createdAt 
                 FROM posts
             """.trimIndent()
         )
@@ -286,5 +286,139 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_notifications_cid` ON notifications (`cid`);")
         connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
+
+
+        // Migrate join tables
+
+
+        // Migrate postLikes
+        connection.execSQL(
+             """
+             CREATE TABLE IF NOT EXISTS `postLikes_new` (
+                 `postUri` TEXT NOT NULL,
+                 `authorId` TEXT NOT NULL,
+                 `createdAt` INTEGER NOT NULL,
+                 `indexedAt` INTEGER NOT NULL,
+                 PRIMARY KEY(`postUri`, `authorId`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`authorId`)
+                     REFERENCES `profiles`(`did`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postLikes")
+        connection.execSQL("ALTER TABLE postLikes_new RENAME TO postLikes")
+
+        connection.execSQL("CREATE INDEX `index_postLikes_postUri` ON postLikes (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postLikes_authorId` ON postLikes (`authorId`);")
+        connection.execSQL("CREATE INDEX `index_postLikes_createdAt` ON postLikes (`createdAt`);")
+        connection.execSQL("CREATE INDEX `index_postLikes_indexedAt` ON postLikes (`indexedAt`);")
+
+        // Migrate postReposts
+        connection.execSQL(
+             """
+             CREATE TABLE IF NOT EXISTS `postReposts_new` (
+                 `postUri` TEXT NOT NULL,
+                 `authorId` TEXT NOT NULL,
+                 `createdAt` INTEGER NOT NULL,
+                 `indexedAt` INTEGER NOT NULL,
+                 PRIMARY KEY(`postUri`, `authorId`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`authorId`)
+                     REFERENCES `profiles`(`did`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postReposts")
+        connection.execSQL("ALTER TABLE postReposts_new RENAME TO postReposts")
+
+        connection.execSQL("CREATE INDEX `index_postReposts_postUri` ON postReposts (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postReposts_authorId` ON postReposts (`authorId`);")
+        connection.execSQL("CREATE INDEX `index_postReposts_indexedAt` ON postReposts (`indexedAt`);")
+
+        // Migrate postThreads
+        connection.execSQL(
+             """
+             CREATE TABLE IF NOT EXISTS `postThreads_new` (
+                 `parentPostUri` TEXT NOT NULL,
+                 `postUri` TEXT NOT NULL,
+                 PRIMARY KEY(`parentPostUri`, `postUri`),
+                 FOREIGN KEY(`parentPostUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postThreads")
+        connection.execSQL("ALTER TABLE postThreads_new RENAME TO postThreads")
+
+        connection.execSQL("CREATE INDEX `index_postThreads_parentPostUri` ON postThreads (`parentPostUri`);")
+        connection.execSQL("CREATE INDEX `index_postThreads_postUri` ON postThreads (`postUri`);")
+
+
+        // Migrate timelineItems
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `timelineItems_new` (
+                 `postUri` TEXT NOT NULL,
+                 `viewingProfileId` TEXT,
+                 `sourceId` TEXT NOT NULL,
+                 `reply.rootPostUri` TEXT,
+                 `reply.parentPostUri` TEXT,
+                 `reply.grandParentPostAuthorUri` TEXT,
+                 `reposter` TEXT,
+                 `hasMedia` INTEGER NOT NULL DEFAULT false,
+                 `isPinned` INTEGER NOT NULL,
+                 `indexedAt` INTEGER NOT NULL,
+                 `id` TEXT NOT NULL,
+                 PRIMARY KEY(`id`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`reply.rootPostUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`reply.parentPostUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+                 FOREIGN KEY(`reply.grandParentPostAuthorId`)
+                     REFERENCES `profile`(`did`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE   
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE timelineItems")
+        connection.execSQL("ALTER TABLE timelineItems_new RENAME TO timelineItems")
+
+        connection.execSQL("CREATE INDEX `index_timelineItems_postUri` ON timelineItems (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_indexedAt` ON timelineItems (`indexedAt`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_viewingProfileId` ON timelineItems (`viewingProfileId`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_sourceId` ON timelineItems (`sourceId`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_reply.rootPostUri` ON timelineItems (`reply.rootPostUri`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_reply.parentPostUri` ON timelineItems (`reply.parentPostUri`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_reply.grandParentPostAuthorId` ON timelineItems (`reply.grandParentPostAuthorId`);")
     }
 }

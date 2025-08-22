@@ -37,14 +37,14 @@ internal fun FeedViewPost.feedItemEntity(
     sourceId: String,
     viewingProfileId: ProfileId?,
 ) = TimelineItemEntity(
-    postId = PostId(post.cid.cid),
+    postUri = PostUri(post.uri.atUri),
     viewingProfileId = viewingProfileId,
     sourceId = sourceId,
     reply = reply?.let {
         FeedReplyEntity(
-            rootPostId = it.root.postEntity().cid,
-            parentPostId = it.parent.postEntity().cid,
-            grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::PostId),
+            rootPostUri = it.root.postEntity().uri,
+            parentPostUri = it.parent.postEntity().uri,
+            grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::ProfileId),
         )
     },
     reposter = when (val reason = reason) {

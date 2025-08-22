@@ -19,23 +19,54 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 
 @Entity(
     tableName = "timelineItems",
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["reply.rootPostUri"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["reply.parentPostUri"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["reply.grandParentPostAuthorId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [
+        Index(value = ["postUri"]),
         Index(value = ["indexedAt"]),
         Index(value = ["viewingProfileId"]),
         Index(value = ["sourceId"]),
+        Index(value = ["reply.rootPostUri"]),
+        Index(value = ["reply.parentPostUri"]),
+        Index(value = ["reply.grandParentPostAuthorId"]),
     ],
 )
 data class TimelineItemEntity(
-    val postId: PostId,
+    val postUri: PostUri,
     val viewingProfileId: ProfileId?,
     val sourceId: String,
     @Embedded
@@ -49,11 +80,11 @@ data class TimelineItemEntity(
     val indexedAt: Instant,
     // Timeline items are unique to the profile viewing them, and these other fields
     @PrimaryKey
-    val id: String = "${viewingProfileId?.id}-$sourceId-${postId.id}-${reposter?.id}",
+    val id: String = "${viewingProfileId?.id}-$sourceId-${postUri.uri}-${reposter?.id}",
 )
 
 data class FeedReplyEntity(
-    val rootPostId: PostId,
-    val parentPostId: PostId,
-    val grandParentPostAuthorId: PostId?,
+    val rootPostUri: PostUri,
+    val parentPostUri: PostUri,
+    val grandParentPostAuthorId: ProfileId?,
 )

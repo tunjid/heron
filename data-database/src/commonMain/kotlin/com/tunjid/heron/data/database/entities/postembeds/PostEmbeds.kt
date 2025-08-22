@@ -20,7 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 
 sealed interface PostEmbed
@@ -30,27 +30,27 @@ sealed interface PostEmbed
  */
 @Entity(
     tableName = "postPosts",
-    primaryKeys = ["postId", "embeddedPostId"],
+    primaryKeys = ["postUri", "embeddedPostUri"],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["embeddedPostId"],
+            parentColumns = ["uri"],
+            childColumns = ["embeddedPostUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
-        Index(value = ["embeddedPostId"]),
+        Index(value = ["postUri"]),
+        Index(value = ["embeddedPostUri"]),
     ],
 )
 data class PostPostEntity(
-    val postId: PostId,
-    val embeddedPostId: PostId,
+    val postUri: PostUri,
+    val embeddedPostUri: PostUri,
 )
