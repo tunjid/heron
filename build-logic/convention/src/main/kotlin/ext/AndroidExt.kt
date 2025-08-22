@@ -29,8 +29,8 @@ fun org.gradle.api.Project.commonConfiguration(
     compileSdk = 36
 
     defaultConfig {
-        // Could have been 21, but I need sqlite 3.24.0 for upserts
-        minSdk = 30
+        // The app uses Modifier.blur Which is Android 12 and up
+        minSdk = 31
     }
 
     compileOptions {
