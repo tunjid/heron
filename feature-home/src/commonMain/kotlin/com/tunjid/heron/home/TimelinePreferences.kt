@@ -48,6 +48,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -127,7 +128,8 @@ internal fun HomeTabs(
     onRefreshTabClicked: (Int) -> Unit,
     onExpansionChanged: (Boolean) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
-    onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit
+    onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
+    onSettingsIconClick : () -> Unit
 ) = with(sharedTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -204,6 +206,15 @@ internal fun HomeTabs(
                 text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
                 style = MaterialTheme.typography.titleMediumEmphasized
             )
+
+            if (isExpanded){
+                SettingsIconButton(
+                    onActionClick = {
+                        onSettingsIconClick()
+                    },
+                )
+            }
+
             ExpandButton(
                 isExpanded = isExpanded,
                 onToggled = { onExpansionChanged(!isExpanded) }
@@ -498,6 +509,33 @@ private fun ExpandButton(
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun SettingsIconButton(
+    onActionClick : () -> Unit,
+    modifier: Modifier = Modifier
+){
+    ElevatedCard(
+        modifier = modifier
+            .padding(horizontal = 4.dp)
+            .offset(y = 4.dp),
+        shape = CircleShape,
+    ) {
+        IconButton(
+            onClick = {
+                onActionClick()
+            },
+            modifier = Modifier
+                .size(40.dp)
+        ){
+            Icon(
+                imageVector = Icons.Rounded.Settings,
+                contentDescription = "",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
