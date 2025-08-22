@@ -29,6 +29,7 @@ import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
 import com.tunjid.heron.profile.di.ProfileNavigationBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
+import com.tunjid.heron.settings.di.SettingsNavigationBindings
 import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashNavigationBindings
 import com.tunjid.treenav.strings.RouteMatcher
@@ -59,6 +60,7 @@ interface AppNavigationGraph {
             @Includes profilesNavigationBindings: ProfilesNavigationBindings,
             @Includes searchNavigationBindings: SearchNavigationBindings,
             @Includes splashNavigationBindings: SplashNavigationBindings,
+            @Includes settingsNavigationBindings: SettingsNavigationBindings
         ): AppNavigationGraph
     }
 

@@ -40,6 +40,7 @@ import com.tunjid.heron.notifications.di.NotificationsBindings
 import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
 import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.settings.di.SettingsNavigationBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
 import com.tunjid.heron.profile.di.ProfileBindings
@@ -51,6 +52,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
+import com.tunjid.heron.settings.di.SettingsBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashBindings
@@ -88,6 +90,7 @@ fun createAppState(
         profilesNavigationBindings = ProfilesNavigationBindings,
         searchNavigationBindings = SearchNavigationBindings,
         splashNavigationBindings = SplashNavigationBindings,
+        settingsNavigationBindings = SettingsNavigationBindings,
     )
 
     val dataBindings = DataBindings(
@@ -164,6 +167,10 @@ fun createAppState(
         splashBindings = SplashBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
+        ),
+        settingsBindings = SettingsBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings
         ),
     )
 
