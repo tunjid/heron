@@ -114,7 +114,7 @@ internal fun NotificationsScreen(
     }
     val onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = remember {
         { _, linkTarget ->
-            if (linkTarget is LinkTarget.OfProfile) actions(
+            if (linkTarget is LinkTarget.Navigable) actions(
                 Action.Navigate.To(
                     pathDestination(
                         path = linkTarget.path,

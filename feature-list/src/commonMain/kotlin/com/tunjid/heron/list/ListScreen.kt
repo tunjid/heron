@@ -413,7 +413,7 @@ private fun ListTimeline(
                         postActions = remember(timelineState.timeline.sourceId) {
                             postActions(
                                 onLinkTargetClicked = { _, linkTarget ->
-                                    if (linkTarget is LinkTarget.OfProfile) actions(
+                                    if (linkTarget is LinkTarget.Navigable) actions(
                                         Action.Navigate.To(
                                             pathDestination(
                                                 path = linkTarget.path,

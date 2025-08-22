@@ -36,6 +36,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.search.di.query
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
@@ -90,13 +91,18 @@ class SearchViewModel(
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope), SearchStateHolder by scope.actionStateFlowMutator(
     initialState = State(
-        searchStateHolders = searchStateHolders(
-            coroutineScope = scope,
+        currentQuery = route.query,
+        isQueryEditable = route.query.isBlank(),
+        layout = when {
+            route.query.isBlank() -> ScreenLayout.Suggested
+            else -> ScreenLayout.GeneralSearchResults
+        },
+        searchStateHolders = scope.searchStateHolders(
+            initialQuery = route.query,
             searchRepository = searchRepository,
             timelineRepository = timelineRepository,
         )
@@ -381,56 +387,64 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
         writeQueue.enqueue(Writable.TimelineUpdate(action.update))
     }
 
-private fun searchStateHolders(
-    coroutineScope: CoroutineScope,
+private fun CoroutineScope.searchStateHolders(
+    initialQuery: String,
     searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
-): List<SearchResultStateHolder> = listOf(
-    SearchState.OfPosts(
-        tilingData = TilingState.Data(
-            currentQuery = SearchQuery.OfPosts.Top(
-                query = "",
-                isLocalOnly = false,
-                data = defaultSearchQueryData(),
+): List<SearchResultStateHolder> = buildList {
+    add(
+        SearchState.OfPosts(
+            tilingData = TilingState.Data(
+                currentQuery = SearchQuery.OfPosts.Top(
+                    query = initialQuery,
+                    isLocalOnly = false,
+                    data = defaultSearchQueryData(),
+                ),
+            )
+        )
+    )
+    add(
+        SearchState.OfPosts(
+            tilingData = TilingState.Data(
+                currentQuery = SearchQuery.OfPosts.Latest(
+                    query = initialQuery,
+                    isLocalOnly = false,
+                    data = defaultSearchQueryData(),
+                ),
             ),
         )
-    ),
-    SearchState.OfPosts(
-        tilingData = TilingState.Data(
-            currentQuery = SearchQuery.OfPosts.Latest(
-                query = "",
-                isLocalOnly = false,
-                data = defaultSearchQueryData(),
+    )
+    if (initialQuery.isBlank()) add(
+        SearchState.OfProfiles(
+            tilingData = TilingState.Data(
+                currentQuery = SearchQuery.OfProfiles(
+                    query = initialQuery,
+                    isLocalOnly = false,
+                    data = defaultSearchQueryData(),
+                ),
             ),
-        ),
-    ),
-    SearchState.OfProfiles(
-        tilingData = TilingState.Data(
-            currentQuery = SearchQuery.OfProfiles(
-                query = "",
-                isLocalOnly = false,
-                data = defaultSearchQueryData(),
+        )
+    )
+    if (initialQuery.isBlank()) add(
+        SearchState.OfFeedGenerators(
+            tilingData = TilingState.Data(
+                currentQuery = SearchQuery.OfFeedGenerators(
+                    query = initialQuery,
+                    isLocalOnly = false,
+                    data = defaultSearchQueryData(),
+                ),
             ),
-        ),
-    ),
-    SearchState.OfFeedGenerators(
-        tilingData = TilingState.Data(
-            currentQuery = SearchQuery.OfFeedGenerators(
-                query = "",
-                isLocalOnly = false,
-                data = defaultSearchQueryData(),
-            ),
-        ),
-    ),
-).map { searchState: SearchState ->
+        )
+    )
+}.map { searchState: SearchState ->
     when (searchState) {
-        is SearchState.OfPosts -> coroutineScope.actionStateFlowMutator(
+        is SearchState.OfPosts -> actionStateFlowMutator(
             initialState = searchState,
             actionTransform = transform@{ actions ->
                 actions.toMutationStream {
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
-                            currentState = { state() },
+                            currentState = { this@transform.state() },
                             updateQueryData = {
                                 when (this) {
                                     is SearchQuery.OfPosts.Latest -> copy(data = it)
@@ -476,13 +490,13 @@ private fun searchStateHolders(
             }
         )
 
-        is SearchState.OfProfiles -> coroutineScope.actionStateFlowMutator(
+        is SearchState.OfProfiles -> actionStateFlowMutator(
             initialState = searchState,
             actionTransform = transform@{ actions ->
                 actions.toMutationStream {
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
-                            currentState = { state() },
+                            currentState = { this@transform.state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
                             cursorListLoader = searchRepository::profileSearch.mapCursorList {
@@ -503,13 +517,13 @@ private fun searchStateHolders(
             }
         )
 
-        is SearchState.OfFeedGenerators -> coroutineScope.actionStateFlowMutator(
+        is SearchState.OfFeedGenerators -> actionStateFlowMutator(
             initialState = searchState,
             actionTransform = transform@{ actions ->
                 actions.toMutationStream {
                     type().flow.map { it.tilingAction }
                         .tilingMutations(
-                            currentState = { state() },
+                            currentState = { this@transform.state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
                             cursorListLoader = searchRepository::feedGeneratorSearch.mapCursorList {

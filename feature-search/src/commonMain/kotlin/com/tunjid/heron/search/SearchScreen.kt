@@ -201,7 +201,7 @@ internal fun SearchScreen(
         }
         val onLinkTargetClicked = remember {
             { _: SearchResult.OfPost, linkTarget: LinkTarget ->
-                if (linkTarget is LinkTarget.OfProfile) actions(
+                if (linkTarget is LinkTarget.Navigable) actions(
                     Action.Navigate.To(
                         pathDestination(
                             path = linkTarget.path,
@@ -610,7 +610,8 @@ private fun TabbedSearchResults(
             modifier = Modifier.fillMaxWidth(),
             tabsState = rememberTabsState(
                 tabs = searchTabs(
-                    isSignedIn = state.signedInProfile != null
+                    isSignedIn = state.signedInProfile != null,
+                    isQueryEditable = state.isQueryEditable,
                 ),
                 selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
@@ -654,13 +655,15 @@ private fun TabbedSearchResults(
 }
 
 @Composable
-private fun searchTabs(isSignedIn: Boolean): List<Tab> = listOf(
-    stringResource(resource = Res.string.top),
-    stringResource(resource = Res.string.latest),
-    stringResource(resource = Res.string.people),
-    stringResource(resource = Res.string.feeds),
-)
-    .takeLast(if (isSignedIn) 4 else 2)
+private fun searchTabs(
+    isSignedIn: Boolean,
+    isQueryEditable: Boolean,
+): List<Tab> = buildList {
+    if (isSignedIn) add(stringResource(resource = Res.string.top))
+    if (isSignedIn) add(stringResource(resource = Res.string.latest))
+    if (isQueryEditable) add(stringResource(resource = Res.string.people))
+    if (isQueryEditable) add(stringResource(resource = Res.string.feeds))
+}
     .map { Tab(title = it, hasUpdate = false) }
 
 @Composable

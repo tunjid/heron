@@ -200,7 +200,6 @@ internal fun ConversationScreen(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun Message(
     modifier: Modifier = Modifier,
@@ -479,8 +478,8 @@ private fun PostMessage(
         },
         postActions = remember(item.id, actions) {
             postActions(
-                onLinkTargetClicked = { post, linkTarget ->
-                    if (linkTarget is LinkTarget.OfProfile) actions(
+                onLinkTargetClicked = { _, linkTarget ->
+                    if (linkTarget is LinkTarget.Navigable) actions(
                         Action.Navigate.To(
                             pathDestination(
                                 path = linkTarget.path,

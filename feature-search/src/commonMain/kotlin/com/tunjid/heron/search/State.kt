@@ -96,6 +96,7 @@ data class State(
     val signedInProfile: Profile? = null,
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
+    val isQueryEditable: Boolean = true,
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
@@ -143,6 +144,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+
+        data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
