@@ -569,7 +569,7 @@ internal class OfflineTimelineRepository(
                                 combine(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
-                                        postIds = postIds
+                                        postUris = postIds
                                     ),
                                     flow2 = postDao.embeddedPosts(
                                         viewingProfileId = signedInProfileId?.id,
@@ -996,7 +996,7 @@ internal class OfflineTimelineRepository(
                             flow = postIds.toFlowOrEmpty { ids ->
                                 postDao.posts(
                                     viewingProfileId = signedInProfileId?.id,
-                                    postIds = ids,
+                                    postUris = ids,
                                 )
                             },
                             flow2 = postIds.toFlowOrEmpty { ids ->

@@ -44,14 +44,14 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
+        Index(value = ["cid"]),
         Index(value = ["indexedAt"]),
-        Index(value = ["uri"], unique = true),
         Index(value = ["createdAt"]),
     ],
 )
 data class ListEntity(
-    @PrimaryKey
     val cid: ListId,
+    @PrimaryKey
     val uri: ListUri,
     val creatorId: ProfileId,
     val name: String,

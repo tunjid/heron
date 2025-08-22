@@ -41,15 +41,15 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
+        Index(value = ["cid"]),
         Index(value = ["indexedAt"]),
         Index(value = ["createdAt"]),
-        Index(value = ["uri"]),
     ],
 )
 data class FeedGeneratorEntity(
-    @PrimaryKey
     val cid: FeedGeneratorId,
     val did: FeedGeneratorId,
+    @PrimaryKey
     val uri: FeedGeneratorUri,
     val avatar: ImageUri?,
     val likeCount: Long?,

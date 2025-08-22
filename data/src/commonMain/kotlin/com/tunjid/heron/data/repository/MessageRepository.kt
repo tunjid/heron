@@ -192,7 +192,7 @@ internal class OfflineMessageRepository @Inject constructor(
                             flow4 = postIds.toFlowOrEmpty { postIds ->
                                 postDao.posts(
                                     viewingProfileId = signedInProfileId?.id,
-                                    postIds = postIds,
+                                    postUris = postIds,
                                 )
                             },
                             flow5 = postIds.toFlowOrEmpty { postIds ->

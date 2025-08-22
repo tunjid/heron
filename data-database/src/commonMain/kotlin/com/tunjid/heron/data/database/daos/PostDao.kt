@@ -95,12 +95,12 @@ interface PostDao {
                 WHERE viewingProfileId = :viewingProfileId
             )
             ON cid = postId
-            WHERE cid IN (:postIds)
+            WHERE cid IN (:postUris)
         """
     )
     fun posts(
         viewingProfileId: String?,
-        postIds: Collection<PostId>,
+        postUris: Collection<PostUri>,
     ): Flow<List<PopulatedPostEntity>>
 
     @Transaction

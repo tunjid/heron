@@ -19,6 +19,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Notification
@@ -26,6 +27,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
@@ -45,15 +47,19 @@ import kotlinx.datetime.Instant
             onDelete = ForeignKey.CASCADE,
         ),
     ],
+    indices = [
+        Index(value = ["cid"]),
+        Index(value = ["indexedAt"]),
+    ],
 )
 data class NotificationEntity(
-    @PrimaryKey
     val cid: GenericId,
+    @PrimaryKey
     val uri: GenericUri,
     val authorId: ProfileId,
     val reason: Notification.Reason,
     val reasonSubject: GenericUri?,
-    val associatedPostId: PostId?,
+    val associatedPostUri: PostUri?,
     val isRead: Boolean,
     val indexedAt: Instant,
 )

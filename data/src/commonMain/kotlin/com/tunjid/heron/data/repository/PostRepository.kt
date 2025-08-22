@@ -274,7 +274,7 @@ internal class OfflinePostRepository @Inject constructor(
             .flatMapLatest { signedInProfileId ->
                 postDao.posts(
                     viewingProfileId = signedInProfileId?.id,
-                    postIds = setOf(id),
+                    postUris = setOf(id),
                 )
                     .mapNotNull {
                         it.firstOrNull()?.asExternalModel(quote = null)

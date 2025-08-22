@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
@@ -41,13 +42,21 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "posts",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["authorId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [
-        Index(value = ["uri"]),
+        Index(value = ["cid"]),
     ],
 )
 data class PostEntity(
-    @PrimaryKey
     val cid: PostId,
+    @PrimaryKey
     val uri: PostUri,
     val authorId: ProfileId,
     val replyCount: Long?,
@@ -57,8 +66,6 @@ data class PostEntity(
     val indexedAt: Instant,
     @Embedded
     val record: RecordData?,
-//    public val labels: List<Label> = emptyList(),
-//    public val threadgate: ThreadgateView? = null,
 ) {
     data class RecordData(
         val text: String,

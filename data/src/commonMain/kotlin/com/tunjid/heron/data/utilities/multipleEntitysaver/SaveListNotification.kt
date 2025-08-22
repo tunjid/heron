@@ -22,7 +22,7 @@ import app.bsky.notification.ListNotificationsReason
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import sh.christian.ozone.api.AtUri
@@ -34,13 +34,13 @@ internal fun MultipleEntitySaver.add(
     associatedPosts: List<PostView>,
 ) {
 
-    val postUrisToPostIds = mutableMapOf<GenericUri, PostId>()
-    associatedPosts.forEach {
+    val postUris = mutableSetOf<PostUri>()
+    associatedPosts.forEach { postView ->
         add(
             viewingProfileId = viewingProfileId,
-            postView = it,
+            postView = postView,
         )
-        postUrisToPostIds[it.uri.atUri.let(::GenericUri)] = it.cid.cid.let(::PostId)
+        postUris.add(postView.uri.atUri.let(::PostUri))
     }
 
     listNotificationsNotification.forEach { notification ->
@@ -66,10 +66,10 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsReason.Unverified -> Notification.Reason.Unverified
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
-                associatedPostId = notification.associatedPostUri()
+                associatedPostUri = notification.associatedPostUri()
                     ?.atUri
-                    ?.let(::GenericUri)
-                    ?.let(postUrisToPostIds::get),
+                    ?.let(::PostUri)
+                    ?.takeIf(postUris::contains),
                 isRead = notification.isRead,
                 indexedAt = notification.indexedAt,
             )
