@@ -69,6 +69,7 @@ import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -196,6 +197,11 @@ internal fun HomeScreen(
                     Action.UpdateTimeline.Update(timelines)
                 )
             },
+            onSettingsIconClick = {
+                actions(
+                    Action.Navigate.To(settingsDestination())
+                )
+            }
         )
 
         tabsOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
