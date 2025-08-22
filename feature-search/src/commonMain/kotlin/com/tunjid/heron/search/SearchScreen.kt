@@ -83,6 +83,7 @@ import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.SuggestedStarterPack
@@ -128,6 +129,9 @@ internal fun SearchScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val signInPopUpState = rememberSignInPopUpState {
+        actions(Action.Navigate.To(signInDestination()))
+    }
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
     )
@@ -246,6 +250,12 @@ internal fun SearchScreen(
                 )
             }
         }
+        val onTimelineUpdateClicked = remember {
+            { update: Timeline.Update ->
+                if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+                else actions(Action.UpdateFeedGeneratorStatus(update))
+            }
+        }
         val onPostSearchResultClicked = remember {
             { result: SearchResult.OfPost ->
                 actions(
@@ -312,9 +322,7 @@ internal fun SearchScreen(
                     onListMemberClicked = onListMemberClicked,
                     onTrendClicked = onTrendClicked,
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
-                    onUpdateTimelineClicked = {
-                        actions(Action.UpdateFeedGeneratorStatus(it))
-                    },
+                    onUpdateTimelineClicked = onTimelineUpdateClicked,
                 )
 
                 ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
@@ -343,6 +351,7 @@ internal fun SearchScreen(
                     onMediaClicked = onMediaClicked,
                     onPostInteraction = onPostInteraction,
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
+                    onTimelineUpdateClicked = onTimelineUpdateClicked,
                 )
             }
         }
@@ -600,6 +609,7 @@ private fun TabbedSearchResults(
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
+    onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -645,6 +655,7 @@ private fun TabbedSearchResults(
                     onPostInteraction = onPostInteraction,
                     onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
+                    onTimelineUpdateClicked = onTimelineUpdateClicked,
                 )
             }
         )
@@ -676,6 +687,7 @@ private fun SearchResults(
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
+    onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
@@ -800,9 +812,7 @@ private fun SearchResults(
                                 null -> FeedGenerator.Status.None
                             },
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
-                            onFeedGeneratorStatusUpdated = { update ->
-
-                            },
+                            onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
                         )
                     }
                 )
