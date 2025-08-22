@@ -157,8 +157,7 @@ private fun loadProfileMutations(
                     // Only replace collectionStateHolders if they were previously empty
                     stateHolders.none { stateHolder ->
                         stateHolder is ProfileScreenStateHolders.Collections<*>
-                    } -> stateHolders + profileCollectionStateHolders(
-                        coroutineScope = scope,
+                    } -> stateHolders + scope.profileCollectionStateHolders(
                         profileId = profileId,
                         profileRepository = profileRepository,
                         metadata = profile.metadata,
@@ -240,8 +239,7 @@ private fun loadSignedInProfileMutations(
                             else -> copy(
                                 stateHolders = timelines.map { timeline ->
                                     ProfileScreenStateHolders.Timeline(
-                                        timelineStateHolder(
-                                            scope = scope,
+                                        scope.timelineStateHolder(
                                             refreshOnStart = true,
                                             timeline = timeline,
                                             startNumColumns = 1,
@@ -321,15 +319,14 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
         writeQueue.enqueue(Writable.TimelineUpdate(action.update))
     }
 
-private fun profileCollectionStateHolders(
-    coroutineScope: CoroutineScope,
+private fun CoroutineScope.profileCollectionStateHolders(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
     metadata: Profile.Metadata,
 ): List<ProfileScreenStateHolders.Collections<*>> =
     listOfNotNull(
         if (metadata.createdFeedGeneratorCount > 0) ProfileScreenStateHolders.Collections.Feeds(
-            mutator = coroutineScope.profileCollectionStateHolder(
+            mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
                     stringResource = Res.string.feed,
                     tilingData = TilingState.Data(
@@ -345,7 +342,7 @@ private fun profileCollectionStateHolders(
         )
         else null,
         if (metadata.createdStarterPackCount > 0) ProfileScreenStateHolders.Collections.StarterPacks(
-            mutator = coroutineScope.profileCollectionStateHolder(
+            mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
                     stringResource = Res.string.starter_pack,
                     tilingData = TilingState.Data(
@@ -361,7 +358,7 @@ private fun profileCollectionStateHolders(
         )
         else null,
         if (metadata.createdListCount > 0) ProfileScreenStateHolders.Collections.Lists(
-            mutator = coroutineScope.profileCollectionStateHolder(
+            mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
                     stringResource = Res.string.list,
                     tilingData = TilingState.Data(

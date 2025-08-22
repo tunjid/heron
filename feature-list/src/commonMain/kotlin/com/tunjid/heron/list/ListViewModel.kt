@@ -147,11 +147,10 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
         .first()
 
     val createdHolder = ListScreenStateHolders.Timeline(
-        mutator = timelineStateHolder(
+        mutator = scope.timelineStateHolder(
             refreshOnStart = true,
             timeline = timeline,
             startNumColumns = 1,
-            scope = scope,
             timelineRepository = timelineRepository,
         )
     )
