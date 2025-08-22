@@ -18,6 +18,9 @@ package com.tunjid.heron.search.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -31,6 +34,7 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
@@ -38,9 +42,9 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
-import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
+import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.search.ui.SearchBar
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -49,6 +53,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -57,12 +62,15 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/search"
+private const val RouteQueryPattern = "/search/{query}"
 
 private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
 )
+
+internal val Route.query by routePath(default = "")
 
 @BindingContainer
 object SearchNavigationBindings {
@@ -73,6 +81,15 @@ object SearchNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
+            routeMapper = ::createRoute
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(RouteQueryPattern)
+    fun provideRouteQueryMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = RouteQueryPattern,
             routeMapper = ::createRoute
         )
 }
@@ -92,6 +109,16 @@ class SearchBindings(
         viewModelInitializer = viewModelInitializer,
     )
 
+    @Provides
+    @IntoMap
+    @StringKey(RouteQueryPattern)
+    fun providePaneQueryEntry(
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
@@ -118,7 +145,7 @@ class SearchBindings(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    RootDestinationTopAppBar(
+                    if (state.isQueryEditable) RootDestinationTopAppBar(
                         modifier = Modifier,
                         signedInProfile = state.signedInProfile,
                         title = {
@@ -147,6 +174,17 @@ class SearchBindings(
                                 )
                             )
                         },
+                    )
+                    else PoppableDestinationTopAppBar(
+                        title = {
+                            Text(
+                                text = state.currentQuery,
+                                style = MaterialTheme.typography.titleSmallEmphasized,
+                            )
+                        },
+                        onBackPressed = {
+                            viewModel.accept(Action.Navigate.Pop)
+                        }
                     )
                 },
                 navigationBar = {
