@@ -37,6 +37,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
+import com.tunjid.heron.settings.di.SettingsBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.treenav.compose.PaneEntry
@@ -74,6 +75,7 @@ interface AppGraph {
             @Includes profilesBindings: ProfilesBindings,
             @Includes searchBindings: SearchBindings,
             @Includes splashBindings: SplashBindings,
+            @Includes settingsBindings: SettingsBindings
         ): AppGraph
     }
 

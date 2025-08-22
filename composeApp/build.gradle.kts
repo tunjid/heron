@@ -73,6 +73,7 @@ kotlin {
             implementation(project(":feature-profile-avatar"))
             implementation(project(":feature-profiles"))
             implementation(project(":feature-search"))
+            implementation(project(":feature-settings"))
             implementation(project(":feature-splash"))
             implementation(project(":ui-media"))
 

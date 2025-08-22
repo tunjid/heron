@@ -196,6 +196,11 @@ fun signInDestination(): NavigationAction.Destination = pathDestination(
     path = "/auth",
 )
 
+fun settingsDestination() : NavigationAction.Destination = pathDestination(
+    path = "/settings",
+    referringRouteOption = ReferringRouteOption.Current
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),
