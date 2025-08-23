@@ -34,7 +34,7 @@ import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
@@ -46,7 +46,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickyShar
 @Composable
 internal fun PostImages(
     feature: ImageList,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
     isBlurred: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -100,7 +100,7 @@ internal fun PostImages(
                         rememberSharedContentState(
                             key = image.sharedElementKey(
                                 prefix = sharedElementPrefix,
-                                postId = postId,
+                                postUri = postUri,
                             )
                         )
                     },
@@ -126,5 +126,5 @@ internal fun PostImages(
 
 fun Image.sharedElementKey(
     prefix: String,
-    postId: PostId,
-) = "$prefix-$postId-${thumb.uri}"
+    postUri: PostUri,
+) = "$prefix-$postUri-${thumb.uri}"

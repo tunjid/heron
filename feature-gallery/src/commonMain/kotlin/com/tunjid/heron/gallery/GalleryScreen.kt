@@ -322,7 +322,7 @@ private fun GalleryImage(
             rememberSharedContentState(
                 key = item.image.sharedElementKey(
                     prefix = sharedElementPrefix,
-                    postId = postId,
+                    postUri = postId,
                 )
             )
         },
@@ -368,7 +368,7 @@ private fun GalleryVideo(
             rememberSharedContentState(
                 key = item.video.sharedElementKey(
                     prefix = sharedElementPrefix,
-                    postId = postId,
+                    postUri = postId,
                 ),
             )
         },

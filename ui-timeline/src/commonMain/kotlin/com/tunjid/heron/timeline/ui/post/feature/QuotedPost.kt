@@ -124,7 +124,7 @@ fun QuotedPost(
             when (val embed = quotedPost.embed) {
                 is ExternalEmbed -> PostExternal(
                     feature = embed,
-                    postId = quotedPost.cid,
+                    postUri = quotedPost.uri,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -137,7 +137,7 @@ fun QuotedPost(
 
                 is ImageList -> PostImages(
                     feature = embed,
-                    postId = quotedPost.cid,
+                    postUri = quotedPost.uri,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -151,7 +151,7 @@ fun QuotedPost(
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
                     video = embed,
-                    postId = quotedPost.cid,
+                    postUri = quotedPost.uri,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,

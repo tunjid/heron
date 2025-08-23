@@ -41,7 +41,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -61,7 +61,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
-import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
@@ -142,21 +142,21 @@ internal fun PostDetailScreen(
                                     )
                                 )
                             },
-                            onPostClicked = { post: Post, quotingPostId: PostId? ->
+                            onPostClicked = { post: Post, quotingPostUri: PostUri? ->
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
                                         postDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
-                                                quotingPostId = quotingPostId,
+                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
+                                                quotingPostUri = quotingPostUri,
                                             ),
                                             post = post,
                                         )
                                     )
                                 )
                             },
-                            onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                            onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
@@ -165,13 +165,13 @@ internal fun PostDetailScreen(
                                             profile = profile,
                                             avatarSharedElementKey = post.avatarSharedElementKey(
                                                 prefix = state.sharedElementPrefix,
-                                                quotingPostId = quotingPostId,
+                                                quotingPostUri = quotingPostUri,
                                             ).takeIf { post.author.did == profile.did }
                                         )
                                     )
                                 )
                             },
-                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                            onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
                                 pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
@@ -179,8 +179,8 @@ internal fun PostDetailScreen(
                                             post = post,
                                             media = media,
                                             startIndex = index,
-                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostIdPrefix(
-                                                quotingPostId = quotingPostId,
+                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
+                                                quotingPostUri = quotingPostUri,
                                             ),
                                         )
                                     )

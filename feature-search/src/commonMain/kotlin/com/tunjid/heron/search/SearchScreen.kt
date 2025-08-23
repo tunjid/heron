@@ -71,7 +71,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -97,7 +97,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
-import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -300,15 +300,15 @@ internal fun SearchScreen(
             }
         }
         val onMediaClicked = remember {
-            { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId? ->
+            { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri? ->
                 actions(
                     Action.Navigate.To(
                         galleryDestination(
                             post = result.post,
                             media = media,
                             startIndex = index,
-                            sharedElementPrefix = result.sharedElementPrefix.withQuotingPostIdPrefix(
-                                quotingPostId = quotingPostId,
+                            sharedElementPrefix = result.sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = quotingPostUri,
                             ),
                         )
                     )
@@ -597,7 +597,7 @@ private fun TabbedSearchResults(
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
@@ -678,7 +678,7 @@ private fun SearchResults(
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,

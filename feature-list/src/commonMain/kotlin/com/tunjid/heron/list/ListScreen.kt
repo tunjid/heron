@@ -63,7 +63,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -422,7 +422,7 @@ private fun ListTimeline(
                                         )
                                     )
                                 },
-                                onPostClicked = { post: Post, quotingPostId: PostId? ->
+                                onPostClicked = { post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -430,14 +430,14 @@ private fun ListTimeline(
                                             postDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
+                                                    quotingPostUri = quotingPostUri,
                                                 ),
                                                 post = post,
                                             )
                                         )
                                     )
                                 },
-                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                                onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -448,14 +448,14 @@ private fun ListTimeline(
                                                 avatarSharedElementKey = post
                                                     .avatarSharedElementKey(
                                                         prefix = timelineState.timeline.sourceId,
-                                                        quotingPostId = quotingPostId,
+                                                        quotingPostUri = quotingPostUri,
                                                     )
                                                     .takeIf { post.author.did == profile.did }
                                             )
                                         )
                                     )
                                 },
-                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -465,7 +465,7 @@ private fun ListTimeline(
                                                 media = media,
                                                 startIndex = index,
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
+                                                    quotingPostUri = quotingPostUri,
                                                 ),
                                             )
                                         )

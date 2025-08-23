@@ -21,15 +21,15 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 
 @Stable
 interface PostActions {
     fun onLinkTargetClicked(post: Post, linkTarget: LinkTarget)
 
-    fun onProfileClicked(profile: Profile, post: Post, quotingPostId: PostId?)
-    fun onPostClicked(post: Post, quotingPostId: PostId?)
-    fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?)
+    fun onProfileClicked(profile: Profile, post: Post, quotingPostUri: PostUri?)
+    fun onPostClicked(post: Post, quotingPostUri: PostUri?)
+    fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?)
     fun onReplyToPost(post: Post)
     fun onPostInteraction(interaction: Post.Interaction)
     fun onPostMetadataClicked(metadata: Post.Metadata)
@@ -37,9 +37,9 @@ interface PostActions {
 
 fun postActions(
     onLinkTargetClicked: (post: Post, linkTarget: LinkTarget) -> Unit,
-    onProfileClicked: (profile: Profile, post: Post, quotingPostId: PostId?) -> Unit,
-    onPostClicked: (post: Post, quotingPostId: PostId?) -> Unit,
-    onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostId: PostId?) -> Unit,
+    onProfileClicked: (profile: Profile, post: Post, quotingPostUri: PostUri?) -> Unit,
+    onPostClicked: (post: Post, quotingPostUri: PostUri?) -> Unit,
+    onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
     onPostMetadataClicked: (metadata: Post.Metadata) -> Unit = {},
@@ -47,31 +47,31 @@ fun postActions(
     override fun onProfileClicked(
         profile: Profile,
         post: Post,
-        quotingPostId: PostId?,
+        quotingPostUri: PostUri?,
     ) = onProfileClicked(
         profile,
         post,
-        quotingPostId
+        quotingPostUri,
     )
 
     override fun onPostClicked(
         post: Post,
-        quotingPostId: PostId?,
+        quotingPostUri: PostUri?,
     ) = onPostClicked(
         post,
-        quotingPostId
+        quotingPostUri,
     )
 
     override fun onPostMediaClicked(
         media: Embed.Media,
         index: Int,
         post: Post,
-        quotingPostId: PostId?,
+        quotingPostUri: PostUri?,
     ) = onPostMediaClicked(
         media,
         index,
         post,
-        quotingPostId
+        quotingPostUri,
     )
 
     override fun onReplyToPost(

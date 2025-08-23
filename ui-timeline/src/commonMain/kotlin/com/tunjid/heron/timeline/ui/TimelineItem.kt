@@ -60,7 +60,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
@@ -93,7 +93,7 @@ fun TimelineItem(
         onPostClicked = { post ->
             postActions.onPostClicked(
                 post = post,
-                quotingPostId = null,
+                quotingPostUri = null,
             )
         },
         content = {
@@ -119,7 +119,7 @@ fun TimelineItem(
                             postActions.onProfileClicked(
                                 profile = profile,
                                 post = post,
-                                quotingPostId = null
+                                quotingPostUri = null
                             )
                         },
                     )
@@ -179,8 +179,8 @@ private fun ThreadedPost(
             item.posts.take(maxPosts)
         }
         limitedPosts.forEachIndexed { index, post ->
-            key(post.cid.id) {
-                if (index == 0 || item.posts[index].cid != item.posts[index - 1].cid) {
+            key(post.uri.uri) {
+                if (index == 0 || item.posts[index].uri != item.posts[index - 1].uri) {
                     Post(
                         modifier = Modifier,
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -225,7 +225,7 @@ private fun ThreadedPost(
                             onClick = {
                                 postActions.onPostClicked(
                                     post = post,
-                                    quotingPostId = null,
+                                    quotingPostUri = null,
                                 )
                             }
                         )
@@ -422,12 +422,12 @@ private val ReplyThreadEndImageShape =
 
 fun Post.avatarSharedElementKey(
     prefix: String?,
-    quotingPostId: PostId? = null,
+    quotingPostUri: PostUri? = null,
 ): String {
-    val finalPrefix = quotingPostId
+    val finalPrefix = quotingPostUri
         ?.let { "$prefix-$it" }
         ?: prefix
-    return "$finalPrefix-${cid.id}-${author.did.id}"
+    return "$finalPrefix-${uri.uri}-${author.did.id}"
 }
 
 internal fun FeedGenerator.avatarSharedElementKey(
@@ -442,9 +442,9 @@ internal fun StarterPack.avatarSharedElementKey(
     prefix: String?,
 ): String = "$prefix-${uri.uri}-avatar"
 
-fun String.withQuotingPostIdPrefix(
-    quotingPostId: PostId? = null,
-): String = quotingPostId
+fun String.withQuotingPostUriPrefix(
+    quotingPostUri: PostUri? = null,
+): String = quotingPostUri
     ?.let { "$this-$it" }
     ?: this
 
