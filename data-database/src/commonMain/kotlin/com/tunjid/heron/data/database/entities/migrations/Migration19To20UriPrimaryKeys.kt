@@ -298,7 +298,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         // Migrate postLikes
         connection.execSQL(
-             """
+            """
              CREATE TABLE IF NOT EXISTS `postLikes_new` (
                  `postUri` TEXT NOT NULL,
                  `authorId` TEXT NOT NULL,
@@ -327,7 +327,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         // Migrate postReposts
         connection.execSQL(
-             """
+            """
              CREATE TABLE IF NOT EXISTS `postReposts_new` (
                  `postUri` TEXT NOT NULL,
                  `authorId` TEXT NOT NULL,
@@ -355,7 +355,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         // Migrate postThreads
         connection.execSQL(
-             """
+            """
              CREATE TABLE IF NOT EXISTS `postThreads_new` (
                  `parentPostUri` TEXT NOT NULL,
                  `postUri` TEXT NOT NULL,
@@ -480,7 +480,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("ALTER TABLE postViewerStatistics_new RENAME TO postViewerStatistics")
 
         connection.execSQL("CREATE INDEX `index_postViewerStatistics_postUri` ON postViewerStatistics (`postUri`);")
-            connection.execSQL("CREATE INDEX `index_postViewerStatistics_viewingProfileId` ON postViewerStatistics (`viewingProfileId`);")
+        connection.execSQL("CREATE INDEX `index_postViewerStatistics_viewingProfileId` ON postViewerStatistics (`viewingProfileId`);")
 
         // Migrate postAuthors
         connection.execSQL(
@@ -506,5 +506,80 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_postAuthors_postUri` ON postAuthors (`postUri`);")
         connection.execSQL("CREATE INDEX `index_postAuthors_authorId` ON postAuthors (`authorId`);")
+
+        // Migrate postImages
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postImages_new` (
+                 `postUri` TEXT NOT NULL,
+                 `imageUri` TEXT NOT NULL,
+                 PRIMARY KEY(`postUri`, `imageUri`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`imageUri`)
+                     REFERENCES `images`(`fullsize`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postImages")
+        connection.execSQL("ALTER TABLE postImages_new RENAME TO postImages")
+
+        connection.execSQL("CREATE INDEX `index_postImages_postUri` ON postImages (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postImages_imageUri` ON postImages (`imageUri`);")
+
+        // Migrate postExternalEmbeds
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postExternalEmbeds_new` (
+                 `postUri` TEXT NOT NULL,
+                 `externalEmbedUri` TEXT NOT NULL,
+                 PRIMARY KEY(`postUri`, `externalEmbedUri`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`externalEmbedUri`)
+                     REFERENCES `externalEmbeds`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postExternalEmbeds")
+        connection.execSQL("ALTER TABLE postExternalEmbeds_new RENAME TO postExternalEmbeds")
+
+        connection.execSQL("CREATE INDEX `index_postExternalEmbeds_postUri` ON postExternalEmbeds (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postExternalEmbeds_externalEmbedUri` ON postExternalEmbeds (`externalEmbedUri`);")
+
+        // Migrate postVideos
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postVideos_new` (
+                 `postUri` TEXT NOT NULL,
+                 `videoId` TEXT NOT NULL,
+                 PRIMARY KEY(`postUri`, `videoId`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`videoId`)
+                     REFERENCES `videos`(`cid`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postVideos")
+        connection.execSQL("ALTER TABLE postVideos_new RENAME TO postVideos")
+
+        connection.execSQL("CREATE INDEX `index_postVideos_postUri` ON postVideos (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postVideos_videoId` ON postVideos (`videoId`);")
     }
 }

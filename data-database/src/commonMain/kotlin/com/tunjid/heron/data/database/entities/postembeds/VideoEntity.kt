@@ -57,7 +57,7 @@ data class VideoEntity(
         ),
         ForeignKey(
             entity = VideoEntity::class,
-            parentColumns = ["uri"],
+            parentColumns = ["cid"],
             childColumns = ["videoId"],
             onDelete = ForeignKey.CASCADE,
         ),
