@@ -282,7 +282,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     REFERENCES `posts`(`uri`) 
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
-                FOREIGN KEY(`authorDid`) 
+                FOREIGN KEY(`authorId`) 
                     REFERENCES `profiles`(`did`) 
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
