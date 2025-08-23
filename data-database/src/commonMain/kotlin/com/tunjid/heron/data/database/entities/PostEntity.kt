@@ -53,6 +53,7 @@ import kotlinx.datetime.Instant
     indices = [
         Index(value = ["uri"]),
         Index(value = ["cid"]),
+        Index(value = ["authorId"]),
     ],
 )
 data class PostEntity(

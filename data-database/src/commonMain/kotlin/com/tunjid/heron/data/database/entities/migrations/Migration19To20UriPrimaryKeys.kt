@@ -80,6 +80,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_posts_uri` ON posts (`uri`);")
         connection.execSQL("CREATE INDEX `index_posts_cid` ON posts (`cid`);")
+        connection.execSQL("CREATE INDEX `index_posts_authorId` ON posts (`authorId`);")
 
         // Migrate lists
         connection.execSQL(
@@ -136,6 +137,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_lists_uri` ON lists (`uri`);")
         connection.execSQL("CREATE INDEX `index_lists_cid` ON lists (`cid`);")
+        connection.execSQL("CREATE INDEX `index_lists_authorId` ON lists (`authorId`);")
         connection.execSQL("CREATE INDEX `index_lists_indexedAt` ON lists (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_lists_createdAt` ON lists (`createdAt`);")
 
@@ -200,6 +202,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_feedGenerators_uri` ON feedGenerators (`uri`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_cid` ON feedGenerators (`cid`);")
+        connection.execSQL("CREATE INDEX `index_feedGenerators_authorId` ON feedGenerators (`authorId`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_indexedAt` ON feedGenerators (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);")
 
@@ -258,6 +261,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_starterPacks_uri` ON starterPacks (`uri`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_cid` ON starterPacks (`cid`);")
+        connection.execSQL("CREATE INDEX `index_starterPacks_authorId` ON starterPacks (`authorId`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_indexedAt` ON starterPacks (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);")
 
@@ -267,7 +271,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
             CREATE TABLE IF NOT EXISTS `notifications_new` (
                 `cid` TEXT NOT NULL,
                 `uri` TEXT NOT NULL,
-                `authorDid` TEXT NOT NULL,
+                `authorId` TEXT NOT NULL,
                 `reason` TEXT NOT NULL,
                 `reasonSubject` TEXT,
                 `associatedPostUri` TEXT,
@@ -290,6 +294,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_notifications_uri` ON notifications (`uri`);")
         connection.execSQL("CREATE INDEX `index_notifications_cid` ON notifications (`cid`);")
+        connection.execSQL("CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);")
         connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
 
 
@@ -514,14 +519,14 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  `postUri` TEXT NOT NULL,
                  `imageUri` TEXT NOT NULL,
                  PRIMARY KEY(`postUri`, `imageUri`),
-                 FOREIGN KEY(`imageUri`)
-                     REFERENCES `images`(`fullSize`)
-                     ON UPDATE NO ACTION
-                     ON DELETE CASCADE
                  FOREIGN KEY(`postUri`)
                      REFERENCES `posts`(`uri`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE,
+                 FOREIGN KEY(`imageUri`)
+                     REFERENCES `images`(`fullSize`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
              )
              """.trimIndent()
         )
