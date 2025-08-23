@@ -39,19 +39,19 @@ import kotlinx.datetime.Instant
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["uri"],
-            childColumns = ["reply.rootPostUri"],
+            childColumns = ["rootPostUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["uri"],
-            childColumns = ["reply.parentPostUri"],
+            childColumns = ["parentPostUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["reply.grandParentPostAuthorId"],
+            childColumns = ["grandParentPostAuthorId"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
@@ -60,9 +60,9 @@ import kotlinx.datetime.Instant
         Index(value = ["indexedAt"]),
         Index(value = ["viewingProfileId"]),
         Index(value = ["sourceId"]),
-        Index(value = ["reply.rootPostUri"]),
-        Index(value = ["reply.parentPostUri"]),
-        Index(value = ["reply.grandParentPostAuthorId"]),
+        Index(value = ["rootPostUri"]),
+        Index(value = ["parentPostUri"]),
+        Index(value = ["grandParentPostAuthorId"]),
     ],
 )
 data class TimelineItemEntity(

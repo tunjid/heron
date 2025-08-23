@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
@@ -36,8 +35,8 @@ import kotlinx.datetime.Instant
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["associatedPostId"],
+            parentColumns = ["uri"],
+            childColumns = ["associatedPostUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(

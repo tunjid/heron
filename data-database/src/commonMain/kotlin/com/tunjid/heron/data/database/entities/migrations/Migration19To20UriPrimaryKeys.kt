@@ -386,9 +386,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  `postUri` TEXT NOT NULL,
                  `viewingProfileId` TEXT,
                  `sourceId` TEXT NOT NULL,
-                 `reply.rootPostUri` TEXT,
-                 `reply.parentPostUri` TEXT,
-                 `reply.grandParentPostAuthorUri` TEXT,
+                 `rootPostUri` TEXT,
+                 `parentPostUri` TEXT,
+                 `grandParentPostAuthorUri` TEXT,
                  `reposter` TEXT,
                  `hasMedia` INTEGER NOT NULL DEFAULT false,
                  `isPinned` INTEGER NOT NULL,
@@ -399,15 +399,15 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      REFERENCES `posts`(`uri`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE,
-                 FOREIGN KEY(`reply.rootPostUri`)
+                 FOREIGN KEY(`rootPostUri`)
                      REFERENCES `posts`(`uri`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE,
-                 FOREIGN KEY(`reply.parentPostUri`)
+                 FOREIGN KEY(`parentPostUri`)
                      REFERENCES `posts`(`uri`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
-                 FOREIGN KEY(`reply.grandParentPostAuthorId`)
+                 FOREIGN KEY(`grandParentPostAuthorId`)
                      REFERENCES `profile`(`did`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE   
@@ -422,9 +422,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("CREATE INDEX `index_timelineItems_indexedAt` ON timelineItems (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_timelineItems_viewingProfileId` ON timelineItems (`viewingProfileId`);")
         connection.execSQL("CREATE INDEX `index_timelineItems_sourceId` ON timelineItems (`sourceId`);")
-        connection.execSQL("CREATE INDEX `index_timelineItems_reply.rootPostUri` ON timelineItems (`reply.rootPostUri`);")
-        connection.execSQL("CREATE INDEX `index_timelineItems_reply.parentPostUri` ON timelineItems (`reply.parentPostUri`);")
-        connection.execSQL("CREATE INDEX `index_timelineItems_reply.grandParentPostAuthorId` ON timelineItems (`reply.grandParentPostAuthorId`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_rootPostUri` ON timelineItems (`rootPostUri`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_parentPostUri` ON timelineItems (`parentPostUri`);")
+        connection.execSQL("CREATE INDEX `index_timelineItems_grandParentPostAuthorId` ON timelineItems (`grandParentPostAuthorId`);")
 
         // Migrate postEmbeds
         connection.execSQL(
