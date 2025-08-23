@@ -606,5 +606,80 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_messagePosts_messageId` ON messagePosts (`messageId`);")
         connection.execSQL("CREATE INDEX `index_messagePosts_postUri` ON messagePosts (`postUri`);")
+
+        // Migrate messageLists
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `messageLists_new` (
+                 `messageId` TEXT NOT NULL,
+                 `listUri` TEXT NOT NULL,
+                 PRIMARY KEY(`messageId`, `listUri`),
+                 FOREIGN KEY(`messageId`)
+                     REFERENCES `messages`(`id`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`listUri`)
+                     REFERENCES `lists`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE messageLists")
+        connection.execSQL("ALTER TABLE messageLists_new RENAME TO messageLists")
+
+        connection.execSQL("CREATE INDEX `index_messageLists_messageId` ON messageLists (`messageId`);")
+        connection.execSQL("CREATE INDEX `index_messageLists_postUri` ON messageLists (`postUri`);")
+
+        // Migrate messageStarterPacks
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `messageStarterPacks_new` (
+                 `messageId` TEXT NOT NULL,
+                 `starterPackUri` TEXT NOT NULL,
+                 PRIMARY KEY(`messageId`, `starterPackUri`),
+                 FOREIGN KEY(`messageId`)
+                     REFERENCES `messages`(`id`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`starterPackUri`)
+                     REFERENCES `starterPacks`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE messageStarterPacks")
+        connection.execSQL("ALTER TABLE messageStarterPacks_new RENAME TO messageStarterPacks")
+
+        connection.execSQL("CREATE INDEX `index_messageStarterPacks_messageId` ON messageStarterPacks (`messageId`);")
+        connection.execSQL("CREATE INDEX `index_messageStarterPacks_postUri` ON messageStarterPacks (`postUri`);")
+
+        // Migrate messageFeedGenerators
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `messageFeedGenerators_new` (
+                 `messageId` TEXT NOT NULL,
+                 `feedGeneratorUri` TEXT NOT NULL,
+                 PRIMARY KEY(`messageId`, `feedGeneratorUri`),
+                 FOREIGN KEY(`messageId`)
+                     REFERENCES `messages`(`id`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`feedGeneratorUri`)
+                     REFERENCES `feedGenerators`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE messageFeedGenerators")
+        connection.execSQL("ALTER TABLE messageFeedGenerators_new RENAME TO messageFeedGenerators")
+
+        connection.execSQL("CREATE INDEX `index_messageFeedGenerators_messageId` ON messageFeedGenerators (`messageId`);")
+        connection.execSQL("CREATE INDEX `index_messageFeedGenerators_postUri` ON messageFeedGenerators (`postUri`);")
     }
 }
