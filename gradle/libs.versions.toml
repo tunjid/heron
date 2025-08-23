@@ -19,7 +19,7 @@ javaDiffUtils = "4.16"
 lifecycle = "2.9.2"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.3.0"
-coil = "3.2.0"
+coil = "3.3.0"
 connectivity = "2.2.0"
 compose-multiplatform = "1.8.2"
 # See https://github.com/JetBrains/compose-multiplatform-core/pull/1868
