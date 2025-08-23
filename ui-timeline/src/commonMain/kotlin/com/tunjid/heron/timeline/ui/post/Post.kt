@@ -158,7 +158,7 @@ private fun AttributionContent(
                             data.postActions.onProfileClicked(
                                 profile = data.post.author,
                                 post = data.post,
-                                quotingPostId = null,
+                                quotingPostUri = null,
                             )
                         },
                     sharedContentState = rememberSharedContentState(
@@ -228,7 +228,7 @@ private fun TextContent(
             onClick = {
                 data.postActions.onPostClicked(
                     post = data.post,
-                    quotingPostId = null,
+                    quotingPostUri = null,
                 )
             },
             onLinkTargetClicked = { post, linkTarget ->
@@ -263,7 +263,7 @@ private fun EmbedContent(
         now = data.now,
         embed = data.post.embed,
         quote = data.post.quote,
-        postId = data.post.cid,
+        postUri = data.post.uri,
         blurredMediaDefinitions = data.blurredMediaDefinitions,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
@@ -274,20 +274,20 @@ private fun EmbedContent(
                 media = media,
                 index = index,
                 post = quote ?: data.post,
-                quotingPostId = data.post.cid.takeIf { quote != null },
+                quotingPostUri = data.post.uri.takeIf { quote != null },
             )
         },
         onQuotedPostClicked = { quotedPost ->
             data.postActions.onPostClicked(
                 post = quotedPost,
-                quotingPostId = data.post.cid
+                quotingPostUri = data.post.uri,
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
             data.postActions.onProfileClicked(
                 profile = quotedProfile,
                 post = quotedPost,
-                quotingPostId = data.post.cid
+                quotingPostUri = data.post.uri,
             )
         },
     )

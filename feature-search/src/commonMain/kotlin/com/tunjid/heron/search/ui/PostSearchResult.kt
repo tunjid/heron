@@ -27,7 +27,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
@@ -46,7 +46,7 @@ internal fun PostSearchResult(
     onProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostClicked: (SearchResult.OfPost) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostId: PostId?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
     ElevatedCard(

@@ -54,12 +54,12 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
-import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui_timeline.generated.resources.Res
 import heron.ui_timeline.generated.resources.sensitive_content
@@ -72,7 +72,7 @@ internal fun PostEmbed(
     now: Instant,
     embed: Embed?,
     quote: Post?,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
     blurredMediaDefinitions: List<Label.Definition>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -85,7 +85,7 @@ internal fun PostEmbed(
     val uriHandler = LocalUriHandler.current
     SensitiveContentBox(
         modifier = modifier,
-        postId = postId,
+        postUri = postUri,
         blurredMediaDefinitions = blurredMediaDefinitions
     ) { isBlurred ->
         Column(
@@ -95,7 +95,7 @@ internal fun PostEmbed(
             when (embed) {
                 is ExternalEmbed -> PostExternal(
                     feature = embed,
-                    postId = postId,
+                    postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
                     presentation = presentation,
                     isBlurred = isBlurred,
@@ -107,7 +107,7 @@ internal fun PostEmbed(
 
                 is ImageList -> PostImages(
                     feature = embed,
-                    postId = postId,
+                    postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentation = presentation,
@@ -120,7 +120,7 @@ internal fun PostEmbed(
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
                     video = embed,
-                    postId = postId,
+                    postUri = postUri,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
@@ -142,8 +142,8 @@ internal fun PostEmbed(
                     else -> QuotedPost(
                         now = now,
                         quotedPost = quote,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostIdPrefix(
-                            quotingPostId = postId,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = postUri,
                         ),
                         isBlurred = blurredMediaDefinitions.isNotEmpty(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -163,11 +163,11 @@ internal fun PostEmbed(
 @Composable
 private fun SensitiveContentBox(
     modifier: Modifier,
-    postId: PostId,
+    postUri: PostUri,
     blurredMediaDefinitions: List<Label.Definition>,
     content: @Composable (isBlurred: Boolean) -> Unit,
 ) {
-    var hasClickedThroughBlurredMedia by rememberSaveable(postId) {
+    var hasClickedThroughBlurredMedia by rememberSaveable(postUri) {
         mutableStateOf(false)
     }
     val isBlurred = blurredMediaDefinitions.isNotEmpty() && !hasClickedThroughBlurredMedia

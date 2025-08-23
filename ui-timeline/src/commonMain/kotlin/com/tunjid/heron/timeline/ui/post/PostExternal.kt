@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -48,7 +48,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 @Composable
 internal fun PostExternal(
     feature: ExternalEmbed,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     isBlurred: Boolean,
@@ -60,7 +60,7 @@ internal fun PostExternal(
             sharedContentState = rememberSharedContentState(
                 key = embedSharedElementKey(
                     prefix = sharedElementPrefix,
-                    postId = postId,
+                    postUri = postUri,
                     text = feature.uri.uri,
                 ),
             ),
@@ -81,7 +81,7 @@ internal fun PostExternal(
                             sharedContentState = rememberSharedContentState(
                                 key = embedSharedElementKey(
                                     prefix = sharedElementPrefix,
-                                    postId = postId,
+                                    postUri = postUri,
                                     text = feature.thumb?.uri,
                                 )
                             ),
@@ -104,7 +104,7 @@ internal fun PostExternal(
                         sharedContentState = rememberSharedContentState(
                             key = embedSharedElementKey(
                                 prefix = sharedElementPrefix,
-                                postId = postId,
+                                postUri = postUri,
                                 text = feature.title,
                             ),
                         ),
@@ -159,6 +159,6 @@ fun PostFeatureTextContent(
 
 private fun embedSharedElementKey(
     prefix: String,
-    postId: PostId,
+    postUri: PostUri,
     text: String?,
-): String = "$prefix-${postId.id}-$text"
+): String = "$prefix-${postUri.uri}-$text"

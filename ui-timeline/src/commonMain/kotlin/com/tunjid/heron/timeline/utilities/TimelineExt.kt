@@ -41,16 +41,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
@@ -225,9 +224,9 @@ private fun Timeline.creator(
 val Timeline.sharedElementPrefix get() = sourceId
 
 fun Timeline.sharedElementPrefix(
-    quotingPostId: PostId?
-) = sourceId.withQuotingPostIdPrefix(
-    quotingPostId = quotingPostId
+    quotingPostUri: PostUri?
+) = sourceId.withQuotingPostUriPrefix(
+    quotingPostUri = quotingPostUri
 )
 
 fun LazyStaggeredGridState.pendingOffsetFor(

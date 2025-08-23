@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -154,7 +155,7 @@ fun galleryDestination(
     startIndex: Int,
     sharedElementPrefix: String,
 ): NavigationAction.Destination = pathDestination(
-    path = "/post/${post.cid.id}/gallery",
+    path = "/profile/${post.author.did.id}/post/${post.uri.recordKey.value}/gallery",
     models = listOf(media),
     sharedElementPrefix = sharedElementPrefix,
     miscQueryParams = mapOf(

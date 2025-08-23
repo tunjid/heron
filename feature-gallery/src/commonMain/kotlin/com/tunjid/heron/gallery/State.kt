@@ -19,9 +19,11 @@ package com.tunjid.heron.gallery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.gallery.di.postId
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.gallery.di.postRecordKey
+import com.tunjid.heron.gallery.di.profileId
 import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
@@ -36,7 +38,7 @@ import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 @Serializable
 data class State(
     val startIndex: Int,
-    val postId: PostId,
+    val postUri: PostUri,
     val sharedElementPrefix: String,
     val post: Post?,
     @Transient
@@ -49,7 +51,10 @@ fun State(
     route: Route
 ) = State(
     startIndex = route.startIndex,
-    postId = route.postId,
+    postUri = PostUri(
+        route.profileId,
+        route.postRecordKey,
+    ),
     post = null,
     sharedElementPrefix = route.sharedElementPrefix,
     items = when (val media = route.model<Embed.Media>()) {

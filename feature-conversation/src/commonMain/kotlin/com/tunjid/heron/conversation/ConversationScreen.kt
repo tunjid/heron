@@ -85,7 +85,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
-import com.tunjid.heron.timeline.ui.withQuotingPostIdPrefix
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -488,30 +488,30 @@ private fun PostMessage(
                         )
                     )
                 },
-                onPostClicked = { post, quotingPostId ->
+                onPostClicked = { post, quotingPostUri ->
                     actions(
                         Action.Navigate.To(
                             postDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = item.id.withQuotingPostIdPrefix(
-                                    quotingPostId = quotingPostId,
+                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
+                                    quotingPostUri = quotingPostUri,
                                 ),
                                 post = post,
                             )
                         )
                     )
                 },
-                onProfileClicked = { profile, post, quotingPostId ->
+                onProfileClicked = { profile, post, quotingPostUri ->
                     actions(
                         Action.Navigate.To(
                             profileDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = profile,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = item.id.withQuotingPostIdPrefix(
-                                        quotingPostId = quotingPostId,
+                                    prefix = item.id.withQuotingPostUriPrefix(
+                                        quotingPostUri = quotingPostUri,
                                     ),
-                                    quotingPostId = quotingPostId,
+                                    quotingPostUri = quotingPostUri,
                                 ),
                             )
                         )

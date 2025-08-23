@@ -52,7 +52,7 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayer
@@ -71,7 +71,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickyShar
 @Composable
 internal fun PostVideo(
     video: Video,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
     isBlurred: Boolean,
     presentation: Timeline.Presentation,
@@ -114,7 +114,7 @@ internal fun PostVideo(
                 rememberSharedContentState(
                     key = video.sharedElementKey(
                         prefix = sharedElementPrefix,
-                        postId = postId,
+                        postUri = postUri,
                     )
                 )
             },
@@ -260,5 +260,5 @@ private fun PlayerControlBackground(
 
 fun Video.sharedElementKey(
     prefix: String,
-    postId: PostId,
-) = "$prefix-$postId-${playlist.uri}"
+    postUri: PostUri,
+) = "$prefix-$postUri-${playlist.uri}"

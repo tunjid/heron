@@ -91,7 +91,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -928,7 +928,7 @@ private fun ProfileTimeline(
                                         )
                                     )
                                 },
-                                onPostClicked = { post: Post, quotingPostId: PostId? ->
+                                onPostClicked = { post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -936,14 +936,14 @@ private fun ProfileTimeline(
                                             postDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
+                                                    quotingPostUri = quotingPostUri,
                                                 ),
                                                 post = post,
                                             )
                                         )
                                     )
                                 },
-                                onProfileClicked = { profile: Profile, post: Post, quotingPostId: PostId? ->
+                                onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -954,14 +954,14 @@ private fun ProfileTimeline(
                                                 avatarSharedElementKey = post
                                                     .avatarSharedElementKey(
                                                         prefix = timelineState.timeline.sourceId,
-                                                        quotingPostId = quotingPostId,
+                                                        quotingPostUri = quotingPostUri,
                                                     )
                                                     .takeIf { post.author.did == profile.did }
                                             )
                                         )
                                     )
                                 },
-                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostId: PostId? ->
+                                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
@@ -971,7 +971,7 @@ private fun ProfileTimeline(
                                                 media = media,
                                                 startIndex = index,
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostId = quotingPostId,
+                                                    quotingPostUri = quotingPostUri,
                                                 ),
                                             )
                                         )

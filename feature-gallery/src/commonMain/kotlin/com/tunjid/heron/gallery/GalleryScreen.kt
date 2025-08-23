@@ -58,7 +58,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -172,7 +172,7 @@ internal fun GalleryScreen(
                                 scaffoldState = paneScaffoldState,
                                 item = item,
                                 sharedElementPrefix = state.sharedElementPrefix,
-                                postId = state.postId,
+                                postUri = state.postUri,
                             )
                         }
 
@@ -186,7 +186,7 @@ internal fun GalleryScreen(
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             item = item,
                             sharedElementPrefix = state.sharedElementPrefix,
-                            postId = state.postId,
+                            postUri = state.postUri,
                         )
                     }
                 }
@@ -313,7 +313,7 @@ private fun GalleryImage(
     modifier: Modifier = Modifier,
     scaffoldState: PaneScaffoldState,
     item: GalleryItem.Photo,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
 ) {
     scaffoldState.updatedMovableStickySharedElementOf(
@@ -322,7 +322,7 @@ private fun GalleryImage(
             rememberSharedContentState(
                 key = item.image.sharedElementKey(
                     prefix = sharedElementPrefix,
-                    postId = postId,
+                    postUri = postUri,
                 )
             )
         },
@@ -350,7 +350,7 @@ private fun GalleryVideo(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
     item: GalleryItem.Video,
-    postId: PostId,
+    postUri: PostUri,
     sharedElementPrefix: String,
 ) {
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
@@ -368,7 +368,7 @@ private fun GalleryVideo(
             rememberSharedContentState(
                 key = item.video.sharedElementKey(
                     prefix = sharedElementPrefix,
-                    postId = postId,
+                    postUri = postUri,
                 ),
             )
         },
