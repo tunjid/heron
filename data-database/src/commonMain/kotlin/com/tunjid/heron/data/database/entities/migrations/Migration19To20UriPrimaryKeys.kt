@@ -630,7 +630,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("ALTER TABLE messageLists_new RENAME TO messageLists")
 
         connection.execSQL("CREATE INDEX `index_messageLists_messageId` ON messageLists (`messageId`);")
-        connection.execSQL("CREATE INDEX `index_messageLists_postUri` ON messageLists (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_messageLists_listUri` ON messageLists (`listUri`);")
 
         // Migrate messageStarterPacks
         connection.execSQL(
@@ -655,7 +655,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("ALTER TABLE messageStarterPacks_new RENAME TO messageStarterPacks")
 
         connection.execSQL("CREATE INDEX `index_messageStarterPacks_messageId` ON messageStarterPacks (`messageId`);")
-        connection.execSQL("CREATE INDEX `index_messageStarterPacks_postUri` ON messageStarterPacks (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_messageStarterPacks_starterPackUri` ON messageStarterPacks (`starterPackUri`);")
 
         // Migrate messageFeedGenerators
         connection.execSQL(
@@ -680,6 +680,6 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("ALTER TABLE messageFeedGenerators_new RENAME TO messageFeedGenerators")
 
         connection.execSQL("CREATE INDEX `index_messageFeedGenerators_messageId` ON messageFeedGenerators (`messageId`);")
-        connection.execSQL("CREATE INDEX `index_messageFeedGenerators_postUri` ON messageFeedGenerators (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_messageFeedGenerators_feedGeneratorUri` ON messageFeedGenerators (`feedGeneratorUri`);")
     }
 }
