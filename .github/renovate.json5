@@ -3,4 +3,13 @@
   "extends": [
     "config:recommended",
   ],
+  packageRules: [
+    {
+      groupName: 'Kotlin and KSP',
+      matchPackageNames: [
+        'com.google.devtools.ksp{/,}**',
+        'org.jetbrains.kotlin:kotlin{/,}**',
+      ],
+    },
+  ]
 }
