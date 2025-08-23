@@ -238,7 +238,7 @@ private inline fun PostInteractionsButtons(
                                 )
 
                                 else -> Post.Interaction.Delete.Unlike(
-                                    postUri = postId,
+                                    postUri = postUri,
                                     likeUri = likeUri,
                                 )
                             }
@@ -252,7 +252,7 @@ private inline fun PostInteractionsButtons(
                                 )
 
                                 else -> Post.Interaction.Delete.RemoveRepost(
-                                    postUri = postId,
+                                    postUri = postUri,
                                     repostUri = repostUri,
                                 )
                             }
