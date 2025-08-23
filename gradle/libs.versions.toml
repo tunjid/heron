@@ -92,7 +92,7 @@ compose-ui-testManifest = { group = "org.jetbrains.compose.ui", name = "ui-test-
 compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
 compose-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 compose-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
-codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.9.0" }
+codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.11.0" }
 connectivity-core = { module = "dev.jordond.connectivity:connectivity-core", version.ref = "connectivity" }
 connectivity-device = { module = "dev.jordond.connectivity:connectivity-device", version.ref = "connectivity" }
 connectivity-http = { module = "dev.jordond.connectivity:connectivity-http", version.ref = "connectivity" }
