@@ -47,7 +47,7 @@ vinceglb-filekit = "0.10.0-beta04"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-andrew-bailey-difference = { group = "dev.andrewbailey.difference", name = "difference", version = "1.1.0" }
+andrew-bailey-difference = { group = "dev.andrewbailey.difference", name = "difference", version = "1.1.1" }
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "android-desugar-jdk-libs" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
