@@ -457,8 +457,8 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
              CREATE TABLE IF NOT EXISTS `postViewerStatistics_new` (
                  `postUri` TEXT NOT NULL,
                  `viewingProfileId` TEXT NOT NULL,
-                 `likeUri` TEXT,
-                 `repostUri` TEXT,
+                 `likeUri` TEXT DEFAULT NULL,
+                 `repostUri` TEXT DEFAULT NULL,
                  `threadMuted` INTEGER NOT NULL,
                  `replyDisabled` INTEGER NOT NULL,
                  `embeddingDisabled` INTEGER NOT NULL,
