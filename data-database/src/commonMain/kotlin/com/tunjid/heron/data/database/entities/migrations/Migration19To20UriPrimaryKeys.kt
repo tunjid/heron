@@ -425,5 +425,86 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("CREATE INDEX `index_timelineItems_reply.rootPostUri` ON timelineItems (`reply.rootPostUri`);")
         connection.execSQL("CREATE INDEX `index_timelineItems_reply.parentPostUri` ON timelineItems (`reply.parentPostUri`);")
         connection.execSQL("CREATE INDEX `index_timelineItems_reply.grandParentPostAuthorId` ON timelineItems (`reply.grandParentPostAuthorId`);")
+
+        // Migrate postEmbeds
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postPosts_new` (
+                 `postUri` TEXT NOT NULL,
+                 `embeddedPostUri` TEXT NOT NULL,
+                 PRIMARY KEY(`postUri`, `embeddedPostUri`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`embeddedPostUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postPosts")
+        connection.execSQL("ALTER TABLE postPosts_new RENAME TO postPosts")
+
+        connection.execSQL("CREATE INDEX `index_postPosts_postUri` ON postPosts (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postPosts_embeddedPostUri` ON postPosts (`embeddedPostUri`);")
+
+        // Migrate postViewerStatistics
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postViewerStatistics_new` (
+                 `postUri` TEXT NOT NULL,
+                 `viewingProfileId` TEXT NOT NULL,
+                 `likeUri` TEXT,
+                 `repostUri` TEXT,
+                 `threadMuted` INTEGER NOT NULL,
+                 `replyDisabled` INTEGER NOT NULL,
+                 `embeddingDisabled` INTEGER NOT NULL,
+                 `pinned` INTEGER NOT NULL,
+                 PRIMARY KEY(`postUri`, `viewingProfileId`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`viewingProfileId`)
+                     REFERENCES `profiles`(`did`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postViewerStatistics")
+        connection.execSQL("ALTER TABLE postViewerStatistics_new RENAME TO postViewerStatistics")
+
+        connection.execSQL("CREATE INDEX `index_postViewerStatistics_postUri` ON postViewerStatistics (`postUri`);")
+            connection.execSQL("CREATE INDEX `index_postViewerStatistics_viewingProfileId` ON postViewerStatistics (`viewingProfileId`);")
+
+        // Migrate postAuthors
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `postAuthors_new` (
+                 `postUri` TEXT NOT NULL,
+                 `authorId` TEXT NOT NULL,
+                 PRIMARY KEY(`postUri`, `authorId`),
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`authorId`)
+                     REFERENCES `profiles`(`did`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE postAuthors")
+        connection.execSQL("ALTER TABLE postAuthors_new RENAME TO postAuthors")
+
+        connection.execSQL("CREATE INDEX `index_postAuthors_postUri` ON postAuthors (`postUri`);")
+        connection.execSQL("CREATE INDEX `index_postAuthors_authorId` ON postAuthors (`authorId`);")
     }
 }
