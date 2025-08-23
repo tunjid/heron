@@ -173,62 +173,62 @@ internal class OfflineMessageRepository @Inject constructor(
                 )
                     .distinctUntilChanged()
                     .flatMapLatest { populatedMessageEntities ->
-                        val feedIds = populatedMessageEntities.mapNotNull {
-                            it.feed?.feedGeneratorId
+                        val feedUris = populatedMessageEntities.mapNotNull {
+                            it.feed?.feedGeneratorUri
                         }
-                        val listIds = populatedMessageEntities.mapNotNull {
-                            it.list?.listId
+                        val listUris = populatedMessageEntities.mapNotNull {
+                            it.list?.listUri
                         }
-                        val starterPackIds = populatedMessageEntities.mapNotNull {
-                            it.starterPack?.starterPackId
+                        val starterPackUris = populatedMessageEntities.mapNotNull {
+                            it.starterPack?.starterPackUri
                         }
-                        val postIds = populatedMessageEntities.mapNotNull {
+                        val postUris = populatedMessageEntities.mapNotNull {
                             it.post?.postUri
                         }
                         combine(
-                            flow = feedIds.toFlowOrEmpty(feedDao::feedGenerators),
-                            flow2 = listIds.toFlowOrEmpty(listDao::lists),
-                            flow3 = starterPackIds.toFlowOrEmpty(starterPackDao::starterPacks),
-                            flow4 = postIds.toFlowOrEmpty { postIds ->
+                            flow = feedUris.toFlowOrEmpty(feedDao::feedGenerators),
+                            flow2 = listUris.toFlowOrEmpty(listDao::lists),
+                            flow3 = starterPackUris.toFlowOrEmpty(starterPackDao::starterPacks),
+                            flow4 = postUris.toFlowOrEmpty { postIds ->
                                 postDao.posts(
                                     viewingProfileId = signedInProfileId?.id,
                                     postUris = postIds,
                                 )
                             },
-                            flow5 = postIds.toFlowOrEmpty { postIds ->
+                            flow5 = postUris.toFlowOrEmpty { postIds ->
                                 postDao.embeddedPosts(
                                     viewingProfileId = signedInProfileId?.id,
                                     postUris = postIds,
                                 )
                             },
                         ) { feeds, lists, starterPacks, posts, embeddedPosts ->
-                            val idsToFeeds = feeds.associateBy { it.entity.cid }
-                            val idsToLists = lists.associateBy { it.entity.cid }
-                            val idsToStarterPacks = starterPacks.associateBy { it.entity.cid }
-                            val idsToPosts = posts.associateBy { it.entity.cid }
-                            val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
+                            val urisToFeeds = feeds.associateBy { it.entity.uri }
+                            val urisToLists = lists.associateBy { it.entity.uri }
+                            val urisToStarterPacks = starterPacks.associateBy { it.entity.uri }
+                            val urisToPosts = posts.associateBy { it.entity.uri }
+                            val urisToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
 
                             populatedMessageEntities.map { populatedMessageEntity ->
                                 populatedMessageEntity.asExternalModel(
                                     feedGenerator = populatedMessageEntity.feed
-                                        ?.feedGeneratorId
-                                        ?.let(idsToFeeds::get)
+                                        ?.feedGeneratorUri
+                                        ?.let(urisToFeeds::get)
                                         ?.asExternalModel(),
                                     list = populatedMessageEntity.list
-                                        ?.listId
-                                        ?.let(idsToLists::get)
+                                        ?.listUri
+                                        ?.let(urisToLists::get)
                                         ?.asExternalModel(),
                                     starterPack = populatedMessageEntity.starterPack
-                                        ?.starterPackId
-                                        ?.let(idsToStarterPacks::get)
+                                        ?.starterPackUri
+                                        ?.let(urisToStarterPacks::get)
                                         ?.asExternalModel(),
                                     post = populatedMessageEntity.post
                                         ?.postUri
-                                        ?.let(idsToPosts::get)
+                                        ?.let(urisToPosts::get)
                                         ?.asExternalModel(
                                             quote = populatedMessageEntity.post
                                                 ?.postUri
-                                                ?.let(idsToEmbeddedPosts::get)
+                                                ?.let(urisToEmbeddedPosts::get)
                                                 ?.entity
                                                 ?.asExternalModel(quote = null)
                                         ),
@@ -249,8 +249,6 @@ internal class OfflineMessageRepository @Inject constructor(
                     },
                     nextCursor = GetMessagesResponse::cursor,
                     onResponse = {
-                        val signedInProfileId = savedStateDataSource.signedInProfileId
-
                         multipleEntitySaverProvider.saveInTransaction {
                             messages.forEach {
                                 when (it) {

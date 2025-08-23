@@ -19,7 +19,7 @@ package com.tunjid.heron.data.database.entities.messageembeds
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -29,7 +29,7 @@ import com.tunjid.heron.data.database.entities.MessageEntity
     tableName = "messageLists",
     primaryKeys = [
         "messageId",
-        "listId"
+        "listUri"
     ],
     foreignKeys = [
         ForeignKey(
@@ -40,19 +40,19 @@ import com.tunjid.heron.data.database.entities.MessageEntity
         ),
         ForeignKey(
             entity = ListEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["listId"],
+            parentColumns = ["uri"],
+            childColumns = ["listUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["messageId"]),
-        Index(value = ["listId"]),
+        Index(value = ["listUri"]),
     ],
 )
 data class MessageListEntity(
     val messageId: MessageId,
-    val listId: ListId,
+    val listUri: ListUri,
 )
 
 

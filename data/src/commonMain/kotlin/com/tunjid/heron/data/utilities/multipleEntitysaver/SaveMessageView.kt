@@ -22,12 +22,12 @@ import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
 import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.FeedGeneratorId
-import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
@@ -78,7 +78,7 @@ internal fun MultipleEntitySaver.add(
                 add(
                     entity = MessageFeedGeneratorEntity(
                         messageId = messageView.id.let(::MessageId),
-                        feedGeneratorId = record.value.cid.cid.let(::FeedGeneratorId),
+                        feedGeneratorUri = record.value.uri.atUri.let(::FeedGeneratorUri),
                     )
                 )
             }
@@ -90,7 +90,7 @@ internal fun MultipleEntitySaver.add(
                 add(
                     entity = MessageListEntity(
                         messageId = messageView.id.let(::MessageId),
-                        listId = record.value.cid.cid.let(::ListId),
+                        listUri = record.value.uri.atUri.let(::ListUri),
                     )
                 )
             }
@@ -102,7 +102,7 @@ internal fun MultipleEntitySaver.add(
                 add(
                     entity = MessageStarterPackEntity(
                         messageId = messageView.id.let(::MessageId),
-                        starterPackId = record.value.cid.cid.let(::StarterPackId),
+                        starterPackUri = record.value.uri.atUri.let(::StarterPackUri),
                     )
                 )
             }

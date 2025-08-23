@@ -1154,7 +1154,7 @@ internal class OfflineTimelineRepository(
         uri: FeedGeneratorUri,
         position: Int,
         isPinned: Boolean,
-    ): Flow<Timeline.Home.Feed> = feedGeneratorDao.feedGeneratorsByUri(listOf(uri))
+    ): Flow<Timeline.Home.Feed> = feedGeneratorDao.feedGenerators(listOf(uri))
         .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
         .distinctUntilChanged()

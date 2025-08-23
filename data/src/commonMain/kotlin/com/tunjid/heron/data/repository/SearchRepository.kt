@@ -42,7 +42,7 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
@@ -299,7 +299,7 @@ internal class OfflineSearchRepository @Inject constructor(
             val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
 
             emitAll(
-                feedGeneratorDao.feedGeneratorsByUri(
+                feedGeneratorDao.feedGenerators(
                     feedUris = feedUris
                 )
                     .map { populatedFeedGeneratorEntities ->
@@ -429,7 +429,7 @@ internal class OfflineSearchRepository @Inject constructor(
             }
 
             starterPackDao.starterPacks(
-                starterPackViews.mapTo(mutableSetOf()) { it.cid.cid.let(::StarterPackId) }
+                starterPackViews.mapTo(mutableSetOf()) { it.uri.atUri.let(::StarterPackUri) }
             )
                 .map { populatedStarterPackEntities ->
                     populatedStarterPackEntities
@@ -463,7 +463,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
             }
 
-            feedGeneratorDao.feedGeneratorsByUri(
+            feedGeneratorDao.feedGenerators(
                 generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) }
             )
                 .map { populatedFeedGeneratorEntities ->
