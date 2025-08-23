@@ -41,7 +41,7 @@ tunjid-tiler = "1.2.0"
 tunjid-tree-nav = "0.0.43"
 tunjid-composables = "0.0.21"
 jetbrainsKotlinJvm = "2.1.20"
-vinceglb-filekit = "0.10.0-beta04"
+vinceglb-filekit = "0.10.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
