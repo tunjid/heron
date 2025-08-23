@@ -19,9 +19,55 @@ package com.tunjid.heron.data.database.entities.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
+import com.tunjid.heron.data.core.models.Constants
 
 internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
     override fun migrate(connection: SQLiteConnection) {
+
+        // Add Unknown user to the db
+        connection.execSQL(
+            """
+            INSERT INTO profiles (
+                did, 
+                handle, 
+                displayName, 
+                description, 
+                avatar, 
+                banner, 
+                followersCount, 
+                followsCount, 
+                postsCount, 
+                joinedViaStarterPack, 
+                indexedAt, 
+                createdAt,
+                createdListCount,
+                createdFeedGeneratorCount,
+                createdStarterPackCount,
+                labeler,
+                allowDms
+            )
+            VALUES (
+                '${Constants.unknownAuthorId}', 
+                '${Constants.UNKNOWN}', 
+                '', 
+                '', 
+                NULL, 
+                NULL, 
+                0, 
+                0, 
+                0, 
+                NULL, 
+                0, 
+                0,
+                NULL, 
+                NULL, 
+                NULL, 
+                NULL, 
+                NULL
+           );
+            """.trimIndent()
+        )
+
         // Migrate posts
         connection.execSQL(
             """
