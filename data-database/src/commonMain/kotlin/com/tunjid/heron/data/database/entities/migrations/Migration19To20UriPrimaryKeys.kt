@@ -514,14 +514,14 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  `postUri` TEXT NOT NULL,
                  `imageUri` TEXT NOT NULL,
                  PRIMARY KEY(`postUri`, `imageUri`),
-                 FOREIGN KEY(`postUri`)
-                     REFERENCES `posts`(`uri`)
-                     ON UPDATE NO ACTION
-                     ON DELETE CASCADE,
                  FOREIGN KEY(`imageUri`)
                      REFERENCES `images`(`fullsize`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
              )
              """.trimIndent()
         )
