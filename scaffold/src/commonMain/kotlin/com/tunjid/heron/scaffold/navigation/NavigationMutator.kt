@@ -155,7 +155,7 @@ fun galleryDestination(
     startIndex: Int,
     sharedElementPrefix: String,
 ): NavigationAction.Destination = pathDestination(
-    path = "/profile/${post.author.did.id}/post/${post.uri.recordKey}/gallery",
+    path = "/profile/${post.author.did.id}/post/${post.uri.recordKey.value}/gallery",
     models = listOf(media),
     sharedElementPrefix = sharedElementPrefix,
     miscQueryParams = mapOf(
