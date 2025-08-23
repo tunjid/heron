@@ -34,9 +34,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     `likeCount` INTEGER,
                     `quoteCount` INTEGER,
                     `indexedAt` INTEGER NOT NULL,
-                    `record.text` TEXT,
-                    `record.base64EncodedRecord` TEXT,
-                    `record.createdAt` INTEGER,
+                    `text` TEXT,
+                    `base64EncodedRecord` TEXT,
+                    `createdAt` INTEGER,
                     PRIMARY KEY(`uri`),
                     FOREIGN KEY(`authorId`) 
                         REFERENCES `profiles`(`did`) 
@@ -56,11 +56,11 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     likeCount, 
                     quoteCount, 
                     indexedAt, 
-                    record.text, 
-                    record.base64EncodedRecord, 
-                    record.createdAt
+                    text, 
+                    base64EncodedRecord, 
+                    createdAt
                 )
-                SELECT 
+                SELECT DISTINCT
                     cid, 
                     uri, 
                     authorId, 
@@ -69,9 +69,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     likeCount, 
                     quoteCount, 
                     indexedAt, 
-                    record.text, 
-                    record.base64EncodedRecord, 
-                    record.createdAt 
+                    text, 
+                    base64EncodedRecord, 
+                    createdAt 
                 FROM posts
             """.trimIndent()
         )
@@ -117,7 +117,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             )
-            SELECT
+            SELECT DISTINCT
                 cid,
                 uri,
                 creatorId,
@@ -179,7 +179,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             )
-            SELECT
+            SELECT DISTINCT
                 cid,
                 did,
                 uri,
@@ -239,7 +239,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             )
-            SELECT
+            SELECT DISTINCT
                 cid,
                 uri,
                 creatorId,
@@ -388,7 +388,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  `sourceId` TEXT NOT NULL,
                  `rootPostUri` TEXT,
                  `parentPostUri` TEXT,
-                 `grandParentPostAuthorUri` TEXT,
+                 `grandParentPostAuthorId` TEXT,
                  `reposter` TEXT,
                  `hasMedia` INTEGER NOT NULL DEFAULT false,
                  `isPinned` INTEGER NOT NULL,
