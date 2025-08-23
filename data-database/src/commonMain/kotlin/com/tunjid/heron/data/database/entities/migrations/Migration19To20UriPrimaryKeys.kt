@@ -106,7 +106,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     base64EncodedRecord, 
                     createdAt
                 )
-                SELECT DISTINCT
+                SELECT
                     cid, 
                     uri, 
                     authorId, 
@@ -119,6 +119,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     base64EncodedRecord, 
                     createdAt 
                 FROM posts
+                WHERE cid in (SELECT MAX(cid) FROM posts GROUP BY uri)
             """.trimIndent()
         )
         connection.execSQL("DROP TABLE posts")
@@ -164,7 +165,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             )
-            SELECT DISTINCT
+            SELECT
                 cid,
                 uri,
                 creatorId,
@@ -176,6 +177,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             FROM lists
+            WHERE cid in (SELECT MAX(cid) FROM lists GROUP BY uri)
         """.trimIndent()
         )
         connection.execSQL("DROP TABLE lists")
@@ -227,7 +229,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             )
-            SELECT DISTINCT
+            SELECT
                 cid,
                 did,
                 uri,
@@ -241,6 +243,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             FROM feedGenerators
+            WHERE cid in (SELECT MAX(cid) FROM feedGenerators GROUP BY uri)
         """.trimIndent()
         )
         connection.execSQL("DROP TABLE feedGenerators")
@@ -300,6 +303,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 indexedAt,
                 createdAt
             FROM starterPacks
+            WHERE cid in (SELECT MAX(cid) FROM starterPacks GROUP BY uri)
         """.trimIndent()
         )
         connection.execSQL("DROP TABLE starterPacks")
