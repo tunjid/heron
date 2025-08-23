@@ -231,7 +231,7 @@ internal class OfflinePostRepository @Inject constructor(
                 combine(
                     postDao.quotedPosts(
                         viewingProfileId = signedInProfileId?.id,
-                        quotedPostId = postEntity.cid.id,
+                        quotedPostUri = postEntity.uri.uri,
                     )
                         .map { populatedPostEntities ->
                             populatedPostEntities.map {

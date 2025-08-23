@@ -125,8 +125,8 @@ interface PostDao {
             SELECT 
                 posts.*,
                 postViewerStatistics.*, 
-                postPosts.postUri AS parentPostId,
-                postPosts.embeddedPostUri AS embeddedPostId
+                postPosts.postUri AS parentPostUri,
+                postPosts.embeddedPostUri AS embeddedPostUri
             FROM posts AS posts
             LEFT JOIN (
                 SELECT * FROM postViewerStatistics
@@ -149,7 +149,7 @@ interface PostDao {
             SELECT
                 posts.*, 
                 postViewerStatistics.*,
-                postPosts.postUri AS parentPostId
+                postPosts.postUri AS parentPostUri
             FROM posts AS posts
             LEFT JOIN (
                 SELECT * FROM postViewerStatistics
@@ -158,13 +158,13 @@ interface PostDao {
             ON posts.uri = postViewerStatistics.postUri
             INNER JOIN postPosts AS postPosts
             ON posts.uri = postPosts.embeddedPostUri
-	        WHERE postPosts.embeddedPostUri = :quotedPostId
+	        WHERE postPosts.embeddedPostUri = :quotedPostUri
             ORDER BY posts.indexedAt
         """
     )
     fun quotedPosts(
         viewingProfileId: String?,
-        quotedPostId: String,
+        quotedPostUri: String,
     ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
@@ -246,7 +246,7 @@ interface PostDao {
                 SELECT postUri,
                     parentPostUri,
                     -1 AS generation,
-                    postUri AS rootPostId,
+                    postUri AS rootPostUri,
                     -1 AS sort1
                 FROM postThreads
                 WHERE postUri = :postUri
@@ -257,7 +257,7 @@ interface PostDao {
                 SELECT parent.postUri,
                     parent.parentPostUri,
                     generation-1 AS generation,
-                    rootPostId,
+                    rootPostUri,
                     sort1-1 AS sort1
                 FROM postThreads parent
                 JOIN parentGeneration g
@@ -267,7 +267,7 @@ interface PostDao {
                 SELECT postUri,
                     parentPostUri,
                     1 AS generation,
-                    postUri AS rootPostId,
+                    postUri AS rootPostUri,
                     posts.createdAt AS sort1
                 FROM postThreads
                 INNER JOIN posts
@@ -280,7 +280,7 @@ interface PostDao {
                 SELECT reply.postUri,
                     reply.parentPostUri,
                     generation+1 AS generation,
-                    rootPostId,
+                    rootPostUri,
                     sort1 AS sort1
                 FROM postThreads reply
                 JOIN replyGeneration g
