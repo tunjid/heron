@@ -562,33 +562,33 @@ internal class OfflineTimelineRepository(
                     .take(1)
                     .flatMapLatest { postEntity ->
                         postDao.postThread(
-                            postUri = postEntity.cid.id
+                            postUri = postEntity.uri.uri
                         )
                             .flatMapLatest { postThread ->
-                                val postIds = postThread.map(ThreadedPostEntity::postId).toSet()
+                                val postUris = postThread.map(ThreadedPostEntity::postUri).toSet()
                                 combine(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
-                                        postUris = postIds
+                                        postUris = postUris
                                     ),
                                     flow2 = postDao.embeddedPosts(
                                         viewingProfileId = signedInProfileId?.id,
-                                        postUris = postIds
+                                        postUris = postUris
                                     ),
                                     flow3 = labelers(),
                                     transform = { posts, embeddedPosts, labelers ->
-                                        val idsToPosts = posts.associateBy { it.entity.cid }
+                                        val urisToPosts = posts.associateBy { it.entity.uri }
                                         val idsToEmbeddedPosts = embeddedPosts.associateBy(
-                                            EmbeddedPopulatedPostEntity::parentPostId
+                                            EmbeddedPopulatedPostEntity::parentPostUri
                                         )
 
                                         postThread.fold(
                                             initial = emptyList<TimelineItem.Thread>(),
                                             operation = { list, thread ->
                                                 val populatedPostEntity =
-                                                    idsToPosts.getValue(thread.entity.cid)
+                                                    urisToPosts.getValue(thread.entity.uri)
                                                 val post = populatedPostEntity.asExternalModel(
-                                                    quote = idsToEmbeddedPosts[thread.entity.cid]
+                                                    quote = idsToEmbeddedPosts[thread.entity.uri]
                                                         ?.entity
                                                         ?.asExternalModel(quote = null)
                                                 )
@@ -1011,14 +1011,14 @@ internal class OfflineTimelineRepository(
                             flow4 = labelers(),
                         ) { posts, embeddedPosts, repostProfiles, labelers ->
                             if (posts.isEmpty()) return@combine emptyList()
-                            val idsToPosts = posts.associateBy { it.entity.cid }
-                            val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
+                            val urisToPosts = posts.associateBy { it.entity.uri }
+                            val urisToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
                             val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                             itemEntities.mapNotNull { entity ->
-                                val mainPost = idsToPosts[entity.postUri]
+                                val mainPost = urisToPosts[entity.postUri]
                                     ?.asExternalModel(
-                                        quote = idsToEmbeddedPosts[entity.postUri]
+                                        quote = urisToEmbeddedPosts[entity.postUri]
                                             ?.entity
                                             ?.asExternalModel(quote = null)
                                     ) ?: return@mapNotNull null
@@ -1051,8 +1051,8 @@ internal class OfflineTimelineRepository(
 
                                 if (shouldHide) return@mapNotNull null
 
-                                val replyParent = entity.reply?.let { idsToPosts[it.parentPostUri] }
-                                val replyRoot = entity.reply?.let { idsToPosts[it.rootPostUri] }
+                                val replyParent = entity.reply?.let { urisToPosts[it.parentPostUri] }
+                                val replyRoot = entity.reply?.let { urisToPosts[it.rootPostUri] }
                                 val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
                                 when {
@@ -1064,12 +1064,12 @@ internal class OfflineTimelineRepository(
                                         labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                         posts = listOf(
                                             replyRoot.asExternalModel(
-                                                quote = idsToEmbeddedPosts[replyRoot.entity.cid]
+                                                quote = urisToEmbeddedPosts[replyRoot.entity.uri]
                                                     ?.entity
                                                     ?.asExternalModel(quote = null)
                                             ),
                                             replyParent.asExternalModel(
-                                                quote = idsToEmbeddedPosts[replyParent.entity.cid]
+                                                quote = urisToEmbeddedPosts[replyParent.entity.uri]
                                                     ?.entity
                                                     ?.asExternalModel(quote = null)
                                             ),
@@ -1284,7 +1284,7 @@ internal class OfflineTimelineRepository(
         post: Post,
     ) = when {
         list.isEmpty() || thread.generation == 0L -> list + TimelineItem.Thread(
-            id = thread.postId.id,
+            id = thread.postUri.uri,
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,
@@ -1299,8 +1299,8 @@ internal class OfflineTimelineRepository(
             it.copy(posts = it.posts + post)
         }
 
-        list.last().posts.first().cid != thread.rootPostId -> list + TimelineItem.Thread(
-            id = thread.postId.id,
+        list.last().posts.first().uri != thread.rootPostUri -> list + TimelineItem.Thread(
+            id = thread.postUri.uri,
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,

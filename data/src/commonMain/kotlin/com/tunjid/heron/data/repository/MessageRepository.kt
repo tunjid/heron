@@ -206,7 +206,7 @@ internal class OfflineMessageRepository @Inject constructor(
                             val idsToLists = lists.associateBy { it.entity.cid }
                             val idsToStarterPacks = starterPacks.associateBy { it.entity.cid }
                             val idsToPosts = posts.associateBy { it.entity.cid }
-                            val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostId }
+                            val idsToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
 
                             populatedMessageEntities.map { populatedMessageEntity ->
                                 populatedMessageEntity.asExternalModel(
