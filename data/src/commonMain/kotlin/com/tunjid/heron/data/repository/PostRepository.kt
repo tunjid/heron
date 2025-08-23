@@ -170,7 +170,7 @@ internal class OfflinePostRepository @Inject constructor(
                         likes.forEach {
                             add(
                                 viewingProfileId = savedStateDataSource.signedInProfileId,
-                                postId = postEntity.cid,
+                                postUri = postEntity.uri,
                                 like = it,
                             )
                         }

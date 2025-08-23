@@ -59,8 +59,8 @@ internal fun MultipleEntitySaver.add(
 
             add(
                 PostThreadEntity(
-                    postUri = feedView.post.postEntity().cid,
-                    parentPostUri = parentPostEntity.cid,
+                    postUri = feedView.post.postEntity().uri,
+                    parentPostUri = parentPostEntity.uri,
                 )
             )
         }
