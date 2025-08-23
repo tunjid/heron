@@ -515,7 +515,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  `imageUri` TEXT NOT NULL,
                  PRIMARY KEY(`postUri`, `imageUri`),
                  FOREIGN KEY(`imageUri`)
-                     REFERENCES `images`(`fullsize`)
+                     REFERENCES `images`(`fullSize`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
                  FOREIGN KEY(`postUri`)
