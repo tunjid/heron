@@ -413,7 +413,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
                  FOREIGN KEY(`grandParentPostAuthorId`)
-                     REFERENCES `profile`(`did`)
+                     REFERENCES `profiles`(`did`)
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE   
              )
