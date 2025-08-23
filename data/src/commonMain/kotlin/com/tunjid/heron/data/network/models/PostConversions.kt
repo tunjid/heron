@@ -55,21 +55,21 @@ import app.bsky.feed.Post as BskyPost
 internal fun PostEntity.postVideoEntity(
     embedEntity: VideoEntity,
 ) = PostVideoEntity(
-    postId = cid,
+    postUri = cid,
     videoId = embedEntity.cid,
 )
 
 internal fun PostEntity.postImageEntity(
     embedEntity: ImageEntity,
 ) = PostImageEntity(
-    postId = cid,
+    postUri = cid,
     imageUri = embedEntity.fullSize,
 )
 
 internal fun PostEntity.postExternalEmbedEntity(
     embedEntity: ExternalEmbedEntity,
 ) = PostExternalEmbedEntity(
-    postId = cid,
+    postUri = cid,
     externalEmbedUri = embedEntity.uri,
 )
 
