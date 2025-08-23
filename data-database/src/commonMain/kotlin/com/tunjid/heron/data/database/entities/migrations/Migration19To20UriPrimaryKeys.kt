@@ -137,7 +137,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_lists_uri` ON lists (`uri`);")
         connection.execSQL("CREATE INDEX `index_lists_cid` ON lists (`cid`);")
-        connection.execSQL("CREATE INDEX `index_lists_authorId` ON lists (`authorId`);")
+        connection.execSQL("CREATE INDEX `index_lists_creatorId` ON lists (`creatorId`);")
         connection.execSQL("CREATE INDEX `index_lists_indexedAt` ON lists (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_lists_createdAt` ON lists (`createdAt`);")
 
@@ -202,7 +202,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_feedGenerators_uri` ON feedGenerators (`uri`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_cid` ON feedGenerators (`cid`);")
-        connection.execSQL("CREATE INDEX `index_feedGenerators_authorId` ON feedGenerators (`authorId`);")
+        connection.execSQL("CREATE INDEX `index_feedGenerators_creatorId` ON feedGenerators (`creatorId`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_indexedAt` ON feedGenerators (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);")
 
@@ -261,7 +261,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_starterPacks_uri` ON starterPacks (`uri`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_cid` ON starterPacks (`cid`);")
-        connection.execSQL("CREATE INDEX `index_starterPacks_authorId` ON starterPacks (`authorId`);")
+        connection.execSQL("CREATE INDEX `index_starterPacks_creatorId` ON starterPacks (`creatorId`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_indexedAt` ON starterPacks (`indexedAt`);")
         connection.execSQL("CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);")
 

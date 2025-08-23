@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 20,
-    "identityHash": "1b7fd85ff74a879704b3f57f1cd844ff",
+    "identityHash": "9a924a254d01c511a7cca7f68a8aa5c3",
     "entities": [
       {
         "tableName": "externalEmbeds",
@@ -487,6 +487,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_posts_cid` ON `${TABLE_NAME}` (`cid`)"
+          },
+          {
+            "name": "index_posts_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_posts_authorId` ON `${TABLE_NAME}` (`authorId`)"
           }
         ],
         "foreignKeys": [
@@ -1281,6 +1290,15 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_lists_cid` ON `${TABLE_NAME}` (`cid`)"
           },
           {
+            "name": "index_lists_creatorId",
+            "unique": false,
+            "columnNames": [
+              "creatorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lists_creatorId` ON `${TABLE_NAME}` (`creatorId`)"
+          },
+          {
             "name": "index_lists_indexedAt",
             "unique": false,
             "columnNames": [
@@ -1482,6 +1500,15 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_feedGenerators_cid` ON `${TABLE_NAME}` (`cid`)"
           },
           {
+            "name": "index_feedGenerators_creatorId",
+            "unique": false,
+            "columnNames": [
+              "creatorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_feedGenerators_creatorId` ON `${TABLE_NAME}` (`creatorId`)"
+          },
+          {
             "name": "index_feedGenerators_indexedAt",
             "unique": false,
             "columnNames": [
@@ -1589,6 +1616,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_cid` ON `${TABLE_NAME}` (`cid`)"
+          },
+          {
+            "name": "index_notifications_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_authorId` ON `${TABLE_NAME}` (`authorId`)"
           },
           {
             "name": "index_notifications_indexedAt",
@@ -1955,6 +1991,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_starterPacks_cid` ON `${TABLE_NAME}` (`cid`)"
+          },
+          {
+            "name": "index_starterPacks_creatorId",
+            "unique": false,
+            "columnNames": [
+              "creatorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_starterPacks_creatorId` ON `${TABLE_NAME}` (`creatorId`)"
           },
           {
             "name": "index_starterPacks_indexedAt",
@@ -2530,7 +2575,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1b7fd85ff74a879704b3f57f1cd844ff')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9a924a254d01c511a7cca7f68a8aa5c3')"
     ]
   }
 }
