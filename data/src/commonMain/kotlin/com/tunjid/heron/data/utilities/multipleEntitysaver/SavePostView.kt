@@ -45,7 +45,7 @@ internal fun MultipleEntitySaver.add(
     }
 
     postView.viewer?.postViewerStatisticsEntity(
-        postId = postEntity.cid,
+        postUri = postEntity.uri,
         viewingProfileId = viewingProfileId,
     )?.let(::add)
 
