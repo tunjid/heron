@@ -18,13 +18,15 @@ package com.tunjid.heron.gallery
 
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.gallery.di.postId
+import com.tunjid.heron.gallery.di.postRecordKey
+import com.tunjid.heron.gallery.di.profileId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -41,7 +43,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -57,6 +61,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     postRepository: PostRepository,
+    profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -67,8 +72,9 @@ class ActualGalleryViewModel(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         loadPostMutations(
-            postId = route.postId,
+            route = route,
             postRepository = postRepository,
+            profileRepository = profileRepository,
         )
     ),
     actionTransform = transform@{ actions ->
@@ -89,12 +95,24 @@ class ActualGalleryViewModel(
 )
 
 private fun loadPostMutations(
-    postId: PostId,
-    postRepository: PostRepository
-): Flow<Mutation<State>> =
-    emptyFlow()
-//    postRepository.post(postId)
-//        .mapToMutation { copy(post = it) }
+    route: Route,
+    postRepository: PostRepository,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> = flow {
+    val postUri = profileRepository.profile(route.profileId)
+        .first()
+        .let {
+            PostUri(
+                profileId = it.did,
+                postRecordKey = route.postRecordKey
+            )
+        }
+
+    emitAll(
+        postRepository.post(postUri)
+            .mapToMutation { copy(post = it) }
+    )
+}
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

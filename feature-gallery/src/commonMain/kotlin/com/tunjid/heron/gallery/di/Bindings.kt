@@ -23,6 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
@@ -49,7 +53,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
-private const val RoutePattern = "/post/{postId}/gallery"
+private const val RoutePattern = "/profile/{profileId}/post/{postRecordKey}/gallery"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -57,8 +61,12 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.postId by mappedRoutePath(
-    mapper = ::PostId,
+internal val Route.postRecordKey by mappedRoutePath(
+    mapper = ::RecordKey,
+)
+
+internal val Route.profileId by mappedRoutePath(
+    mapper = ::ProfileId,
 )
 
 internal val Route.startIndex by mappedRouteQuery(
