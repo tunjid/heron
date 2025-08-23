@@ -581,5 +581,30 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_postVideos_postUri` ON postVideos (`postUri`);")
         connection.execSQL("CREATE INDEX `index_postVideos_videoId` ON postVideos (`videoId`);")
+
+        // Migrate messagePosts
+        connection.execSQL(
+            """
+             CREATE TABLE IF NOT EXISTS `messagePosts_new` (
+                 `messageId` TEXT NOT NULL,
+                 `postUri` TEXT NOT NULL,
+                 PRIMARY KEY(`messageId`, `postUri`),
+                 FOREIGN KEY(`messageId`)
+                     REFERENCES `messages`(`id`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE,
+                 FOREIGN KEY(`postUri`)
+                     REFERENCES `posts`(`uri`)
+                     ON UPDATE NO ACTION
+                     ON DELETE CASCADE
+             )
+             """.trimIndent()
+        )
+
+        connection.execSQL("DROP TABLE messagePosts")
+        connection.execSQL("ALTER TABLE messagePosts_new RENAME TO messagePosts")
+
+        connection.execSQL("CREATE INDEX `index_messagePosts_messageId` ON messagePosts (`messageId`);")
+        connection.execSQL("CREATE INDEX `index_messagePosts_postUri` ON messagePosts (`postUri`);")
     }
 }

@@ -25,7 +25,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.MessageId
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -163,7 +163,7 @@ private fun MultipleEntitySaver.add(
         add(
             entity = MessagePostEntity(
                 messageId = messageId,
-                postId = postView.cid.cid.let(::PostId),
+                postUri = postView.uri.atUri.let(::PostUri),
             )
         )
     }

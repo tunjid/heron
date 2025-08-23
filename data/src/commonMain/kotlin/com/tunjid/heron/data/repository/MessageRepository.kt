@@ -183,7 +183,7 @@ internal class OfflineMessageRepository @Inject constructor(
                             it.starterPack?.starterPackId
                         }
                         val postIds = populatedMessageEntities.mapNotNull {
-                            it.post?.postId
+                            it.post?.postUri
                         }
                         combine(
                             flow = feedIds.toFlowOrEmpty(feedDao::feedGenerators),
@@ -223,11 +223,11 @@ internal class OfflineMessageRepository @Inject constructor(
                                         ?.let(idsToStarterPacks::get)
                                         ?.asExternalModel(),
                                     post = populatedMessageEntity.post
-                                        ?.postId
+                                        ?.postUri
                                         ?.let(idsToPosts::get)
                                         ?.asExternalModel(
                                             quote = populatedMessageEntity.post
-                                                ?.postId
+                                                ?.postUri
                                                 ?.let(idsToEmbeddedPosts::get)
                                                 ?.entity
                                                 ?.asExternalModel(quote = null)
