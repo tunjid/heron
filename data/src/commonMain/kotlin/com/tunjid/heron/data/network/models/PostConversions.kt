@@ -55,21 +55,21 @@ import app.bsky.feed.Post as BskyPost
 internal fun PostEntity.postVideoEntity(
     embedEntity: VideoEntity,
 ) = PostVideoEntity(
-    postId = cid,
+    postUri = uri,
     videoId = embedEntity.cid,
 )
 
 internal fun PostEntity.postImageEntity(
     embedEntity: ImageEntity,
 ) = PostImageEntity(
-    postId = cid,
+    postUri = uri,
     imageUri = embedEntity.fullSize,
 )
 
 internal fun PostEntity.postExternalEmbedEntity(
     embedEntity: ExternalEmbedEntity,
 ) = PostExternalEmbedEntity(
-    postId = cid,
+    postUri = uri,
     externalEmbedUri = embedEntity.uri,
 )
 
@@ -85,7 +85,7 @@ internal fun PostView.post(
         embeds = embedEntities(),
         viewerStatisticsEntity = viewer
             ?.postViewerStatisticsEntity(
-                postId = postEntity.cid,
+                postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
         quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
@@ -228,12 +228,12 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
 
 
 internal fun ViewerState.postViewerStatisticsEntity(
-    postId: PostId,
+    postUri: PostUri,
     viewingProfileId: ProfileId?,
 ) =
     if (viewingProfileId == null) null
     else PostViewerStatisticsEntity(
-        postId = postId,
+        postUri = postUri,
         viewingProfileId = viewingProfileId,
         likeUri = like?.atUri?.let(::GenericUri),
         repostUri = repost?.atUri?.let(::GenericUri),
@@ -247,7 +247,7 @@ internal fun ReplyRefRootUnion.postViewerStatisticsEntity(
     viewingProfileId: ProfileId?,
 ) = when (this) {
     is ReplyRefRootUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
-        postId = PostId(value.cid.cid),
+        postUri = PostUri(value.uri.atUri),
         viewingProfileId = viewingProfileId,
     )
 
@@ -261,7 +261,7 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
     viewingProfileId: ProfileId?,
 ) = when (this) {
     is ReplyRefParentUnion.PostView -> value.viewer?.postViewerStatisticsEntity(
-        postId = PostId(value.cid.cid),
+        postUri = PostUri(value.uri.atUri),
         viewingProfileId = viewingProfileId,
     )
 

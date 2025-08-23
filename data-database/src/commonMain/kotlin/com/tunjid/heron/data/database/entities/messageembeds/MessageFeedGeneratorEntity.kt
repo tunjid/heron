@@ -19,7 +19,7 @@ package com.tunjid.heron.data.database.entities.messageembeds
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.FeedGeneratorId
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -29,7 +29,7 @@ import com.tunjid.heron.data.database.entities.MessageEntity
     tableName = "messageFeedGenerators",
     primaryKeys = [
         "messageId",
-        "feedGeneratorId"
+        "feedGeneratorUri"
     ],
     foreignKeys = [
         ForeignKey(
@@ -40,19 +40,19 @@ import com.tunjid.heron.data.database.entities.MessageEntity
         ),
         ForeignKey(
             entity = FeedGeneratorEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["feedGeneratorId"],
+            parentColumns = ["uri"],
+            childColumns = ["feedGeneratorUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["messageId"]),
-        Index(value = ["feedGeneratorId"]),
+        Index(value = ["feedGeneratorUri"]),
     ],
 )
 data class MessageFeedGeneratorEntity(
     val messageId: MessageId,
-    val feedGeneratorId: FeedGeneratorId,
+    val feedGeneratorUri: FeedGeneratorUri,
 )
 
 

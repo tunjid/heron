@@ -21,6 +21,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 
 /**
@@ -28,12 +29,12 @@ import com.tunjid.heron.data.core.types.ProfileId
  */
 @Entity(
     tableName = "postAuthors",
-    primaryKeys = ["postId", "authorId"],
+    primaryKeys = ["postUri", "authorId"],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -44,11 +45,11 @@ import com.tunjid.heron.data.core.types.ProfileId
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
+        Index(value = ["postUri"]),
         Index(value = ["authorId"]),
     ],
 )
 data class PostAuthorsEntity(
-    val postId: PostId,
+    val postUri: PostUri,
     val authorId: ProfileId,
 )

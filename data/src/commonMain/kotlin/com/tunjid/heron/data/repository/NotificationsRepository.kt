@@ -220,15 +220,15 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     .flatMapLatest { populatedNotificationEntities ->
                         postDao.posts(
                             viewingProfileId = signedInProfileId?.id,
-                            postIds = populatedNotificationEntities
-                                .mapNotNull { it.entity.associatedPostId }
+                            postUris = populatedNotificationEntities
+                                .mapNotNull { it.entity.associatedPostUri }
                                 .toSet(),
                         ).map { posts ->
-                            val idsToPosts = posts.associateBy { it.entity.cid }
+                            val urisToPosts = posts.associateBy { it.entity.uri }
                             populatedNotificationEntities.map {
                                 it.asExternalModel(
-                                    associatedPost = it.entity.associatedPostId
-                                        ?.let(idsToPosts::get)
+                                    associatedPost = it.entity.associatedPostUri
+                                        ?.let(urisToPosts::get)
                                         ?.asExternalModel(quote = null)
                                 )
                             }

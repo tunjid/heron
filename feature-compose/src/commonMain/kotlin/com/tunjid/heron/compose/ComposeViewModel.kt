@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -84,8 +84,8 @@ class ActualComposeViewModel(
             authRepository = authRepository,
         ),
         quotedPostMutations(
-            quotedPostId = when (val creationType = route.model) {
-                is Post.Create.Quote -> creationType.interaction.postId
+            quotedPostUri = when (val creationType = route.model) {
+                is Post.Create.Quote -> creationType.interaction.postUri
                 else -> null
             },
             postRepository = postRepository,
@@ -126,11 +126,11 @@ private fun loadSignedInProfileMutations(
     }
 
 private fun quotedPostMutations(
-    quotedPostId: PostId?,
+    quotedPostUri: PostUri?,
     postRepository: PostRepository,
 ): Flow<Mutation<State>> =
-    quotedPostId?.let { id ->
-        postRepository.post(id).mapToMutation {
+    quotedPostUri?.let { postUri ->
+        postRepository.post(postUri).mapToMutation {
             copy(quotedPost = it)
         }
     }

@@ -19,9 +19,9 @@ package com.tunjid.heron.data.database.entities.profile
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.Index
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -29,14 +29,14 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 @Entity(
     tableName = "postViewerStatistics",
     primaryKeys = [
-        "postId",
+        "postUri",
         "viewingProfileId",
     ],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -46,9 +46,13 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
             onDelete = ForeignKey.CASCADE,
         ),
     ],
+    indices = [
+        Index(value = ["postUri"]),
+        Index(value = ["viewingProfileId"]),
+    ],
 )
 data class PostViewerStatisticsEntity(
-    val postId: PostId,
+    val postUri: PostUri,
     val viewingProfileId: ProfileId,
     @ColumnInfo(defaultValue = "NULL")
     val likeUri: GenericUri?,
@@ -60,24 +64,24 @@ data class PostViewerStatisticsEntity(
     val pinned: Boolean,
 ) {
     sealed class Partial {
-        abstract val postId: PostId
+        abstract val postUri: PostUri
         abstract val viewingProfileId: ProfileId
 
 
         data class Like(
-            override val postId: PostId,
+            override val postUri: PostUri,
             override val viewingProfileId: ProfileId,
             val likeUri: GenericUri?,
         ) : Partial()
 
         data class Repost(
-            override val postId: PostId,
+            override val postUri: PostUri,
             override val viewingProfileId: ProfileId,
             val repostUri: GenericUri?,
         ) : Partial()
 
         fun asFull() = PostViewerStatisticsEntity(
-            postId = postId,
+            postUri = postUri,
             viewingProfileId = viewingProfileId,
             likeUri = when (this) {
                 is Like -> likeUri

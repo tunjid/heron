@@ -41,14 +41,16 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
+        Index(value = ["uri"]),
+        Index(value = ["cid"]),
+        Index(value = ["creatorId"]),
         Index(value = ["indexedAt"]),
         Index(value = ["createdAt"]),
-        Index(value = ["uri"]),
     ],
 )
 data class StarterPackEntity(
-    @PrimaryKey
     val cid: StarterPackId,
+    @PrimaryKey
     val uri: StarterPackUri,
     val creatorId: ProfileId,
     val listUri: ListUri?,

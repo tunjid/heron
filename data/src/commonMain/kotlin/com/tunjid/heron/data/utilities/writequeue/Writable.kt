@@ -37,10 +37,10 @@ sealed interface Writable {
 
         override val queueId: String
             get() = when (interaction) {
-                is Post.Interaction.Create.Like -> "like-${interaction.postId}"
-                is Post.Interaction.Create.Repost -> "repost-${interaction.postId}"
-                is Post.Interaction.Delete.RemoveRepost -> "repost-${interaction.postId}"
-                is Post.Interaction.Delete.Unlike -> "like-${interaction.postId}"
+                is Post.Interaction.Create.Like -> "like-${interaction.postUri}"
+                is Post.Interaction.Create.Repost -> "repost-${interaction.postUri}"
+                is Post.Interaction.Delete.RemoveRepost -> "repost-${interaction.postUri}"
+                is Post.Interaction.Delete.Unlike -> "like-${interaction.postUri}"
             }
 
         override suspend fun WriteQueue.write() {

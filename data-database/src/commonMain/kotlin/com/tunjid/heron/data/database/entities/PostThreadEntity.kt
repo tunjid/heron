@@ -19,32 +19,37 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import com.tunjid.heron.data.core.types.PostId
+import androidx.room.Index
+import com.tunjid.heron.data.core.types.PostUri
 
 @Entity(
     tableName = "postThreads",
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["parentPostId"],
+            parentColumns = ["uri"],
+            childColumns = ["parentPostUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     primaryKeys = [
-        "parentPostId",
-        "postId",
+        "parentPostUri",
+        "postUri",
+    ],
+    indices = [
+        Index(value = ["parentPostUri"]),
+        Index(value = ["postUri"]),
     ],
 )
 data class PostThreadEntity(
-    val parentPostId: PostId,
-    val postId: PostId,
+    val parentPostUri: PostUri,
+    val postUri: PostUri,
 )
 
 data class PostThreadAndGenerationEntity(

@@ -23,8 +23,8 @@ import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 
@@ -45,12 +45,12 @@ data class ExternalEmbedEntity(
  */
 @Entity(
     tableName = "postExternalEmbeds",
-    primaryKeys = ["postId", "externalEmbedUri"],
+    primaryKeys = ["postUri", "externalEmbedUri"],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -61,12 +61,12 @@ data class ExternalEmbedEntity(
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
+        Index(value = ["postUri"]),
         Index(value = ["externalEmbedUri"]),
     ],
 )
 data class PostExternalEmbedEntity(
-    val postId: Id,
+    val postUri: PostUri,
     val externalEmbedUri: Uri,
 )
 

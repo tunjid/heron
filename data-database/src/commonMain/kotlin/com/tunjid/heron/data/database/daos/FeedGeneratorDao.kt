@@ -20,7 +20,6 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
@@ -36,19 +35,8 @@ interface FeedGeneratorDao {
             WHERE uri IN (:feedUris)
         """
     )
-    fun feedGeneratorsByUri(
-        feedUris: Collection<FeedGeneratorUri>,
-    ): Flow<List<PopulatedFeedGeneratorEntity>>
-
-    @Transaction
-    @Query(
-        """
-            SELECT * FROM feedGenerators
-            WHERE uri IN (:feedIds)
-        """
-    )
     fun feedGenerators(
-        feedIds: Collection<FeedGeneratorId>,
+        feedUris: Collection<FeedGeneratorUri>,
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 
     @Transaction

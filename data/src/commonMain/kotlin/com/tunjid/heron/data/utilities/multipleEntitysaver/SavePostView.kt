@@ -45,7 +45,7 @@ internal fun MultipleEntitySaver.add(
     }
 
     postView.viewer?.postViewerStatisticsEntity(
-        postId = postEntity.cid,
+        postUri = postEntity.uri,
         viewingProfileId = viewingProfileId,
     )?.let(::add)
 
@@ -53,8 +53,8 @@ internal fun MultipleEntitySaver.add(
         add(embeddedPostEntity)
         add(
             PostPostEntity(
-                postId = postEntity.cid,
-                embeddedPostId = embeddedPostEntity.cid,
+                postUri = postEntity.uri,
+                embeddedPostUri = embeddedPostEntity.uri,
             )
         )
         postView.quotedPostEmbedEntities().forEach { embedEntity ->

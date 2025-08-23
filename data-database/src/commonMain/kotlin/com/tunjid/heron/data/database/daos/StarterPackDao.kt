@@ -20,7 +20,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import kotlinx.coroutines.flow.Flow
@@ -42,11 +42,11 @@ interface StarterPackDao {
     @Query(
         """
             SELECT * FROM starterPacks
-	        WHERE cid IN (:ids)
+	        WHERE uri IN (:uris)
         """
     )
     fun starterPacks(
-        ids: Collection<StarterPackId>,
+        uris: Collection<StarterPackUri>,
     ): Flow<List<PopulatedStarterPackEntity>>
 
     @Transaction

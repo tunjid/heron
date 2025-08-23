@@ -22,9 +22,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 
 @Entity(
@@ -45,12 +44,12 @@ data class ImageEntity(
  */
 @Entity(
     tableName = "postImages",
-    primaryKeys = ["postId", "imageUri"],
+    primaryKeys = ["postUri", "imageUri"],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -61,13 +60,13 @@ data class ImageEntity(
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
+        Index(value = ["postUri"]),
         Index(value = ["imageUri"]),
     ],
 )
 data class PostImageEntity(
-    val postId: Id,
-    val imageUri: Uri,
+    val postUri: PostUri,
+    val imageUri: ImageUri,
 )
 
 

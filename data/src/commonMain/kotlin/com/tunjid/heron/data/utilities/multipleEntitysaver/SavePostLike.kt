@@ -17,18 +17,18 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.GetLikesLike
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
-    postId: PostId,
+    postUri: PostUri,
     like: GetLikesLike,
 ) {
     add(
         PostLikeEntity(
-            postId = postId,
+            postUri = postUri,
             authorId = like.actor.did.did.let(::ProfileId),
             createdAt = like.createdAt,
             indexedAt = like.indexedAt,

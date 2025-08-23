@@ -20,7 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.MessageId
-import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 
@@ -29,7 +29,7 @@ import com.tunjid.heron.data.database.entities.PostEntity
     tableName = "messagePosts",
     primaryKeys = [
         "messageId",
-        "postId"
+        "postUri"
     ],
     foreignKeys = [
         ForeignKey(
@@ -40,19 +40,19 @@ import com.tunjid.heron.data.database.entities.PostEntity
         ),
         ForeignKey(
             entity = PostEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["postId"],
+            parentColumns = ["uri"],
+            childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["messageId"]),
-        Index(value = ["postId"]),
+        Index(value = ["postUri"]),
     ],
 )
 data class MessagePostEntity(
     val messageId: MessageId,
-    val postId: PostId,
+    val postUri: PostUri,
 )
 
 

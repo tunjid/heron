@@ -20,7 +20,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.MessageId
-import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 
@@ -29,7 +29,7 @@ import com.tunjid.heron.data.database.entities.StarterPackEntity
     tableName = "messageStarterPacks",
     primaryKeys = [
         "messageId",
-        "starterPackId"
+        "starterPackUri"
     ],
     foreignKeys = [
         ForeignKey(
@@ -40,19 +40,19 @@ import com.tunjid.heron.data.database.entities.StarterPackEntity
         ),
         ForeignKey(
             entity = StarterPackEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["starterPackId"],
+            parentColumns = ["uri"],
+            childColumns = ["starterPackUri"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["messageId"]),
-        Index(value = ["starterPackId"]),
+        Index(value = ["starterPackUri"]),
     ],
 )
 data class MessageStarterPackEntity(
     val messageId: MessageId,
-    val starterPackId: StarterPackId,
+    val starterPackUri: StarterPackUri,
 )
 
 

@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
@@ -41,13 +42,23 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "posts",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["authorId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [
         Index(value = ["uri"]),
+        Index(value = ["cid"]),
+        Index(value = ["authorId"]),
     ],
 )
 data class PostEntity(
-    @PrimaryKey
     val cid: PostId,
+    @PrimaryKey
     val uri: PostUri,
     val authorId: ProfileId,
     val replyCount: Long?,
@@ -57,8 +68,6 @@ data class PostEntity(
     val indexedAt: Instant,
     @Embedded
     val record: RecordData?,
-//    public val labels: List<Label> = emptyList(),
-//    public val threadgate: ThreadgateView? = null,
 ) {
     data class RecordData(
         val text: String,
@@ -94,31 +103,31 @@ data class PopulatedPostEntity(
     @Embedded
     val viewerStats: PostViewerStatisticsEntity?,
     @Relation(
-        parentColumn = "cid",
+        parentColumn = "uri",
         entityColumn = "fullSize",
         associateBy = Junction(
             value = PostImageEntity::class,
-            parentColumn = "postId",
+            parentColumn = "postUri",
             entityColumn = "imageUri",
         ),
     )
     val images: List<ImageEntity>,
     @Relation(
-        parentColumn = "cid",
+        parentColumn = "uri",
         entityColumn = "cid",
         associateBy = Junction(
             value = PostVideoEntity::class,
-            parentColumn = "postId",
+            parentColumn = "postUri",
             entityColumn = "videoId",
         ),
     )
     val videos: List<VideoEntity>,
     @Relation(
-        parentColumn = "cid",
+        parentColumn = "uri",
         entityColumn = "uri",
         associateBy = Junction(
             value = PostExternalEmbedEntity::class,
-            parentColumn = "postId",
+            parentColumn = "postUri",
             entityColumn = "externalEmbedUri",
         ),
     )
@@ -133,17 +142,17 @@ data class PopulatedPostEntity(
 data class EmbeddedPopulatedPostEntity(
     @Embedded
     val entity: PopulatedPostEntity,
-    val parentPostId: PostId,
-    val embeddedPostId: PostId,
+    val parentPostUri: PostUri,
+    val embeddedPostUri: PostUri,
 )
 
 data class ThreadedPostEntity(
     @Embedded
     val entity: PostEntity,
     val generation: Long,
-    val postId: PostId,
-    val parentPostId: PostId?,
-    val rootPostId: PostId?,
+    val postUri: PostUri,
+    val parentPostUri: PostUri?,
+    val rootPostUri: PostUri?,
     val sort1: Long?,
 )
 

@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -91,8 +92,9 @@ private fun loadPostMutations(
     postId: PostId,
     postRepository: PostRepository
 ): Flow<Mutation<State>> =
-    postRepository.post(postId)
-        .mapToMutation { copy(post = it) }
+    emptyFlow()
+//    postRepository.post(postId)
+//        .mapToMutation { copy(post = it) }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
