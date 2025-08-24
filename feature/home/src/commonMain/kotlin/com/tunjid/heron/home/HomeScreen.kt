@@ -18,12 +18,14 @@ package com.tunjid.heron.home
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -94,9 +96,12 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -115,6 +120,7 @@ internal fun HomeScreen(
         updatedTimelineStateHolders.size
     }
     val scope = rememberCoroutineScope()
+    val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
 
     Box(
         modifier = modifier
@@ -136,22 +142,45 @@ internal fun HomeScreen(
                     .sourceId
             },
             pageContent = { page ->
+                val gridState = rememberLazyStaggeredGridState()
                 val timelineStateHolder = updatedTimelineStateHolders[page]
                 HomeTimeline(
                     paneScaffoldState = paneScaffoldState,
+                    gridState = gridState,
                     timelineStateHolder = timelineStateHolder,
                     actions = actions,
                 )
+                LaunchedEffect(Unit) {
+                    snapshotFlow {
+                        val fraction = pagerState.currentPageOffsetFraction
+                        val nextPage = when {
+                            fraction > 0 -> ceil(pagerState.currentPage + fraction)
+                            else -> floor(pagerState.currentPage + fraction)
+                        }.roundToInt()
+                        nextPage == page || nextPage == page + 1
+                    }
+                        .filter(true::equals)
+                        .collectLatest {
+                            // Already scrolled past the first
+                            if (gridState.firstVisibleItemIndex != 0) return@collectLatest
+                            val firstItemOffset = gridState.firstVisibleItemScrollOffset
+                            val tabOffset = tabsOffsetNestedScrollConnection.offset.y
+
+                            // tab offset is negative
+                            val gapToClose = firstItemOffset + tabOffset
+                            // Close the gap
+                            if (gapToClose < 0) gridState.scrollBy(-gapToClose)
+                        }
+                }
             }
         )
-        val statusBarHeight = UiTokens.statusBarHeight
         HomeTabs(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
                 .offset {
                     IntOffset(
                         x = 0,
-                        y = UiTokens.toolbarHeight.roundToPx() + statusBarHeight.roundToPx()
+                        y = topClearance.roundToPx()
                     ) + tabsOffsetNestedScrollConnection.offset.round()
                 },
             sharedTransitionScope = paneScaffoldState,
@@ -239,12 +268,11 @@ internal fun HomeScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTimeline(
+    gridState: LazyStaggeredGridState,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
 ) {
-
-    val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
