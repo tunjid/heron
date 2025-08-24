@@ -28,3 +28,14 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.metro) apply false
 }
+
+allprojects {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.module == libs.compose.runtime.get().module) {
+                // TODO: https://issuetracker.google.com/issues/420460328
+                useVersion("1.8.2")
+            }
+        }
+    }
+}
