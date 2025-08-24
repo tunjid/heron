@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
@@ -42,7 +41,8 @@ import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
-import com.tunjid.heron.home.timelinePreferenceExpansionEffect
+import com.tunjid.heron.home.TabLayout
+import com.tunjid.heron.home.TimelinePreferenceExpansionEffect
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -188,13 +188,13 @@ class HomeBindings(
                         text = stringResource(
                             when {
                                 isSignedOut -> ScaffoldStrings.sign_in
-                                state.timelinePreferencesExpanded -> Res.string.save
+                                state.tabLayout is TabLayout.Expanded -> Res.string.save
                                 else -> Res.string.create_post
                             }
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            state.timelinePreferencesExpanded -> Icons.Rounded.Save
+                            state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
                             else -> Icons.Rounded.Edit
                         },
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
@@ -205,7 +205,7 @@ class HomeBindings(
                                         signInDestination()
                                     )
 
-                                    state.timelinePreferencesExpanded -> Action.UpdateTimeline.RequestUpdate
+                                    state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
                                     else -> Action.Navigate.To(
                                         composePostDestination(
                                             type = Post.Create.Timeline,
@@ -242,14 +242,12 @@ class HomeBindings(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(top = contentPadding.calculateTopPadding()),
                     )
                 }
             )
 
-            topAppBarOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
-                isExpanded = state.timelinePreferencesExpanded,
+            topAppBarOffsetNestedScrollConnection.TimelinePreferenceExpansionEffect(
+                isExpanded = state.tabLayout is TabLayout.Expanded,
             )
         }
     )

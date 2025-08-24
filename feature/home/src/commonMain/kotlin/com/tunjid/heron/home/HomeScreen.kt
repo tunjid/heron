@@ -94,6 +94,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.floor
@@ -120,17 +121,11 @@ internal fun HomeScreen(
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
+            minOffset = { Offset(x = 0f, y = -(UiTokens.toolbarHeight).toPx()) },
         )
         HorizontalPager(
             modifier = Modifier
                 .nestedScroll(tabsOffsetNestedScrollConnection)
-                .offset {
-                    tabsOffsetNestedScrollConnection.offset.round() + IntOffset(
-                        x = 0,
-                        y = UiTokens.tabsHeight.roundToPx(),
-                    )
-                }
                 .paneClip(),
             state = pagerState,
             key = { page ->
@@ -149,18 +144,22 @@ internal fun HomeScreen(
                 )
             }
         )
+        val statusBarHeight = UiTokens.statusBarHeight
         HomeTabs(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
                 .offset {
-                    tabsOffsetNestedScrollConnection.offset.round()
+                    IntOffset(
+                        x = 0,
+                        y = UiTokens.toolbarHeight.roundToPx() + statusBarHeight.roundToPx()
+                    ) + tabsOffsetNestedScrollConnection.offset.round()
                 },
             sharedTransitionScope = paneScaffoldState,
             selectedTabIndex = pagerState::tabIndex,
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentSourceId = state.currentSourceId,
             isSignedIn = state.signedInProfile != null,
-            isExpanded = state.timelinePreferencesExpanded,
+            tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
             scrollToPage = {
@@ -178,8 +177,8 @@ internal fun HomeScreen(
                         ),
                     )
             },
-            onExpansionChanged = { isExpanded ->
-                actions(Action.SetPreferencesExpanded(isExpanded = isExpanded))
+            onLayoutChanged = { layout ->
+                actions(Action.SetTabLayout(layout = layout))
             },
             onTimelinePresentationUpdated = click@{ index, presentation ->
                 val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
@@ -203,9 +202,22 @@ internal fun HomeScreen(
             }
         )
 
-        tabsOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
-            isExpanded = state.timelinePreferencesExpanded
+        tabsOffsetNestedScrollConnection.TimelinePreferenceExpansionEffect(
+            isExpanded = state.tabLayout is TabLayout.Expanded,
         )
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { tabsOffsetNestedScrollConnection.toolbarOffsetProgress() > 0.5f }
+                .distinctUntilChanged()
+                .collect { showAllTabs ->
+                    actions(
+                        Action.SetTabLayout(
+                            if (showAllTabs) TabLayout.Collapsed.All
+                            else TabLayout.Collapsed.Selected
+                        )
+                    )
+                }
+        }
 
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
@@ -306,7 +318,9 @@ private fun HomeTimeline(
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
                 verticalItemSpacing = 8.dp,
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight
+                ),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {

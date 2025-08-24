@@ -75,7 +75,6 @@ class ActualHomeViewModel(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     inputs = listOf(
         timelineMutations(
-            startNumColumns = 1,
             scope = scope,
             timelineRepository = timelineRepository,
         ),
@@ -102,7 +101,7 @@ class ActualHomeViewModel(
                 )
 
                 is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
-                is Action.SetPreferencesExpanded -> action.flow.setPreferencesExpanded()
+                is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
                 is Action.Navigate -> action.flow.consumeNavigationActions(
                     navigationMutationConsumer = navActions
                 )
@@ -119,7 +118,6 @@ private fun loadProfileMutations(
     }
 
 private fun timelineMutations(
-    startNumColumns: Int,
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
@@ -137,7 +135,7 @@ private fun timelineMutations(
                     ?: scope.timelineStateHolder(
                         refreshOnStart = false,
                         timeline = timeline,
-                        startNumColumns = startNumColumns,
+                        startNumColumns = 1,
                         timelineRepository = timelineRepository,
                     )
 
@@ -167,7 +165,13 @@ private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
                 writeQueue.enqueue(writable)
                 writeQueue.awaitDequeue(writable)
                 emit {
-                    copy(timelinePreferencesExpanded = false)
+                    copy(
+                        tabLayout = when (tabLayout) {
+                            TabLayout.Collapsed.All -> tabLayout
+                            TabLayout.Collapsed.Selected -> tabLayout
+                            TabLayout.Expanded -> TabLayout.Collapsed.Selected
+                        }
+                    )
                 }
             }
         }
@@ -187,10 +191,10 @@ private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
         copy(currentSourceId = action.sourceId)
     }
 
-private fun Flow<Action.SetPreferencesExpanded>.setPreferencesExpanded(
+private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(
 ): Flow<Mutation<State>> =
     mapToMutation { action ->
-        copy(timelinePreferencesExpanded = action.isExpanded)
+        copy(tabLayout = action.layout)
     }
 
 private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(

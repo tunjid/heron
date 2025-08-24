@@ -61,25 +61,38 @@ data class Tab(
 @Stable
 class TabsState private constructor(
     tabs: List<Tab>,
+    isCollapsed: Boolean,
     val selectedTabIndex: () -> Float,
     val onTabSelected: (Int) -> Unit,
     val onTabReselected: (Int) -> Unit,
 ) {
 
     val tabList: List<Tab> get() = tabs
+    var isCollapsed by mutableStateOf(isCollapsed)
+        internal set
 
     internal val tabs = mutableStateListOf(*(tabs.toTypedArray()))
+
+    internal val visibleTabs
+        get() = if (isCollapsed) listOf(tabs[selectedTabIndex().roundToInt()])
+        else tabs.toList()
+
+    internal fun tabIndex() =
+        if (isCollapsed) 0f
+        else selectedTabIndex()
 
     companion object {
         @Composable
         fun rememberTabsState(
             tabs: List<Tab>,
+            isCollapsed: Boolean = false,
             selectedTabIndex: () -> Float,
             onTabSelected: (Int) -> Unit,
             onTabReselected: (Int) -> Unit,
         ) = remember {
             TabsState(
                 selectedTabIndex = selectedTabIndex,
+                isCollapsed = isCollapsed,
                 tabs = tabs,
                 onTabSelected = onTabSelected,
                 onTabReselected = onTabReselected
@@ -89,6 +102,7 @@ class TabsState private constructor(
                 it.tabs.clear()
                 it.tabs.addAll(tabs)
             }
+            it.isCollapsed = isCollapsed
         }
     }
 }
@@ -108,13 +122,17 @@ fun Tabs(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             items(
-                items = tabs,
+                items = visibleTabs,
                 key = Tab::title,
                 itemContent = { tab ->
                     BadgedBox(
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .animateItem(),
                         badge = {
-                            if (tab.hasUpdate) Badge()
+                            if (tab.hasUpdate) Badge(
+                                modifier = Modifier
+                                    .offset(y = 2.dp)
+                            )
                         },
                         content = {
                             tabContent(tab)
@@ -123,7 +141,7 @@ fun Tabs(
                 }
             )
         }
-        Indicator(lazyListState, selectedTabIndex)
+        Indicator(lazyListState, ::tabIndex)
     }
 }
 
