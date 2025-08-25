@@ -215,6 +215,13 @@ sealed interface Timeline {
     }
 }
 
+val Timeline.uri: Uri?
+    get() = when(this) {
+        is Timeline.Home -> source
+        is Timeline.Profile -> null
+        is Timeline.StarterPack -> listTimeline.source
+    }
+
 sealed class TimelineItem {
 
     abstract val id: String

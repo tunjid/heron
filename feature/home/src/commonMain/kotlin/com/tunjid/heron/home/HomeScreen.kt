@@ -62,7 +62,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -128,7 +130,7 @@ internal fun HomeScreen(
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = -(UiTokens.toolbarHeight).toPx()) },
+            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
         )
         HorizontalPager(
             modifier = Modifier
@@ -213,7 +215,9 @@ internal fun HomeScreen(
                     ?.state
                     ?.value
                     ?.timeline
-
+                    ?.uri
+                    ?.path
+                    ?.let { actions(Action.Navigate.To(pathDestination(it))) }
             },
             onLayoutChanged = { layout ->
                 actions(Action.SetTabLayout(layout = layout))
