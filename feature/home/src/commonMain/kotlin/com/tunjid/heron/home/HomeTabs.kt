@@ -373,7 +373,8 @@ private fun CollapsedTabs(
                     color = backgroundColor,
                     size = size.copy(width = size.width * backgroundProgress.value),
                 )
-            },
+            }
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

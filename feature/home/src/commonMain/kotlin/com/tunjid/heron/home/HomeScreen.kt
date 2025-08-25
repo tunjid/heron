@@ -179,7 +179,6 @@ internal fun HomeScreen(
         )
         HomeTabs(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
                 .offset {
                     IntOffset(
                         x = 0,
