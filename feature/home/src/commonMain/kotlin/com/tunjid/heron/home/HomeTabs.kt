@@ -93,6 +93,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
@@ -104,6 +105,7 @@ import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.timeline_preferences
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
@@ -240,6 +242,25 @@ internal fun HomeTabs(
                 }
             )
         }
+    }
+}
+
+@Composable
+internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
+    layout: TabLayout,
+    onCollapsed: (TabLayout.Collapsed) -> Unit,
+) {
+    LaunchedEffect(layout) {
+        if (layout is TabLayout.Collapsed) snapshotFlow {
+            verticalOffsetProgress() < 0.5f
+        }
+            .distinctUntilChanged()
+            .collect { showAllTabs ->
+                onCollapsed(
+                    if (showAllTabs) TabLayout.Collapsed.All
+                    else TabLayout.Collapsed.Selected
+                )
+            }
     }
 }
 

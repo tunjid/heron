@@ -77,7 +77,6 @@ import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
@@ -100,7 +99,6 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.abs
@@ -250,20 +248,10 @@ internal fun HomeScreen(
             isExpanded = state.tabLayout is TabLayout.Expanded,
         )
 
-        LaunchedEffect(state.tabLayout) {
-            if (state.tabLayout is TabLayout.Collapsed) snapshotFlow {
-                tabsOffsetNestedScrollConnection.verticalOffsetProgress() < 0.5f
-            }
-                .distinctUntilChanged()
-                .collect { showAllTabs ->
-                    actions(
-                        Action.SetTabLayout(
-                            if (showAllTabs) TabLayout.Collapsed.All
-                            else TabLayout.Collapsed.Selected
-                        )
-                    )
-                }
-        }
+        tabsOffsetNestedScrollConnection.TabsCollapseEffect(
+            state.tabLayout,
+            onCollapsed = { actions(Action.SetTabLayout(it)) }
+        )
 
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
