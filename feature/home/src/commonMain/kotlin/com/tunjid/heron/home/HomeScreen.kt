@@ -194,12 +194,12 @@ internal fun HomeScreen(
             tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
-            scrollToPage = {
+            onCollapsedTabSelected = { page ->
                 scope.launch {
-                    pagerState.animateScrollToPage(it)
+                    pagerState.animateScrollToPage(page)
                 }
             },
-            onRefreshTabClicked = { page ->
+            onCollapsedTabReselected = { page ->
                 updatedTimelineStateHolders
                     .getOrNull(page)
                     ?.accept
@@ -209,15 +209,18 @@ internal fun HomeScreen(
                         ),
                     )
             },
-            onNavigateToTimeline = { page ->
-                updatedTimelineStateHolders
-                    .getOrNull(page)
-                    ?.state
-                    ?.value
-                    ?.timeline
-                    ?.uri
-                    ?.path
-                    ?.let { actions(Action.Navigate.To(pathDestination(it))) }
+            onExpandedTabSelected = { page ->
+                when (val holder = updatedTimelineStateHolders.getOrNull(page)) {
+                    is HomeScreenStateHolders.Pinned -> scope.launch {
+                        pagerState.animateScrollToPage(page)
+                    }
+
+                    is HomeScreenStateHolders.Saved -> holder.state.value.timeline.uri?.path?.let {
+                        actions(Action.Navigate.To(pathDestination(it)))
+                    }
+
+                    null -> Unit
+                }
             },
             onLayoutChanged = { layout ->
                 actions(Action.SetTabLayout(layout = layout))

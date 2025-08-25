@@ -128,9 +128,9 @@ internal fun HomeTabs(
     sharedTransitionScope: SharedTransitionScope,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
-    scrollToPage: (Int) -> Unit,
-    onRefreshTabClicked: (Int) -> Unit,
-    onNavigateToTimeline: (Int) -> Unit,
+    onCollapsedTabSelected: (Int) -> Unit,
+    onCollapsedTabReselected: (Int) -> Unit,
+    onExpandedTabSelected: (Int) -> Unit,
     onLayoutChanged: (TabLayout) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
@@ -152,9 +152,9 @@ internal fun HomeTabs(
         selectedTabIndex = selectedTabIndex,
         onTabSelected = {
             onLayoutChanged(TabLayout.Collapsed.All)
-            scrollToPage(it)
+            onCollapsedTabSelected(it)
         },
-        onTabReselected = onRefreshTabClicked,
+        onTabReselected = onCollapsedTabReselected,
     )
     val expandedTabsState = rememberTabsState(
         tabs = remember(timelines) {
@@ -166,8 +166,8 @@ internal fun HomeTabs(
             }
         },
         selectedTabIndex = selectedTabIndex,
-        onTabSelected = onNavigateToTimeline,
-        onTabReselected = onNavigateToTimeline,
+        onTabSelected = onExpandedTabSelected,
+        onTabReselected = onExpandedTabSelected,
     )
     Box(
         modifier = modifier
@@ -181,10 +181,9 @@ internal fun HomeTabs(
         AnimatedContent(
             modifier = Modifier
                 .animateContentSize(),
-            targetState = tabLayout,
-            contentKey = { it is TabLayout.Expanded },
-        ) { layout ->
-            if (layout is TabLayout.Expanded) ExpandedTabs(
+            targetState = tabLayout is TabLayout.Expanded,
+        ) { isExpanded ->
+            if (isExpanded) ExpandedTabs(
                 saveRequestId = saveRequestId,
                 timelines = timelines,
                 tabsState = expandedTabsState,
