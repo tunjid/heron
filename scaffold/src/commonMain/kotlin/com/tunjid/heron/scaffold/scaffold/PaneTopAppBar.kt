@@ -170,7 +170,7 @@ private fun Modifier.rootAppBarBackground(
 ): Modifier = drawBehind {
     drawRect(
         color = backgroundColor,
-        alpha = HundredPercent - (progress() * 0.1f)
+        alpha = HundredPercent - (progress() * 0.1f),
     )
 }
 
