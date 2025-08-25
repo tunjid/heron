@@ -104,6 +104,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -151,6 +152,7 @@ internal fun HomeScreen(
                     paneScaffoldState = paneScaffoldState,
                     gridState = gridState,
                     timelineStateHolder = timelineStateHolder,
+                    tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
                 )
                 LaunchedEffect(Unit) {
@@ -284,6 +286,7 @@ private fun HomeTimeline(
     gridState: LazyStaggeredGridState,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
+    tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -334,7 +337,10 @@ private fun HomeTimeline(
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .offset {
+                        IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
+                    },
                 state = pullToRefreshState,
                 isRefreshing = timelineState.isRefreshing,
             )
@@ -500,7 +506,12 @@ private fun HomeTimeline(
 
     gridState.TimelineRefreshEffect(
         timelineState = timelineState,
-        onRefresh = { animateScrollToItem(index = 0) }
+        onRefresh = {
+            animateScrollToItem(
+                index = 0,
+                scrollOffset = abs(tabsOffset().y.roundToInt()),
+            )
+        }
     )
 
     LaunchedEffect(gridState) {

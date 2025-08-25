@@ -198,7 +198,7 @@ private fun Modifier.rootAppBarBlur(
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 
-private val RootAppBarBlurRadius = 80.dp
+private val RootAppBarBlurRadius = 60.dp
 
 private const val SignedInUserAvatarSharedElementKey = "self"
 private const val HundredPercent = 1f
