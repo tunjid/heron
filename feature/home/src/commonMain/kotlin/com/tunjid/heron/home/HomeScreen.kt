@@ -101,7 +101,6 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.math.abs
@@ -158,13 +157,12 @@ internal fun HomeScreen(
                 LaunchedEffect(Unit) {
                     snapshotFlow {
                         val fraction = pagerState.currentPageOffsetFraction
-                        val nextPage = when {
+                        // Find next page
+                        when {
                             fraction > 0 -> ceil(pagerState.currentPage + fraction)
                             else -> floor(pagerState.currentPage + fraction)
                         }.roundToInt()
-                        nextPage == page || nextPage == page + 1
                     }
-                        .filter(true::equals)
                         .collectLatest {
                             // Already scrolled past the first
                             if (gridState.firstVisibleItemIndex != 0) return@collectLatest
