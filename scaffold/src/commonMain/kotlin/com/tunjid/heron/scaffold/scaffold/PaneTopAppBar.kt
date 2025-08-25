@@ -184,11 +184,13 @@ private fun Modifier.rootAppBarBlur(
     val verticalBlurPixels = RootAppBarBlurRadius.toPx() * currentProgress
 
     // Only non-zero blur radii are valid BlurEffect parameters
-    renderEffect = if (horizontalBlurPixels > 0f && verticalBlurPixels > 0f) BlurEffect(
+    if (horizontalBlurPixels <= 0f || verticalBlurPixels <= 0f) return@graphicsLayer
+
+    renderEffect = BlurEffect(
         radiusX = horizontalBlurPixels,
         radiusY = verticalBlurPixels,
         edgeTreatment = TileMode.Clamp,
-    ) else null
+    )
 
     shape = RectangleShape
     clip = false
