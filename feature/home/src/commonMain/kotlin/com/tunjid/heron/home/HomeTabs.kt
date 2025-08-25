@@ -18,6 +18,7 @@ package com.tunjid.heron.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
@@ -219,7 +220,9 @@ internal fun HomeTabs(
                 style = MaterialTheme.typography.titleMediumEmphasized
             )
 
-            if (isExpanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+            ) {
                 SettingsIconButton(
                     onActionClick = {
                         onSettingsIconClick()
