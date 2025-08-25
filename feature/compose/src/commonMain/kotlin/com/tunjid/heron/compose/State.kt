@@ -34,7 +34,6 @@ import io.github.vinceglb.filekit.path
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val sharedElementPrefix: String?,
@@ -63,9 +62,9 @@ fun State(route: Route): State = when (val model = route.model) {
                     is Post.Create.Reply,
                     is Post.Create.Quote,
                     Post.Create.Timeline,
-                        -> ""
-                }
-            )
+                    -> ""
+                },
+            ),
         ),
         sharedElementPrefix = route.sharedElementPrefix,
         labelers = emptyList(),
@@ -113,12 +112,12 @@ sealed class MediaItem(
     ) = when (this) {
         is Photo -> Photo(
             file = file,
-            size = size
+            size = size,
         )
 
         is Video -> Video(
             file = file,
-            size = size
+            size = size,
         )
     }
 
@@ -177,7 +176,9 @@ sealed class Action(val key: String) {
         ) : EditMedia()
     }
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 }

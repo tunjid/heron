@@ -169,20 +169,17 @@ class AppState(
         return displayState
     }
 
-
     internal fun onNavItemSelected(navItem: NavItem) {
         navigationStateHolder.accept { navState.navItemSelected(item = navItem) }
     }
 
-    internal fun pop() =
-        navigationStateHolder.accept {
-            navState.pop()
-        }
+    internal fun pop() = navigationStateHolder.accept {
+        navState.pop()
+    }
 
-    fun onDeepLink(uri: GenericUri) =
-        navigationStateHolder.accept {
-            navState.push(uri.uri.toRoute)
-        }
+    fun onDeepLink(uri: GenericUri) = navigationStateHolder.accept {
+        navState.push(uri.uri.toRoute)
+    }
 
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value
@@ -198,7 +195,6 @@ class AppState(
                         AppStack.Auth -> stack.stackName == name
                         AppStack.Splash -> stack.stackName == name
                     }
-
                 } ?: return@mapIndexedNotNull null
 
                 NavItem(
@@ -244,7 +240,7 @@ internal class SplitPaneState(
         minSize = MinPaneWidth,
         keyAtIndex = { index ->
             filteredPaneOrder[index]
-        }
+        },
     )
 
     internal val isMediumScreenWidthOrWider

@@ -40,7 +40,7 @@ sealed class WriteQueue {
 
     internal abstract val timelineRepository: TimelineRepository
 
-   abstract val queueChanges: Flow<Unit>
+    abstract val queueChanges: Flow<Unit>
 
     abstract suspend fun enqueue(
         writable: Writable,
@@ -65,7 +65,7 @@ internal class SnapshotWriteQueue @Inject constructor(
     private val queue = mutableStateListOf<Writable>()
 
     override val queueChanges: Flow<Unit>
-        get() = snapshotFlow { queue.size }.map {  }
+        get() = snapshotFlow { queue.size }.map { }
 
     override suspend fun enqueue(
         writable: Writable,
@@ -84,9 +84,7 @@ internal class SnapshotWriteQueue @Inject constructor(
         }.first { it == null }
     }
 
-    override fun contains(writable: Writable): Boolean {
-        return queue.any { it.queueId == writable.queueId }
-    }
+    override fun contains(writable: Writable): Boolean = queue.any { it.queueId == writable.queueId }
 
     override suspend fun drain() {
         snapshotFlow { queue.lastOrNull() }
@@ -104,4 +102,3 @@ internal class SnapshotWriteQueue @Inject constructor(
             }
     }
 }
-

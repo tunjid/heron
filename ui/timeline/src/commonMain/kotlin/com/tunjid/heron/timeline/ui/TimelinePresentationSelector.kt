@@ -44,9 +44,8 @@ fun TimelinePresentationSelector(
     )
 }
 
-private fun Timeline.Presentation.textResource() =
-    when (this) {
-        Timeline.Presentation.Text.WithEmbed -> Res.string.text_and_embeds
-        Timeline.Presentation.Media.Condensed -> Res.string.condensed_media
-        Timeline.Presentation.Media.Expanded -> Res.string.expanded_media
-    }
+private fun Timeline.Presentation.textResource() = when (this) {
+    Timeline.Presentation.Text.WithEmbed -> Res.string.text_and_embeds
+    Timeline.Presentation.Media.Condensed -> Res.string.condensed_media
+    Timeline.Presentation.Media.Expanded -> Res.string.expanded_media
+}

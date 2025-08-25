@@ -36,7 +36,7 @@ interface TimelineDao {
         """
         DELETE FROM timelineItems
         WHERE sourceId = :sourceId
-    """
+    """,
     )
     suspend fun deleteAllFeedsFor(
         sourceId: String,
@@ -60,7 +60,7 @@ interface TimelineDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun feedItems(
         viewingProfileId: String?,
@@ -79,7 +79,7 @@ interface TimelineDao {
                 ELSE viewingProfileId IS NULL
             END
             LIMIT 1
-        """
+        """,
     )
     fun lastFetchKey(
         viewingProfileId: String?,
@@ -93,7 +93,7 @@ interface TimelineDao {
         items = entities,
         partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
         insertEntities = ::insertOrIgnoreTimelinePreferences,
-        updatePartials = ::updatePartialTimelinePreferencesFetchedAt
+        updatePartials = ::updatePartialTimelinePreferencesFetchedAt,
     )
 
     @Transaction

@@ -32,9 +32,9 @@ import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlin.jvm.JvmInline
 
 @Serializable
 data class FormField(
@@ -62,8 +62,11 @@ data class FormField(
 }
 
 fun List<FormField>.update(updatedField: FormField) = map { field ->
-    if (field.id == updatedField.id) updatedField
-    else field
+    if (field.id == updatedField.id) {
+        updatedField
+    } else {
+        field
+    }
 }
 
 internal val Username = FormField.Id("username")
@@ -103,7 +106,7 @@ data class State(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
             ),
-        )
+        ),
     ),
     @Transient
     val messages: List<String> = emptyList(),
@@ -111,7 +114,7 @@ data class State(
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 
-val State.canSignInLater: Boolean get() = fields.all{ field ->
+val State.canSignInLater: Boolean get() = fields.all { field ->
     field.value.isBlank()
 }
 
@@ -126,18 +129,22 @@ val State.sessionRequest: SessionRequest
 sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
     sealed class Submit : Action("Submit") {
-        data object GuestAuth: Submit()
+        data object GuestAuth : Submit()
         data class Auth(
-            val request: SessionRequest
-        ): Submit()
+            val request: SessionRequest,
+        ) : Submit()
     }
     data class MessageConsumed(
         val message: String,
     ) : Action("MessageConsumed")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
-        data object Home : Navigate(), NavigationAction by pathDestination(
-            path = AppStack.Home.rootRoute.routeParams.pathAndQueries,
-        )
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
+        data object Home :
+            Navigate(),
+            NavigationAction by pathDestination(
+                path = AppStack.Home.rootRoute.routeParams.pathAndQueries,
+            )
     }
 }

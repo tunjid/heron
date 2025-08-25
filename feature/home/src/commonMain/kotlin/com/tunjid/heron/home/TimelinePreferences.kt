@@ -98,19 +98,18 @@ import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.timeline_preferences
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
-import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import org.jetbrains.compose.resources.stringResource
 
 expect fun timelinePreferenceDragAndDropTransferData(title: String): DragAndDropTransferData
 
 expect fun DragAndDropEvent.draggedId(): String?
 
 expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modifier
-
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -129,7 +128,7 @@ internal fun HomeTabs(
     onExpansionChanged: (Boolean) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
-    onSettingsIconClick : () -> Unit
+    onSettingsIconClick: () -> Unit,
 ) = with(sharedTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
@@ -171,54 +170,59 @@ internal fun HomeTabs(
                 .animateContentSize(),
             targetState = isExpanded,
         ) { expanded ->
-            if (expanded) ExpandedTabs(
-                saveRequestId = saveRequestId,
-                timelines = timelines,
-                tabsState = expandedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                onDismissed = { onExpansionChanged(false) },
-                onTimelinePreferencesSaved = onTimelinePreferencesSaved,
-            )
-            else CollapsedTabs(
-                modifier = Modifier,
-                tabsState = collapsedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                currentSourceId = currentSourceId,
-                timelines = timelines,
-                onTimelinePresentationUpdated = onTimelinePresentationUpdated,
-            )
-        }
-        if (isSignedIn) Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = 8.dp,
-                    end = 8.dp,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .weight(1f),
-                text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
-                style = MaterialTheme.typography.titleMediumEmphasized
-            )
-
-            if (isExpanded){
-                SettingsIconButton(
-                    onActionClick = {
-                        onSettingsIconClick()
-                    },
+            if (expanded) {
+                ExpandedTabs(
+                    saveRequestId = saveRequestId,
+                    timelines = timelines,
+                    tabsState = expandedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    onDismissed = { onExpansionChanged(false) },
+                    onTimelinePreferencesSaved = onTimelinePreferencesSaved,
+                )
+            } else {
+                CollapsedTabs(
+                    modifier = Modifier,
+                    tabsState = collapsedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    currentSourceId = currentSourceId,
+                    timelines = timelines,
+                    onTimelinePresentationUpdated = onTimelinePresentationUpdated,
                 )
             }
+        }
+        if (isSignedIn) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 8.dp,
+                        end = 8.dp,
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .weight(1f),
+                    text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                )
 
-            ExpandButton(
-                isExpanded = isExpanded,
-                onToggled = { onExpansionChanged(!isExpanded) }
-            )
+                if (isExpanded) {
+                    SettingsIconButton(
+                        onActionClick = {
+                            onSettingsIconClick()
+                        },
+                    )
+                }
+
+                ExpandButton(
+                    isExpanded = isExpanded,
+                    onToggled = { onExpansionChanged(!isExpanded) },
+                )
+            }
         }
     }
 }
@@ -231,7 +235,7 @@ internal fun AccumulatedOffsetNestedScrollConnection.timelinePreferenceExpansion
     val expandedHeight = rememberUpdatedState(
         with(density) {
             (UiTokens.statusBarHeight + UiTokens.toolbarHeight).toPx()
-        }
+        },
     )
 
     LaunchedEffect(isExpanded) {
@@ -280,15 +284,15 @@ private fun ExpandedTabs(
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = onDismissed
+                onClick = onDismissed,
             ),
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             Spacer(
-                Modifier.height(40.dp)
+                Modifier.height(40.dp),
             )
             FlowRow(
                 modifier = Modifier
@@ -307,15 +311,17 @@ private fun ExpandedTabs(
                     }
 
                     key(timeline.sourceId) {
-                        if (!timelinePreferencesState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
-                            modifier = Modifier
-                                .animateBounds(this@with),
-                            timelinePreferencesState = timelinePreferencesState,
-                            currentTimelines = timelines,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedContentScope = animatedContentScope,
-                            timeline = timeline,
-                        )
+                        if (!timelinePreferencesState.isDraggedId(timeline.sourceId)) {
+                            tabsState.ExpandedTab(
+                                modifier = Modifier
+                                    .animateBounds(this@with),
+                                timelinePreferencesState = timelinePreferencesState,
+                                currentTimelines = timelines,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedContentScope = animatedContentScope,
+                                timeline = timeline,
+                            )
+                        }
                     }
                 }
             }
@@ -329,9 +335,11 @@ private fun ExpandedTabs(
         }
             .drop(1)
             .collectLatest { requestId ->
-                if (requestId != null) onTimelinePreferencesSaved(
-                    timelinePreferencesState.timelinesToSave()
-                )
+                if (requestId != null) {
+                    onTimelinePreferencesSaved(
+                        timelinePreferencesState.timelinesToSave(),
+                    )
+                }
             }
     }
 }
@@ -351,7 +359,7 @@ private fun CollapsedTabs(
         modifier = modifier
             .clip(CircleShape),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Tabs(
             modifier = Modifier
@@ -362,7 +370,7 @@ private fun CollapsedTabs(
             tabsState = tabsState,
             tabContent = { tab ->
                 CollapsedTab(tab, sharedTransitionScope, animatedContentScope)
-            }
+            },
         )
         TimelinePresentationSelector(
             currentSourceId = currentSourceId,
@@ -405,18 +413,20 @@ private fun TabsState.ExpandedTab(
                 is Timeline.Home.Following -> null
                 is Timeline.Home.List -> timeline.feedList.avatar?.uri
             }
-            if (url != null) AsyncImage(
-                modifier = Modifier
-                    .size(24.dp),
-                args = remember(url) {
-                    ImageArgs(
-                        url = url,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                }
-            )
+            if (url != null) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(24.dp),
+                    args = remember(url) {
+                        ImageArgs(
+                            url = url,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
+                )
+            }
         },
         label = {
             Text(
@@ -424,7 +434,7 @@ private fun TabsState.ExpandedTab(
                     .width(IntrinsicSize.Max)
                     .sharedElement(
                         sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                            timeline.name
+                            timeline.name,
                         ),
                         animatedVisibilityScope = animatedContentScope,
                     ),
@@ -450,7 +460,7 @@ private fun TabsState.ExpandedTab(
 private fun TabsState.CollapsedTab(
     tab: Tab,
     sharedTransitionScope: SharedTransitionScope,
-    animatedContentScope: AnimatedContentScope
+    animatedContentScope: AnimatedContentScope,
 ) = with(sharedTransitionScope) {
     FilterChip(
         modifier = Modifier,
@@ -461,19 +471,22 @@ private fun TabsState.CollapsedTab(
             val index = tabList.indexOf(tab)
             if (index < 0) return@click
 
-            if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
-            else onTabReselected(index)
+            if (index != selectedTabIndex().roundToInt()) {
+                onTabSelected(index)
+            } else {
+                onTabReselected(index)
+            }
         },
         label = {
             Text(
                 modifier = Modifier.Companion
                     .sharedElement(
                         sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                            tab.title
+                            tab.title,
                         ),
                         animatedVisibilityScope = animatedContentScope,
                     ),
-                text = tab.title
+                text = tab.title,
             )
         },
     )
@@ -486,7 +499,7 @@ private fun ExpandButton(
     onToggled: () -> Unit,
 ) {
     val rotationState = animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f
+        targetValue = if (isExpanded) 180f else 0f,
     )
     ElevatedCard(
         modifier = modifier
@@ -514,9 +527,9 @@ private fun ExpandButton(
 
 @Composable
 private fun SettingsIconButton(
-    onActionClick : () -> Unit,
-    modifier: Modifier = Modifier
-){
+    onActionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     ElevatedCard(
         modifier = modifier
             .padding(horizontal = 4.dp)
@@ -528,8 +541,8 @@ private fun SettingsIconButton(
                 onActionClick()
             },
             modifier = Modifier
-                .size(40.dp)
-        ){
+                .size(40.dp),
+        ) {
             Icon(
                 imageVector = Icons.Rounded.Settings,
                 contentDescription = "",
@@ -542,16 +555,16 @@ private fun SettingsIconButton(
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SectionTitle(
-    title: String
+    title: String,
 ) {
     Text(
         modifier = Modifier
             .padding(
-                vertical = 8.dp
+                vertical = 8.dp,
             )
             .fillMaxWidth(),
         text = title,
-        style = MaterialTheme.typography.titleSmallEmphasized
+        style = MaterialTheme.typography.titleSmallEmphasized,
     )
 }
 
@@ -565,23 +578,25 @@ private fun TimelinePresentationSelector(
     val timeline = timelines.firstOrNull {
         it.sourceId == currentSourceId
     }
-    if (timeline != null) Row(
-        modifier = modifier.wrapContentWidth(),
-        horizontalArrangement = Arrangement.aligned(Alignment.End)
-    ) {
-        com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
-            selected = timeline.presentation,
-            available = timeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                val index = timelines.indexOfFirst {
-                    it.sourceId == currentSourceId
-                }
-                onTimelinePresentationUpdated(
-                    index,
-                    presentation,
-                )
-            }
-        )
+    if (timeline != null) {
+        Row(
+            modifier = modifier.wrapContentWidth(),
+            horizontalArrangement = Arrangement.aligned(Alignment.End),
+        ) {
+            com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
+                selected = timeline.presentation,
+                available = timeline.supportedPresentations,
+                onPresentationSelected = { presentation ->
+                    val index = timelines.indexOfFirst {
+                        it.sourceId == currentSourceId
+                    }
+                    onTimelinePresentationUpdated(
+                        index,
+                        presentation,
+                    )
+                },
+            )
+        }
     }
 }
 
@@ -607,10 +622,12 @@ private class TimelinePreferencesState(
         if (index < 0) return
 
         timelines.removeAt(index)
-        if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(
-            a = firstUnpinnedIndex - 1,
-            b = 0
-        )
+        if (index <= firstUnpinnedIndex) {
+            firstUnpinnedIndex = max(
+                a = firstUnpinnedIndex - 1,
+                b = 0,
+            )
+        }
     }
 
     fun timelinesToSave() = timelines.mapIndexed { index, timeline ->
@@ -650,8 +667,11 @@ private class TimelinePreferencesState(
 
             val acceptedDrop =
                 // Make sure at least 1 item is always pinned
-                if (firstUnpinnedIndex in draggedIndex..droppedIndex) firstUnpinnedIndex > 1
-                else draggedIndex >= 0 && droppedIndex >= 0
+                if (firstUnpinnedIndex in draggedIndex..droppedIndex) {
+                    firstUnpinnedIndex > 1
+                } else {
+                    draggedIndex >= 0 && droppedIndex >= 0
+                }
 
             Snapshot.withMutableSnapshot {
                 if (acceptedDrop) {

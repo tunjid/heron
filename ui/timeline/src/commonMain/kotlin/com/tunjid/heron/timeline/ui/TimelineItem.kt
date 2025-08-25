@@ -102,24 +102,30 @@ fun TimelineItem(
                     .fillMaxWidth()
                     .presentationPadding(
                         presentation = presentation,
-                        top = if (item.isThreadedAnchor) 0.dp
-                        else 16.dp,
-                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
-                        else 8.dp,
+                        top = if (item.isThreadedAnchor) {
+                            0.dp
+                        } else {
+                            16.dp
+                        },
+                        bottom = if (item.isThreadedAncestorOrAnchor) {
+                            0.dp
+                        } else {
+                            8.dp
+                        },
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
                         modifier = Modifier.padding(
                             start = 32.dp,
-                            bottom = 4.dp
+                            bottom = 4.dp,
                         ),
                         item = item,
                         onProfileClicked = { post, profile ->
                             postActions.onProfileClicked(
                                 profile = profile,
                                 post = post,
-                                quotingPostUri = null
+                                quotingPostUri = null,
                             )
                         },
                     )
@@ -189,67 +195,85 @@ private fun ThreadedPost(
                         post = post,
                         isAnchoredInTimeline = item.generation == 0L,
                         avatarShape =
-                            when {
-                                item.isThreadedAnchor -> RoundedPolygonShape.Circle
-                                item.isThreadedAncestor ->
-                                    if (item.posts.size == 1) ReplyThreadStartImageShape
-                                    else ReplyThreadImageShape
-
-                                else -> when (index) {
-                                    0 ->
-                                        if (item.posts.size == 1) RoundedPolygonShape.Circle
-                                        else ReplyThreadStartImageShape
-
-                                    item.posts.lastIndex -> ReplyThreadEndImageShape
-                                    else -> ReplyThreadImageShape
+                        when {
+                            item.isThreadedAnchor -> RoundedPolygonShape.Circle
+                            item.isThreadedAncestor ->
+                                if (item.posts.size == 1) {
+                                    ReplyThreadStartImageShape
+                                } else {
+                                    ReplyThreadImageShape
                                 }
-                            },
+
+                            else -> when (index) {
+                                0 ->
+                                    if (item.posts.size == 1) {
+                                        RoundedPolygonShape.Circle
+                                    } else {
+                                        ReplyThreadStartImageShape
+                                    }
+
+                                item.posts.lastIndex -> ReplyThreadEndImageShape
+                                else -> ReplyThreadImageShape
+                            }
+                        },
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = post.createdAt,
                         presentation = presentation,
                         labelVisibilitiesToDefinitions = item.labelVisibilitiesToDefinitions,
                         postActions = postActions,
                         timeline = {
-                            if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .padding(top = 52.dp)
-                            )
-                        }
-                    )
-                    if (index != item.posts.lastIndex) {
-                        if (index == 0 && item.hasBreak) BrokenTimeline(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .childThreadNode(videoId = null),
-                            onClick = {
-                                postActions.onPostClicked(
-                                    post = post,
-                                    quotingPostUri = null,
+                            if (index != item.posts.lastIndex || item.isThreadedAncestor) {
+                                Timeline(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .padding(top = 52.dp),
                                 )
                             }
-                        )
-                        else Timeline(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .height(
-                                    if (index == 0) 16.dp
-                                    else 12.dp
-                                )
-                                .childThreadNode(videoId = null)
+                        },
+                    )
+                    if (index != item.posts.lastIndex) {
+                        if (index == 0 && item.hasBreak) {
+                            BrokenTimeline(
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .childThreadNode(videoId = null),
+                                onClick = {
+                                    postActions.onPostClicked(
+                                        post = post,
+                                        quotingPostUri = null,
+                                    )
+                                },
+                            )
+                        } else {
+                            Timeline(
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .height(
+                                        if (index == 0) {
+                                            16.dp
+                                        } else {
+                                            12.dp
+                                        },
+                                    )
+                                    .childThreadNode(videoId = null),
+                            )
+                        }
+                    }
+                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) {
+                        Spacer(
+                            Modifier
+                                .height(4.dp)
+                                .childThreadNode(videoId = null),
                         )
                     }
-                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
-                        Modifier
-                            .height(4.dp)
-                            .childThreadNode(videoId = null)
-                    )
                 }
             }
         }
 
-        if (item.posts.size > maxPosts) ShowMore {
-            maxPosts += DefaultMaxPostsInThread
+        if (item.posts.size > maxPosts) {
+            ShowMore {
+                maxPosts += DefaultMaxPostsInThread
+            }
         }
     }
 }
@@ -264,7 +288,7 @@ private fun Timeline(
                 .offset(x = 4.dp)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .fillMaxHeight()
-                .width(2.dp)
+                .width(2.dp),
         )
     }
 }
@@ -281,14 +305,14 @@ private fun BrokenTimeline(
                 interactionSource = NoOpInteractionSource,
                 indication = null,
                 onClick = onClick,
-            )
+            ),
     ) {
         Spacer(
             Modifier
                 .offset(x = 4.dp)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .height(8.dp)
-                .width(2.dp)
+                .width(2.dp),
         )
         Box {
             Row(
@@ -311,7 +335,7 @@ private fun BrokenTimeline(
                         .padding(horizontal = 16.dp),
                     text = stringResource(Res.string.see_more_posts),
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     ),
                 )
             }
@@ -321,7 +345,7 @@ private fun BrokenTimeline(
                     .offset(x = 4.dp)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .height(20.dp)
-                    .width(2.dp)
+                    .width(2.dp),
             )
         }
     }
@@ -343,7 +367,7 @@ private fun ShowMore(
             Timeline(
                 Modifier
                     .offset(8.dp)
-                    .height(4.dp)
+                    .height(4.dp),
             )
             Icon(
                 modifier = Modifier
@@ -361,7 +385,7 @@ private fun ShowMore(
             onClick = onClick,
             content = {
                 Text(stringResource(Res.string.show_more))
-            }
+            },
         )
     }
 }
@@ -374,23 +398,32 @@ fun TimelineCard(
     onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val isFlat = item.isThreadedAncestorOrAnchor
-            || presentation == Timeline.Presentation.Media.Expanded
+    val isFlat = item.isThreadedAncestorOrAnchor ||
+        presentation == Timeline.Presentation.Media.Expanded
 
     ElevatedCard(
         modifier = modifier,
         shape = animateDpAsState(
-            if (isFlat) 0.dp
-            else when (presentation) {
-                Timeline.Presentation.Text.WithEmbed -> 8.dp
-                Timeline.Presentation.Media.Condensed -> 8.dp
-                Timeline.Presentation.Media.Expanded -> 0.dp
-            }
+            if (isFlat) {
+                0.dp
+            } else {
+                when (presentation) {
+                    Timeline.Presentation.Text.WithEmbed -> 8.dp
+                    Timeline.Presentation.Media.Condensed -> 8.dp
+                    Timeline.Presentation.Media.Expanded -> 0.dp
+                }
+            },
         ).value.let(::RoundedCornerShape),
-        colors = if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        else CardDefaults.elevatedCardColors(),
-        elevation = if (isFlat) CardDefaults.cardElevation()
-        else CardDefaults.elevatedCardElevation(),
+        colors = if (isFlat) {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        } else {
+            CardDefaults.elevatedCardColors()
+        },
+        elevation = if (isFlat) {
+            CardDefaults.cardElevation()
+        } else {
+            CardDefaults.elevatedCardElevation()
+        },
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )
@@ -407,9 +440,12 @@ private val ReplyThreadStartImageShape =
 private val ReplyThreadImageShape =
     RoundedPolygonShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
-            if (index == 2 || index == 3) 32.dp
-            else 48.dp
-        }
+            if (index == 2 || index == 3) {
+                32.dp
+            } else {
+                48.dp
+            }
+        },
     )
 
 private val ReplyThreadEndImageShape =

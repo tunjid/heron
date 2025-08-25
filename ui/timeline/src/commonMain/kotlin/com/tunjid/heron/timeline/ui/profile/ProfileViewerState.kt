@@ -44,9 +44,13 @@ fun ProfileViewerState(
 ) {
     val follows = viewerState.isFollowing
     val followStatusText = stringResource(
-        if (isSignedInProfile) Res.string.edit
-        else if (follows) Res.string.following
-        else Res.string.follow
+        if (isSignedInProfile) {
+            Res.string.edit
+        } else if (follows) {
+            Res.string.following
+        } else {
+            Res.string.follow
+        },
     )
     FilterChip(
         modifier = Modifier
@@ -57,9 +61,13 @@ fun ProfileViewerState(
         leadingIcon = {
             Icon(
                 imageVector =
-                    if (isSignedInProfile) Icons.Rounded.Edit
-                    else if (follows) Icons.Rounded.Check
-                    else Icons.Rounded.Add,
+                if (isSignedInProfile) {
+                    Icons.Rounded.Edit
+                } else if (follows) {
+                    Icons.Rounded.Check
+                } else {
+                    Icons.Rounded.Add
+                },
                 contentDescription = followStatusText,
             )
         },

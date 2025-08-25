@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.profile.avatar
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
@@ -62,39 +61,39 @@ class ActualProfileAvatarViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-        profile = route.profile ?: stubProfile(
-            did = ProfileId(route.profileHandleOrId.id),
-            handle = ProfileHandle(route.profileHandleOrId.id),
-            avatar = null,
+) : ViewModel(viewModelScope = scope),
+    ProfileStateHolder by scope.actionStateFlowMutator(
+        initialState = State(
+            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+            profile = route.profile ?: stubProfile(
+                did = ProfileId(route.profileHandleOrId.id),
+                handle = ProfileHandle(route.profileHandleOrId.id),
+                avatar = null,
+            ),
         ),
-    ),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(
-            profileId = route.profileHandleOrId,
-            profileRepository = profileRepository,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(
+                profileId = route.profileHandleOrId,
+                profileRepository = profileRepository,
+            ),
         ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    profileRepository.profile(profileId).mapToMutation {
-        copy(profile = it)
-    }
+): Flow<Mutation<State>> = profileRepository.profile(profileId).mapToMutation {
+    copy(profile = it)
+}

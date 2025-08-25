@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 
-
 @Entity(
     tableName = "conversations",
 )
@@ -62,44 +61,42 @@ data class PopulatedConversationEntity(
     val memberEntities: List<ProfileEntity>,
 )
 
-fun PopulatedConversationEntity.asExternalModel() =
-    Conversation(
-        id = entity.id,
-        muted = entity.muted,
-        unreadCount = entity.unreadCount,
-        members = memberEntities.map(ProfileEntity::asExternalModel),
-        lastMessage = lastMessageEntity?.let(::conversationMessage),
-        lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
-    )
+fun PopulatedConversationEntity.asExternalModel() = Conversation(
+    id = entity.id,
+    muted = entity.muted,
+    unreadCount = entity.unreadCount,
+    members = memberEntities.map(ProfileEntity::asExternalModel),
+    lastMessage = lastMessageEntity?.let(::conversationMessage),
+    lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
+)
 
 private fun PopulatedConversationEntity.conversationMessage(
-    message: MessageEntity
-): Message? =
-    memberEntities.firstOrNull {
-        it.did == message.senderId
+    message: MessageEntity,
+): Message? = memberEntities.firstOrNull {
+    it.did == message.senderId
+}
+    ?.let { sender ->
+        Message(
+            id = message.id,
+            conversationId = message.conversationId,
+            text = message.text,
+            sentAt = message.sentAt,
+            isDeleted = message.isDeleted,
+            sender = sender.asExternalModel(),
+            feedGenerator = null,
+            list = null,
+            starterPack = null,
+            post = null,
+            reactions = listOfNotNull(
+                lastReactionEntity
+                    ?.takeIf { message.id == lastMessageReactedToEntity?.id }
+                    ?.let { reactionValue ->
+                        Message.Reaction(
+                            value = lastReactionEntity.value,
+                            senderId = lastReactionEntity.senderId,
+                            createdAt = lastReactionEntity.createdAt,
+                        )
+                    },
+            ),
+        )
     }
-        ?.let { sender ->
-            Message(
-                id = message.id,
-                conversationId = message.conversationId,
-                text = message.text,
-                sentAt = message.sentAt,
-                isDeleted = message.isDeleted,
-                sender = sender.asExternalModel(),
-                feedGenerator = null,
-                list = null,
-                starterPack = null,
-                post = null,
-                reactions = listOfNotNull(
-                    lastReactionEntity
-                        ?.takeIf { message.id == lastMessageReactedToEntity?.id }
-                        ?.let { reactionValue ->
-                            Message.Reaction(
-                                value = lastReactionEntity.value,
-                                senderId = lastReactionEntity.senderId,
-                                createdAt = lastReactionEntity.createdAt,
-                            )
-                        }
-                ),
-            )
-        }

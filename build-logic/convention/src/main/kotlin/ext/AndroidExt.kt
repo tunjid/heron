@@ -45,7 +45,7 @@ fun org.gradle.api.Project.addDesugarDependencies() {
     dependencies {
         add(
             configurationName = "coreLibraryDesugaring",
-            dependencyNotation = versionCatalog.findLibrary("android-desugarJdkLibs").get()
+            dependencyNotation = versionCatalog.findLibrary("android-desugarJdkLibs").get(),
         )
     }
 }

@@ -14,9 +14,9 @@
  *    limitations under the License.
  */
 
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.io.FileInputStream
 import java.util.Properties
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     id("android-application-convention")
@@ -35,7 +35,7 @@ kotlin {
     listOf(
         iosX64(),
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
@@ -141,7 +141,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -166,6 +166,6 @@ compose.desktop {
 configurations {
     getByName("desktopMainApi").exclude(
         group = "org.jetbrains.kotlinx",
-        module = "kotlinx-coroutines-android"
+        module = "kotlinx-coroutines-android",
     )
 }

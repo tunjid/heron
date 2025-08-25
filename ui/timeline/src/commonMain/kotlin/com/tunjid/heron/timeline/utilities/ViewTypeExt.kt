@@ -52,27 +52,26 @@ internal fun Modifier.presentationPadding(
 }
 
 internal fun Modifier.sensitiveContentBlur(
-    shape: Shape
-) =
-    drawWithCache {
-        val density = Density(density)
-        val color = Color.Black.copy(alpha = 0.5f)
-        onDrawWithContent {
-            drawContent()
-            drawOutline(
-                outline = shape.createOutline(
-                    size = size,
-                    layoutDirection = layoutDirection,
-                    density = density,
-                ),
-                color = color,
-            )
-        }
-    }
-        .blur(
-            radius = 120.dp,
-            edgeTreatment = BlurredEdgeTreatment(shape)
+    shape: Shape,
+) = drawWithCache {
+    val density = Density(density)
+    val color = Color.Black.copy(alpha = 0.5f)
+    onDrawWithContent {
+        drawContent()
+        drawOutline(
+            outline = shape.createOutline(
+                size = size,
+                layoutDirection = layoutDirection,
+                density = density,
+            ),
+            color = color,
         )
+    }
+}
+    .blur(
+        radius = 120.dp,
+        edgeTreatment = BlurredEdgeTreatment(shape),
+    )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(

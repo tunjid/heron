@@ -18,32 +18,29 @@ package com.tunjid.heron.timeline.utilities
 
 import kotlin.time.Duration
 
-//fun Handle.color(): Color {
+// fun Handle.color(): Color {
 //  return Color(0xFF000000 or (hashCode().toLong() and 0x00FFFFFF))
-//}
+// }
 
-fun Duration.roundComponent() =
-    toComponents { days, hours, minutes, seconds, _ ->
-        when {
-            days > 0 -> "${days}d"
-            hours > 0 -> "${hours}h"
-            minutes > 0 -> "${minutes}m"
-            seconds > 0 -> "${seconds}s"
-            seconds < 0 || minutes < 0 || hours < 0 || days < 0 -> "The Future"
-            else -> "Now"
-        }
+fun Duration.roundComponent() = toComponents { days, hours, minutes, seconds, _ ->
+    when {
+        days > 0 -> "${days}d"
+        hours > 0 -> "${hours}h"
+        minutes > 0 -> "${minutes}m"
+        seconds > 0 -> "${seconds}s"
+        seconds < 0 || minutes < 0 || hours < 0 || days < 0 -> "The Future"
+        else -> "Now"
     }
+}
 
-fun format(value: Long): String {
-    return when (value) {
-        in 10_000_000_000..Long.MAX_VALUE -> format(value, 1_000_000f, "B", wholeNumber = true)
-        in 1_000_000_000..10_000_000_000 -> format(value, 1_000_000_000f, "B")
-        in 10_000_000..1_000_000_000 -> format(value, 1_000_000f, "M", wholeNumber = true)
-        in 1_000_000..10_000_000 -> format(value, 1_000_000f, "M")
-        in 100_000..1_000_000 -> format(value, 1_000f, "K", wholeNumber = true)
-        in 10_000..1_000_000 -> format(value, 1_000f, "K")
-        else -> format(value, 1f, "", wholeNumber = true)
-    }
+fun format(value: Long): String = when (value) {
+    in 10_000_000_000..Long.MAX_VALUE -> format(value, 1_000_000f, "B", wholeNumber = true)
+    in 1_000_000_000..10_000_000_000 -> format(value, 1_000_000_000f, "B")
+    in 10_000_000..1_000_000_000 -> format(value, 1_000_000f, "M", wholeNumber = true)
+    in 1_000_000..10_000_000 -> format(value, 1_000_000f, "M")
+    in 100_000..1_000_000 -> format(value, 1_000f, "K", wholeNumber = true)
+    in 10_000..1_000_000 -> format(value, 1_000f, "K")
+    else -> format(value, 1f, "", wholeNumber = true)
 }
 
 private fun format(
@@ -64,10 +61,8 @@ private fun format(
     }
 }
 
-private fun Int.formatDecimalSeparator(): String {
-    return toString()
-        .reversed()
-        .chunked(3)
-        .joinToString(separator = ",")
-        .reversed()
-}
+private fun Int.formatDecimalSeparator(): String = toString()
+    .reversed()
+    .chunked(3)
+    .joinToString(separator = ",")
+    .reversed()

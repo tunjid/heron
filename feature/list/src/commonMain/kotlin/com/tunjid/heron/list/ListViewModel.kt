@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.list
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
@@ -84,44 +83,45 @@ class ActualListViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ListStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    actionTransform = transform@{ actions ->
-        merge(
-            timelineStateHolderMutations(
-                request = route.timelineRequest,
-                scope = scope,
-                timelineRepository = timelineRepository,
-                profileRepository = profileRepository,
-            ),
-            listMemberStateHolderMutations(
-                request = route.timelineRequest,
-                scope = scope,
-                timelineRepository = timelineRepository,
-                profileRepository = profileRepository,
-                authRepository = authRepository
-            ),
-            actions.toMutationStream(
-                keySelector = Action::key
-            ) {
-                when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
+) : ViewModel(viewModelScope = scope),
+    ListStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        actionTransform = transform@{ actions ->
+            merge(
+                timelineStateHolderMutations(
+                    request = route.timelineRequest,
+                    scope = scope,
+                    timelineRepository = timelineRepository,
+                    profileRepository = profileRepository,
+                ),
+                listMemberStateHolderMutations(
+                    request = route.timelineRequest,
+                    scope = scope,
+                    timelineRepository = timelineRepository,
+                    profileRepository = profileRepository,
+                    authRepository = authRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions
-                    )
-                }
-            }
-        )
-    }
-)
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+            )
+        },
+    )
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfList,
@@ -133,15 +133,17 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
         .filterIsInstance<ListScreenStateHolders.Timeline>()
         .firstOrNull()
 
-    if (existingHolder != null) return@flow emitAll(
-        merge(
-            existingHolder.state.mapToMutation { copy(timelineState = it) },
-            timelineCreatorMutations(
-                timeline = existingHolder.state.value.timeline,
-                profileRepository = profileRepository,
-            )
+    if (existingHolder != null) {
+        return@flow emitAll(
+            merge(
+                existingHolder.state.mapToMutation { copy(timelineState = it) },
+                timelineCreatorMutations(
+                    timeline = existingHolder.state.value.timeline,
+                    profileRepository = profileRepository,
+                ),
+            ),
         )
-    )
+    }
 
     val timeline = timelineRepository.timeline(request)
         .first()
@@ -152,11 +154,11 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
             timeline = timeline,
             startNumColumns = 1,
             timelineRepository = timelineRepository,
-        )
+        ),
     )
     emit {
         copy(
-            stateHolders = stateHolders + createdHolder
+            stateHolders = stateHolders + createdHolder,
         )
     }
     emitAll(
@@ -165,8 +167,8 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
             timelineCreatorMutations(
                 timeline = timeline,
                 profileRepository = profileRepository,
-            )
-        )
+            ),
+        ),
     )
 }
 
@@ -205,7 +207,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
             inputs = listOf(
                 authRepository.signedInUser.mapToMutation {
                     copy(signedInProfileId = it?.did)
-                }
+                },
             ),
             actionTransform = { actions ->
                 actions.toMutationStream {
@@ -221,70 +223,68 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
                             onTilingDataUpdated = { copy(tilingData = it) },
                         )
                 }
-            }
-        )
+            },
+        ),
     )
     emit {
         copy(
-            stateHolders = listOf(createdHolder) + stateHolders
+            stateHolders = listOf(createdHolder) + stateHolders,
         )
     }
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Interaction(action.interaction))
-    }
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(Writable.Interaction(action.interaction))
+}
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(
-            Writable.Connection(
-                when (val following = action.following) {
-                    null -> Profile.Connection.Follow(
-                        signedInProfileId = action.signedInProfileId,
-                        profileId = action.viewedProfileId,
-                        followedBy = action.followedBy,
-                    )
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Connection(
+            when (val following = action.following) {
+                null -> Profile.Connection.Follow(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.viewedProfileId,
+                    followedBy = action.followedBy,
+                )
 
-                    else -> Profile.Connection.Unfollow(
-                        signedInProfileId = action.signedInProfileId,
-                        profileId = action.viewedProfileId,
-                        followUri = following,
-                        followedBy = action.followedBy,
-                    )
-                }
-            )
-        )
-    }
+                else -> Profile.Connection.Unfollow(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.viewedProfileId,
+                    followUri = following,
+                    followedBy = action.followedBy,
+                )
+            },
+        ),
+    )
+}
 
 private fun timelineCreatorMutations(
     timeline: Timeline,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    when (timeline) {
-        is Timeline.Home.Feed,
-        is Timeline.Home.Following,
-        is Timeline.Profile -> emptyFlow()
+): Flow<Mutation<State>> = when (timeline) {
+    is Timeline.Home.Feed,
+    is Timeline.Home.Following,
+    is Timeline.Profile,
+    -> emptyFlow()
 
-        is Timeline.Home.List -> profileRepository.profile(
-            profileId = timeline.feedList.creator.did
-        )
+    is Timeline.Home.List -> profileRepository.profile(
+        profileId = timeline.feedList.creator.did,
+    )
 
-        is Timeline.StarterPack -> profileRepository.profile(
-            profileId = timeline.starterPack.creator.did
-        )
+    is Timeline.StarterPack -> profileRepository.profile(
+        profileId = timeline.starterPack.creator.did,
+    )
+}
+    .mapToMutation {
+        copy(creator = it)
     }
-        .mapToMutation {
-            copy(creator = it)
-        }
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,
     cursorAnchor = Clock.System.now(),
-    limit = 15
+    limit = 15,
 )

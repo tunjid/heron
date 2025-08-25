@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "feedGenerators",
     foreignKeys = [
@@ -69,7 +68,7 @@ data class PopulatedFeedGeneratorEntity(
     val entity: FeedGeneratorEntity,
     @Relation(
         parentColumn = "creatorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val creator: ProfileEntity?,
     @Relation(
@@ -79,18 +78,17 @@ data class PopulatedFeedGeneratorEntity(
     val labelEntities: List<LabelEntity>,
 )
 
-fun PopulatedFeedGeneratorEntity.asExternalModel() =
-    FeedGenerator(
-        cid = entity.cid,
-        did = entity.did,
-        uri = entity.uri,
-        avatar = entity.avatar,
-        likeCount = entity.likeCount,
-        creator = creator.asExternalModel(),
-        displayName = entity.displayName,
-        description = entity.description,
-        acceptsInteractions = entity.acceptsInteractions,
-        contentMode = entity.contentMode,
-        indexedAt = entity.indexedAt,
-        labels = labelEntities.map(LabelEntity::asExternalModel),
-    )
+fun PopulatedFeedGeneratorEntity.asExternalModel() = FeedGenerator(
+    cid = entity.cid,
+    did = entity.did,
+    uri = entity.uri,
+    avatar = entity.avatar,
+    likeCount = entity.likeCount,
+    creator = creator.asExternalModel(),
+    displayName = entity.displayName,
+    description = entity.description,
+    acceptsInteractions = entity.acceptsInteractions,
+    contentMode = entity.contentMode,
+    indexedAt = entity.indexedAt,
+    labels = labelEntities.map(LabelEntity::asExternalModel),
+)

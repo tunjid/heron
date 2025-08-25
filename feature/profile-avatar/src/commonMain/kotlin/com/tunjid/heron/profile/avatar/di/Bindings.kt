@@ -69,12 +69,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 internal val Route.avatarSharedElementKey by optionalRouteQuery()
@@ -89,11 +89,10 @@ object ProfileAvatarNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -121,7 +120,7 @@ class ProfileAvatarBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -162,8 +161,8 @@ class ProfileAvatarBindings(
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

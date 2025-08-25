@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.conversation
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
@@ -79,184 +78,179 @@ class ActualConversationViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ConversationStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(authRepository),
-        pendingMessageFlushMutations(writeQueue),
-        flow { messagesRepository.monitorConversationLogs() },
-        labelPreferencesMutations(
-            timelineRepository = timelineRepository,
+) : ViewModel(viewModelScope = scope),
+    ConversationStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(authRepository),
+            pendingMessageFlushMutations(writeQueue),
+            flow { messagesRepository.monitorConversationLogs() },
+            labelPreferencesMutations(
+                timelineRepository = timelineRepository,
+            ),
+            labelerMutations(
+                timelineRepository = timelineRepository,
+            ),
         ),
-        labelerMutations(
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
 
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.SendMessage -> action.flow.sendMessageMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendMessage -> action.flow.sendMessageMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Tile -> action.flow.messagingTilingMutations(
-                    currentState = { state() },
-                    messagesRepository = messagesRepository
-                )
+                    is Action.Tile -> action.flow.messagingTilingMutations(
+                        currentState = { state() },
+                        messagesRepository = messagesRepository,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
-    }
+): Flow<Mutation<State>> = authRepository.signedInUser.mapToMutation {
+    copy(signedInProfile = it)
+}
 
 private fun pendingMessageFlushMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    writeQueue.queueChanges.mapToMutation {
-        val updatedPendingMessages = pendingItems.filter {
-            writeQueue.contains(Writable.Send(it.message))
-        }
-        copy(
-            pendingItems = updatedPendingMessages,
-            tilingData = tilingData.updatePendingMessages(updatedPendingMessages)
-        )
+): Flow<Mutation<State>> = writeQueue.queueChanges.mapToMutation {
+    val updatedPendingMessages = pendingItems.filter {
+        writeQueue.contains(Writable.Send(it.message))
     }
+    copy(
+        pendingItems = updatedPendingMessages,
+        tilingData = tilingData.updatePendingMessages(updatedPendingMessages),
+    )
+}
 
 private fun labelPreferencesMutations(
     timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.preferences()
-        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
+): Flow<Mutation<State>> = timelineRepository.preferences()
+    .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
 
 private fun labelerMutations(
     timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.labelers()
-        .mapToMutation { copy(labelers = it) }
+): Flow<Mutation<State>> = timelineRepository.labelers()
+    .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Interaction(action.interaction))
-    }
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(Writable.Interaction(action.interaction))
+}
 
 private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Reaction(action.reaction))
-    }
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(Writable.Reaction(action.reaction))
+}
 
 private fun Flow<Action.SendMessage>.sendMessageMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        // Add the pending item to the chat
-        emit {
-            val currentItems = tilingData.items
-            val tileCount = currentItems.tileCount
-            val lastQuery = when {
-                tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
-                else -> tilingData.currentQuery
-            }
-            val pendingItem = MessageItem.Pending(
-                sender = signedInProfile ?: stubProfile(
-                    did = ProfileId(""),
-                    handle = ProfileHandle(id = ""),
-                ),
-                message = action.message,
-                sentAt = Clock.System.now(),
-            )
-
-            copy(
-                pendingItems = pendingItems + pendingItem,
-                tilingData = tilingData.copy(
-                    items = currentItems + tiledListOf(
-                        lastQuery to pendingItem,
-                    )
-                )
-            )
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    // Add the pending item to the chat
+    emit {
+        val currentItems = tilingData.items
+        val tileCount = currentItems.tileCount
+        val lastQuery = when {
+            tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
+            else -> tilingData.currentQuery
         }
+        val pendingItem = MessageItem.Pending(
+            sender = signedInProfile ?: stubProfile(
+                did = ProfileId(""),
+                handle = ProfileHandle(id = ""),
+            ),
+            message = action.message,
+            sentAt = Clock.System.now(),
+        )
 
-        // Write the message
-        writeQueue.enqueue(Writable.Send(action.message))
+        copy(
+            pendingItems = pendingItems + pendingItem,
+            tilingData = tilingData.copy(
+                items = currentItems + tiledListOf(
+                    lastQuery to pendingItem,
+                ),
+            ),
+        )
     }
+
+    // Write the message
+    writeQueue.enqueue(Writable.Send(action.message))
+}
 
 private suspend fun Flow<Action.Tile>.messagingTilingMutations(
     currentState: suspend () -> State,
-    messagesRepository: MessageRepository
-): Flow<Mutation<State>> =
-    map { it.tilingAction }
-        .tilingMutations(
-            currentState = currentState,
-            updateQueryData = { copy(data = it) },
-            refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(
-                MessageItem::Sent
-            ),
-            onNewItems = { items ->
-                items.distinctBy(MessageItem::id)
-            },
-            onTilingDataUpdated = tilingDataUpdated@{ updatedTilingData ->
-                copy(
-                    tilingData = when {
-                        pendingItems.isEmpty() -> updatedTilingData
-                        // Database refreshes can happen at any time. Add pending items.
-                        else -> updatedTilingData.updatePendingMessages(pendingItems)
-                    }
-                )
-            },
-        )
+    messagesRepository: MessageRepository,
+): Flow<Mutation<State>> = map { it.tilingAction }
+    .tilingMutations(
+        currentState = currentState,
+        updateQueryData = { copy(data = it) },
+        refreshQuery = { copy(data = data.reset()) },
+        cursorListLoader = messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(
+            MessageItem::Sent,
+        ),
+        onNewItems = { items ->
+            items.distinctBy(MessageItem::id)
+        },
+        onTilingDataUpdated = tilingDataUpdated@{ updatedTilingData ->
+            copy(
+                tilingData = when {
+                    pendingItems.isEmpty() -> updatedTilingData
+                    // Database refreshes can happen at any time. Add pending items.
+                    else -> updatedTilingData.updatePendingMessages(pendingItems)
+                },
+            )
+        },
+    )
 
 private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
-    pendingItems: List<MessageItem.Pending>
-): TilingState.Data<MessageQuery, MessageItem> =
-    copy(
-        items = when {
-            items.isEmpty() -> buildTiledList {
-                addAll(
-                    query = currentQuery,
-                    items = pendingItems,
-                )
-            }
+    pendingItems: List<MessageItem.Pending>,
+): TilingState.Data<MessageQuery, MessageItem> = copy(
+    items = when {
+        items.isEmpty() -> buildTiledList {
+            addAll(
+                query = currentQuery,
+                items = pendingItems,
+            )
+        }
 
-            else -> buildTiledList {
-                (0..<items.tileCount).forEach { tileIndex ->
-                    val tile = items.tileAt(tileIndex)
-                    val lastTileIndex = items.tileCount - 1
-                    val tileSublist = items.subList(tile.start, tile.end)
-                    if (tileIndex == lastTileIndex) addAll(
+        else -> buildTiledList {
+            (0..<items.tileCount).forEach { tileIndex ->
+                val tile = items.tileAt(tileIndex)
+                val lastTileIndex = items.tileCount - 1
+                val tileSublist = items.subList(tile.start, tile.end)
+                if (tileIndex == lastTileIndex) {
+                    addAll(
                         query = items.queryAtTile(tileIndex),
                         // Add pending items to the last chunk and sort
                         items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
                     )
-                    else addAll(
+                } else {
+                    addAll(
                         query = items.queryAtTile(tileIndex),
                         items = tileSublist,
                     )
                 }
             }
         }
-    )
+    },
+)

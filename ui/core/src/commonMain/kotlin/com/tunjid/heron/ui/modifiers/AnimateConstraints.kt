@@ -29,28 +29,27 @@ import kotlinx.coroutines.CoroutineScope
 @OptIn(ExperimentalAnimatableApi::class)
 fun Modifier.animateConstraints(
     sizeAnimation: DeferredTargetAnimation<IntSize, AnimationVector2D>,
-    coroutineScope: CoroutineScope
-) =
-    this.approachLayout(
-        isMeasurementApproachInProgress = { lookaheadSize ->
-            // Update the target of the size animation.
-            sizeAnimation.updateTarget(lookaheadSize, coroutineScope)
-            // Return true if the size animation has pending target change or is currently
-            // running.
-            !sizeAnimation.isIdle
-        }
-    ) { measurable, c ->
-        // In the measurement approach, the goal is to gradually reach the destination size
-        // (i.e. lookahead size). To achieve that, we use an animation to track the current
-        // size, and animate to the destination size whenever it changes. Once the animation
-        // finishes, the approach is complete.
+    coroutineScope: CoroutineScope,
+) = this.approachLayout(
+    isMeasurementApproachInProgress = { lookaheadSize ->
+        // Update the target of the size animation.
+        sizeAnimation.updateTarget(lookaheadSize, coroutineScope)
+        // Return true if the size animation has pending target change or is currently
+        // running.
+        !sizeAnimation.isIdle
+    },
+) { measurable, c ->
+    // In the measurement approach, the goal is to gradually reach the destination size
+    // (i.e. lookahead size). To achieve that, we use an animation to track the current
+    // size, and animate to the destination size whenever it changes. Once the animation
+    // finishes, the approach is complete.
 
-        // First, update the target of the animation, and read the current animated size.
-        val (width, height) = sizeAnimation.updateTarget(lookaheadSize, coroutineScope)
-        // Then create fixed size constraints using the animated size
-        val animatedConstraints = Constraints.fixed(width, height)
-        // Measure child with animated constraints.
-        val placeable = measurable.measure(animatedConstraints)
-        val (w, h) = c.constrain(IntSize(placeable.width, placeable.height))
-        layout(w, h) { placeable.place(0, 0) }
-    }
+    // First, update the target of the animation, and read the current animated size.
+    val (width, height) = sizeAnimation.updateTarget(lookaheadSize, coroutineScope)
+    // Then create fixed size constraints using the animated size
+    val animatedConstraints = Constraints.fixed(width, height)
+    // Measure child with animated constraints.
+    val placeable = measurable.measure(animatedConstraints)
+    val (w, h) = c.constrain(IntSize(placeable.width, placeable.height))
+    layout(w, h) { placeable.place(0, 0) }
+}

@@ -33,7 +33,6 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val creator: Profile? = null,
@@ -64,9 +63,9 @@ fun State(
                     ),
                     timeline = timeline,
                 ),
-            )
+            ),
         )
-    }
+    },
 )
 
 sealed class Action(val key: String) {
@@ -75,11 +74,14 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

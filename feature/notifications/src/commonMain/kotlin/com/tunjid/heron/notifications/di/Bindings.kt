@@ -81,11 +81,10 @@ object NotificationsNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -139,8 +138,8 @@ class NotificationsBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -160,10 +159,10 @@ class NotificationsBindings(
                                     composePostDestination(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -194,8 +193,8 @@ class NotificationsBindings(
                         modifier = Modifier
                             .padding(top = contentPadding.calculateTopPadding()),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

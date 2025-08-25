@@ -40,7 +40,6 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val creator: Profile? = null,
@@ -72,7 +71,7 @@ fun State(
                             ),
                             timeline = timeline,
                         ),
-                    )
+                    ),
                 )
             }
 
@@ -94,26 +93,27 @@ fun State(
                                 ),
                                 timeline = timeline,
                             ),
-                        )
+                        ),
                     )
                 }
             }
 
             else -> null
         }
-    }
+    },
 )
 
 sealed class ListScreenStateHolders {
 
     class Members(
-        val mutator: MembersStateHolder
+        val mutator: MembersStateHolder,
     ) : ListScreenStateHolders(),
         MembersStateHolder by mutator
 
     class Timeline(
         val mutator: TimelineStateHolder,
-    ) : ListScreenStateHolders(), TimelineStateHolder by mutator
+    ) : ListScreenStateHolders(),
+        TimelineStateHolder by mutator
 
     val key
         get() = when (this) {
@@ -129,13 +129,13 @@ sealed class ListScreenStateHolders {
 
     fun refresh() = when (this) {
         is Members -> accept(
-            TilingState.Action.Refresh
+            TilingState.Action.Refresh,
         )
 
         is Timeline -> accept(
             TimelineState.Action.Tile(
-                tilingAction = TilingState.Action.Refresh
-            )
+                tilingAction = TilingState.Action.Refresh,
+            ),
         )
     }
 }
@@ -160,11 +160,14 @@ sealed class Action(val key: String) {
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

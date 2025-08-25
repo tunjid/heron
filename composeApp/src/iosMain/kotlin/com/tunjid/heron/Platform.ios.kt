@@ -38,21 +38,20 @@ class IOSPlatform : Platform {
 
 actual fun getPlatform(): Platform = IOSPlatform()
 
-fun createAppState(): AppState =
-    createAppState(
-        videoPlayerController = {
-            StubVideoPlayerController
-        },
-        args = { appScope ->
-            DataBindingArgs(
-                appScope = appScope,
-                connectivity = Connectivity(),
-                savedStatePath = savedStatePath(),
-                savedStateFileSystem = FileSystem.SYSTEM,
-                databaseBuilder = getDatabaseBuilder(),
-            )
-        },
-    )
+fun createAppState(): AppState = createAppState(
+    videoPlayerController = {
+        StubVideoPlayerController
+    },
+    args = { appScope ->
+        DataBindingArgs(
+            appScope = appScope,
+            connectivity = Connectivity(),
+            savedStatePath = savedStatePath(),
+            savedStateFileSystem = FileSystem.SYSTEM,
+            databaseBuilder = getDatabaseBuilder(),
+        )
+    },
+)
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {

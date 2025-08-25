@@ -83,8 +83,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.postRecordKey by mappedRoutePath(
@@ -101,20 +101,18 @@ object PostDetailNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(RouteUriPattern)
-    fun provideRouteUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RouteUriPattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteUriMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RouteUriPattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -153,7 +151,7 @@ class PostDetailBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -193,7 +191,7 @@ class PostDetailBindings(
                             when {
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 else -> Res.string.reply
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -211,10 +209,10 @@ class PostDetailBindings(
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         )
-                                    }
-                                )
+                                    },
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -234,12 +232,12 @@ class PostDetailBindings(
                         actions = viewModel.accept,
                         modifier = Modifier
                             .padding(
-                                top = paddingValues.calculateTopPadding()
+                                top = paddingValues.calculateTopPadding(),
                             ),
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

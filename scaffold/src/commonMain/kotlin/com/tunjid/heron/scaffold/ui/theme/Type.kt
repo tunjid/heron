@@ -64,77 +64,75 @@ fun appTypography(fontFamily: FontFamily): Typography {
 }
 
 @Composable
-fun appFont(): FontFamily {
-    return FontFamily(
-        Font(
-            resource = Res.font.Roboto_Black,
-            weight = FontWeight.Black,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_BlackItalic,
-            weight = FontWeight.Black,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_Bold,
-            weight = FontWeight.Bold,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_BoldItalic,
-            weight = FontWeight.Bold,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_ExtraBold,
-            weight = FontWeight.ExtraBold,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_ExtraBoldItalic,
-            weight = FontWeight.ExtraBold,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_Light,
-            weight = FontWeight.Light,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_LightItalic,
-            weight = FontWeight.Light,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_Medium,
-            weight = FontWeight.Medium,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_MediumItalic,
-            weight = FontWeight.Medium,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_Regular,
-            weight = FontWeight.Normal,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_Italic,
-            weight = FontWeight.Normal,
-            style = FontStyle.Italic,
-        ),
-        Font(
-            resource = Res.font.Roboto_SemiBold,
-            weight = FontWeight.SemiBold,
-            style = FontStyle.Normal,
-        ),
-        Font(
-            resource = Res.font.Roboto_SemiBoldItalic,
-            weight = FontWeight.SemiBold,
-            style = FontStyle.Italic,
-        ),
-    )
-}
+fun appFont(): FontFamily = FontFamily(
+    Font(
+        resource = Res.font.Roboto_Black,
+        weight = FontWeight.Black,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_BlackItalic,
+        weight = FontWeight.Black,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_Bold,
+        weight = FontWeight.Bold,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_BoldItalic,
+        weight = FontWeight.Bold,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_ExtraBold,
+        weight = FontWeight.ExtraBold,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_ExtraBoldItalic,
+        weight = FontWeight.ExtraBold,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_Light,
+        weight = FontWeight.Light,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_LightItalic,
+        weight = FontWeight.Light,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_Medium,
+        weight = FontWeight.Medium,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_MediumItalic,
+        weight = FontWeight.Medium,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_Regular,
+        weight = FontWeight.Normal,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_Italic,
+        weight = FontWeight.Normal,
+        style = FontStyle.Italic,
+    ),
+    Font(
+        resource = Res.font.Roboto_SemiBold,
+        weight = FontWeight.SemiBold,
+        style = FontStyle.Normal,
+    ),
+    Font(
+        resource = Res.font.Roboto_SemiBoldItalic,
+        weight = FontWeight.SemiBold,
+        style = FontStyle.Italic,
+    ),
+)

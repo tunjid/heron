@@ -79,12 +79,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
+        routeParams.decodeReferringRoute(),
     ),
 )
 
 private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 private val Route.listUriSuffix by routePath()
@@ -102,7 +102,7 @@ private val RequestTrie = mapOf(
         TimelineRequest.OfList.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
-                .let(::ListUri)
+                .let(::ListUri),
         )
     },
     PathPattern(StarterPackRoutePattern) to { route: Route ->
@@ -115,7 +115,7 @@ private val RequestTrie = mapOf(
         TimelineRequest.OfStarterPack.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
-                .let(::StarterPackUri)
+                .let(::StarterPackUri),
         )
     },
 ).toRouteTrie()
@@ -129,39 +129,34 @@ object ListNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(ListRoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ListRoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = ListRoutePattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(ListRouteUriPattern)
-    fun provideRouteUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ListRouteUriPattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteUriMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = ListRouteUriPattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(StarterPackRoutePattern)
-    fun provideStarterPackRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = StarterPackRoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideStarterPackRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = StarterPackRoutePattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(StarterPackRouteUriPattern)
-    fun provideRouteStarterPackUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = StarterPackRouteUriPattern,
-            routeMapper = ::createRoute
-        )
-
+    fun provideRouteStarterPackUriMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = StarterPackRouteUriPattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -222,7 +217,7 @@ class ListBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -261,13 +256,13 @@ class ListBindings(
                                         ?.invoke(
                                             TimelineState.Action.UpdatePreferredPresentation(
                                                 timeline = timeline,
-                                                presentation = presentation
-                                            )
+                                                presentation = presentation,
+                                            ),
                                         )
-                                }
+                                },
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
                 content = { paddingValues ->
@@ -275,14 +270,14 @@ class ListBindings(
                         paneScaffoldState = this,
                         modifier = Modifier
                             .padding(
-                                top = paddingValues.calculateTopPadding()
+                                top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
                         actions = viewModel.accept,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

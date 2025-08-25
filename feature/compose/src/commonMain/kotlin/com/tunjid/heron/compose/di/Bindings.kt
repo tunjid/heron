@@ -79,11 +79,10 @@ object ComposeNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -133,7 +132,7 @@ class ComposeBindings(
                         },
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)
-                        }
+                        },
                     )
                 },
                 floatingActionButton = {
@@ -187,14 +186,14 @@ class ComposeBindings(
                         paneScaffoldState = this,
                         modifier = Modifier
                             .padding(
-                                top = paddingValues.calculateTopPadding()
+                                top = paddingValues.calculateTopPadding(),
                             )
                             .imePadding(),
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

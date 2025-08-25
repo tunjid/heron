@@ -26,7 +26,6 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     @Transient
@@ -36,24 +35,26 @@ data class State(
             data = CursorQuery.Data(
                 page = 0,
                 cursorAnchor = Clock.System.now(),
-                limit = 15
-            )
-        )
+                limit = 15,
+            ),
+        ),
     ),
     @Transient
     val messages: List<String> = emptyList(),
-): TilingState<ConversationQuery, Conversation>
-
+) : TilingState<ConversationQuery, Conversation>
 
 sealed class Action(val key: String) {
 
     data class Tile(
         val tilingAction: TilingState.Action,
-    ): Action(key = "Tile")
+    ) : Action(key = "Tile")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

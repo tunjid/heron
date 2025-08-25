@@ -47,13 +47,13 @@ fun CollectionLayout(
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
     onClicked: () -> Unit,
-) = with(movableElementSharedTransitionScope){
+) = with(movableElementSharedTransitionScope) {
     Column(
         modifier = modifier
             .clickable { onClicked() }
             .padding(
                 vertical = 4.dp,
-                horizontal = 16.dp
+                horizontal = 16.dp,
             ),
     ) {
         AttributionLayout(
@@ -68,8 +68,8 @@ fun CollectionLayout(
                                 key = titleSharedElementKey(
                                     prefix = sharedElementPrefix,
                                     type = sharedElementType,
-                                )
-                            )
+                                ),
+                            ),
                         ),
                     text = title,
                     style = LocalTextStyle.current.copy(fontWeight = Bold),
@@ -81,8 +81,8 @@ fun CollectionLayout(
                                 key = subtitleSharedElementKey(
                                     prefix = sharedElementPrefix,
                                     type = sharedElementType,
-                                )
-                            )
+                                ),
+                            ),
                         ),
                     text = subtitle,
                     overflow = TextOverflow.Ellipsis,
@@ -95,7 +95,7 @@ fun CollectionLayout(
         )
         Spacer(
             modifier = Modifier
-                .height(8.dp)
+                .height(8.dp),
         )
         Text(
             text = description ?: "",
@@ -103,7 +103,7 @@ fun CollectionLayout(
         )
         Spacer(
             modifier = Modifier
-                .height(8.dp)
+                .height(8.dp),
         )
         Text(
             text = blurb ?: "",
@@ -112,7 +112,7 @@ fun CollectionLayout(
         )
         Spacer(
             modifier = Modifier
-                .height(4.dp)
+                .height(4.dp),
         )
     }
 }

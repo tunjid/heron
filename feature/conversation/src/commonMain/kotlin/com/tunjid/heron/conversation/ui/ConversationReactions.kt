@@ -55,7 +55,6 @@ import com.tunjid.heron.ui.tabIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-
 @Stable
 class EmojiPickerSheetState(
     internal val sheetState: SheetState,
@@ -112,82 +111,83 @@ fun EmojiPickerBottomSheet(
     val scope = rememberCoroutineScope()
 
     val messageToReactTo = state.messageToReactTo
-    if (messageToReactTo != null) ModalBottomSheet(
-        onDismissRequest = {
-            state.messageToReactTo = null
-        },
-        sheetState = state.sheetState,
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                // TabRow to display the categories
-                Tabs(
+    if (messageToReactTo != null) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                state.messageToReactTo = null
+            },
+            sheetState = state.sheetState,
+            content = {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    tabsState = rememberTabsState(
-                        tabs = categories.map {
-                            Tab(
-                                title = emojiCategories[it]?.firstOrNull() ?: "X",
-                                hasUpdate = false,
-                            )
-                        },
-                        selectedTabIndex = pagerState::tabIndex,
-                        onTabSelected = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(it)
-                            }
-                        },
-                        onTabReselected = { },
-                    )
-                )
-
-
-                // HorizontalPager to swipe between emoji grids
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth()
-                ) { pageIndex ->
-                    val category = categories[pageIndex]
-                    val emojis = emojiCategories[category] ?: emptyList()
-
-                    // LazyVerticalGrid to display emojis efficiently
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 48.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        items(emojis) { emoji ->
-                            IconButton(
-                                modifier = Modifier
-                                    .padding(1.dp)
-                                    .aspectRatio(1f), // Make the emoji cell square
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = when {
-                                        messageToReactTo.hasEmojiReaction(emoji) -> MaterialTheme.colorScheme.primaryContainer
-                                        else -> Color.Unspecified
-                                    },
-                                ),
-                                onClick = {
-                                    onEmojiSelected(messageToReactTo, emoji)
-                                    state.hideSheet()
-                                },
-                                content = {
-                                    Text(
-                                        text = emoji,
-                                        textAlign = TextAlign.Center,
-                                        fontSize = 24.sp,
-                                    )
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                ) {
+                    // TabRow to display the categories
+                    Tabs(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        tabsState = rememberTabsState(
+                            tabs = categories.map {
+                                Tab(
+                                    title = emojiCategories[it]?.firstOrNull() ?: "X",
+                                    hasUpdate = false,
+                                )
+                            },
+                            selectedTabIndex = pagerState::tabIndex,
+                            onTabSelected = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(it)
                                 }
-                            )
+                            },
+                            onTabReselected = { },
+                        ),
+                    )
+
+                    // HorizontalPager to swipe between emoji grids
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { pageIndex ->
+                        val category = categories[pageIndex]
+                        val emojis = emojiCategories[category] ?: emptyList()
+
+                        // LazyVerticalGrid to display emojis efficiently
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 48.dp),
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            items(emojis) { emoji ->
+                                IconButton(
+                                    modifier = Modifier
+                                        .padding(1.dp)
+                                        .aspectRatio(1f), // Make the emoji cell square
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = when {
+                                            messageToReactTo.hasEmojiReaction(emoji) -> MaterialTheme.colorScheme.primaryContainer
+                                            else -> Color.Unspecified
+                                        },
+                                    ),
+                                    onClick = {
+                                        onEmojiSelected(messageToReactTo, emoji)
+                                        state.hideSheet()
+                                    },
+                                    content = {
+                                        Text(
+                                            text = emoji,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 24.sp,
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }
-            }
-        }
-    )
+            },
+        )
+    }
 }
 
 private val emojiCategories: Map<String, List<String>> = mapOf(
@@ -199,7 +199,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🤭", "🤫", "🤥", "😶", "😶‍🌫️", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴",
         "🤤", "😪", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿",
         "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼",
-        "😽", "🙀", "😿", "😾"
+        "😽", "🙀", "😿", "😾",
     ),
 
     "🧑People & Body" to listOf(
@@ -494,7 +494,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🗣️",
         "👤",
         "👥",
-        "🫂"
+        "🫂",
     ),
 
     "🐻Animals & Nature" to listOf(
@@ -509,7 +509,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🌻", "🌼", "🌷", "🌱", "🪴", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀", "🍁", "🍂", "🍃",
         "🍄", "🪨", "🌰", "🌍", "🌎", "🌏", "🌕", "🌖", "🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🌚", "🌝",
         "🌞", "🪐", "⭐", "🌟", "🌠", "🌌", "☁️", "⛅", "⛈️", "🌤️", "🌥️", "🌦️", "🌧️", "🌨️", "🌩️", "🌪️",
-        "🌫️", "🌬️", "🌀", "🌈", "🌂", "☂️", "☔", "⛱️", "⚡", "❄️", "☃️", "⛄", "☄️", "🔥", "💧", "🌊"
+        "🌫️", "🌬️", "🌀", "🌈", "🌂", "☂️", "☔", "⛱️", "⚡", "❄️", "☃️", "⛄", "☄️", "🔥", "💧", "🌊",
     ),
 
     "🍔Food & Drink" to listOf(
@@ -521,7 +521,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🍥", "🥮", "🍡", "🥟", "🥠", "🥡", "🦀", "🦞", "🦐", "🦑", "🦪", "🍦", "🍧", "🍨", "🍩", "🍪",
         "🎂", "🍰", "🧁", "🥧", "🍫", "🍬", "🍭", "🍮", "🍯", "🍼", "🥛", "☕", "🫖", "🍵", "🍶", "🍾",
         "🍷", "🍸", "🍹", "🍺", "🍻", "🥂", "🥃", "🫗", "🥤", "🧋", "🧃", "🧉", "🧊", "🥢", "🍽️", "🍴",
-        "🥄", "🏺"
+        "🥄", "🏺",
     ),
 
     "⚽Activity" to listOf(
@@ -640,7 +640,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🎳",
         "🎮",
         "🎰",
-        "🧩"
+        "🧩",
     ),
 
     "🚀Travel & Places" to listOf(
@@ -650,7 +650,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🚀", "🛸", "🚁", "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🪝", "⛽", "🚧", "🚦", "🚥",
         "🛑", "🗺️", "🗿", "🗽", "🗼", "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️", "🏖️", "🏝️", "🏜️",
         "🌋", "⛰️", "🏔️", "🗻", "🏕️", "⛺", "🛖", "🏠", "🏡", "🏘️", "🏚️", "🏢", "🏬", "🏣", "🏤", "🏥",
-        "🏦", "🏨", "🏩", "🏪", "🏫", "🏭", "⛩️", "🕋", "🕌", "🕍", "🛕", "⛪", "🌉", "🌃", "🏙️", "🌆", "🌇", "🌉"
+        "🏦", "🏨", "🏩", "🏪", "🏫", "🏭", "⛩️", "🕋", "🕌", "🕍", "🛕", "⛪", "🌉", "🌃", "🏙️", "🌆", "🌇", "🌉",
     ),
 
     "💡Objects" to listOf(
@@ -668,7 +668,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "✂️", "✒️", "🖋️", "🖌️", "🖍️", "📝", "✏️", "🔎", "🔍", "🔏", "🔐", "🔒", "🔓", "🧥", "🥼", "🦺",
         "👚", "👕", "👖", "🩲", "🩳", "👔", "👗", "👘", "🥻", "🩱", "👙", "🩴", "🥿", "👠", "👡", "👢",
         "👞", "👟", "🥾", "🧦", "🧤", "🧣", "🎩", "🧢", "👒", "🎓", "⛑️", "🪖", "👑", "💍", "👜", "👝",
-        "👛", "💼", "🎒", "🧳", "👓", "🕶️", "🥽", "🌂", "☂️"
+        "👛", "💼", "🎒", "🧳", "👓", "🕶️", "🥽", "🌂", "☂️",
     ),
 
     "💕Symbols" to listOf(
@@ -931,7 +931,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "♣️",
         "🃏",
         "🎴",
-        "🀄"
+        "🀄",
     ),
 
     // Note: This includes all major country flags and some subdivisions/special flags.
@@ -1205,6 +1205,6 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🇿🇼",
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
         "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-        "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
-    )
+        "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    ),
 )

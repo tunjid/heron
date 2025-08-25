@@ -48,33 +48,37 @@ actual fun VideoPlayer(
     Box(modifier = modifier) {
         // Note its important the embedded Surface is removed from the composition when it is scrolled
         // off screen
-        if (state.canShowVideo) VideoSurface(
-            exoPlayer = state.player,
-            contentScale = contentScale,
-            alignment = alignment,
-            videoSize = state.videoSize,
-            shape = shape,
-            modifier = Modifier
-                .fillMaxSize()
-                .drawWithContent {
-                    graphicsLayer.record {
-                        this@drawWithContent.drawContent()
-                    }
-                    drawLayer(graphicsLayer)
-                }
+        if (state.canShowVideo) {
+            VideoSurface(
+                exoPlayer = state.player,
+                contentScale = contentScale,
+                alignment = alignment,
+                videoSize = state.videoSize,
+                shape = shape,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawWithContent {
+                        graphicsLayer.record {
+                            this@drawWithContent.drawContent()
+                        }
+                        drawLayer(graphicsLayer)
+                    },
 
-        )
-        if (state.canShowStill) VideoStill(
-            modifier = Modifier.fillMaxSize(),
-            state = state,
-        )
+            )
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
 
         // Capture a still frame from the video to use as a stand in when buffering playback
         LaunchedEffect(state.status) {
-            if (state.status is PlayerStatus.Pause
-                && state.hasRenderedFirstFrame
-                && graphicsLayer.size.height != 0
-                && graphicsLayer.size.width != 0
+            if (state.status is PlayerStatus.Pause &&
+                state.hasRenderedFirstFrame &&
+                graphicsLayer.size.height != 0 &&
+                graphicsLayer.size.width != 0
             ) {
                 state.videoStill = graphicsLayer.toImageBitmap()
             }
@@ -85,9 +89,11 @@ actual fun VideoPlayer(
         snapshotFlow { state.player?.let { it to state.status } }
             .filterNotNull()
             .collectLatest { (player, status) ->
-                if (status is PlayerStatus.Play) while (true) {
-                    state.lastPositionMs = player.currentPosition
-                    delay(100)
+                if (status is PlayerStatus.Play) {
+                    while (true) {
+                        state.lastPositionMs = player.currentPosition
+                        delay(100)
+                    }
                 }
             }
     }
@@ -109,11 +115,11 @@ private val ExoPlayerState.canShowVideo
     }
 
 private val ExoPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero
-            || !hasRenderedFirstFrame
-            || when (status) {
-        is PlayerStatus.Idle -> true
-        is PlayerStatus.Pause -> false
-        PlayerStatus.Play.Requested -> true
-        PlayerStatus.Play.Confirmed -> false
-    }
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }

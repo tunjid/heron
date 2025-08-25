@@ -116,10 +116,10 @@ import heron.feature.search.generated.resources.starter_packs
 import heron.feature.search.generated.resources.suggested_accounts
 import heron.feature.search.generated.resources.top
 import heron.feature.search.generated.resources.trending_title
+import kotlin.math.floor
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.floor
 
 @Composable
 internal fun SearchScreen(
@@ -145,14 +145,14 @@ internal fun SearchScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     Column(
-        modifier = modifier
+        modifier = modifier,
     ) {
         Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
         val pagerState = rememberPagerState { state.searchStateHolders.size }
@@ -165,9 +165,9 @@ internal fun SearchScreen(
                             avatarSharedElementKey = profileWithViewerState
                                 .profile
                                 .searchProfileAvatarSharedElementKey(),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
-                        )
-                    )
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        ),
+                    ),
                 )
             }
         }
@@ -181,7 +181,7 @@ internal fun SearchScreen(
                                 viewedProfileId = profileWithViewerState.profile.did,
                                 following = profileWithViewerState.viewerState?.following,
                                 followedBy = profileWithViewerState.viewerState?.followedBy,
-                            )
+                            ),
                         )
                     }
                 }
@@ -193,22 +193,24 @@ internal fun SearchScreen(
                         profileDestination(
                             profile = profileSearchResult.profileWithViewerState.profile,
                             avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent
-                        )
-                    )
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        ),
+                    ),
                 )
             }
         }
         val onLinkTargetClicked = remember {
             { _: SearchResult.OfPost, linkTarget: LinkTarget ->
-                if (linkTarget is LinkTarget.Navigable) actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = linkTarget.path,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        )
+                if (linkTarget is LinkTarget.Navigable) {
+                    actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = linkTarget.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            ),
+                        ),
                     )
-                )
+                }
             }
         }
         val onPostSearchResultProfileClicked = remember {
@@ -219,10 +221,10 @@ internal fun SearchScreen(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = result.post.author,
                             avatarSharedElementKey = result.post.avatarSharedElementKey(
-                                result.sharedElementPrefix
-                            )
-                        )
-                    )
+                                result.sharedElementPrefix,
+                            ),
+                        ),
+                    ),
                 )
             }
         }
@@ -233,9 +235,9 @@ internal fun SearchScreen(
                         profileDestination(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             profile = listMember.subject,
-                            avatarSharedElementKey = listMember.avatarSharedElementKey()
-                        )
-                    )
+                            avatarSharedElementKey = listMember.avatarSharedElementKey(),
+                        ),
+                    ),
                 )
             }
         }
@@ -246,8 +248,8 @@ internal fun SearchScreen(
                         pathDestination(
                             path = trend.link,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }
@@ -260,15 +262,18 @@ internal fun SearchScreen(
                             models = listOf(feedGenerator),
                             sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }
         val onTimelineUpdateClicked = remember {
             { update: Timeline.Update ->
-                if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                else actions(Action.UpdateFeedGeneratorStatus(update))
+                if (paneScaffoldState.isSignedOut) {
+                    signInPopUpState.show()
+                } else {
+                    actions(Action.UpdateFeedGeneratorStatus(update))
+                }
             }
         }
         val onPostSearchResultClicked = remember {
@@ -279,8 +284,8 @@ internal fun SearchScreen(
                             referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                             sharedElementPrefix = result.sharedElementPrefix,
                             post = result.post,
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }
@@ -288,14 +293,17 @@ internal fun SearchScreen(
             { result: SearchResult.OfPost ->
                 actions(
                     Action.Navigate.To(
-                        if (paneScaffoldState.isSignedOut) signInDestination()
-                        else composePostDestination(
-                            type = Post.Create.Reply(
-                                parent = result.post,
-                            ),
-                            sharedElementPrefix = result.sharedElementPrefix,
-                        )
-                    )
+                        if (paneScaffoldState.isSignedOut) {
+                            signInDestination()
+                        } else {
+                            composePostDestination(
+                                type = Post.Create.Reply(
+                                    parent = result.post,
+                                ),
+                                sharedElementPrefix = result.sharedElementPrefix,
+                            )
+                        },
+                    ),
                 )
             }
         }
@@ -310,15 +318,15 @@ internal fun SearchScreen(
                             sharedElementPrefix = result.sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = quotingPostUri,
                             ),
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }
         val onPostInteraction = postInteractionState::onInteraction
 
         AnimatedContent(
-            targetState = state.layout
+            targetState = state.layout,
         ) { targetLayout ->
             when (targetLayout) {
                 ScreenLayout.Suggested -> SuggestedContent(
@@ -375,8 +383,8 @@ internal fun SearchScreen(
     LifecycleStartEffect(Unit) {
         actions(
             Action.FetchSuggestedProfiles(
-                category = state.suggestedProfileCategory
-            )
+                category = state.suggestedProfileCategory,
+            ),
         )
         onStopOrDispose { }
     }
@@ -428,16 +436,18 @@ private fun SuggestedContent(
                     trend = trend,
                     onTrendClicked = onTrendClicked,
                 )
-            }
+            },
         )
-        if (suggestedProfiles.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.AccountCircle,
-                title = stringResource(Res.string.suggested_accounts),
-            )
+        if (suggestedProfiles.isNotEmpty()) {
+            item {
+                TrendTitle(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    icon = Icons.Rounded.AccountCircle,
+                    title = stringResource(Res.string.suggested_accounts),
+                )
+            }
         }
         items(
             items = suggestedProfiles.take(5),
@@ -456,16 +466,18 @@ private fun SuggestedContent(
                     onProfileClicked = { onProfileClicked(suggestedProfile) },
                     onViewerStateClicked = { onViewerStateClicked(suggestedProfile) },
                 )
-            }
+            },
         )
-        if (starterPacksWithMembers.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.JoinFull,
-                title = stringResource(Res.string.starter_packs),
-            )
+        if (starterPacksWithMembers.isNotEmpty()) {
+            item {
+                TrendTitle(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    icon = Icons.Rounded.JoinFull,
+                    title = stringResource(Res.string.starter_packs),
+                )
+            }
         }
         items(
             items = starterPacksWithMembers.take(5),
@@ -480,16 +492,18 @@ private fun SuggestedContent(
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
-            }
+            },
         )
-        if (feedGenerators.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.RssFeed,
-                title = stringResource(Res.string.discover_feeds),
-            )
+        if (feedGenerators.isNotEmpty()) {
+            item {
+                TrendTitle(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    icon = Icons.Rounded.RssFeed,
+                    title = stringResource(Res.string.discover_feeds),
+                )
+            }
         }
         items(
             items = feedGenerators.take(5),
@@ -510,13 +524,13 @@ private fun SuggestedContent(
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
                     onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
                 )
-            }
+            },
         )
         item {
             Spacer(
                 Modifier
                     .padding(WindowInsets.navigationBars.asPaddingValues())
-                    .height(UiTokens.bottomNavHeight)
+                    .height(UiTokens.bottomNavHeight),
             )
         }
     }
@@ -532,10 +546,10 @@ private fun TrendTitle(
     Column(
         modifier = modifier.padding(
             vertical = 8.dp,
-        )
+        ),
     ) {
         Row(
-            verticalAlignment = Alignment.Bottom
+            verticalAlignment = Alignment.Bottom,
         ) {
             Icon(
                 modifier = Modifier
@@ -547,13 +561,12 @@ private fun TrendTitle(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMediumEmphasized
+                style = MaterialTheme.typography.titleMediumEmphasized,
             )
         }
         Spacer(Modifier.height(8.dp))
     }
 }
-
 
 @Composable
 private fun AutoCompleteProfileSearchResults(
@@ -578,9 +591,9 @@ private fun AutoCompleteProfileSearchResults(
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     result = result,
                     onProfileClicked = onProfileClicked,
-                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) }
+                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
                 )
-            }
+            },
         )
     }
 }
@@ -603,7 +616,7 @@ private fun TabbedSearchResults(
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
     Column(
-        modifier = modifier
+        modifier = modifier,
     ) {
         val scope = rememberCoroutineScope()
         Tabs(
@@ -620,7 +633,7 @@ private fun TabbedSearchResults(
                     }
                 },
                 onTabReselected = { },
-            )
+            ),
         )
         HorizontalPager(
             modifier = Modifier
@@ -628,7 +641,7 @@ private fun TabbedSearchResults(
                     RoundedCornerShape(
                         topStart = 16.dp,
                         topEnd = 16.dp,
-                    )
+                    ),
                 ),
             state = pagerState,
             key = { page -> page },
@@ -649,7 +662,7 @@ private fun TabbedSearchResults(
                     onFeedGeneratorClicked = onFeedGeneratorClicked,
                     onTimelineUpdateClicked = onTimelineUpdateClicked,
                 )
-            }
+            },
         )
     }
 }
@@ -704,7 +717,7 @@ private fun SearchResults(
                         PostSearchResult(
                             modifier = Modifier
                                 .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(result)
+                                    state = videoStates.getOrCreateStateFor(result),
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             now = now,
@@ -716,7 +729,7 @@ private fun SearchResults(
                             onMediaClicked = onMediaClicked,
                             onPostInteraction = onPostInteraction,
                         )
-                    }
+                    },
                 )
             }
             if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
@@ -742,10 +755,10 @@ private fun SearchResults(
                         SearchState.Tile(
                             tilingAction = TilingState.Action.LoadAround(
                                 query ?: state.tilingData.currentQuery,
-                            )
-                        )
+                            ),
+                        ),
                     )
-                }
+                },
             )
         }
 
@@ -767,7 +780,7 @@ private fun SearchResults(
                             onProfileClicked = onProfileClicked,
                             onViewerStateClicked = onViewerStateClicked,
                         )
-                    }
+                    },
                 )
             }
             listState.PivotedTilingEffect(
@@ -777,10 +790,10 @@ private fun SearchResults(
                         SearchState.Tile(
                             tilingAction = TilingState.Action.LoadAround(
                                 query ?: state.tilingData.currentQuery,
-                            )
-                        )
+                            ),
+                        ),
                     )
-                }
+                },
             )
         }
 
@@ -808,7 +821,7 @@ private fun SearchResults(
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                             onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
                         )
-                    }
+                    },
                 )
             }
             listState.PivotedTilingEffect(
@@ -818,16 +831,15 @@ private fun SearchResults(
                         SearchState.Tile(
                             tilingAction = TilingState.Action.LoadAround(
                                 query ?: state.tilingData.currentQuery,
-                            )
-                        )
+                            ),
+                        ),
                     )
-                }
+                },
             )
         }
     }
 }
 
-private fun Profile.searchProfileAvatarSharedElementKey(): String =
-    "suggested-profile-${did.id}"
+private fun Profile.searchProfileAvatarSharedElementKey(): String = "suggested-profile-${did.id}"
 
 internal const val SearchFeedGeneratorSharedElementPrefix = "search-feedGenerator"

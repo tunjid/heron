@@ -48,7 +48,7 @@ class ThreadedVideoPositionStates<T>(
     fun getOrCreateStateFor(item: T): ThreadedVideoPositionState {
         val state = itemIdsToStates.getOrPut(
             key = item.id(),
-            defaultValue = ::ThreadedVideoPositionState
+            defaultValue = ::ThreadedVideoPositionState,
         )
         DisposableEffect(Unit) {
             onDispose { itemIdsToStates.remove(item.id()) }
@@ -56,17 +56,14 @@ class ThreadedVideoPositionStates<T>(
         return state
     }
 
-    fun retrieveStateFor(item: T): ThreadedVideoPositionState? =
-        itemIdsToStates[item.id()]
+    fun retrieveStateFor(item: T): ThreadedVideoPositionState? = itemIdsToStates[item.id()]
 }
 
 @Stable
 class ThreadedVideoPositionState : State {
     private var node: ThreadedVideoPositionNode? = null
 
-    override fun videoIdAt(fraction: Float): String? {
-        return node?.videoIdAt(fraction)
-    }
+    override fun videoIdAt(fraction: Float): String? = node?.videoIdAt(fraction)
 
     companion object {
 
@@ -88,8 +85,7 @@ class ThreadedVideoPositionState : State {
         private data class ThreadedVideoPositionElement(
             private val state: State,
         ) : ModifierNodeElement<ThreadedVideoPositionNode>() {
-            override fun create(): ThreadedVideoPositionNode =
-                ThreadedVideoPositionNode(state = state)
+            override fun create(): ThreadedVideoPositionNode = ThreadedVideoPositionNode(state = state)
 
             override fun update(node: ThreadedVideoPositionNode) {
                 node.state = state
@@ -102,8 +98,7 @@ class ThreadedVideoPositionState : State {
 
         private class ThreadedVideoPositionNode(
             var state: State,
-        ) :
-            Modifier.Node(),
+        ) : Modifier.Node(),
             TraversableNode,
             ThreadTraversalNode {
 
@@ -130,9 +125,10 @@ class ThreadedVideoPositionState : State {
                 }
             }
 
-            override fun videoIdAt(fraction: Float): String? =
-                if (!isAttached) null
-                else when (val currentState = state) {
+            override fun videoIdAt(fraction: Float): String? = if (!isAttached) {
+                null
+            } else {
+                when (val currentState = state) {
                     is ChildState -> currentState.videoId
                     is ThreadedVideoPositionState -> {
                         val total = requireLayoutCoordinates().size.height
@@ -144,8 +140,11 @@ class ThreadedVideoPositionState : State {
                             seen += currentNode.requireLayoutCoordinates().size.height
                             if (seen > limit) {
                                 videoId = currentNode.videoIdAt(fraction)
-                                if (videoId != null) CancelTraversal
-                                else ContinueTraversal
+                                if (videoId != null) {
+                                    CancelTraversal
+                                } else {
+                                    ContinueTraversal
+                                }
                             } else {
                                 ContinueTraversal
                             }
@@ -153,6 +152,7 @@ class ThreadedVideoPositionState : State {
                         videoId
                     }
                 }
+            }
         }
     }
 }
@@ -176,7 +176,6 @@ internal sealed interface ThreadTraversalNode : TraversableNode {
         object ThreadTraversalKey
     }
 }
-
 
 internal val Post.videoId
     get() = when (val embed = embed) {

@@ -80,8 +80,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.conversationId by mappedRoutePath(
@@ -94,11 +94,10 @@ object ConversationNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -123,7 +122,7 @@ class ConversationBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -142,7 +141,7 @@ class ConversationBindings(
                     minOffset = {
                         Offset(
                             x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx(),
                         )
                     },
                 )
@@ -176,12 +175,12 @@ class ConversationBindings(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 profile = profile,
                                                 avatarSharedElementKey = profile.conversationSharedElementKey(
-                                                    conversationId = state.id
+                                                    conversationId = state.id,
                                                 ),
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
-                                }
+                                },
                             )
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
@@ -202,8 +201,8 @@ class ConversationBindings(
                                             conversationId = state.id,
                                             text = annotatedString.text,
                                             links = annotatedString.links(),
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             }
                         },
@@ -221,8 +220,8 @@ class ConversationBindings(
                             .padding(top = paddingValues.calculateTopPadding())
                             .imePadding(),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

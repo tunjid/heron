@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 
-
 @Entity(
     tableName = "externalEmbeds",
 )
@@ -74,5 +73,5 @@ fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
     uri = uri,
     title = title,
     description = description,
-    thumb = thumb
+    thumb = thumb,
 )

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.gallery
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.repository.PostRepository
@@ -67,32 +66,33 @@ class ActualGalleryViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), GalleryStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadPostMutations(
-            route = route,
-            postRepository = postRepository,
-            profileRepository = profileRepository,
-        )
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+) : ViewModel(viewModelScope = scope),
+    GalleryStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadPostMutations(
+                route = route,
+                postRepository = postRepository,
+                profileRepository = profileRepository,
+            ),
+        ),
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadPostMutations(
     route: Route,
@@ -104,19 +104,18 @@ private fun loadPostMutations(
         .let {
             PostUri(
                 profileId = it.did,
-                postRecordKey = route.postRecordKey
+                postRecordKey = route.postRecordKey,
             )
         }
 
     emitAll(
         postRepository.post(postUri)
-            .mapToMutation { copy(post = it) }
+            .mapToMutation { copy(post = it) },
     )
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Interaction(action.interaction))
-    }
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(Writable.Interaction(action.interaction))
+}

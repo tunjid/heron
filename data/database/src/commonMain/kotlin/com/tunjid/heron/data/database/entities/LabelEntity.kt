@@ -24,7 +24,6 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "labels",
     primaryKeys = [
@@ -51,11 +50,10 @@ data class LabelEntity(
     val createdAt: Instant,
 )
 
-fun LabelEntity.asExternalModel() =
-    Label(
-        uri = uri,
-        creatorId = creatorId,
-        value = Label.Value(value),
-        version = version,
-        createdAt = createdAt,
-    )
+fun LabelEntity.asExternalModel() = Label(
+    uri = uri,
+    creatorId = creatorId,
+    value = Label.Value(value),
+    version = version,
+    createdAt = createdAt,
+)

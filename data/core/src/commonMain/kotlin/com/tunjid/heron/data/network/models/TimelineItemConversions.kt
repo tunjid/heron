@@ -66,7 +66,7 @@ internal fun FeedViewPost.feedItemEntity(
         is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
         is FeedViewPostReasonUnion.Unknown,
         null,
-            -> post.indexedAt
+        -> post.indexedAt
     },
 )
 
@@ -75,7 +75,7 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
     is ReplyRefRootUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
@@ -83,7 +83,7 @@ internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefRootUnion.postEntity() = when (val ref = this) {
@@ -130,29 +130,28 @@ internal fun ReplyRefParentUnion.postEntity() = when (val ref = this) {
     )
 }
 
-internal fun FeedViewPostReasonUnion.profileEntity() =
-    when (this) {
-        is FeedViewPostReasonUnion.ReasonRepost -> ProfileEntity(
-            did = ProfileId(value.by.did.did),
-            handle = ProfileHandle(value.by.handle.handle),
-            displayName = value.by.displayName,
-            description = null,
-            avatar = value.by.avatar?.uri?.let(::ImageUri),
-            banner = null,
-            followersCount = null,
-            followsCount = null,
-            postsCount = null,
-            joinedViaStarterPack = null,
-            indexedAt = null,
-            createdAt = value.by.createdAt,
-            associated = ProfileEntity.Associated(
-                createdListCount = value.by.associated?.lists,
-                createdFeedGeneratorCount = value.by.associated?.feedgens,
-                createdStarterPackCount = value.by.associated?.starterPacks,
-                labeler = value.by.associated?.labeler,
-                allowDms = value.by.associated?.chat?.allowIncoming?.value,
-            )
-        )
+internal fun FeedViewPostReasonUnion.profileEntity() = when (this) {
+    is FeedViewPostReasonUnion.ReasonRepost -> ProfileEntity(
+        did = ProfileId(value.by.did.did),
+        handle = ProfileHandle(value.by.handle.handle),
+        displayName = value.by.displayName,
+        description = null,
+        avatar = value.by.avatar?.uri?.let(::ImageUri),
+        banner = null,
+        followersCount = null,
+        followsCount = null,
+        postsCount = null,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = value.by.createdAt,
+        associated = ProfileEntity.Associated(
+            createdListCount = value.by.associated?.lists,
+            createdFeedGeneratorCount = value.by.associated?.feedgens,
+            createdStarterPackCount = value.by.associated?.starterPacks,
+            labeler = value.by.associated?.labeler,
+            allowDms = value.by.associated?.chat?.allowIncoming?.value,
+        ),
+    )
 
-        else -> null
-    }
+    else -> null
+}

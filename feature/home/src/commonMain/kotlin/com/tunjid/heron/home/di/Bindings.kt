@@ -95,11 +95,10 @@ object HomeNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -137,7 +136,7 @@ class HomeBindings(
                     minOffset = {
                         Offset(
                             x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx(),
                         )
                     },
                 )
@@ -167,8 +166,8 @@ class HomeBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -176,7 +175,7 @@ class HomeBindings(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.surface)
                             .height(statusBarHeight)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     )
                 },
                 floatingActionButton = {
@@ -190,7 +189,7 @@ class HomeBindings(
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 state.timelinePreferencesExpanded -> Res.string.save
                                 else -> Res.string.create_post
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -202,7 +201,7 @@ class HomeBindings(
                             viewModel.accept(
                                 when {
                                     isSignedOut -> Action.Navigate.To(
-                                        signInDestination()
+                                        signInDestination(),
                                     )
 
                                     state.timelinePreferencesExpanded -> Action.UpdateTimeline.RequestUpdate
@@ -210,11 +209,11 @@ class HomeBindings(
                                         composePostDestination(
                                             type = Post.Create.Timeline,
                                             sharedElementPrefix = null,
-                                        )
+                                        ),
                                     )
-                                }
+                                },
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -245,12 +244,12 @@ class HomeBindings(
                         modifier = Modifier
                             .padding(top = contentPadding.calculateTopPadding()),
                     )
-                }
+                },
             )
 
             topAppBarOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
                 isExpanded = state.timelinePreferencesExpanded,
             )
-        }
+        },
     )
 }

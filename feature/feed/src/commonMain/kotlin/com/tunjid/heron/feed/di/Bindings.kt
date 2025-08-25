@@ -71,12 +71,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
+        routeParams.decodeReferringRoute(),
     ),
 )
 
 private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 private val Route.feedUriSuffix by routePath()
@@ -92,7 +92,7 @@ private val RequestTrie = mapOf(
         TimelineRequest.OfFeed.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
-                .let(::FeedGeneratorUri)
+                .let(::FeedGeneratorUri),
         )
     },
 ).toRouteTrie()
@@ -106,21 +106,18 @@ object FeedNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(RouteUriPattern)
-    fun provideRouteUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RouteUriPattern,
-            routeMapper = ::createRoute
-        )
-
+    fun provideRouteUriMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RouteUriPattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -159,7 +156,7 @@ class FeedBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -193,13 +190,13 @@ class FeedBindings(
                                         ?.invoke(
                                             TimelineState.Action.UpdatePreferredPresentation(
                                                 timeline = timeline,
-                                                presentation = presentation
-                                            )
+                                                presentation = presentation,
+                                            ),
                                         )
-                                }
+                                },
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
                 content = { paddingValues ->
@@ -207,14 +204,14 @@ class FeedBindings(
                         paneScaffoldState = this,
                         modifier = Modifier
                             .padding(
-                                top = paddingValues.calculateTopPadding()
+                                top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
                         actions = viewModel.accept,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

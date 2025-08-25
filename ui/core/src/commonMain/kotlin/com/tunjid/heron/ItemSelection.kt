@@ -58,8 +58,11 @@ inline fun <T> ItemSelection(
 ) {
     var expandedItem by remember {
         mutableStateOf(
-            if (alwaysExpanded) selectedItem
-            else null
+            if (alwaysExpanded) {
+                selectedItem
+            } else {
+                null
+            },
         )
     }
     LookaheadScope {
@@ -74,39 +77,44 @@ inline fun <T> ItemSelection(
                 horizontalArrangement = Arrangement.aligned(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (availableItems.size > 1) availableItems.forEach { item ->
-                    androidx.compose.runtime.key(item.key()) {
-                        val isSelected = selectedItem == item
-                        AnimatedVisibility(
-                            modifier = Modifier.animateBounds(
-                                lookaheadScope = this@LookaheadScope,
-                            ),
-                            visible = isSelected || expandedItem != null,
-                            enter = fadeIn() + scaleIn(),
-                            exit = fadeOut() + scaleOut(),
-                        ) {
-                            IconButton(
-                                modifier = Modifier
-                                    .size(40.dp),
-                                onClick = {
-                                    when (expandedItem) {
-                                        null -> expandedItem = item
-                                        item -> if (!alwaysExpanded) expandedItem = null
-                                        else -> onItemSelected(item)
-                                    }
-                                },
-                                content = {
-                                    Icon(
-                                        imageVector = item.icon(),
-                                        contentDescription = org.jetbrains.compose.resources.stringResource(
-                                            item.stringResource()
-                                        ),
-                                        tint =
-                                            if (item == selectedItem) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface
-                                    )
-                                },
-                            )
+                if (availableItems.size > 1) {
+                    availableItems.forEach { item ->
+                        androidx.compose.runtime.key(item.key()) {
+                            val isSelected = selectedItem == item
+                            AnimatedVisibility(
+                                modifier = Modifier.animateBounds(
+                                    lookaheadScope = this@LookaheadScope,
+                                ),
+                                visible = isSelected || expandedItem != null,
+                                enter = fadeIn() + scaleIn(),
+                                exit = fadeOut() + scaleOut(),
+                            ) {
+                                IconButton(
+                                    modifier = Modifier
+                                        .size(40.dp),
+                                    onClick = {
+                                        when (expandedItem) {
+                                            null -> expandedItem = item
+                                            item -> if (!alwaysExpanded) expandedItem = null
+                                            else -> onItemSelected(item)
+                                        }
+                                    },
+                                    content = {
+                                        Icon(
+                                            imageVector = item.icon(),
+                                            contentDescription = org.jetbrains.compose.resources.stringResource(
+                                                item.stringResource(),
+                                            ),
+                                            tint =
+                                            if (item == selectedItem) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }

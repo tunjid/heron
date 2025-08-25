@@ -24,7 +24,6 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.Accumulate
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
 
-
 @Composable
 fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
     val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
@@ -33,7 +32,7 @@ fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConne
         maxOffset = maxOffset@{
             Offset(
                 x = 0f,
-                y = (navigationBarHeight + UiTokens.bottomNavHeight).toPx()
+                y = (navigationBarHeight + UiTokens.bottomNavHeight).toPx(),
             )
         },
         minOffset = { Offset.Zero },

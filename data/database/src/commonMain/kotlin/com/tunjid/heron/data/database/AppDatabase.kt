@@ -117,7 +117,7 @@ import kotlinx.coroutines.IO
         AutoMigration(
             from = 6,
             to = 7,
-            spec = PostViewerStatisticsAutoMigration::class
+            spec = PostViewerStatisticsAutoMigration::class,
         ),
         // Migration 5 - 6 is a manual migration
         // postLikes and postReposts
@@ -183,17 +183,16 @@ fun interface TransactionWriter {
     suspend fun inTransaction(block: suspend () -> Unit)
 }
 
-fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
-    fallbackToDestructiveMigrationOnDowngrade(
-        dropAllTables = true,
+fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() = fallbackToDestructiveMigrationOnDowngrade(
+    dropAllTables = true,
+)
+    .addMigrations(
+        NonNullPostUriAndAuthorMigration,
+        FeedAndListsCreatedAtAutoMigration,
+        Migration17To18TimelineViewer,
+        Migration18To19PostViewerStatistics,
+        Migration19To20UriPrimaryKeys,
     )
-        .addMigrations(
-            NonNullPostUriAndAuthorMigration,
-            FeedAndListsCreatedAtAutoMigration,
-            Migration17To18TimelineViewer,
-            Migration18To19PostViewerStatistics,
-            Migration19To20UriPrimaryKeys,
-        )
-        .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(Dispatchers.IO)
-        .build()
+    .setDriver(BundledSQLiteDriver())
+    .setQueryCoroutineContext(Dispatchers.IO)
+    .build()

@@ -54,11 +54,10 @@ object SplashNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -92,6 +91,6 @@ class SplashBindings(
                 paneMovableElementSharedTransitionScope = rememberThreePaneMovableElementSharedTransitionScope(),
                 modifier = Modifier,
             )
-        }
+        },
     )
 }

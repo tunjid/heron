@@ -23,15 +23,11 @@ import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterShortStyle
 
 @Composable
-actual fun Instant.formatDate(): String {
-    return NSDateFormatter()
-        .apply { dateStyle = NSDateFormatterShortStyle }
-        .stringFromDate(toNSDate())
-}
+actual fun Instant.formatDate(): String = NSDateFormatter()
+    .apply { dateStyle = NSDateFormatterShortStyle }
+    .stringFromDate(toNSDate())
 
 @Composable
-actual fun Instant.formatTime(): String {
-    return NSDateFormatter()
-        .apply { timeStyle = NSDateFormatterShortStyle }
-        .stringFromDate(toNSDate())
-}
+actual fun Instant.formatTime(): String = NSDateFormatter()
+    .apply { timeStyle = NSDateFormatterShortStyle }
+    .stringFromDate(toNSDate())

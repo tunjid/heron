@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.data.core.types
 
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
+import kotlinx.serialization.Serializable
 
 @Serializable
 @JvmInline

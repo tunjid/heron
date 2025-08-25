@@ -27,7 +27,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "profiles",
 )
@@ -69,12 +68,13 @@ fun ProfileEntity.partial() = ProfileEntity.Partial(
     did = did,
     handle = handle,
     displayName = displayName,
-    avatar = avatar
+    avatar = avatar,
 )
 
-fun ProfileEntity?.asExternalModel() =
-    if (this == null) emptyProfile()
-    else Profile(
+fun ProfileEntity?.asExternalModel() = if (this == null) {
+    emptyProfile()
+} else {
+    Profile(
         did = did,
         handle = handle,
         displayName = displayName,
@@ -93,6 +93,7 @@ fun ProfileEntity?.asExternalModel() =
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
         ),
     )
+}
 
 data class PopulatedProfileEntity(
     @Embedded

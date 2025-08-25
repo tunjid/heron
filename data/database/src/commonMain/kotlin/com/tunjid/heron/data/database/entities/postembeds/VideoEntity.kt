@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 
-
 @Entity(
     tableName = "videos",
 )

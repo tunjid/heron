@@ -53,19 +53,21 @@ internal fun PostImages(
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
-
     val shape = animateDpAsState(
         when (presentation) {
             Timeline.Presentation.Text.WithEmbed -> 16.dp
             Timeline.Presentation.Media.Condensed -> 8.dp
             Timeline.Presentation.Media.Expanded -> 0.dp
-        }
+        },
     ).value
         .let(::RoundedCornerShape)
         .toRoundedPolygonShape()
 
-    val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
-    else Modifier
+    val itemModifier = if (isBlurred) {
+        Modifier.sensitiveContentBlur(shape)
+    } else {
+        Modifier
+    }
 
     LazyRow(
         modifier = Modifier
@@ -80,18 +82,20 @@ internal fun PostImages(
                 paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
                     modifier = when (presentation) {
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
-                            1 -> itemModifier
-                                .fillParentMaxWidth()
-                                .aspectRatio(image.aspectRatioOrSquare)
+                            1 ->
+                                itemModifier
+                                    .fillParentMaxWidth()
+                                    .aspectRatio(image.aspectRatioOrSquare)
 
-                            else -> itemModifier
-                                .height(200.dp)
-                                .aspectRatio(image.aspectRatioOrSquare)
+                            else ->
+                                itemModifier
+                                    .height(200.dp)
+                                    .aspectRatio(image.aspectRatioOrSquare)
                         }
 
                         Timeline.Presentation.Media.Condensed,
                         Timeline.Presentation.Media.Expanded,
-                            -> itemModifier
+                        -> itemModifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
                     }
@@ -101,15 +105,18 @@ internal fun PostImages(
                             key = image.sharedElementKey(
                                 prefix = sharedElementPrefix,
                                 postUri = postUri,
-                            )
+                            ),
                         )
                     },
                     state = ImageArgs(
                         url = image.thumb.uri,
                         contentDescription = image.alt,
                         contentScale =
-                            if (presentation == Timeline.Presentation.Media.Expanded)
-                                ContentScale.Crop else ContentScale.Fit,
+                        if (presentation == Timeline.Presentation.Media.Expanded) {
+                            ContentScale.Crop
+                        } else {
+                            ContentScale.Fit
+                        },
                         shape = shape,
                     ),
                     sharedElement = { state, innerModifier ->
@@ -117,9 +124,9 @@ internal fun PostImages(
                             modifier = innerModifier,
                             args = state,
                         )
-                    }
+                    },
                 )
-            }
+            },
         )
     }
 }

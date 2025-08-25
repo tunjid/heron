@@ -86,9 +86,9 @@ import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @Composable
 internal fun GalleryScreen(
@@ -115,22 +115,22 @@ internal fun GalleryScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = state.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .clickable(
-                onClick = playerControlsUiState::toggleVisibility
-            )
+                onClick = playerControlsUiState::toggleVisibility,
+            ),
     ) {
         val updatedItems by rememberUpdatedState(state.items)
         val pagerState = rememberPagerState(
-            initialPage = state.startIndex
+            initialPage = state.startIndex,
         ) {
             updatedItems.size
         }
@@ -147,7 +147,7 @@ internal fun GalleryScreen(
                         .fillMaxSize()
                         .onSizeChanged {
                             windowSize = it
-                        }
+                        },
                 ) {
                     when (val item = updatedItems[page]) {
                         is GalleryItem.Photo -> {
@@ -167,7 +167,7 @@ internal fun GalleryScreen(
                                             coroutineScope.launch {
                                                 zoomState.toggleZoom()
                                             }
-                                        }
+                                        },
                                     ),
                                 scaffoldState = paneScaffoldState,
                                 item = item,
@@ -190,7 +190,7 @@ internal fun GalleryScreen(
                         )
                     }
                 }
-            }
+            },
         )
 
         videoPlayerController.VideoOverlay(
@@ -218,9 +218,9 @@ internal fun GalleryScreen(
                                 avatarSharedElementKey = post.avatarSharedElementKey(
                                     prefix = state.sharedElementPrefix,
                                 ),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current
-                            )
-                        )
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
                     )
                 },
             )
@@ -234,14 +234,17 @@ internal fun GalleryScreen(
                 onReplyToPost = { post ->
                     actions(
                         Action.Navigate.To(
-                            if (paneScaffoldState.isSignedOut) signInDestination()
-                            else composePostDestination(
-                                type = Post.Create.Reply(
-                                    parent = post,
-                                ),
-                                sharedElementPrefix = state.sharedElementPrefix,
-                            )
-                        )
+                            if (paneScaffoldState.isSignedOut) {
+                                signInDestination()
+                            } else {
+                                composePostDestination(
+                                    type = Post.Create.Reply(
+                                        parent = post,
+                                    ),
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                )
+                            },
+                        ),
                     )
                 },
                 onPostInteraction = postInteractionState::onInteraction,
@@ -253,7 +256,7 @@ internal fun GalleryScreen(
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 VideoText(
                     post = state.post,
@@ -262,14 +265,16 @@ internal fun GalleryScreen(
                         .padding(horizontal = 16.dp),
                     onClick = {},
                     onLinkTargetClicked = { _, target ->
-                        if (target is LinkTarget.Navigable) actions(
-                            Action.Navigate.To(
-                                pathDestination(
-                                    path = target.path,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                )
+                        if (target is LinkTarget.Navigable) {
+                            actions(
+                                Action.Navigate.To(
+                                    pathDestination(
+                                        path = target.path,
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    ),
+                                ),
                             )
-                        )
+                        }
                     },
                 )
                 PlaybackStatus(
@@ -297,10 +302,10 @@ internal fun GalleryScreen(
                     null -> Unit
                     is GalleryItem.Photo -> Unit
                     is GalleryItem.Video -> videoPlayerController.play(
-                        media.video.playlist.uri
+                        media.video.playlist.uri,
                     )
                 }
-            }
+            },
         )
 
         playerControlsUiState.ControlsVisibilityEffect()
@@ -323,7 +328,7 @@ private fun GalleryImage(
                 key = item.image.sharedElementKey(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
-                )
+                ),
             )
         },
         state = remember(item.image) {
@@ -340,7 +345,7 @@ private fun GalleryImage(
                 modifier = innerModifier,
                 args = args,
             )
-        }
+        },
     )
 }
 
@@ -358,34 +363,37 @@ private fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
-        modifier = modifier,
-        state = videoPlayerState,
-    )
-    else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
-        modifier = modifier,
-        sharedContentState = with(paneMovableElementSharedTransitionScope) {
-            rememberSharedContentState(
-                key = item.video.sharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                ),
-            )
-        },
-        state = videoPlayerState,
-        alternateOutgoingSharedElement = { state, innerModifier ->
-            VideoStill(
-                modifier = innerModifier,
-                state = state,
-            )
-        },
-        sharedElement = { state, innerModifier ->
-            VideoPlayer(
-                modifier = innerModifier,
-                state = state,
-            )
-        }
-    )
+    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) {
+        VideoStill(
+            modifier = modifier,
+            state = videoPlayerState,
+        )
+    } else {
+        paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+            modifier = modifier,
+            sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                rememberSharedContentState(
+                    key = item.video.sharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postUri = postUri,
+                    ),
+                )
+            },
+            state = videoPlayerState,
+            alternateOutgoingSharedElement = { state, innerModifier ->
+                VideoStill(
+                    modifier = innerModifier,
+                    state = state,
+                )
+            },
+            sharedElement = { state, innerModifier ->
+                VideoPlayer(
+                    modifier = innerModifier,
+                    state = state,
+                )
+            },
+        )
+    }
 }
 
 private fun Modifier.aspectRatioFor(
@@ -398,7 +406,7 @@ private fun Modifier.aspectRatioFor(
         .fillMaxSize()
         .aspectRatio(
             ratio = aspectRatio.aspectRatioOrSquare,
-            matchHeightConstraintsFirst = isWiderAspectRatioThanMedia
+            matchHeightConstraintsFirst = isWiderAspectRatioThanMedia,
         )
 }
 
@@ -414,21 +422,23 @@ fun VideoPlayerController.VideoOverlay(
         is GalleryItem.Photo -> Unit
         is GalleryItem.Video -> {
             val videoPlayerState = getVideoStateById(
-                videoId = galleryItem.video.playlist.uri
+                videoId = galleryItem.video.playlist.uri,
             )
 
-            if (videoPlayerState != null) AnimatedVisibility(
-                modifier = modifier,
-                visible = isVisible,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = Color.Black.copy(alpha = 0.8f)),
-                    content = {
-                        content(videoPlayerState)
-                    },
-                )
+            if (videoPlayerState != null) {
+                AnimatedVisibility(
+                    modifier = modifier,
+                    visible = isVisible,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = Color.Black.copy(alpha = 0.8f)),
+                        content = {
+                            content(videoPlayerState)
+                        },
+                    )
+                }
             }
         }
     }
@@ -457,7 +467,6 @@ fun VideoPoster(
             onProfileClicked(post)
         },
         onViewerStateClicked = {
-
         },
     )
 }

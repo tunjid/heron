@@ -81,43 +81,46 @@ fun SuggestedStarterPack(
                     overlap = AvatarOverlap,
                     maxItems = MaxAvatars,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     val count = MaxAvatars - 1
-                    if (starterPackWithMembers.members.isEmpty()) (0..<count).forEach { index ->
-                        Surface(
-                            modifier = Modifier
-                                .zIndex((MaxAvatars - index).toFloat())
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                            shape = CircleShape
-                        ) { }
-                    }
-                    else starterPackWithMembers.members.take(count)
-                        .forEachIndexed { index, listMember ->
-                            updatedMovableStickySharedElementOf(
+                    if (starterPackWithMembers.members.isEmpty()) {
+                        (0..<count).forEach { index ->
+                            Surface(
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clickable { onListMemberClicked(listMember) },
-                                sharedContentState = with(movableElementSharedTransitionScope) {
-                                    rememberSharedContentState(
-                                        key = listMember.avatarSharedElementKey(),
-                                    )
-                                },
-                                state = remember(listMember.subject.avatar) {
-                                    ImageArgs(
-                                        url = listMember.subject.avatar?.uri,
-                                        contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
-                                    )
-                                },
-                                sharedElement = { state, modifier ->
-                                    AsyncImage(state, modifier)
-                                }
-                            )
+                                    .aspectRatio(1f),
+                                shape = CircleShape,
+                            ) { }
                         }
+                    } else {
+                        starterPackWithMembers.members.take(count)
+                            .forEachIndexed { index, listMember ->
+                                updatedMovableStickySharedElementOf(
+                                    modifier = Modifier
+                                        .zIndex((MaxAvatars - index).toFloat())
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .clickable { onListMemberClicked(listMember) },
+                                    sharedContentState = with(movableElementSharedTransitionScope) {
+                                        rememberSharedContentState(
+                                            key = listMember.avatarSharedElementKey(),
+                                        )
+                                    },
+                                    state = remember(listMember.subject.avatar) {
+                                        ImageArgs(
+                                            url = listMember.subject.avatar?.uri,
+                                            contentScale = ContentScale.Crop,
+                                            shape = RoundedPolygonShape.Circle,
+                                        )
+                                    },
+                                    sharedElement = { state, modifier ->
+                                        AsyncImage(state, modifier)
+                                    },
+                                )
+                            }
+                    }
                     starterPackWithMembers.starterPack.list?.listItemCount?.let { joined ->
                         val itemsLeft = joined - starterPackWithMembers.members.size
                         Box(
@@ -143,17 +146,17 @@ fun SuggestedStarterPack(
                 }
                 Spacer(
                     modifier = Modifier
-                        .height(8.dp)
+                        .height(8.dp),
                 )
                 Text(
-                    text = starterPackWithMembers.starterPack.name
+                    text = starterPackWithMembers.starterPack.name,
                 )
                 Text(
                     text = stringResource(
                         Res.string.by_creator,
                         remember(starterPackWithMembers.starterPack.creator.handle) {
                             starterPackWithMembers.starterPack.creator.handle.id
-                        }
+                        },
                     ),
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
@@ -161,12 +164,11 @@ fun SuggestedStarterPack(
                     color = MaterialTheme.colorScheme.outline,
                 )
             }
-        }
+        },
     )
 }
 
-internal fun ListMember.avatarSharedElementKey(): String =
-    "suggested-list-member-${subject.did.id}"
+internal fun ListMember.avatarSharedElementKey(): String = "suggested-list-member-${subject.did.id}"
 
 private fun profilesLeftInStarterPack(itemsLeft: Long) = "+${format(itemsLeft)}"
 

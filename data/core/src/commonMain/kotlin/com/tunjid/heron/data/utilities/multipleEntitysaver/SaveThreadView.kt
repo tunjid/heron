@@ -40,7 +40,7 @@ internal fun MultipleEntitySaver.add(
             is ThreadViewPostParentUnion.NotFoundPost,
             is ThreadViewPostParentUnion.Unknown,
             null,
-                -> null
+            -> null
         }
     }
         .windowed(
@@ -48,16 +48,19 @@ internal fun MultipleEntitySaver.add(
             step = 1,
         )
         .forEach { window ->
-            if (window.size == 1) addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = null,
-                parentPost = window[0],
-            )
-            else addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = window[0],
-                parentPost = window[1],
-            )
+            if (window.size == 1) {
+                addThreadParent(
+                    viewingProfileId = viewingProfileId,
+                    childPost = null,
+                    parentPost = window[0],
+                )
+            } else {
+                addThreadParent(
+                    viewingProfileId = viewingProfileId,
+                    childPost = window[0],
+                    parentPost = window[1],
+                )
+            }
         }
 
     threadViewPost.replies
@@ -81,12 +84,14 @@ private fun MultipleEntitySaver.addThreadParent(
         viewingProfileId = viewingProfileId,
         postView = parentPost.post,
     )
-    if (childPost is ThreadViewPost) add(
-        PostThreadEntity(
-            postUri = childPost.post.uri.atUri.let(::PostUri),
-            parentPostUri = parentPost.post.uri.atUri.let(::PostUri),
+    if (childPost is ThreadViewPost) {
+        add(
+            PostThreadEntity(
+                postUri = childPost.post.uri.atUri.let(::PostUri),
+                parentPostUri = parentPost.post.uri.atUri.let(::PostUri),
+            ),
         )
-    )
+    }
     parentPost.replies
         // TODO: Deal with deleted, blocked or removed posts
         .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
@@ -112,7 +117,7 @@ private fun MultipleEntitySaver.addThreadReply(
         PostThreadEntity(
             postUri = reply.post.uri.atUri.let(::PostUri),
             parentPostUri = parent.post.uri.atUri.let(::PostUri),
-        )
+        ),
     )
     reply.replies
         // TODO: Deal with deleted, blocked or removed posts

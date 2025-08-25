@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-
 import ext.libs
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -22,7 +21,6 @@ fun org.gradle.api.Project.configureUiModule(
     extension: KotlinMultiplatformExtension,
 ) = extension.apply {
     sourceSets.apply {
-
         named("commonMain") {
             dependencies {
                 implementation(project(":data:models"))

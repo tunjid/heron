@@ -121,6 +121,4 @@ fun FeedThreadItem(
     }
 }
 
-fun Post.hasInteractions(): Boolean {
-    return replyCount > 0 || repostCount > 0 || likeCount > 0
-}
+fun Post.hasInteractions(): Boolean = replyCount > 0 || repostCount > 0 || likeCount > 0

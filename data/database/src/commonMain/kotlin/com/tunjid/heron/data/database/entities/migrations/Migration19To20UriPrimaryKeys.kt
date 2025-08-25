@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.models.Constants
 
 internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
     override fun migrate(connection: SQLiteConnection) {
-
         // Add Unknown user to the db
         connection.execSQL(
             """
@@ -65,7 +64,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 NULL, 
                 NULL
            );
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         // Migrate posts
@@ -89,7 +88,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                         ON UPDATE NO ACTION 
                         ON DELETE CASCADE
                 )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -120,7 +119,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     createdAt 
                 FROM posts
                 WHERE cid in (SELECT MAX(cid) FROM posts GROUP BY uri)
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE posts")
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
@@ -149,7 +148,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
             )
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -178,7 +177,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 createdAt
             FROM lists
             WHERE cid in (SELECT MAX(cid) FROM lists GROUP BY uri)
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE lists")
         connection.execSQL("ALTER TABLE lists_new RENAME TO lists")
@@ -211,7 +210,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
             )
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -244,7 +243,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 createdAt
             FROM feedGenerators
             WHERE cid in (SELECT MAX(cid) FROM feedGenerators GROUP BY uri)
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE feedGenerators")
         connection.execSQL("ALTER TABLE feedGenerators_new RENAME TO feedGenerators")
@@ -275,7 +274,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
             )
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -304,7 +303,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 createdAt
             FROM starterPacks
             WHERE cid in (SELECT MAX(cid) FROM starterPacks GROUP BY uri)
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE starterPacks")
         connection.execSQL("ALTER TABLE starterPacks_new RENAME TO starterPacks")
@@ -337,7 +336,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     ON UPDATE NO ACTION 
                     ON DELETE CASCADE
             )
-        """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE notifications")
         connection.execSQL("ALTER TABLE notifications_new RENAME TO notifications")
@@ -347,9 +346,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL("CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);")
         connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
 
-
         // Migrate join tables
-
 
         // Migrate postLikes
         connection.execSQL(
@@ -369,7 +366,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postLikes")
@@ -398,7 +395,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postReposts")
@@ -424,7 +421,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postThreads")
@@ -432,7 +429,6 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
 
         connection.execSQL("CREATE INDEX `index_postThreads_parentPostUri` ON postThreads (`parentPostUri`);")
         connection.execSQL("CREATE INDEX `index_postThreads_postUri` ON postThreads (`postUri`);")
-
 
         // Migrate timelineItems
         connection.execSQL(
@@ -467,7 +463,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE   
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE timelineItems")
@@ -497,7 +493,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postPosts")
@@ -528,7 +524,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postViewerStatistics")
@@ -553,7 +549,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postAuthors")
@@ -578,7 +574,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postImages")
@@ -603,7 +599,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postExternalEmbeds")
@@ -628,7 +624,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE postVideos")
@@ -653,7 +649,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE messagePosts")
@@ -678,7 +674,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE messageLists")
@@ -703,7 +699,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE messageStarterPacks")
@@ -728,7 +724,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                      ON UPDATE NO ACTION
                      ON DELETE CASCADE
              )
-             """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL("DROP TABLE messageFeedGenerators")

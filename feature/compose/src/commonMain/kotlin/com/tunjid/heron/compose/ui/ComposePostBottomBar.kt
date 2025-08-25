@@ -51,7 +51,6 @@ import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlin.math.max
-
 import kotlin.math.min
 
 @Composable
@@ -74,8 +73,8 @@ internal fun ComposePostBottomBar(
                 maxItems = max(
                     a = 0,
                     b = PhotoUploadLimit - photos.size,
-                ).takeUnless(0::equals)
-            )
+                ).takeUnless(0::equals),
+            ),
         ) { images ->
             images
                 ?.let(Action.EditMedia::AddPhotos)
@@ -84,7 +83,7 @@ internal fun ComposePostBottomBar(
 
         val videoPickerLauncher = rememberFilePickerLauncher(
             type = FileKitType.Video,
-            mode = FileKitMode.Single
+            mode = FileKitMode.Single,
         ) { video ->
             video
                 ?.let(Action.EditMedia::AddVideo)
@@ -110,16 +109,16 @@ internal fun ComposePostBottomBar(
                             },
                         imageVector = imageVector,
                         contentDescription = null,
-                        tint = FloatingActionButtonDefaults.containerColor
+                        tint = FloatingActionButtonDefaults.containerColor,
                     )
-                }
+                },
             )
         }
         Spacer(Modifier.weight(1f))
         PostTextLimit(
             modifier = Modifier
                 .padding(horizontal = 8.dp),
-            postText = postText
+            postText = postText,
         )
     }
 }
@@ -157,7 +156,7 @@ fun PostTextLimit(
                 start = MaterialTheme.colorScheme.primary,
                 stop = Color.Red,
                 fraction = easing.transform(progress),
-            )
+            ),
         )
     }
 }

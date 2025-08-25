@@ -31,7 +31,6 @@ data class Trend(
     val actors: List<Profile>,
 ) {
     enum class Status {
-        Hot
+        Hot,
     }
 }
-

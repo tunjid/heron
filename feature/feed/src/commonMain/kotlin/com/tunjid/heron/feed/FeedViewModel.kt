@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.feed
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -71,33 +70,34 @@ class ActualFeedViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), FeedStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    actionTransform = transform@{ actions ->
-        merge(
-            timelineStateHolderMutations(
-                request = route.timelineRequest,
-                scope = scope,
-                timelineRepository = timelineRepository,
-                profileRepository = profileRepository,
-            ),
-            actions.toMutationStream(
-                keySelector = Action::key
-            ) {
-                when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
+) : ViewModel(viewModelScope = scope),
+    FeedStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        actionTransform = transform@{ actions ->
+            merge(
+                timelineStateHolderMutations(
+                    request = route.timelineRequest,
+                    scope = scope,
+                    timelineRepository = timelineRepository,
+                    profileRepository = profileRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions
-                    )
-                }
-            }
-        )
-    }
-)
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+            )
+        },
+    )
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfFeed,
@@ -106,15 +106,17 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> = flow {
     val existingHolder = state().timelineStateHolder
-    if (existingHolder != null) return@flow emitAll(
-        merge(
-            existingHolder.state.mapToMutation { copy(timelineState = it) },
-            timelineCreatorMutations(
-                timeline = existingHolder.state.value.timeline,
-                profileRepository = profileRepository,
-            )
+    if (existingHolder != null) {
+        return@flow emitAll(
+            merge(
+                existingHolder.state.mapToMutation { copy(timelineState = it) },
+                timelineCreatorMutations(
+                    timeline = existingHolder.state.value.timeline,
+                    profileRepository = profileRepository,
+                ),
+            ),
         )
-    )
+    }
 
     val timeline = timelineRepository.timeline(request)
         .first()
@@ -133,35 +135,33 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
             timelineCreatorMutations(
                 timeline = timeline,
                 profileRepository = profileRepository,
-            )
-        )
+            ),
+        ),
     )
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Interaction(action.interaction))
-    }
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(Writable.Interaction(action.interaction))
+}
 
 private fun timelineCreatorMutations(
     timeline: Timeline,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    when (timeline) {
-        is Timeline.Home.Feed -> profileRepository.profile(
-            profileId = timeline.feedGenerator.creator.did
-        )
+): Flow<Mutation<State>> = when (timeline) {
+    is Timeline.Home.Feed -> profileRepository.profile(
+        profileId = timeline.feedGenerator.creator.did,
+    )
 
-        is Timeline.Home.Following -> emptyFlow()
-        is Timeline.Home.List -> profileRepository.profile(
-            profileId = timeline.feedList.creator.did
-        )
+    is Timeline.Home.Following -> emptyFlow()
+    is Timeline.Home.List -> profileRepository.profile(
+        profileId = timeline.feedList.creator.did,
+    )
 
-        is Timeline.Profile -> emptyFlow()
-        is Timeline.StarterPack -> emptyFlow()
+    is Timeline.Profile -> emptyFlow()
+    is Timeline.StarterPack -> emptyFlow()
+}
+    .mapToMutation {
+        copy(creator = it)
     }
-        .mapToMutation {
-            copy(creator = it)
-        }

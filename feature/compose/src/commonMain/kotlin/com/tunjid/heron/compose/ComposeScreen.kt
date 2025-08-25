@@ -70,10 +70,10 @@ import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 @Composable
 internal fun ComposeScreen(
@@ -86,13 +86,13 @@ internal fun ComposeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
+            .verticalScroll(scrollState),
     ) {
         val postText = state.postText
         ReplyingTo(
             paneMovableElementSharedTransitionScope = paneScaffoldState,
             type = state.postType,
-            sharedElementPrefix = state.sharedElementPrefix
+            sharedElementPrefix = state.sharedElementPrefix,
         )
         Post(
             signedInProfile = state.signedInProfile,
@@ -111,9 +111,9 @@ internal fun ComposeScreen(
                         text = postText.text,
                         links = postText.annotatedString.links(),
                         media = state.video?.let(::listOf) ?: state.photos,
-                    )
+                    ),
                 )
-            }
+            },
         )
         MediaUploadItems(
             modifier = Modifier
@@ -126,11 +126,11 @@ internal fun ComposeScreen(
             },
             onMediaItemUpdated = { item ->
                 actions(Action.EditMedia.UpdateMedia(item))
-            }
+            },
         )
         Spacer(
             modifier = Modifier
-                .height(56.dp)
+                .height(56.dp),
         )
 
         LaunchedEffect(Unit) {
@@ -156,7 +156,7 @@ private fun Post(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = spacedBy(8.dp)
+        verticalArrangement = spacedBy(8.dp),
     ) {
         AuthorAndPost(
             modifier = modifier,
@@ -181,7 +181,7 @@ private fun Post(
                     onPostTextChanged = onPostTextChanged,
                     onCreatePost = onCreatePost@{
                         onCreatePost()
-                    }
+                    },
                 )
             },
         )
@@ -189,7 +189,7 @@ private fun Post(
         val isBlurred = remember(
             key1 = quotedPost,
             key2 = labelers,
-            key3 = labelPreferences
+            key3 = labelPreferences,
         ) {
             val visibilitiesToDefinitions = quotedPost?.labelVisibilitiesToDefinitions(
                 labelers = labelers,
@@ -197,20 +197,22 @@ private fun Post(
             ) ?: emptyMap()
             visibilitiesToDefinitions.blurredMediaDefinitions.isNotEmpty()
         }
-        if (quotedPost != null) QuotedPost(
-            modifier = Modifier.padding(
-                horizontal = 24.dp,
-            ),
-            now = remember { Clock.System.now() },
-            quotedPost = quotedPost,
-            sharedElementPrefix = NeverMatchedSharedElementPrefix,
-            isBlurred = isBlurred,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            onClick = {},
-            onLinkTargetClicked = { _, _ -> },
-            onProfileClicked = { _, _ -> },
-            onPostMediaClicked = { _, _, _ -> },
-        )
+        if (quotedPost != null) {
+            QuotedPost(
+                modifier = Modifier.padding(
+                    horizontal = 24.dp,
+                ),
+                now = remember { Clock.System.now() },
+                quotedPost = quotedPost,
+                sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                isBlurred = isBlurred,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                onClick = {},
+                onLinkTargetClicked = { _, _ -> },
+                onProfileClicked = { _, _ -> },
+                onPostMediaClicked = { _, _, _ -> },
+            )
+        }
     }
 }
 
@@ -246,7 +248,7 @@ private fun ReplyingTo(
                     },
                     sharedElement = { state, modifier ->
                         AsyncImage(state, modifier)
-                    }
+                    },
                 )
             },
             postContent = {
@@ -257,7 +259,7 @@ private fun ReplyingTo(
                     )
                     Text(text = type.parent.record?.text ?: "")
                 }
-            }
+            },
         )
 
         Post.Create.Timeline -> Unit
@@ -304,10 +306,9 @@ private fun PostComposition(
                         text = it.text,
                         textLinks = it.annotatedString.links(),
                         onLinkTargetClicked = {
-
-                        }
-                    )
-                )
+                        },
+                    ),
+                ),
             )
         },
         onTextLayout = {
@@ -318,7 +319,7 @@ private fun PostComposition(
         },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = LocalContentColor.current
+            color = LocalContentColor.current,
         ),
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Send,

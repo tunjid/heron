@@ -76,7 +76,6 @@ internal fun SearchBar(
                             .clip(CircleShape)
                             .clickable {
                                 onQueryChanged("")
-
                             },
                         imageVector = Icons.Rounded.Cancel,
                         contentDescription = stringResource(Res.string.clear_search),
@@ -101,7 +100,7 @@ internal fun SearchBar(
         ) {
             Text(
                 text = stringResource(Res.string.search),
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.labelLarge,
             )
         }
     }

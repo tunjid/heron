@@ -32,7 +32,7 @@ internal fun MultipleEntitySaver.add(
             authorId = like.actor.did.did.let(::ProfileId),
             createdAt = like.createdAt,
             indexedAt = like.indexedAt,
-        )
+        ),
     )
     add(
         viewingProfileId = viewingProfileId,

@@ -34,25 +34,23 @@ class AndroidPlatform : Platform {
 
 actual fun getPlatform(): Platform = AndroidPlatform()
 
-fun createAppState(context: Context): AppState =
-    createAppState(
-        videoPlayerController = { appScope ->
-            ExoplayerController(
-                context = context,
-                scope = appScope,
-                diffingDispatcher = Dispatchers.Default,
-            )
-        },
-        args = { appScope ->
-            DataBindingArgs(
-                appScope = appScope,
-                connectivity = Connectivity(),
-                savedStatePath = context.savedStatePath(),
-                savedStateFileSystem = FileSystem.SYSTEM,
-                databaseBuilder = getDatabaseBuilder(context),
-            )
-        },
-    )
+fun createAppState(context: Context): AppState = createAppState(
+    videoPlayerController = { appScope ->
+        ExoplayerController(
+            context = context,
+            scope = appScope,
+            diffingDispatcher = Dispatchers.Default,
+        )
+    },
+    args = { appScope ->
+        DataBindingArgs(
+            appScope = appScope,
+            connectivity = Connectivity(),
+            savedStatePath = context.savedStatePath(),
+            savedStateFileSystem = FileSystem.SYSTEM,
+            databaseBuilder = getDatabaseBuilder(context),
+        )
+    },
+)
 
-private fun Context.savedStatePath(): Path =
-    filesDir.resolve("savedState").absolutePath.toPath()
+private fun Context.savedStatePath(): Path = filesDir.resolve("savedState").absolutePath.toPath()

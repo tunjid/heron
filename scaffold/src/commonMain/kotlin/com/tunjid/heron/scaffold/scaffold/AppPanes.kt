@@ -66,15 +66,15 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.launch
 
 private val PaneSpring = spring(
     stiffness = Spring.StiffnessMediumLow,
-    visibilityThreshold = 0.1f
+    visibilityThreshold = 0.1f,
 )
 
 enum class PaneAnchor(
@@ -94,7 +94,7 @@ internal class PaneAnchorState {
     val width
         get() = max(
             a = 0,
-            b = anchoredDraggableState.offset.roundToInt()
+            b = anchoredDraggableState.offset.roundToInt(),
         )
 
     val targetPaneAnchor get() = anchoredDraggableState.targetValue
@@ -107,9 +107,9 @@ internal class PaneAnchorState {
             val cappedFraction = max(
                 a = min(
                     a = anchoredDraggableState.requireOffset() / maxWidth,
-                    b = 1f
+                    b = 1f,
                 ),
-                b = 0f
+                b = 0f,
             )
             return when (cappedFraction) {
                 in 0f..0.01f -> PaneAnchor.Zero
@@ -131,7 +131,7 @@ internal class PaneAnchorState {
 
     fun updateMaxWidth(
         density: Density,
-        maxWidth: Int
+        maxWidth: Int,
     ) {
         if (maxWidth == this.maxWidth) return
         this.maxWidth = maxWidth
@@ -164,8 +164,11 @@ internal class PaneAnchorState {
     private fun defaultOpenAnchorPosition(density: Density): PaneAnchor {
         val layoutSize = with(density) { maxWidth.toDp() }
         val isExpanded = layoutSize >= SecondaryPaneMinWidthBreakpointDp
-        return if (isExpanded) PaneAnchor.Half
-        else PaneAnchor.OneThirds
+        return if (isExpanded) {
+            PaneAnchor.Half
+        } else {
+            PaneAnchor.OneThirds
+        }
     }
 
     companion object {
@@ -187,22 +190,25 @@ internal class PaneAnchorState {
             val thumbWidth by animateDpAsState(
                 label = "App Pane Draggable thumb",
                 targetValue =
-                    if (active) DraggableDividerSizeDp
-                    else when (paneAnchorState.targetPaneAnchor) {
+                if (active) {
+                    DraggableDividerSizeDp
+                } else {
+                    when (paneAnchorState.targetPaneAnchor) {
                         PaneAnchor.Zero -> DraggableDividerSizeDp
                         PaneAnchor.OneThirds,
                         PaneAnchor.Half,
                         PaneAnchor.TwoThirds,
                         PaneAnchor.Full,
-                            -> 2.dp
+                        -> 2.dp
                     }
+                },
             )
             Box(
                 modifier = Modifier
                     .offset {
                         IntOffset(
                             x = offset.roundToPx() - (DraggableDividerSizeDp / 2).roundToPx(),
-                            y = 0
+                            y = 0,
                         )
                     }
                     .fillMaxHeight()
@@ -214,9 +220,9 @@ internal class PaneAnchorState {
                         interactionSource = paneAnchorState.thumbMutableInteractionSource,
                         flingBehavior = AnchoredDraggableDefaults.flingBehavior(
                             state = paneAnchorState.anchoredDraggableState,
-                            animationSpec = PaneSpring
-                        )
-                    )
+                            animationSpec = PaneSpring,
+                        ),
+                    ),
             ) {
                 Surface(
                     modifier = Modifier
@@ -240,8 +246,8 @@ internal class PaneAnchorState {
                         imageVector = Icons.Default.UnfoldMore,
                         contentDescription = "Drag",
                         colorFilter = ColorFilter.tint(
-                            color = MaterialTheme.colorScheme.surface
-                        )
+                            color = MaterialTheme.colorScheme.surface,
+                        ),
                     )
                 }
             }
@@ -252,7 +258,7 @@ internal class PaneAnchorState {
                 paneAnchorState.width,
                 splitLayoutState.size,
                 splitLayoutState.weightSum,
-                density
+                density,
             ) {
                 val fullWidthPx = with(density) { splitLayoutState.size.roundToPx() }
                 val percentage = paneAnchorState.width.toFloat() / fullWidthPx
@@ -276,8 +282,8 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
     val currentlyEnabled = remember {
         derivedStateOf {
             paneState.pane == ThreePane.Primary &&
-                    splitPaneState.filteredPaneOrder.size > 1 &&
-                    appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
+                splitPaneState.filteredPaneOrder.size > 1 &&
+                appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
         }
     }
 
@@ -291,7 +297,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
             // Force create a new lambda to work around:
             // https://issuetracker.google.com/issues/431534103
             { currentlyEnabled.value }
-        }
+        },
     ) { events ->
         try {
             events.collectIndexed { index, event ->

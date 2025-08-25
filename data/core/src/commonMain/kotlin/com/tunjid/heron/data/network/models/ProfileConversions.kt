@@ -31,117 +31,110 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 
-internal fun ProfileView.profileEntity(): ProfileEntity =
-    ProfileEntity(
-        did = ProfileId(did.did),
-        handle = ProfileHandle(handle.handle),
-        displayName = displayName,
-        description = description,
-        avatar = avatar?.uri?.let(::ImageUri),
-        banner = null,
-        followersCount = null,
-        followsCount = null,
-        postsCount = null,
-        joinedViaStarterPack = null,
-        indexedAt = indexedAt,
-        createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        )
-    )
+internal fun ProfileView.profileEntity(): ProfileEntity = ProfileEntity(
+    did = ProfileId(did.did),
+    handle = ProfileHandle(handle.handle),
+    displayName = displayName,
+    description = description,
+    avatar = avatar?.uri?.let(::ImageUri),
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = indexedAt,
+    createdAt = createdAt,
+    associated = ProfileEntity.Associated(
+        createdListCount = associated?.lists,
+        createdFeedGeneratorCount = associated?.feedgens,
+        createdStarterPackCount = associated?.starterPacks,
+        labeler = associated?.labeler,
+        allowDms = associated?.chat?.allowIncoming?.value,
+    ),
+)
 
-internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
-    ProfileEntity(
-        did = ProfileId(did.did),
-        handle = ProfileHandle(handle.handle),
-        displayName = displayName,
-        description = null,
-        avatar = avatar?.uri?.let(::ImageUri),
-        banner = null,
-        followersCount = null,
-        followsCount = null,
-        postsCount = null,
-        joinedViaStarterPack = null,
-        indexedAt = null,
-        createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        )
-    )
+internal fun ProfileViewBasic.profileEntity(): ProfileEntity = ProfileEntity(
+    did = ProfileId(did.did),
+    handle = ProfileHandle(handle.handle),
+    displayName = displayName,
+    description = null,
+    avatar = avatar?.uri?.let(::ImageUri),
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = createdAt,
+    associated = ProfileEntity.Associated(
+        createdListCount = associated?.lists,
+        createdFeedGeneratorCount = associated?.feedgens,
+        createdStarterPackCount = associated?.starterPacks,
+        labeler = associated?.labeler,
+        allowDms = associated?.chat?.allowIncoming?.value,
+    ),
+)
 
-internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
-    ProfileEntity(
-        did = ProfileId(did.did),
-        handle = ProfileHandle(handle.handle),
-        displayName = displayName,
-        description = description,
-        avatar = avatar?.uri?.let(::ImageUri),
-        banner = banner?.uri?.let(::ImageUri),
-        followersCount = followersCount,
-        followsCount = followsCount,
-        postsCount = postsCount,
-        joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::GenericId),
-        indexedAt = indexedAt,
-        createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        )
-    )
+internal fun ProfileViewDetailed.profileEntity(): ProfileEntity = ProfileEntity(
+    did = ProfileId(did.did),
+    handle = ProfileHandle(handle.handle),
+    displayName = displayName,
+    description = description,
+    avatar = avatar?.uri?.let(::ImageUri),
+    banner = banner?.uri?.let(::ImageUri),
+    followersCount = followersCount,
+    followsCount = followsCount,
+    postsCount = postsCount,
+    joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::GenericId),
+    indexedAt = indexedAt,
+    createdAt = createdAt,
+    associated = ProfileEntity.Associated(
+        createdListCount = associated?.lists,
+        createdFeedGeneratorCount = associated?.feedgens,
+        createdStarterPackCount = associated?.starterPacks,
+        labeler = associated?.labeler,
+        allowDms = associated?.chat?.allowIncoming?.value,
+    ),
+)
 
 internal fun ProfileViewBasic.profileViewerStateEntities(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
-    when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
-        )
-    }
+): List<ProfileViewerStateEntity> = when (val viewer = viewer) {
+    null -> emptyList()
+    else -> listOf(
+        profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
+        ),
+    )
+}
 
 internal fun ProfileView.profileViewerStateEntities(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
-    when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
-        )
-    }
+): List<ProfileViewerStateEntity> = when (val viewer = viewer) {
+    null -> emptyList()
+    else -> listOf(
+        profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
+        ),
+    )
+}
 
 internal fun ProfileViewDetailed.profileViewerStateEntities(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
-    when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
-        )
-    }
-
+): List<ProfileViewerStateEntity> = when (val viewer = viewer) {
+    null -> emptyList()
+    else -> listOf(
+        profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
+        ),
+    )
+}
 
 internal fun ProfileViewBasic.profile() = Profile(
     did = did.did.let(::ProfileId),
@@ -186,7 +179,7 @@ internal fun ProfileView.profile() = Profile(
 private fun profileViewerStateEntity(
     viewingProfileId: ProfileId,
     viewedProfileId: ProfileId,
-    viewer: ViewerState
+    viewer: ViewerState,
 ) = ProfileViewerStateEntity(
     profileId = viewingProfileId,
     otherProfileId = viewedProfileId,
@@ -208,7 +201,7 @@ private fun KnownFollowers?.profileViewers(
     null -> emptyList()
     else -> followers.flatMap { profileViewBasic ->
         profileViewBasic.profileViewerStateEntities(
-            viewingProfileId = viewingProfileId
+            viewingProfileId = viewingProfileId,
         )
     }
 }

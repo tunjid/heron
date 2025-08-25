@@ -38,7 +38,6 @@ data class ImageEntity(
     val height: Long?,
 ) : PostEmbed
 
-
 /**
  * Cross reference for many to many relationship between [Post] and [ImageEntity]
  */
@@ -68,7 +67,6 @@ data class PostImageEntity(
     val postUri: PostUri,
     val imageUri: ImageUri,
 )
-
 
 fun ImageEntity.asExternalModel() = Image(
     fullsize = fullSize,

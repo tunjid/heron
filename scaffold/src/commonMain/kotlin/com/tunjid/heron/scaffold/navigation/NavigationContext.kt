@@ -44,15 +44,12 @@ internal class ImmutableNavigationContext(
         get() = routeParser.parse(this) ?: unknownRoute()
 
     @OptIn(ExperimentalEncodingApi::class)
-    override fun Route.encodeToQueryParam(): String =
-        ModelUrlSafeBase64.encode(routeParams.pathAndQueries.encodeToByteArray())
+    override fun Route.encodeToQueryParam(): String = ModelUrlSafeBase64.encode(routeParams.pathAndQueries.encodeToByteArray())
 }
 
 fun unknownRoute(path: String = "/404") = routeOf(path = path)
 
 @OptIn(ExperimentalEncodingApi::class)
-fun String.decodeRoutePathAndQueriesFromQueryParam(): String =
-    ModelUrlSafeBase64.decode(this).decodeToString()
-
+fun String.decodeRoutePathAndQueriesFromQueryParam(): String = ModelUrlSafeBase64.decode(this).decodeToString()
 
 val NavigationContext.currentRoute get() = navState.current as Route

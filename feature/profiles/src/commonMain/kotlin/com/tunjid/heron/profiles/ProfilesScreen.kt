@@ -83,8 +83,8 @@ internal fun ProfilesScreen(
                                     avatarSharedElementKey = item
                                         .profile
                                         .profileWithRelationshipAvatarSharedElementKey(),
-                                )
-                            )
+                                ),
+                            ),
                         )
                     },
                     onViewerStateClicked = { viewerState ->
@@ -95,12 +95,12 @@ internal fun ProfilesScreen(
                                     viewedProfileId = item.profile.did,
                                     following = viewerState?.following,
                                     followedBy = viewerState?.followedBy,
-                                )
+                                ),
                             )
                         }
                     },
                 )
-            }
+            },
         )
     }
 
@@ -111,12 +111,11 @@ internal fun ProfilesScreen(
                 Action.Tile(
                     TilingState.Action.LoadAround(
                         query ?: state.tilingData.currentQuery,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 }
 
-private fun Profile.profileWithRelationshipAvatarSharedElementKey() =
-    "profiles-${did}"
+private fun Profile.profileWithRelationshipAvatarSharedElementKey() = "profiles-$did"

@@ -79,9 +79,11 @@ fun CoroutineScope.timelineStateHolder(
                     page = 0,
                     cursorAnchor = when (timeline) {
                         is Timeline.Home,
-                        is Timeline.StarterPack -> timeline.lastRefreshed
-                            .takeUnless { refreshOnStart }
-                            ?: Clock.System.now()
+                        is Timeline.StarterPack,
+                        ->
+                            timeline.lastRefreshed
+                                .takeUnless { refreshOnStart }
+                                ?: Clock.System.now()
 
                         is Timeline.Profile -> Clock.System.now()
                     },
@@ -102,70 +104,73 @@ fun CoroutineScope.timelineStateHolder(
     actionTransform = transform@{ actions ->
         actions.toMutationStream(keySelector = TimelineState.Action::key) {
             when (val action = type()) {
-                is TimelineState.Action.Tile -> action.flow
-                    .map { it.tilingAction }
-                    .tilingMutations(
-                        // This is determined by State.hasUpdates
-                        isRefreshedOnNewItems = false,
-                        currentState = { this@transform.state() },
-                        updateQueryData = TimelineQuery::updateData,
-                        refreshQuery = TimelineQuery::refresh,
-                        cursorListLoader = timelineRepository::timelineItems,
-                        onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
-                        onTilingDataUpdated = { copy(tilingData = it) },
-                    )
+                is TimelineState.Action.Tile ->
+                    action.flow
+                        .map { it.tilingAction }
+                        .tilingMutations(
+                            // This is determined by State.hasUpdates
+                            isRefreshedOnNewItems = false,
+                            currentState = { this@transform.state() },
+                            updateQueryData = TimelineQuery::updateData,
+                            refreshQuery = TimelineQuery::refresh,
+                            cursorListLoader = timelineRepository::timelineItems,
+                            onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
+                            onTilingDataUpdated = { copy(tilingData = it) },
+                        )
 
                 is TimelineState.Action.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
                     timelineRepository = timelineRepository,
                 )
             }
         }
-    }
+    },
 )
 
 private fun hasUpdatesMutations(
     timeline: Timeline,
     timelineRepository: TimelineRepository,
-): Flow<Mutation<TimelineState>> =
-    timelineRepository.hasUpdates(timeline)
-        .mapToMutation {
-            copy(
-                hasUpdates = it,
-                tilingData = if (hasUpdates) tilingData else tilingData.copy(
+): Flow<Mutation<TimelineState>> = timelineRepository.hasUpdates(timeline)
+    .mapToMutation {
+        copy(
+            hasUpdates = it,
+            tilingData = if (hasUpdates) {
+                tilingData
+            } else {
+                tilingData.copy(
                     status = TilingState.Status.Refreshed(
-                        cursorAnchor = tilingData.currentQuery.data.cursorAnchor
-                    )
-                ),
-            )
-        }
+                        cursorAnchor = tilingData.currentQuery.data.cursorAnchor,
+                    ),
+                )
+            },
+        )
+    }
 
 private fun timelineUpdateMutations(
     timeline: Timeline,
     timelineRepository: TimelineRepository,
-): Flow<Mutation<TimelineState>> =
-    timelineRepository.timeline(
-        request = when (timeline) {
-            is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithUri(
-                uri = timeline.feedGenerator.uri,
-            )
+): Flow<Mutation<TimelineState>> = timelineRepository.timeline(
+    request = when (timeline) {
+        is Timeline.Home.Feed -> TimelineRequest.OfFeed.WithUri(
+            uri = timeline.feedGenerator.uri,
+        )
 
-            is Timeline.Home.Following -> TimelineRequest.Following
+        is Timeline.Home.Following -> TimelineRequest.Following
 
-            is Timeline.Home.List -> TimelineRequest.OfList.WithUri(
-                uri = timeline.feedList.uri,
-            )
+        is Timeline.Home.List -> TimelineRequest.OfList.WithUri(
+            uri = timeline.feedList.uri,
+        )
 
-            is Timeline.Profile -> TimelineRequest.OfProfile(
-                profileHandleOrDid = timeline.profileId,
-                type = timeline.type,
-            )
+        is Timeline.Profile -> TimelineRequest.OfProfile(
+            profileHandleOrDid = timeline.profileId,
+            type = timeline.type,
+        )
 
-            is Timeline.StarterPack -> TimelineRequest.OfStarterPack.WithUri(
-                uri = timeline.starterPack.uri,
-            )
-        }
-    )
-        .mapToMutation { copy(timeline = it) }
+        is Timeline.StarterPack -> TimelineRequest.OfStarterPack.WithUri(
+            uri = timeline.starterPack.uri,
+        )
+    },
+)
+    .mapToMutation { copy(timeline = it) }
 
 private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
@@ -177,7 +182,7 @@ private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updat
 }
 
 private fun TimelineQuery.updateData(
-    data: CursorQuery.Data
+    data: CursorQuery.Data,
 ): TimelineQuery = TimelineQuery(
     timeline = timeline,
     data = data,

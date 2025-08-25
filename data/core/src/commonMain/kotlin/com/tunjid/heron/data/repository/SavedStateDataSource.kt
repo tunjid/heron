@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
@@ -42,7 +41,6 @@ import okio.BufferedSource
 import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
-
 
 @Serializable
 data class SavedState(
@@ -79,13 +77,12 @@ data class SavedState(
             )
 
             companion object {
-                fun fromJsonContentOrEmpty(jsonContent: JsonContent?): DidDoc =
-                    try {
-                        jsonContent?.decodeAs<DidDoc>()
-                    } catch (_: Exception) {
-                        null
-                    }
-                        ?: DidDoc()
+                fun fromJsonContentOrEmpty(jsonContent: JsonContent?): DidDoc = try {
+                    jsonContent?.decodeAs<DidDoc>()
+                } catch (_: Exception) {
+                    null
+                }
+                    ?: DidDoc()
             }
         }
     }
@@ -113,7 +110,7 @@ private val GuestAuth = SavedState.AuthTokens(
     authProfileId = Constants.unknownAuthorId,
     auth = "",
     refresh = "",
-    didDoc = SavedState.AuthTokens.DidDoc()
+    didDoc = SavedState.AuthTokens.DidDoc(),
 )
 
 val InitialSavedState = SavedState(
@@ -145,27 +142,22 @@ internal val SavedStateDataSource.signedInAuth
         .map { it.auth.ifSignedIn() }
         .distinctUntilChanged()
 
-private fun SavedState.AuthTokens?.ifSignedIn() =
-    this?.takeUnless(GuestAuth::equals)
+private fun SavedState.AuthTokens?.ifSignedIn() = this?.takeUnless(GuestAuth::equals)
 
-fun SavedState.signedProfilePreferencesOrDefault() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
-        ?.preferences
-        ?: Preferences.DefaultPreferences
+fun SavedState.signedProfilePreferencesOrDefault() = auth.ifSignedIn()
+    ?.let { profileData[it.authProfileId] }
+    ?.preferences
+    ?: Preferences.DefaultPreferences
 
-fun SavedState.signedInProfileNotifications() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
-        ?.notifications
+fun SavedState.signedInProfileNotifications() = auth.ifSignedIn()
+    ?.let { profileData[it.authProfileId] }
+    ?.notifications
 
 internal val SavedState.signedInProfileId get() =
     auth.ifSignedIn()?.authProfileId
-fun SavedState.isSignedIn() =
-    auth.ifSignedIn() != null
+fun SavedState.isSignedIn() = auth.ifSignedIn() != null
 
-internal suspend fun SavedStateDataSource.guestSignIn() =
-    updateState { copy(auth = GuestAuth) }
+internal suspend fun SavedStateDataSource.guestSignIn() = updateState { copy(auth = GuestAuth) }
 
 interface SavedStateDataSource {
     val savedState: StateFlow<SavedState>
@@ -184,9 +176,9 @@ internal class DataStoreSavedStateDataSource(
         storage = OkioStorage(
             fileSystem = fileSystem,
             serializer = SavedStateOkioSerializer(protoBuf),
-            producePath = { path }
+            producePath = { path },
         ),
-        scope = appScope
+        scope = appScope,
     )
 
     override val savedState = dataStore.data.stateIn(
@@ -205,8 +197,7 @@ private class SavedStateOkioSerializer(
 ) : OkioSerializer<SavedState> {
     override val defaultValue: SavedState = EmptySavedState
 
-    override suspend fun readFrom(source: BufferedSource): SavedState =
-        protoBuf.decodeFromByteArray(source.readByteArray())
+    override suspend fun readFrom(source: BufferedSource): SavedState = protoBuf.decodeFromByteArray(source.readByteArray())
 
     override suspend fun writeTo(t: SavedState, sink: BufferedSink) {
         sink.write(protoBuf.encodeToByteArray(value = t))
@@ -239,7 +230,7 @@ private suspend inline fun SavedStateDataSource.updateSignedInProfileData(
             preferences = Preferences.DefaultPreferences,
         )
         copy(
-            profileData = profileData + (signedInProfileId to signedInProfileData.block())
+            profileData = profileData + (signedInProfileId to signedInProfileData.block()),
         )
     }
 }

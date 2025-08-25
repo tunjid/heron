@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "starterPacks",
     foreignKeys = [
@@ -62,13 +61,12 @@ data class StarterPackEntity(
     val createdAt: Instant,
 )
 
-
 data class PopulatedStarterPackEntity(
     @Embedded
     val entity: StarterPackEntity,
     @Relation(
         parentColumn = "creatorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val creator: ProfileEntity?,
     @Relation(
@@ -83,22 +81,20 @@ data class PopulatedStarterPackEntity(
     val labelEntities: List<LabelEntity>,
 )
 
-fun PopulatedStarterPackEntity.asExternalModel() =
-    StarterPack(
-        cid = entity.cid,
-        uri = entity.uri,
-        name = entity.name,
-        description = entity.description,
-        creator = creator.asExternalModel(),
-        list = creator?.let { profileEntity ->
-            list?.asExternalModel(
-                creator = profileEntity.asExternalModel(),
-                labels = emptyList()
-            )
-        },
-        joinedWeekCount = entity.joinedWeekCount,
-        joinedAllTimeCount = entity.joinedAllTimeCount,
-        indexedAt = entity.indexedAt,
-        labels = labelEntities.map(LabelEntity::asExternalModel),
-    )
-
+fun PopulatedStarterPackEntity.asExternalModel() = StarterPack(
+    cid = entity.cid,
+    uri = entity.uri,
+    name = entity.name,
+    description = entity.description,
+    creator = creator.asExternalModel(),
+    list = creator?.let { profileEntity ->
+        list?.asExternalModel(
+            creator = profileEntity.asExternalModel(),
+            labels = emptyList(),
+        )
+    },
+    joinedWeekCount = entity.joinedWeekCount,
+    joinedAllTimeCount = entity.joinedAllTimeCount,
+    indexedAt = entity.indexedAt,
+    labels = labelEntities.map(LabelEntity::asExternalModel),
+)

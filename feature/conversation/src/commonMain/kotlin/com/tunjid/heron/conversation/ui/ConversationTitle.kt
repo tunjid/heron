@@ -48,7 +48,6 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun ConversationTitle(
@@ -60,7 +59,7 @@ internal fun ConversationTitle(
 ) {
     val hasMultipleParticipants = remember(
         signedInProfileId,
-        participants.size
+        participants.size,
     ) {
         participants.filter { it.did != signedInProfileId }.size > 1
     }
@@ -91,12 +90,12 @@ private fun MultipleParticipantTitle(
     onProfileClicked: (Profile) -> Unit,
 ) = with(paneScaffoldState) {
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         participants.forEachIndexed { index, participant ->
             updatedMovableSharedElementOf(
                 sharedContentState = rememberSharedContentState(
-                    key = participant.conversationSharedElementKey(conversationId)
+                    key = participant.conversationSharedElementKey(conversationId),
                 ),
                 state = remember(participant.avatar?.uri) {
                     ImageArgs(
@@ -112,12 +111,12 @@ private fun MultipleParticipantTitle(
                     .clickable { onProfileClicked(participant) },
                 sharedElement = { args, innerModifier ->
                     AsyncImage(args, innerModifier)
-                }
+                },
             )
         }
         Spacer(
             modifier = Modifier
-                .width(16.dp)
+                .width(16.dp),
         )
         Text(
             modifier = Modifier,
@@ -157,18 +156,18 @@ private fun SingleMemberTitle(
                 },
                 sharedElement = { state, modifier ->
                     AsyncImage(state, modifier)
-                }
+                },
             )
         },
         label = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 ProfileName(
-                    profile = profile
+                    profile = profile,
                 )
                 ProfileHandle(
-                    profile = profile
+                    profile = profile,
                 )
             }
         },
@@ -176,5 +175,5 @@ private fun SingleMemberTitle(
 }
 
 internal fun Profile.conversationSharedElementKey(
-    conversationId: ConversationId
-): String = "${conversationId.id}-${did}"
+    conversationId: ConversationId,
+): String = "${conversationId.id}-$did"

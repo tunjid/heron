@@ -24,12 +24,11 @@ import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 
-
 @Entity(
     tableName = "messageFeedGenerators",
     primaryKeys = [
         "messageId",
-        "feedGeneratorUri"
+        "feedGeneratorUri",
     ],
     foreignKeys = [
         ForeignKey(
@@ -54,5 +53,3 @@ data class MessageFeedGeneratorEntity(
     val messageId: MessageId,
     val feedGeneratorUri: FeedGeneratorUri,
 )
-
-

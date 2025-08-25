@@ -90,73 +90,77 @@ fun TimelineTitle(
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
-    if (timeline != null) Row(
-        modifier = modifier
-            .padding(
-                horizontal = 8.dp
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val avatar = timeline.avatar
-        AsyncImage(
-            modifier = Modifier
-                .paneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = timeline.avatarSharedElementKey(sharedElementPrefix)
+    if (timeline != null) {
+        Row(
+            modifier = modifier
+                .padding(
+                    horizontal = 8.dp,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val avatar = timeline.avatar
+            AsyncImage(
+                modifier = Modifier
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = timeline.avatarSharedElementKey(sharedElementPrefix),
+                        ),
                     )
-                )
-                .size(44.dp),
-            args = remember(avatar) {
-                ImageArgs(
-                    url = avatar.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    shape = timeline.shape,
-                )
-            },
-        )
+                    .size(44.dp),
+                args = remember(avatar) {
+                    ImageArgs(
+                        url = avatar.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        shape = timeline.shape,
+                    )
+                },
+            )
 
-        Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
 
-        Box {
-            Column {
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = timeline.titleSharedElementKey(sharedElementPrefix)
-                            )
-                        ),
-                    text = timeline.displayName(),
-                    style = MaterialTheme.typography.titleSmallEmphasized,
-                )
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = timeline.subtitleSharedElementKey(sharedElementPrefix)
-                            )
-                        ),
-                    text = timeline.creator(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+            Box {
+                Column {
+                    Text(
+                        modifier = Modifier
+                            .paneStickySharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = timeline.titleSharedElementKey(sharedElementPrefix),
+                                ),
+                            ),
+                        text = timeline.displayName(),
+                        style = MaterialTheme.typography.titleSmallEmphasized,
+                    )
+                    Text(
+                        modifier = Modifier
+                            .paneStickySharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = timeline.subtitleSharedElementKey(sharedElementPrefix),
+                                ),
+                            ),
+                        text = timeline.creator(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
+                if (hasUpdates) {
+                    Badge(
+                        modifier = Modifier.size(4.dp),
+                    )
+                }
             }
-            if (hasUpdates) Badge(
-                modifier = Modifier.size(4.dp)
+            Spacer(Modifier.weight(1f))
+            TimelinePresentationSelector(
+                selected = timeline.presentation,
+                available = timeline.supportedPresentations,
+                onPresentationSelected = { presentation ->
+                    onPresentationSelected(
+                        timeline,
+                        presentation,
+                    )
+                },
             )
         }
-        Spacer(Modifier.weight(1f))
-        TimelinePresentationSelector(
-            selected = timeline.presentation,
-            available = timeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                onPresentationSelected(
-                    timeline,
-                    presentation,
-                )
-            }
-        )
     }
 }
 
@@ -168,8 +172,7 @@ val Timeline.description: String
 
         is Timeline.Home.Following,
         is Timeline.Profile,
-            -> null
-
+        -> null
     } ?: ""
 
 val Timeline.Presentation.cardSize
@@ -201,36 +204,37 @@ internal val Timeline.Presentation.icon
     }
 
 @Composable
-private fun Timeline.creator(
-): String = when (this) {
+private fun Timeline.creator(): String = when (this) {
     is Timeline.Home.Feed -> stringResource(
-        Res.string.feed_by, feedGenerator.creator.handle.id
+        Res.string.feed_by,
+        feedGenerator.creator.handle.id,
     )
 
     is Timeline.Home.List -> stringResource(
-        Res.string.list_by, feedList.creator.handle.id
+        Res.string.list_by,
+        feedList.creator.handle.id,
     )
 
     is Timeline.StarterPack -> stringResource(
-        Res.string.starter_pack_by, starterPack.creator.handle.id
+        Res.string.starter_pack_by,
+        starterPack.creator.handle.id,
     )
 
     is Timeline.Home.Following,
     is Timeline.Profile,
-        -> null
-
+    -> null
 } ?: ""
 
 val Timeline.sharedElementPrefix get() = sourceId
 
 fun Timeline.sharedElementPrefix(
-    quotingPostUri: PostUri?
+    quotingPostUri: PostUri?,
 ) = sourceId.withQuotingPostUriPrefix(
-    quotingPostUri = quotingPostUri
+    quotingPostUri = quotingPostUri,
 )
 
 fun LazyStaggeredGridState.pendingOffsetFor(
-    item: TimelineItem
+    item: TimelineItem,
 ) = layoutInfo
     .visibleItemsInfo
     .first { it.key == item.id }
@@ -247,11 +251,12 @@ private val Timeline.avatar: ImageUri
         is Timeline.Home.List -> feedList.avatar
         is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
-        is Timeline.Profile -> BlueskyClouds
+        is Timeline.Profile,
+        -> BlueskyClouds
     } ?: BlueskyClouds
 
 private fun Timeline.avatarSharedElementKey(
-    sharedElementPrefix: String?
+    sharedElementPrefix: String?,
 ): String = when (this) {
     is Timeline.Home.Feed -> feedGenerator.avatarSharedElementKey(sharedElementPrefix)
     is Timeline.Home.List -> feedList.avatarSharedElementKey(sharedElementPrefix)
@@ -261,7 +266,7 @@ private fun Timeline.avatarSharedElementKey(
 }
 
 private fun Timeline.titleSharedElementKey(
-    sharedElementPrefix: String?
+    sharedElementPrefix: String?,
 ): String = when (this) {
     is Timeline.Home.Feed -> titleSharedElementKey(
         prefix = sharedElementPrefix,
@@ -283,7 +288,7 @@ private fun Timeline.titleSharedElementKey(
 }
 
 private fun Timeline.subtitleSharedElementKey(
-    sharedElementPrefix: String?
+    sharedElementPrefix: String?,
 ): String = when (this) {
     is Timeline.Home.Feed -> subtitleSharedElementKey(
         prefix = sharedElementPrefix,
@@ -311,5 +316,5 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.StarterPack -> StarterPackCollectionShape
         is Timeline.Home.Following,
         is Timeline.Profile,
-            -> RoundedPolygonShape.Circle
+        -> RoundedPolygonShape.Circle
     }

@@ -43,7 +43,6 @@ import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PaneNavigationBar(
@@ -63,14 +62,17 @@ fun PaneScaffoldState.PaneNavigationBar(
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationBar) appState.movableNavigationBar(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationBar(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            if (canUseMovableNavigationBar) {
+                appState.movableNavigationBar(
+                    Modifier,
+                    onNavItemReselected,
+                )
+            } else {
+                appState.PaneNavigationBar(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
+            }
         },
     )
 }
@@ -92,23 +94,29 @@ fun PaneScaffoldState.PaneNavigationRail(
             ),
         visible = canShowNavigationRail,
         enter = if (
-            canShowNavigationRail
-            && paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
-        ) enterTransition else EnterTransition.None,
+            canShowNavigationRail &&
+            paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
+        ) {
+            enterTransition
+        } else {
+            EnterTransition.None
+        },
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationRail) appState.movableNavigationRail(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationRail(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
-        }
+            if (canUseMovableNavigationRail) {
+                appState.movableNavigationRail(
+                    Modifier,
+                    onNavItemReselected,
+                )
+            } else {
+                appState.PaneNavigationRail(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
+            }
+        },
     )
 }
-
 
 @Composable
 internal fun AppState.PaneNavigationBar(
@@ -137,7 +145,7 @@ internal fun AppState.PaneNavigationBar(
                 onClick = {
                     if (item.selected && onNavItemReselected()) return@NavigationBarItem
                     onNavItemSelected(item)
-                }
+                },
             )
         }
     }
@@ -170,7 +178,7 @@ internal fun AppState.PaneNavigationRail(
                 onClick = {
                     if (item.selected && onNavItemReselected()) return@NavigationRailItem
                     onNavItemSelected(item)
-                }
+                },
             )
         }
     }
@@ -178,18 +186,23 @@ internal fun AppState.PaneNavigationRail(
 
 @Composable
 fun Modifier.bottomNavigationSharedBounds(
-    paneScaffoldState: PaneScaffoldState
+    paneScaffoldState: PaneScaffoldState,
 ): Modifier = with(paneScaffoldState) {
     when (paneState.pane) {
-        ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
-            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
-            animatedVisibilityScope = this,
-        )
+        ThreePane.Primary -> if (inPredictiveBack) {
+            this@bottomNavigationSharedBounds
+        } else {
+            sharedBounds(
+                sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+                animatedVisibilityScope = this,
+            )
+        }
 
         ThreePane.Secondary,
         ThreePane.Tertiary,
         ThreePane.Overlay,
-        null -> this@bottomNavigationSharedBounds
+        null,
+        -> this@bottomNavigationSharedBounds
     }
 }
 

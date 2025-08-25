@@ -42,6 +42,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import dev.andrewbailey.diff.differenceOf
+import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import java.io.File
 
 @OptIn(UnstableApi::class)
 @Stable
@@ -102,11 +102,9 @@ class ExoplayerController(
      */
     private var currentMediaItem by mutableStateOf<MediaItem?>(null)
 
-
     private var player: ExoPlayer? by mutableStateOf(null)
 
     private var activeVideoId: String by mutableStateOf("")
-
 
     // TODO: Revisit this. The Coroutine should be launched lazily instead of in an init block.
     init {
@@ -210,10 +208,14 @@ class ExoplayerController(
         }
         // NOTE: Play must be called on the manager and not on the exoplayer instance itself.
         when (activeState.status) {
-            is PlayerStatus.Idle -> if (activeState.autoplay) playAsync(
-                playerIdToPlay = videoId,
-                seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
-            ) else player?.pause()
+            is PlayerStatus.Idle -> if (activeState.autoplay) {
+                playAsync(
+                    playerIdToPlay = videoId,
+                    seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
+                )
+            } else {
+                player?.pause()
+            }
 
             is PlayerStatus.Pause -> player?.pause()
             is PlayerStatus.Play -> playAsync(
@@ -222,7 +224,6 @@ class ExoplayerController(
             )
         }
     }
-
 
     override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
 
@@ -327,7 +328,6 @@ class ExoplayerController(
     }
 
     override fun onPlayerError(error: PlaybackException) {
-
     }
 
     private fun playAsync(
@@ -362,12 +362,14 @@ class ExoplayerController(
 
     private fun trim() {
         val size = idsToStates.size
-        if (size >= MaxVideoStates) idsToStates.keys.filter {
-            val state = idsToStates[it]
-            state?.status is PlayerStatus.Idle.Evicted
+        if (size >= MaxVideoStates) {
+            idsToStates.keys.filter {
+                val state = idsToStates[it]
+                state?.status is PlayerStatus.Idle.Evicted
+            }
+                .take(size - MaxVideoStates)
+                .forEach(idsToStates::remove)
         }
-            .take(size - MaxVideoStates)
-            .forEach(idsToStates::remove)
     }
 
     /**
@@ -391,16 +393,14 @@ class ExoplayerController(
             insert = { item: MediaItem, index: Int ->
                 addMediaItem(index, item)
             },
-            move = ::moveMediaItem
+            move = ::moveMediaItem,
         )
     }
 
-    private fun isCurrentMediaItem(videoId: String) =
-        activeVideoId == videoId && currentMediaItem?.mediaId == videoId
+    private fun isCurrentMediaItem(videoId: String) = activeVideoId == videoId && currentMediaItem?.mediaId == videoId
 
     private val Player.currentMediaItems: List<MediaItem>
         get() = List(mediaItemCount, ::getMediaItemAt)
-
 }
 
 @OptIn(UnstableApi::class)
@@ -409,9 +409,12 @@ private fun exoPlayer(
 ): ExoPlayer {
     val client = OkHttpClient()
     val cache = SimpleCache(
-        /* cacheDir = */ File(context.cacheDir, "homepagesimplecache"),
-        /* evictor = */ LeastRecentlyUsedCacheEvictor((10 * 1024 * 1024).toLong()),
-        /* databaseProvider = */ StandaloneDatabaseProvider(context),
+        /* cacheDir = */
+        File(context.cacheDir, "homepagesimplecache"),
+        /* evictor = */
+        LeastRecentlyUsedCacheEvictor((10 * 1024 * 1024).toLong()),
+        /* databaseProvider = */
+        StandaloneDatabaseProvider(context),
     )
 
     val okHttpDataSourceFactory = OkHttpDataSource.Factory(client).also {
@@ -441,11 +444,10 @@ private fun exoPlayer(
         .build()
 }
 
-private fun VideoPlayerState.toMediaItem() =
-    MediaItem
-        .Builder()
-        .setUri(videoUrl)
-        .setMediaId(videoId)
-        .build()
+private fun VideoPlayerState.toMediaItem() = MediaItem
+    .Builder()
+    .setUri(videoUrl)
+    .setMediaId(videoId)
+    .build()
 
 private const val MaxVideoStates = 30

@@ -81,17 +81,20 @@ data class Post(
         @Serializable
         data class Reply(
             val parent: Post,
-        ) : Create(), UrlEncodableModel
+        ) : Create(),
+            UrlEncodableModel
 
         @Serializable
         data class Mention(
             val profile: Profile,
-        ) : Create(), UrlEncodableModel
+        ) : Create(),
+            UrlEncodableModel
 
         @Serializable
         data class Quote(
             val interaction: Interaction.Create.Repost,
-        ) : Create(), UrlEncodableModel
+        ) : Create(),
+            UrlEncodableModel
 
         @Serializable
         data object Timeline : Create(), UrlEncodableModel
@@ -166,7 +169,7 @@ data class Post(
 
 fun Post.labelVisibilitiesToDefinitions(
     labelers: List<Labeler>,
-    labelPreferences: ContentLabelPreferences
+    labelPreferences: ContentLabelPreferences,
 ): Map<Label.Visibility, List<Label.Definition>> = labelVisibilitiesToDefinitions(
     postLabels = when {
         labels.isEmpty() -> emptySet()

@@ -105,11 +105,11 @@ internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
 private val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 private val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey
+    mapper = ::RecordKey,
 )
 
 private fun createRoute(
@@ -117,8 +117,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 @BindingContainer
@@ -127,38 +127,34 @@ object ProfilesNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(PostLikesPattern)
-    fun providePostLikesRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = PostLikesPattern,
-            routeMapper = ::createRoute
-        )
+    fun providePostLikesRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = PostLikesPattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(PostRepostsPattern)
-    fun providePostRepostsRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = PostRepostsPattern,
-            routeMapper = ::createRoute
-        )
+    fun providePostRepostsRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = PostRepostsPattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(ProfileFollowersPattern)
-    fun provideProfileFollowersRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ProfileFollowersPattern,
-            routeMapper = ::createRoute
-        )
+    fun provideProfileFollowersRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = ProfileFollowersPattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(ProfileFollowingPattern)
-    fun provideProfileFollowingRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ProfileFollowingPattern,
-            routeMapper = ::createRoute
-        )
+    fun provideProfileFollowingRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = ProfileFollowingPattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -219,7 +215,7 @@ class ProfilesBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -248,15 +244,15 @@ class ProfilesBindings(
                         modifier = Modifier
                             .padding(
                                 paddingValues = PaddingValues(
-                                    top = paddingValues.calculateTopPadding()
-                                )
+                                    top = paddingValues.calculateTopPadding(),
+                                ),
                             ),
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
-        }
+        },
     )
 }
 
@@ -273,8 +269,8 @@ private fun TopBar(
                 modifier = Modifier,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f
-                    )
+                        alpha = 0.9f,
+                    ),
                 ),
                 onClick = onBackPressed,
             ) {

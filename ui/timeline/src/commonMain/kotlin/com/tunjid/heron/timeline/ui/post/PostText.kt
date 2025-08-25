@@ -53,29 +53,32 @@ fun PostText(
         ?.trim()
         .orEmpty()
 
-    if (text.isBlank()) Spacer(Modifier.height(0.dp))
-    else Text(
-        modifier = modifier
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onClick() }
-            .paneStickySharedElement(
-                sharedContentState = rememberSharedContentState(
-                    key = post.textSharedElementKey(
-                        prefix = sharedElementPrefix,
+    if (text.isBlank()) {
+        Spacer(Modifier.height(0.dp))
+    } else {
+        Text(
+            modifier = modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onClick() }
+                .paneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = post.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                        ),
                     ),
                 ),
+            text = rememberFormattedTextPost(
+                text = text,
+                textLinks = post.record?.links ?: emptyList(),
+                onLinkTargetClicked = { onLinkTargetClicked(post, it) },
             ),
-        text = rememberFormattedTextPost(
-            text = text,
-            textLinks = post.record?.links ?: emptyList(),
-            onLinkTargetClicked = { onLinkTargetClicked(post, it) }
-        ),
-        maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-    )
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+        )
+    }
 }
 
 private fun Post.textSharedElementKey(

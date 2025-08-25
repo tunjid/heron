@@ -27,6 +27,8 @@ internal data class NavItem(
     val hasBadge: Boolean,
 )
 
-internal fun MultiStackNav.navItemSelected(item: NavItem) =
-    if (item.selected) popToRoot(indexToPop = item.index)
-    else switch(toIndex = item.index)
+internal fun MultiStackNav.navItemSelected(item: NavItem) = if (item.selected) {
+    popToRoot(indexToPop = item.index)
+} else {
+    switch(toIndex = item.index)
+}

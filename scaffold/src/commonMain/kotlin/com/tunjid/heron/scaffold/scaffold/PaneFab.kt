@@ -67,9 +67,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.UiTokens
-import kotlinx.coroutines.launch
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -95,7 +95,7 @@ fun PaneScaffoldState.PaneFab(
                     .animateFabSize()
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
-                            key = FabSharedElementKey
+                            key = FabSharedElementKey,
                         ),
                         zIndexInOverlay = FabSharedElementZIndex,
                     ),
@@ -106,7 +106,7 @@ fun PaneScaffoldState.PaneFab(
                         modifier = Modifier
                             .animateFabSize()
                             .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (icon != null) FabIcon(icon)
                         if (icon == null || expanded) {
@@ -119,9 +119,9 @@ fun PaneScaffoldState.PaneFab(
                             }
                         }
                     }
-                }
+                },
             )
-        }
+        },
     )
 }
 
@@ -132,14 +132,14 @@ private fun FabIcon(icon: ImageVector) {
         spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessHigh,
-            visibilityThreshold = 0.1f
+            visibilityThreshold = 0.1f,
         )
     }
 
     Icon(
         modifier = Modifier.rotate(rotationAnimatable.value),
         imageVector = icon,
-        contentDescription = null
+        contentDescription = null,
     )
 
     LaunchedEffect(icon) {
@@ -148,18 +148,17 @@ private fun FabIcon(icon: ImageVector) {
     }
 }
 
-fun PaneScaffoldState.isFabExpanded(offset: Offset): Boolean {
-    return offset.y < with(splitPaneState.density) { 56.dp.toPx() }
-}
+fun PaneScaffoldState.isFabExpanded(offset: Offset): Boolean = offset.y < with(splitPaneState.density) { 56.dp.toPx() }
 
-fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
-    return if (isMediumScreenWidthOrWider) IntOffset.Zero
-    else IntOffset(
+fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset = if (isMediumScreenWidthOrWider) {
+    IntOffset.Zero
+} else {
+    IntOffset(
         x = offset.x.roundToInt(),
         y = min(
             offset.y.roundToInt(),
             with(splitPaneState.density) { UiTokens.bottomNavHeight.roundToPx() },
-        )
+        ),
     )
 }
 
@@ -172,25 +171,23 @@ private data object FabSharedElementKey
 private fun Modifier.animateFabSize(
     animationSpec: FiniteAnimationSpec<IntSize> = spring(
         stiffness = Spring.StiffnessMediumLow,
-        visibilityThreshold = IntSize.VisibilityThreshold
+        visibilityThreshold = IntSize.VisibilityThreshold,
     ),
     alignment: Alignment = Alignment.TopStart,
     finishedListener: ((initialValue: IntSize, targetValue: IntSize) -> Unit)? = null,
-): Modifier =
-    this then
-            SizeAnimationModifierElement(
-                animationSpec,
-                alignment,
-                finishedListener
-            )
+): Modifier = this then
+    SizeAnimationModifierElement(
+        animationSpec,
+        alignment,
+        finishedListener,
+    )
 
 private data class SizeAnimationModifierElement(
     val animationSpec: FiniteAnimationSpec<IntSize>,
     val alignment: Alignment,
     val finishedListener: ((initialValue: IntSize, targetValue: IntSize) -> Unit)?,
 ) : ModifierNodeElement<SizeAnimationModifierNode>() {
-    override fun create(): SizeAnimationModifierNode =
-        SizeAnimationModifierNode(animationSpec, alignment, finishedListener)
+    override fun create(): SizeAnimationModifierNode = SizeAnimationModifierNode(animationSpec, alignment, finishedListener)
 
     override fun update(node: SizeAnimationModifierNode) {
         node.animationSpec = animationSpec
@@ -227,12 +224,11 @@ private class SizeAnimationModifierNode(
         }
     private var lookaheadConstraintsAvailable: Boolean = false
 
-    private fun targetConstraints(default: Constraints) =
-        if (lookaheadConstraintsAvailable) {
-            lookaheadConstraints
-        } else {
-            default
-        }
+    private fun targetConstraints(default: Constraints) = if (lookaheadConstraintsAvailable) {
+        lookaheadConstraints
+    } else {
+        default
+    }
 
     data class AnimData(
         val anim: Animatable<IntSize, AnimationVector2D>,
@@ -282,7 +278,7 @@ private class SizeAnimationModifierNode(
                 alignment.align(
                     size = measuredSize,
                     space = IntSize(width, height),
-                    layoutDirection = this@measure.layoutDirection
+                    layoutDirection = this@measure.layoutDirection,
                 )
             placeable.place(offset)
         }
@@ -305,9 +301,11 @@ private class SizeAnimationModifierNode(
             }
         } ?: AnimData(
             Animatable(
-                targetSize, IntSize.VectorConverter, IntSize(1, 1)
+                targetSize,
+                IntSize.VectorConverter,
+                IntSize(1, 1),
             ),
-            targetSize
+            targetSize,
         )
 
         animData = data
@@ -316,7 +314,8 @@ private class SizeAnimationModifierNode(
 }
 
 private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
-    LayoutModifierNode, Modifier.Node() {
+    Modifier.Node(),
+    LayoutModifierNode {
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
         height: Int,
@@ -337,4 +336,3 @@ private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
         width: Int,
     ) = measurable.maxIntrinsicHeight(width)
 }
-

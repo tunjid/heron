@@ -45,7 +45,7 @@ class SignInPopUpState private constructor() {
     companion object {
         @Composable
         fun rememberSignInPopUpState(
-            onSignInClicked: () -> Unit
+            onSignInClicked: () -> Unit,
         ): SignInPopUpState {
             val state = remember(::SignInPopUpState)
 
@@ -61,9 +61,8 @@ class SignInPopUpState private constructor() {
 @Composable
 private fun SignInPopUp(
     state: SignInPopUpState,
-    onSignInClicked: () -> Unit
+    onSignInClicked: () -> Unit,
 ) {
-
     if (!state.visible) return
 
     AlertDialog(
@@ -81,7 +80,7 @@ private fun SignInPopUp(
             Text(
                 text = stringResource(Res.string.sign_in_prompt),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         confirmButton = {
@@ -91,9 +90,9 @@ private fun SignInPopUp(
                     Text(
                         text = stringResource(Res.string.sign_in),
                         color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
-                }
+                },
             )
         },
         dismissButton = {
@@ -105,14 +104,13 @@ private fun SignInPopUp(
                     Text(
                         text = stringResource(Res.string.dismiss),
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
-                }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
     )
-
 }

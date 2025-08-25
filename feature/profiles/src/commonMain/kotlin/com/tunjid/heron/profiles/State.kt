@@ -27,7 +27,6 @@ import com.tunjid.heron.tiling.TilingState
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val signedInProfileId: ProfileId? = null,
@@ -63,7 +62,6 @@ sealed class Load {
             override val profileId: Id.Profile,
         ) : Profile()
     }
-
 }
 
 sealed class Action(val key: String) {
@@ -79,12 +77,14 @@ sealed class Action(val key: String) {
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
-
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

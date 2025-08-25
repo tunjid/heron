@@ -145,6 +145,8 @@ tunjid-treenav-compose-threepane = { group = "com.tunjid.treenav", name = "compo
 tunjid-treenav-core = { group = "com.tunjid.treenav", name = "treenav", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", version.ref = "tunjid-tree-nav" }
 
+ktlint = "com.pinterest.ktlint:ktlint-cli:1.7.1"
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -156,3 +158,4 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+spotless = "com.diffplug.spotless:7.2.1"

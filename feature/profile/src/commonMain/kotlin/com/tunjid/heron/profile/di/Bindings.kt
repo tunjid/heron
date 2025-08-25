@@ -84,12 +84,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 @BindingContainer
@@ -98,11 +98,10 @@ object ProfileNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -130,7 +129,7 @@ class ProfileBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -169,7 +168,7 @@ class ProfileBindings(
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 state.isSignedInProfile -> Res.string.post
                                 else -> Res.string.mention
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -184,14 +183,17 @@ class ProfileBindings(
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
-                                                if (state.isSignedInProfile) Post.Create.Timeline
-                                                else Post.Create.Mention(state.profile),
+                                            if (state.isSignedInProfile) {
+                                                Post.Create.Timeline
+                                            } else {
+                                                Post.Create.Mention(state.profile)
+                                            },
                                             sharedElementPrefix = null,
                                         )
-                                    }
-                                )
+                                    },
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -215,8 +217,8 @@ class ProfileBindings(
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

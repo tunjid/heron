@@ -78,20 +78,18 @@ object SearchNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RoutePattern,
+        routeMapper = ::createRoute,
+    )
 
     @Provides
     @IntoMap
     @StringKey(RouteQueryPattern)
-    fun provideRouteQueryMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RouteQueryPattern,
-            routeMapper = ::createRoute
-        )
+    fun provideRouteQueryMatcher(): RouteMatcher = urlRouteMatcher(
+        routePattern = RouteQueryPattern,
+        routeMapper = ::createRoute,
+    )
 }
 
 @BindingContainer
@@ -145,47 +143,50 @@ class SearchBindings(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
-                    if (state.isQueryEditable) RootDestinationTopAppBar(
-                        modifier = Modifier,
-                        signedInProfile = state.signedInProfile,
-                        title = {
-                            SearchBar(
-                                searchQuery = state.currentQuery,
-                                onQueryChanged = { query ->
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryChanged(query)
-                                    )
-                                },
-                                onQueryConfirmed = {
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false)
-                                    )
-                                }
-                            )
-                        },
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    )
+                    if (state.isQueryEditable) {
+                        RootDestinationTopAppBar(
+                            modifier = Modifier,
+                            signedInProfile = state.signedInProfile,
+                            title = {
+                                SearchBar(
+                                    searchQuery = state.currentQuery,
+                                    onQueryChanged = { query ->
+                                        viewModel.accept(
+                                            Action.Search.OnSearchQueryChanged(query),
+                                        )
+                                    },
+                                    onQueryConfirmed = {
+                                        viewModel.accept(
+                                            Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
+                                        )
+                                    },
                                 )
-                            )
-                        },
-                    )
-                    else PoppableDestinationTopAppBar(
-                        title = {
-                            Text(
-                                text = state.currentQuery,
-                                style = MaterialTheme.typography.titleSmallEmphasized,
-                            )
-                        },
-                        onBackPressed = {
-                            viewModel.accept(Action.Navigate.Pop)
-                        }
-                    )
+                            },
+                            onSignedInProfileClicked = { profile, sharedElementKey ->
+                                viewModel.accept(
+                                    Action.Navigate.To(
+                                        profileDestination(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = sharedElementKey,
+                                        ),
+                                    ),
+                                )
+                            },
+                        )
+                    } else {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                Text(
+                                    text = state.currentQuery,
+                                    style = MaterialTheme.typography.titleSmallEmphasized,
+                                )
+                            },
+                            onBackPressed = {
+                                viewModel.accept(Action.Navigate.Pop)
+                            },
+                        )
+                    }
                 },
                 navigationBar = {
                     PaneNavigationBar(
@@ -205,8 +206,8 @@ class SearchBindings(
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

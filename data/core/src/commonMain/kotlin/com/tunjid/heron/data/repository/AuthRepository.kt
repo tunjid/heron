@@ -96,10 +96,9 @@ internal class AuthTokenRepository(
                 }
             }
 
-    override fun isSignedInProfile(id: Id): Flow<Boolean> =
-        savedStateDataSource.savedState
-            .map { it.signedInProfileId == id }
-            .distinctUntilChanged()
+    override fun isSignedInProfile(id: Id): Flow<Boolean> = savedStateDataSource.savedState
+        .map { it.signedInProfileId == id }
+        .distinctUntilChanged()
 
     override suspend fun createSession(
         request: SessionRequest,
@@ -108,7 +107,7 @@ internal class AuthTokenRepository(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
-            )
+            ),
         )
     }
         .mapCatching { result ->
@@ -121,7 +120,7 @@ internal class AuthTokenRepository(
                         didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                             jsonContent = result.didDoc,
                         ),
-                    )
+                    ),
                 )
             }
             // Suspend till auth token has been saved and is readable
@@ -139,14 +138,12 @@ internal class AuthTokenRepository(
         }
     }
 
-    override suspend fun updateSignedInUser(): Boolean {
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getSession()
-        }
-            .getOrNull()
-            ?.did
-            ?.let { updateSignedInUser(it) } == true
+    override suspend fun updateSignedInUser(): Boolean = networkService.runCatchingWithMonitoredNetworkRetry {
+        getSession()
     }
+        .getOrNull()
+        ?.did
+        ?.let { updateSignedInUser(it) } == true
 
     private suspend fun updateSignedInUser(did: Did) = supervisorScope {
         listOf(
@@ -185,8 +182,8 @@ internal class AuthTokenRepository(
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getFeedGenerator(
                         GetFeedGeneratorQueryParams(
-                            feed = AtUri(it.value)
-                        )
+                            feed = AtUri(it.value),
+                        ),
                     )
                 }
             }
@@ -198,8 +195,8 @@ internal class AuthTokenRepository(
                         GetListQueryParams(
                             cursor = null,
                             limit = 1,
-                            list = AtUri(it.value)
-                        )
+                            list = AtUri(it.value),
+                        ),
                     )
                 }
             }
@@ -213,47 +210,45 @@ internal class AuthTokenRepository(
     }
 }
 
-private fun GetPreferencesResponse.toExternalModel() =
-    preferences.fold(
-        initial = Preferences.DefaultPreferences,
-        operation = { preferences, preferencesUnion ->
-            when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> preferences
-                is PreferencesUnion.BskyAppStatePref -> preferences
-                is PreferencesUnion.ContentLabelPref -> preferences.copy(
-                    contentLabelPreferences = preferences.contentLabelPreferences
-                            + preferencesUnion.asExternalModel()
-                )
+private fun GetPreferencesResponse.toExternalModel() = preferences.fold(
+    initial = Preferences.DefaultPreferences,
+    operation = { preferences, preferencesUnion ->
+        when (preferencesUnion) {
+            is PreferencesUnion.AdultContentPref -> preferences
+            is PreferencesUnion.BskyAppStatePref -> preferences
+            is PreferencesUnion.ContentLabelPref -> preferences.copy(
+                contentLabelPreferences = preferences.contentLabelPreferences +
+                    preferencesUnion.asExternalModel(),
+            )
 
-                is PreferencesUnion.FeedViewPref -> preferences
-                is PreferencesUnion.HiddenPostsPref -> preferences
-                is PreferencesUnion.InterestsPref -> preferences
-                is PreferencesUnion.LabelersPref -> preferences
-                is PreferencesUnion.MutedWordsPref -> preferences
-                is PreferencesUnion.PersonalDetailsPref -> preferences
-                is PreferencesUnion.SavedFeedsPref -> preferences
-                is PreferencesUnion.SavedFeedsPrefV2 -> preferences.copy(
-                    timelinePreferences = preferencesUnion.value.items.map {
-                        TimelinePreference(
-                            id = it.id,
-                            type = it.type.value,
-                            value = it.value,
-                            pinned = it.pinned,
-                        )
-                    }
-                )
+            is PreferencesUnion.FeedViewPref -> preferences
+            is PreferencesUnion.HiddenPostsPref -> preferences
+            is PreferencesUnion.InterestsPref -> preferences
+            is PreferencesUnion.LabelersPref -> preferences
+            is PreferencesUnion.MutedWordsPref -> preferences
+            is PreferencesUnion.PersonalDetailsPref -> preferences
+            is PreferencesUnion.SavedFeedsPref -> preferences
+            is PreferencesUnion.SavedFeedsPrefV2 -> preferences.copy(
+                timelinePreferences = preferencesUnion.value.items.map {
+                    TimelinePreference(
+                        id = it.id,
+                        type = it.type.value,
+                        value = it.value,
+                        pinned = it.pinned,
+                    )
+                },
+            )
 
-                is PreferencesUnion.ThreadViewPref -> preferences
-                is PreferencesUnion.Unknown -> preferences
-                is PreferencesUnion.PostInteractionSettingsPref -> preferences
-                is PreferencesUnion.VerificationPrefs -> preferences
-            }
+            is PreferencesUnion.ThreadViewPref -> preferences
+            is PreferencesUnion.Unknown -> preferences
+            is PreferencesUnion.PostInteractionSettingsPref -> preferences
+            is PreferencesUnion.VerificationPrefs -> preferences
         }
-    )
+    },
+)
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
     labelerId = value.labelerDid?.did?.let(::ProfileId),
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
-

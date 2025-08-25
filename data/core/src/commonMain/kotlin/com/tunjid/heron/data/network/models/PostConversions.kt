@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.RecordWithMediaViewMediaUnion
+import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
@@ -49,8 +50,6 @@ import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import sh.christian.ozone.api.model.JsonContent
-import app.bsky.feed.Post as BskyPost
-
 
 internal fun PostEntity.postVideoEntity(
     embedEntity: VideoEntity,
@@ -88,14 +87,18 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
-            postEntity = quotedPostEntity,
-            profileEntity = quotedPostProfileEntity,
-            embeds = quotedPostEmbedEntities(),
-            viewerStatisticsEntity = null,
-            quote = null,
-            labels = emptyList(),
-        ) else null,
+        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) {
+            post(
+                postEntity = quotedPostEntity,
+                profileEntity = quotedPostProfileEntity,
+                embeds = quotedPostEmbedEntities(),
+                viewerStatisticsEntity = null,
+                quote = null,
+                labels = emptyList(),
+            )
+        } else {
+            null
+        },
         labels = labels.map { atProtoLabel ->
             Label(
                 uri = atProtoLabel.uri.uri.let(::GenericUri),
@@ -104,7 +107,7 @@ internal fun PostView.post(
                 version = atProtoLabel.ver,
                 createdAt = atProtoLabel.cts,
             )
-        }
+        },
     )
 }
 
@@ -129,7 +132,7 @@ private fun post(
         is ExternalEmbedEntity -> embedEntity.asExternalModel()
         is ImageEntity -> ImageList(
             images = embeds.filterIsInstance<ImageEntity>()
-                .map(ImageEntity::asExternalModel)
+                .map(ImageEntity::asExternalModel),
         )
 
         is VideoEntity -> embedEntity.asExternalModel()
@@ -140,34 +143,52 @@ private fun post(
     labels = labels,
 )
 
-internal fun PostView.postEntity() =
-    PostEntity(
-        cid = PostId(cid.cid),
-        uri = PostUri(uri.atUri),
-        authorId = ProfileId(author.did.did),
-        replyCount = replyCount,
-        repostCount = repostCount,
-        likeCount = likeCount,
-        quoteCount = quoteCount,
-        indexedAt = indexedAt,
-        record = record.asPostEntityRecordData(),
+internal fun PostView.postEntity() = PostEntity(
+    cid = PostId(cid.cid),
+    uri = PostUri(uri.atUri),
+    authorId = ProfileId(author.did.did),
+    replyCount = replyCount,
+    repostCount = repostCount,
+    likeCount = likeCount,
+    quoteCount = quoteCount,
+    indexedAt = indexedAt,
+    record = record.asPostEntityRecordData(),
+)
+
+internal fun PostView.profileEntity(): ProfileEntity = author.profileEntity()
+
+internal fun PostView.embedEntities(): List<PostEmbed> = when (val embed = embed) {
+    is PostViewEmbedUnion.ExternalView -> listOf(
+        ExternalEmbedEntity(
+            uri = GenericUri(embed.value.external.uri.uri),
+            title = embed.value.external.title,
+            description = embed.value.external.description,
+            thumb = embed.value.external.thumb?.uri?.let(::ImageUri),
+        ),
     )
 
-internal fun PostView.profileEntity(): ProfileEntity =
-    author.profileEntity()
+    is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
+        ImageEntity(
+            fullSize = ImageUri(it.fullsize.uri),
+            thumb = ImageUri(it.thumb.uri),
+            alt = it.alt,
+            width = it.aspectRatio?.width,
+            height = it.aspectRatio?.height,
+        )
+    }
 
-internal fun PostView.embedEntities(): List<PostEmbed> =
-    when (val embed = embed) {
-        is PostViewEmbedUnion.ExternalView -> listOf(
+    is PostViewEmbedUnion.RecordView -> emptyList()
+    is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
+        is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
             ExternalEmbedEntity(
-                uri = GenericUri(embed.value.external.uri.uri),
-                title = embed.value.external.title,
-                description = embed.value.external.description,
-                thumb = embed.value.external.thumb?.uri?.let(::ImageUri),
-            )
+                uri = GenericUri(mediaEmbed.value.external.uri.uri),
+                title = mediaEmbed.value.external.title,
+                description = mediaEmbed.value.external.description,
+                thumb = mediaEmbed.value.external.thumb?.uri?.let(::ImageUri),
+            ),
         )
 
-        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
+        is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
             ImageEntity(
                 fullSize = ImageUri(it.fullsize.uri),
                 thumb = ImageUri(it.thumb.uri),
@@ -177,62 +198,41 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
             )
         }
 
-        is PostViewEmbedUnion.RecordView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
-            is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
-                ExternalEmbedEntity(
-                    uri = GenericUri(mediaEmbed.value.external.uri.uri),
-                    title = mediaEmbed.value.external.title,
-                    description = mediaEmbed.value.external.description,
-                    thumb = mediaEmbed.value.external.thumb?.uri?.let(::ImageUri),
-                )
-            )
-
-            is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
-                ImageEntity(
-                    fullSize = ImageUri(it.fullsize.uri),
-                    thumb = ImageUri(it.thumb.uri),
-                    alt = it.alt,
-                    width = it.aspectRatio?.width,
-                    height = it.aspectRatio?.height,
-                )
-            }
-
-            is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
-            is RecordWithMediaViewMediaUnion.VideoView -> listOf(
-                VideoEntity(
-                    cid = GenericId(mediaEmbed.value.cid.cid),
-                    playlist = GenericUri(mediaEmbed.value.playlist.uri),
-                    thumbnail = mediaEmbed.value.thumbnail?.uri?.let(::ImageUri),
-                    alt = mediaEmbed.value.alt,
-                    width = mediaEmbed.value.aspectRatio?.width,
-                    height = mediaEmbed.value.aspectRatio?.height,
-                )
-            )
-        }
-
-        is PostViewEmbedUnion.Unknown -> emptyList()
-        is PostViewEmbedUnion.VideoView -> listOf(
+        is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
+        is RecordWithMediaViewMediaUnion.VideoView -> listOf(
             VideoEntity(
-                cid = GenericId(embed.value.cid.cid),
-                playlist = GenericUri(embed.value.playlist.uri),
-                thumbnail = embed.value.thumbnail?.uri?.let(::ImageUri),
-                alt = embed.value.alt,
-                width = embed.value.aspectRatio?.width,
-                height = embed.value.aspectRatio?.height,
-            )
+                cid = GenericId(mediaEmbed.value.cid.cid),
+                playlist = GenericUri(mediaEmbed.value.playlist.uri),
+                thumbnail = mediaEmbed.value.thumbnail?.uri?.let(::ImageUri),
+                alt = mediaEmbed.value.alt,
+                width = mediaEmbed.value.aspectRatio?.width,
+                height = mediaEmbed.value.aspectRatio?.height,
+            ),
         )
-
-        null -> emptyList()
     }
 
+    is PostViewEmbedUnion.Unknown -> emptyList()
+    is PostViewEmbedUnion.VideoView -> listOf(
+        VideoEntity(
+            cid = GenericId(embed.value.cid.cid),
+            playlist = GenericUri(embed.value.playlist.uri),
+            thumbnail = embed.value.thumbnail?.uri?.let(::ImageUri),
+            alt = embed.value.alt,
+            width = embed.value.aspectRatio?.width,
+            height = embed.value.aspectRatio?.height,
+        ),
+    )
+
+    null -> emptyList()
+}
 
 internal fun ViewerState.postViewerStatisticsEntity(
     postUri: PostUri,
     viewingProfileId: ProfileId?,
-) =
-    if (viewingProfileId == null) null
-    else PostViewerStatisticsEntity(
+) = if (viewingProfileId == null) {
+    null
+} else {
+    PostViewerStatisticsEntity(
         postUri = postUri,
         viewingProfileId = viewingProfileId,
         likeUri = like?.atUri?.let(::GenericUri),
@@ -242,6 +242,7 @@ internal fun ViewerState.postViewerStatisticsEntity(
         embeddingDisabled = embeddingDisabled == true,
         pinned = pinned == true,
     )
+}
 
 internal fun ReplyRefRootUnion.postViewerStatisticsEntity(
     viewingProfileId: ProfileId?,
@@ -254,7 +255,7 @@ internal fun ReplyRefRootUnion.postViewerStatisticsEntity(
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
     is ReplyRefRootUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
@@ -268,11 +269,10 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
-        -> null
+    -> null
 }
 
-internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
-    // TODO can this be deterministic?
+internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? = // TODO can this be deterministic?
     try {
         val bskyPost = decodeAs<BskyPost>()
         PostEntity.RecordData(
@@ -284,35 +284,38 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
         null
     }
 
-private fun BskyPost.toPostRecord() =
-    Post.Record(
-        text = text,
-        createdAt = createdAt,
-        links = facets.mapNotNull(Facet::toLinkOrNull),
-        replyRef = reply?.let {
-            Post.ReplyRef(
-                rootCid = it.root.cid.cid.let(::PostId),
-                rootUri = it.root.uri.atUri.let(::PostUri),
-                parentCid = it.parent.cid.cid.let(::PostId),
-                parentUri = it.parent.uri.atUri.let(::PostUri),
-            )
-        },
-    )
+private fun BskyPost.toPostRecord() = Post.Record(
+    text = text,
+    createdAt = createdAt,
+    links = facets.mapNotNull(Facet::toLinkOrNull),
+    replyRef = reply?.let {
+        Post.ReplyRef(
+            rootCid = it.root.cid.cid.let(::PostId),
+            rootUri = it.root.uri.atUri.let(::PostUri),
+            parentCid = it.parent.cid.cid.let(::PostId),
+            parentUri = it.parent.uri.atUri.let(::PostUri),
+        )
+    },
+)
 
 private fun Facet.toLinkOrNull(): Link? {
-    return if (features.isEmpty()) null else Link(
-        start = index.byteStart.toInt(),
-        end = index.byteEnd.toInt(),
-        target = when (val feature = features.first()) {
-            is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
-            is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
-                feature.value.did.did.let(::ProfileId)
-            )
+    return if (features.isEmpty()) {
+        null
+    } else {
+        Link(
+            start = index.byteStart.toInt(),
+            end = index.byteEnd.toInt(),
+            target = when (val feature = features.first()) {
+                is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
+                is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
+                    feature.value.did.did.let(::ProfileId),
+                )
 
-            is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
-            is FacetFeatureUnion.Unknown -> return null
-        },
-    )
+                is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
+                is FacetFeatureUnion.Unknown -> return null
+            },
+        )
+    }
 }
 
 private fun Long?.orZero() = this ?: 0L

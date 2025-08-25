@@ -32,9 +32,11 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewBasic,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
-        viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    if (viewingProfileId != null) {
+        profileView.profileViewerStateEntities(
+            viewingProfileId = viewingProfileId,
+        ).forEach(::add)
+    }
 
     profileView.viewer
         ?.knownFollowers
@@ -50,7 +52,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }
@@ -60,9 +62,11 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileView,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
-        viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    if (viewingProfileId != null) {
+        profileView.profileViewerStateEntities(
+            viewingProfileId = viewingProfileId,
+        ).forEach(::add)
+    }
 
     profileView.viewer
         ?.knownFollowers
@@ -78,7 +82,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }
@@ -88,9 +92,11 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewDetailed,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
-        viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    if (viewingProfileId != null) {
+        profileView.profileViewerStateEntities(
+            viewingProfileId = viewingProfileId,
+        ).forEach(::add)
+    }
 
     profileView.viewer
         ?.knownFollowers
@@ -106,7 +112,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }

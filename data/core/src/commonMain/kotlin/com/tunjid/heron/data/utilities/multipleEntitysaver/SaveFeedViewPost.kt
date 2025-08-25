@@ -36,7 +36,7 @@ internal fun MultipleEntitySaver.add(
             feedView.feedItemEntity(
                 sourceId = timeline.sourceId,
                 viewingProfileId = viewingProfileId,
-            )
+            ),
         )
 
         // Extract data from post
@@ -61,7 +61,7 @@ internal fun MultipleEntitySaver.add(
                 PostThreadEntity(
                     postUri = feedView.post.postEntity().uri,
                     parentPostUri = parentPostEntity.uri,
-                )
+                ),
             )
         }
     }

@@ -65,17 +65,15 @@ data class ProfileViewerStateEntity(
     )
 }
 
-internal fun ProfileViewerStateEntity.partial() =
-    ProfileViewerStateEntity.Partial(
-        profileId = profileId,
-        otherProfileId = otherProfileId,
-        following = following,
-        followedBy = followedBy,
-    )
+internal fun ProfileViewerStateEntity.partial() = ProfileViewerStateEntity.Partial(
+    profileId = profileId,
+    otherProfileId = otherProfileId,
+    following = following,
+    followedBy = followedBy,
+)
 
-fun ProfileViewerStateEntity.asExternalModel() =
-    ProfileViewerState(
-        following = following,
-        followedBy = followedBy,
-        commonFollowersCount = commonFollowersCount,
-    )
+fun ProfileViewerStateEntity.asExternalModel() = ProfileViewerState(
+    following = following,
+    followedBy = followedBy,
+    commonFollowersCount = commonFollowersCount,
+)

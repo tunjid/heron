@@ -77,7 +77,7 @@ fun QuotedPost(
             onClick = onClick,
         ) {
             Row(
-                horizontalArrangement = spacedBy(8.dp)
+                horizontalArrangement = spacedBy(8.dp),
             ) {
                 AsyncImage(
                     modifier = Modifier
@@ -86,7 +86,7 @@ fun QuotedPost(
                         .paneStickySharedElement(
                             sharedContentState = rememberSharedContentState(
                                 key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
-                            )
+                            ),
                         )
                         .clickable {
                             onProfileClicked(quotedPost, author)
@@ -96,7 +96,7 @@ fun QuotedPost(
                         contentDescription = author.displayName ?: author.handle.id,
                         contentScale = ContentScale.Crop,
                         shape = RoundedPolygonShape.Circle,
-                    )
+                    ),
                 )
                 PostHeadline(
                     now = now,
@@ -159,7 +159,7 @@ fun QuotedPost(
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     onClicked = {
                         onPostMediaClicked(embed, 0, quotedPost)
-                    }
+                    },
                 )
 
                 null -> Unit

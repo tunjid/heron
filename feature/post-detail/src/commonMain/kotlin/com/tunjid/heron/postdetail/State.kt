@@ -25,7 +25,6 @@ import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val anchorPost: Post?,
@@ -41,7 +40,7 @@ data class State(
                 hasBreak = false,
                 labelVisibilitiesToDefinitions = emptyMap(),
             )
-        }
+        },
     ),
     @Transient
     val messages: List<String> = emptyList(),
@@ -58,11 +57,14 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

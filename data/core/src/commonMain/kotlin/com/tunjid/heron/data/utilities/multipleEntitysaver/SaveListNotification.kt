@@ -27,13 +27,11 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import sh.christian.ozone.api.AtUri
 
-
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     listNotificationsNotification: List<ListNotificationsNotification>,
     associatedPosts: List<PostView>,
 ) {
-
     val postUris = mutableSetOf<PostUri>()
     associatedPosts.forEach { postView ->
         add(
@@ -46,7 +44,7 @@ internal fun MultipleEntitySaver.add(
     listNotificationsNotification.forEach { notification ->
         add(
             viewingProfileId = viewingProfileId,
-            profileView = notification.author
+            profileView = notification.author,
         )
         add(
             NotificationEntity(
@@ -72,11 +70,10 @@ internal fun MultipleEntitySaver.add(
                     ?.takeIf(postUris::contains),
                 isRead = notification.isRead,
                 indexedAt = notification.indexedAt,
-            )
+            ),
         )
     }
 }
-
 
 internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (reason) {
     is ListNotificationsReason.Unknown -> null

@@ -72,7 +72,7 @@ fun FeedGenerator(
         sharedElementType = feedGenerator.uri,
         blurb = stringResource(
             Res.string.liked_by,
-            format(feedGenerator.likeCount ?: 0L)
+            format(feedGenerator.likeCount ?: 0L),
         ),
         avatar = {
             val avatar = feedGenerator.avatar ?: BlueskyClouds
@@ -80,8 +80,8 @@ fun FeedGenerator(
                 modifier = Modifier
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
-                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
-                        )
+                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix),
+                        ),
                     )
                     .size(44.dp),
                 args = remember(avatar) {
@@ -91,7 +91,7 @@ fun FeedGenerator(
                         contentDescription = null,
                         shape = FeedGeneratorCollectionShape,
                     )
-                }
+                },
             )
         },
         action = {
@@ -117,12 +117,11 @@ fun FeedGenerator(
     )
 }
 
-private fun FeedGenerator.Status.textResource(): StringResource =
-    when (this) {
-        FeedGenerator.Status.Pinned -> Res.string.pin_feed
-        FeedGenerator.Status.Saved -> Res.string.save_feed
-        FeedGenerator.Status.None -> Res.string.remove_feed
-    }
+private fun FeedGenerator.Status.textResource(): StringResource = when (this) {
+    FeedGenerator.Status.Pinned -> Res.string.pin_feed
+    FeedGenerator.Status.Saved -> Res.string.save_feed
+    FeedGenerator.Status.None -> Res.string.remove_feed
+}
 
 private val FeedGenerator.Status.icon: ImageVector
     get() = when (this) {

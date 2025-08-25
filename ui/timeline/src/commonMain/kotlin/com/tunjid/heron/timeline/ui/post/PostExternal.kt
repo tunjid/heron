@@ -69,10 +69,13 @@ internal fun PostExternal(
     ) {
         Column(verticalArrangement = spacedBy(8.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
-                val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
-                    RoundedPolygonShape.Rectangle
-                )
-                else Modifier
+                val itemModifier = if (isBlurred) {
+                    Modifier.sensitiveContentBlur(
+                        RoundedPolygonShape.Rectangle,
+                    )
+                } else {
+                    Modifier
+                }
                 AsyncImage(
                     modifier = itemModifier
                         .fillMaxWidth()
@@ -83,7 +86,7 @@ internal fun PostExternal(
                                     prefix = sharedElementPrefix,
                                     postUri = postUri,
                                     text = feature.thumb?.uri,
-                                )
+                                ),
                             ),
                         ),
                     args = ImageArgs(
@@ -94,25 +97,27 @@ internal fun PostExternal(
                     ),
                 )
             }
-            if (presentation == Timeline.Presentation.Text.WithEmbed) PostFeatureTextContent(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 16.dp,
-                    )
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = embedSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postUri = postUri,
-                                text = feature.title,
+            if (presentation == Timeline.Presentation.Text.WithEmbed) {
+                PostFeatureTextContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 16.dp,
+                        )
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = embedSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postUri = postUri,
+                                    text = feature.title,
+                                ),
                             ),
                         ),
-                    ),
-                title = feature.title,
-                description = null,
-                uri = feature.uri,
-            )
+                    title = feature.title,
+                    description = null,
+                    uri = feature.uri,
+                )
+            }
         }
     }
 }

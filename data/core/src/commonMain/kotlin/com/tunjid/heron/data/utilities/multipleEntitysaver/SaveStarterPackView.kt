@@ -18,13 +18,13 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.graph.StarterPackView
 import app.bsky.graph.StarterPackViewBasic
+import app.bsky.graph.Starterpack as BskyStarterPack
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import app.bsky.graph.Starterpack as BskyStarterPack
 
 internal fun MultipleEntitySaver.add(
     starterPack: StarterPackView,
@@ -45,7 +45,7 @@ internal fun MultipleEntitySaver.add(
         starterPack.listItemsSample.forEach { listItemView ->
             add(
                 listUri = listView.uri.atUri.let(::ListUri),
-                listItemView = listItemView
+                listItemView = listItemView,
             )
         }
     }
@@ -61,7 +61,7 @@ internal fun MultipleEntitySaver.add(
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
             indexedAt = starterPack.indexedAt,
-        )
+        ),
     )
 }
 
@@ -87,6 +87,6 @@ internal fun MultipleEntitySaver.add(
             joinedAllTimeCount = starterPackView.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
             indexedAt = starterPackView.indexedAt,
-        )
+        ),
     )
 }

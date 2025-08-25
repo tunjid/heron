@@ -92,10 +92,10 @@ internal fun NotificationsScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
@@ -106,22 +106,24 @@ internal fun NotificationsScreen(
                     profileDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
-                        avatarSharedElementKey = notification.avatarSharedElementKey(profile)
-                    )
-                )
+                        avatarSharedElementKey = notification.avatarSharedElementKey(profile),
+                    ),
+                ),
             )
         }
     }
     val onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = remember {
         { _, linkTarget ->
-            if (linkTarget is LinkTarget.Navigable) actions(
-                Action.Navigate.To(
-                    pathDestination(
-                        path = linkTarget.path,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    )
+            if (linkTarget is LinkTarget.Navigable) {
+                actions(
+                    Action.Navigate.To(
+                        pathDestination(
+                            path = linkTarget.path,
+                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        ),
+                    ),
                 )
-            )
+            }
         }
     }
     val onProfileClicked: (Notification.PostAssociated, Profile) -> Unit = remember {
@@ -132,10 +134,10 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
-                            notification.sharedElementPrefix()
-                        )
-                    )
-                )
+                            notification.sharedElementPrefix(),
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -147,8 +149,8 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
                         post = notification.associatedPost,
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
@@ -156,14 +158,17 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    if (paneScaffoldState.isSignedOut) signInDestination()
-                    else composePostDestination(
-                        type = Post.Create.Reply(
-                            parent = notification.associatedPost,
-                        ),
-                        sharedElementPrefix = notification.sharedElementPrefix(),
-                    )
-                )
+                    if (paneScaffoldState.isSignedOut) {
+                        signInDestination()
+                    } else {
+                        composePostDestination(
+                            type = Post.Create.Reply(
+                                parent = notification.associatedPost,
+                            ),
+                            sharedElementPrefix = notification.sharedElementPrefix(),
+                        )
+                    },
+                ),
             )
         }
     }
@@ -178,7 +183,7 @@ internal fun NotificationsScreen(
         isRefreshing = state.isRefreshing,
         onRefresh = {
             actions(
-                Action.Tile(TilingState.Action.Refresh)
+                Action.Tile(TilingState.Action.Refresh),
             )
         },
         indicator = {
@@ -208,7 +213,7 @@ internal fun NotificationsScreen(
                 itemContent = { item ->
                     val itemModifier = Modifier
                         .animateBounds(
-                            lookaheadScope = paneScaffoldState
+                            lookaheadScope = paneScaffoldState,
                         )
                         .animateItem()
 
@@ -313,7 +318,7 @@ internal fun NotificationsScreen(
                             onProfileClicked = onAggregatedProfileClicked,
                         )
                     }
-                }
+                },
             )
         }
     }
@@ -324,11 +329,11 @@ internal fun NotificationsScreen(
             actions(
                 Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery
-                    )
-                )
+                        query ?: state.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     LaunchedEffect(listState) {
@@ -336,7 +341,7 @@ internal fun NotificationsScreen(
             if (listState.lastScrolledForward) return@snapshotFlow null
 
             val firstVisibleNotification = items.getOrNull(
-                listState.firstVisibleItemIndex
+                listState.firstVisibleItemIndex,
             ) ?: return@snapshotFlow null
             firstVisibleNotification.notification.indexedAt
         }

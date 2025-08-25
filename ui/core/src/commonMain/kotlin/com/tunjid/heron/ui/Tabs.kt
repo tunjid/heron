@@ -82,7 +82,7 @@ class TabsState private constructor(
                 selectedTabIndex = selectedTabIndex,
                 tabs = tabs,
                 onTabSelected = onTabSelected,
-                onTabReselected = onTabReselected
+                onTabReselected = onTabReselected,
             )
         }.also {
             if (it.tabs != tabs) {
@@ -92,7 +92,6 @@ class TabsState private constructor(
         }
     }
 }
-
 
 @Composable
 fun Tabs(
@@ -118,9 +117,9 @@ fun Tabs(
                         },
                         content = {
                             tabContent(tab)
-                        }
+                        },
                     )
-                }
+                },
             )
         }
         Indicator(lazyListState, selectedTabIndex)
@@ -141,8 +140,11 @@ fun TabsState.Tab(
             val index = tabs.indexOf(tab)
             if (index < 0) return@click
 
-            if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
-            else onTabReselected(index)
+            if (index != selectedTabIndex().roundToInt()) {
+                onTabSelected(index)
+            } else {
+                onTabReselected(index)
+            }
         },
         label = {
             Text(tab.title)
@@ -163,8 +165,9 @@ private fun BoxScope.Indicator(
             val layoutInfo = lazyListState.layoutInfo
             val roundedIndex = selectedTabIndex().roundToInt()
 
-            if (roundedIndex == layoutInfo.totalItemsCount - 1)
+            if (roundedIndex == layoutInfo.totalItemsCount - 1) {
                 return@snapshotFlow layoutInfo.totalItemsCount - 1
+            }
 
             val index = layoutInfo.visibleItemsInfo.binarySearch {
                 it.index - roundedIndex
@@ -172,9 +175,11 @@ private fun BoxScope.Indicator(
             if (index < 0) return@snapshotFlow roundedIndex
             val item = layoutInfo.visibleItemsInfo[index]
 
-            if (item.offset + item.size > layoutInfo.viewportEndOffset)
+            if (item.offset + item.size > layoutInfo.viewportEndOffset) {
                 lazyListState.firstVisibleItemIndex + 1
-            else lazyListState.firstVisibleItemIndex
+            } else {
+                lazyListState.firstVisibleItemIndex
+            }
         }
             .collect { lazyListState.animateScrollToItem(it) }
     }
@@ -221,7 +226,7 @@ private fun BoxScope.Indicator(
             .background(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                 shape = TabShape,
-            )
+            ),
     )
 }
 

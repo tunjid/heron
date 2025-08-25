@@ -65,8 +65,8 @@ fun FeedList(
                 modifier = Modifier
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
-                            key = list.avatarSharedElementKey(sharedElementPrefix)
-                        )
+                            key = list.avatarSharedElementKey(sharedElementPrefix),
+                        ),
                     )
                     .size(44.dp),
                 args = remember(avatar) {
@@ -76,7 +76,7 @@ fun FeedList(
                         contentDescription = null,
                         shape = ListCollectionShape,
                     )
-                }
+                },
             )
         },
         onClicked = {
@@ -112,8 +112,8 @@ fun StarterPack(
                 modifier = Modifier
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
-                            key = starterPack.avatarSharedElementKey(sharedElementPrefix)
-                        )
+                            key = starterPack.avatarSharedElementKey(sharedElementPrefix),
+                        ),
                     )
                     .size(44.dp),
                 args = remember(avatar) {
@@ -123,7 +123,7 @@ fun StarterPack(
                         contentDescription = null,
                         shape = StarterPackCollectionShape,
                     )
-                }
+                },
             )
         },
         onClicked = {

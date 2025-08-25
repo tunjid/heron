@@ -30,9 +30,9 @@ import com.tunjid.composables.dragtodismiss.DragToDismissState
 import com.tunjid.composables.dragtodismiss.dragToDismiss
 import com.tunjid.composables.dragtodismiss.rememberUpdatedDragToDismissState
 import com.tunjid.treenav.compose.navigation3.ui.LocalNavigationEventDispatcherOwner
+import kotlin.math.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlin.math.min
 
 @Composable
 fun Modifier.dragToPop(): Modifier {
@@ -46,21 +46,22 @@ fun Modifier.dragToPop(): Modifier {
     val dragToDismissState = rememberUpdatedDragToDismissState()
 
     val dispatcher = checkNotNull(
-        LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher
+        LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher,
     )
 
     LaunchedEffect(appState.dismissBehavior) {
         val offsetFlow = when (appState.dismissBehavior) {
             AppState.DismissBehavior.Gesture.Drag -> snapshotFlow(dragToDismissState::offset)
             AppState.DismissBehavior.Gesture.Slide,
-            AppState.DismissBehavior.None -> null
+            AppState.DismissBehavior.None,
+            -> null
         } ?: return@LaunchedEffect
 
         // This delay is needed so as to not conflict with the NavigationEventHandler
         // for slide to dismiss
         delay(timeMillis = 10)
         dispatcher.dispatchOnStarted(
-            dragToDismissState.navigationEvent(progress = 0f)
+            dragToDismissState.navigationEvent(progress = 0f),
         )
         offsetFlow.collectLatest { offset ->
             dispatcher.dispatchOnProgressed(
@@ -68,8 +69,8 @@ fun Modifier.dragToPop(): Modifier {
                     min(
                         a = 1f,
                         b = offset.getDistanceSquared() / dismissThreshold,
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
@@ -96,17 +97,16 @@ fun Modifier.dragToPop(): Modifier {
             dispatcher.dispatchOnCompleted()
 
             appState.dismissBehavior = AppState.DismissBehavior.None
-        }
+        },
     )
         .offset { dragToDismissState.offset.round() }
 }
 
 private fun DragToDismissState.navigationEvent(
-    progress: Float
+    progress: Float,
 ) = NavigationEvent(
     touchX = offset.x,
     touchY = offset.y,
     progress = progress,
     swipeEdge = NavigationEvent.EDGE_LEFT,
 )
-

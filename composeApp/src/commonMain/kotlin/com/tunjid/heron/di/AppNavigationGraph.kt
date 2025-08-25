@@ -38,7 +38,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 
 @DependencyGraph(
-    scope = AppScope::class
+    scope = AppScope::class,
 )
 interface AppNavigationGraph {
 
@@ -60,7 +60,7 @@ interface AppNavigationGraph {
             @Includes profilesNavigationBindings: ProfilesNavigationBindings,
             @Includes searchNavigationBindings: SearchNavigationBindings,
             @Includes splashNavigationBindings: SplashNavigationBindings,
-            @Includes settingsNavigationBindings: SettingsNavigationBindings
+            @Includes settingsNavigationBindings: SettingsNavigationBindings,
         ): AppNavigationGraph
     }
 
@@ -73,12 +73,11 @@ val AppNavigationGraph.allRouteMatchers
         .sortedWith(routeMatchingComparator())
         .map(Pair<String, RouteMatcher>::second)
 
-private fun routeMatchingComparator() =
-    compareBy<Pair<String, RouteMatcher>>(
-        // Order by number of path segments firs
-        { (key) -> key.split("/").size },
-        // Match more specific segments first, route params should be matched later
-        { (key) -> -key.split("/").filter { it.startsWith("{") }.size },
-        // Finally sort alphabetically
-        { (key) -> key }
-    ).reversed()
+private fun routeMatchingComparator() = compareBy<Pair<String, RouteMatcher>>(
+    // Order by number of path segments firs
+    { (key) -> key.split("/").size },
+    // Match more specific segments first, route params should be matched later
+    { (key) -> -key.split("/").filter { it.startsWith("{") }.size },
+    // Finally sort alphabetically
+    { (key) -> key },
+).reversed()

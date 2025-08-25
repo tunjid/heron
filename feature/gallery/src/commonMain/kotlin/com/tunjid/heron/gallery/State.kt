@@ -17,10 +17,12 @@
 package com.tunjid.heron.gallery
 
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
@@ -31,9 +33,6 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import com.tunjid.heron.data.core.models.Image as EmbeddedImage
-import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
-
 
 @Serializable
 data class State(
@@ -48,7 +47,7 @@ data class State(
 )
 
 fun State(
-    route: Route
+    route: Route,
 ) = State(
     startIndex = route.startIndex,
     postUri = PostUri(
@@ -61,7 +60,7 @@ fun State(
         is ImageList -> media.images.map(GalleryItem::Photo)
         is Video -> listOf(GalleryItem.Video(media))
         null -> emptyList()
-    }
+    },
 )
 
 sealed class GalleryItem {
@@ -86,9 +85,12 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

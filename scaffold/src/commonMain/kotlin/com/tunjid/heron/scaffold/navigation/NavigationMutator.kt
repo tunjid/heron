@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-
 package com.tunjid.heron.scaffold.navigation
 
 import androidx.compose.material.icons.Icons
@@ -68,6 +67,8 @@ import heron.scaffold.generated.resources.messages
 import heron.scaffold.generated.resources.notifications
 import heron.scaffold.generated.resources.search
 import heron.scaffold.generated.resources.splash
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -81,14 +82,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
 val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl
+    mapper = String::fromBase64EncodedUrl,
 )
 
 inline fun <reified T> Route.model(): T? = model as? T
@@ -168,7 +167,7 @@ fun postLikesDestination(
     postRecordKey: RecordKey,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profileId.id}/post/${postRecordKey.value}/liked-by",
-    referringRouteOption = ReferringRouteOption.Current
+    referringRouteOption = ReferringRouteOption.Current,
 )
 
 fun postRepostsDestination(
@@ -176,30 +175,30 @@ fun postRepostsDestination(
     postRecordKey: RecordKey,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profileId.id}/post/${postRecordKey.value}/reposted-by",
-    referringRouteOption = ReferringRouteOption.Current
+    referringRouteOption = ReferringRouteOption.Current,
 )
 
 fun profileFollowsDestination(
     profileId: ProfileId,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profileId.id}/follows",
-    referringRouteOption = ReferringRouteOption.Current
+    referringRouteOption = ReferringRouteOption.Current,
 )
 
 fun profileFollowersDestination(
     profileId: ProfileId,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profileId.id}/followers",
-    referringRouteOption = ReferringRouteOption.Current
+    referringRouteOption = ReferringRouteOption.Current,
 )
 
 fun signInDestination(): NavigationAction.Destination = pathDestination(
     path = "/auth",
 )
 
-fun settingsDestination() : NavigationAction.Destination = pathDestination(
+fun settingsDestination(): NavigationAction.Destination = pathDestination(
     path = "/settings",
-    referringRouteOption = ReferringRouteOption.Current
+    referringRouteOption = ReferringRouteOption.Current,
 )
 
 fun pathDestination(
@@ -248,7 +247,7 @@ interface NavigationAction {
                         "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
                         referringRouteQueryParams(referringRouteOption),
-                    )
+                    ),
                 ).toRoute
                     .takeIf { it.id != currentRoute.id }
                     ?.let(navState::push)
@@ -283,26 +282,26 @@ interface NavigationAction {
                 option: ReferringRouteOption,
             ): Pair<String, List<String>> = ReferringRouteQueryParam to when (option) {
                 Current -> listOf(
-                    currentRoute.encodeToQueryParam()
+                    currentRoute.encodeToQueryParam(),
                 )
 
-                Parent -> currentRoute
-                    .routeParams
-                    .queryParams
-                    .getOrElse(
-                        key = ReferringRouteQueryParam,
-                        defaultValue = ::emptyList,
-                    )
+                Parent ->
+                    currentRoute
+                        .routeParams
+                        .queryParams
+                        .getOrElse(
+                            key = ReferringRouteQueryParam,
+                            defaultValue = ::emptyList,
+                        )
 
                 ParentOrCurrent -> referringRouteQueryParams(Parent).second.ifEmpty {
                     referringRouteQueryParams(Current).second
                 }
             }
 
-            fun RouteParams.decodeReferringRoute() =
-                queryParams[ReferringRouteQueryParam]?.firstOrNull()
-                    ?.decodeRoutePathAndQueriesFromQueryParam()
-                    ?.let(::routeOf)
+            fun RouteParams.decodeReferringRoute() = queryParams[ReferringRouteQueryParam]?.firstOrNull()
+                ?.decodeRoutePathAndQueriesFromQueryParam()
+                ?.let(::routeOf)
 
             /**
              * Hydrates a route with metadata that may have been lost like path args and
@@ -323,7 +322,7 @@ class PersistedNavigationStateHolder(
         initialState = InitialNavigationState,
         started = SharingStarted.Eagerly,
         inputs = listOf(
-            savedStateDataSource.forceSignOutMutations()
+            savedStateDataSource.forceSignOutMutations(),
         ),
         actionTransform = { navActions ->
             flow {
@@ -345,10 +344,10 @@ class PersistedNavigationStateHolder(
                         navMutation(
                             ImmutableNavigationContext(
                                 state = this,
-                                routeParser = routeParser
-                            )
+                                routeParser = routeParser,
+                            ),
                         )
-                    }
+                    },
                 )
             }
         },
@@ -357,15 +356,14 @@ class PersistedNavigationStateHolder(
             navigationStateFlow.onEach { navigationState ->
                 appScope.persistNavigationState(
                     navigationState = navigationState,
-                    savedStateDataSource = savedStateDataSource
+                    savedStateDataSource = savedStateDataSource,
                 )
             }
-        }
+        },
     )
 
 @Suppress("UnusedReceiverParameter")
-fun NavigationContext.resetAuthNavigation(): MultiStackNav =
-    SignedInNavigationState
+fun NavigationContext.resetAuthNavigation(): MultiStackNav = SignedInNavigationState
 
 /**
  * A helper function for generic state producers to consume navigation actions
@@ -377,54 +375,57 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> =
-    savedState
-        // No auth token and is displaying main navigation
-        .filter { it.auth == null && it != EmptySavedState }
-        .mapToMutation { _ ->
-            SignedOutNavigationState
-        }
+private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> = savedState
+    // No auth token and is displaying main navigation
+    .filter { it.auth == null && it != EmptySavedState }
+    .mapToMutation { _ ->
+        SignedOutNavigationState
+    }
 
 private fun CoroutineScope.persistNavigationState(
     navigationState: MultiStackNav,
     savedStateDataSource: SavedStateDataSource,
 ) = launch {
-    if (navigationState != InitialNavigationState) savedStateDataSource.updateState {
-        this.copy(navigation = navigationState.toSavedState())
+    if (navigationState != InitialNavigationState) {
+        savedStateDataSource.updateState {
+            this.copy(navigation = navigationState.toSavedState())
+        }
     }
 }
 
-private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
-    savedState.navigation.backStacks
-        .foldIndexed(
-            initial = MultiStackNav(
-                name = if (savedState.isSignedIn()) SignedInNavigationState.name
-                else SignedOutNavigationState.name
-            ),
-            operation = { index, multiStackNav, routesForStack ->
-                multiStackNav.copy(
-                    stacks = multiStackNav.stacks +
-                            routesForStack.fold(
-                                initial = StackNav(
-                                    name = when {
-                                        savedState.isSignedIn() -> SignedInNavigationState
-                                        else -> SignedOutNavigationState
-                                    }.stacks.getOrNull(index)?.name ?: "Unknown"
-                                ),
-                                operation = innerFold@{ stackNav, route ->
-                                    val resolvedRoute =
-                                        parse(pathAndQueries = route) ?: unknownRoute()
-                                    stackNav.copy(
-                                        children = stackNav.children + resolvedRoute
-                                    )
-                                }
+private fun RouteParser.parseMultiStackNav(savedState: SavedState) = savedState.navigation.backStacks
+    .foldIndexed(
+        initial = MultiStackNav(
+            name = if (savedState.isSignedIn()) {
+                SignedInNavigationState.name
+            } else {
+                SignedOutNavigationState.name
+            },
+        ),
+        operation = { index, multiStackNav, routesForStack ->
+            multiStackNav.copy(
+                stacks = multiStackNav.stacks +
+                    routesForStack.fold(
+                        initial = StackNav(
+                            name = when {
+                                savedState.isSignedIn() -> SignedInNavigationState
+                                else -> SignedOutNavigationState
+                            }.stacks.getOrNull(index)?.name ?: "Unknown",
+                        ),
+                        operation = innerFold@{ stackNav, route ->
+                            val resolvedRoute =
+                                parse(pathAndQueries = route) ?: unknownRoute()
+                            stackNav.copy(
+                                children = stackNav.children + resolvedRoute,
                             )
-                )
-            }
-        )
-        .copy(
-            currentIndex = savedState.navigation.activeNav
-        )
+                        },
+                    ),
+            )
+        },
+    )
+    .copy(
+        currentIndex = savedState.navigation.activeNav,
+    )
 
 private fun MultiStackNav.toSavedState() = SavedState.Navigation(
     activeNav = currentIndex,
@@ -434,7 +435,7 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
                 .filterIsInstance<Route>()
                 .fold(listOf()) { stackList, route ->
                     stackList + route.routeParams.pathAndQueries
-                }
+                },
         )
     },
 )
@@ -442,15 +443,15 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
 private val InitialNavigationState = MultiStackNav(
     name = "splash-app",
     stacks = listOf(
-        AppStack.Splash.toStackNav()
-    )
+        AppStack.Splash.toStackNav(),
+    ),
 )
 
 private val SignedOutNavigationState = MultiStackNav(
     name = "signed-out-app",
     stacks = listOf(
-        AppStack.Auth.toStackNav()
-    )
+        AppStack.Auth.toStackNav(),
+    ),
 )
 
 private val SignedInNavigationState = MultiStackNav(
@@ -460,9 +461,8 @@ private val SignedInNavigationState = MultiStackNav(
         AppStack.Search,
         AppStack.Messages,
         AppStack.Notifications,
-    ).map(AppStack::toStackNav)
+    ).map(AppStack::toStackNav),
 )
-
 
 enum class AppStack(
     val stackName: String,
@@ -488,7 +488,7 @@ enum class AppStack(
         icon = Icons.Rounded.Mail,
         rootRoute = routeOf("/messages"),
 
-        ),
+    ),
     Notifications(
         stackName = "notifications-stack",
         titleRes = Res.string.notifications,
@@ -506,12 +506,12 @@ enum class AppStack(
         titleRes = Res.string.splash,
         icon = Icons.Rounded.Start,
         rootRoute = routeOf("/splash"),
-    );
+    ),
 }
 
 private fun AppStack.toStackNav() = StackNav(
     name = stackName,
-    children = listOf(rootRoute)
+    children = listOf(rootRoute),
 )
 
 private const val ReferringRouteQueryParam = "referringRoute"

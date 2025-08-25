@@ -44,6 +44,6 @@ internal fun MultipleEntitySaver.add(
             contentMode = feedGeneratorView.contentMode,
             indexedAt = feedGeneratorView.indexedAt,
             createdAt = feedGeneratorView.uri.tidInstant ?: feedGeneratorView.indexedAt,
-        )
+        ),
     )
 }

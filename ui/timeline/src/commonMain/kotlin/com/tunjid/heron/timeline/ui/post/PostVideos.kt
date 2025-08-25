@@ -87,13 +87,13 @@ internal fun PostVideo(
                 Timeline.Presentation.Text.WithEmbed -> 8.dp
                 Timeline.Presentation.Media.Condensed -> 8.dp
                 Timeline.Presentation.Media.Expanded -> 0.dp
-            }
+            },
         ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
     )
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(video.aspectRatioOrSquare)
+            .aspectRatio(video.aspectRatioOrSquare),
     ) {
         val videoModifier = when {
             isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
@@ -104,34 +104,37 @@ internal fun PostVideo(
                 videoPlayerController.play(videoId = video.playlist.uri)
                 onClicked()
             }
-        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
-            modifier = videoModifier,
-            state = videoPlayerState,
-        )
-        else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
-            modifier = videoModifier,
-            sharedContentState = with(paneMovableElementSharedTransitionScope) {
-                rememberSharedContentState(
-                    key = video.sharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postUri = postUri,
+        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) {
+            VideoStill(
+                modifier = videoModifier,
+                state = videoPlayerState,
+            )
+        } else {
+            paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+                modifier = videoModifier,
+                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key = video.sharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postUri = postUri,
+                        ),
                     )
-                )
-            },
-            state = videoPlayerState,
-            alternateOutgoingSharedElement = { state, innerModifier ->
-                VideoStill(
-                    modifier = innerModifier,
-                    state = state,
-                )
-            },
-            sharedElement = { state, innerModifier ->
-                VideoPlayer(
-                    modifier = innerModifier,
-                    state = state,
-                )
-            }
-        )
+                },
+                state = videoPlayerState,
+                alternateOutgoingSharedElement = { state, innerModifier ->
+                    VideoStill(
+                        modifier = innerModifier,
+                        state = state,
+                    )
+                },
+                sharedElement = { state, innerModifier ->
+                    VideoPlayer(
+                        modifier = innerModifier,
+                        state = state,
+                    )
+                },
+            )
+        }
         PlayerInfo(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -143,18 +146,20 @@ internal fun PostVideo(
             videoPlayerController = videoPlayerController,
         )
 
-        if (presentation != Timeline.Presentation.Media.Condensed) PlayButton(
-            modifier = when {
-                isBlurred -> Modifier.blur(
-                    radius = 2.dp,
-                    edgeTreatment = BlurredEdgeTreatment(CircleShape)
-                )
-                else -> Modifier
-            }
-                .align(Alignment.Center),
-            videoPlayerState = videoPlayerState,
-            videoPlayerController = videoPlayerController,
-        )
+        if (presentation != Timeline.Presentation.Media.Condensed) {
+            PlayButton(
+                modifier = when {
+                    isBlurred -> Modifier.blur(
+                        radius = 2.dp,
+                        edgeTreatment = BlurredEdgeTreatment(CircleShape),
+                    )
+                    else -> Modifier
+                }
+                    .align(Alignment.Center),
+                videoPlayerState = videoPlayerState,
+                videoPlayerController = videoPlayerController,
+            )
+        }
     }
 }
 
@@ -166,7 +171,7 @@ private fun PlayerInfo(
 ) {
     AnimatedVisibility(
         modifier = modifier,
-        visible = videoPlayerState.status is PlayerStatus.Play.Confirmed
+        visible = videoPlayerState.status is PlayerStatus.Play.Confirmed,
     ) {
         Row {
             PlayerControlBackground {
@@ -178,7 +183,7 @@ private fun PlayerInfo(
                         minFontSize = 8.sp,
                         maxFontSize = 10.sp,
                     ),
-                    color = Color.Companion::White
+                    color = Color.Companion::White,
                 )
             }
             Spacer(Modifier.weight(1f))
@@ -192,10 +197,13 @@ private fun PlayerInfo(
                             .padding(2.dp),
                         contentDescription = "",
                         imageVector =
-                            if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeUp
-                            else Icons.AutoMirrored.Rounded.VolumeOff,
+                        if (videoPlayerState.isMuted) {
+                            Icons.AutoMirrored.Rounded.VolumeUp
+                        } else {
+                            Icons.AutoMirrored.Rounded.VolumeOff
+                        },
                     )
-                }
+                },
             )
         }
     }
@@ -209,17 +217,17 @@ private fun PlayButton(
 ) {
     AnimatedVisibility(
         modifier = modifier,
-        visible = videoPlayerState.status !is PlayerStatus.Play
+        visible = videoPlayerState.status !is PlayerStatus.Play,
     ) {
         Box(
             modifier = Modifier
                 .size(56.dp)
                 .background(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = CircleShape
+                    shape = CircleShape,
                 )
                 .clip(CircleShape)
-                .clickable { videoPlayerController.play(videoPlayerState.videoId) }
+                .clickable { videoPlayerController.play(videoPlayerState.videoId) },
         ) {
             Icon(
                 modifier = Modifier
@@ -243,7 +251,7 @@ private fun PlayerControlBackground(
             .padding(vertical = 8.dp)
             .background(
                 color = color,
-                shape = CircleShape
+                shape = CircleShape,
             )
             .clip(CircleShape)
             .clickable {
@@ -253,7 +261,7 @@ private fun PlayerControlBackground(
     ) {
         Box(
             modifier = Modifier.align(Alignment.Center),
-            content = { content() }
+            content = { content() },
         )
     }
 }

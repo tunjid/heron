@@ -63,12 +63,12 @@ import heron.ui.media.generated.resources.pause
 import heron.ui.media.generated.resources.play
 import heron.ui.media.generated.resources.rewind_5
 import heron.ui.media.generated.resources.skip_5
+import kotlin.math.max
+import kotlin.math.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.max
-import kotlin.math.min
 
 @Composable
 private fun PlaybackControls(
@@ -124,10 +124,12 @@ fun PlaybackStatus(
             valueRange = 0f..videoPlayerState.totalDuration.toFloat(),
             interactionSource = controlsState.controlsInteractionSource,
             onValueChangeFinished = {
-                if (!adjustedPosition.isNaN()) controlsState.videoPlayerController.play(
-                    videoId = videoPlayerState.videoId,
-                    seekToMs = adjustedPosition.toLong(),
-                )
+                if (!adjustedPosition.isNaN()) {
+                    controlsState.videoPlayerController.play(
+                        videoId = videoPlayerState.videoId,
+                        seekToMs = adjustedPosition.toLong(),
+                    )
+                }
                 adjustedPosition = Float.NaN
                 controlsState.onInteracted()
             },
@@ -136,7 +138,7 @@ fun PlaybackStatus(
                     interactionSource = remember { MutableInteractionSource() },
                     colors = SliderDefaults.colors(),
                     enabled = true,
-                    thumbSize = DpSize(20.dp, 20.dp)
+                    thumbSize = DpSize(20.dp, 20.dp),
                 )
             },
             track = { sliderState ->
@@ -155,7 +157,7 @@ fun PlaybackStatus(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = videoPlayerState.lastPositionMs.formatVideoDuration()
+                text = videoPlayerState.lastPositionMs.formatVideoDuration(),
             )
             PlaybackControls(
                 modifier = Modifier,
@@ -167,7 +169,7 @@ fun PlaybackStatus(
                     withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
                         append(videoPlayerState.totalDuration.formatVideoDuration())
                     }
-                }
+                },
             )
         }
     }
@@ -212,7 +214,7 @@ fun PlayerControlsUiState.ControlsVisibilityEffect() {
     LaunchedEffect(Unit) {
         merge(
             snapshotFlow { interactionCount },
-            snapshotFlow { playerControlsVisible || sliderDragged.value }
+            snapshotFlow { playerControlsVisible || sliderDragged.value },
         )
             .collectLatest {
                 playerControlsVisible = playerControlsVisible || sliderDragged.value
@@ -231,7 +233,7 @@ private fun PlayerControlsUiState.interactWith(
     when (playerControlState.icon) {
         Icons.Rounded.PlayCircle,
         Icons.Rounded.PauseCircle,
-            -> when (videoPlayerState.status) {
+        -> when (videoPlayerState.status) {
             is PlayerStatus.Play -> videoPlayerController.pauseActiveVideo()
             else -> videoPlayerController.play(videoPlayerState.videoId)
         }
@@ -241,7 +243,7 @@ private fun PlayerControlsUiState.interactWith(
             seekToMs = min(
                 a = videoPlayerState.totalDuration,
                 b = videoPlayerState.lastPositionMs + SkipDurationMS,
-            )
+            ),
         )
 
         Icons.Rounded.Replay5 -> videoPlayerController.play(
@@ -249,7 +251,7 @@ private fun PlayerControlsUiState.interactWith(
             seekToMs = max(
                 a = 0,
                 b = videoPlayerState.lastPositionMs - SkipDurationMS,
-            )
+            ),
         )
 
         else -> Unit

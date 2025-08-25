@@ -38,7 +38,7 @@ interface ProfileDao {
             SELECT * FROM profiles
             WHERE did IN (:ids)
             OR handle IN (:ids)
-        """
+        """,
     )
     fun profiles(
         ids: Collection<Id.Profile>,
@@ -53,13 +53,12 @@ interface ProfileDao {
                 AND otherProfileId IN (:otherProfileIds)
             OR handle = :profileId
                 AND otherProfileId IN (:otherProfileIds)
-        """
+        """,
     )
     fun viewerState(
         profileId: String,
         otherProfileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerStateEntity>>
-
 
     @Query(
         """
@@ -75,7 +74,7 @@ interface ProfileDao {
             )
             ORDER BY followersCount
             LIMIT :limit
-        """
+        """,
     )
     fun commonFollowers(
         profileId: String,
@@ -95,7 +94,7 @@ interface ProfileDao {
         items = entities,
         partialMapper = ProfileEntity::partial,
         insertEntities = ::insertOrIgnoreProfiles,
-        updatePartials = ::updatePartialProfiles
+        updatePartials = ::updatePartialProfiles,
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -120,7 +119,7 @@ interface ProfileDao {
         items = entities,
         partialMapper = ProfileViewerStateEntity::partial,
         insertEntities = ::insertOrIgnoreProfileViewers,
-        updatePartials = ::updatePartialProfileViewers
+        updatePartials = ::updatePartialProfileViewers,
     )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -132,5 +131,4 @@ interface ProfileDao {
     suspend fun updatePartialProfileViewers(
         entities: List<ProfileViewerStateEntity.Partial>,
     )
-
 }

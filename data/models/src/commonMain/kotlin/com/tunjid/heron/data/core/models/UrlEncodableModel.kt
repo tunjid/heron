@@ -36,6 +36,9 @@ import com.tunjid.heron.data.core.types.ProfileUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.Base64.PaddingOption
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
@@ -43,9 +46,6 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.Base64.PaddingOption
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * A declaration for compile time known Model type that can be serialized as bytes and eencoded
@@ -55,17 +55,13 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  */
 sealed interface UrlEncodableModel
 
-inline fun <reified T : UrlEncodableModel> T.toBytes(): ByteArray =
-    ModelSerializerFormat.encodeToByteArray(value = this)
+inline fun <reified T : UrlEncodableModel> T.toBytes(): ByteArray = ModelSerializerFormat.encodeToByteArray(value = this)
 
 @OptIn(ExperimentalEncodingApi::class)
-inline fun <reified T : UrlEncodableModel> String.fromBase64EncodedUrl(): T =
-    ModelSerializerFormat.decodeFromByteArray(ModelUrlSafeBase64.decode(this))
+inline fun <reified T : UrlEncodableModel> String.fromBase64EncodedUrl(): T = ModelSerializerFormat.decodeFromByteArray(ModelUrlSafeBase64.decode(this))
 
 @OptIn(ExperimentalEncodingApi::class)
-inline fun <reified T : UrlEncodableModel> T.toUrlEncodedBase64(): String =
-    ModelUrlSafeBase64.encode(toBytes())
-
+inline fun <reified T : UrlEncodableModel> T.toUrlEncodedBase64(): String = ModelUrlSafeBase64.encode(toBytes())
 
 // This is brittle. Code gen should do this
 val ModelSerializerFormat: BinaryFormat = Cbor {
