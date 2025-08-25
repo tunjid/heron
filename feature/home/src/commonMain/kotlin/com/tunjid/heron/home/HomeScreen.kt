@@ -250,8 +250,10 @@ internal fun HomeScreen(
             isExpanded = state.tabLayout is TabLayout.Expanded,
         )
 
-        LaunchedEffect(Unit) {
-            snapshotFlow { tabsOffsetNestedScrollConnection.verticalOffsetProgress() < 0.5f }
+        LaunchedEffect(state.tabLayout) {
+            if (state.tabLayout is TabLayout.Collapsed) snapshotFlow {
+                tabsOffsetNestedScrollConnection.verticalOffsetProgress() < 0.5f
+            }
                 .distinctUntilChanged()
                 .collect { showAllTabs ->
                     actions(
