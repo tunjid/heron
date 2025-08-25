@@ -17,62 +17,34 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
-    id("ksp-convention")
-    alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.composeCompiler)
     id("org.jetbrains.compose")
+    alias(libs.plugins.composeCompiler)
 }
-
 android {
-    namespace = "com.tunjid.heron.domain.navigation"
-}
-
-compose.resources {
-    publicResClass = true
+    namespace = "com.tunjid.heron.ui.core"
 }
 
 kotlin {
     sourceSets {
-        androidMain {
-            dependencies {
-                implementation(libs.androidx.activity.compose)
-                implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
-            }
-        }
         commonMain {
             dependencies {
                 implementation(project(":data:models"))
-                implementation(project(":data:core"))
-                implementation(project(":ui:core"))
-                implementation(project(":ui:media"))
 
-                implementation(libs.androidx.navigation.event)
-
-                implementation(libs.compose.animation)
                 implementation(libs.compose.components.resources)
-                implementation(libs.compose.foundation.foundation)
+                implementation(libs.compose.animation)
                 implementation(libs.compose.foundation.layout)
-                implementation(libs.compose.runtime)
-                implementation(libs.compose.material)
-                implementation(libs.compose.material.icons)
+                implementation(libs.compose.foundation.foundation)
                 implementation(libs.compose.material.icons.extended)
                 implementation(libs.compose.material3)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.ui.ui)
+
+                implementation(libs.androidx.graphics.shapes)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.serialization.cbor)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.kotlinx.serialization.protobuf)
-
-                implementation(libs.okio)
-
-                implementation(libs.savedstate.compose)
-                implementation(libs.savedstate.savedstate)
 
                 implementation(libs.tunjid.composables)
-
-                implementation(libs.tunjid.mutator.core.common)
-                implementation(libs.tunjid.mutator.coroutines.common)
 
                 implementation(libs.tunjid.treenav.compose)
                 implementation(libs.tunjid.treenav.compose.threepane)
@@ -80,6 +52,21 @@ kotlin {
                 implementation(libs.tunjid.treenav.strings)
             }
         }
+        androidMain {
+            dependencies {
+                implementation(libs.ktor.client.android)
+            }
+        }
+        desktopMain {
+            dependencies {
+                implementation(libs.ktor.client.java)
+            }
+        }
+//        iosMain {
+//            dependencies {
+//                implementation(libs.ktor.client.darwin)
+//            }
+//        }
     }
 }
 
