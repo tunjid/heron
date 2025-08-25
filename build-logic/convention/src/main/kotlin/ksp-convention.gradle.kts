@@ -20,7 +20,5 @@ plugins {
     id("dev.zacsweers.metro")
 }
 
-configureKsp()
-
 metro {
 }
