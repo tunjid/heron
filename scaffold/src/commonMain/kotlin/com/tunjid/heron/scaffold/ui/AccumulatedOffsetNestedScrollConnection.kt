@@ -23,7 +23,9 @@ import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
-
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
@@ -38,4 +40,19 @@ fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConne
         },
         minOffset = { Offset.Zero },
     )
+}
+
+fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {
+    val minDimension = min(
+        a = abs(minOffset.y),
+        b = abs(maxOffset.y),
+    )
+    val maxDimension = max(
+        a = abs(minOffset.y),
+        b = abs(maxOffset.y),
+    )
+    val currentDifference = abs(offset.y) - minDimension
+    val maxDifference = maxDimension - minDimension
+
+    return currentDifference / maxDifference
 }

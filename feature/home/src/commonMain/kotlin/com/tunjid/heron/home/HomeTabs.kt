@@ -105,7 +105,6 @@ import heron.feature.home.generated.resources.timeline_preferences
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -241,11 +240,8 @@ internal fun HomeTabs(
     }
 }
 
-internal fun AccumulatedOffsetNestedScrollConnection.toolbarOffsetProgress() =
-    abs(offset.y - minOffset.y) / abs(minOffset.y)
-
 @Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TimelinePreferenceExpansionEffect(
+internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
     isExpanded: Boolean,
 ) {
     val density = LocalDensity.current

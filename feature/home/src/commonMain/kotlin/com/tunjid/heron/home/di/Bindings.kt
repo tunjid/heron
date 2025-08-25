@@ -16,17 +16,12 @@
 
 package com.tunjid.heron.home.di
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Save
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -42,7 +37,7 @@ import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.TabLayout
-import com.tunjid.heron.home.TimelinePreferenceExpansionEffect
+import com.tunjid.heron.home.TabsExpansionEffect
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -61,6 +56,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -130,14 +126,13 @@ class HomeBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val statusBarHeight = UiTokens.statusBarHeight
             val topAppBarOffsetNestedScrollConnection =
                 rememberAccumulatedOffsetNestedScrollConnection(
                     maxOffset = { Offset.Zero },
                     minOffset = {
                         Offset(
                             x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                            y = -UiTokens.toolbarHeight.toPx()
                         )
                     },
                 )
@@ -159,6 +154,7 @@ class HomeBindings(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
+                        opacityFactor = topAppBarOffsetNestedScrollConnection::verticalOffsetProgress,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -171,12 +167,6 @@ class HomeBindings(
                                 )
                             )
                         },
-                    )
-                    Box(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surface)
-                            .height(statusBarHeight)
-                            .fillMaxWidth()
                     )
                 },
                 floatingActionButton = {
@@ -237,7 +227,7 @@ class HomeBindings(
                         },
                     )
                 },
-                content = { contentPadding ->
+                content = {
                     HomeScreen(
                         paneScaffoldState = this,
                         state = state,
@@ -246,7 +236,7 @@ class HomeBindings(
                 }
             )
 
-            topAppBarOffsetNestedScrollConnection.TimelinePreferenceExpansionEffect(
+            topAppBarOffsetNestedScrollConnection.TabsExpansionEffect(
                 isExpanded = state.tabLayout is TabLayout.Expanded,
             )
         }

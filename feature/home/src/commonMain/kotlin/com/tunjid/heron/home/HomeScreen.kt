@@ -75,6 +75,7 @@ import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
@@ -231,12 +232,12 @@ internal fun HomeScreen(
             }
         )
 
-        tabsOffsetNestedScrollConnection.TimelinePreferenceExpansionEffect(
+        tabsOffsetNestedScrollConnection.TabsExpansionEffect(
             isExpanded = state.tabLayout is TabLayout.Expanded,
         )
 
         LaunchedEffect(Unit) {
-            snapshotFlow { tabsOffsetNestedScrollConnection.toolbarOffsetProgress() > 0.5f }
+            snapshotFlow { tabsOffsetNestedScrollConnection.verticalOffsetProgress() < 0.5f }
                 .distinctUntilChanged()
                 .collect { showAllTabs ->
                     actions(

@@ -34,12 +34,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
@@ -57,10 +63,19 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
+    opacityFactor: () -> Float = { HundredPercent },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier
+            .rootAppBarBackground(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                progress = opacityFactor,
+            )
+            .rootAppBarBlur(opacityFactor),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+        ),
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
@@ -149,7 +164,42 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     )
 }
 
+private fun Modifier.rootAppBarBackground(
+    backgroundColor: Color,
+    progress: () -> Float,
+): Modifier = drawBehind {
+    drawRect(
+        color = backgroundColor,
+        alpha = HundredPercent - (progress() * 0.1f)
+    )
+}
+
+private fun Modifier.rootAppBarBlur(
+    progress: () -> Float,
+): Modifier = graphicsLayer {
+    val currentProgress = progress()
+    if (currentProgress <= 0f) return@graphicsLayer
+
+    val horizontalBlurPixels = RootAppBarBlurRadius.toPx() * currentProgress
+    val verticalBlurPixels = RootAppBarBlurRadius.toPx() * currentProgress
+
+    // Only non-zero blur radii are valid BlurEffect parameters
+    if (horizontalBlurPixels <= 0f || verticalBlurPixels <= 0f) return@graphicsLayer
+
+    renderEffect = BlurEffect(
+        radiusX = horizontalBlurPixels,
+        radiusY = verticalBlurPixels,
+        edgeTreatment = TileMode.Decal
+    )
+    shape = RectangleShape
+    clip = false
+}
+
+
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 
+private val RootAppBarBlurRadius = 80.dp
+
 private const val SignedInUserAvatarSharedElementKey = "self"
+private const val HundredPercent = 1f
