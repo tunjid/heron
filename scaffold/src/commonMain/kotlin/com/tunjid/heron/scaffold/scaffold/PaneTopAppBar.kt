@@ -63,16 +63,16 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
-    opacityFactor: () -> Float = { HundredPercent },
+    transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
     TopAppBar(
         modifier = modifier
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
-                progress = opacityFactor,
+                progress = transparencyFactor,
             )
-            .rootAppBarBlur(opacityFactor),
+            .rootAppBarBlur(transparencyFactor),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
         ),

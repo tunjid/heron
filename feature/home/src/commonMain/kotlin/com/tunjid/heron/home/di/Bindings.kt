@@ -154,7 +154,7 @@ class HomeBindings(
                         modifier = Modifier.offset {
                             topAppBarOffsetNestedScrollConnection.offset.round()
                         },
-                        opacityFactor = topAppBarOffsetNestedScrollConnection::verticalOffsetProgress,
+                        transparencyFactor = topAppBarOffsetNestedScrollConnection::verticalOffsetProgress,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
