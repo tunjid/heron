@@ -130,6 +130,7 @@ internal fun HomeTabs(
     selectedTabIndex: () -> Float,
     scrollToPage: (Int) -> Unit,
     onRefreshTabClicked: (Int) -> Unit,
+    onNavigateToTimeline: (Int) -> Unit,
     onLayoutChanged: (TabLayout) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
@@ -165,8 +166,8 @@ internal fun HomeTabs(
             }
         },
         selectedTabIndex = selectedTabIndex,
-        onTabSelected = collapsedTabsState.onTabSelected,
-        onTabReselected = collapsedTabsState.onTabReselected,
+        onTabSelected = onNavigateToTimeline,
+        onTabReselected = onNavigateToTimeline,
     )
     Box(
         modifier = modifier

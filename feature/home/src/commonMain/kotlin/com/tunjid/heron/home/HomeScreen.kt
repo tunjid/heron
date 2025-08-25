@@ -118,7 +118,7 @@ internal fun HomeScreen(
         state.timelineStateHolders
     )
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.size
+        updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
@@ -206,6 +206,14 @@ internal fun HomeScreen(
                             tilingAction = TilingState.Action.Refresh,
                         ),
                     )
+            },
+            onNavigateToTimeline = { page ->
+                updatedTimelineStateHolders
+                    .getOrNull(page)
+                    ?.state
+                    ?.value
+                    ?.timeline
+
             },
             onLayoutChanged = { layout ->
                 actions(Action.SetTabLayout(layout = layout))
