@@ -1409,14 +1409,14 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                 savedFeed.value != update.uri.uri
             }
 
-            is Timeline.Update.OfFeedGenerator.Save ->
-                value.items
-                    .filter { it.value != update.uri.uri } + SavedFeed(
-                    id = tidGenerator.generate(),
-                    type = Type.Feed,
-                    value = update.uri.uri,
-                    pinned = false,
-                )
+            is Timeline.Update.OfFeedGenerator.Save -> value.items.filter {
+                it.value != update.uri.uri
+            } + SavedFeed(
+                id = tidGenerator.generate(),
+                type = Type.Feed,
+                value = update.uri.uri,
+                pinned = false,
+            )
         },
     ),
 )
