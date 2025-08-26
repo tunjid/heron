@@ -392,7 +392,6 @@ internal class OfflinePostRepository @Inject constructor(
                     upsertInteraction(
                         partial = when (interaction) {
                             is Post.Interaction.Create.Like -> {
-                                postDao.updateLikeCount(interaction.postUri.uri, true)
                                 PostViewerStatisticsEntity.Partial.Like(
                                     likeUri = it.uri.atUri.let(::GenericUri),
                                     postUri = interaction.postUri,
@@ -407,6 +406,7 @@ internal class OfflinePostRepository @Inject constructor(
                             )
                         }
                     )
+                    postDao.updateLikeCount(postUri =interaction.postUri.uri, isIncrement = true)
                 }
 
             is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
@@ -433,7 +433,6 @@ internal class OfflinePostRepository @Inject constructor(
                     upsertInteraction(
                         partial = when (interaction) {
                             is Post.Interaction.Delete.Unlike -> {
-                                postDao.updateLikeCount(interaction.postUri.uri, false)
                                 PostViewerStatisticsEntity.Partial.Like(
                                     likeUri = null,
                                     postUri = interaction.postUri,
@@ -448,6 +447,7 @@ internal class OfflinePostRepository @Inject constructor(
                             )
                         }
                     )
+                    postDao.updateLikeCount(postUri =interaction.postUri.uri, isIncrement = false)
                 }
         }
 
