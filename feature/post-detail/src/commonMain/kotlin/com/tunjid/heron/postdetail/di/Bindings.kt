@@ -85,8 +85,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.postRecordKey by mappedRoutePath(
@@ -106,7 +106,7 @@ object PostDetailNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 
     @Provides
@@ -115,7 +115,7 @@ object PostDetailNavigationBindings {
     fun provideRouteUriMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteUriPattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -155,7 +155,7 @@ class PostDetailBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -200,7 +200,7 @@ class PostDetailBindings(
                             when {
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 else -> Res.string.reply
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -218,10 +218,10 @@ class PostDetailBindings(
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         )
-                                    }
-                                )
+                                    },
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -242,8 +242,8 @@ class PostDetailBindings(
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

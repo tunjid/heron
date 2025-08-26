@@ -34,7 +34,7 @@ interface NotificationsDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun notifications(
         before: Instant,
@@ -50,7 +50,7 @@ interface NotificationsDao {
     @Query(
         """
         DELETE FROM notifications
-    """
+    """,
     )
     suspend fun deleteAllNotifications()
 }

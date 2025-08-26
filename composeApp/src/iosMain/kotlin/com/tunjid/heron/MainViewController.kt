@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 
+@Suppress("FunctionName")
 fun MainViewController() = ComposeUIViewController {
     com.tunjid.heron.scaffold.scaffold.App(
         appState = remember { createAppState() },

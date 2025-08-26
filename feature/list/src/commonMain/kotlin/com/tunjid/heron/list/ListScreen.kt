@@ -104,11 +104,11 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.list.generated.resources.Res
 import heron.feature.list.generated.resources.people
 import heron.feature.list.generated.resources.posts
+import kotlin.math.floor
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.floor
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -142,9 +142,9 @@ internal fun ListScreen(
                     .offset {
                         IntOffset(
                             x = 0,
-                            y = -collapsingHeaderState.translation.roundToInt()
+                            y = -collapsingHeaderState.translation.roundToInt(),
                         )
-                    }
+                    },
             ) {
                 Text(
                     modifier = Modifier
@@ -152,7 +152,7 @@ internal fun ListScreen(
                             horizontal = 16.dp,
                             vertical = 8.dp,
                         ),
-                    text = state.timelineState?.timeline?.description ?: ""
+                    text = state.timelineState?.timeline?.description ?: "",
                 )
                 Tabs(
                     modifier = Modifier
@@ -160,7 +160,7 @@ internal fun ListScreen(
                         .clip(CircleShape),
                     tabsState = rememberTabsState(
                         tabs = listTabs(
-                            hasUpdate = state.timelineState?.hasUpdates == true
+                            hasUpdate = state.timelineState?.hasUpdates == true,
                         ),
                         selectedTabIndex = pagerState::tabIndex,
                         onTabSelected = {
@@ -223,16 +223,16 @@ internal fun ListScreen(
                                 actions = actions,
                             )
                         }
-                    }
+                    },
                 )
             }
-        }
+        },
     )
 }
 
 @Composable
 private fun listTabs(
-    hasUpdate: Boolean
+    hasUpdate: Boolean,
 ): List<Tab> = remember { mutableStateListOf<Tab>() }.apply {
     when {
         isEmpty() -> {
@@ -240,13 +240,13 @@ private fun listTabs(
                 Tab(
                     title = stringResource(Res.string.people),
                     hasUpdate = false,
-                )
+                ),
             )
             add(
                 Tab(
                     title = stringResource(Res.string.posts),
                     hasUpdate = hasUpdate,
-                )
+                ),
             )
         }
 
@@ -297,9 +297,9 @@ private fun ListMembers(
                                 profileDestination(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = profile,
-                                    avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey()
-                                )
-                            )
+                                    avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey(),
+                                ),
+                            ),
                         )
                     },
                     onViewerStateClicked = { viewerState ->
@@ -310,12 +310,12 @@ private fun ListMembers(
                                     viewedProfileId = item.subject.did,
                                     following = viewerState?.following,
                                     followedBy = viewerState?.followedBy,
-                                )
+                                ),
                             )
                         }
                     },
                 )
-            }
+            },
         )
     }
 
@@ -324,10 +324,10 @@ private fun ListMembers(
         onQueryChanged = { query ->
             membersStateHolder.accept(
                 TilingState.Action.LoadAround(
-                    query ?: state.tilingData.currentQuery
-                )
+                    query ?: state.tilingData.currentQuery,
+                ),
             )
-        }
+        },
     )
 }
 
@@ -359,18 +359,18 @@ private fun ListTimeline(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
     LookaheadScope {
         LazyVerticalStaggeredGrid(
             modifier = Modifier
                 .padding(
                     horizontal = animateDpAsState(
-                        presentation.timelineHorizontalPadding
-                    ).value
+                        presentation.timelineHorizontalPadding,
+                    ).value,
                 )
                 .fillMaxSize()
                 .paneClip()
@@ -381,9 +381,9 @@ private fun ListTimeline(
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
                             tilingAction = TilingState.Action.GridSize(
-                                floor(it.width / itemWidth).roundToInt()
-                            )
-                        )
+                                floor(it.width / itemWidth).roundToInt(),
+                            ),
+                        ),
                     )
                 },
             state = gridState,
@@ -402,7 +402,7 @@ private fun ListTimeline(
                             .fillMaxWidth()
                             .animateItem()
                             .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item)
+                                state = videoStates.getOrCreateStateFor(item),
                             ),
                         paneMovableElementSharedTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
@@ -418,8 +418,8 @@ private fun ListTimeline(
                                             pathDestination(
                                                 path = linkTarget.path,
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostClicked = { post: Post, quotingPostUri: PostUri? ->
@@ -433,8 +433,8 @@ private fun ListTimeline(
                                                     quotingPostUri = quotingPostUri,
                                                 ),
                                                 post = post,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
@@ -450,9 +450,9 @@ private fun ListTimeline(
                                                         prefix = timelineState.timeline.sourceId,
                                                         quotingPostUri = quotingPostUri,
                                                     )
-                                                    .takeIf { post.author.did == profile.did }
-                                            )
-                                        )
+                                                    .takeIf { post.author.did == profile.did },
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
@@ -467,8 +467,8 @@ private fun ListTimeline(
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                     quotingPostUri = quotingPostUri,
                                                 ),
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
@@ -482,15 +482,15 @@ private fun ListTimeline(
                                                     parent = post,
                                                 ),
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostInteraction = postInteractionState::onInteraction,
                             )
-                        }
+                        },
                     )
-                }
+                },
             )
         }
     }
@@ -518,16 +518,16 @@ private fun ListTimeline(
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query ?: timelineState.tilingData.currentQuery
-                    )
-                )
+                        query ?: timelineState.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     gridState.TimelineRefreshEffect(
         timelineState = timelineState,
-        onRefresh = { animateScrollToItem(index = 0) }
+        onRefresh = { animateScrollToItem(index = 0) },
     )
 }
 

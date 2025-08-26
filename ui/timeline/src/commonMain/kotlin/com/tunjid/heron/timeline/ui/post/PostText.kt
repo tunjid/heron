@@ -70,7 +70,7 @@ fun PostText(
         text = rememberFormattedTextPost(
             text = text,
             textLinks = post.record?.links ?: emptyList(),
-            onLinkTargetClicked = { onLinkTargetClicked(post, it) }
+            onLinkTargetClicked = { onLinkTargetClicked(post, it) },
         ),
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,

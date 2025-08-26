@@ -44,7 +44,7 @@ internal object Migration18To19PostViewerStatistics : Migration(18, 19) {
                     ON UPDATE NO ACTION
                     ON DELETE CASCADE 
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         // Remove the old table

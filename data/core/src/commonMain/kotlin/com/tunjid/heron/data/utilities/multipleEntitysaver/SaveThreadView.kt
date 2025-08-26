@@ -40,7 +40,7 @@ internal fun MultipleEntitySaver.add(
             is ThreadViewPostParentUnion.NotFoundPost,
             is ThreadViewPostParentUnion.Unknown,
             null,
-                -> null
+            -> null
         }
     }
         .windowed(
@@ -85,7 +85,7 @@ private fun MultipleEntitySaver.addThreadParent(
         PostThreadEntity(
             postUri = childPost.post.uri.atUri.let(::PostUri),
             parentPostUri = parentPost.post.uri.atUri.let(::PostUri),
-        )
+        ),
     )
     parentPost.replies
         // TODO: Deal with deleted, blocked or removed posts
@@ -112,7 +112,7 @@ private fun MultipleEntitySaver.addThreadReply(
         PostThreadEntity(
             postUri = reply.post.uri.atUri.let(::PostUri),
             parentPostUri = parent.post.uri.atUri.let(::PostUri),
-        )
+        ),
     )
     reply.replies
         // TODO: Deal with deleted, blocked or removed posts

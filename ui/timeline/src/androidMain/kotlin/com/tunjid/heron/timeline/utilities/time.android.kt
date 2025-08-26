@@ -19,9 +19,9 @@ package com.tunjid.heron.timeline.utilities
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import java.util.Date
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
-import java.util.Date
 
 @Composable
 actual fun Instant.formatDate(): String {
@@ -36,4 +36,3 @@ actual fun Instant.formatTime(): String {
         .getTimeFormat(LocalContext.current)
         .format(Date.from(toJavaInstant()))
 }
-

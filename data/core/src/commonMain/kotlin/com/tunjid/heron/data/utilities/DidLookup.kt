@@ -34,6 +34,7 @@ import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInProfileId
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import kotlin.collections.map
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -44,7 +45,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
-import kotlin.collections.map
 
 internal suspend fun lookupProfileDid(
     profileId: Id.Profile,
@@ -55,7 +55,7 @@ internal suspend fun lookupProfileDid(
     return when {
         Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
         Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
-            ids = listOf(ProfileHandleOrId(profileHandleOrId))
+            ids = listOf(ProfileHandleOrId(profileHandleOrId)),
         )
             .first()
             .takeIf(List<ProfileEntity>::isNotEmpty)
@@ -66,8 +66,8 @@ internal suspend fun lookupProfileDid(
             ?: networkService.runCatchingWithMonitoredNetworkRetry {
                 resolveHandle(
                     params = ResolveHandleQueryParams(
-                        Handle(profileHandleOrId)
-                    )
+                        Handle(profileHandleOrId),
+                    ),
                 )
             }
                 .getOrNull()
@@ -96,7 +96,7 @@ internal suspend fun resolveLinks(
                             networkService = networkService,
                         )?.let { did ->
                             link.copy(
-                                target = LinkTarget.UserDidMention(did.did.let(::ProfileId))
+                                target = LinkTarget.UserDidMention(did.did.let(::ProfileId)),
                             )
                         }
                     }
@@ -119,7 +119,7 @@ internal suspend fun refreshProfile(
     ) ?: return
     networkService.runCatchingWithMonitoredNetworkRetry {
         getProfile(
-            GetProfileQueryParams(actor = profileDid)
+            GetProfileQueryParams(actor = profileDid),
         )
     }
         .getOrNull()
@@ -142,12 +142,12 @@ internal fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
         ProfileWithViewerState(
             profile = profileView.profileMapper(),
             viewerState =
-                if (signedInProfileId == null) null
-                else profileView.profileViewerStateEntities(
-                    signedInProfileId
-                )
-                    .first()
-                    .asExternalModel(),
+            if (signedInProfileId == null) null
+            else profileView.profileViewerStateEntities(
+                signedInProfileId,
+            )
+                .first()
+                .asExternalModel(),
         )
     }
 }
@@ -164,9 +164,9 @@ internal fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerSta
             map { profileView ->
                 ProfileWithViewerState(
                     profile = profileView.profileMapper(),
-                    viewerState = null
+                    viewerState = null,
                 )
-            }
+            },
         )
 
         else -> profileDao.viewerState(
@@ -174,19 +174,19 @@ internal fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerSta
             otherProfileIds = mapTo(
                 destination = mutableSetOf(),
                 transform = idMapper,
-            )
+            ),
         )
             .distinctUntilChanged()
             .map { viewerStates ->
                 val profileIdsToViewerStates = viewerStates.associateBy(
-                    ProfileViewerStateEntity::otherProfileId
+                    ProfileViewerStateEntity::otherProfileId,
                 )
 
                 profileViews.map { profileViewBasic ->
                     val profile = profileViewBasic.profileMapper()
                     ProfileWithViewerState(
                         profile = profile,
-                        viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel()
+                        viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel(),
                     )
                 }
             }

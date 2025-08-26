@@ -34,7 +34,7 @@ fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
         minOffset = {
             Offset(
                 x = 0f,
-                y = -UiTokens.toolbarHeight.toPx()
+                y = -UiTokens.toolbarHeight.toPx(),
             )
         },
     )
@@ -47,7 +47,7 @@ fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConne
         maxOffset = maxOffset@{
             Offset(
                 x = 0f,
-                y = (navigationBarHeight + UiTokens.bottomNavHeight).toPx()
+                y = (navigationBarHeight + UiTokens.bottomNavHeight).toPx(),
             )
         },
         minOffset = { Offset.Zero },

@@ -89,7 +89,6 @@ internal class UriConverters {
     @TypeConverter
     fun toUriString(uri: Uri?): String? =
         uri?.uri
-
 }
 
 internal class IdConverters {

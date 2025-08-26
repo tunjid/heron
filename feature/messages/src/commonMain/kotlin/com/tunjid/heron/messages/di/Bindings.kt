@@ -81,7 +81,7 @@ object MessagesNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -120,7 +120,7 @@ class MessagesBindings(
                     minOffset = {
                         Offset(
                             x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
+                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx(),
                         )
                     },
                 )
@@ -149,8 +149,8 @@ class MessagesBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -158,7 +158,7 @@ class MessagesBindings(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.surface)
                             .height(statusBarHeight)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     )
                 },
                 navigationBar = {
@@ -180,8 +180,8 @@ class MessagesBindings(
                         modifier = Modifier
                             .padding(top = paddingValues.calculateTopPadding()),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

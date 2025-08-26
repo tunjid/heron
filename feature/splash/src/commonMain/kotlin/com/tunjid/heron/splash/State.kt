@@ -22,15 +22,15 @@ import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     @Transient
     val messages: List<String> = emptyList(),
 )
 
-
 sealed class Action(val key: String) {
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction
 }

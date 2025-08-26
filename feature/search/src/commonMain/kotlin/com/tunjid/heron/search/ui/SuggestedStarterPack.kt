@@ -81,7 +81,7 @@ fun SuggestedStarterPack(
                     overlap = AvatarOverlap,
                     maxItems = MaxAvatars,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     val count = MaxAvatars - 1
                     if (starterPackWithMembers.members.isEmpty()) (0..<count).forEach { index ->
@@ -90,7 +90,7 @@ fun SuggestedStarterPack(
                                 .zIndex((MaxAvatars - index).toFloat())
                                 .fillMaxWidth()
                                 .aspectRatio(1f),
-                            shape = CircleShape
+                            shape = CircleShape,
                         ) { }
                     }
                     else starterPackWithMembers.members.take(count)
@@ -115,7 +115,7 @@ fun SuggestedStarterPack(
                                 },
                                 sharedElement = { state, modifier ->
                                     AsyncImage(state, modifier)
-                                }
+                                },
                             )
                         }
                     starterPackWithMembers.starterPack.list?.listItemCount?.let { joined ->
@@ -143,17 +143,17 @@ fun SuggestedStarterPack(
                 }
                 Spacer(
                     modifier = Modifier
-                        .height(8.dp)
+                        .height(8.dp),
                 )
                 Text(
-                    text = starterPackWithMembers.starterPack.name
+                    text = starterPackWithMembers.starterPack.name,
                 )
                 Text(
                     text = stringResource(
                         Res.string.by_creator,
                         remember(starterPackWithMembers.starterPack.creator.handle) {
                             starterPackWithMembers.starterPack.creator.handle.id
-                        }
+                        },
                     ),
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
@@ -161,7 +161,7 @@ fun SuggestedStarterPack(
                     color = MaterialTheme.colorScheme.outline,
                 )
             }
-        }
+        },
     )
 }
 

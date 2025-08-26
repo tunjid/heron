@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.conversation
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
@@ -79,49 +78,50 @@ class ActualConversationViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ConversationStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(authRepository),
-        pendingMessageFlushMutations(writeQueue),
-        flow { messagesRepository.monitorConversationLogs() },
-        labelPreferencesMutations(
-            timelineRepository = timelineRepository,
+) : ViewModel(viewModelScope = scope),
+    ConversationStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(authRepository),
+            pendingMessageFlushMutations(writeQueue),
+            flow { messagesRepository.monitorConversationLogs() },
+            labelPreferencesMutations(
+                timelineRepository = timelineRepository,
+            ),
+            labelerMutations(
+                timelineRepository = timelineRepository,
+            ),
         ),
-        labelerMutations(
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
 
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.SendMessage -> action.flow.sendMessageMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendMessage -> action.flow.sendMessageMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Tile -> action.flow.messagingTilingMutations(
-                    currentState = { state() },
-                    messagesRepository = messagesRepository
-                )
+                    is Action.Tile -> action.flow.messagingTilingMutations(
+                        currentState = { state() },
+                        messagesRepository = messagesRepository,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,
@@ -139,7 +139,7 @@ private fun pendingMessageFlushMutations(
         }
         copy(
             pendingItems = updatedPendingMessages,
-            tilingData = tilingData.updatePendingMessages(updatedPendingMessages)
+            tilingData = tilingData.updatePendingMessages(updatedPendingMessages),
         )
     }
 
@@ -195,8 +195,8 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
                 tilingData = tilingData.copy(
                     items = currentItems + tiledListOf(
                         lastQuery to pendingItem,
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -206,7 +206,7 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
 
 private suspend fun Flow<Action.Tile>.messagingTilingMutations(
     currentState: suspend () -> State,
-    messagesRepository: MessageRepository
+    messagesRepository: MessageRepository,
 ): Flow<Mutation<State>> =
     map { it.tilingAction }
         .tilingMutations(
@@ -214,7 +214,7 @@ private suspend fun Flow<Action.Tile>.messagingTilingMutations(
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },
             cursorListLoader = messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(
-                MessageItem::Sent
+                MessageItem::Sent,
             ),
             onNewItems = { items ->
                 items.distinctBy(MessageItem::id)
@@ -225,13 +225,13 @@ private suspend fun Flow<Action.Tile>.messagingTilingMutations(
                         pendingItems.isEmpty() -> updatedTilingData
                         // Database refreshes can happen at any time. Add pending items.
                         else -> updatedTilingData.updatePendingMessages(pendingItems)
-                    }
+                    },
                 )
             },
         )
 
 private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
-    pendingItems: List<MessageItem.Pending>
+    pendingItems: List<MessageItem.Pending>,
 ): TilingState.Data<MessageQuery, MessageItem> =
     copy(
         items = when {
@@ -258,5 +258,5 @@ private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
                     )
                 }
             }
-        }
+        },
     )

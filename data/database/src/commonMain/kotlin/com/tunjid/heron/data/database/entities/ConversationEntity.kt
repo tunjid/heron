@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 
-
 @Entity(
     tableName = "conversations",
 )
@@ -73,7 +72,7 @@ fun PopulatedConversationEntity.asExternalModel() =
     )
 
 private fun PopulatedConversationEntity.conversationMessage(
-    message: MessageEntity
+    message: MessageEntity,
 ): Message? =
     memberEntities.firstOrNull {
         it.did == message.senderId
@@ -99,7 +98,7 @@ private fun PopulatedConversationEntity.conversationMessage(
                                 senderId = lastReactionEntity.senderId,
                                 createdAt = lastReactionEntity.createdAt,
                             )
-                        }
+                        },
                 ),
             )
         }

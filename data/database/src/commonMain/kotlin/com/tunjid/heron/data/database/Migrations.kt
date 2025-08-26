@@ -33,7 +33,7 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
             """
            INSERT INTO profiles (did, handle, displayName, description, avatar, banner, followersCount, followsCount, postsCount, joinedViaStarterPack, indexedAt, createdAt)
            VALUES ('${Constants.UNKNOWN}', '${Constants.UNKNOWN}', '', '', NULL, NULL, 0, 0, 0, NULL, 0, 0);
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL(
@@ -52,7 +52,7 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
                 createdAt INTEGER, 
                 PRIMARY KEY(cid)
               )
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         connection.execSQL(
@@ -83,7 +83,7 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
                 base64EncodedRecord, 
                 createdAt
                 FROM posts
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         // Remove the old table

@@ -98,13 +98,13 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -115,7 +115,7 @@ internal fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val updatedTimelineStateHolders by rememberUpdatedState(
-        state.timelineStateHolders
+        state.timelineStateHolders,
     )
     val pagerState = rememberPagerState {
         updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
@@ -124,7 +124,7 @@ internal fun HomeScreen(
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
 
     Box(
-        modifier = modifier
+        modifier = modifier,
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
@@ -173,14 +173,14 @@ internal fun HomeScreen(
                             if (gapToClose < 0) gridState.scrollBy(-gapToClose)
                         }
                 }
-            }
+            },
         )
         HomeTabs(
             modifier = Modifier
                 .offset {
                     IntOffset(
                         x = 0,
-                        y = topClearance.roundToPx()
+                        y = topClearance.roundToPx(),
                     ) + tabsOffsetNestedScrollConnection.offset.round()
                 },
             sharedTransitionScope = paneScaffoldState,
@@ -229,19 +229,19 @@ internal fun HomeScreen(
                     TimelineState.Action.UpdatePreferredPresentation(
                         timeline = timelineStateHolder.state.value.timeline,
                         presentation = presentation,
-                    )
+                    ),
                 )
             },
             onTimelinePreferencesSaved = { timelines ->
                 actions(
-                    Action.UpdateTimeline.Update(timelines)
+                    Action.UpdateTimeline.Update(timelines),
                 )
             },
             onSettingsIconClick = {
                 actions(
-                    Action.Navigate.To(settingsDestination())
+                    Action.Navigate.To(settingsDestination()),
                 )
-            }
+            },
         )
 
         tabsOffsetNestedScrollConnection.TabsExpansionEffect(
@@ -250,7 +250,7 @@ internal fun HomeScreen(
 
         tabsOffsetNestedScrollConnection.TabsCollapseEffect(
             state.tabLayout,
-            onCollapsed = { actions(Action.SetTabLayout(it)) }
+            onCollapsed = { actions(Action.SetTabLayout(it)) },
         )
 
         LaunchedEffect(Unit) {
@@ -262,8 +262,8 @@ internal fun HomeScreen(
                                 .state
                                 .value
                                 .timeline
-                                .sourceId
-                        )
+                                .sourceId,
+                        ),
                     )
                 }
         }
@@ -301,18 +301,18 @@ private fun HomeTimeline(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     PullToRefreshBox(
         modifier = Modifier
             .padding(
                 horizontal = animateDpAsState(
-                    presentation.timelineHorizontalPadding
-                ).value
+                    presentation.timelineHorizontalPadding,
+                ).value,
             )
             .fillMaxSize(),
         isRefreshing = timelineState.isRefreshing,
@@ -347,16 +347,16 @@ private fun HomeTimeline(
                         timelineStateHolder.accept(
                             TimelineState.Action.Tile(
                                 tilingAction = TilingState.Action.GridSize(
-                                    numColumns = floor(it.width / itemWidth).roundToInt()
-                                )
-                            )
+                                    numColumns = floor(it.width / itemWidth).roundToInt(),
+                                ),
+                            ),
                         )
                     },
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
                 verticalItemSpacing = 8.dp,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
@@ -370,7 +370,7 @@ private fun HomeTimeline(
                                 .fillMaxWidth()
                                 .animateItem()
                                 .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item)
+                                    state = videoStates.getOrCreateStateFor(item),
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
@@ -386,8 +386,8 @@ private fun HomeTimeline(
                                                 pathDestination(
                                                     path = linkTarget.path,
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostClicked = { post: Post, quotingPostUri: PostUri? ->
@@ -401,8 +401,8 @@ private fun HomeTimeline(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
                                                     post = post,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
@@ -418,9 +418,9 @@ private fun HomeTimeline(
                                                             prefix = timelineState.timeline.sharedElementPrefix,
                                                             quotingPostUri = quotingPostUri,
                                                         )
-                                                        .takeIf { post.author.did == profile.did }
-                                                )
-                                            )
+                                                        .takeIf { post.author.did == profile.did },
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
@@ -435,8 +435,8 @@ private fun HomeTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onReplyToPost = { post: Post ->
@@ -450,15 +450,15 @@ private fun HomeTimeline(
                                                         parent = post,
                                                     ),
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostInteraction = postInteractionState::onInteraction,
                                 )
                             },
                         )
-                    }
+                    },
                 )
             }
         }
@@ -487,11 +487,11 @@ private fun HomeTimeline(
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: timelineState.tilingData.currentQuery
-                    )
-                )
+                        query = query ?: timelineState.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     gridState.TimelineRefreshEffect(
@@ -501,7 +501,7 @@ private fun HomeTimeline(
                 index = 0,
                 scrollOffset = abs(tabsOffset().y.roundToInt()),
             )
-        }
+        },
     )
 
     LaunchedEffect(gridState) {

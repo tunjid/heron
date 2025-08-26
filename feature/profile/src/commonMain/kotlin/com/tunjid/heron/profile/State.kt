@@ -50,7 +50,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
-
 @Serializable
 data class State(
     val profile: Profile,
@@ -80,22 +79,21 @@ fun State(route: Route) = State(
 sealed class ProfileScreenStateHolders {
 
     sealed class Collections<T>(
-        private val mutator: ProfileCollectionStateHolder<T>
+        private val mutator: ProfileCollectionStateHolder<T>,
     ) : ProfileScreenStateHolders(),
         ProfileCollectionStateHolder<T> by mutator {
 
         class Feeds(
-            mutator: ProfileCollectionStateHolder<FeedGenerator>
+            mutator: ProfileCollectionStateHolder<FeedGenerator>,
         ) : Collections<FeedGenerator>(mutator)
 
         class Lists(
-            mutator: ProfileCollectionStateHolder<FeedList>
+            mutator: ProfileCollectionStateHolder<FeedList>,
         ) : Collections<FeedList>(mutator)
 
         class StarterPacks(
-            mutator: ProfileCollectionStateHolder<StarterPack>
+            mutator: ProfileCollectionStateHolder<StarterPack>,
         ) : Collections<StarterPack>(mutator)
-
     }
 
     class Timeline(
@@ -119,13 +117,13 @@ sealed class ProfileScreenStateHolders {
 
     fun refresh() = when (this) {
         is Collections<*> -> accept(
-            TilingState.Action.Refresh
+            TilingState.Action.Refresh,
         )
 
         is Timeline -> accept(
             TimelineState.Action.Tile(
-                tilingAction = TilingState.Action.Refresh
-            )
+                tilingAction = TilingState.Action.Refresh,
+            ),
         )
     }
 }
@@ -159,12 +157,15 @@ sealed class Action(val key: String) {
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
 
         data class ToAvatar(
             val profile: Profile,
@@ -177,7 +178,7 @@ sealed class Action(val key: String) {
                         "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
                         referringRouteQueryParams(ReferringRouteOption.Current),
-                    )
+                    ),
                 )
                     .toRoute
                     .takeIf { it.id != currentRoute.id }

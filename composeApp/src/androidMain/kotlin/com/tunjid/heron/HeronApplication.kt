@@ -23,5 +23,4 @@ class HeronApplication : Application() {
     val appState by lazy {
         createAppState(this)
     }
-
 }

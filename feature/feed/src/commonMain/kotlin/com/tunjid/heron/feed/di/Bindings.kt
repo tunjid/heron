@@ -73,12 +73,12 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
+        routeParams.decodeReferringRoute(),
     ),
 )
 
 private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId
+    mapper = ::ProfileHandleOrId,
 )
 
 private val Route.feedUriSuffix by routePath()
@@ -94,7 +94,7 @@ private val RequestTrie = mapOf(
         TimelineRequest.OfFeed.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
-                .let(::FeedGeneratorUri)
+                .let(::FeedGeneratorUri),
         )
     },
 ).toRouteTrie()
@@ -111,7 +111,7 @@ object FeedNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 
     @Provides
@@ -120,9 +120,8 @@ object FeedNavigationBindings {
     fun provideRouteUriMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteUriPattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
-
 }
 
 @BindingContainer
@@ -161,7 +160,7 @@ class FeedBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -199,14 +198,14 @@ class FeedBindings(
                                         ?.invoke(
                                             TimelineState.Action.UpdatePreferredPresentation(
                                                 timeline = timeline,
-                                                presentation = presentation
-                                            )
+                                                presentation = presentation,
+                                            ),
                                         )
-                                }
+                                },
                             )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
                 content = {
@@ -216,8 +215,8 @@ class FeedBindings(
                         actions = viewModel.accept,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

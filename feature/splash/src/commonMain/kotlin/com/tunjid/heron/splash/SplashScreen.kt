@@ -33,13 +33,12 @@ internal fun SplashScreen(
 ) {
     Box(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         paneMovableElementSharedTransitionScope.AppLogo(
             modifier = Modifier
                 .size(100.dp)
-                .align(Alignment.Center)
+                .align(Alignment.Center),
         )
     }
 }
-

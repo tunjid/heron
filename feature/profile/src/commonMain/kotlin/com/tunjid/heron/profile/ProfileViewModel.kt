@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.profile
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -92,57 +91,58 @@ class ActualProfileViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ProfileStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(
-            profileId = route.profileHandleOrId,
-            scope = scope,
-            profileRepository = profileRepository,
-        ),
-        profileRelationshipMutations(
-            profileId = route.profileHandleOrId,
-            profileRepository = profileRepository,
-        ),
-        feedGeneratorUrisToStatusMutations(
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        merge(
-            actions.toMutationStream(
-                keySelector = Action::key
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions
-                    )
-                }
-            },
-            loadSignedInProfileMutations(
-                currentState = { state() },
+) : ViewModel(viewModelScope = scope),
+    ProfileStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(
                 profileId = route.profileHandleOrId,
                 scope = scope,
-                authRepository = authRepository,
+                profileRepository = profileRepository,
+            ),
+            profileRelationshipMutations(
+                profileId = route.profileHandleOrId,
+                profileRepository = profileRepository,
+            ),
+            feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
             ),
-        )
-    }
-)
+        ),
+        actionTransform = transform@{ actions ->
+            merge(
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+                loadSignedInProfileMutations(
+                    currentState = { state() },
+                    profileId = route.profileHandleOrId,
+                    scope = scope,
+                    authRepository = authRepository,
+                    timelineRepository = timelineRepository,
+                ),
+            )
+        },
+    )
 
 private fun loadProfileMutations(
     profileId: Id.Profile,
@@ -164,15 +164,15 @@ private fun loadProfileMutations(
                     )
 
                     else -> stateHolders
-                }
+                },
             )
         },
         profileRepository.commonFollowers(
             otherProfileId = profileId,
-            limit = 6
+            limit = 6,
         ).mapToMutation {
             copy(commonFollowers = it)
-        }
+        },
     )
 
 private fun loadSignedInProfileMutations(
@@ -187,12 +187,14 @@ private fun loadSignedInProfileMutations(
         .mapToManyMutations { signedInProfile ->
             val isSignedIn = signedInProfile != null
             val isSignedInProfile = signedInProfile != null &&
-                    (signedInProfile.did.id == profileId.id ||
-                            signedInProfile.handle.id == profileId.id)
+                (
+                    signedInProfile.did.id == profileId.id ||
+                        signedInProfile.handle.id == profileId.id
+                    )
             emit {
                 copy(
                     signedInProfileId = signedInProfile?.did,
-                    isSignedInProfile = isSignedInProfile
+                    isSignedInProfile = isSignedInProfile,
                 )
             }
 
@@ -219,7 +221,7 @@ private fun loadSignedInProfileMutations(
                             TimelineRequest.OfProfile(
                                 profileHandleOrDid = profileId,
                                 type = type,
-                            )
+                            ),
                         )
                             // Only take 1 emission, timelines should be loaded lazily
                             .take(1)
@@ -244,12 +246,12 @@ private fun loadSignedInProfileMutations(
                                             timeline = timeline,
                                             startNumColumns = 1,
                                             timelineRepository = timelineRepository,
-                                        )
+                                        ),
                                     )
                                 } + stateHolders,
                             )
                         }
-                    }
+                    },
             )
         }
 
@@ -272,7 +274,7 @@ private fun feedGeneratorUrisToStatusMutations(
                     .associateBy(
                         keySelector = TimelinePreference::feedGeneratorUri,
                         valueTransform = TimelinePreference::pinned,
-                    )
+                    ),
             )
         }
 
@@ -307,8 +309,8 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
                         followUri = following,
                         followedBy = action.followedBy,
                     )
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -338,7 +340,7 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 ),
                 itemId = FeedGenerator::cid,
                 cursorListLoader = profileRepository::feedGenerators,
-            )
+            ),
         )
         else null,
         if (metadata.createdStarterPackCount > 0) ProfileScreenStateHolders.Collections.StarterPacks(
@@ -354,7 +356,7 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 ),
                 itemId = StarterPack::cid,
                 cursorListLoader = profileRepository::starterPacks,
-            )
+            ),
         )
         else null,
         if (metadata.createdListCount > 0) ProfileScreenStateHolders.Collections.Lists(
@@ -370,7 +372,7 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 ),
                 itemId = FeedList::cid,
                 cursorListLoader = profileRepository::lists,
-            )
+            ),
         )
         else null,
     )
@@ -378,7 +380,7 @@ private fun CoroutineScope.profileCollectionStateHolders(
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,
     cursorAnchor = Clock.System.now(),
-    limit = 15
+    limit = 15,
 )
 
 private fun <T> CoroutineScope.profileCollectionStateHolder(
@@ -401,5 +403,5 @@ private fun <T> CoroutineScope.profileCollectionStateHolder(
                     onTilingDataUpdated = { copy(tilingData = it) },
                 )
         }
-    }
+    },
 )

@@ -29,4 +29,5 @@ data class Video(
     val alt: String? = null,
     override val width: Long?,
     override val height: Long?,
-) : Embed.Media, AspectRatio
+) : Embed.Media,
+    AspectRatio

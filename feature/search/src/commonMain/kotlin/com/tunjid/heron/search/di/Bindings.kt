@@ -81,7 +81,7 @@ object SearchNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 
     @Provides
@@ -90,7 +90,7 @@ object SearchNavigationBindings {
     fun provideRouteQueryMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteQueryPattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -153,14 +153,14 @@ class SearchBindings(
                                 searchQuery = state.currentQuery,
                                 onQueryChanged = { query ->
                                     viewModel.accept(
-                                        Action.Search.OnSearchQueryChanged(query)
+                                        Action.Search.OnSearchQueryChanged(query),
                                     )
                                 },
                                 onQueryConfirmed = {
                                     viewModel.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false)
+                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                                     )
-                                }
+                                },
                             )
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
@@ -170,8 +170,8 @@ class SearchBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -184,7 +184,7 @@ class SearchBindings(
                         },
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -205,8 +205,8 @@ class SearchBindings(
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

@@ -80,9 +80,9 @@ import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.datetime.Clock
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.datetime.Clock
 
 @Composable
 internal fun FeedScreen(
@@ -93,7 +93,7 @@ internal fun FeedScreen(
 ) {
     Box(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         when (val timelineStateHolder = state.timelineStateHolder) {
             null -> Unit
@@ -136,17 +136,17 @@ private fun FeedTimeline(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
     PullToRefreshBox(
         modifier = Modifier
             .padding(
                 horizontal = animateDpAsState(
-                    presentation.timelineHorizontalPadding
-                ).value
+                    presentation.timelineHorizontalPadding,
+                ).value,
             )
             .fillMaxSize()
             .paneClip()
@@ -157,9 +157,9 @@ private fun FeedTimeline(
                 timelineStateHolder.accept(
                     TimelineState.Action.Tile(
                         tilingAction = TilingState.Action.GridSize(
-                            numColumns = floor(it.width / itemWidth).roundToInt()
-                        )
-                    )
+                            numColumns = floor(it.width / itemWidth).roundToInt(),
+                        ),
+                    ),
                 )
             },
         isRefreshing = timelineState.isRefreshing,
@@ -167,8 +167,8 @@ private fun FeedTimeline(
         onRefresh = {
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
-                    tilingAction = TilingState.Action.Refresh
-                )
+                    tilingAction = TilingState.Action.Refresh,
+                ),
             )
         },
         indicator = {
@@ -200,7 +200,7 @@ private fun FeedTimeline(
                                 .fillMaxWidth()
                                 .animateItem()
                                 .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item)
+                                    state = videoStates.getOrCreateStateFor(item),
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
@@ -216,8 +216,8 @@ private fun FeedTimeline(
                                                 pathDestination(
                                                     path = linkTarget.path,
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostClicked = { post: Post, quotingPostUri: PostUri? ->
@@ -231,8 +231,8 @@ private fun FeedTimeline(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
                                                     post = post,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
@@ -248,9 +248,9 @@ private fun FeedTimeline(
                                                             prefix = timelineState.timeline.sourceId,
                                                             quotingPostUri = quotingPostUri,
                                                         )
-                                                        .takeIf { post.author.did == profile.did }
-                                                )
-                                            )
+                                                        .takeIf { post.author.did == profile.did },
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
@@ -265,8 +265,8 @@ private fun FeedTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onReplyToPost = { post: Post ->
@@ -280,15 +280,15 @@ private fun FeedTimeline(
                                                         parent = post,
                                                     ),
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                )
-                                            )
+                                                ),
+                                            ),
                                         )
                                     },
                                     onPostInteraction = postInteractionState::onInteraction,
                                 )
                             },
                         )
-                    }
+                    },
                 )
             }
         }
@@ -317,15 +317,15 @@ private fun FeedTimeline(
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: timelineState.tilingData.currentQuery
-                    )
-                )
+                        query = query ?: timelineState.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     gridState.TimelineRefreshEffect(
         timelineState = timelineState,
-        onRefresh = { animateScrollToItem(index = 0) }
+        onRefresh = { animateScrollToItem(index = 0) },
     )
 }

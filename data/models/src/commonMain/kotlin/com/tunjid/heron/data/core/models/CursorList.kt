@@ -27,7 +27,7 @@ data class CursorList<out T>(
 ) : List<T> by items
 
 inline fun <T, R> CursorList<T>.mapCursorList(
-    mapper: (T) -> R
+    mapper: (T) -> R,
 ) = CursorList(
     items = items.map(mapper),
     nextCursor = nextCursor,
@@ -51,7 +51,7 @@ val Cursor.value
     get() = when (this) {
         Cursor.Initial -> null
         Cursor.Pending -> throw IllegalArgumentException(
-            "Pending cursors cannot be used to fetch data"
+            "Pending cursors cannot be used to fetch data",
         )
 
         is Cursor.Next -> cursor

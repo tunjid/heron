@@ -20,6 +20,7 @@ import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.GetLogQueryParams
+import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
 import chat.bsky.convo.GetMessagesResponse
 import chat.bsky.convo.GetMessagesResponseMessageUnion
@@ -60,6 +61,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import dev.zacsweers.metro.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -70,8 +72,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration.Companion.seconds
-import chat.bsky.convo.GetLogResponseLogUnion as Log
 
 @Serializable
 data class ConversationQuery(
@@ -83,7 +83,6 @@ data class MessageQuery(
     val conversationId: ConversationId,
     override val data: CursorQuery.Data,
 ) : CursorQuery
-
 
 interface MessageRepository {
 
@@ -122,7 +121,7 @@ internal class OfflineMessageRepository @Inject constructor(
 
     override fun conversations(
         query: ConversationQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<Conversation>> =
         combine(
             messageDao.conversations(
@@ -139,7 +138,7 @@ internal class OfflineMessageRepository @Inject constructor(
                         params = ListConvosQueryParams(
                             limit = query.data.limit,
                             cursor = cursor.value,
-                        )
+                        ),
                     )
                 },
                 nextCursor = ListConvosResponse::cursor,
@@ -156,13 +155,13 @@ internal class OfflineMessageRepository @Inject constructor(
                     }
                 },
             ),
-            ::CursorList
+            ::CursorList,
         )
             .distinctUntilChanged()
 
     override fun messages(
         query: MessageQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<Message>> =
         savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
             combine(
@@ -230,7 +229,7 @@ internal class OfflineMessageRepository @Inject constructor(
                                                 ?.postUri
                                                 ?.let(urisToEmbeddedPosts::get)
                                                 ?.entity
-                                                ?.asExternalModel(quote = null)
+                                                ?.asExternalModel(quote = null),
                                         ),
                                 )
                             }
@@ -244,7 +243,7 @@ internal class OfflineMessageRepository @Inject constructor(
                                 convoId = query.conversationId.id,
                                 limit = query.data.limit,
                                 cursor = cursor.value,
-                            )
+                            ),
                         )
                     },
                     nextCursor = GetMessagesResponse::cursor,
@@ -269,7 +268,7 @@ internal class OfflineMessageRepository @Inject constructor(
                         }
                     },
                 ),
-                ::CursorList
+                ::CursorList,
             )
                 .distinctUntilChanged()
         }
@@ -336,7 +335,6 @@ internal class OfflineMessageRepository @Inject constructor(
                 }
                 return@scan currentCursor
             }
-
             .collect()
     }
 
@@ -356,8 +354,8 @@ internal class OfflineMessageRepository @Inject constructor(
                         text = message.text,
                         facets = resolvedLinks.facet(),
                         embed = null,
-                    )
-                )
+                    ),
+                ),
             )
         }.getOrNull() ?: return
 
@@ -382,7 +380,7 @@ internal class OfflineMessageRepository @Inject constructor(
                         convoId = reaction.convoId.id,
                         messageId = reaction.messageId.id,
                         value = reaction.value,
-                    )
+                    ),
                 ).map(AddReactionResponse::message)
 
                 is Message.UpdateReaction.Remove -> removeReaction(
@@ -390,7 +388,7 @@ internal class OfflineMessageRepository @Inject constructor(
                         convoId = reaction.convoId.id,
                         messageId = reaction.messageId.id,
                         value = reaction.value,
-                    )
+                    ),
                 ).map(RemoveReactionResponse::message)
             }
         }.getOrNull() ?: return
@@ -409,7 +407,7 @@ internal class OfflineMessageRepository @Inject constructor(
 private fun Log.AddReaction.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
     messages: LazyList<Pair<ConversationId, MessageView>>,
-    logRev: String
+    logRev: String,
 ): String {
     when (val message = value.message) {
         is LogAddReactionMessageUnion.DeletedMessageView ->
@@ -426,7 +424,7 @@ private fun Log.AddReaction.maxCursor(
 private fun Log.CreateMessage.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
     messages: LazyList<Pair<ConversationId, MessageView>>,
-    logRev: String
+    logRev: String,
 ): String {
     when (val message = value.message) {
         is LogCreateMessageMessageUnion.DeletedMessageView ->
@@ -443,7 +441,7 @@ private fun Log.CreateMessage.maxCursor(
 private fun Log.DeleteMessage.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
     messages: LazyList<Pair<ConversationId, MessageView>>,
-    logRev: String
+    logRev: String,
 ): String {
     when (val message = value.message) {
         is LogDeleteMessageMessageUnion.DeletedMessageView ->
@@ -453,7 +451,6 @@ private fun Log.DeleteMessage.maxCursor(
             messages.add(value.convoId.let(::ConversationId) to message.value)
 
         is LogDeleteMessageMessageUnion.Unknown -> Unit
-
     }
     return maxOf(logRev, value.rev)
 }
@@ -461,7 +458,7 @@ private fun Log.DeleteMessage.maxCursor(
 private fun Log.RemoveReaction.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,
     messages: LazyList<Pair<ConversationId, MessageView>>,
-    logRev: String
+    logRev: String,
 ): String {
     when (val message = value.message) {
         is LogRemoveReactionMessageUnion.DeletedMessageView ->
@@ -471,7 +468,6 @@ private fun Log.RemoveReaction.maxCursor(
             messages.add(value.convoId.let(::ConversationId) to message.value)
 
         is LogRemoveReactionMessageUnion.Unknown -> Unit
-
     }
     return maxOf(logRev, value.rev)
 }

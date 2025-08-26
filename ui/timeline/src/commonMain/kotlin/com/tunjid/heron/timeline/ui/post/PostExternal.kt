@@ -70,7 +70,7 @@ internal fun PostExternal(
         Column(verticalArrangement = spacedBy(8.dp)) {
             if (!feature.thumb?.uri.isNullOrBlank()) {
                 val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
-                    RoundedPolygonShape.Rectangle
+                    RoundedPolygonShape.Rectangle,
                 )
                 else Modifier
                 AsyncImage(
@@ -83,7 +83,7 @@ internal fun PostExternal(
                                     prefix = sharedElementPrefix,
                                     postUri = postUri,
                                     text = feature.thumb?.uri,
-                                )
+                                ),
                             ),
                         ),
                     args = ImageArgs(

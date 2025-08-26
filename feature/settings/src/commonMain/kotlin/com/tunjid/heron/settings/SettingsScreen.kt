@@ -18,8 +18,8 @@ package com.tunjid.heron.settings
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,19 +46,18 @@ internal fun SettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-
-    var showSignOutDialog by rememberSaveable() { mutableStateOf(false) }
+    var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         Button(
             onClick = {
                 showSignOutDialog = true
-            }
-        ){
+            },
+        ) {
             Text("Sign Out")
         }
     }
@@ -70,17 +69,16 @@ internal fun SettingsScreen(
             showSignOutDialog = false
             actions(Action.Navigate.To(signInDestination()))
             actions(Action.SignOut)
-        }
+        },
     )
 }
 
 @Composable
 fun SignOutDialog(
-    showSignOutDialog : Boolean,
-    onDismiss : () -> Unit,
-    onConfirmSignOut : () -> Unit
-){
-
+    showSignOutDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirmSignOut: () -> Unit,
+) {
     if (!showSignOutDialog) return
 
     AlertDialog(
@@ -89,14 +87,14 @@ fun SignOutDialog(
             Text(
                 text = stringResource(Res.string.sign_out),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
             Text(
                 text = stringResource(Res.string.sign_out_confirmation),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         confirmButton = {
@@ -104,7 +102,7 @@ fun SignOutDialog(
                 Text(
                     text = stringResource(Res.string.sign_out),
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         },
@@ -113,12 +111,12 @@ fun SignOutDialog(
                 Text(
                     stringResource(Res.string.cancel),
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
     )
 }

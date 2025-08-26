@@ -49,7 +49,7 @@ internal fun <T> ProfileCollection(
         items(
             items = updatedItems,
             key = itemKey,
-            itemContent = itemContent
+            itemContent = itemContent,
         )
     }
 
@@ -58,10 +58,10 @@ internal fun <T> ProfileCollection(
         onQueryChanged = { query ->
             collectionStateHolder.accept(
                 TilingState.Action.LoadAround(
-                    query = query ?: collectionState.tilingData.currentQuery
-                )
+                    query = query ?: collectionState.tilingData.currentQuery,
+                ),
             )
-        }
+        },
     )
 }
 

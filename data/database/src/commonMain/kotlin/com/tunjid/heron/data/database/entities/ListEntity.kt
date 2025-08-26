@@ -32,7 +32,6 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "lists",
     foreignKeys = [
@@ -80,7 +79,7 @@ data class PopulatedListEntity(
     val entity: ListEntity,
     @Relation(
         parentColumn = "creatorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val creator: ProfileEntity,
     @Relation(
@@ -127,4 +126,3 @@ fun PopulatedListEntity.asExternalModel(): FeedList =
         creator = creator.asExternalModel(),
         labels = labelEntities.map(LabelEntity::asExternalModel),
     )
-

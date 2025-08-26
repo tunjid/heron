@@ -25,6 +25,6 @@ fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     val dbFile = appContext.getDatabasePath("heron_room.db")
     return Room.databaseBuilder<AppDatabase>(
         context = appContext,
-        name = dbFile.absolutePath
+        name = dbFile.absolutePath,
     )
 }

@@ -36,14 +36,14 @@ fun Modifier.predictiveBackPlacement(
     paneScope: PaneScope<ThreePane, *>,
 ): Modifier = with(paneScope) {
     val appState = LocalAppState.current
-    val shouldDrawBackground = paneState.pane == ThreePane.Primary
-            && inPredictiveBack
-            && isActive
-            && appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
+    val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
+        inPredictiveBack &&
+        isActive &&
+        appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
 
     val clipRadius by animateDpAsState(
         if (shouldDrawBackground) 16.dp
-        else 0.dp
+        else 0.dp,
     )
 
     if (shouldDrawBackground) backPreview(appState.backPreviewState)

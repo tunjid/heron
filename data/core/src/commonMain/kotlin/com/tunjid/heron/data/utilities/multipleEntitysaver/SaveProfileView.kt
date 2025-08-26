@@ -50,7 +50,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }
@@ -78,7 +78,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }
@@ -106,7 +106,7 @@ internal fun MultipleEntitySaver.add(
                 unknownFollower(
                     profileId = knownFollowerProfile.did.did.let(::ProfileId),
                     otherProfileId = profileView.did.did.let(::ProfileId),
-                )
+                ),
             )
         }
 }

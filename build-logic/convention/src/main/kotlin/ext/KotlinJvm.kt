@@ -53,8 +53,8 @@ private fun org.gradle.api.Project.configureKotlin() {
                     "-opt-in=androidx.compose.material.ExperimentalMaterialApi",
                     "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
                     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                    "-opt-in=kotlinx.coroutines.FlowPreview"
-                )
+                    "-opt-in=kotlinx.coroutines.FlowPreview",
+                ),
             )
         }
     }

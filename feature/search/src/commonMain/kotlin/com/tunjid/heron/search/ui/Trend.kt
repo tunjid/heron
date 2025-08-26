@@ -64,25 +64,25 @@ internal fun Trend(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
             Text(
-                text = trendTitle(index, trend)
+                text = trendTitle(index, trend),
             )
             Spacer(
                 modifier = Modifier
-                    .height(8.dp)
+                    .height(8.dp),
             )
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Spacer(
                     modifier = Modifier
-                        .width(8.dp)
+                        .width(8.dp),
                 )
                 TrendAvatars(
-                    trend = trend
+                    trend = trend,
                 )
                 Text(
                     text = trendDetails(trend),
@@ -93,7 +93,7 @@ internal fun Trend(
         }
         Spacer(
             modifier = Modifier
-                .weight(1f)
+                .weight(1f),
         )
         FilterChip(
             selected = false,
@@ -118,7 +118,7 @@ internal fun Trend(
                             Res.string.trend_started,
                             remember(
                                 now,
-                                trend.startedAt
+                                trend.startedAt,
                             ) { now - trend.startedAt }.roundComponent(),
                         )
                     },
@@ -145,7 +145,7 @@ private fun TrendAvatars(trend: Trend) {
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     shape = RoundedPolygonShape.Circle,
-                )
+                ),
             )
         }
 }

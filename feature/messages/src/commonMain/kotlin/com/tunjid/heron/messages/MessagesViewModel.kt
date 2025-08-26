@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.messages
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.repository.AuthRepository
@@ -63,40 +62,41 @@ class ActualMessagesViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), MessagesStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-    ),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(
-            authRepository
+) : ViewModel(viewModelScope = scope),
+    MessagesStateHolder by scope.actionStateFlowMutator(
+        initialState = State(),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(
+                authRepository,
+            ),
         ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
-
-                is Action.Tile -> action.flow
-                    .map { it.tilingAction }
-                    .tilingMutations(
-                        currentState = { state() },
-                        updateQueryData = { copy(data = it) },
-                        refreshQuery = { copy(data = data.reset()) },
-                        cursorListLoader = messagesRepository::conversations,
-                        onNewItems = { items ->
-                            items.distinctBy(Conversation::id)
-                        },
-                        onTilingDataUpdated = { copy(tilingData = it) },
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
                     )
+
+                    is Action.Tile ->
+                        action.flow
+                            .map { it.tilingAction }
+                            .tilingMutations(
+                                currentState = { state() },
+                                updateQueryData = { copy(data = it) },
+                                refreshQuery = { copy(data = data.reset()) },
+                                cursorListLoader = messagesRepository::conversations,
+                                onNewItems = { items ->
+                                    items.distinctBy(Conversation::id)
+                                },
+                                onTilingDataUpdated = { copy(tilingData = it) },
+                            )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,

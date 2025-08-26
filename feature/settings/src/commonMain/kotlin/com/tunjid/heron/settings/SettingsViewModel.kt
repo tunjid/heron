@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -41,7 +40,7 @@ internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<St
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     override fun invoke(
         scope: CoroutineScope,
-        route : Route
+        route: Route,
     ): ActualSettingsViewModel
 }
 
@@ -51,24 +50,25 @@ class ActualSettingsViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Assisted route : Route
-) : ViewModel(viewModelScope = scope), SettingsStateHolder by scope.actionStateFlowMutator(
-    initialState = State(),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
+    @Assisted route: Route,
+) : ViewModel(viewModelScope = scope),
+    SettingsStateHolder by scope.actionStateFlowMutator(
+        initialState = State(),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
 
-                Action.SignOut -> action.flow.mapToManyMutations {
-                    authRepository.signOut()
+                    Action.SignOut -> action.flow.mapToManyMutations {
+                        authRepository.signOut()
+                    }
                 }
             }
-        }
-    }
-)
+        },
+    )

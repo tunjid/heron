@@ -33,7 +33,6 @@ internal fun MultipleEntitySaver.add(
             value = label.`val`,
             version = label.ver,
             createdAt = label.cts,
-        )
+        ),
     )
 }
-

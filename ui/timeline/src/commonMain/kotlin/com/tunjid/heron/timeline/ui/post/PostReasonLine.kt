@@ -47,7 +47,7 @@ internal fun PostReasonLine(
 ) {
     when (item) {
         is TimelineItem.Pinned -> PostPinnedReasonLine(
-            modifier = modifier
+            modifier = modifier,
         )
 
         is TimelineItem.Repost -> PostRepostReasonLine(
@@ -55,12 +55,12 @@ internal fun PostReasonLine(
             repostBy = item.by,
             onProfileClicked = {
                 onProfileClicked(item.post, it)
-            }
+            },
         )
 
         is TimelineItem.Thread,
         is TimelineItem.Single,
-            -> Unit
+        -> Unit
     }
 }
 
@@ -76,7 +76,7 @@ private fun PostRepostReasonLine(
         iconContentDescription = stringResource(Res.string.repost),
         text = stringResource(
             Res.string.repost_by,
-            repostBy.displayName ?: repostBy.handle
+            repostBy.displayName ?: repostBy.handle,
         ),
     )
 }

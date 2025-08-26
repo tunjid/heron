@@ -18,9 +18,9 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import kotlin.jvm.JvmInline
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlin.jvm.JvmInline
 
 @Serializable
 data class Label(
@@ -91,15 +91,15 @@ fun labelVisibilitiesToDefinitions(
 ): Map<Label.Visibility, List<Label.Definition>> = when {
     postLabels.isEmpty() -> emptyMap()
     else -> labelers.fold(
-        mutableMapOf<Label.Visibility, MutableList<Label.Definition>>()
+        mutableMapOf<Label.Visibility, MutableList<Label.Definition>>(),
     ) { destination, labeler ->
         labeler.definitions.fold(destination) innerFold@{ innerDestination, definition ->
             // Not applicable to this post
             if (!postLabels.contains(definition.identifier)) return@innerFold innerDestination
 
-            val mayBlur = definition.adultOnly
-                    || definition.blurs == Label.BlurTarget.Media
-                    || definition.blurs == Label.BlurTarget.Content
+            val mayBlur = definition.adultOnly ||
+                definition.blurs == Label.BlurTarget.Media ||
+                definition.blurs == Label.BlurTarget.Content
 
             if (!mayBlur) return@innerFold innerDestination
 

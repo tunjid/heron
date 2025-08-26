@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.scaffold.di
 
-
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -69,6 +68,6 @@ class ScaffoldBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideNavigationStateHolder(
-        persistedNavigationStateHolder: PersistedNavigationStateHolder
+        persistedNavigationStateHolder: PersistedNavigationStateHolder,
     ): NavigationStateHolder = persistedNavigationStateHolder
 }

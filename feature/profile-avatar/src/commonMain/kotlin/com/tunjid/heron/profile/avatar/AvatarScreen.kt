@@ -47,7 +47,7 @@ internal fun AvatarScreen(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
@@ -70,7 +70,7 @@ internal fun AvatarScreen(
             },
             sharedElement = { state, modifier ->
                 AsyncImage(state, modifier)
-            }
+            },
         )
     }
 }

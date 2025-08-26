@@ -19,6 +19,7 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.ProfileView
 import app.bsky.feed.GetActorFeedsQueryParams
 import app.bsky.feed.GetActorFeedsResponse
+import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetFollowersQueryParams
@@ -88,7 +89,6 @@ import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
-import app.bsky.graph.Follow as BskyFollow
 
 @Serializable
 data class ProfilesQuery(
@@ -209,7 +209,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 val otherProfileResolvedId = lookupProfileDid(
                     profileId = otherProfileId,
                     profileDao = profileDao,
-                    networkService = networkService
+                    networkService = networkService,
                 )?.did ?: return@flatMapLatest emptyFlow()
 
                 profileDao.commonFollowers(
@@ -225,7 +225,7 @@ internal class OfflineProfileRepository @Inject constructor(
 
     override fun listMembers(
         query: ListMemberQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<ListMember>> =
         signedInProfileId()
             .flatMapLatest { profileId ->
@@ -247,7 +247,7 @@ internal class OfflineProfileRepository @Inject constructor(
                                     list = query.listUri.uri.let(::AtUri),
                                     limit = query.data.limit,
                                     cursor = cursor.value,
-                                )
+                                ),
                             )
                         },
                         nextCursor = GetListResponse::cursor,
@@ -263,14 +263,14 @@ internal class OfflineProfileRepository @Inject constructor(
                             }
                         },
                     ),
-                    ::CursorList
+                    ::CursorList,
                 )
                     .distinctUntilChanged()
             }
 
     override fun followers(
         query: ProfilesQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
         val profileDid = lookupProfileDid(
             profileId = query.profileId,
@@ -288,7 +288,7 @@ internal class OfflineProfileRepository @Inject constructor(
                         is Cursor.Next -> cursor.value
                         Cursor.Pending -> null
                     },
-                )
+                ),
             )
         }
             .getOrNull()
@@ -317,7 +317,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     profileViewerStateEntities = ProfileView::profileViewerStateEntities,
                 ),
                 nextCursor = nextCursor,
-            )
+            ),
         )
 
         emitAll(
@@ -332,13 +332,13 @@ internal class OfflineProfileRepository @Inject constructor(
                         items = profileWithViewerStates,
                         nextCursor = nextCursor,
                     )
-                }
+                },
         )
     }
 
     override fun following(
         query: ProfilesQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
         val profileDid = lookupProfileDid(
             profileId = query.profileId,
@@ -356,7 +356,7 @@ internal class OfflineProfileRepository @Inject constructor(
                         is Cursor.Next -> cursor.value
                         Cursor.Pending -> null
                     },
-                )
+                ),
             )
         }
             .getOrNull()
@@ -385,7 +385,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     profileViewerStateEntities = ProfileView::profileViewerStateEntities,
                 ),
                 nextCursor = nextCursor,
-            )
+            ),
         )
 
         emitAll(
@@ -400,13 +400,13 @@ internal class OfflineProfileRepository @Inject constructor(
                         items = profileWithViewerStates,
                         nextCursor = nextCursor,
                     )
-                }
+                },
         )
     }
 
     override fun starterPacks(
         query: ProfilesQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<StarterPack>> = flow {
         val profileDid = lookupProfileDid(
             profileId = query.profileId,
@@ -432,7 +432,7 @@ internal class OfflineProfileRepository @Inject constructor(
                                 actor = profileDid,
                                 limit = query.data.limit,
                                 cursor = cursor.value,
-                            )
+                            ),
                         )
                     },
                     nextCursor = GetActorStarterPacksResponse::cursor,
@@ -442,9 +442,9 @@ internal class OfflineProfileRepository @Inject constructor(
                         }
                     },
                 ),
-                ::CursorList
+                ::CursorList,
             )
-                .distinctUntilChanged()
+                .distinctUntilChanged(),
         )
     }
 
@@ -476,7 +476,7 @@ internal class OfflineProfileRepository @Inject constructor(
                                 actor = profileDid,
                                 limit = query.data.limit,
                                 cursor = cursor.value,
-                            )
+                            ),
                         )
                     },
                     nextCursor = GetListsResponse::cursor,
@@ -486,15 +486,15 @@ internal class OfflineProfileRepository @Inject constructor(
                         }
                     },
                 ),
-                ::CursorList
+                ::CursorList,
             )
-                .distinctUntilChanged()
+                .distinctUntilChanged(),
         )
     }
 
     override fun feedGenerators(
         query: ProfilesQuery,
-        cursor: Cursor
+        cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> = flow {
         val profileDid = lookupProfileDid(
             profileId = query.profileId,
@@ -520,7 +520,7 @@ internal class OfflineProfileRepository @Inject constructor(
                                 actor = profileDid,
                                 limit = query.data.limit,
                                 cursor = cursor.value,
-                            )
+                            ),
                         )
                     },
                     nextCursor = GetActorFeedsResponse::cursor,
@@ -530,9 +530,9 @@ internal class OfflineProfileRepository @Inject constructor(
                         }
                     },
                 ),
-                ::CursorList
+                ::CursorList,
             )
-                .distinctUntilChanged()
+                .distinctUntilChanged(),
         )
     }
 
@@ -549,7 +549,7 @@ internal class OfflineProfileRepository @Inject constructor(
                             subject = connection.profileId.id.let(::Did),
                             createdAt = Clock.System.now(),
                         ).asJsonContent(BskyFollow.serializer()),
-                    )
+                    ),
                 )
             }
                 .getOrNull()
@@ -562,8 +562,8 @@ internal class OfflineProfileRepository @Inject constructor(
                                 otherProfileId = connection.profileId,
                                 following = it.uri.atUri.let(::GenericUri),
                                 followedBy = connection.followedBy,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 }
 
@@ -573,7 +573,7 @@ internal class OfflineProfileRepository @Inject constructor(
                         repo = connection.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.Follow),
                         rkey = Collections.rKey(connection.followUri),
-                    )
+                    ),
                 )
             }
                 .getOrNull()
@@ -585,8 +585,8 @@ internal class OfflineProfileRepository @Inject constructor(
                                 otherProfileId = connection.profileId,
                                 following = null,
                                 followedBy = connection.followedBy,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 }
         }

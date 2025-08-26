@@ -45,7 +45,7 @@ fun MovableElementSharedTransitionScope.AppLogo(
                 animatedVisibilityScope = this,
                 boundsTransform = { _, _ ->
                     spring(stiffness = Spring.StiffnessLow)
-                }
+                },
             ),
         imageVector = AppLogo,
         contentDescription = null,
@@ -63,7 +63,7 @@ val AppLogo: ImageVector
             defaultWidth = 35.dp,
             defaultHeight = 48.dp,
             viewportWidth = 35f,
-            viewportHeight = 48f
+            viewportHeight = 48f,
         ).apply {
             path(
                 fill = SolidColor(Color(0xFFFFFFFF)),
@@ -74,7 +74,7 @@ val AppLogo: ImageVector
                 strokeLineCap = StrokeCap.Butt,
                 strokeLineJoin = StrokeJoin.Miter,
                 strokeLineMiter = 1.0f,
-                pathFillType = PathFillType.EvenOdd
+                pathFillType = PathFillType.EvenOdd,
             ) {
                 moveTo(0f, 12.0766f)
                 lineToRelative(1.3261f, 1.7184f)
@@ -91,7 +91,7 @@ val AppLogo: ImageVector
                 strokeLineCap = StrokeCap.Butt,
                 strokeLineJoin = StrokeJoin.Miter,
                 strokeLineMiter = 1.0f,
-                pathFillType = PathFillType.EvenOdd
+                pathFillType = PathFillType.EvenOdd,
             ) {
                 moveTo(13.4049f, 14.2816f)
                 lineTo(13.4119f, 14.2755f)
@@ -127,7 +127,7 @@ val AppLogo: ImageVector
                 strokeLineCap = StrokeCap.Butt,
                 strokeLineJoin = StrokeJoin.Miter,
                 strokeLineMiter = 1.0f,
-                pathFillType = PathFillType.EvenOdd
+                pathFillType = PathFillType.EvenOdd,
             ) {
                 moveTo(11.1272f, 6.5483f)
                 lineTo(16.4585f, 6.5404f)
@@ -147,7 +147,7 @@ val AppLogo: ImageVector
                 strokeLineCap = StrokeCap.Butt,
                 strokeLineJoin = StrokeJoin.Miter,
                 strokeLineMiter = 1.0f,
-                pathFillType = PathFillType.EvenOdd
+                pathFillType = PathFillType.EvenOdd,
             ) {
                 moveTo(14.625f, 47.9987f)
                 lineToRelative(3.6285f, 0f)
@@ -159,4 +159,5 @@ val AppLogo: ImageVector
         return _Heron!!
     }
 
+@Suppress("ObjectPropertyName")
 private var _Heron: ImageVector? = null

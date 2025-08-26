@@ -24,12 +24,11 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 
-
 @Entity(
     tableName = "messagePosts",
     primaryKeys = [
         "messageId",
-        "postUri"
+        "postUri",
     ],
     foreignKeys = [
         ForeignKey(
@@ -54,5 +53,3 @@ data class MessagePostEntity(
     val messageId: MessageId,
     val postUri: PostUri,
 )
-
-

@@ -55,7 +55,6 @@ import com.tunjid.heron.ui.tabIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-
 @Stable
 class EmojiPickerSheetState(
     internal val sheetState: SheetState,
@@ -121,7 +120,7 @@ fun EmojiPickerBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp),
             ) {
                 // TabRow to display the categories
                 Tabs(
@@ -141,14 +140,13 @@ fun EmojiPickerBottomSheet(
                             }
                         },
                         onTabReselected = { },
-                    )
+                    ),
                 )
-
 
                 // HorizontalPager to swipe between emoji grids
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) { pageIndex ->
                     val category = categories[pageIndex]
                     val emojis = emojiCategories[category] ?: emptyList()
@@ -157,7 +155,7 @@ fun EmojiPickerBottomSheet(
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 48.dp),
                         modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
                     ) {
                         items(emojis) { emoji ->
                             IconButton(
@@ -180,13 +178,13 @@ fun EmojiPickerBottomSheet(
                                         textAlign = TextAlign.Center,
                                         fontSize = 24.sp,
                                     )
-                                }
+                                },
                             )
                         }
                     }
                 }
             }
-        }
+        },
     )
 }
 
@@ -199,7 +197,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🤭", "🤫", "🤥", "😶", "😶‍🌫️", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴",
         "🤤", "😪", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿",
         "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼",
-        "😽", "🙀", "😿", "😾"
+        "😽", "🙀", "😿", "😾",
     ),
 
     "🧑People & Body" to listOf(
@@ -494,7 +492,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🗣️",
         "👤",
         "👥",
-        "🫂"
+        "🫂",
     ),
 
     "🐻Animals & Nature" to listOf(
@@ -509,7 +507,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🌻", "🌼", "🌷", "🌱", "🪴", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀", "🍁", "🍂", "🍃",
         "🍄", "🪨", "🌰", "🌍", "🌎", "🌏", "🌕", "🌖", "🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🌚", "🌝",
         "🌞", "🪐", "⭐", "🌟", "🌠", "🌌", "☁️", "⛅", "⛈️", "🌤️", "🌥️", "🌦️", "🌧️", "🌨️", "🌩️", "🌪️",
-        "🌫️", "🌬️", "🌀", "🌈", "🌂", "☂️", "☔", "⛱️", "⚡", "❄️", "☃️", "⛄", "☄️", "🔥", "💧", "🌊"
+        "🌫️", "🌬️", "🌀", "🌈", "🌂", "☂️", "☔", "⛱️", "⚡", "❄️", "☃️", "⛄", "☄️", "🔥", "💧", "🌊",
     ),
 
     "🍔Food & Drink" to listOf(
@@ -521,7 +519,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🍥", "🥮", "🍡", "🥟", "🥠", "🥡", "🦀", "🦞", "🦐", "🦑", "🦪", "🍦", "🍧", "🍨", "🍩", "🍪",
         "🎂", "🍰", "🧁", "🥧", "🍫", "🍬", "🍭", "🍮", "🍯", "🍼", "🥛", "☕", "🫖", "🍵", "🍶", "🍾",
         "🍷", "🍸", "🍹", "🍺", "🍻", "🥂", "🥃", "🫗", "🥤", "🧋", "🧃", "🧉", "🧊", "🥢", "🍽️", "🍴",
-        "🥄", "🏺"
+        "🥄", "🏺",
     ),
 
     "⚽Activity" to listOf(
@@ -640,7 +638,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🎳",
         "🎮",
         "🎰",
-        "🧩"
+        "🧩",
     ),
 
     "🚀Travel & Places" to listOf(
@@ -650,7 +648,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🚀", "🛸", "🚁", "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🪝", "⛽", "🚧", "🚦", "🚥",
         "🛑", "🗺️", "🗿", "🗽", "🗼", "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️", "🏖️", "🏝️", "🏜️",
         "🌋", "⛰️", "🏔️", "🗻", "🏕️", "⛺", "🛖", "🏠", "🏡", "🏘️", "🏚️", "🏢", "🏬", "🏣", "🏤", "🏥",
-        "🏦", "🏨", "🏩", "🏪", "🏫", "🏭", "⛩️", "🕋", "🕌", "🕍", "🛕", "⛪", "🌉", "🌃", "🏙️", "🌆", "🌇", "🌉"
+        "🏦", "🏨", "🏩", "🏪", "🏫", "🏭", "⛩️", "🕋", "🕌", "🕍", "🛕", "⛪", "🌉", "🌃", "🏙️", "🌆", "🌇", "🌉",
     ),
 
     "💡Objects" to listOf(
@@ -668,7 +666,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "✂️", "✒️", "🖋️", "🖌️", "🖍️", "📝", "✏️", "🔎", "🔍", "🔏", "🔐", "🔒", "🔓", "🧥", "🥼", "🦺",
         "👚", "👕", "👖", "🩲", "🩳", "👔", "👗", "👘", "🥻", "🩱", "👙", "🩴", "🥿", "👠", "👡", "👢",
         "👞", "👟", "🥾", "🧦", "🧤", "🧣", "🎩", "🧢", "👒", "🎓", "⛑️", "🪖", "👑", "💍", "👜", "👝",
-        "👛", "💼", "🎒", "🧳", "👓", "🕶️", "🥽", "🌂", "☂️"
+        "👛", "💼", "🎒", "🧳", "👓", "🕶️", "🥽", "🌂", "☂️",
     ),
 
     "💕Symbols" to listOf(
@@ -931,7 +929,7 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "♣️",
         "🃏",
         "🎴",
-        "🀄"
+        "🀄",
     ),
 
     // Note: This includes all major country flags and some subdivisions/special flags.
@@ -1205,6 +1203,6 @@ private val emojiCategories: Map<String, List<String>> = mapOf(
         "🇿🇼",
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
         "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-        "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
-    )
+        "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    ),
 )

@@ -52,7 +52,7 @@ data class TimelinePreference(
 )
 
 val TimelinePreference.feedGeneratorUri: FeedGeneratorUri?
-    get() = when(type) {
+    get() = when (type) {
         "feed" -> FeedGeneratorUri(value)
         else -> null
     }

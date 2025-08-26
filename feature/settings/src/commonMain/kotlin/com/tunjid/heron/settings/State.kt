@@ -20,7 +20,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     @Transient
@@ -31,12 +30,15 @@ sealed class Action(val key: String) {
 
     data object SignOut : Action(key = "SignOut")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         /** Handles navigation to settings child screens */
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

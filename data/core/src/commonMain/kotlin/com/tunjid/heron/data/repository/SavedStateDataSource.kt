@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioSerializer
@@ -42,7 +41,6 @@ import okio.BufferedSource
 import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
-
 
 @Serializable
 data class SavedState(
@@ -113,7 +111,7 @@ private val GuestAuth = SavedState.AuthTokens(
     authProfileId = Constants.unknownAuthorId,
     auth = "",
     refresh = "",
-    didDoc = SavedState.AuthTokens.DidDoc()
+    didDoc = SavedState.AuthTokens.DidDoc(),
 )
 
 val InitialSavedState = SavedState(
@@ -184,9 +182,9 @@ internal class DataStoreSavedStateDataSource(
         storage = OkioStorage(
             fileSystem = fileSystem,
             serializer = SavedStateOkioSerializer(protoBuf),
-            producePath = { path }
+            producePath = { path },
         ),
-        scope = appScope
+        scope = appScope,
     )
 
     override val savedState = dataStore.data.stateIn(
@@ -239,7 +237,7 @@ private suspend inline fun SavedStateDataSource.updateSignedInProfileData(
             preferences = Preferences.DefaultPreferences,
         )
         copy(
-            profileData = profileData + (signedInProfileId to signedInProfileData.block())
+            profileData = profileData + (signedInProfileId to signedInProfileData.block()),
         )
     }
 }

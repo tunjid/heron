@@ -22,7 +22,6 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 
-
 fun AnnotatedString.links(): List<Link> {
     val byteOffsets = text.byteOffsets()
 

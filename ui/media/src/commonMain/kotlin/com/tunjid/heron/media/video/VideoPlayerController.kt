@@ -82,7 +82,6 @@ interface VideoPlayerController {
      * (aka. IDs of videos that have not been registered)
      */
     fun unregisterAll(retainedVideoIds: Set<String>): Set<String>
-
 }
 
 val LocalVideoPlayerController = staticCompositionLocalOf<VideoPlayerController> {

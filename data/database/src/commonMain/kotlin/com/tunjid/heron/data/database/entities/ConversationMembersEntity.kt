@@ -21,12 +21,11 @@ import androidx.room.ForeignKey
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 
-
 @Entity(
     tableName = "conversationMembers",
     primaryKeys = [
         "conversationId",
-        "memberId"
+        "memberId",
     ],
     foreignKeys = [
         ForeignKey(

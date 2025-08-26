@@ -66,7 +66,7 @@ internal fun FeedViewPost.feedItemEntity(
         is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
         is FeedViewPostReasonUnion.Unknown,
         null,
-            -> post.indexedAt
+        -> post.indexedAt
     },
 )
 
@@ -75,7 +75,7 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
     is ReplyRefRootUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
@@ -83,7 +83,7 @@ internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefRootUnion.postEntity() = when (val ref = this) {
@@ -151,7 +151,7 @@ internal fun FeedViewPostReasonUnion.profileEntity() =
                 createdStarterPackCount = value.by.associated?.starterPacks,
                 labeler = value.by.associated?.labeler,
                 allowDms = value.by.associated?.chat?.allowIncoming?.value,
-            )
+            ),
         )
 
         else -> null
