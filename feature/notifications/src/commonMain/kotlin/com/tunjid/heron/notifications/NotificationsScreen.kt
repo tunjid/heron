@@ -64,6 +64,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlinx.coroutines.flow.filterNotNull
@@ -197,7 +198,7 @@ internal fun NotificationsScreen(
                 .paneClip(),
             state = listState,
             contentPadding = bottomNavAndInsetPaddingValues(
-                top = 16.dp,
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
