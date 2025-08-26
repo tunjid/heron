@@ -193,6 +193,26 @@ interface PostDao {
     @Transaction
     @Query(
         """
+    UPDATE posts
+    SET likeCount =
+        CASE
+            WHEN :isIncrement THEN COALESCE(likeCount, 0) + 1
+            ELSE CASE 
+                     WHEN COALESCE(likeCount, 0) > 0 THEN likeCount - 1
+                     ELSE 0
+                 END
+        END
+    WHERE uri = :postUri
+    """
+    )
+    suspend fun updateLikeCount(
+        postUri: String,
+        isIncrement: Boolean,
+    )
+
+    @Transaction
+    @Query(
+        """
             SELECT * FROM profiles
             INNER JOIN postReposts
                 ON did = authorId
