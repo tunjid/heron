@@ -35,6 +35,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -98,6 +102,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -684,17 +689,20 @@ private fun SearchResults(
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
     val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
-    val listState = rememberLazyListState()
     val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
 
     when (val state = searchState.value) {
         is SearchState.OfPosts -> {
+            val gridState = rememberLazyStaggeredGridState()
             val now = remember { Clock.System.now() }
             val results by rememberUpdatedState(state.tiledItems)
-            LazyColumn(
+            LazyVerticalStaggeredGrid(
                 modifier = modifier,
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                state = gridState,
+                columns = StaggeredGridCells.Adaptive(
+                    Timeline.Presentation.Text.WithEmbed.cardSize
+                ),
+                verticalItemSpacing = 16.dp,
                 contentPadding = bottomNavAndInsetPaddingValues(),
             ) {
                 items(
@@ -721,7 +729,7 @@ private fun SearchResults(
             }
             if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
                 val videoPlayerController = LocalVideoPlayerController.current
-                listState.interpolatedVisibleIndexEffect(
+                gridState.interpolatedVisibleIndexEffect(
                     denominator = 10,
                     itemsAvailable = results.size,
                 ) { interpolatedIndex ->
@@ -735,7 +743,7 @@ private fun SearchResults(
                         ?: videoPlayerController.pauseActiveVideo()
                 }
             }
-            listState.PivotedTilingEffect(
+            gridState.PivotedTilingEffect(
                 items = results,
                 onQueryChanged = { query ->
                     searchResultStateHolder.accept(
@@ -750,6 +758,7 @@ private fun SearchResults(
         }
 
         is SearchState.OfProfiles -> {
+            val listState = rememberLazyListState()
             val results by rememberUpdatedState(state.tiledItems)
             LazyColumn(
                 modifier = modifier,
@@ -785,6 +794,7 @@ private fun SearchResults(
         }
 
         is SearchState.OfFeedGenerators -> {
+            val listState = rememberLazyListState()
             val results by rememberUpdatedState(state.tiledItems)
             LazyColumn(
                 modifier = modifier,
