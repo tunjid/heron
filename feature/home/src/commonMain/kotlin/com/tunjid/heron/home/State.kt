@@ -28,7 +28,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val currentSourceId: String? = null,
-    val timelinePreferencesExpanded: Boolean = false,
+    val tabLayout: TabLayout = TabLayout.Collapsed.All,
     @Transient
     val timelinePreferenceSaveRequestId: String? = null,
     @Transient
@@ -43,6 +43,14 @@ data class State(
     val messages: List<String> = emptyList(),
 )
 
+@Serializable
+sealed class TabLayout {
+    data object Expanded : TabLayout()
+    sealed class Collapsed : TabLayout() {
+        data object All : Collapsed()
+        data object Selected : Collapsed()
+    }
+}
 
 sealed class HomeScreenStateHolders : TimelineStateHolder {
 
@@ -74,9 +82,9 @@ sealed class Action(val key: String) {
         val sourceId: String,
     ) : Action(key = "SetCurrentTab")
 
-    data class SetPreferencesExpanded(
-        val isExpanded: Boolean,
-    ) : Action(key = "SetPreferencesExpanded")
+    data class SetTabLayout(
+        val layout: TabLayout,
+    ) : Action(key = "SetTabLayout")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
 

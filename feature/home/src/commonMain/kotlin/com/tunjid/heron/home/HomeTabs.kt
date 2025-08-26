@@ -14,16 +14,28 @@
  *    limitations under the License.
  */
 
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package com.tunjid.heron.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -77,7 +89,10 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.ContentScale
@@ -88,6 +103,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
@@ -99,6 +115,7 @@ import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.timeline_preferences
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
@@ -116,7 +133,7 @@ expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modif
 @Composable
 internal fun HomeTabs(
     modifier: Modifier = Modifier,
-    isExpanded: Boolean,
+    tabLayout: TabLayout,
     isSignedIn: Boolean,
     currentSourceId: String?,
     saveRequestId: String?,
@@ -124,13 +141,15 @@ internal fun HomeTabs(
     sharedTransitionScope: SharedTransitionScope,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
-    scrollToPage: (Int) -> Unit,
-    onRefreshTabClicked: (Int) -> Unit,
-    onExpansionChanged: (Boolean) -> Unit,
+    onCollapsedTabSelected: (Int) -> Unit,
+    onCollapsedTabReselected: (Int) -> Unit,
+    onExpandedTabSelected: (Int) -> Unit,
+    onLayoutChanged: (TabLayout) -> Unit,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
-    onSettingsIconClick : () -> Unit
+    onSettingsIconClick: () -> Unit
 ) = with(sharedTransitionScope) {
+    val isExpanded = tabLayout is TabLayout.Expanded
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -142,12 +161,13 @@ internal fun HomeTabs(
                     )
                 }
         },
+        isCollapsed = tabLayout is TabLayout.Collapsed.Selected,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = {
-            onExpansionChanged(false)
-            scrollToPage(it)
+            onLayoutChanged(TabLayout.Collapsed.All)
+            onCollapsedTabSelected(it)
         },
-        onTabReselected = onRefreshTabClicked,
+        onTabReselected = onCollapsedTabReselected,
     )
     val expandedTabsState = rememberTabsState(
         tabs = remember(timelines) {
@@ -159,25 +179,34 @@ internal fun HomeTabs(
             }
         },
         selectedTabIndex = selectedTabIndex,
-        onTabSelected = collapsedTabsState.onTabSelected,
-        onTabReselected = collapsedTabsState.onTabReselected,
+        onTabSelected = onExpandedTabSelected,
+        onTabReselected = onExpandedTabSelected,
     )
     Box(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surface),
+            .background(
+                animateColorAsState(
+                    if (isExpanded) MaterialTheme.colorScheme.surface
+                    else Color.Transparent
+                ).value
+            ),
     ) {
         AnimatedContent(
             modifier = Modifier
                 .animateContentSize(),
-            targetState = isExpanded,
-        ) { expanded ->
-            if (expanded) ExpandedTabs(
+            targetState = tabLayout is TabLayout.Expanded,
+            transitionSpec = {
+                if (targetState) TabsExpansionTransition
+                else TabsCollapseTransition
+            },
+        ) { isExpanded ->
+            if (isExpanded) ExpandedTabs(
                 saveRequestId = saveRequestId,
                 timelines = timelines,
                 tabsState = expandedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
-                onDismissed = { onExpansionChanged(false) },
+                onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
                 onTimelinePreferencesSaved = onTimelinePreferencesSaved,
             )
             else CollapsedTabs(
@@ -199,15 +228,27 @@ internal fun HomeTabs(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
+            AnimatedVisibility(
+                visible = isExpanded,
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .weight(1f),
+                    text = stringResource(Res.string.timeline_preferences),
+                    style = MaterialTheme.typography.titleMediumEmphasized
+                )
+            }
+
+            Spacer(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .weight(1f),
-                text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
-                style = MaterialTheme.typography.titleMediumEmphasized
+                    .weight(1f)
+                    .animateContentSize()
             )
 
-            if (isExpanded){
+            AnimatedVisibility(
+                visible = isExpanded,
+            ) {
                 SettingsIconButton(
                     onActionClick = {
                         onSettingsIconClick()
@@ -217,14 +258,38 @@ internal fun HomeTabs(
 
             ExpandButton(
                 isExpanded = isExpanded,
-                onToggled = { onExpansionChanged(!isExpanded) }
+                onToggled = {
+                    onLayoutChanged(
+                        if (isExpanded) TabLayout.Collapsed.All
+                        else TabLayout.Expanded
+                    )
+                }
             )
         }
     }
 }
 
 @Composable
-internal fun AccumulatedOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
+internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
+    layout: TabLayout,
+    onCollapsed: (TabLayout.Collapsed) -> Unit,
+) {
+    LaunchedEffect(layout) {
+        if (layout is TabLayout.Collapsed) snapshotFlow {
+            verticalOffsetProgress() < 0.5f
+        }
+            .distinctUntilChanged()
+            .collect { showAllTabs ->
+                onCollapsed(
+                    if (showAllTabs) TabLayout.Collapsed.All
+                    else TabLayout.Collapsed.Selected
+                )
+            }
+    }
+}
+
+@Composable
+internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
     isExpanded: Boolean,
 ) {
     val density = LocalDensity.current
@@ -347,28 +412,51 @@ private fun CollapsedTabs(
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) = with(sharedTransitionScope) {
+    val backgroundColor = MaterialTheme.colorScheme.surface
+    val backgroundProgress = animateFloatAsState(if (tabsState.isCollapsed) 0f else 1f)
     Row(
         modifier = modifier
-            .clip(CircleShape),
+            .drawBehind {
+                drawRect(
+                    color = backgroundColor,
+                    size = size.copy(width = size.width * backgroundProgress.value),
+                )
+            }
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Tabs(
+        Box(
             modifier = Modifier
                 .skipToLookaheadSize()
-                .background(MaterialTheme.colorScheme.surface)
                 .weight(1f)
                 .clip(CircleShape),
-            tabsState = tabsState,
-            tabContent = { tab ->
-                CollapsedTab(tab, sharedTransitionScope, animatedContentScope)
-            }
-        )
+        ) {
+            Tabs(
+                modifier = Modifier
+                    .drawBehind {
+                        val chipHeight = ChipHeight.toPx()
+                        drawRoundRect(
+                            color = backgroundColor,
+                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                            size = size.copy(height = chipHeight),
+                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension)
+                        )
+                    }
+                    .wrapContentWidth()
+                    .animateContentSize(),
+                tabsState = tabsState,
+                tabContent = { tab ->
+                    CollapsedTab(tab, sharedTransitionScope, animatedContentScope)
+                }
+            )
+        }
         TimelinePresentationSelector(
             currentSourceId = currentSourceId,
             timelines = timelines,
             onTimelinePresentationUpdated = onTimelinePresentationUpdated,
         )
+        // Space for the Expand Button
         Spacer(
             modifier = Modifier
                 .width(48.dp),
@@ -427,6 +515,7 @@ private fun TabsState.ExpandedTab(
                             timeline.name
                         ),
                         animatedVisibilityScope = animatedContentScope,
+                        boundsTransform = TabsBoundsTransform,
                     ),
                 text = timeline.name,
                 maxLines = 1,
@@ -466,12 +555,13 @@ private fun TabsState.CollapsedTab(
         },
         label = {
             Text(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .sharedElement(
                         sharedContentState = sharedTransitionScope.rememberSharedContentState(
                             tab.title
                         ),
                         animatedVisibilityScope = animatedContentScope,
+                        boundsTransform = TabsBoundsTransform,
                     ),
                 text = tab.title
             )
@@ -514,9 +604,9 @@ private fun ExpandButton(
 
 @Composable
 private fun SettingsIconButton(
-    onActionClick : () -> Unit,
+    onActionClick: () -> Unit,
     modifier: Modifier = Modifier
-){
+) {
     ElevatedCard(
         modifier = modifier
             .padding(horizontal = 4.dp)
@@ -529,7 +619,7 @@ private fun SettingsIconButton(
             },
             modifier = Modifier
                 .size(40.dp)
-        ){
+        ) {
             Icon(
                 imageVector = Icons.Rounded.Settings,
                 contentDescription = "",
@@ -703,4 +793,17 @@ private class TimelinePreferencesState(
     }
 }
 
+private val TabsBoundsTransform = BoundsTransform { _, _ ->
+    spring(stiffness = Spring.StiffnessLow)
+}
+
+private val TabsExpansionTransition =
+    slideInVertically(spring(stiffness = Spring.StiffnessMediumLow))
+        .togetherWith(fadeOut())
+
+private val TabsCollapseTransition =
+    fadeIn()
+        .togetherWith(slideOutVertically(spring(stiffness = Spring.StiffnessMediumLow)))
+
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
+private val ChipHeight = 32.dp

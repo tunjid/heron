@@ -18,12 +18,14 @@ package com.tunjid.heron.home
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -60,7 +62,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -94,8 +98,11 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -111,26 +118,21 @@ internal fun HomeScreen(
         state.timelineStateHolders
     )
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.size
+        updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
+    val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
 
     Box(
         modifier = modifier
     ) {
         val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
             maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = (-UiTokens.tabsHeight).toPx()) },
+            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
         )
         HorizontalPager(
             modifier = Modifier
                 .nestedScroll(tabsOffsetNestedScrollConnection)
-                .offset {
-                    tabsOffsetNestedScrollConnection.offset.round() + IntOffset(
-                        x = 0,
-                        y = UiTokens.tabsHeight.roundToPx(),
-                    )
-                }
                 .paneClip(),
             state = pagerState,
             key = { page ->
@@ -141,34 +143,60 @@ internal fun HomeScreen(
                     .sourceId
             },
             pageContent = { page ->
+                val gridState = rememberLazyStaggeredGridState()
                 val timelineStateHolder = updatedTimelineStateHolders[page]
                 HomeTimeline(
                     paneScaffoldState = paneScaffoldState,
+                    gridState = gridState,
                     timelineStateHolder = timelineStateHolder,
+                    tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
                 )
+                LaunchedEffect(Unit) {
+                    snapshotFlow {
+                        val fraction = pagerState.currentPageOffsetFraction
+                        // Find next page
+                        when {
+                            fraction > 0 -> ceil(pagerState.currentPage + fraction)
+                            else -> floor(pagerState.currentPage + fraction)
+                        }.roundToInt()
+                    }
+                        .collectLatest {
+                            // Already scrolled past the first
+                            if (gridState.firstVisibleItemIndex != 0) return@collectLatest
+                            val firstItemOffset = gridState.firstVisibleItemScrollOffset
+                            val tabOffset = tabsOffsetNestedScrollConnection.offset.y
+
+                            // tab offset is negative
+                            val gapToClose = firstItemOffset + tabOffset
+                            // Close the gap
+                            if (gapToClose < 0) gridState.scrollBy(-gapToClose)
+                        }
+                }
             }
         )
         HomeTabs(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
                 .offset {
-                    tabsOffsetNestedScrollConnection.offset.round()
+                    IntOffset(
+                        x = 0,
+                        y = topClearance.roundToPx()
+                    ) + tabsOffsetNestedScrollConnection.offset.round()
                 },
             sharedTransitionScope = paneScaffoldState,
             selectedTabIndex = pagerState::tabIndex,
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentSourceId = state.currentSourceId,
             isSignedIn = state.signedInProfile != null,
-            isExpanded = state.timelinePreferencesExpanded,
+            tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
-            scrollToPage = {
+            onCollapsedTabSelected = { page ->
                 scope.launch {
-                    pagerState.animateScrollToPage(it)
+                    pagerState.animateScrollToPage(page)
                 }
             },
-            onRefreshTabClicked = { page ->
+            onCollapsedTabReselected = { page ->
                 updatedTimelineStateHolders
                     .getOrNull(page)
                     ?.accept
@@ -178,8 +206,21 @@ internal fun HomeScreen(
                         ),
                     )
             },
-            onExpansionChanged = { isExpanded ->
-                actions(Action.SetPreferencesExpanded(isExpanded = isExpanded))
+            onExpandedTabSelected = { page ->
+                when (val holder = updatedTimelineStateHolders.getOrNull(page)) {
+                    is HomeScreenStateHolders.Pinned -> scope.launch {
+                        pagerState.animateScrollToPage(page)
+                    }
+
+                    is HomeScreenStateHolders.Saved -> holder.state.value.timeline.uri?.path?.let {
+                        actions(Action.Navigate.To(pathDestination(it)))
+                    }
+
+                    null -> Unit
+                }
+            },
+            onLayoutChanged = { layout ->
+                actions(Action.SetTabLayout(layout = layout))
             },
             onTimelinePresentationUpdated = click@{ index, presentation ->
                 val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
@@ -203,8 +244,13 @@ internal fun HomeScreen(
             }
         )
 
-        tabsOffsetNestedScrollConnection.timelinePreferenceExpansionEffect(
-            isExpanded = state.timelinePreferencesExpanded
+        tabsOffsetNestedScrollConnection.TabsExpansionEffect(
+            isExpanded = state.tabLayout is TabLayout.Expanded,
+        )
+
+        tabsOffsetNestedScrollConnection.TabsCollapseEffect(
+            state.tabLayout,
+            onCollapsed = { actions(Action.SetTabLayout(it)) }
         )
 
         LaunchedEffect(Unit) {
@@ -227,12 +273,12 @@ internal fun HomeScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTimeline(
+    gridState: LazyStaggeredGridState,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
+    tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
 ) {
-
-    val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
@@ -281,7 +327,10 @@ private fun HomeTimeline(
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .offset {
+                        IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
+                    },
                 state = pullToRefreshState,
                 isRefreshing = timelineState.isRefreshing,
             )
@@ -306,7 +355,9 @@ private fun HomeTimeline(
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
                 verticalItemSpacing = 8.dp,
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight
+                ),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
@@ -445,7 +496,12 @@ private fun HomeTimeline(
 
     gridState.TimelineRefreshEffect(
         timelineState = timelineState,
-        onRefresh = { animateScrollToItem(index = 0) }
+        onRefresh = {
+            animateScrollToItem(
+                index = 0,
+                scrollOffset = abs(tabsOffset().y.roundToInt()),
+            )
+        }
     )
 
     LaunchedEffect(gridState) {
