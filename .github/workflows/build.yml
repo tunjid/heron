@@ -18,6 +18,7 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew spotlessCheck
+
   build-android-app:
     runs-on: ubuntu-latest
     steps:
