@@ -14,18 +14,23 @@
  *    limitations under the License.
  */
 
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package com.tunjid.heron.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -191,8 +196,8 @@ internal fun HomeTabs(
                 .animateContentSize(),
             targetState = tabLayout is TabLayout.Expanded,
             transitionSpec = {
-                if (targetState) slideInVertically() togetherWith fadeOut()
-                else fadeIn() togetherWith slideOutVertically()
+                if (targetState) TabsExpansionTransition
+                else TabsCollapseTransition
             },
         ) { isExpanded ->
             if (isExpanded) ExpandedTabs(
@@ -510,6 +515,7 @@ private fun TabsState.ExpandedTab(
                             timeline.name
                         ),
                         animatedVisibilityScope = animatedContentScope,
+                        boundsTransform = TabsBoundsTransform,
                     ),
                 text = timeline.name,
                 maxLines = 1,
@@ -555,6 +561,7 @@ private fun TabsState.CollapsedTab(
                             tab.title
                         ),
                         animatedVisibilityScope = animatedContentScope,
+                        boundsTransform = TabsBoundsTransform,
                     ),
                 text = tab.title
             )
@@ -785,6 +792,18 @@ private class TimelinePreferencesState(
             )
     }
 }
+
+private val TabsBoundsTransform = BoundsTransform { _, _ ->
+    spring(stiffness = Spring.StiffnessLow)
+}
+
+private val TabsExpansionTransition =
+    slideInVertically(spring(stiffness = Spring.StiffnessMediumLow))
+        .togetherWith(fadeOut())
+
+private val TabsCollapseTransition =
+    fadeIn()
+        .togetherWith(slideOutVertically(spring(stiffness = Spring.StiffnessMediumLow)))
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 private val ChipHeight = 32.dp
