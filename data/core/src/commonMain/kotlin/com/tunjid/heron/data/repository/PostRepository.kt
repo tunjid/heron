@@ -391,11 +391,14 @@ internal class OfflinePostRepository @Inject constructor(
                     if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
                     upsertInteraction(
                         partial = when (interaction) {
-                            is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = it.uri.atUri.let(::GenericUri),
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
+                            is Post.Interaction.Create.Like -> {
+                                postDao.updateLikeCount(interaction.postUri.uri, true)
+                                PostViewerStatisticsEntity.Partial.Like(
+                                    likeUri = it.uri.atUri.let(::GenericUri),
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                )
+                            }
 
                             is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = it.uri.atUri.let(::GenericUri),
@@ -429,11 +432,14 @@ internal class OfflinePostRepository @Inject constructor(
                 ?.let {
                     upsertInteraction(
                         partial = when (interaction) {
-                            is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = null,
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
+                            is Post.Interaction.Delete.Unlike -> {
+                                postDao.updateLikeCount(interaction.postUri.uri, false)
+                                PostViewerStatisticsEntity.Partial.Like(
+                                    likeUri = null,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                )
+                            }
 
                             is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
                                 repostUri = null,
