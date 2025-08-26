@@ -109,7 +109,9 @@ internal fun PostDetailScreen(
         state = gridState,
         columns = StaggeredGridCells.Adaptive(340.dp),
         verticalItemSpacing = 4.dp,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+        ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {

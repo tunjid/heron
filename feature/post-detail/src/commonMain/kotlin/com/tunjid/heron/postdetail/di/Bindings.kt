@@ -55,6 +55,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -165,6 +167,9 @@ class PostDetailBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -172,6 +177,7 @@ class PostDetailBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -179,6 +185,7 @@ class PostDetailBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
@@ -227,15 +234,12 @@ class PostDetailBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = { paddingValues ->
+                content = {
                     PostDetailScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding()
-                            ),
+                        modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
                 }

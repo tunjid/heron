@@ -185,7 +185,9 @@ private fun FeedTimeline(
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
                 verticalItemSpacing = 8.dp,
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                ),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {

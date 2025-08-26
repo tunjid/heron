@@ -20,19 +20,16 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.conversation.Action
 import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
@@ -56,7 +53,6 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -135,17 +131,6 @@ class ConversationBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val statusBarHeight = UiTokens.statusBarHeight
-            val topAppBarOffsetNestedScrollConnection =
-                rememberAccumulatedOffsetNestedScrollConnection(
-                    maxOffset = { Offset.Zero },
-                    minOffset = {
-                        Offset(
-                            x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
-                        )
-                    },
-                )
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -160,9 +145,6 @@ class ConversationBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarOffsetNestedScrollConnection.offset.round()
-                        },
                         title = {
                             ConversationTitle(
                                 conversationId = state.id,
@@ -195,7 +177,7 @@ class ConversationBindings(
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
                         sendMessage = remember(viewModel, state.id) {
-                            { annotatedString ->
+                            { annotatedString: AnnotatedString ->
                                 viewModel.accept(
                                     Action.SendMessage(
                                         Message.Create(
