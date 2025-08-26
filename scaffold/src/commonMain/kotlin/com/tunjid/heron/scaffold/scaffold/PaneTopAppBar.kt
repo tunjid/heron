@@ -125,16 +125,22 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    transparencyFactor: () -> Float = { 0f },
     onBackPressed: () -> Unit,
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier
+            .rootAppBarBackground(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                progress = transparencyFactor,
+            ),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
             AnimatedVisibility(
                 modifier = Modifier
+                    .padding(horizontal = 8.dp)
                     .animateBounds(lookaheadScope = this),
                 visible = paneState.pane == ThreePane.Primary,
                 enter = BackArrowEnter,

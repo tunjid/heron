@@ -28,6 +28,18 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
+fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
+    rememberAccumulatedOffsetNestedScrollConnection(
+        maxOffset = { Offset.Zero },
+        minOffset = {
+            Offset(
+                x = 0f,
+                y = -UiTokens.toolbarHeight.toPx()
+            )
+        },
+    )
+
+@Composable
 fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection {
     val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
     return rememberAccumulatedOffsetNestedScrollConnection(

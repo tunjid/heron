@@ -24,12 +24,10 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.home.Action
@@ -56,8 +54,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -126,16 +124,9 @@ class HomeBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val topAppBarOffsetNestedScrollConnection =
-                rememberAccumulatedOffsetNestedScrollConnection(
-                    maxOffset = { Offset.Zero },
-                    minOffset = {
-                        Offset(
-                            x = 0f,
-                            y = -UiTokens.toolbarHeight.toPx()
-                        )
-                    },
-                )
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -143,7 +134,7 @@ class HomeBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(topAppBarOffsetNestedScrollConnection)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -152,9 +143,9 @@ class HomeBindings(
                 topBar = {
                     RootDestinationTopAppBar(
                         modifier = Modifier.offset {
-                            topAppBarOffsetNestedScrollConnection.offset.round()
+                            topAppBarNestedScrollConnection.offset.round()
                         },
-                        transparencyFactor = topAppBarOffsetNestedScrollConnection::verticalOffsetProgress,
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         signedInProfile = state.signedInProfile,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
@@ -236,7 +227,7 @@ class HomeBindings(
                 }
             )
 
-            topAppBarOffsetNestedScrollConnection.TabsExpansionEffect(
+            topAppBarNestedScrollConnection.TabsExpansionEffect(
                 isExpanded = state.tabLayout is TabLayout.Expanded,
             )
         }

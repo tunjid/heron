@@ -17,9 +17,9 @@
 package com.tunjid.heron.feed.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -42,6 +42,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
@@ -171,9 +173,13 @@ class FeedBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .predictiveBackPlacement(paneScope = this),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -199,16 +205,13 @@ class FeedBindings(
                                 }
                             )
                         },
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) }
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     FeedScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding()
-                            ),
                         state = state,
                         actions = viewModel.accept,
                     )
