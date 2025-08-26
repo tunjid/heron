@@ -1391,18 +1391,18 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                 }
             }
 
-            is Timeline.Update.OfFeedGenerator.Pin ->
-                value.items
-                    .filter { it.value != update.uri.uri }
-                    .partition(SavedFeed::pinned)
-                    .let { (pinned, saved) ->
-                        pinned + SavedFeed(
-                            id = tidGenerator.generate(),
-                            type = Type.Feed,
-                            value = update.uri.uri,
-                            pinned = true,
-                        ) + saved
-                    }
+            is Timeline.Update.OfFeedGenerator.Pin -> value.items.filter {
+                it.value != update.uri.uri
+            }
+                .partition(SavedFeed::pinned)
+                .let { (pinned, saved) ->
+                    pinned + SavedFeed(
+                        id = tidGenerator.generate(),
+                        type = Type.Feed,
+                        value = update.uri.uri,
+                        pinned = true,
+                    ) + saved
+                }
 
             is Timeline.Update.OfFeedGenerator.Remove -> value.items.filter { savedFeed ->
                 if (savedFeed.type != Type.Feed) return@filter true
