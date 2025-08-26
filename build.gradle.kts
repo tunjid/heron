@@ -14,6 +14,8 @@
  *    limitations under the License.
  */
 
+import com.diffplug.gradle.spotless.SpotlessExtension
+
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -27,9 +29,23 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.metro) apply false
+    alias(libs.plugins.spotless) apply false
 }
 
 allprojects {
+    plugins.apply(rootProject.libs.plugins.spotless.get().pluginId)
+    extensions.configure<SpotlessExtension> {
+        kotlin {
+            target(
+                "src/**/*.kt",
+                "build-logic/**/*.kt",
+                "**/*.kts",
+            )
+            targetExclude("**/build/**")
+            ktlint(rootProject.libs.ktlint.get().version)
+        }
+    }
+
     configurations.configureEach {
         resolutionStrategy.eachDependency {
             if (requested.module == libs.compose.runtime.get().module) {
