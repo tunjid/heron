@@ -26,6 +26,11 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -185,6 +190,10 @@ internal fun HomeTabs(
             modifier = Modifier
                 .animateContentSize(),
             targetState = tabLayout is TabLayout.Expanded,
+            transitionSpec = {
+                if (targetState) slideInVertically() togetherWith fadeOut()
+                else fadeIn() togetherWith slideOutVertically()
+            },
         ) { isExpanded ->
             if (isExpanded) ExpandedTabs(
                 saveRequestId = saveRequestId,
@@ -214,12 +223,22 @@ internal fun HomeTabs(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
+            AnimatedVisibility(
+                visible = isExpanded,
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .weight(1f),
+                    text = stringResource(Res.string.timeline_preferences),
+                    style = MaterialTheme.typography.titleMediumEmphasized
+                )
+            }
+
+            Spacer(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .weight(1f),
-                text = if (isExpanded) stringResource(Res.string.timeline_preferences) else "",
-                style = MaterialTheme.typography.titleMediumEmphasized
+                    .weight(1f)
+                    .animateContentSize()
             )
 
             AnimatedVisibility(
