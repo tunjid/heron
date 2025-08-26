@@ -70,7 +70,7 @@ data class PopulatedNotificationEntity(
     val entity: NotificationEntity,
     @Relation(
         parentColumn = "authorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val author: ProfileEntity,
 )
@@ -89,7 +89,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             author = author.asExternalModel(),
             reasonSubject = entity.uri,
             isRead = entity.isRead,
-            associatedPost = associatedPost
+            associatedPost = associatedPost,
         )
 
     Notification.Reason.Repost ->
@@ -101,7 +101,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             author = author.asExternalModel(),
             reasonSubject = entity.uri,
             isRead = entity.isRead,
-            associatedPost = associatedPost
+            associatedPost = associatedPost,
         )
 
     Notification.Reason.Follow -> Notification.Followed(
@@ -122,7 +122,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             author = author.asExternalModel(),
             reasonSubject = entity.uri,
             isRead = entity.isRead,
-            associatedPost = associatedPost
+            associatedPost = associatedPost,
         )
 
     Notification.Reason.Reply ->
@@ -134,7 +134,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             author = author.asExternalModel(),
             reasonSubject = entity.uri,
             isRead = entity.isRead,
-            associatedPost = associatedPost
+            associatedPost = associatedPost,
         )
 
     Notification.Reason.Quote ->
@@ -146,7 +146,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             author = author.asExternalModel(),
             reasonSubject = entity.uri,
             isRead = entity.isRead,
-            associatedPost = associatedPost
+            associatedPost = associatedPost,
         )
 
     Notification.Reason.JoinedStarterPack -> Notification.JoinedStarterPack(

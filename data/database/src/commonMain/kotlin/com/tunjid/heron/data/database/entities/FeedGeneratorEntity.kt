@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "feedGenerators",
     foreignKeys = [
@@ -69,7 +68,7 @@ data class PopulatedFeedGeneratorEntity(
     val entity: FeedGeneratorEntity,
     @Relation(
         parentColumn = "creatorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val creator: ProfileEntity?,
     @Relation(

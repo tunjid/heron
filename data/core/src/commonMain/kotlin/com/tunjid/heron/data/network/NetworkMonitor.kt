@@ -45,7 +45,7 @@ internal class ConnectivityNetworkMonitor @Inject constructor(
             emitAll(
                 connectivity.statusUpdates.map {
                     it.isConnected
-                }
+                },
             )
         } finally {
             connectivity.stop()

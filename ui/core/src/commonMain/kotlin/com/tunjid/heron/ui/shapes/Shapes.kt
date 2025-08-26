@@ -150,7 +150,7 @@ sealed class RoundedPolygonShape : Shape {
                     size = size,
                     density = density,
                 ),
-            )
+            ),
         )
 
         private fun CornerSize.normalize(
@@ -195,13 +195,13 @@ sealed class RoundedPolygonShape : Shape {
     ) : RoundedPolygonShape() {
         override fun createPolygon(
             size: Size,
-            density: Density
+            density: Density,
         ): RoundedPolygon = polygon
     }
 }
 
 fun RoundedCornerShape.toRoundedPolygonShape() = RoundedPolygonShape.RoundedRectangle(
-    roundedCornerShape = this
+    roundedCornerShape = this,
 )
 
 @Composable
@@ -233,7 +233,7 @@ fun RoundedPolygonShape.animate(
         MorphingShape(
             previousShape = previousShape,
             currentShape = currentShape,
-            interpolation = interpolation
+            interpolation = interpolation,
         )
     }
 
@@ -285,9 +285,9 @@ private class MorphingShape(
         val endPolygon = currentShape.ensurePolygon(size, density)
 
         if (
-            morph == null
-            || startPolygon != previousPolygon
-            || endPolygon != currentPolygon
+            morph == null ||
+            startPolygon != previousPolygon ||
+            endPolygon != currentPolygon
         ) {
             previousPolygon = startPolygon
             currentPolygon = endPolygon

@@ -55,7 +55,7 @@ internal fun MultipleEntitySaver.add(
             PostPostEntity(
                 postUri = postEntity.uri,
                 embeddedPostUri = embeddedPostEntity.uri,
-            )
+            ),
         )
         postView.quotedPostEmbedEntities().forEach { embedEntity ->
             associatePostEmbeds(

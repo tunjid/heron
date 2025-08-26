@@ -54,5 +54,4 @@ fun unknownRoute(path: String = "/404") = routeOf(path = path)
 fun String.decodeRoutePathAndQueriesFromQueryParam(): String =
     ModelUrlSafeBase64.decode(this).decodeToString()
 
-
 val NavigationContext.currentRoute get() = navState.current as Route

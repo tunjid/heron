@@ -169,7 +169,6 @@ class AppState(
         return displayState
     }
 
-
     internal fun onNavItemSelected(navItem: NavItem) {
         navigationStateHolder.accept { navState.navItemSelected(item = navItem) }
     }
@@ -198,7 +197,6 @@ class AppState(
                         AppStack.Auth -> stack.stackName == name
                         AppStack.Splash -> stack.stackName == name
                     }
-
                 } ?: return@mapIndexedNotNull null
 
                 NavItem(
@@ -244,7 +242,7 @@ internal class SplitPaneState(
         minSize = MinPaneWidth,
         keyAtIndex = { index ->
             filteredPaneOrder[index]
-        }
+        },
     )
 
     internal val isMediumScreenWidthOrWider

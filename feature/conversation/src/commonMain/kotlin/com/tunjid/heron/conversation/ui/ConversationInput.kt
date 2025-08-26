@@ -106,7 +106,7 @@ fun PaneScaffoldState.UserInput(
                     annotatedString = formatTextPost(
                         text = it.text,
                         textLinks = it.annotatedString.links(),
-                        onLinkTargetClicked = {}
+                        onLinkTargetClicked = {},
                     ),
                 )
             },
@@ -147,7 +147,7 @@ private fun UserInputText(
     val a11ylabel = stringResource(Res.string.textfield_desc)
 
     Box(
-        modifier = modifier
+        modifier = modifier,
     ) {
         UserInputTextField(
             textFieldValue = textFieldValue,
@@ -226,7 +226,7 @@ fun PaneScaffoldState.SendButton(
         visible = true,
         onClick = onClick@{
             onMessageSent(textFieldValue.annotatedString)
-        }
+        },
     )
 }
 

@@ -18,24 +18,24 @@
 
 package com.tunjid.heron.data.network
 
-//import android.content.Context
-//import android.net.ConnectivityManager
-//import android.net.ConnectivityManager.NetworkCallback
-//import android.net.Network
-//import android.net.NetworkCapabilities
-//import android.net.NetworkRequest.Builder
-//import androidx.core.content.getSystemService
-//import kotlinx.coroutines.CoroutineScope
-//import kotlinx.coroutines.channels.awaitClose
-//import kotlinx.coroutines.flow.Flow
-//import kotlinx.coroutines.flow.SharingStarted
-//import kotlinx.coroutines.flow.callbackFlow
-//import kotlinx.coroutines.flow.stateIn
+// import android.content.Context
+// import android.net.ConnectivityManager
+// import android.net.ConnectivityManager.NetworkCallback
+// import android.net.Network
+// import android.net.NetworkCapabilities
+// import android.net.NetworkRequest.Builder
+// import androidx.core.content.getSystemService
+// import kotlinx.coroutines.CoroutineScope
+// import kotlinx.coroutines.channels.awaitClose
+// import kotlinx.coroutines.flow.Flow
+// import kotlinx.coroutines.flow.SharingStarted
+// import kotlinx.coroutines.flow.callbackFlow
+// import kotlinx.coroutines.flow.stateIn
 //
-//actual class NetworkMonitor(
+// actual class NetworkMonitor(
 //    scope: CoroutineScope,
 //    private val context: Context,
-//) {
+// ) {
 //    actual val isConnected: Flow<Boolean> = callbackFlow {
 //        val callback = object : NetworkCallback() {
 //            override fun onAvailable(network: Network) {
@@ -64,4 +64,4 @@ package com.tunjid.heron.data.network
 //            started = SharingStarted.WhileSubscribed(2000),
 //            initialValue = false
 //        )
-//}
+// }

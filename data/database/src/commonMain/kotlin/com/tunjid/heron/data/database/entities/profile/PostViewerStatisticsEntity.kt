@@ -67,7 +67,6 @@ data class PostViewerStatisticsEntity(
         abstract val postUri: PostUri
         abstract val viewingProfileId: ProfileId
 
-
         data class Like(
             override val postUri: PostUri,
             override val viewingProfileId: ProfileId,

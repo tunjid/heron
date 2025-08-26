@@ -23,4 +23,3 @@ import kotlinx.coroutines.CoroutineScope
 const val FeatureWhileSubscribed = 2_000L
 
 interface AssistedViewModelFactory : (CoroutineScope, Route) -> ViewModel
-

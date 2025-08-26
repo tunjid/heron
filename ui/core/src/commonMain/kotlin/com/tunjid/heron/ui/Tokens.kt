@@ -56,7 +56,7 @@ object UiTokens {
         horizontal: Dp = 0.dp,
     ): PaddingValues {
         val padding = navigationBarHeight + bottomNavHeight
-        return remember(top, horizontal,padding) {
+        return remember(top, horizontal, padding) {
             PaddingValues(
                 top = top,
                 start = horizontal,

@@ -29,12 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.IntSize
+import coil3.compose.AsyncImage as CoilAsyncImage
 import coil3.compose.AsyncImagePainter
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
 import io.github.vinceglb.filekit.PlatformFile
-import coil3.compose.AsyncImage as CoilAsyncImage
 import io.github.vinceglb.filekit.coil.AsyncImage as FileAsyncImage
 
 sealed class ImageRequest {
@@ -81,7 +81,6 @@ fun rememberUpdatedImageState(
     remember { ImageState(args) }
         .also { it.args = args }
 
-
 fun ImageArgs(
     url: String?,
     thumbnailUrl: String? = null,
@@ -92,7 +91,7 @@ fun ImageArgs(
 ) = ImageArgs(
     request = ImageRequest.Network(
         url = url,
-        thumbnailUrl = thumbnailUrl
+        thumbnailUrl = thumbnailUrl,
     ),
     contentDescription = contentDescription,
     contentScale = contentScale,
@@ -143,7 +142,7 @@ fun AsyncImage(
     val args = state.args
     Box(
         modifier = modifier
-            .clip(args.shape.animate())
+            .clip(args.shape.animate()),
     ) {
         val contentScale = args.contentScale.animate()
 
@@ -167,7 +166,7 @@ fun AsyncImage(
                     model = request.url,
                     contentDescription = args.contentDescription,
                     contentScale = contentScale,
-                    onSuccess = { thumbnailVisible = false }
+                    onSuccess = { thumbnailVisible = false },
                 )
                 if (thumbnailVisible) CoilAsyncImage(
                     modifier = Modifier.fillMaxConstraints(),
@@ -192,12 +191,12 @@ private fun Modifier.fillMaxConstraints() =
                 minHeight = when {
                     constraints.hasBoundedHeight -> constraints.maxHeight
                     else -> constraints.minHeight
-                }
-            )
+                },
+            ),
         )
         layout(
             width = placeable.width,
-            height = placeable.height
+            height = placeable.height,
         ) {
             placeable.place(0, 0)
         }

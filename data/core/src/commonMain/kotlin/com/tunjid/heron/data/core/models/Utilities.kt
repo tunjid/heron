@@ -26,5 +26,5 @@ fun PostUri(
     profileId: ProfileId,
     postRecordKey: RecordKey,
 ) = com.tunjid.heron.data.core.types.PostUri(
-    uri = "${Uri.Host.AtProto.prefix}${profileId.id}/${Collections.Post}/${postRecordKey.value}"
+    uri = "${Uri.Host.AtProto.prefix}${profileId.id}/${Collections.Post}/${postRecordKey.value}",
 )

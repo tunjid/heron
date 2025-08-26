@@ -20,7 +20,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 data class State(
     val avatarSharedElementKey: String? = null,
@@ -29,7 +28,9 @@ data class State(
 
 sealed class Action(val key: String) {
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 }

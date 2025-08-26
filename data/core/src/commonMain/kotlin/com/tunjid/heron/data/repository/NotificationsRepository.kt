@@ -37,6 +37,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,7 +51,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.response.AtpResponse
-import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable
 data class NotificationsQuery(
@@ -87,7 +87,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     while (true) {
                         val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
                             getUnreadCount(
-                                params = GetUnreadCountQueryParams()
+                                params = GetUnreadCountQueryParams(),
                             )
                         }
                             .getOrNull()?.count ?: 0
@@ -119,15 +119,15 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         .listNotifications(
                             ListNotificationsQueryParams(
                                 limit = query.data.limit,
-                                cursor = cursor.value
-                            )
+                                cursor = cursor.value,
+                            ),
                         )
                     when (notificationsAtpResponse) {
                         is AtpResponse.Failure -> AtpResponse.Failure(
                             statusCode = notificationsAtpResponse.statusCode,
                             response = null,
                             error = notificationsAtpResponse.error,
-                            headers = notificationsAtpResponse.headers
+                            headers = notificationsAtpResponse.headers,
                         )
 
                         is AtpResponse.Success -> {
@@ -136,17 +136,16 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     GetPostsQueryParams(
                                         uris = notificationsAtpResponse.response.notifications
                                             .mapNotNull(
-                                                ListNotificationsNotification::associatedPostUri
+                                                ListNotificationsNotification::associatedPostUri,
                                             )
-                                            .distinct()
-                                    )
+                                            .distinct(),
+                                    ),
                                 )
                                 .map {
                                     notificationsAtpResponse.requireResponse() to it.posts
                                 }
                         }
                     }
-
                 },
                 nextCursor = {
                     first.cursor
@@ -169,7 +168,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         }
                     }
                 },
-            )
+            ),
         )
             .distinctUntilChanged()
 
@@ -183,7 +182,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
         val isSuccess = networkService.runCatchingWithMonitoredNetworkRetry {
             updateSeen(
                 // Add 1 millisecond to the request to be past the time on the backend
-                request = UpdateSeenRequest(at + 1.milliseconds)
+                request = UpdateSeenRequest(at + 1.milliseconds),
             )
         }.isSuccess
         if (isSuccess) savedStateDataSource.updateSignedInUserNotifications {
@@ -192,7 +191,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 lastRead = maxOf(
                     a = lastRead ?: Instant.DISTANT_PAST,
                     b = at,
-                )
+                ),
             )
         }
     }
@@ -229,7 +228,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                 it.asExternalModel(
                                     associatedPost = it.entity.associatedPostUri
                                         ?.let(urisToPosts::get)
-                                        ?.asExternalModel(quote = null)
+                                        ?.asExternalModel(quote = null),
                                 )
                             }
                         }

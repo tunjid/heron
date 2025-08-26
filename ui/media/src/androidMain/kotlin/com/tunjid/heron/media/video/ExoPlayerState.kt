@@ -37,7 +37,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
-
 @Stable
 internal class ExoPlayerState internal constructor(
     videoId: String,
@@ -94,7 +93,7 @@ internal class ExoPlayerState internal constructor(
 
     override var videoStill by mutableStateOf<ImageBitmap?>(
         value = null,
-        policy = referentialEqualityPolicy()
+        policy = referentialEqualityPolicy(),
     )
 
     internal val player by exoPlayerState
@@ -184,11 +183,10 @@ internal class ExoPlayerState internal constructor(
     /** Whether the video should reset to the beginning. */
     override val shouldReplay: Boolean
         get() = (totalDuration - lastPositionMs) <= END_OF_VIDEO_RESOLUTION_THRESHOLD_MS &&
-                totalDuration != 0L &&
-                !isLooping
+            totalDuration != 0L &&
+            !isLooping
 
     private fun onVideoEnded() = Unit
-
 }
 
 private fun VideoSize.toIntSize() = IntSize(width, height)

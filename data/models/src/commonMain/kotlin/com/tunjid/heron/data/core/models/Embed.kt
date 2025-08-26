@@ -20,7 +20,9 @@ import kotlinx.serialization.Serializable
 
 sealed interface Embed {
     @Serializable
-    sealed interface Media : Embed, UrlEncodableModel
+    sealed interface Media :
+        Embed,
+        UrlEncodableModel
 }
 
 @Serializable
@@ -28,7 +30,6 @@ sealed class MediaFile : UrlEncodableModel {
     abstract val data: ByteArray
     abstract val width: Long
     abstract val height: Long
-
 
     @Serializable
     class Photo(

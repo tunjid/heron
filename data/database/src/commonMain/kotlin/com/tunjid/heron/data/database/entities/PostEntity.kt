@@ -97,7 +97,7 @@ data class PopulatedPostEntity(
     val entity: PostEntity,
     @Relation(
         parentColumn = "authorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val author: ProfileEntity?,
     @Embedded
@@ -171,7 +171,7 @@ fun PopulatedPostEntity.asExternalModel(
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()
         images.isNotEmpty() -> ImageList(
-            images = images.map(ImageEntity::asExternalModel)
+            images = images.map(ImageEntity::asExternalModel),
         )
 
         else -> null
@@ -179,7 +179,7 @@ fun PopulatedPostEntity.asExternalModel(
     quote = quote,
     record = entity.record?.asExternalModel(),
     viewerStats = viewerStats?.asExternalModel(),
-    labels = labelEntities.map(LabelEntity::asExternalModel)
+    labels = labelEntities.map(LabelEntity::asExternalModel),
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =

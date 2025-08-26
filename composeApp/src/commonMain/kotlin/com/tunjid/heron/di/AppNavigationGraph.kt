@@ -38,7 +38,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 
 @DependencyGraph(
-    scope = AppScope::class
+    scope = AppScope::class,
 )
 interface AppNavigationGraph {
 
@@ -60,7 +60,7 @@ interface AppNavigationGraph {
             @Includes profilesNavigationBindings: ProfilesNavigationBindings,
             @Includes searchNavigationBindings: SearchNavigationBindings,
             @Includes splashNavigationBindings: SplashNavigationBindings,
-            @Includes settingsNavigationBindings: SettingsNavigationBindings
+            @Includes settingsNavigationBindings: SettingsNavigationBindings,
         ): AppNavigationGraph
     }
 
@@ -80,5 +80,5 @@ private fun routeMatchingComparator() =
         // Match more specific segments first, route params should be matched later
         { (key) -> -key.split("/").filter { it.startsWith("{") }.size },
         // Finally sort alphabetically
-        { (key) -> key }
+        { (key) -> key },
     ).reversed()

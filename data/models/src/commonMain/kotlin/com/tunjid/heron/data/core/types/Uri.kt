@@ -17,8 +17,8 @@
 package com.tunjid.heron.data.core.types
 
 import io.ktor.http.Url
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
+import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface Uri {
@@ -55,7 +55,6 @@ value class FeedGeneratorUri(
 ) : Uri {
     override fun toString(): String = uri
 }
-
 
 @Serializable
 @JvmInline

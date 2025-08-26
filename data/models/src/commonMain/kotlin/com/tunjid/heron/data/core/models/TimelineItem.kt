@@ -79,7 +79,7 @@ sealed interface Timeline {
 
             companion object {
                 fun stub(
-                    list: FeedList
+                    list: FeedList,
                 ) = List(
                     position = 0,
                     lastRefreshed = null,
@@ -106,7 +106,7 @@ sealed interface Timeline {
 
             companion object {
                 fun stub(
-                    feedGenerator: FeedGenerator
+                    feedGenerator: FeedGenerator,
                 ) = Feed(
                     position = 0,
                     lastRefreshed = null,
@@ -117,7 +117,6 @@ sealed interface Timeline {
                 )
             }
         }
-
     }
 
     @Serializable
@@ -147,7 +146,8 @@ sealed interface Timeline {
             Replies(suffix = "posts-and-replies"),
             Likes(suffix = "likes"),
             Media(suffix = "media"),
-            Videos(suffix = "videos");
+            Videos(suffix = "videos"),
+            ;
 
             fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
         }
@@ -180,15 +180,15 @@ sealed interface Timeline {
             abstract val uri: FeedGeneratorUri
 
             data class Pin(
-                override val uri: FeedGeneratorUri
+                override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
 
             data class Save(
-                override val uri: FeedGeneratorUri
+                override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
 
             data class Remove(
-                override val uri: FeedGeneratorUri
+                override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
         }
     }
@@ -216,7 +216,7 @@ sealed interface Timeline {
 }
 
 val Timeline.uri: Uri?
-    get() = when(this) {
+    get() = when (this) {
         is Timeline.Home -> source
         is Timeline.Profile -> null
         is Timeline.StarterPack -> listTimeline.source
@@ -234,7 +234,7 @@ sealed class TimelineItem {
             is Pinned,
             is Thread,
             is Single,
-                -> post.indexedAt
+            -> post.indexedAt
 
             is Repost -> at
         }
@@ -273,11 +273,11 @@ sealed class TimelineItem {
 }
 
 private val TextOnlyPresentations = listOf(
-    Text.WithEmbed
+    Text.WithEmbed,
 )
 
 private val AllPresentations = listOf(
     Text.WithEmbed,
     Media.Expanded,
-    Media.Condensed
+    Media.Condensed,
 )

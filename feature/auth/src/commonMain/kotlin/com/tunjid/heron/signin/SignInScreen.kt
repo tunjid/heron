@@ -52,7 +52,7 @@ internal fun SignInScreen(
             .fillMaxSize()
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val focusManager = LocalFocusManager.current
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -82,7 +82,7 @@ internal fun SignInScreen(
                                 when {
                                     state.canSignInLater -> Action.Submit.GuestAuth
                                     else -> Action.Submit.Auth(state.sessionRequest)
-                                }
+                                },
                             )
                             keyboardController?.hide()
                         }
@@ -95,8 +95,8 @@ internal fun SignInScreen(
                                 Username -> Res.string.username
                                 Password -> Res.string.password
                                 else -> throw IllegalArgumentException()
-                            }
-                        )
+                            },
+                        ),
                     )
                 },
                 leadingIcon = {
@@ -111,4 +111,3 @@ internal fun SignInScreen(
         }
     }
 }
-

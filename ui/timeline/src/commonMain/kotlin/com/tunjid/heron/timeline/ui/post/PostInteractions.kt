@@ -91,7 +91,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-
 @Composable
 fun PostInteractions(
     replyCount: String?,
@@ -131,7 +130,7 @@ fun PostInteractions(
             orientation = Orientation.Horizontal,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
-            onPostInteraction = onPostInteraction
+            onPostInteraction = onPostInteraction,
         )
         Spacer(Modifier.width(0.dp))
     }
@@ -146,7 +145,6 @@ fun MediaPostInteractions(
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -165,7 +163,7 @@ fun MediaPostInteractions(
             orientation = Orientation.Vertical,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
-            onPostInteraction = onPostInteraction
+            onPostInteraction = onPostInteraction,
         )
     }
 }
@@ -241,7 +239,7 @@ private inline fun PostInteractionsButtons(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
-                            }
+                            },
                         )
 
                         PostInteractionButton.Repost -> onPostInteraction(
@@ -255,7 +253,7 @@ private inline fun PostInteractionsButtons(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
-                            }
+                            },
                         )
                     }
                 },
@@ -286,7 +284,7 @@ private fun PostInteraction(
             bottom = 2.dp,
         )
 
-    when(orientation) {
+    when (orientation) {
         Orientation.Vertical -> Column(
             modifier = itemModifier,
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -396,7 +394,7 @@ class PostInteractionsSheetState private constructor(
                 state = state,
                 onSignInClicked = onSignInClicked,
                 onInteractionConfirmed = onInteractionConfirmed,
-                onQuotePostClicked = onQuotePostClicked
+                onQuotePostClicked = onQuotePostClicked,
             )
 
             return state
@@ -411,7 +409,6 @@ private fun PostInteractionsBottomSheet(
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
-
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
             null -> Unit
@@ -419,7 +416,7 @@ private fun PostInteractionsBottomSheet(
             is Post.Interaction.Create.Like,
             is Post.Interaction.Delete.RemoveRepost,
             is Post.Interaction.Delete.Unlike,
-                -> {
+            -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)
                     state.currentInteraction = null
@@ -439,12 +436,12 @@ private fun PostInteractionsBottomSheet(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (state.isSignedIn) repeat(2) { index ->
                     val contentDescription = stringResource(
                         if (index == 0) Res.string.repost
-                        else Res.string.quote
+                        else Res.string.quote,
                     ).capitalize(locale = Locale.current)
                     Row(
                         modifier = Modifier
@@ -452,8 +449,9 @@ private fun PostInteractionsBottomSheet(
                             .clip(CircleShape)
                             .clickable {
                                 when (index) {
-                                    0 -> state.currentInteraction
-                                        ?.let(onInteractionConfirmed)
+                                    0 ->
+                                        state.currentInteraction
+                                            ?.let(onInteractionConfirmed)
 
                                     else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
                                         ?.let(onQuotePostClicked)
@@ -475,14 +473,14 @@ private fun PostInteractionsBottomSheet(
                                     .size(24.dp),
                                 imageVector = if (index == 0) Icons.Rounded.Repeat
                                 else Icons.Rounded.FormatQuote,
-                                contentDescription = null
+                                contentDescription = null,
                             )
                             Text(
                                 modifier = Modifier,
                                 text = contentDescription,
-                                style = MaterialTheme.typography.bodyLarge
+                                style = MaterialTheme.typography.bodyLarge,
                             )
-                        }
+                        },
                     )
                 }
 
@@ -498,18 +496,18 @@ private fun PostInteractionsBottomSheet(
                         Text(
                             text = stringResource(
                                 if (state.isSignedIn) Res.string.cancel
-                                else Res.string.sign_in
+                                else Res.string.sign_in,
                             )
                                 .capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
                         )
-                    }
+                    },
                 )
                 Spacer(
-                    Modifier.height(16.dp)
+                    Modifier.height(16.dp),
                 )
             }
-        }
+        },
     )
 }
 

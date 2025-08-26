@@ -24,7 +24,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity.Partial.FetchedAt
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "timelinePreferences",
     indices = [
@@ -83,6 +82,5 @@ fun TimelinePreferencesEntity.fetchedAtPartial() = FetchedAt(
 
 private fun timelinePreferenceId(
     viewingProfileId: ProfileId?,
-    sourceId: String
+    sourceId: String,
 ): String = "${viewingProfileId?.id}-$sourceId"
-

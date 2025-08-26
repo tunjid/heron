@@ -14,12 +14,12 @@
  *    limitations under the License.
  */
 
+import java.util.Locale
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import java.util.Locale
 
 fun Project.configureKsp() {
     extensions.configure<KotlinMultiplatformExtension> {
@@ -30,7 +30,6 @@ fun Project.configureKsp() {
 }
 
 private fun KotlinTarget.configureKsp(project: Project) {
-
     println("Target name: $targetName. Metadata? ${targetName == "metadata"}")
     if (targetName != "metadata") {
         project.dependencies {
@@ -38,12 +37,12 @@ private fun KotlinTarget.configureKsp(project: Project) {
                 configurationName = "ksp${
                     targetName.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(
-                            Locale.getDefault()
+                            Locale.getDefault(),
                         ) else it.toString()
                     }
                 }",
                 dependencyNotation = project.versionCatalog.findLibrary("kotlin-inject-compiler")
-                    .get()
+                    .get(),
             )
         }
     }

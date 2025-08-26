@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.signin
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -62,31 +61,32 @@ class ActualSignInViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), SignInStateHolder by scope.actionStateFlowMutator(
-    initialState = State(),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
-    ),
-    actionTransform = { actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.FieldChanged -> action.flow.formEditMutations()
-                is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
-                is Action.Submit -> action.flow.submissionMutations(
-                    authRepository = authRepository,
-                    navActions = navActions
-                )
+) : ViewModel(viewModelScope = scope),
+    SignInStateHolder by scope.actionStateFlowMutator(
+        initialState = State(),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
+        ),
+        actionTransform = { actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.FieldChanged -> action.flow.formEditMutations()
+                    is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
+                    is Action.Submit -> action.flow.submissionMutations(
+                        authRepository = authRepository,
+                        navActions = navActions,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
     mapToMutation { (updatedField) ->

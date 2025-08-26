@@ -39,7 +39,6 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileSearchResult(
@@ -71,18 +70,18 @@ fun ProfileSearchResult(
                 },
                 sharedElement = { state, modifier ->
                     AsyncImage(state, modifier)
-                }
+                },
             )
         },
         label = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 ProfileName(
-                    profile = result.profileWithViewerState.profile
+                    profile = result.profileWithViewerState.profile,
                 )
                 ProfileHandle(
-                    profile = result.profileWithViewerState.profile
+                    profile = result.profileWithViewerState.profile,
                 )
             }
         },
@@ -90,11 +89,11 @@ fun ProfileSearchResult(
             ProfileViewerState(
                 viewerState = result.profileWithViewerState.viewerState,
                 isSignedInProfile = false,
-                onClick = { onViewerStateClicked(result) }
+                onClick = { onViewerStateClicked(result) },
             )
-        }
+        },
     )
 }
 
 internal fun SearchResult.OfProfile.avatarSharedElementKey(): String =
-    "${sharedElementPrefix}-${profileWithViewerState.profile.did.id}"
+    "$sharedElementPrefix-${profileWithViewerState.profile.did.id}"

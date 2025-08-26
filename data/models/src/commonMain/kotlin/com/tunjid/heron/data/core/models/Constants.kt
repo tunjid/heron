@@ -37,4 +37,3 @@ object Constants {
     val unknownAuthorId = ProfileId(id = "did:web:heron.app.unknown.user")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }
-

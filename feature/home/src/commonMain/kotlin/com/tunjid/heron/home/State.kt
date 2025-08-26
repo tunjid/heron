@@ -24,7 +24,6 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val currentSourceId: String? = null,
@@ -57,7 +56,7 @@ sealed class HomeScreenStateHolders : TimelineStateHolder {
     abstract val mutator: TimelineStateHolder
 
     data class Pinned(
-        override val mutator: TimelineStateHolder
+        override val mutator: TimelineStateHolder,
     ) : HomeScreenStateHolders(),
         TimelineStateHolder by mutator
 
@@ -92,14 +91,17 @@ sealed class Action(val key: String) {
         data object RequestUpdate : UpdateTimeline()
 
         data class Update(
-            val timelines: List<Timeline.Home>
+            val timelines: List<Timeline.Home>,
         ) : UpdateTimeline()
     }
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

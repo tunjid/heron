@@ -86,11 +86,11 @@ internal fun PostEmbed(
     SensitiveContentBox(
         modifier = modifier,
         postUri = postUri,
-        blurredMediaDefinitions = blurredMediaDefinitions
+        blurredMediaDefinitions = blurredMediaDefinitions,
     ) { isBlurred ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             when (embed) {
                 is ExternalEmbed -> PostExternal(
@@ -114,7 +114,7 @@ internal fun PostEmbed(
                     isBlurred = isBlurred,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, null)
-                    }
+                    },
                 )
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
@@ -127,7 +127,7 @@ internal fun PostEmbed(
                     presentation = presentation,
                     onClicked = {
                         onPostMediaClicked(embed, 0, null)
-                    }
+                    },
                 )
 
                 null -> Unit
@@ -152,7 +152,7 @@ internal fun PostEmbed(
                         onPostMediaClicked = onPostMediaClicked,
                         onClick = {
                             onQuotedPostClicked(quote)
-                        }
+                        },
                     )
                 }
             }
@@ -199,7 +199,7 @@ private fun SensitiveContentBox(
                     },
                 )
             }
-        }
+        },
     )
 }
 
@@ -231,10 +231,11 @@ private fun SensitiveContentButton(
                     )
 
                     Label.Severity.None,
-                    null -> Unit
+                    null,
+                    -> Unit
                 }
                 Text(
-                    text = stringResource(Res.string.sensitive_content)
+                    text = stringResource(Res.string.sensitive_content),
                 )
             }
         },

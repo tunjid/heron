@@ -74,7 +74,7 @@ fun ProfileWithViewerState(
                 },
                 sharedElement = { state, modifier ->
                     AsyncImage(state, modifier)
-                }
+                },
             )
         },
         label = {
@@ -101,7 +101,7 @@ fun ProfileWithViewerState(
                         isSignedInProfile = isSignedInProfile,
                         onClick = {
                             onViewerStateClicked(viewerState)
-                        }
+                        },
                     )
                 },
             )

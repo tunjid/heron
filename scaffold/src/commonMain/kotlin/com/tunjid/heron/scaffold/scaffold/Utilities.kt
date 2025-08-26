@@ -24,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-
 @Composable
 internal inline fun <T> rememberUpdatedStateIf(
     value: T,
@@ -34,7 +33,7 @@ internal inline fun <T> rememberUpdatedStateIf(
 }.also { if (predicate(value)) it.value = value }
 
 fun viewModelCoroutineScope() = CoroutineScope(
-    SupervisorJob() + Dispatchers.Main.immediate
+    SupervisorJob() + Dispatchers.Main.immediate,
 )
 
 internal val BottomNavSharedElementZIndex = 2f

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
-
 object StubVideoPlayerController : VideoPlayerController {
 
     @Suppress("UNUSED_PARAMETER")

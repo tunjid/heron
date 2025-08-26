@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.search
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -53,6 +52,7 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -69,7 +69,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -93,68 +92,69 @@ class SearchViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), SearchStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        currentQuery = route.query,
-        isQueryEditable = route.query.isBlank(),
-        layout = when {
-            route.query.isBlank() -> ScreenLayout.Suggested
-            else -> ScreenLayout.GeneralSearchResults
-        },
-        searchStateHolders = scope.searchStateHolders(
-            initialQuery = route.query,
-            searchRepository = searchRepository,
-            timelineRepository = timelineRepository,
-        )
-    ),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadProfileMutations(authRepository),
-        trendsMutations(searchRepository),
-        suggestedStarterPackMutations(
-            searchRepository = searchRepository,
-            profileRepository = profileRepository,
+) : ViewModel(viewModelScope = scope),
+    SearchStateHolder by scope.actionStateFlowMutator(
+        initialState = State(
+            currentQuery = route.query,
+            isQueryEditable = route.query.isBlank(),
+            layout = when {
+                route.query.isBlank() -> ScreenLayout.Suggested
+                else -> ScreenLayout.GeneralSearchResults
+            },
+            searchStateHolders = scope.searchStateHolders(
+                initialQuery = route.query,
+                searchRepository = searchRepository,
+                timelineRepository = timelineRepository,
+            ),
         ),
-        suggestedFeedGeneratorMutations(
-            searchRepository = searchRepository
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(authRepository),
+            trendsMutations(searchRepository),
+            suggestedStarterPackMutations(
+                searchRepository = searchRepository,
+                profileRepository = profileRepository,
+            ),
+            suggestedFeedGeneratorMutations(
+                searchRepository = searchRepository,
+            ),
+            feedGeneratorUrisToStatusMutations(
+                timelineRepository = timelineRepository,
+            ),
         ),
-        feedGeneratorUrisToStatusMutations(
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Search -> action.flow.searchQueryMutations(
-                    coroutineScope = scope,
-                    searchRepository = searchRepository,
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Search -> action.flow.searchQueryMutations(
+                        coroutineScope = scope,
+                        searchRepository = searchRepository,
+                    )
 
-                is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
-                    searchRepository = searchRepository,
-                )
+                    is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
+                        searchRepository = searchRepository,
+                    )
 
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,
@@ -169,7 +169,7 @@ private fun loadProfileMutations(
                     is SearchState.OfPosts -> isSignedIn
                     is SearchState.OfProfiles -> true
                 }
-            }
+            },
         )
     }
 
@@ -194,17 +194,17 @@ private fun suggestedStarterPackMutations(
                         data = CursorQuery.Data(
                             page = 0,
                             cursorAnchor = Clock.System.now(),
-                            limit = 10
-                        )
+                            limit = 10,
+                        ),
                     ),
-                    cursor = Cursor.Initial
+                    cursor = Cursor.Initial,
                 )
             }
 
             val starterPackWithMembersList = starterPacks.map { starterPack ->
                 SuggestedStarterPack(
                     starterPack = starterPack,
-                    members = emptyList()
+                    members = emptyList(),
                 )
             }
 
@@ -214,7 +214,7 @@ private fun suggestedStarterPackMutations(
                     val listUri = fetchedMembers.firstOrNull()?.listUri ?: return@scan list
                     list.map { packWithMembers ->
                         if (packWithMembers.starterPack.list?.uri == listUri) packWithMembers.copy(
-                            members = fetchedMembers
+                            members = fetchedMembers,
                         )
                         else packWithMembers
                     }
@@ -239,7 +239,7 @@ private fun feedGeneratorUrisToStatusMutations(
                     .associateBy(
                         keySelector = TimelinePreference::feedGeneratorUri,
                         valueTransform = TimelinePreference::pinned,
-                    )
+                    ),
             )
         }
 
@@ -248,18 +248,17 @@ private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
 ): Flow<Mutation<State>> =
     flatMapLatest { action ->
         searchRepository.suggestedProfiles(
-            category = action.category
+            category = action.category,
         )
             .mapLatest { suggestedProfiles ->
                 action.category to suggestedProfiles
             }
             .mapToMutation { categoryToProfiles ->
                 copy(
-                    categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles
+                    categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles,
                 )
             }
     }
-
 
 private fun Flow<Action.Search>.searchQueryMutations(
     coroutineScope: CoroutineScope,
@@ -277,8 +276,8 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     is Action.Search.OnSearchQueryChanged -> copy(
                         currentQuery = action.query,
                         layout =
-                            if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                            else ScreenLayout.Suggested,
+                        if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
+                        else ScreenLayout.Suggested,
                     )
 
                     is Action.Search.OnSearchQueryConfirmed -> {
@@ -288,33 +287,33 @@ private fun Flow<Action.Search>.searchQueryMutations(
                                     is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
-                                        data = defaultSearchQueryData()
+                                        data = defaultSearchQueryData(),
                                     )
 
                                     is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
-                                        data = defaultSearchQueryData()
+                                        data = defaultSearchQueryData(),
                                     )
                                 }
 
                                 is SearchState.OfProfiles -> SearchQuery.OfProfiles(
                                     query = currentQuery,
                                     isLocalOnly = action.isLocalOnly,
-                                    data = defaultSearchQueryData()
+                                    data = defaultSearchQueryData(),
                                 )
 
                                 is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
                                     query = currentQuery,
                                     isLocalOnly = action.isLocalOnly,
-                                    data = defaultSearchQueryData()
+                                    data = defaultSearchQueryData(),
                                 )
                             }
 
                             it.accept(
                                 SearchState.Tile(
-                                    tilingAction = TilingState.Action.LoadAround(confirmedQuery)
-                                )
+                                    tilingAction = TilingState.Action.LoadAround(confirmedQuery),
+                                ),
                             )
                         }
                         copy(
@@ -333,7 +332,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),
-                    cursor = Cursor.Pending
+                    cursor = Cursor.Pending,
                 )
             }
             .mapToMutation { profileWithViewerStates ->
@@ -341,11 +340,11 @@ private fun Flow<Action.Search>.searchQueryMutations(
                     autoCompletedProfiles = profileWithViewerStates.map { profileWithViewerState ->
                         SearchResult.OfProfile(
                             profileWithViewerState = profileWithViewerState,
-                            sharedElementPrefix = "auto-complete-results"
+                            sharedElementPrefix = "auto-complete-results",
                         )
-                    }
+                    },
                 )
-            }
+            },
     )
 }
 
@@ -368,8 +367,8 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
                         followUri = following,
                         followedBy = action.followedBy,
                     )
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -400,8 +399,8 @@ private fun CoroutineScope.searchStateHolders(
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
-            )
-        )
+            ),
+        ),
     )
     add(
         SearchState.OfPosts(
@@ -412,7 +411,7 @@ private fun CoroutineScope.searchStateHolders(
                     data = defaultSearchQueryData(),
                 ),
             ),
-        )
+        ),
     )
     if (initialQuery.isBlank()) add(
         SearchState.OfProfiles(
@@ -423,7 +422,7 @@ private fun CoroutineScope.searchStateHolders(
                     data = defaultSearchQueryData(),
                 ),
             ),
-        )
+        ),
     )
     if (initialQuery.isBlank()) add(
         SearchState.OfFeedGenerators(
@@ -434,7 +433,7 @@ private fun CoroutineScope.searchStateHolders(
                     data = defaultSearchQueryData(),
                 ),
             ),
-        )
+        ),
     )
 }.map { searchState: SearchState ->
     when (searchState) {
@@ -462,7 +461,7 @@ private fun CoroutineScope.searchStateHolders(
                                     timelineRepository.labelers(),
                                     timelineRepository.preferences()
                                         .map { it.contentLabelPreferences },
-                                    ::Pair
+                                    ::Pair,
                                 )
                                     .distinctUntilChanged()
                                     .flatMapLatest { (labelers, contentLabelPreferences) ->
@@ -473,7 +472,7 @@ private fun CoroutineScope.searchStateHolders(
                                                 labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
                                                     labelers = labelers,
                                                     labelPreferences = contentLabelPreferences,
-                                                )
+                                                ),
                                             )
                                         }.invoke(query, cursor)
                                     }
@@ -487,7 +486,7 @@ private fun CoroutineScope.searchStateHolders(
                             onTilingDataUpdated = { copy(tilingData = it) },
                         )
                 }
-            }
+            },
         )
 
         is SearchState.OfProfiles -> actionStateFlowMutator(
@@ -514,7 +513,7 @@ private fun CoroutineScope.searchStateHolders(
                             onTilingDataUpdated = { copy(tilingData = it) },
                         )
                 }
-            }
+            },
         )
 
         is SearchState.OfFeedGenerators -> actionStateFlowMutator(
@@ -541,7 +540,7 @@ private fun CoroutineScope.searchStateHolders(
                             onTilingDataUpdated = { copy(tilingData = it) },
                         )
                 }
-            }
+            },
         )
     }
 }
@@ -549,5 +548,5 @@ private fun CoroutineScope.searchStateHolders(
 private fun defaultSearchQueryData() = CursorQuery.Data(
     page = 0,
     cursorAnchor = Clock.System.now(),
-    limit = 15
+    limit = 15,
 )

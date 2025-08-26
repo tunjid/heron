@@ -39,9 +39,11 @@ fun VideoStill(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    when (val lastBitmap = state.videoStill.takeIf {
-        state.status != PlayerStatus.Idle.Initial
-    }) {
+    when (
+        val lastBitmap = state.videoStill.takeIf {
+            state.status != PlayerStatus.Idle.Initial
+        }
+    ) {
         null -> AsyncImage(
             modifier = modifier,
             args = remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
@@ -80,7 +82,7 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     videoId = videoId,
     thumbnail = thumbnail,
     isLooping = isLooping,
-    autoplay = autoplay
+    autoplay = autoplay,
 ).also { videoPlayerState ->
     videoPlayerState.thumbnailUrl = thumbnail
     videoPlayerState.contentScale = contentScale

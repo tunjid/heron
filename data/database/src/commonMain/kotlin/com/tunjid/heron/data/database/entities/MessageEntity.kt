@@ -36,7 +36,6 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "messages",
     foreignKeys = [
@@ -77,7 +76,7 @@ data class PopulatedMessageEntity(
     val entity: MessageEntity,
     @Relation(
         parentColumn = "senderId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val sender: ProfileEntity,
     @Relation(
@@ -129,6 +128,5 @@ fun PopulatedMessageEntity.asExternalModel(
             senderId = it.senderId,
             createdAt = it.createdAt,
         )
-    }
+    },
 )
-

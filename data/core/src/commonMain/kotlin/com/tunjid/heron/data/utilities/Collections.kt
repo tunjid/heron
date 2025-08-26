@@ -76,11 +76,10 @@ fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlas
     .split(QueryDelimiter)
     .first()
 
-
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
 ): JsonContent = BlueskyJson.decodeFromString(
-    BlueskyJson.encodeToString(serializer, this)
+    BlueskyJson.encodeToString(serializer, this),
 )
 
 private fun tidTimestampFromBase32(base32Tid: String): Long {

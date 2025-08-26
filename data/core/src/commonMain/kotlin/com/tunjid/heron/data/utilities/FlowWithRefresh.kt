@@ -27,5 +27,5 @@ internal fun <T> Flow<T>.withRefresh(
     refresh: suspend () -> Unit,
 ) = merge(
     this,
-    flow { refresh() }
+    flow { refresh() },
 )

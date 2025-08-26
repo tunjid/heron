@@ -33,7 +33,7 @@ interface FeedGeneratorDao {
         """
             SELECT * FROM feedGenerators
             WHERE uri IN (:feedUris)
-        """
+        """,
     )
     fun feedGenerators(
         feedUris: Collection<FeedGeneratorUri>,
@@ -48,7 +48,7 @@ interface FeedGeneratorDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun profileFeedGenerators(
         creatorId: String,

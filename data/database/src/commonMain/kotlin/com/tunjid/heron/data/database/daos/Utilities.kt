@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.database.daos
 
-
 /**
  * Performs an upsert by first attempting to insert [items] using [insertEntities] with the result
  * of the inserts returned.

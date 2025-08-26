@@ -95,7 +95,7 @@ class TabsState private constructor(
                 isCollapsed = isCollapsed,
                 tabs = tabs,
                 onTabSelected = onTabSelected,
-                onTabReselected = onTabReselected
+                onTabReselected = onTabReselected,
             )
         }.also {
             if (it.tabs != tabs) {
@@ -106,7 +106,6 @@ class TabsState private constructor(
         }
     }
 }
-
 
 @Composable
 fun Tabs(
@@ -131,14 +130,14 @@ fun Tabs(
                         badge = {
                             if (tab.hasUpdate) Badge(
                                 modifier = Modifier
-                                    .offset(y = 2.dp)
+                                    .offset(y = 2.dp),
                             )
                         },
                         content = {
                             tabContent(tab)
-                        }
+                        },
                     )
-                }
+                },
             )
         }
         Indicator(lazyListState, ::tabIndex)
@@ -239,7 +238,7 @@ private fun BoxScope.Indicator(
             .background(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                 shape = TabShape,
-            )
+            ),
     )
 }
 

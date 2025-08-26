@@ -80,26 +80,26 @@ internal fun NotificationPostScaffold(
             notification = notification,
             sharedElementPrefix = notification.sharedElementPrefix(),
             now = now,
-            createdAt = notification.indexedAt
+            createdAt = notification.indexedAt,
         )
         Spacer(Modifier.height(4.dp))
         Row(
-            horizontalArrangement = spacedBy(14.dp)
+            horizontalArrangement = spacedBy(14.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .width(UiTokens.avatarSize)
+                    .width(UiTokens.avatarSize),
             ) {
                 if (!isRead) Badge(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .padding(vertical = 8.dp)
-                        .size(4.dp)
+                        .size(4.dp),
                 )
             }
             Column(
                 modifier = Modifier.padding(
-                    bottom = 8.dp
+                    bottom = 8.dp,
                 ),
                 verticalArrangement = spacedBy(8.dp),
             ) {
@@ -112,7 +112,7 @@ internal fun NotificationPostScaffold(
                     onClick = { onPostClicked(notification) },
                     onLinkTargetClicked = { _, linkTarget ->
                         onLinkTargetClicked(notification, linkTarget)
-                    }
+                    },
                 )
 //                PostEmbed(
 //                    now = now,
@@ -180,7 +180,7 @@ private fun PostAttribution(
                 },
                 sharedElement = { state, modifier ->
                     AsyncImage(state, modifier)
-                }
+                },
             )
         },
         label = {
@@ -192,12 +192,11 @@ private fun PostAttribution(
                 sharedElementPrefix = sharedElementPrefix,
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             )
-        }
+        },
     )
 //    if (item is TimelineItem.Reply) {
 //                    PostReplyLine(item.parentPost.author, onProfileClicked)
 //                }
 }
 
-fun Notification.PostAssociated.sharedElementPrefix(
-): String = "notification-${cid.id}"
+fun Notification.PostAssociated.sharedElementPrefix(): String = "notification-${cid.id}"

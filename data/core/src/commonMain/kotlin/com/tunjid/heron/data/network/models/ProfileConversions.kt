@@ -51,7 +51,7 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
             createdStarterPackCount = associated?.starterPacks,
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
-        )
+        ),
     )
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
@@ -74,7 +74,7 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
             createdStarterPackCount = associated?.starterPacks,
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
-        )
+        ),
     )
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
@@ -97,7 +97,7 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
             createdStarterPackCount = associated?.starterPacks,
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
-        )
+        ),
     )
 
 internal fun ProfileViewBasic.profileViewerStateEntities(
@@ -142,7 +142,6 @@ internal fun ProfileViewDetailed.profileViewerStateEntities(
         )
     }
 
-
 internal fun ProfileViewBasic.profile() = Profile(
     did = did.did.let(::ProfileId),
     handle = handle.handle.let(::ProfileHandle),
@@ -186,7 +185,7 @@ internal fun ProfileView.profile() = Profile(
 private fun profileViewerStateEntity(
     viewingProfileId: ProfileId,
     viewedProfileId: ProfileId,
-    viewer: ViewerState
+    viewer: ViewerState,
 ) = ProfileViewerStateEntity(
     profileId = viewingProfileId,
     otherProfileId = viewedProfileId,
@@ -208,7 +207,7 @@ private fun KnownFollowers?.profileViewers(
     null -> emptyList()
     else -> followers.flatMap { profileViewBasic ->
         profileViewBasic.profileViewerStateEntities(
-            viewingProfileId = viewingProfileId
+            viewingProfileId = viewingProfileId,
         )
     }
 }

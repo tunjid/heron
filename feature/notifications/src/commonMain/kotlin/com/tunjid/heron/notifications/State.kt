@@ -31,7 +31,6 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
 @Serializable
 data class State(
     val lastRefreshed: Instant? = null,
@@ -42,7 +41,7 @@ data class State(
             data = CursorQuery.Data(
                 page = 0,
                 cursorAnchor = Clock.System.now(),
-            )
+            ),
         ),
     ),
     @Transient
@@ -59,7 +58,7 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
                     item = last.copy(
                         isRead = last.isRead && notification.isRead,
                         aggregatedProfiles = last.aggregatedProfiles + notification.author,
-                    )
+                    ),
                 )
             }
 
@@ -69,7 +68,7 @@ fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, Aggregat
                     isRead = notification.isRead,
                     notification = notification,
                     aggregatedProfiles = listOf(notification.author),
-                )
+                ),
             )
         }
     }
@@ -89,12 +88,14 @@ sealed class Action(val key: String) {
         val at: Instant,
     ) : Action(key = "markNotificationsRead")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
-
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }
 

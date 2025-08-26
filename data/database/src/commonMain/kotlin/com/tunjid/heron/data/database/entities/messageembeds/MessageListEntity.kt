@@ -24,12 +24,11 @@ import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 
-
 @Entity(
     tableName = "messageLists",
     primaryKeys = [
         "messageId",
-        "listUri"
+        "listUri",
     ],
     foreignKeys = [
         ForeignKey(
@@ -54,5 +53,3 @@ data class MessageListEntity(
     val messageId: MessageId,
     val listUri: ListUri,
 )
-
-

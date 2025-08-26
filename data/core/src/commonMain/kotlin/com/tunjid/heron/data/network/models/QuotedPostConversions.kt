@@ -68,7 +68,8 @@ private fun RecordViewRecordUnion.profileEntity() =
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewDetached,
-        is RecordViewRecordUnion.ViewNotFound -> null
+        is RecordViewRecordUnion.ViewNotFound,
+        -> null
 
         is RecordViewRecordUnion.ViewRecord -> ProfileEntity(
             did = ProfileId(value.author.did.did),
@@ -89,7 +90,7 @@ private fun RecordViewRecordUnion.profileEntity() =
                 createdStarterPackCount = value.author.associated?.starterPacks,
                 labeler = value.author.associated?.labeler,
                 allowDms = value.author.associated?.chat?.allowIncoming?.value,
-            )
+            ),
         )
     }
 
@@ -97,18 +98,20 @@ internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> emptyList()
         is PostViewEmbedUnion.ImagesView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView -> embed
-            .value
-            .record
-            .record
-            .embedEntities()
+        is PostViewEmbedUnion.RecordWithMediaView ->
+            embed
+                .value
+                .record
+                .record
+                .embedEntities()
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> emptyList()
-        is PostViewEmbedUnion.RecordView -> embed
-            .value
-            .record
-            .embedEntities()
+        is PostViewEmbedUnion.RecordView ->
+            embed
+                .value
+                .record
+                .embedEntities()
 
         null -> emptyList()
     }
@@ -123,7 +126,7 @@ private fun RecordViewRecordUnion.embedEntities() =
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewNotFound,
-            -> emptyList()
+        -> emptyList()
 
         is RecordViewRecordUnion.ViewRecord ->
             value.embeds.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->
@@ -134,7 +137,7 @@ private fun RecordViewRecordUnion.embedEntities() =
                             title = innerRecord.value.external.title,
                             description = innerRecord.value.external.description,
                             thumb = innerRecord.value.external.thumb?.uri?.let(::ImageUri),
-                        )
+                        ),
                     )
 
                     is RecordViewRecordEmbedUnion.ImagesView -> innerRecord.value.images.map {
@@ -158,7 +161,7 @@ private fun RecordViewRecordUnion.embedEntities() =
                             alt = innerRecord.value.alt,
                             width = innerRecord.value.aspectRatio?.width,
                             height = innerRecord.value.aspectRatio?.height,
-                        )
+                        ),
                     )
                 }
             }
@@ -174,7 +177,7 @@ private fun RecordViewRecordUnion.postEntity() =
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewNotFound,
-            -> null
+        -> null
 
         is RecordViewRecordUnion.ViewRecord ->
             PostEntity(

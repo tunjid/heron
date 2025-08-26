@@ -39,7 +39,6 @@ import heron.feature.notifications.generated.resources.multiple_joined_from_your
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
-
 @Composable
 fun JoinedStarterPackRow(
     modifier: Modifier = Modifier,

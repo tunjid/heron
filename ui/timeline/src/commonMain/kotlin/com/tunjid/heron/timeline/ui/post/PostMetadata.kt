@@ -60,7 +60,7 @@ internal fun PostMetadata(
     onMetadataClicked: (Post.Metadata) -> Unit,
 ) {
     val textStyle = MaterialTheme.typography.bodySmall.copy(
-        color = MaterialTheme.colorScheme.outline
+        color = MaterialTheme.colorScheme.outline,
     )
     Column(
         modifier = modifier,
@@ -95,9 +95,9 @@ internal fun PostMetadata(
 
                                         PostMetadataText.Reposts -> Post.Metadata.Reposts(
                                             profileId = profileId,
-                                            postRecordKey = postRecordKey
+                                            postRecordKey = postRecordKey,
                                         )
-                                    }
+                                    },
                                 )
                             },
                         ),
@@ -131,12 +131,12 @@ internal fun MetadataText(
             text = count.toString(),
             style = textStyle.copy(
                 fontWeight = FontWeight.Bold,
-            )
+            ),
         )
         Text(
             text = stringResource(
                 if (count == 1L) singularResource
-                else pluralResource
+                else pluralResource,
             ),
             style = textStyle,
         )

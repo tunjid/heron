@@ -37,7 +37,6 @@ internal fun MultipleEntitySaver.add(
             uri = listItemView.uri.atUri.let(::ListMemberUri),
             subjectId = listItemView.subject.did.did.let(::ProfileId),
             createdAt = createdAt,
-        )
+        ),
     )
 }
-

@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 
-
 @Composable
 fun rememberFormattedTextPost(
     text: String,

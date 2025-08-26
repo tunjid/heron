@@ -32,7 +32,7 @@ interface StarterPackDao {
         """
             SELECT * FROM starterPacks
             WHERE uri = :starterPackUri
-        """
+        """,
     )
     fun starterPack(
         starterPackUri: String,
@@ -43,7 +43,7 @@ interface StarterPackDao {
         """
             SELECT * FROM starterPacks
 	        WHERE uri IN (:uris)
-        """
+        """,
     )
     fun starterPacks(
         uris: Collection<StarterPackUri>,
@@ -58,7 +58,7 @@ interface StarterPackDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun profileStarterPacks(
         creatorId: String,
@@ -70,5 +70,4 @@ interface StarterPackDao {
     suspend fun upsertStarterPacks(
         entities: List<StarterPackEntity>,
     )
-
 }

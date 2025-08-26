@@ -261,7 +261,10 @@ data class ColorFamily(
 )
 
 val unspecified_scheme = ColorFamily(
-    Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
+    Color.Unspecified,
+    Color.Unspecified,
+    Color.Unspecified,
+    Color.Unspecified,
 )
 
 @Composable
@@ -279,7 +282,6 @@ fun AppTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = appTypography(appFont()),
-        content = content
+        content = content,
     )
 }
-

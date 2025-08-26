@@ -65,7 +65,7 @@ interface ListDao {
         """
             SELECT * FROM lists
             WHERE uri = :listUri
-        """
+        """,
     )
     fun list(
         listUri: String,
@@ -76,7 +76,7 @@ interface ListDao {
         """
             SELECT * FROM lists
             WHERE uri IN (:listUris)
-        """
+        """,
     )
     fun lists(
         listUris: Collection<ListUri>,
@@ -94,7 +94,7 @@ interface ListDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun listMembers(
         listUri: String,
@@ -112,7 +112,7 @@ interface ListDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun profileLists(
         creatorId: String,

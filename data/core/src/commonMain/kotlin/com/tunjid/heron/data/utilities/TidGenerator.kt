@@ -17,13 +17,13 @@
 package com.tunjid.heron.data.utilities
 
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A generator for Time-ordered Identifiers (TIDs).

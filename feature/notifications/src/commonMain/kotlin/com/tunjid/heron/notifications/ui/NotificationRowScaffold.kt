@@ -93,7 +93,6 @@ fun NotificationAggregateScaffold(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
             // TODO: Consider moving this to the VM.
             var isExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -107,17 +106,17 @@ fun NotificationAggregateScaffold(
                 movableContentWithReceiverOf<MovableElementSharedTransitionScope, Boolean> { expanded ->
                     ExpandButton(
                         isExpanded = expanded,
-                        onExpansionToggled = { isExpanded = it }
+                        onExpansionToggled = { isExpanded = it },
                     )
                 }
             }
             val items = remember {
                 movableContentWithReceiverOf<
-                        MovableElementSharedTransitionScope,
-                        Boolean,
-                        Notification,
-                        List<Profile>,
-                        >
+                    MovableElementSharedTransitionScope,
+                    Boolean,
+                    Notification,
+                    List<Profile>,
+                    >
                 { isExpanded, notification, renderedProfiles ->
                     ExpandableProfiles(
                         isExpanded = isExpanded,
@@ -141,7 +140,7 @@ fun NotificationAggregateScaffold(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isExpanded = !isExpanded },
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(isExpanded, notification, renderedProfiles)
                     if (renderedProfiles.size > 1) expandButton(isExpanded)
@@ -149,8 +148,8 @@ fun NotificationAggregateScaffold(
             }
             Box(
                 modifier = Modifier.animateBounds(
-                    lookaheadScope = paneMovableElementSharedTransitionScope
-                )
+                    lookaheadScope = paneMovableElementSharedTransitionScope,
+                ),
             ) {
                 content()
             }
@@ -167,7 +166,7 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
     IconButton(
         modifier = Modifier
             .animateBounds(
-                lookaheadScope = this@ExpandButton
+                lookaheadScope = this@ExpandButton,
             )
             .size(32.dp)
             .rotate(animateFloatAsState(if (isExpanded) 180f else 0f).value),
@@ -179,7 +178,7 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
             )
-        }
+        },
     )
 }
 
@@ -204,7 +203,7 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = notification.avatarSharedElementKey(profile),
-                        )
+                        ),
                     )
                     .clickable { onProfileClicked(notification, profile) },
                 args = ImageArgs(
@@ -212,7 +211,7 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
                     shape = RoundedPolygonShape.Circle,
-                )
+                ),
             )
             AnimatedVisibility(
                 visible = isExpanded,

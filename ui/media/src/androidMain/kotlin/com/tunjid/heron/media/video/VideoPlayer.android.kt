@@ -61,7 +61,7 @@ actual fun VideoPlayer(
                         this@drawWithContent.drawContent()
                     }
                     drawLayer(graphicsLayer)
-                }
+                },
 
         )
         if (state.canShowStill) VideoStill(
@@ -71,10 +71,10 @@ actual fun VideoPlayer(
 
         // Capture a still frame from the video to use as a stand in when buffering playback
         LaunchedEffect(state.status) {
-            if (state.status is PlayerStatus.Pause
-                && state.hasRenderedFirstFrame
-                && graphicsLayer.size.height != 0
-                && graphicsLayer.size.width != 0
+            if (state.status is PlayerStatus.Pause &&
+                state.hasRenderedFirstFrame &&
+                graphicsLayer.size.height != 0 &&
+                graphicsLayer.size.width != 0
             ) {
                 state.videoStill = graphicsLayer.toImageBitmap()
             }
@@ -109,11 +109,11 @@ private val ExoPlayerState.canShowVideo
     }
 
 private val ExoPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero
-            || !hasRenderedFirstFrame
-            || when (status) {
-        is PlayerStatus.Idle -> true
-        is PlayerStatus.Pause -> false
-        PlayerStatus.Play.Requested -> true
-        PlayerStatus.Play.Confirmed -> false
-    }
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }

@@ -17,12 +17,12 @@
 package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toJavaInstant
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toJavaInstant
 
 @Composable
 actual fun Instant.formatDate(): String {

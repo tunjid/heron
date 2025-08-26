@@ -24,12 +24,11 @@ import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 
-
 @Entity(
     tableName = "messageStarterPacks",
     primaryKeys = [
         "messageId",
-        "starterPackUri"
+        "starterPackUri",
     ],
     foreignKeys = [
         ForeignKey(
@@ -54,5 +53,3 @@ data class MessageStarterPackEntity(
     val messageId: MessageId,
     val starterPackUri: StarterPackUri,
 )
-
-

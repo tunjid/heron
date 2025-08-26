@@ -56,7 +56,7 @@ fun PostHeadline(
                             key = author.textSharedElementKey(
                                 prefix = sharedElementPrefix,
                                 postId = postId,
-                                text = primaryText
+                                text = primaryText,
                             ),
                         ),
                     ),
@@ -77,13 +77,12 @@ fun PostHeadline(
                             key = author.textSharedElementKey(
                                 prefix = sharedElementPrefix,
                                 postId = postId,
-                                text = secondaryText
+                                text = secondaryText,
                             ),
                         ),
                     ),
                 profile = author,
             )
-
         }
     }
 }

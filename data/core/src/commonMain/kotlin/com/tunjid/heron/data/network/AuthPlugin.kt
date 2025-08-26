@@ -83,14 +83,14 @@ internal class AuthPlugin(
                         ?.firstOrNull()
                         ?.let {
                             context.url.set(
-                                host = Url(urlString = it.serviceEndpoint).host
+                                host = Url(urlString = it.serviceEndpoint).host,
                             )
                         }
                 }
 
                 if (authTokens == null && SignedOutPaths.any(predicate = context.url.encodedPath::endsWith)) {
                     context.url.set(
-                        host = Url(urlString = SignedOutUrl).host
+                        host = Url(urlString = SignedOutUrl).host,
                     )
                 }
 
@@ -127,7 +127,7 @@ internal class AuthPlugin(
                                         didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                                             jsonContent = refreshed.didDoc,
                                         ),
-                                    )
+                                    ),
                                 )
                                 context.headers.remove(Authorization)
                                 context.bearerAuth(newAccessToken)

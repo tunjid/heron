@@ -48,7 +48,7 @@ class ThreadedVideoPositionStates<T>(
     fun getOrCreateStateFor(item: T): ThreadedVideoPositionState {
         val state = itemIdsToStates.getOrPut(
             key = item.id(),
-            defaultValue = ::ThreadedVideoPositionState
+            defaultValue = ::ThreadedVideoPositionState,
         )
         DisposableEffect(Unit) {
             onDispose { itemIdsToStates.remove(item.id()) }
@@ -102,8 +102,7 @@ class ThreadedVideoPositionState : State {
 
         private class ThreadedVideoPositionNode(
             var state: State,
-        ) :
-            Modifier.Node(),
+        ) : Modifier.Node(),
             TraversableNode,
             ThreadTraversalNode {
 
@@ -176,7 +175,6 @@ internal sealed interface ThreadTraversalNode : TraversableNode {
         object ThreadTraversalKey
     }
 }
-
 
 internal val Post.videoId
     get() = when (val embed = embed) {

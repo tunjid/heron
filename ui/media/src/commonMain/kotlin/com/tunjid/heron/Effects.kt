@@ -26,9 +26,9 @@ import androidx.compose.runtime.snapshotFlow
 import com.tunjid.composables.lazy.list.interpolatedFirstItemIndex
 import com.tunjid.composables.lazy.pager.interpolatedFirstItemIndex
 import com.tunjid.composables.lazy.staggeredgrid.interpolatedFirstItemIndex
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
 import kotlin.math.round
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun LazyStaggeredGridState.interpolatedVisibleIndexEffect(

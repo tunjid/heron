@@ -108,7 +108,7 @@ internal class AuthTokenRepository(
             CreateSessionRequest(
                 identifier = request.username,
                 password = request.password,
-            )
+            ),
         )
     }
         .mapCatching { result ->
@@ -121,7 +121,7 @@ internal class AuthTokenRepository(
                         didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                             jsonContent = result.didDoc,
                         ),
-                    )
+                    ),
                 )
             }
             // Suspend till auth token has been saved and is readable
@@ -185,8 +185,8 @@ internal class AuthTokenRepository(
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getFeedGenerator(
                         GetFeedGeneratorQueryParams(
-                            feed = AtUri(it.value)
-                        )
+                            feed = AtUri(it.value),
+                        ),
                     )
                 }
             }
@@ -198,8 +198,8 @@ internal class AuthTokenRepository(
                         GetListQueryParams(
                             cursor = null,
                             limit = 1,
-                            list = AtUri(it.value)
-                        )
+                            list = AtUri(it.value),
+                        ),
                     )
                 }
             }
@@ -221,8 +221,8 @@ private fun GetPreferencesResponse.toExternalModel() =
                 is PreferencesUnion.AdultContentPref -> preferences
                 is PreferencesUnion.BskyAppStatePref -> preferences
                 is PreferencesUnion.ContentLabelPref -> preferences.copy(
-                    contentLabelPreferences = preferences.contentLabelPreferences
-                            + preferencesUnion.asExternalModel()
+                    contentLabelPreferences = preferences.contentLabelPreferences +
+                        preferencesUnion.asExternalModel(),
                 )
 
                 is PreferencesUnion.FeedViewPref -> preferences
@@ -240,7 +240,7 @@ private fun GetPreferencesResponse.toExternalModel() =
                             value = it.value,
                             pinned = it.pinned,
                         )
-                    }
+                    },
                 )
 
                 is PreferencesUnion.ThreadViewPref -> preferences
@@ -248,7 +248,7 @@ private fun GetPreferencesResponse.toExternalModel() =
                 is PreferencesUnion.PostInteractionSettingsPref -> preferences
                 is PreferencesUnion.VerificationPrefs -> preferences
             }
-        }
+        },
     )
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
@@ -256,4 +256,3 @@ private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPr
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
-
