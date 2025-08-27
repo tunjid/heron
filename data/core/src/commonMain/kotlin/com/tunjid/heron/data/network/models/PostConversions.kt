@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.RecordWithMediaViewMediaUnion
+import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
@@ -49,8 +50,6 @@ import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import sh.christian.ozone.api.model.JsonContent
-import app.bsky.feed.Post as BskyPost
-
 
 internal fun PostEntity.postVideoEntity(
     embedEntity: VideoEntity,
@@ -104,7 +103,7 @@ internal fun PostView.post(
                 version = atProtoLabel.ver,
                 createdAt = atProtoLabel.cts,
             )
-        }
+        },
     )
 }
 
@@ -129,7 +128,7 @@ private fun post(
         is ExternalEmbedEntity -> embedEntity.asExternalModel()
         is ImageEntity -> ImageList(
             images = embeds.filterIsInstance<ImageEntity>()
-                .map(ImageEntity::asExternalModel)
+                .map(ImageEntity::asExternalModel),
         )
 
         is VideoEntity -> embedEntity.asExternalModel()
@@ -164,7 +163,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                 title = embed.value.external.title,
                 description = embed.value.external.description,
                 thumb = embed.value.external.thumb?.uri?.let(::ImageUri),
-            )
+            ),
         )
 
         is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
@@ -185,7 +184,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                     title = mediaEmbed.value.external.title,
                     description = mediaEmbed.value.external.description,
                     thumb = mediaEmbed.value.external.thumb?.uri?.let(::ImageUri),
-                )
+                ),
             )
 
             is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
@@ -207,7 +206,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                     alt = mediaEmbed.value.alt,
                     width = mediaEmbed.value.aspectRatio?.width,
                     height = mediaEmbed.value.aspectRatio?.height,
-                )
+                ),
             )
         }
 
@@ -220,12 +219,11 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                 alt = embed.value.alt,
                 width = embed.value.aspectRatio?.width,
                 height = embed.value.aspectRatio?.height,
-            )
+            ),
         )
 
         null -> emptyList()
     }
-
 
 internal fun ViewerState.postViewerStatisticsEntity(
     postUri: PostUri,
@@ -254,7 +252,7 @@ internal fun ReplyRefRootUnion.postViewerStatisticsEntity(
     is ReplyRefRootUnion.BlockedPost,
     is ReplyRefRootUnion.NotFoundPost,
     is ReplyRefRootUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
@@ -268,7 +266,7 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
     is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
-        -> null
+    -> null
 }
 
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
@@ -306,7 +304,7 @@ private fun Facet.toLinkOrNull(): Link? {
         target = when (val feature = features.first()) {
             is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
             is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
-                feature.value.did.did.let(::ProfileId)
+                feature.value.did.did.let(::ProfileId),
             )
 
             is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)

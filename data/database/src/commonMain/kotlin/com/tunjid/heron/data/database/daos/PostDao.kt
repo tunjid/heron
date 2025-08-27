@@ -39,7 +39,6 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import kotlinx.coroutines.flow.Flow
 
-
 @Dao
 interface PostDao {
 
@@ -95,7 +94,7 @@ interface PostDao {
             )
             ON uri = postUri
             WHERE uri IN (:postUris)
-        """
+        """,
     )
     fun posts(
         viewingProfileId: String?,
@@ -112,7 +111,7 @@ interface PostDao {
             )
             ON uri = postUri            
 	        WHERE uri IN (:postUris)
-        """
+        """,
     )
     fun postEntitiesByUri(
         viewingProfileId: String?,
@@ -136,7 +135,7 @@ interface PostDao {
             INNER JOIN postPosts AS postPosts
             ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.postUri IN (:postUris)
-        """
+        """,
     )
     fun embeddedPosts(
         viewingProfileId: String?,
@@ -160,7 +159,7 @@ interface PostDao {
             ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.embeddedPostUri = :quotedPostUri
             ORDER BY posts.indexedAt
-        """
+        """,
     )
     fun quotedPosts(
         viewingProfileId: String?,
@@ -181,7 +180,7 @@ interface PostDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun likedBy(
         postUri: String,
@@ -203,7 +202,7 @@ interface PostDao {
                  END
         END
     WHERE uri = :postUri
-    """
+    """,
     )
     suspend fun updateLikeCount(
         postUri: String,
@@ -224,7 +223,7 @@ interface PostDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun repostedBy(
         postUri: String,
@@ -341,7 +340,7 @@ interface PostDao {
             )
             
             ORDER BY sort1, generation
-        """
+        """,
     )
     fun postThread(
         postUri: String,

@@ -49,7 +49,6 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun MediaUploadItems(
@@ -75,7 +74,7 @@ internal fun MediaUploadItems(
                             .weight(1f)
                             .aspectRatio(
                                 ratio = 1f,
-                                matchHeightConstraintsFirst = true
+                                matchHeightConstraintsFirst = true,
                             ),
                         photo = it,
                         removeMediaItem = removeMediaItem,
@@ -104,7 +103,7 @@ private fun ImageUpload(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 shape = MediaUploadItemShape,
-            )
+            ),
         )
         AsyncImage(
             modifier = Modifier
@@ -130,7 +129,7 @@ private fun ImageUpload(
             snapshotFlow { state.imageSize }
                 .collect { size ->
                     onMediaItemUpdated(
-                        photo.updateSize(size)
+                        photo.updateSize(size),
                     )
                 }
         }

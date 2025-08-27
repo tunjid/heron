@@ -118,7 +118,7 @@ internal fun ConversationScreen(
     ) {
         items(
             count = items.size,
-            key = { items[it].id }
+            key = { items[it].id },
         ) { index ->
             val prevAuthor = items.getOrNull(index - 1)?.sender
             val nextAuthor = items.getOrNull(index + 1)?.sender
@@ -145,7 +145,7 @@ internal fun ConversationScreen(
                         is MessageItem.Pending -> Unit
                         is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
                     }
-                }
+                },
             )
         }
     }
@@ -167,10 +167,10 @@ internal fun ConversationScreen(
                             messageId = message.id,
                             convoId = message.conversationId,
                         )
-                    }
-                )
+                    },
+                ),
             )
-        }
+        },
     )
 
     listState.PivotedTilingEffect(
@@ -179,11 +179,11 @@ internal fun ConversationScreen(
             actions(
                 Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: state.tilingData.currentQuery
-                    )
-                )
+                        query = query ?: state.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     LaunchedEffect(listState) {
@@ -242,17 +242,17 @@ private fun Message(
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     profile = item.sender,
                                     avatarSharedElementKey = item.avatarSharedElementKey(),
-                                )
-                            )
+                                ),
+                            ),
                         )
                     },
                 item = item,
-                paneScaffoldState = paneScaffoldState
+                paneScaffoldState = paneScaffoldState,
             )
         }
         Spacer(
             modifier = Modifier
-                .width(if (isLastMessageByAuthor) 16.dp else 34.dp)
+                .width(if (isLastMessageByAuthor) 16.dp else 34.dp),
         )
 
         AuthorAndTextMessage(
@@ -289,11 +289,11 @@ private fun MessageAvatar(
     paneScaffoldState: PaneScaffoldState,
 ) {
     Box(
-        modifier = modifier
+        modifier = modifier,
     ) {
         paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = paneScaffoldState.rememberSharedContentState(
-                key = item.avatarSharedElementKey()
+                key = item.avatarSharedElementKey(),
             ),
             state = remember(item.sender.avatar) {
                 ImageArgs(
@@ -306,7 +306,7 @@ private fun MessageAvatar(
             modifier = Modifier.matchParentSize(),
             sharedElement = { args, innerModifier ->
                 AsyncImage(args, innerModifier)
-            }
+            },
         )
     }
 }
@@ -334,7 +334,7 @@ private fun AuthorAndTextMessage(
                     detectTapGestures(
                         onLongPress = {
                             onMessageLongPressed(item)
-                        }
+                        },
                     )
                 },
             message = item,
@@ -353,24 +353,23 @@ private fun AuthorAndTextMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-    item: MessageItem
+    item: MessageItem,
 ) {
     // Combine author and timestamp for a11y.
-    Row(
-        modifier = Modifier.semantics(mergeDescendants = true) {}) {
+    Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
             text = item.sender.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
-                .paddingFrom(LastBaseline, after = 8.dp) // Space to 1st bubble
+                .paddingFrom(LastBaseline, after = 8.dp), // Space to 1st bubble
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = item.sentAt.toTimestamp(),
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.alignBy(LastBaseline),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -393,7 +392,7 @@ private fun ChatItemBubble(
     ) {
         Surface(
             color = backgroundBubbleColor,
-            shape = side.bubbleShape
+            shape = side.bubbleShape,
         ) {
             Text(
                 text = message.text,
@@ -412,7 +411,7 @@ private fun ChatItemBubble(
                         Side.Receiver -> 16.dp
                         Side.Sender -> (-16).dp
                     },
-                    y = (-8).dp
+                    y = (-8).dp,
                 )
                 .background(
                     color = MaterialTheme.colorScheme.outline,
@@ -422,7 +421,7 @@ private fun ChatItemBubble(
                     horizontal = 4.dp,
                     vertical = 2.dp,
                 ),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             message.reactions.forEach { reaction ->
                 key(reaction.value) {
@@ -446,7 +445,7 @@ private fun PostMessage(
     labelers: Labelers,
     contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
-    actions: (Action) -> Unit
+    actions: (Action) -> Unit,
 ) {
     Post(
         modifier = Modifier
@@ -454,7 +453,7 @@ private fun PostMessage(
                 top = 16.dp,
                 bottom = 8.dp,
                 start = 16.dp,
-                end = 16.dp
+                end = 16.dp,
             )
             .widthIn(max = 200.dp),
         paneMovableElementSharedTransitionScope = paneScaffoldState,
@@ -469,7 +468,7 @@ private fun PostMessage(
         labelVisibilitiesToDefinitions = remember(
             post.labels,
             labelers,
-            contentPreferences
+            contentPreferences,
         ) {
             post.labelVisibilitiesToDefinitions(
                 labelers = labelers,
@@ -484,8 +483,8 @@ private fun PostMessage(
                             pathDestination(
                                 path = linkTarget.path,
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 },
                 onPostClicked = { post, quotingPostUri ->
@@ -497,8 +496,8 @@ private fun PostMessage(
                                     quotingPostUri = quotingPostUri,
                                 ),
                                 post = post,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 },
                 onProfileClicked = { profile, post, quotingPostUri ->
@@ -513,26 +512,24 @@ private fun PostMessage(
                                     ),
                                     quotingPostUri = quotingPostUri,
                                 ),
-                            )
-                        )
+                            ),
+                        ),
                     )
                 },
                 onPostMediaClicked = { _, _, _, _ ->
-
                 },
                 onReplyToPost = {
-
                 },
                 onPostInteraction = {
                     actions(Action.SendPostInteraction(it))
                 },
             )
-        }
+        },
     )
 }
 
 private fun MessageItem.avatarSharedElementKey(): String {
-    return "${id}-${conversationId.id}-${sender.did.id}"
+    return "$id-${conversationId.id}-${sender.did.id}"
 }
 
 private fun Instant.toTimestamp(): String {
@@ -543,7 +540,6 @@ private fun Instant.toTimestamp(): String {
     val amOrPm = if (localDateTime.hour > 12) "PM" else "AM"
     return "${localDateTime.hour}.$minute $amOrPm"
 }
-
 
 private sealed interface Side :
     Arrangement.Horizontal,
@@ -563,7 +559,7 @@ private sealed interface Side :
             totalSize: Int,
             sizes: IntArray,
             layoutDirection: LayoutDirection,
-            outPositions: IntArray
+            outPositions: IntArray,
         ) {
             with(Arrangement.Start) {
                 arrange(
@@ -573,7 +569,7 @@ private sealed interface Side :
                         LayoutDirection.Ltr -> LayoutDirection.Rtl
                         LayoutDirection.Rtl -> LayoutDirection.Ltr
                     },
-                    outPositions = outPositions
+                    outPositions = outPositions,
                 )
             }
         }
@@ -581,7 +577,7 @@ private sealed interface Side :
         override fun align(
             size: Int,
             space: Int,
-            layoutDirection: LayoutDirection
+            layoutDirection: LayoutDirection,
         ): Int = Alignment.Start.align(
             size = size,
             space = space,

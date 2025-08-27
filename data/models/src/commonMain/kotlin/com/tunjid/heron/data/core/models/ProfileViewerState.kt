@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
 data class ProfileViewerState(
     val following: GenericUri?,
     val followedBy: GenericUri?,
-    val commonFollowersCount: Long?
+    val commonFollowersCount: Long?,
     // TODO: Add other fields when working on those features,
     //  they should already exist in the entity
 )

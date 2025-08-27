@@ -77,8 +77,8 @@ class PaneScaffoldState internal constructor(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane
-                && isMediumScreenWidthOrWider
+        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
+            isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
@@ -98,11 +98,11 @@ class PaneScaffoldState internal constructor(
     internal val defaultContainerColor: Color
         @Composable get() {
             val elevation by animateDpAsState(
-                if (paneState.pane == ThreePane.Primary
-                    && isActive
-                    && inPredictiveBack
+                if (paneState.pane == ThreePane.Primary &&
+                    isActive &&
+                    inPredictiveBack
                 ) 4.dp
-                else 0.dp
+                else 0.dp,
             )
 
             return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
@@ -154,15 +154,17 @@ fun PaneScaffoldState.PaneScaffold(
                 modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
-                    AppState.DismissBehavior.Gesture.Drag -> Modifier
-                        .animateBounds(
-                            lookaheadScope = this,
-                        )
+                    AppState.DismissBehavior.Gesture.Drag,
+                    ->
+                        Modifier
+                            .animateBounds(
+                                lookaheadScope = this,
+                            )
 
                     AppState.DismissBehavior.Gesture.Slide -> Modifier
                 }
                     .padding(
-                        horizontal = if (hasSiblings) 8.dp else 0.dp
+                        horizontal = if (hasSiblings) 8.dp else 0.dp,
                     ),
                 containerColor = containerColor,
                 topBar = {
@@ -181,7 +183,7 @@ fun PaneScaffoldState.PaneScaffold(
                     content(paddingValues)
                 },
             )
-        }
+        },
     )
     val updatedMessages = rememberUpdatedState(snackBarMessages.firstOrNull())
     LaunchedEffect(Unit) {
@@ -190,7 +192,7 @@ fun PaneScaffoldState.PaneScaffold(
             .filterNot(String::isNullOrBlank)
             .collect { message ->
                 snackbarHostState.showSnackbar(
-                    message = message
+                    message = message,
                 )
                 onSnackBarMessageConsumed(message)
             }
@@ -226,7 +228,7 @@ private inline fun PaneNavigationRailScaffold(
                     .zIndex(1f),
                 content = {
                     content()
-                }
+                },
             )
         },
     )
@@ -239,5 +241,5 @@ private val PaneClipModifier = Modifier.clip(
     shape = RoundedCornerShape(
         topStart = 16.dp,
         topEnd = 16.dp,
-    )
+    ),
 )

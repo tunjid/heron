@@ -27,11 +27,11 @@ fun OverlappingAvatarRow(
     modifier: Modifier = Modifier,
     overlap: Dp,
     maxItems: Int,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Layout(
         modifier = modifier,
-        content = content
+        content = content,
     ) { measurables, constraints ->
 
         val overlapOffset = overlap.roundToPx()
@@ -40,7 +40,7 @@ fun OverlappingAvatarRow(
 
         val placeables = measurables.map { measurable ->
             measurable.measure(
-                Constraints.fixed(itemSize, itemSize)
+                Constraints.fixed(itemSize, itemSize),
             )
         }
 

@@ -87,9 +87,8 @@ private fun PaneScaffoldState.ComposePostFab(
                     text = postText.text,
                     links = postText.annotatedString.links(),
                     media = state.video?.let(::listOf) ?: state.photos,
-                )
+                ),
             )
-
-        }
+        },
     )
 }

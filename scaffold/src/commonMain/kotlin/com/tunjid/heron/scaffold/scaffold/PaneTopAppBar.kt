@@ -80,13 +80,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             AppLogo(
                 modifier = Modifier
                     .padding(start = 8.dp)
-                    .size(36.dp)
+                    .size(36.dp),
             )
         },
         title = title,
         actions = {
             AnimatedVisibility(
-                visible = signedInProfile != null
+                visible = signedInProfile != null,
             ) {
                 signedInProfile?.let { profile ->
                     AsyncImage(
@@ -100,7 +100,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                             .clickable {
                                 onSignedInProfileClicked(
                                     profile,
-                                    SignedInUserAvatarSharedElementKey
+                                    SignedInUserAvatarSharedElementKey,
                                 )
                             },
                         args = remember(profile) {
@@ -110,7 +110,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                 contentScale = ContentScale.Crop,
                                 shape = RoundedPolygonShape.Circle,
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -155,13 +155,13 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                             contentDescription = stringResource(Res.string.go_back),
                         )
                     }
-                }
+                },
             )
         },
         title = {
             Box(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = this)
+                    .animateBounds(lookaheadScope = this),
             ) {
                 title()
             }
@@ -201,7 +201,6 @@ private fun Modifier.rootAppBarBlur(
     shape = RectangleShape
     clip = false
 }
-
 
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }

@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-
 import ext.libs
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -22,7 +21,6 @@ fun org.gradle.api.Project.configureUiModule(
     extension: KotlinMultiplatformExtension,
 ) = extension.apply {
     sourceSets.apply {
-
         named("commonMain") {
             dependencies {
                 implementation(project(":data:models"))
@@ -34,34 +32,34 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":ui:tiling"))
                 implementation(project(":ui:timeline"))
 
-                api(libs.findLibrary("lifecycle-runtime").get())
-                api(libs.findLibrary("lifecycle-runtime-compose").get())
-                api(libs.findLibrary("lifecycle-viewmodel").get())
-                api(libs.findLibrary("lifecycle-viewmodel-compose").get())
+                api(libs.lifecycle.runtime)
+                api(libs.lifecycle.runtime.compose)
+                api(libs.lifecycle.viewmodel)
+                api(libs.lifecycle.viewmodel.compose)
 
-                api(libs.findLibrary("compose-components-resources").get())
-                api(libs.findLibrary("compose-runtime").get())
-                api(libs.findLibrary("compose-animation").get())
-                api(libs.findLibrary("compose-material-icons-extended").get())
-                api(libs.findLibrary("compose-material3").get())
-                api(libs.findLibrary("compose-foundation-layout").get())
+                api(libs.compose.components.resources)
+                api(libs.compose.runtime)
+                api(libs.compose.animation)
+                api(libs.compose.material.icons.extended)
+                api(libs.compose.material3)
+                api(libs.compose.foundation.layout)
 
-                api(libs.findLibrary("androidx-graphics-shapes").get())
+                api(libs.androidx.graphics.shapes)
 
-                api(libs.findLibrary("kotlinx-coroutines-core").get())
+                api(libs.kotlinx.coroutines.core)
 
-                api(libs.findLibrary("savedstate-savedstate").get())
-                api(libs.findLibrary("savedstate-compose").get())
+                api(libs.savedstate.savedstate)
+                api(libs.savedstate.compose)
 
-                api(libs.findLibrary("tunjid-mutator-core-common").get())
-                api(libs.findLibrary("tunjid-mutator-coroutines-common").get())
+                api(libs.tunjid.mutator.core.common)
+                api(libs.tunjid.mutator.coroutines.common)
 
-                api(libs.findLibrary("tunjid-composables").get())
+                api(libs.tunjid.composables)
 
-                api(libs.findLibrary("tunjid-treenav-compose").get())
-                api(libs.findLibrary("tunjid-treenav-compose-threepane").get())
-                api(libs.findLibrary("tunjid-treenav-core").get())
-                api(libs.findLibrary("tunjid-treenav-strings").get())
+                api(libs.tunjid.treenav.compose)
+                api(libs.tunjid.treenav.compose.threepane)
+                api(libs.tunjid.treenav.core)
+                api(libs.tunjid.treenav.strings)
             }
         }
         named("androidMain") {

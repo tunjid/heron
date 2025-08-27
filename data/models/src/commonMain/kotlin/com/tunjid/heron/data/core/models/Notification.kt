@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.types.GenericUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 sealed class Notification {
 
@@ -130,7 +129,6 @@ sealed class Notification {
         override val isRead: Boolean,
         override val indexedAt: Instant,
     ) : Notification()
-
 
     enum class Reason {
         Unknown,

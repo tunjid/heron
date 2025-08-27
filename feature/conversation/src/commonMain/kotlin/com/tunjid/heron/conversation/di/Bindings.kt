@@ -52,7 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -76,8 +76,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.conversationId by mappedRoutePath(
@@ -93,7 +93,7 @@ object ConversationNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -119,7 +119,7 @@ class ConversationBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -158,12 +158,12 @@ class ConversationBindings(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 profile = profile,
                                                 avatarSharedElementKey = profile.conversationSharedElementKey(
-                                                    conversationId = state.id
+                                                    conversationId = state.id,
                                                 ),
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
-                                }
+                                },
                             )
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
@@ -184,8 +184,8 @@ class ConversationBindings(
                                             conversationId = state.id,
                                             text = annotatedString.text,
                                             links = annotatedString.links(),
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             }
                         },
@@ -203,8 +203,8 @@ class ConversationBindings(
                             .padding(top = paddingValues.calculateTopPadding())
                             .imePadding(),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

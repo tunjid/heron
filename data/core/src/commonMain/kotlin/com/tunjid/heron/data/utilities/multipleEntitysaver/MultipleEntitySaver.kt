@@ -169,7 +169,6 @@ internal class MultipleEntitySaver(
 
     private val messageStarterPackEntities = LazyList<MessageStarterPackEntity>()
 
-
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
      * and clears the saved models for the next transaction.
@@ -177,10 +176,10 @@ internal class MultipleEntitySaver(
     suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
         val (fullProfileEntities, partialProfileEntities) = profileEntities.list.partition {
-            it.handle != Constants.unknownAuthorHandle
-                    && it.followersCount != null
-                    && it.followsCount != null
-                    && it.postsCount != null
+            it.handle != Constants.unknownAuthorHandle &&
+                it.followersCount != null &&
+                it.followsCount != null &&
+                it.postsCount != null
         }
         // Profiles from messages may just be empty profiles with Dids
         val (usablePartialProfileEntities, emptyProfileEntities) = partialProfileEntities.partition {
@@ -211,10 +210,10 @@ internal class MultipleEntitySaver(
                 it.commonFollowersCount != null
             }
         profileDao.upsertProfileViewers(
-            fullProfileViewerEntities
+            fullProfileViewerEntities,
         )
         profileDao.insertOrPartiallyUpdateProfileViewers(
-            partialProfileViewerEntities
+            partialProfileViewerEntities,
         )
 
         notificationsDao.upsertNotifications(notificationEntities.list)
@@ -241,8 +240,8 @@ internal class MultipleEntitySaver(
         messageDao.deleteMessageReactions(
             messageEntities.list.mapTo(
                 mutableSetOf(),
-                MessageEntity::id
-            )
+                MessageEntity::id,
+            ),
         )
         messageDao.upsertMessageReactions(messageReactionEntities.list)
         messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
@@ -328,6 +327,4 @@ internal class MultipleEntitySaver(
     private fun add(entity: VideoEntity) = videoEntities.add(entity)
 
     private fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
-
 }
-

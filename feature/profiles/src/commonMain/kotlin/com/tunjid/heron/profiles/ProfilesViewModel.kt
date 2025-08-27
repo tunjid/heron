@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.profiles
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -75,58 +74,59 @@ class ActualProfilesViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ProfilesStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-        tilingData = TilingState.Data(
-            currentQuery = when (val load = route.load) {
-                is Load.Post -> PostDataQuery(
-                    profileId = load.profileId,
-                    postRecordKey = load.postRecordKey,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
+) : ViewModel(viewModelScope = scope),
+    ProfilesStateHolder by scope.actionStateFlowMutator(
+        initialState = State(
+            tilingData = TilingState.Data(
+                currentQuery = when (val load = route.load) {
+                    is Load.Post -> PostDataQuery(
+                        profileId = load.profileId,
+                        postRecordKey = load.postRecordKey,
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
                     )
-                )
 
-                is Load.Profile -> ProfilesQuery(
-                    profileId = load.profileId,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
+                    is Load.Profile -> ProfilesQuery(
+                        profileId = load.profileId,
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
                     )
-                )
-            }
-        )
-    ),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadSignedInProfileIdMutations(
-            authRepository = authRepository
-        )
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Tile -> action.flow.profilesLoadMutations(
-                    load = route.load,
-                    stateHolder = this@transform,
-                    postRepository = postRepository,
-                    profileRepository = profileRepository,
-                )
+                },
+            ),
+        ),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadSignedInProfileIdMutations(
+                authRepository = authRepository,
+            ),
+        ),
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Tile -> action.flow.profilesLoadMutations(
+                        load = route.load,
+                        stateHolder = this@transform,
+                        postRepository = postRepository,
+                        profileRepository = profileRepository,
+                    )
 
-                is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
@@ -206,7 +206,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
                         followUri = following,
                         followedBy = action.followedBy,
                     )
-                }
-            )
+                },
+            ),
         )
     }

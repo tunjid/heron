@@ -18,9 +18,9 @@ package com.tunjid.heron.timeline.utilities
 
 import kotlin.time.Duration
 
-//fun Handle.color(): Color {
+// fun Handle.color(): Color {
 //  return Color(0xFF000000 or (hashCode().toLong() and 0x00FFFFFF))
-//}
+// }
 
 fun Duration.roundComponent() =
     toComponents { days, hours, minutes, seconds, _ ->

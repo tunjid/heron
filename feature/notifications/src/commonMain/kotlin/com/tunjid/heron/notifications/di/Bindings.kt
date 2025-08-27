@@ -18,7 +18,6 @@ package com.tunjid.heron.notifications.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
@@ -48,8 +47,10 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -84,7 +85,7 @@ object NotificationsNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -116,6 +117,9 @@ class NotificationsBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -123,6 +127,7 @@ class NotificationsBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -130,8 +135,11 @@ class NotificationsBindings(
                 },
                 topBar = {
                     RootDestinationTopAppBar(
-                        modifier = Modifier,
+                        modifier = Modifier.offset {
+                            topAppBarNestedScrollConnection.offset.round()
+                        },
                         signedInProfile = state.signedInProfile,
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -139,8 +147,8 @@ class NotificationsBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -160,10 +168,10 @@ class NotificationsBindings(
                                     composePostDestination(
                                         type = Post.Create.Timeline,
                                         sharedElementPrefix = null,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -186,16 +194,14 @@ class NotificationsBindings(
                         },
                     )
                 },
-                content = { contentPadding ->
+                content = {
                     NotificationsScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(top = contentPadding.calculateTopPadding()),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

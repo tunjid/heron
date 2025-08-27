@@ -42,7 +42,7 @@ internal object Migration17To18TimelineViewer : Migration(17, 18) {
                 `id` TEXT NOT NULL,
                 PRIMARY KEY(`id`)
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         // Remove the old table

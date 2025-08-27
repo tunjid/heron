@@ -27,10 +27,10 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
 actual fun timelinePreferenceDragAndDropTransferData(
-    title: String
+    title: String,
 ): DragAndDropTransferData = DragAndDropTransferData(
     transferable = DragAndDropTransferable(
-        StringSelection(title)
+        StringSelection(title),
     ),
     supportedActions = listOf(
         DragAndDropTransferAction.Move,
@@ -42,7 +42,7 @@ actual fun DragAndDropEvent.draggedId(): String? {
 }
 
 actual fun Modifier.timelinePreferenceDragAndDropSource(
-    sourceId: String
+    sourceId: String,
 ): Modifier = this.dragAndDropSource {
     timelinePreferenceDragAndDropTransferData(sourceId)
 }

@@ -86,9 +86,9 @@ import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @Composable
 internal fun GalleryScreen(
@@ -115,22 +115,22 @@ internal fun GalleryScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = state.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .clickable(
-                onClick = playerControlsUiState::toggleVisibility
-            )
+                onClick = playerControlsUiState::toggleVisibility,
+            ),
     ) {
         val updatedItems by rememberUpdatedState(state.items)
         val pagerState = rememberPagerState(
-            initialPage = state.startIndex
+            initialPage = state.startIndex,
         ) {
             updatedItems.size
         }
@@ -147,7 +147,7 @@ internal fun GalleryScreen(
                         .fillMaxSize()
                         .onSizeChanged {
                             windowSize = it
-                        }
+                        },
                 ) {
                     when (val item = updatedItems[page]) {
                         is GalleryItem.Photo -> {
@@ -167,7 +167,7 @@ internal fun GalleryScreen(
                                             coroutineScope.launch {
                                                 zoomState.toggleZoom()
                                             }
-                                        }
+                                        },
                                     ),
                                 scaffoldState = paneScaffoldState,
                                 item = item,
@@ -190,7 +190,7 @@ internal fun GalleryScreen(
                         )
                     }
                 }
-            }
+            },
         )
 
         videoPlayerController.VideoOverlay(
@@ -218,9 +218,9 @@ internal fun GalleryScreen(
                                 avatarSharedElementKey = post.avatarSharedElementKey(
                                     prefix = state.sharedElementPrefix,
                                 ),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current
-                            )
-                        )
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
                     )
                 },
             )
@@ -240,8 +240,8 @@ internal fun GalleryScreen(
                                     parent = post,
                                 ),
                                 sharedElementPrefix = state.sharedElementPrefix,
-                            )
-                        )
+                            ),
+                        ),
                     )
                 },
                 onPostInteraction = postInteractionState::onInteraction,
@@ -253,7 +253,7 @@ internal fun GalleryScreen(
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 VideoText(
                     post = state.post,
@@ -267,8 +267,8 @@ internal fun GalleryScreen(
                                 pathDestination(
                                     path = target.path,
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                )
-                            )
+                                ),
+                            ),
                         )
                     },
                 )
@@ -297,10 +297,10 @@ internal fun GalleryScreen(
                     null -> Unit
                     is GalleryItem.Photo -> Unit
                     is GalleryItem.Video -> videoPlayerController.play(
-                        media.video.playlist.uri
+                        media.video.playlist.uri,
                     )
                 }
-            }
+            },
         )
 
         playerControlsUiState.ControlsVisibilityEffect()
@@ -323,7 +323,7 @@ private fun GalleryImage(
                 key = item.image.sharedElementKey(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
-                )
+                ),
             )
         },
         state = remember(item.image) {
@@ -340,7 +340,7 @@ private fun GalleryImage(
                 modifier = innerModifier,
                 args = args,
             )
-        }
+        },
     )
 }
 
@@ -384,7 +384,7 @@ private fun GalleryVideo(
                 modifier = innerModifier,
                 state = state,
             )
-        }
+        },
     )
 }
 
@@ -398,7 +398,7 @@ private fun Modifier.aspectRatioFor(
         .fillMaxSize()
         .aspectRatio(
             ratio = aspectRatio.aspectRatioOrSquare,
-            matchHeightConstraintsFirst = isWiderAspectRatioThanMedia
+            matchHeightConstraintsFirst = isWiderAspectRatioThanMedia,
         )
 }
 
@@ -414,7 +414,7 @@ fun VideoPlayerController.VideoOverlay(
         is GalleryItem.Photo -> Unit
         is GalleryItem.Video -> {
             val videoPlayerState = getVideoStateById(
-                videoId = galleryItem.video.playlist.uri
+                videoId = galleryItem.video.playlist.uri,
             )
 
             if (videoPlayerState != null) AnimatedVisibility(
@@ -457,7 +457,6 @@ fun VideoPoster(
             onProfileClicked(post)
         },
         onViewerStateClicked = {
-
         },
     )
 }

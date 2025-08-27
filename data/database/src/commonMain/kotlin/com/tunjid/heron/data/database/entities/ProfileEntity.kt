@@ -27,7 +27,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "profiles",
 )
@@ -69,7 +68,7 @@ fun ProfileEntity.partial() = ProfileEntity.Partial(
     did = did,
     handle = handle,
     displayName = displayName,
-    avatar = avatar
+    avatar = avatar,
 )
 
 fun ProfileEntity?.asExternalModel() =

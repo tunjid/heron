@@ -88,7 +88,7 @@ fun Post(
 ) {
     Box(
         modifier = modifier
-            .childThreadNode(videoId = post.videoId)
+            .childThreadNode(videoId = post.videoId),
     ) {
         if (presentation == Timeline.Presentation.Text.WithEmbed) Box(
             modifier = Modifier
@@ -106,7 +106,7 @@ fun Post(
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
         val verticalPadding = when (presentation) {
             Timeline.Presentation.Text.WithEmbed -> 4.dp
@@ -143,7 +143,7 @@ private fun AttributionContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-            -> AttributionLayout(
+        -> AttributionLayout(
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Attribution,
@@ -175,7 +175,7 @@ private fun AttributionContent(
                     },
                     sharedElement = { state, modifier ->
                         AsyncImage(state, modifier)
-                    }
+                    },
                 )
             },
             label = {
@@ -187,7 +187,7 @@ private fun AttributionContent(
                     sharedElementPrefix = data.sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = this,
                 )
-            }
+            },
         )
 
         Timeline.Presentation.Media.Condensed -> Unit
@@ -202,7 +202,7 @@ private fun TextContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-            -> PostText(
+        -> PostText(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
             paneMovableElementSharedTransitionScope = this,
@@ -220,7 +220,7 @@ private fun TextContent(
             maxLines = when (data.presentation) {
                 Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
                 Timeline.Presentation.Media.Condensed -> throw IllegalArgumentException(
-                    "Condensed media should not show text"
+                    "Condensed media should not show text",
                 )
 
                 Timeline.Presentation.Media.Expanded -> 2
@@ -236,7 +236,7 @@ private fun TextContent(
                     post = post,
                     linkTarget = linkTarget,
                 )
-            }
+            },
         )
 
         Timeline.Presentation.Media.Condensed -> Unit
@@ -301,7 +301,7 @@ private fun ActionsContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-            -> PostInteractions(
+        -> PostInteractions(
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Actions,
@@ -416,18 +416,18 @@ private fun Modifier.contentPresentationPadding(
         }
 
         PostContent.Metadata -> 0.dp
-    }
+    },
 )
 
 private fun Embed?.asPostContent() = when (this) {
     is ImageList,
     is Video,
-        -> PostContent.Embed.Media
+    -> PostContent.Embed.Media
 
     null,
     UnknownEmbed,
     is ExternalEmbed,
-        -> PostContent.Embed.Link
+    -> PostContent.Embed.Link
 }
 
 @Composable
@@ -454,7 +454,7 @@ private fun rememberUpdatedPostData(
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
-            created = createdAt
+            created = createdAt,
         )
     }.also {
         if (it.presentation != presentation) it.presentationChanged = true
@@ -486,7 +486,7 @@ private class PostData(
 ) {
     var postActions by mutableStateOf(postActions)
     var paneMovableElementSharedTransitionScope by mutableStateOf(
-        paneMovableElementSharedTransitionScope
+        paneMovableElementSharedTransitionScope,
     )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
@@ -530,7 +530,7 @@ private val Timeline.Presentation.contentOrder
     }
 
 private val SpringSpec = spring<Rect>(
-    stiffness = Spring.StiffnessMediumLow
+    stiffness = Spring.StiffnessMediumLow,
 )
 
 private val TextAndEmbedOrder = listOf(

@@ -33,4 +33,7 @@ dependencies {
     implementation(libs.kotlin.serializationPlugin)
     implementation(libs.google.devtools.kspPlugin)
     implementation(libs.metro.gradlePlugin)
+
+    // TODO: https://github.com/gradle/gradle/issues/15383
+    implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }

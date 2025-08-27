@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.postdetail
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -67,32 +66,33 @@ class ActualPostDetailViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), PostDetailStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        postThreadsMutations(
-            route = route,
-            profileRepository = profileRepository,
-            timelineRepository = timelineRepository,
+) : ViewModel(viewModelScope = scope),
+    PostDetailStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            postThreadsMutations(
+                route = route,
+                profileRepository = profileRepository,
+                timelineRepository = timelineRepository,
+            ),
         ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 fun postThreadsMutations(
     route: Route,
@@ -104,7 +104,7 @@ fun postThreadsMutations(
         .let {
             PostUri(
                 profileId = it.did,
-                postRecordKey = route.postRecordKey
+                postRecordKey = route.postRecordKey,
             )
         }
     emitAll(
@@ -112,7 +112,7 @@ fun postThreadsMutations(
             .mapToMutation {
                 if (it.isEmpty()) this
                 else copy(items = it)
-            }
+            },
     )
 }
 

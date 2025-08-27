@@ -73,7 +73,7 @@ interface MessageDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun conversations(
         limit: Long,
@@ -88,7 +88,7 @@ interface MessageDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """
+        """,
     )
     fun messages(
         conversationId: String,
@@ -135,10 +135,11 @@ interface MessageDao {
     suspend fun upsertMessagePosts(
         entities: List<MessagePostEntity>,
     )
+
     @Query(
         """
         DELETE FROM conversations
-    """
+    """,
     )
     suspend fun deleteAllConversations()
 
@@ -146,7 +147,7 @@ interface MessageDao {
         """
         DELETE FROM messages
         WHERE conversationId = :conversationId
-    """
+    """,
     )
     suspend fun deleteAllMessages(
         conversationId: String,
@@ -156,7 +157,7 @@ interface MessageDao {
         """
         DELETE FROM messageReactions
         WHERE messageId in (:messageIds)
-    """
+    """,
     )
     suspend fun deleteMessageReactions(
         messageIds: Collection<MessageId>,

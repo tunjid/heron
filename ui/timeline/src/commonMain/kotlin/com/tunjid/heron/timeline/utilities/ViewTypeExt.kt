@@ -52,7 +52,7 @@ internal fun Modifier.presentationPadding(
 }
 
 internal fun Modifier.sensitiveContentBlur(
-    shape: Shape
+    shape: Shape,
 ) =
     drawWithCache {
         val density = Density(density)
@@ -71,7 +71,7 @@ internal fun Modifier.sensitiveContentBlur(
     }
         .blur(
             radius = 120.dp,
-            edgeTreatment = BlurredEdgeTreatment(shape)
+            edgeTreatment = BlurredEdgeTreatment(shape),
         )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

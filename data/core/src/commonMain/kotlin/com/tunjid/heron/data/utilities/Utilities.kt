@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities
 import androidx.collection.MutableObjectIntMap
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
+import kotlin.jvm.JvmInline
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import sh.christian.ozone.api.response.AtpResponse
-import kotlin.jvm.JvmInline
 
 internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     return try {
@@ -45,7 +45,7 @@ internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
     times: Int = 3,
     initialDelay: Long = 100, // 0.1 second
-    maxDelay: Long = 5000,    // 1 second
+    maxDelay: Long = 5000, // 1 second
     factor: Double = 2.0,
     crossinline block: suspend () -> AtpResponse<T>,
 ): Result<T> = coroutineScope scope@{
@@ -59,11 +59,11 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
         try {
             return@scope when (val atpResponse = block()) {
                 is AtpResponse.Failure -> Result.failure(
-                    Exception(atpResponse.error?.message)
+                    Exception(atpResponse.error?.message),
                 )
 
                 is AtpResponse.Success -> Result.success(
-                    atpResponse.response
+                    atpResponse.response,
                 )
             }.also { connectivityJob.cancel() }
         } catch (e: IOException) {
@@ -97,7 +97,7 @@ internal value class LazyList<T>(
     val lazyList: Lazy<MutableList<T>> = lazy(
         mode = LazyThreadSafetyMode.SYNCHRONIZED,
         initializer = ::mutableListOf,
-    )
+    ),
 ) {
     val list: List<T>
         get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
@@ -107,7 +107,7 @@ internal value class LazyList<T>(
 }
 
 internal inline fun <T, R> Collection<T>.toFlowOrEmpty(
-    crossinline block: (Collection<T>) -> Flow<List<R>>
+    crossinline block: (Collection<T>) -> Flow<List<R>>,
 ): Flow<List<R>> =
     when {
         isEmpty() -> emptyFlow()

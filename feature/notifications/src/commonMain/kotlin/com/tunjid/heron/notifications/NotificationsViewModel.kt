@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.repository.AuthRepository
@@ -69,43 +68,43 @@ class ActualNotificationsViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), NotificationsStateHolder by scope.actionStateFlowMutator(
-    initialState = State(
-    ),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        lastRefreshedMutations(
-            notificationsRepository
+) : ViewModel(viewModelScope = scope),
+    NotificationsStateHolder by scope.actionStateFlowMutator(
+        initialState = State(),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            lastRefreshedMutations(
+                notificationsRepository,
+            ),
+            loadProfileMutations(
+                authRepository,
+            ),
         ),
-        loadProfileMutations(
-            authRepository
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.Tile -> action.flow.notificationsMutations(
-                    stateHolder = this@transform,
-                    notificationsRepository = notificationsRepository,
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Tile -> action.flow.notificationsMutations(
+                        stateHolder = this@transform,
+                        notificationsRepository = notificationsRepository,
+                    )
 
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
-                    notificationsRepository = notificationsRepository,
-                )
+                    is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
+                        notificationsRepository = notificationsRepository,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,
@@ -127,11 +126,11 @@ fun lastRefreshedMutations(
                     is TilingState.Status.Refreshing -> {
                         if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
                         else TilingState.Status.Refreshed(
-                            cursorAnchor = tilingData.currentQuery.data.cursorAnchor
+                            cursorAnchor = tilingData.currentQuery.data.cursorAnchor,
                         )
                     }
-                }
-            )
+                },
+            ),
         )
     }
 

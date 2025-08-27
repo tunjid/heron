@@ -51,12 +51,13 @@ internal fun MultipleEntitySaver.add(
             entity = ConversationMembersEntity(
                 conversationId = convoView.id.let(::ConversationId),
                 memberId = member.did.did.let(::ProfileId),
-            )
+            ),
         )
     }
     val lastMessageId = when (val lastMessage = convoView.lastMessage) {
         is ConvoViewLastMessageUnion.Unknown,
-        null -> null
+        null,
+        -> null
         is ConvoViewLastMessageUnion.DeletedMessageView -> {
             add(
                 conversationId = convoView.id.let(::ConversationId),
@@ -77,7 +78,8 @@ internal fun MultipleEntitySaver.add(
 
     val lastReactedToMessageId = when (val lastReaction = convoView.lastReaction) {
         is ConvoViewLastReactionUnion.Unknown,
-        null -> null
+        null,
+        -> null
 
         is ConvoViewLastReactionUnion.MessageAndReactionView -> {
             add(
@@ -91,7 +93,7 @@ internal fun MultipleEntitySaver.add(
                     messageId = lastReaction.value.message.id.let(::MessageId),
                     senderId = lastReaction.value.reaction.sender.did.did.let(::ProfileId),
                     createdAt = lastReaction.value.reaction.createdAt,
-                )
+                ),
             )
             lastReaction.value.message.id.let(::MessageId)
         }
@@ -106,6 +108,6 @@ internal fun MultipleEntitySaver.add(
             muted = convoView.muted,
             status = convoView.status?.value,
             unreadCount = convoView.unreadCount,
-        )
+        ),
     )
 }

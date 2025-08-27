@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.home
 
-
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
@@ -42,12 +41,12 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -70,45 +69,46 @@ class ActualHomeViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), HomeStateHolder by scope.actionStateFlowMutator(
-    initialState = State(),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        timelineMutations(
-            scope = scope,
-            timelineRepository = timelineRepository,
+) : ViewModel(viewModelScope = scope),
+    HomeStateHolder by scope.actionStateFlowMutator(
+        initialState = State(),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            timelineMutations(
+                scope = scope,
+                timelineRepository = timelineRepository,
+            ),
+            loadProfileMutations(
+                authRepository,
+            ),
         ),
-        loadProfileMutations(
-            authRepository
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
-                is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                    writeQueue = writeQueue,
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.RefreshCurrentTab -> action.flow.tabRefreshMutations(
-                    stateHolder = this@transform,
-                )
+                    is Action.RefreshCurrentTab -> action.flow.tabRefreshMutations(
+                        stateHolder = this@transform,
+                    )
 
-                is Action.UpdateTimeline -> action.flow.saveTimelinePreferencesMutations(
-                    writeQueue = writeQueue,
-                )
+                    is Action.UpdateTimeline -> action.flow.saveTimelinePreferencesMutations(
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
-                is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
+                    is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadProfileMutations(
     authRepository: AuthRepository,
@@ -141,7 +141,7 @@ private fun timelineMutations(
 
                 if (timeline.isPinned) HomeScreenStateHolders.Pinned(timelineStateHolder)
                 else HomeScreenStateHolders.Saved(timelineStateHolder)
-            }
+            },
         )
     }
 
@@ -170,13 +170,12 @@ private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
                             TabLayout.Collapsed.All -> tabLayout
                             TabLayout.Collapsed.Selected -> tabLayout
                             TabLayout.Expanded -> TabLayout.Collapsed.Selected
-                        }
+                        },
                     )
                 }
             }
         }
     }
-
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
@@ -185,14 +184,12 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
-private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
-): Flow<Mutation<State>> =
+private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(currentSourceId = action.sourceId)
     }
 
-private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(
-): Flow<Mutation<State>> =
+private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(tabLayout = action.layout)
     }

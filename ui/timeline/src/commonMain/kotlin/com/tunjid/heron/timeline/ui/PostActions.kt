@@ -81,18 +81,18 @@ fun postActions(
     override fun onPostInteraction(
         interaction: Post.Interaction,
     ) = onPostInteraction(
-        interaction
+        interaction,
     )
 
     override fun onPostMetadataClicked(
         metadata: Post.Metadata,
     ) = onPostMetadataClicked(
-        metadata
+        metadata,
     )
 
     override fun onLinkTargetClicked(
         post: Post,
-        linkTarget: LinkTarget
+        linkTarget: LinkTarget,
     ) = onLinkTargetClicked(
         post,
         linkTarget,

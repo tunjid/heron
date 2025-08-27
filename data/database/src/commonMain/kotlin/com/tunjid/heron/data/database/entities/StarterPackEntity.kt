@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "starterPacks",
     foreignKeys = [
@@ -62,13 +61,12 @@ data class StarterPackEntity(
     val createdAt: Instant,
 )
 
-
 data class PopulatedStarterPackEntity(
     @Embedded
     val entity: StarterPackEntity,
     @Relation(
         parentColumn = "creatorId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val creator: ProfileEntity?,
     @Relation(
@@ -93,7 +91,7 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         list = creator?.let { profileEntity ->
             list?.asExternalModel(
                 creator = profileEntity.asExternalModel(),
-                labels = emptyList()
+                labels = emptyList(),
             )
         },
         joinedWeekCount = entity.joinedWeekCount,
@@ -101,4 +99,3 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         indexedAt = entity.indexedAt,
         labels = labelEntities.map(LabelEntity::asExternalModel),
     )
-

@@ -154,13 +154,13 @@ import heron.feature.profile.generated.resources.followers
 import heron.feature.profile.generated.resources.following
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.posts
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ProfileScreen(
@@ -218,7 +218,7 @@ internal fun ProfileScreen(
                     updatedStateHolders
                         .getOrNull(pagerState.currentPage)
                         ?.refresh()
-                }
+                },
             ),
         state = headerState.headerState,
         headerContent = {
@@ -255,7 +255,7 @@ internal fun ProfileScreen(
                                 viewedProfileId = state.profile.did,
                                 following = viewerState?.following,
                                 followedBy = viewerState?.followedBy,
-                            )
+                            ),
                         )
                     }
                 },
@@ -267,7 +267,7 @@ internal fun ProfileScreen(
                         Action.Navigate.ToAvatar(
                             profile = state.profile,
                             avatarSharedElementKey = state.avatarSharedElementKey,
-                        )
+                        ),
                     )
                 },
             )
@@ -308,8 +308,8 @@ internal fun ProfileScreen(
                                                         models = listOf(it),
                                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    )
-                                                )
+                                                    ),
+                                                ),
                                             )
                                         },
                                         onFeedGeneratorStatusUpdated = { update ->
@@ -338,8 +338,8 @@ internal fun ProfileScreen(
                                                         models = listOf(it),
                                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    )
-                                                )
+                                                    ),
+                                                ),
                                             )
                                         },
                                     )
@@ -365,14 +365,13 @@ internal fun ProfileScreen(
                                                         models = listOf(it),
                                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    )
-                                                )
+                                                    ),
+                                                ),
                                             )
                                         },
                                     )
                                 },
                             )
-
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 paneScaffoldState = paneScaffoldState,
@@ -380,10 +379,10 @@ internal fun ProfileScreen(
                                 actions = actions,
                             )
                         }
-                    }
+                    },
                 )
             }
-        }
+        },
     )
 }
 
@@ -428,7 +427,7 @@ private fun ProfileHeader(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth(),
     ) {
         ProfileBanner(
             modifier = Modifier
@@ -441,7 +440,7 @@ private fun ProfileHeader(
                 .padding(top = headerState.bioTopPadding)
                 .offset {
                     headerState.bioOffset()
-                }
+                },
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -453,7 +452,7 @@ private fun ProfileHeader(
                                 topStart = 16.dp,
                                 topEnd = 16.dp,
                             )
-                        }
+                        },
                     )
                     .padding(horizontal = 16.dp)
                     .graphicsLayer {
@@ -506,7 +505,7 @@ private fun ProfileHeader(
                         start = Alignment.TopCenter,
                         stop = Alignment.TopEnd,
                         fraction = headerState.avatarAlignmentLerp,
-                    )
+                    ),
                 ),
             headerState = headerState,
             isRefreshing = isRefreshing,
@@ -565,13 +564,13 @@ private fun ProfileAvatar(
             .offset {
                 headerState.avatarOffset(
                     density = this,
-                    statusBarHeight = statusBarHeight
+                    statusBarHeight = statusBarHeight,
                 )
             },
     ) {
         val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
         val scale = animateFloatAsState(
-            if (showWave) 1.2f else 1f
+            if (showWave) 1.2f else 1f,
         )
         CircularWavyProgressIndicator(
             progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
@@ -582,7 +581,7 @@ private fun ProfileAvatar(
                 .graphicsLayer {
                     scaleX = scale.value
                     scaleY = scale.value
-                }
+                },
         )
         paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
@@ -608,11 +607,10 @@ private fun ProfileAvatar(
             },
             sharedElement = { state, modifier ->
                 AsyncImage(state, modifier)
-            }
+            },
         )
     }
 }
-
 
 @Composable
 private fun ProfileHeadline(
@@ -648,7 +646,7 @@ private fun ProfileHeadline(
                         isSignedInProfile = isSignedInProfile,
                         onClick = {
                             onViewerStateClicked(viewerState)
-                        }
+                        },
                     )
                 },
             )
@@ -693,11 +691,11 @@ private fun ProfileStats(
         Statistic(
             value = profile.postsCount ?: 0,
             description = stringResource(Res.string.posts),
-            onClick = {}
+            onClick = {},
         )
         Box(
             Modifier
-                .weight(1f)
+                .weight(1f),
         ) {
             if (followsSignInProfile) Text(
                 modifier = Modifier
@@ -774,7 +772,7 @@ private fun CommonFollowers(
                         },
                     )
                 }
-            }
+            },
         )
         Text(
             text = stringResource(
@@ -791,10 +789,10 @@ private fun CommonFollowers(
                         transform = { it.displayName ?: "" },
                         postfix = stringResource(
                             Res.string.followed_by_others,
-                            (commonFollowerCount?.toInt() ?: size) - 2
+                            (commonFollowerCount?.toInt() ?: size) - 2,
                         ),
                     )
-                }
+                },
             ),
             style = MaterialTheme.typography.bodySmall,
         )
@@ -814,7 +812,7 @@ private fun ProfileTabs(
         modifier = modifier
             .clip(CircleShape),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Tabs(
             modifier = Modifier
@@ -867,10 +865,10 @@ private fun ProfileTimeline(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     LookaheadScope {
@@ -878,8 +876,8 @@ private fun ProfileTimeline(
             modifier = Modifier
                 .padding(
                     horizontal = animateDpAsState(
-                        presentation.timelineHorizontalPadding
-                    ).value
+                        presentation.timelineHorizontalPadding,
+                    ).value,
                 )
                 .fillMaxSize()
                 .onSizeChanged {
@@ -889,15 +887,15 @@ private fun ProfileTimeline(
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
                             tilingAction = TilingState.Action.GridSize(
-                                numColumns = floor(it.width / itemWidth).roundToInt()
-                            )
-                        )
+                                numColumns = floor(it.width / itemWidth).roundToInt(),
+                            ),
+                        ),
                     )
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(
                 items = items,
@@ -908,7 +906,7 @@ private fun ProfileTimeline(
                             .fillMaxWidth()
                             .animateItem()
                             .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item)
+                                state = videoStates.getOrCreateStateFor(item),
                             ),
                         paneMovableElementSharedTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
@@ -924,8 +922,8 @@ private fun ProfileTimeline(
                                             pathDestination(
                                                 path = linkTarget.path,
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostClicked = { post: Post, quotingPostUri: PostUri? ->
@@ -939,8 +937,8 @@ private fun ProfileTimeline(
                                                     quotingPostUri = quotingPostUri,
                                                 ),
                                                 post = post,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
@@ -956,9 +954,9 @@ private fun ProfileTimeline(
                                                         prefix = timelineState.timeline.sourceId,
                                                         quotingPostUri = quotingPostUri,
                                                     )
-                                                    .takeIf { post.author.did == profile.did }
-                                            )
-                                        )
+                                                    .takeIf { post.author.did == profile.did },
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
@@ -973,8 +971,8 @@ private fun ProfileTimeline(
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                     quotingPostUri = quotingPostUri,
                                                 ),
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
@@ -988,15 +986,15 @@ private fun ProfileTimeline(
                                                     parent = post,
                                                 ),
                                                 sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                            )
-                                        )
+                                            ),
+                                        ),
                                     )
                                 },
                                 onPostInteraction = postInteractionState::onInteraction,
                             )
                         },
                     )
-                }
+                },
             )
         }
     }
@@ -1024,16 +1022,16 @@ private fun ProfileTimeline(
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: timelineState.tilingData.currentQuery
-                    )
-                )
+                        query = query ?: timelineState.tilingData.currentQuery,
+                    ),
+                ),
             )
-        }
+        },
     )
 
     gridState.TimelineRefreshEffect(
         timelineState = timelineState,
-        onRefresh = { animateScrollToItem(index = 0) }
+        onRefresh = { animateScrollToItem(index = 0) },
     )
 }
 
@@ -1066,9 +1064,9 @@ private fun TimelinePresentationSelector(
                     TimelineState.Action.UpdatePreferredPresentation(
                         timeline = timeline,
                         presentation = presentation,
-                    )
+                    ),
                 )
-        }
+        },
     )
 }
 
@@ -1092,7 +1090,7 @@ private class HeaderState(
 
     fun bioOffset() = IntOffset(
         x = 0,
-        y = -headerState.translation.roundToInt()
+        y = -headerState.translation.roundToInt(),
     )
 
     fun avatarOffset(
@@ -1101,7 +1099,7 @@ private class HeaderState(
     ) = with(density) {
         IntOffset(
             x = -(16.dp * progress).roundToPx(),
-            y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx()
+            y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx(),
         )
     }
 

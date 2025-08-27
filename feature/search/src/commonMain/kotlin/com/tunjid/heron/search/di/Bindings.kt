@@ -40,12 +40,14 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.search.ui.SearchBar
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -81,7 +83,7 @@ object SearchNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 
     @Provides
@@ -90,7 +92,7 @@ object SearchNavigationBindings {
     fun provideRouteQueryMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteQueryPattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -132,6 +134,9 @@ class SearchBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -139,6 +144,7 @@ class SearchBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -146,23 +152,26 @@ class SearchBindings(
                 },
                 topBar = {
                     if (state.isQueryEditable) RootDestinationTopAppBar(
-                        modifier = Modifier,
+                        modifier = Modifier.offset {
+                            topAppBarNestedScrollConnection.offset.round()
+                        },
                         signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
                                 onQueryChanged = { query ->
                                     viewModel.accept(
-                                        Action.Search.OnSearchQueryChanged(query)
+                                        Action.Search.OnSearchQueryChanged(query),
                                     )
                                 },
                                 onQueryConfirmed = {
                                     viewModel.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false)
+                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                                     )
-                                }
+                                },
                             )
                         },
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -170,8 +179,8 @@ class SearchBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -182,9 +191,10 @@ class SearchBindings(
                                 style = MaterialTheme.typography.titleSmallEmphasized,
                             )
                         },
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -205,8 +215,8 @@ class SearchBindings(
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

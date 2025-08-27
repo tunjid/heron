@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
+import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
@@ -34,8 +36,6 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
-import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
-import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -43,7 +43,7 @@ internal fun MultipleEntitySaver.add(
     messageView: MessageView,
 ) {
     add(
-        entity = emptyProfileEntity(messageView.sender.did)
+        entity = emptyProfileEntity(messageView.sender.did),
     )
 
     add(
@@ -55,7 +55,7 @@ internal fun MultipleEntitySaver.add(
             conversationId = conversationId,
             isDeleted = false,
             sentAt = messageView.sentAt,
-        )
+        ),
     )
     messageView.reactions.forEach { reactionView ->
         add(
@@ -64,7 +64,7 @@ internal fun MultipleEntitySaver.add(
                 messageId = messageView.id.let(::MessageId),
                 senderId = reactionView.sender.did.did.let(::ProfileId),
                 createdAt = reactionView.createdAt,
-            )
+            ),
         )
     }
 
@@ -79,7 +79,7 @@ internal fun MultipleEntitySaver.add(
                     entity = MessageFeedGeneratorEntity(
                         messageId = messageView.id.let(::MessageId),
                         feedGeneratorUri = record.value.uri.atUri.let(::FeedGeneratorUri),
-                    )
+                    ),
                 )
             }
 
@@ -91,7 +91,7 @@ internal fun MultipleEntitySaver.add(
                     entity = MessageListEntity(
                         messageId = messageView.id.let(::MessageId),
                         listUri = record.value.uri.atUri.let(::ListUri),
-                    )
+                    ),
                 )
             }
 
@@ -103,7 +103,7 @@ internal fun MultipleEntitySaver.add(
                     entity = MessageStarterPackEntity(
                         messageId = messageView.id.let(::MessageId),
                         starterPackUri = record.value.uri.atUri.let(::StarterPackUri),
-                    )
+                    ),
                 )
             }
 
@@ -111,7 +111,8 @@ internal fun MultipleEntitySaver.add(
             is RecordViewRecordUnion.Unknown,
             is RecordViewRecordUnion.ViewBlocked,
             is RecordViewRecordUnion.ViewDetached,
-            is RecordViewRecordUnion.ViewNotFound -> {
+            is RecordViewRecordUnion.ViewNotFound,
+            -> {
                 Unit
             }
 
@@ -164,7 +165,7 @@ private fun MultipleEntitySaver.add(
             entity = MessagePostEntity(
                 messageId = messageId,
                 postUri = postView.uri.atUri.let(::PostUri),
-            )
+            ),
         )
     }
 }
@@ -174,7 +175,7 @@ internal fun MultipleEntitySaver.add(
     deletedMessageView: DeletedMessageView,
 ) {
     add(
-        entity = emptyProfileEntity(deletedMessageView.sender.did)
+        entity = emptyProfileEntity(deletedMessageView.sender.did),
     )
 
     add(
@@ -186,6 +187,6 @@ internal fun MultipleEntitySaver.add(
             senderId = deletedMessageView.sender.did.did.let(::ProfileId),
             conversationId = conversationId,
             sentAt = deletedMessageView.sentAt,
-        )
+        ),
     )
 }

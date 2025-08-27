@@ -24,7 +24,6 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "labels",
     primaryKeys = [

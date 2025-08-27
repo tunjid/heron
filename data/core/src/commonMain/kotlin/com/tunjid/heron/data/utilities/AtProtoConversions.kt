@@ -17,10 +17,12 @@
 package com.tunjid.heron.data.utilities
 
 import app.bsky.embed.AspectRatio
+import app.bsky.embed.Images as BskyImages
 import app.bsky.embed.ImagesImage
 import app.bsky.embed.Record
 import app.bsky.embed.RecordWithMedia
 import app.bsky.embed.RecordWithMediaMediaUnion
+import app.bsky.embed.Video as BskyVideo
 import app.bsky.feed.PostEmbedUnion
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetByteSlice
@@ -40,8 +42,6 @@ import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Uri as BskyUri
 import sh.christian.ozone.api.model.Blob
-import app.bsky.embed.Images as BskyImages
-import app.bsky.embed.Video as BskyVideo
 
 internal sealed class MediaBlob {
     data class Image(
@@ -82,12 +82,12 @@ internal fun postEmbedUnion(
                 media = video
                     ?.let { RecordWithMediaMediaUnion.Video(it) }
                     ?: images?.let { RecordWithMediaMediaUnion.Images(it) }
-                    ?: throw IllegalArgumentException("Media should exist")
-            )
+                    ?: throw IllegalArgumentException("Media should exist"),
+            ),
         )
 
         record != null -> PostEmbedUnion.Record(
-            value = record
+            value = record,
         )
 
         video != null -> PostEmbedUnion.Video(video)
@@ -104,15 +104,15 @@ internal fun List<Link>.facet(): List<Facet> = map { link ->
         ),
         features = when (val target = link.target) {
             is LinkTarget.ExternalLink -> listOf(
-                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri)))
+                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri))),
             )
 
             is LinkTarget.UserDidMention -> listOf(
-                FacetFeatureMention(FacetMention(target.did.id.let(::Did)))
+                FacetFeatureMention(FacetMention(target.did.id.let(::Did))),
             )
 
             is LinkTarget.Hashtag -> listOf(
-                FacetFeatureTag(FacetTag(target.tag))
+                FacetFeatureTag(FacetTag(target.tag)),
             )
 
             is LinkTarget.UserHandleMention -> emptyList()
@@ -125,7 +125,7 @@ private fun Post.Interaction.Create.Repost.toRecord(): Record =
         record = StrongRef(
             uri = AtUri(postUri.uri),
             cid = Cid(postId.id),
-        )
+        ),
     )
 
 private fun List<MediaBlob>.video(): BskyVideo? =
@@ -137,8 +137,8 @@ private fun List<MediaBlob>.video(): BskyVideo? =
                 alt = videoFile.file.altText,
                 aspectRatio = AspectRatio(
                     videoFile.file.width,
-                    videoFile.file.height
-                )
+                    videoFile.file.height,
+                ),
             )
         }
 
@@ -150,8 +150,8 @@ private fun List<MediaBlob>.images(): BskyImages? =
                 alt = photoFile.file.altText,
                 aspectRatio = AspectRatio(
                     photoFile.file.width,
-                    photoFile.file.height
-                )
+                    photoFile.file.height,
+                ),
             )
         }
         .takeUnless(List<ImagesImage>::isEmpty)

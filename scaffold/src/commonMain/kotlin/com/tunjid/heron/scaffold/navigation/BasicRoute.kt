@@ -25,5 +25,5 @@ fun <T : Route> routePatternAndMatcher(
     routeMapper: (RouteParams) -> T,
 ) = routePattern to urlRouteMatcher(
     routePattern = routePattern,
-    routeMapper = routeMapper
+    routeMapper = routeMapper,
 )

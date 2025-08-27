@@ -90,7 +90,7 @@ object SignInNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -145,7 +145,7 @@ class SignInBindings(
                             when {
                                 state.canSignInLater -> Res.string.sign_in_later
                                 else -> Res.string.sign_in
-                            }
+                            },
                         ),
                         icon = when {
                             state.canSignInLater -> Icons.Rounded.Timer
@@ -157,9 +157,9 @@ class SignInBindings(
                                 when {
                                     state.canSignInLater -> Action.Submit.GuestAuth
                                     else -> Action.Submit.Auth(state.sessionRequest)
-                                }
+                                },
                             )
-                        }
+                        },
                     )
                 },
                 content = { paddingValues ->
@@ -169,9 +169,9 @@ class SignInBindings(
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }
 
@@ -182,7 +182,7 @@ private fun PaneScaffoldState.TopBar() {
             AppLogo(
                 modifier = Modifier
                     .padding(start = 8.dp)
-                    .size(36.dp)
+                    .size(36.dp),
             )
         },
         title = {},
@@ -194,7 +194,7 @@ private fun PaneScaffoldState.TopBar() {
                         text = stringResource(Res.string.create_an_account),
                         maxLines = 1,
                     )
-                }
+                },
             )
         },
     )

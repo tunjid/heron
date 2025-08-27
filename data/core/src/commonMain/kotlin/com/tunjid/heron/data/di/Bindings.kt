@@ -78,7 +78,7 @@ class DataBindingArgs(
 
 @BindingContainer
 class DataBindings(
-    private val args: DataBindingArgs
+    private val args: DataBindingArgs,
 ) {
 
     @Named("AppScope")
@@ -104,8 +104,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideTidGenerator(
-    ): TidGenerator = TidGenerator()
+    internal fun provideTidGenerator(): TidGenerator = TidGenerator()
 
     @SingleIn(AppScope::class)
     @Provides
@@ -197,60 +196,60 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideKtorNetworkService(
-        ktorNetworkService: KtorNetworkService
+        ktorNetworkService: KtorNetworkService,
     ): NetworkService = ktorNetworkService
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideSnapshotWriteQueue(
-        snapshotWriteQueue: SnapshotWriteQueue
+        snapshotWriteQueue: SnapshotWriteQueue,
     ): WriteQueue = snapshotWriteQueue
 
     @SingleIn(AppScope::class)
     @Provides
     private fun provideDataStoreSavedStateRepository(
-        dataStoreSavedStateRepository: DataStoreSavedStateDataSource
+        dataStoreSavedStateRepository: DataStoreSavedStateDataSource,
     ): SavedStateDataSource = dataStoreSavedStateRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideAuthTokenRepository(
-        authTokenRepository: AuthTokenRepository
+        authTokenRepository: AuthTokenRepository,
     ): AuthRepository = authTokenRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineTimelineRepository(
-        offlineTimelineRepository: OfflineTimelineRepository
+        offlineTimelineRepository: OfflineTimelineRepository,
     ): TimelineRepository = offlineTimelineRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineProfileRepository(
-        offlineProfileRepository: OfflineProfileRepository
+        offlineProfileRepository: OfflineProfileRepository,
     ): ProfileRepository = offlineProfileRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineNotificationsRepository(
-        offlineNotificationsRepository: OfflineNotificationsRepository
+        offlineNotificationsRepository: OfflineNotificationsRepository,
     ): NotificationsRepository = offlineNotificationsRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineSearchRepository(
-        offlineSearchRepository: OfflineSearchRepository
+        offlineSearchRepository: OfflineSearchRepository,
     ): SearchRepository = offlineSearchRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflinePostRepository(
-        offlinePostRepository: OfflinePostRepository
+        offlinePostRepository: OfflinePostRepository,
     ): PostRepository = offlinePostRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineMessageRepository(
-        offlineMessageRepository: OfflineMessageRepository
+        offlineMessageRepository: OfflineMessageRepository,
     ): MessageRepository = offlineMessageRepository
 }

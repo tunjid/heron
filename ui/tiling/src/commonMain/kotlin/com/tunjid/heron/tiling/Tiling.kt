@@ -33,6 +33,7 @@ import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
+import kotlin.math.max
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -46,7 +47,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlin.math.max
 
 interface TilingState<Query : CursorQuery, Item> {
 
@@ -111,7 +111,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
         initial = Pair(
             MutableStateFlow(startingState.currentQuery),
             MutableStateFlow(startingState.numColumns),
-        )
+        ),
     ) { accumulator, action ->
         val (queries, numColumns) = accumulator
         // update backing states as a side effect
@@ -122,7 +122,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
 
             is TilingState.Action.LoadAround -> {
                 if (action.query !is Query) throw IllegalArgumentException(
-                    "Expected query of ${Query::class}, got ${action.query::class}"
+                    "Expected query of ${Query::class}, got ${action.query::class}",
                 )
                 val lastQuery = queries.value
 
@@ -161,7 +161,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                             )
 
                             else -> status
-                        }
+                        },
                     )
                 },
                 numColumns.mapToMutation {
@@ -178,7 +178,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                                 startingQuery = refreshedQuery,
                                 cursorListLoader = cursorListLoader,
                                 updatePage = updateQueryData,
-                            )
+                            ),
                         )
                 }
                     .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
@@ -190,12 +190,12 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                                     val fetchedQuery = items.queryAt(0)
                                     if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
                                     else TilingState.Status.Refreshed(
-                                        cursorAnchor = fetchedQuery.data.cursorAnchor
+                                        cursorAnchor = fetchedQuery.data.cursorAnchor,
                                     )
                                 }
 
                                 else -> status
-                            }
+                            },
                         )
                         else this
                     },
@@ -208,7 +208,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
 }
 
 inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).mapCursorList(
-    crossinline mapper: (T) -> R
+    crossinline mapper: (T) -> R,
 ): (Query, Cursor) -> Flow<CursorList<R>> = { query, cursor ->
     invoke(query, cursor).map { cursorList ->
         cursorList.mapCursorList(mapper)
@@ -257,10 +257,10 @@ inline fun <Query : CursorQuery, Item> cursorTileInputs(
                 },
                 nextQuery = {
                     updatePage(data.copy(page = data.page + 1))
-                }
+                },
             )
-        }
-    )
+        },
+    ),
 )
 
 fun <Query : CursorQuery, Item> cursorListTiler(
@@ -276,13 +276,12 @@ fun <Query : CursorQuery, Item> cursorListTiler(
         startingQuery = startingQuery,
         nextPage = updatePage,
         cursorListLoader = cursorListLoader,
-    )
+    ),
 )
 
 fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query ->
     query.data.page
 }
-
 
 private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
     startingQuery: Query,
@@ -295,7 +294,7 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
         seedQueryTokenMap = mapOf(
-            startingQuery to Cursor.Initial
+            startingQuery to Cursor.Initial,
         ),
         fetcher = { query, cursor ->
             cursorListLoader(query, cursor)
@@ -307,10 +306,10 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
                             Pair(
                                 first = query.nextPage(query.data.copy(page = query.data.page + 1)),
                                 second = networkCursorList.nextCursor,
-                            )
+                            ),
                         ),
-                        items = networkCursorList
+                        items = networkCursorList,
                     )
                 }
-        }
+        },
     )

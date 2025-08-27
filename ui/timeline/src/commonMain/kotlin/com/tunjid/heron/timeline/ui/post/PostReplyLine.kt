@@ -56,7 +56,7 @@ internal fun PostReplyLine(
         Text(
             text = stringResource(
                 Res.string.reply_to,
-                replyingTo.displayName ?: replyingTo.handle.id
+                replyingTo.displayName ?: replyingTo.handle.id,
             ),
             maxLines = 1,
             style = MaterialTheme.typography.bodySmall,

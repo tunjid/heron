@@ -49,9 +49,8 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 
-
 @DependencyGraph(
-    scope = AppScope::class
+    scope = AppScope::class,
 )
 interface AppGraph {
 
@@ -75,7 +74,7 @@ interface AppGraph {
             @Includes profilesBindings: ProfilesBindings,
             @Includes searchBindings: SearchBindings,
             @Includes splashBindings: SplashBindings,
-            @Includes settingsBindings: SettingsBindings
+            @Includes settingsBindings: SettingsBindings,
         ): AppGraph
     }
 

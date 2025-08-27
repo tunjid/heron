@@ -25,11 +25,11 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
 actual fun timelinePreferenceDragAndDropTransferData(
-    title: String
+    title: String,
 ): DragAndDropTransferData =
     DragAndDropTransferData(
         clipData = ClipData.newPlainText("Drag timeline", title),
-        localState = title
+        localState = title,
     )
 
 actual fun DragAndDropEvent.draggedId(): String? =
@@ -37,16 +37,16 @@ actual fun DragAndDropEvent.draggedId(): String? =
 
 @Suppress("DEPRECATION")
 actual fun Modifier.timelinePreferenceDragAndDropSource(
-    sourceId: String
+    sourceId: String,
 ): Modifier = dragAndDropSource(
     block = {
         detectDragGesturesAfterLongPress(
             onDragStart = {
                 startTransfer(
-                    timelinePreferenceDragAndDropTransferData(sourceId)
+                    timelinePreferenceDragAndDropTransferData(sourceId),
                 )
             },
-            onDrag = { _, _ -> }
+            onDrag = { _, _ -> },
         )
-    }
+    },
 )

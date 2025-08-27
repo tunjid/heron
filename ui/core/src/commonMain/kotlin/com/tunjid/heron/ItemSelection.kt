@@ -59,7 +59,7 @@ inline fun <T> ItemSelection(
     var expandedItem by remember {
         mutableStateOf(
             if (alwaysExpanded) selectedItem
-            else null
+            else null,
         )
     }
     LookaheadScope {
@@ -99,11 +99,11 @@ inline fun <T> ItemSelection(
                                     Icon(
                                         imageVector = item.icon(),
                                         contentDescription = org.jetbrains.compose.resources.stringResource(
-                                            item.stringResource()
+                                            item.stringResource(),
                                         ),
                                         tint =
-                                            if (item == selectedItem) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface
+                                        if (item == selectedItem) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurface,
                                     )
                                 },
                             )

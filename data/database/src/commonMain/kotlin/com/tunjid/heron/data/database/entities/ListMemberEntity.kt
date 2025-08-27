@@ -30,7 +30,6 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlinx.datetime.Instant
 
-
 @Entity(
     tableName = "listMembers",
     foreignKeys = [
@@ -59,7 +58,6 @@ data class ListMemberEntity(
     val createdAt: Instant,
 )
 
-
 data class PopulatedListMemberEntity(
     @Embedded
     val entity: ListMemberEntity,
@@ -67,7 +65,7 @@ data class PopulatedListMemberEntity(
     val viewerStateEntity: ProfileViewerStateEntity?,
     @Relation(
         parentColumn = "subjectId",
-        entityColumn = "did"
+        entityColumn = "did",
     )
     val subject: ProfileEntity?,
 )
@@ -80,4 +78,3 @@ fun PopulatedListMemberEntity.asExternalModel() =
         createdAt = entity.createdAt,
         viewerState = viewerStateEntity?.asExternalModel(),
     )
-

@@ -17,7 +17,7 @@
 import com.android.build.api.dsl.CommonExtension
 import ext.ProjectJavaVersion
 import ext.configureKotlinJvm
-import org.gradle.api.artifacts.VersionCatalogsExtension
+import ext.libs
 import org.gradle.kotlin.dsl.dependencies
 
 /**
@@ -45,11 +45,7 @@ fun org.gradle.api.Project.addDesugarDependencies() {
     dependencies {
         add(
             configurationName = "coreLibraryDesugaring",
-            dependencyNotation = versionCatalog.findLibrary("android-desugarJdkLibs").get()
+            dependencyNotation = libs.android.desugarJdkLibs,
         )
     }
 }
-
-val org.gradle.api.Project.versionCatalog
-    get() = extensions.getByType(VersionCatalogsExtension::class.java)
-        .named("libs")

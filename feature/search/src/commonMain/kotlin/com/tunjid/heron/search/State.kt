@@ -39,7 +39,7 @@ import kotlinx.serialization.Transient
 enum class ScreenLayout {
     Suggested,
     AutoCompleteProfiles,
-    GeneralSearchResults
+    GeneralSearchResults,
 }
 
 internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.Tile, out StateFlow<SearchState>>
@@ -74,20 +74,30 @@ val SearchResult.OfPost.canAutoPlayVideo: Boolean
 sealed class SearchState {
     data class OfPosts(
         override val tilingData: TilingState.Data<SearchQuery.OfPosts, SearchResult.OfPost>,
-    ) : SearchState(), TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
+    ) : SearchState(),
+        TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
 
     data class OfProfiles(
         override val tilingData: TilingState.Data<SearchQuery.OfProfiles, SearchResult.OfProfile>,
-    ) : SearchState(), TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
+    ) : SearchState(),
+        TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
         override val tilingData: TilingState.Data<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>,
-    ) : SearchState(), TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
+    ) : SearchState(),
+        TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
 
     data class Tile(
         val tilingAction: TilingState.Action,
     )
 }
+
+val SearchState.key
+    get() = when (this) {
+        is SearchState.OfFeedGenerators -> tilingData.currentQuery.sourceId
+        is SearchState.OfPosts -> tilingData.currentQuery.sourceId
+        is SearchState.OfProfiles -> tilingData.currentQuery.sourceId
+    }
 
 @Serializable
 data class State(
@@ -143,12 +153,15 @@ sealed class Action(val key: String) {
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
 
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

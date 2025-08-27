@@ -18,7 +18,6 @@ package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
@@ -54,9 +53,9 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
-import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -85,8 +84,8 @@ private fun createRoute(
 ) = routeOf(
     params = routeParams,
     children = listOfNotNull(
-        routeParams.decodeReferringRoute()
-    )
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 internal val Route.postRecordKey by mappedRoutePath(
@@ -106,7 +105,7 @@ object PostDetailNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 
     @Provides
@@ -115,7 +114,7 @@ object PostDetailNavigationBindings {
     fun provideRouteUriMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteUriPattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -155,7 +154,7 @@ class PostDetailBindings(
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
             )
         },
         render = { route ->
@@ -200,7 +199,7 @@ class PostDetailBindings(
                             when {
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 else -> Res.string.reply
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -218,10 +217,10 @@ class PostDetailBindings(
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         )
-                                    }
-                                )
+                                    },
+                                ),
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -242,8 +241,8 @@ class PostDetailBindings(
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
-                }
+                },
             )
-        }
+        },
     )
 }

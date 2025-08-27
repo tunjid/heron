@@ -53,9 +53,9 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
-import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -92,7 +92,7 @@ object HomeNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -154,8 +154,8 @@ class HomeBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
                     )
@@ -171,7 +171,7 @@ class HomeBindings(
                                 isSignedOut -> ScaffoldStrings.sign_in
                                 state.tabLayout is TabLayout.Expanded -> Res.string.save
                                 else -> Res.string.create_post
-                            }
+                            },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
@@ -183,7 +183,7 @@ class HomeBindings(
                             viewModel.accept(
                                 when {
                                     isSignedOut -> Action.Navigate.To(
-                                        signInDestination()
+                                        signInDestination(),
                                     )
 
                                     state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
@@ -191,11 +191,11 @@ class HomeBindings(
                                         composePostDestination(
                                             type = Post.Create.Timeline,
                                             sharedElementPrefix = null,
-                                        )
+                                        ),
                                     )
-                                }
+                                },
                             )
-                        }
+                        },
                     )
                 },
                 navigationBar = {
@@ -224,12 +224,12 @@ class HomeBindings(
                         state = state,
                         actions = viewModel.accept,
                     )
-                }
+                },
             )
 
             topAppBarNestedScrollConnection.TabsExpansionEffect(
                 isExpanded = state.tabLayout is TabLayout.Expanded,
             )
-        }
+        },
     )
 }

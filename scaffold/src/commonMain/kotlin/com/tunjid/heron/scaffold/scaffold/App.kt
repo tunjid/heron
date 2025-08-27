@@ -64,7 +64,7 @@ fun App(
             Surface {
                 // Root LookaheadScope used to anchor all shared element transitions
                 SharedTransitionLayout(
-                    modifier = modifier.fillMaxSize()
+                    modifier = modifier.fillMaxSize(),
                 ) {
                     val density = LocalDensity.current
                     val movableSharedElementHostState = remember {
@@ -75,7 +75,7 @@ fun App(
                     val windowWidth = rememberUpdatedState(
                         with(density) {
                             LocalWindowInfo.current.containerSize.width.toDp()
-                        }
+                        },
                     )
                     if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
@@ -84,18 +84,18 @@ fun App(
                             listOf(
                                 threePaneAdaptiveDecorator(
                                     secondaryPaneBreakPoint = mutableStateOf(
-                                        SecondaryPaneMinWidthBreakpointDp
+                                        SecondaryPaneMinWidthBreakpointDp,
                                     ),
                                     tertiaryPaneBreakPoint = mutableStateOf(
-                                        TertiaryPaneMinWidthBreakpointDp
+                                        TertiaryPaneMinWidthBreakpointDp,
                                     ),
-                                    windowWidthState = windowWidth
+                                    windowWidthState = windowWidth,
                                 ),
                                 threePaneMovableSharedElementDecorator(
-                                    movableSharedElementHostState
+                                    movableSharedElementHostState,
                                 ),
                             )
-                        }
+                        },
                     )
                     MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
@@ -110,11 +110,11 @@ fun App(
                         }.also {
                             it.update(
                                 paneNavigationState = paneNavigationState,
-                                density = density
+                                density = density,
                             )
                         }
                         CompositionLocalProvider(
-                            LocalSplitPaneState provides splitPaneState
+                            LocalSplitPaneState provides splitPaneState,
                         ) {
                             SplitLayout(
                                 state = splitPaneState.splitLayoutState,
@@ -124,12 +124,12 @@ fun App(
                                     DraggableThumb(
                                         splitLayoutState = splitPaneState.splitLayoutState,
                                         paneAnchorState = splitPaneState.paneAnchorState,
-                                        offset = offset
+                                        offset = offset,
                                     )
                                 },
                                 itemContent = { index ->
                                     Destination(splitPaneState.filteredPaneOrder[index])
-                                }
+                                },
                             )
                         }
                         NavigationEventHandler(
@@ -170,7 +170,7 @@ private fun sharedElementsCoordinatesSet(): Boolean {
                 }
                 placeable.place(0, 0)
             }
-        }
+        },
     )
     return coordinatesSet
 }

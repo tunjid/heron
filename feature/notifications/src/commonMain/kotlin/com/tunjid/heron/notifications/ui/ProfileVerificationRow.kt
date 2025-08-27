@@ -39,7 +39,6 @@ import heron.feature.notifications.generated.resources.joined_from_your_started_
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
-
 @Composable
 fun ProfileVerificationRow(
     modifier: Modifier = Modifier,
@@ -73,7 +72,7 @@ fun ProfileVerificationRow(
                     modifier = Modifier.alignByBaseline(),
                     text = stringResource(
                         if (isVerified) Res.string.account_verified
-                        else Res.string.account_unverified
+                        else Res.string.account_unverified,
                     ),
                 )
                 TimeDelta(

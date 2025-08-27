@@ -16,22 +16,14 @@
 
 package com.tunjid.heron.messages.di
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.messages.Action
 import com.tunjid.heron.messages.ActualMessagesViewModel
@@ -48,8 +40,9 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -81,7 +74,7 @@ object MessagesNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
-            routeMapper = ::createRoute
+            routeMapper = ::createRoute,
         )
 }
 
@@ -113,17 +106,9 @@ class MessagesBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val statusBarHeight = UiTokens.statusBarHeight
-            val topAppBarOffsetNestedScrollConnection =
-                rememberAccumulatedOffsetNestedScrollConnection(
-                    maxOffset = { Offset.Zero },
-                    minOffset = {
-                        Offset(
-                            x = 0f,
-                            y = -(statusBarHeight + UiTokens.toolbarHeight).toPx()
-                        )
-                    },
-                )
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -131,6 +116,7 @@ class MessagesBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -139,9 +125,10 @@ class MessagesBindings(
                 topBar = {
                     RootDestinationTopAppBar(
                         modifier = Modifier.offset {
-                            topAppBarOffsetNestedScrollConnection.offset.round()
+                            topAppBarNestedScrollConnection.offset.round()
                         },
                         signedInProfile = state.signedInProfile,
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -149,16 +136,10 @@ class MessagesBindings(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
-                                    )
-                                )
+                                    ),
+                                ),
                             )
                         },
-                    )
-                    Box(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surface)
-                            .height(statusBarHeight)
-                            .fillMaxWidth()
                     )
                 },
                 navigationBar = {
@@ -172,16 +153,14 @@ class MessagesBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = { paddingValues ->
+                content = {
                     MessagesScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(top = paddingValues.calculateTopPadding()),
                     )
-                }
+                },
             )
-        }
+        },
     )
 }

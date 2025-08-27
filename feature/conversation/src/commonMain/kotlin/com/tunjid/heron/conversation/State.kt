@@ -29,12 +29,11 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.strings.Route
+import kotlin.collections.filterIsInstance
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlin.collections.filterIsInstance
-
 
 @Serializable
 data class State(
@@ -51,7 +50,7 @@ data class State(
 ) : TilingState<MessageQuery, MessageItem>
 
 fun State(
-    route: Route
+    route: Route,
 ) = State(
     id = route.conversationId,
     members = route.models.filterIsInstance<Profile>(),
@@ -63,10 +62,10 @@ fun State(
             data = CursorQuery.Data(
                 page = 0,
                 cursorAnchor = Clock.System.now(),
-                limit = 15
-            )
-        )
-    )
+                limit = 15,
+            ),
+        ),
+    ),
 )
 
 @Serializable
@@ -82,7 +81,6 @@ sealed class MessageItem {
         val message: Message.Create,
         val sentAt: Instant,
     ) : MessageItem()
-
 }
 
 val MessageItem.sender
@@ -122,7 +120,7 @@ val MessageItem.reactions
     }
 
 fun Message.hasEmojiReaction(
-    emoji: String
+    emoji: String,
 ): Boolean = reactions.any {
     it.value == emoji
 }
@@ -145,11 +143,14 @@ sealed class Action(val key: String) {
         val reaction: Message.UpdateReaction,
     ) : Action(key = "UpdateMessageReaction")
 
-    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+    sealed class Navigate :
+        Action(key = "Navigate"),
+        NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(), NavigationAction by delegate
+        ) : Navigate(),
+            NavigationAction by delegate
     }
 }

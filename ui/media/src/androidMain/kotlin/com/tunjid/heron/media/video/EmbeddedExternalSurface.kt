@@ -45,7 +45,7 @@ internal fun EmbeddedExternalSurface(
     isOpaque: Boolean = true,
     surfaceSize: IntSize = IntSize.Zero,
     transform: Matrix? = null,
-    onInit: AndroidExternalSurfaceScope.() -> Unit
+    onInit: AndroidExternalSurfaceScope.() -> Unit,
 ) {
     val state = rememberEmbeddedExternalSurfaceState()
 
@@ -66,7 +66,7 @@ internal fun EmbeddedExternalSurface(
             // If transform is null, we'll call setTransform(null) which sets the
             // identity transform on the TextureView
             view.setTransform(transform?.let { state.matrix.apply { setFrom(transform) } })
-        }
+        },
     )
 }
 
@@ -77,7 +77,8 @@ private fun rememberEmbeddedExternalSurfaceState(): EmbeddedExternalSurfaceState
 }
 
 private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
-    BaseAndroidExternalSurfaceState(scope), TextureView.SurfaceTextureListener {
+    BaseAndroidExternalSurfaceState(scope),
+    TextureView.SurfaceTextureListener {
 
     var surfaceSize = IntSize.Zero
     val matrix = android.graphics.Matrix()
@@ -87,7 +88,7 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
     override fun onSurfaceTextureAvailable(
         surfaceTexture: SurfaceTexture,
         width: Int,
-        height: Int
+        height: Int,
     ) {
         var w = width
         var h = height
@@ -107,7 +108,7 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
     override fun onSurfaceTextureSizeChanged(
         surfaceTexture: SurfaceTexture,
         width: Int,
-        height: Int
+        height: Int,
     ) {
         var w = width
         var h = height
@@ -134,10 +135,11 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
 }
 
 private abstract class BaseAndroidExternalSurfaceState(val scope: CoroutineScope) :
-    androidx.compose.foundation.AndroidExternalSurfaceScope, SurfaceScope {
+    androidx.compose.foundation.AndroidExternalSurfaceScope,
+    SurfaceScope {
 
     private var onSurface:
-            (suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit)? =
+        (suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit)? =
         null
     private var onSurfaceChanged: (Surface.(width: Int, height: Int) -> Unit)? = null
     private var onSurfaceDestroyed: (Surface.() -> Unit)? = null
@@ -145,7 +147,7 @@ private abstract class BaseAndroidExternalSurfaceState(val scope: CoroutineScope
     private var job: Job? = null
 
     override fun onSurface(
-        onSurface: suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit
+        onSurface: suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit,
     ) {
         this.onSurface = onSurface
     }

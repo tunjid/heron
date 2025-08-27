@@ -46,7 +46,7 @@ internal fun MultipleEntitySaver.add(
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt,
             createdAt = listView.uri.tidInstant ?: listView.indexedAt,
-        )
+        ),
     )
 }
 
@@ -67,6 +67,6 @@ internal fun MultipleEntitySaver.add(
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt ?: Instant.DISTANT_PAST,
             createdAt = listView.uri.tidInstant ?: listView.indexedAt ?: Instant.DISTANT_PAST,
-        )
+        ),
     )
 }

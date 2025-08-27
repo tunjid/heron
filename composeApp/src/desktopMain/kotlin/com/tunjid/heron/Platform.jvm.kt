@@ -21,10 +21,10 @@ import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
+import java.io.File
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
-import java.io.File
 
 class JVMPlatform : Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
@@ -50,5 +50,5 @@ fun createAppState(): AppState =
 
 private fun savedStatePath(): Path = File(
     System.getProperty("java.io.tmpdir"),
-    "tunji-heron-saved-state-21.ser"
+    "tunji-heron-saved-state-21.ser",
 ).toOkioPath()

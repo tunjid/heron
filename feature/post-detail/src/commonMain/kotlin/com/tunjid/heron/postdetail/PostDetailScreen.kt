@@ -66,8 +66,8 @@ import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlinx.datetime.Clock
 import kotlin.math.floor
+import kotlinx.datetime.Clock
 
 @Composable
 internal fun PostDetailScreen(
@@ -95,10 +95,10 @@ internal fun PostDetailScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = state.sharedElementPrefix,
-                    )
-                )
+                    ),
+                ),
             )
-        }
+        },
     )
 
     LazyVerticalStaggeredGrid(
@@ -124,7 +124,7 @@ internal fun PostDetailScreen(
                         .fillMaxWidth()
                         .animateItem()
                         .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item)
+                            state = videoStates.getOrCreateStateFor(item),
                         ),
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
@@ -140,8 +140,8 @@ internal fun PostDetailScreen(
                                         pathDestination(
                                             path = linkTarget.path,
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             },
                             onPostClicked = { post: Post, quotingPostUri: PostUri? ->
@@ -154,8 +154,8 @@ internal fun PostDetailScreen(
                                                 quotingPostUri = quotingPostUri,
                                             ),
                                             post = post,
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             },
                             onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
@@ -168,9 +168,9 @@ internal fun PostDetailScreen(
                                             avatarSharedElementKey = post.avatarSharedElementKey(
                                                 prefix = state.sharedElementPrefix,
                                                 quotingPostUri = quotingPostUri,
-                                            ).takeIf { post.author.did == profile.did }
-                                        )
-                                    )
+                                            ).takeIf { post.author.did == profile.did },
+                                        ),
+                                    ),
                                 )
                             },
                             onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
@@ -184,8 +184,8 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = quotingPostUri,
                                             ),
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             },
                             onReplyToPost = { post: Post ->
@@ -198,8 +198,8 @@ internal fun PostDetailScreen(
                                                 parent = post,
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
-                                        )
-                                    )
+                                        ),
+                                    ),
                                 )
                             },
                             onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
@@ -217,19 +217,19 @@ internal fun PostDetailScreen(
                                                 profileId = postMetadata.profileId,
                                                 postRecordKey = postMetadata.postRecordKey,
                                             )
-                                        }
-                                    )
+                                        },
+                                    ),
                                 )
                             },
                             onPostInteraction = postInteractionState::onInteraction,
                         )
                     },
                 )
-            }
+            },
         )
         // Allow for scrolling to the post selected even if others came before.
         item(
-            span = StaggeredGridItemSpan.FullLine
+            span = StaggeredGridItemSpan.FullLine,
         ) {
             Spacer(Modifier.height(800.dp))
         }
@@ -252,4 +252,3 @@ internal fun PostDetailScreen(
         }
     }
 }
-

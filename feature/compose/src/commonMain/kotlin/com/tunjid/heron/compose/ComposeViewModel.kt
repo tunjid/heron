@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.compose
 
-
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.MediaFile
@@ -76,47 +75,48 @@ class ActualComposeViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope), ComposeStateHolder by scope.actionStateFlowMutator(
-    initialState = State(route),
-    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-    inputs = listOf(
-        loadSignedInProfileMutations(
-            authRepository = authRepository,
+) : ViewModel(viewModelScope = scope),
+    ComposeStateHolder by scope.actionStateFlowMutator(
+        initialState = State(route),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadSignedInProfileMutations(
+                authRepository = authRepository,
+            ),
+            quotedPostMutations(
+                quotedPostUri = when (val creationType = route.model) {
+                    is Post.Create.Quote -> creationType.interaction.postUri
+                    else -> null
+                },
+                postRepository = postRepository,
+            ),
+            labelPreferencesMutations(
+                timelineRepository = timelineRepository,
+            ),
+            labelerMutations(
+                timelineRepository = timelineRepository,
+            ),
         ),
-        quotedPostMutations(
-            quotedPostUri = when (val creationType = route.model) {
-                is Post.Create.Quote -> creationType.interaction.postUri
-                else -> null
-            },
-            postRepository = postRepository,
-        ),
-        labelPreferencesMutations(
-            timelineRepository = timelineRepository,
-        ),
-        labelerMutations(
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(
-            keySelector = Action::key
-        ) {
-            when (val action = type()) {
-                is Action.PostTextChanged -> action.flow.postTextMutations()
-                is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
-                is Action.EditMedia -> action.flow.editMediaMutations()
-                is Action.CreatePost -> action.flow.createPostMutations(
-                    navActions = navActions,
-                    writeQueue = writeQueue,
-                )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.PostTextChanged -> action.flow.postTextMutations()
+                    is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
+                    is Action.EditMedia -> action.flow.editMediaMutations()
+                    is Action.CreatePost -> action.flow.createPostMutations(
+                        navActions = navActions,
+                        writeQueue = writeQueue,
+                    )
 
-                is Action.Navigate -> action.flow.consumeNavigationActions(
-                    navigationMutationConsumer = navActions
-                )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
             }
-        }
-    }
-)
+        },
+    )
 
 private fun loadSignedInProfileMutations(
     authRepository: AuthRepository,
@@ -148,20 +148,17 @@ private fun labelerMutations(
     timelineRepository.labelers()
         .mapToMutation { copy(labelers = it) }
 
-private fun Flow<Action.PostTextChanged>.postTextMutations(
-): Flow<Mutation<State>> =
+private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(postText = action.textFieldValue)
     }
 
-private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(
-): Flow<Mutation<State>> =
+private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(fabExpanded = action.expanded)
     }
 
-private fun Flow<Action.EditMedia>.editMediaMutations(
-): Flow<Mutation<State>> =
+private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
     map { action ->
         // Invoke in IO context as creating media items may perform IO
         withContext(Dispatchers.IO) {
@@ -176,7 +173,7 @@ private fun Flow<Action.EditMedia>.editMediaMutations(
         .mapToMutation { (action, media) ->
             when (action) {
                 is Action.EditMedia.AddPhotos -> copy(
-                    photos = photos + media.filterIsInstance<MediaItem.Photo>()
+                    photos = photos + media.filterIsInstance<MediaItem.Photo>(),
                 )
 
                 is Action.EditMedia.AddVideo -> copy(
@@ -186,7 +183,7 @@ private fun Flow<Action.EditMedia>.editMediaMutations(
 
                 is Action.EditMedia.RemoveMedia -> copy(
                     photos = photos.filter { it != action.media },
-                    video = video?.takeIf { it != action.media }
+                    video = video?.takeIf { it != action.media },
                 )
 
                 is Action.EditMedia.UpdateMedia -> when (val item = media.first()) {
@@ -233,7 +230,7 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                                     height = item.size.height.toLong(),
                                 )
                             }
-                        }
+                        },
                     ),
                 ),
             )
@@ -243,7 +240,7 @@ private fun Flow<Action.CreatePost>.createPostMutations(
         writeQueue.awaitDequeue(postWrite)
         emitAll(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
-                navigationMutationConsumer = navActions
-            )
+                navigationMutationConsumer = navActions,
+            ),
         )
     }

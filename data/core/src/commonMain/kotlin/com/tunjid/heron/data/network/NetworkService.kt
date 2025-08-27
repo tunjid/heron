@@ -18,6 +18,7 @@ package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -33,7 +34,6 @@ import kotlinx.serialization.json.Json
 import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.XrpcBlueskyApi
 import sh.christian.ozone.api.response.AtpResponse
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 
 interface NetworkService {
     val api: BlueskyApi
@@ -41,7 +41,7 @@ interface NetworkService {
     suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int = 3,
         initialDelay: Long = 100, // 0.1 second
-        maxDelay: Long = 5000,    // 1 second
+        maxDelay: Long = 5000, // 1 second
         factor: Double = 2.0,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T>
@@ -64,7 +64,7 @@ class KtorNetworkService(
             install(ContentNegotiation) {
                 json(
                     json = json,
-                    contentType = ContentType.Application.Json
+                    contentType = ContentType.Application.Json,
                 )
             }
 
@@ -90,13 +90,13 @@ class KtorNetworkService(
                     }
                 }
             }
-        }
+        },
     )
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int,
         initialDelay: Long, // 0.1 second
-        maxDelay: Long,    // 1 second
+        maxDelay: Long, // 1 second
         factor: Double,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T> = networkMonitor.runCatchingWithNetworkRetry(
@@ -104,6 +104,6 @@ class KtorNetworkService(
         initialDelay,
         maxDelay,
         factor,
-        block = { block(api) }
+        block = { block(api) },
     )
 }
