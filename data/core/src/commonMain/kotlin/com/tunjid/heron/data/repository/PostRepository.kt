@@ -23,8 +23,11 @@ import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
+import app.bsky.feed.Like as BskyLike
+import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
+import app.bsky.feed.Repost as BskyRepost
 import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
@@ -89,9 +92,6 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
 import sh.christian.ozone.api.response.AtpResponse
-import app.bsky.feed.Like as BskyLike
-import app.bsky.feed.Post as BskyPost
-import app.bsky.feed.Repost as BskyRepost
 
 @Serializable
 data class PostDataQuery(
@@ -161,7 +161,7 @@ internal class OfflinePostRepository @Inject constructor(
                             uri = postEntity.uri.uri.let(::AtUri),
                             limit = query.data.limit,
                             cursor = cursor.value,
-                        )
+                        ),
                     )
                 },
                 nextCursor = GetLikesResponse::cursor,
@@ -177,7 +177,7 @@ internal class OfflinePostRepository @Inject constructor(
                     }
                 },
             ),
-            ::CursorList
+            ::CursorList,
         )
             .distinctUntilChanged()
     }
@@ -206,7 +206,7 @@ internal class OfflinePostRepository @Inject constructor(
                             uri = postEntity.uri.uri.let(::AtUri),
                             limit = query.data.limit,
                             cursor = cursor.value,
-                        )
+                        ),
                     )
                 },
                 nextCursor = GetRepostedByResponse::cursor,
@@ -214,7 +214,7 @@ internal class OfflinePostRepository @Inject constructor(
                     // TODO: Figure out how to get indexedAt for reposts
                 },
             ),
-            ::CursorList
+            ::CursorList,
         )
             .distinctUntilChanged()
     }
@@ -246,7 +246,7 @@ internal class OfflinePostRepository @Inject constructor(
                                     uri = postEntity.uri.uri.let(::AtUri),
                                     limit = query.data.limit,
                                     cursor = cursor.value,
-                                )
+                                ),
                             )
                         },
                         nextCursor = GetQuotesResponse::cursor,
@@ -364,7 +364,7 @@ internal class OfflinePostRepository @Inject constructor(
                             when (interaction) {
                                 is Post.Interaction.Create.Like -> Collections.Like
                                 is Post.Interaction.Create.Repost -> Collections.Repost
-                            }
+                            },
                         ),
                         record = when (interaction) {
                             is Post.Interaction.Create.Like -> BskyLike(
@@ -383,7 +383,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 createdAt = Clock.System.now(),
                             ).asJsonContent(Repost.serializer())
                         },
-                    )
+                    ),
                 )
             }
                 .getOrNull()
@@ -405,11 +405,11 @@ internal class OfflinePostRepository @Inject constructor(
                                     postUri = interaction.postUri,
                                     viewingProfileId = authorId,
                                 )
-                            }
+                            },
                         )
                         postDao.updateLikeCount(
-                            postUri =interaction.postUri.uri,
-                            isIncrement = true
+                            postUri = interaction.postUri.uri,
+                            isIncrement = true,
                         )
                     }
                 }
@@ -422,15 +422,15 @@ internal class OfflinePostRepository @Inject constructor(
                             when (interaction) {
                                 is Post.Interaction.Delete.RemoveRepost -> Collections.Repost
                                 is Post.Interaction.Delete.Unlike -> Collections.Like
-                            }
+                            },
                         ),
                         rkey = Collections.rKey(
                             when (interaction) {
                                 is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri
                                 is Post.Interaction.Delete.Unlike -> interaction.likeUri
-                            }
-                        )
-                    )
+                            },
+                        ),
+                    ),
                 )
             }
                 .getOrNull()
@@ -451,16 +451,15 @@ internal class OfflinePostRepository @Inject constructor(
                                     postUri = interaction.postUri,
                                     viewingProfileId = authorId,
                                 )
-                            }
+                            },
                         )
                         postDao.updateLikeCount(
-                            postUri =interaction.postUri.uri,
-                            isIncrement = false
+                            postUri = interaction.postUri.uri,
+                            isIncrement = false,
                         )
                     }
                 }
         }
-
     }
 
     private suspend fun upsertInteraction(
@@ -478,7 +477,7 @@ internal class OfflinePostRepository @Inject constructor(
                     is PostViewerStatisticsEntity.Partial.Repost ->
                         postDao.updatePostStatisticsReposts(listOf(partial))
                 }
-            }
+            },
         )
     }
 
@@ -498,11 +497,11 @@ internal class OfflinePostRepository @Inject constructor(
                         .map {
                             PostUri(
                                 profileId = it.did,
-                                postRecordKey = postRecordKey
+                                postRecordKey = postRecordKey,
                             )
                         }
-                        .first()
-                )
+                        .first(),
+                ),
             )
                 .first(List<PostEntity>::isNotEmpty)
                 .first()
