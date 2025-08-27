@@ -29,7 +29,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
-                implementation(project(":di"))
                 implementation(project(":scaffold"))
 
                 implementation(libs.tunjid.composables)
