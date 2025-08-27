@@ -103,13 +103,13 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.verticalOffsetProgress
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
