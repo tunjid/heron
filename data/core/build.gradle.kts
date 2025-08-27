@@ -28,7 +28,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":di"))
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
 
@@ -77,7 +76,4 @@ kotlin {
             }
         }
     }
-}
-dependencies {
-    implementation(project(":di"))
 }

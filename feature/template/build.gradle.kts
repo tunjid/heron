@@ -30,7 +30,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
-                implementation(project(":di"))
 
                 implementation(libs.compose.runtime)
                 implementation(libs.lifecycle.runtime)

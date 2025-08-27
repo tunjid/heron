@@ -51,7 +51,6 @@ include(
     ":data:core",
     ":data:models",
     ":data:database",
-    ":di",
     ":ui:tiling",
     ":scaffold",
     ":feature:auth",

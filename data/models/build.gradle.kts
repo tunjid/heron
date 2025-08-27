@@ -28,8 +28,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":di"))
-
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)
@@ -43,7 +41,4 @@ kotlin {
             }
         }
     }
-}
-dependencies {
-    implementation(project(":di"))
 }

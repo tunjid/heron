@@ -29,7 +29,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":di"))
                 api(project(":data:models"))
 
                 implementation(libs.kotlinx.datetime)
@@ -54,7 +53,6 @@ room {
 }
 
 dependencies {
-    implementation(project(":di"))
 //    kspCommonMainMetadata(libs.androidx.room.compiler)
     kspAndroid(libs.androidx.room.compiler)
     kspDesktop(libs.androidx.room.compiler)
