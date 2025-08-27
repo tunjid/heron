@@ -41,6 +41,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.scaffold.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.topAppBarNestedScrollConnection
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
@@ -132,6 +134,9 @@ class SearchBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
@@ -139,6 +144,7 @@ class SearchBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -146,7 +152,9 @@ class SearchBindings(
                 },
                 topBar = {
                     if (state.isQueryEditable) RootDestinationTopAppBar(
-                        modifier = Modifier,
+                        modifier = Modifier.offset {
+                            topAppBarNestedScrollConnection.offset.round()
+                        },
                         signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
@@ -163,6 +171,7 @@ class SearchBindings(
                                 },
                             )
                         },
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -182,6 +191,7 @@ class SearchBindings(
                                 style = MaterialTheme.typography.titleSmallEmphasized,
                             )
                         },
+                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)
                         },

@@ -18,7 +18,7 @@ package com.tunjid.heron.home
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -77,6 +77,7 @@ import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.scaffold.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
@@ -99,10 +100,8 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -152,27 +151,12 @@ internal fun HomeScreen(
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
                 )
-                LaunchedEffect(Unit) {
-                    snapshotFlow {
-                        val fraction = pagerState.currentPageOffsetFraction
-                        // Find next page
-                        when {
-                            fraction > 0 -> ceil(pagerState.currentPage + fraction)
-                            else -> floor(pagerState.currentPage + fraction)
-                        }.roundToInt()
-                    }
-                        .collectLatest {
-                            // Already scrolled past the first
-                            if (gridState.firstVisibleItemIndex != 0) return@collectLatest
-                            val firstItemOffset = gridState.firstVisibleItemScrollOffset
-                            val tabOffset = tabsOffsetNestedScrollConnection.offset.y
-
-                            // tab offset is negative
-                            val gapToClose = firstItemOffset + tabOffset
-                            // Close the gap
-                            if (gapToClose < 0) gridState.scrollBy(-gapToClose)
-                        }
-                }
+                tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+                    pagerState = pagerState,
+                    firstVisibleItemIndex = gridState::firstVisibleItemIndex,
+                    firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
+                    scrollBy = gridState::animateScrollBy,
+                )
             },
         )
         HomeTabs(

@@ -16,16 +16,22 @@
 
 package com.tunjid.heron.scaffold.ui
 
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.ui.UiTokens
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Composable
 fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
@@ -52,6 +58,40 @@ fun bottomNavigationNestedScrollConnection(): AccumulatedOffsetNestedScrollConne
         },
         minOffset = { Offset.Zero },
     )
+}
+
+@Composable
+fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+    pagerState: PagerState,
+    firstVisibleItemIndex: () -> Int,
+    firstVisibleItemScrollOffset: () -> Int,
+    scrollBy: suspend (Float) -> Unit,
+) {
+    val updatedFirstVisibleItemIndex by rememberUpdatedState(firstVisibleItemIndex)
+    val updatedFirstVisibleItemScrollOffset by rememberUpdatedState(firstVisibleItemScrollOffset)
+    val updatedScrollBy by rememberUpdatedState(scrollBy)
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow {
+            val fraction = pagerState.currentPageOffsetFraction
+            // Find next page
+            when {
+                fraction > 0 -> ceil(pagerState.currentPage + fraction)
+                else -> floor(pagerState.currentPage + fraction)
+            }.roundToInt()
+        }
+            .collect {
+                // Already scrolled past the first
+                if (updatedFirstVisibleItemIndex() != 0) return@collect
+                val firstItemOffset = updatedFirstVisibleItemScrollOffset()
+                val tabOffset = offset.y
+
+                // tab offset is negative
+                val gapToClose = firstItemOffset + tabOffset
+                // Close the gap
+                if (gapToClose < 0) updatedScrollBy(-gapToClose)
+            }
+    }
 }
 
 fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {

@@ -17,8 +17,12 @@
 package com.tunjid.heron.search
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,13 +32,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -53,17 +61,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -88,6 +109,8 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
+import com.tunjid.heron.scaffold.ui.PagerTopGapCloseEffect
+import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.SuggestedStarterPack
@@ -122,6 +145,7 @@ import heron.feature.search.generated.resources.suggested_accounts
 import heron.feature.search.generated.resources.top
 import heron.feature.search.generated.resources.trending_title
 import kotlin.math.floor
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -156,224 +180,219 @@ internal fun SearchScreen(
         },
     )
 
-    Column(
-        modifier = modifier,
-    ) {
-        Spacer(Modifier.height(UiTokens.toolbarHeight + UiTokens.statusBarHeight))
-        val pagerState = rememberPagerState { state.searchStateHolders.size }
-        val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
-            { profileWithViewerState ->
-                actions(
-                    Action.Navigate.To(
-                        profileDestination(
-                            profile = profileWithViewerState.profile,
-                            avatarSharedElementKey = profileWithViewerState
-                                .profile
-                                .searchProfileAvatarSharedElementKey(),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        ),
+    val pagerState = rememberPagerState { state.searchStateHolders.size }
+    val onProfileClicked: (ProfileWithViewerState) -> Unit = remember {
+        { profileWithViewerState ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        profile = profileWithViewerState.profile,
+                        avatarSharedElementKey = profileWithViewerState
+                            .profile
+                            .searchProfileAvatarSharedElementKey(),
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                     ),
-                )
-            }
+                ),
+            )
         }
-        val onViewerStateClicked: (ProfileWithViewerState) -> Unit =
-            remember(state.signedInProfile?.did) {
-                { profileWithViewerState ->
-                    state.signedInProfile?.did?.let {
-                        actions(
-                            Action.ToggleViewerState(
-                                signedInProfileId = it,
-                                viewedProfileId = profileWithViewerState.profile.did,
-                                following = profileWithViewerState.viewerState?.following,
-                                followedBy = profileWithViewerState.viewerState?.followedBy,
-                            ),
-                        )
-                    }
+    }
+    val onViewerStateClicked: (ProfileWithViewerState) -> Unit =
+        remember(state.signedInProfile?.did) {
+            { profileWithViewerState ->
+                state.signedInProfile?.did?.let {
+                    actions(
+                        Action.ToggleViewerState(
+                            signedInProfileId = it,
+                            viewedProfileId = profileWithViewerState.profile.did,
+                            following = profileWithViewerState.viewerState?.following,
+                            followedBy = profileWithViewerState.viewerState?.followedBy,
+                        ),
+                    )
                 }
             }
-        val onProfileSearchResultClicked: (SearchResult.OfProfile) -> Unit = remember {
-            { profileSearchResult ->
-                actions(
-                    Action.Navigate.To(
-                        profileDestination(
-                            profile = profileSearchResult.profileWithViewerState.profile,
-                            avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+        }
+    val onProfileSearchResultClicked: (SearchResult.OfProfile) -> Unit = remember {
+        { profileSearchResult ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        profile = profileSearchResult.profileWithViewerState.profile,
+                        avatarSharedElementKey = profileSearchResult.avatarSharedElementKey(),
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    ),
+                ),
+            )
+        }
+    }
+    val onLinkTargetClicked = remember {
+        { _: SearchResult.OfPost, linkTarget: LinkTarget ->
+            if (linkTarget is LinkTarget.Navigable) actions(
+                Action.Navigate.To(
+                    pathDestination(
+                        path = linkTarget.path,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    ),
+                ),
+            )
+        }
+    }
+    val onPostSearchResultProfileClicked = remember {
+        { result: SearchResult.OfPost ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = result.post.author,
+                        avatarSharedElementKey = result.post.avatarSharedElementKey(
+                            result.sharedElementPrefix,
                         ),
                     ),
-                )
-            }
+                ),
+            )
         }
-        val onLinkTargetClicked = remember {
-            { _: SearchResult.OfPost, linkTarget: LinkTarget ->
-                if (linkTarget is LinkTarget.Navigable) actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = linkTarget.path,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+    }
+    val onListMemberClicked = remember {
+        { listMember: ListMember ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = listMember.subject,
+                        avatarSharedElementKey = listMember.avatarSharedElementKey(),
+                    ),
+                ),
+            )
+        }
+    }
+    val onTrendClicked = remember {
+        { trend: Trend ->
+            actions(
+                Action.Navigate.To(
+                    pathDestination(
+                        path = trend.link,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    ),
+                ),
+            )
+        }
+    }
+    val onFeedGeneratorClicked = remember {
+        { feedGenerator: FeedGenerator ->
+            actions(
+                Action.Navigate.To(
+                    pathDestination(
+                        path = feedGenerator.uri.path,
+                        models = listOf(feedGenerator),
+                        sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    ),
+                ),
+            )
+        }
+    }
+    val onTimelineUpdateClicked = remember {
+        { update: Timeline.Update ->
+            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+            else actions(Action.UpdateFeedGeneratorStatus(update))
+        }
+    }
+    val onPostSearchResultClicked = remember {
+        { result: SearchResult.OfPost ->
+            actions(
+                Action.Navigate.To(
+                    postDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = result.sharedElementPrefix,
+                        post = result.post,
+                    ),
+                ),
+            )
+        }
+    }
+    val onReplyToPost = remember {
+        { result: SearchResult.OfPost ->
+            actions(
+                Action.Navigate.To(
+                    if (paneScaffoldState.isSignedOut) signInDestination()
+                    else composePostDestination(
+                        type = Post.Create.Reply(
+                            parent = result.post,
+                        ),
+                        sharedElementPrefix = result.sharedElementPrefix,
+                    ),
+                ),
+            )
+        }
+    }
+    val onMediaClicked = remember {
+        { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri? ->
+            actions(
+                Action.Navigate.To(
+                    galleryDestination(
+                        post = result.post,
+                        media = media,
+                        startIndex = index,
+                        sharedElementPrefix = result.sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = quotingPostUri,
                         ),
                     ),
-                )
-            }
+                ),
+            )
         }
-        val onPostSearchResultProfileClicked = remember {
-            { result: SearchResult.OfPost ->
-                actions(
-                    Action.Navigate.To(
-                        profileDestination(
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                            profile = result.post.author,
-                            avatarSharedElementKey = result.post.avatarSharedElementKey(
-                                result.sharedElementPrefix,
-                            ),
-                        ),
-                    ),
-                )
-            }
-        }
-        val onListMemberClicked = remember {
-            { listMember: ListMember ->
-                actions(
-                    Action.Navigate.To(
-                        profileDestination(
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                            profile = listMember.subject,
-                            avatarSharedElementKey = listMember.avatarSharedElementKey(),
-                        ),
-                    ),
-                )
-            }
-        }
-        val onTrendClicked = remember {
-            { trend: Trend ->
-                actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = trend.link,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        ),
-                    ),
-                )
-            }
-        }
-        val onFeedGeneratorClicked = remember {
-            { feedGenerator: FeedGenerator ->
-                actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = feedGenerator.uri.path,
-                            models = listOf(feedGenerator),
-                            sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        ),
-                    ),
-                )
-            }
-        }
-        val onTimelineUpdateClicked = remember {
-            { update: Timeline.Update ->
-                if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                else actions(Action.UpdateFeedGeneratorStatus(update))
-            }
-        }
-        val onPostSearchResultClicked = remember {
-            { result: SearchResult.OfPost ->
-                actions(
-                    Action.Navigate.To(
-                        postDestination(
-                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                            sharedElementPrefix = result.sharedElementPrefix,
-                            post = result.post,
-                        ),
-                    ),
-                )
-            }
-        }
-        val onReplyToPost = remember {
-            { result: SearchResult.OfPost ->
-                actions(
-                    Action.Navigate.To(
-                        if (paneScaffoldState.isSignedOut) signInDestination()
-                        else composePostDestination(
-                            type = Post.Create.Reply(
-                                parent = result.post,
-                            ),
-                            sharedElementPrefix = result.sharedElementPrefix,
-                        ),
-                    ),
-                )
-            }
-        }
-        val onMediaClicked = remember {
-            { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri? ->
-                actions(
-                    Action.Navigate.To(
-                        galleryDestination(
-                            post = result.post,
-                            media = media,
-                            startIndex = index,
-                            sharedElementPrefix = result.sharedElementPrefix.withQuotingPostUriPrefix(
-                                quotingPostUri = quotingPostUri,
-                            ),
-                        ),
-                    ),
-                )
-            }
-        }
-        val onPostInteraction = postInteractionState::onInteraction
+    }
+    val onPostInteraction = postInteractionState::onInteraction
 
-        AnimatedContent(
-            targetState = state.layout,
-        ) { targetLayout ->
-            when (targetLayout) {
-                ScreenLayout.Suggested -> SuggestedContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 16.dp),
-                    movableElementSharedTransitionScope = paneScaffoldState,
-                    trends = state.trends,
-                    suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
-                        ?: emptyList(),
-                    starterPacksWithMembers = state.starterPacksWithMembers,
-                    feedGenerators = state.feedGenerators,
-                    feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
-                    onProfileClicked = onProfileClicked,
-                    onViewerStateClicked = onViewerStateClicked,
-                    onListMemberClicked = onListMemberClicked,
-                    onTrendClicked = onTrendClicked,
-                    onFeedGeneratorClicked = onFeedGeneratorClicked,
-                    onUpdateTimelineClicked = onTimelineUpdateClicked,
-                )
+    AnimatedContent(
+        targetState = state.layout,
+    ) { targetLayout ->
+        when (targetLayout) {
+            ScreenLayout.Suggested -> SuggestedContent(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                movableElementSharedTransitionScope = paneScaffoldState,
+                trends = state.trends,
+                suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
+                    ?: emptyList(),
+                starterPacksWithMembers = state.starterPacksWithMembers,
+                feedGenerators = state.feedGenerators,
+                feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
+                onProfileClicked = onProfileClicked,
+                onViewerStateClicked = onViewerStateClicked,
+                onListMemberClicked = onListMemberClicked,
+                onTrendClicked = onTrendClicked,
+                onFeedGeneratorClicked = onFeedGeneratorClicked,
+                onUpdateTimelineClicked = onTimelineUpdateClicked,
+            )
 
-                ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 16.dp),
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
-                    results = state.autoCompletedProfiles,
-                    onProfileClicked = onProfileSearchResultClicked,
-                    onViewerStateClicked = onViewerStateClicked,
-                )
+            ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                results = state.autoCompletedProfiles,
+                onProfileClicked = onProfileSearchResultClicked,
+                onViewerStateClicked = onViewerStateClicked,
+            )
 
-                ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    pagerState = pagerState,
-                    state = state,
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
-                    onProfileClicked = onProfileSearchResultClicked,
-                    onViewerStateClicked = onViewerStateClicked,
-                    onLinkTargetClicked = onLinkTargetClicked,
-                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
-                    onPostSearchResultClicked = onPostSearchResultClicked,
-                    onReplyToPost = onReplyToPost,
-                    onMediaClicked = onMediaClicked,
-                    onPostInteraction = onPostInteraction,
-                    onFeedGeneratorClicked = onFeedGeneratorClicked,
-                    onTimelineUpdateClicked = onTimelineUpdateClicked,
-                )
-            }
+            ScreenLayout.GeneralSearchResults -> TabbedSearchResults(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
+                pagerState = pagerState,
+                state = state,
+                paneScaffoldState = paneScaffoldState,
+                onProfileClicked = onProfileSearchResultClicked,
+                onViewerStateClicked = onViewerStateClicked,
+                onLinkTargetClicked = onLinkTargetClicked,
+                onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                onPostSearchResultClicked = onPostSearchResultClicked,
+                onReplyToPost = onReplyToPost,
+                onMediaClicked = onMediaClicked,
+                onPostInteraction = onPostInteraction,
+                onFeedGeneratorClicked = onFeedGeneratorClicked,
+                onTimelineUpdateClicked = onTimelineUpdateClicked,
+            )
         }
     }
 
@@ -407,7 +426,9 @@ private fun SuggestedContent(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = bottomNavAndInsetPaddingValues(),
+        contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+        ),
     ) {
         item {
             TrendTitle(
@@ -571,6 +592,7 @@ private fun AutoCompleteProfileSearchResults(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             horizontal = 16.dp,
         ),
     ) {
@@ -594,7 +616,7 @@ private fun TabbedSearchResults(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     state: State,
-    paneMovableElementSharedTransitionScope: PaneScaffoldState,
+    paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
@@ -606,28 +628,73 @@ private fun TabbedSearchResults(
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
-    Column(
+    Box(
         modifier = modifier,
     ) {
-        val scope = rememberCoroutineScope()
-        Tabs(
-            modifier = Modifier.fillMaxWidth(),
-            tabsState = rememberTabsState(
-                tabs = searchTabs(
-                    isSignedIn = state.signedInProfile != null,
-                    isQueryEditable = state.isQueryEditable,
-                ),
-                selectedTabIndex = pagerState::tabIndex,
-                onTabSelected = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(it)
-                    }
-                },
-                onTabReselected = { },
-            ),
+        val updatedSearchStateHolders by rememberUpdatedState(
+            state.searchStateHolders,
         )
+        val scope = rememberCoroutineScope()
+        val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
+        var tabsCollapsed by rememberSaveable {
+            mutableStateOf(false)
+        }
+        val tabsBackgroundColor = MaterialTheme.colorScheme.surface
+        val tabsBackgroundProgress = animateFloatAsState(if (tabsCollapsed) 0f else 1f)
+        val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
+            maxOffset = { Offset.Zero },
+            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .zIndex(1f)
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = topClearance.roundToPx(),
+                    ) + tabsOffsetNestedScrollConnection.offset.round()
+                }
+                .drawBehind {
+                    drawRect(
+                        color = tabsBackgroundColor,
+                        size = size.copy(width = size.width * tabsBackgroundProgress.value),
+                    )
+                },
+        ) {
+            Tabs(
+                modifier = Modifier
+                    .drawBehind {
+                        val chipHeight = 32.dp.toPx()
+                        drawRoundRect(
+                            color = tabsBackgroundColor,
+                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                            size = size.copy(height = chipHeight),
+                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                        )
+                    }
+                    .wrapContentWidth()
+                    .animateContentSize(),
+                tabsState = rememberTabsState(
+                    tabs = searchTabs(
+                        isSignedIn = state.signedInProfile != null,
+                        isQueryEditable = state.isQueryEditable,
+                    ),
+                    isCollapsed = tabsCollapsed,
+                    selectedTabIndex = pagerState::tabIndex,
+                    onTabSelected = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(it)
+                        }
+                    },
+                    onTabReselected = { },
+                ),
+            )
+        }
         HorizontalPager(
             modifier = Modifier
+                .zIndex(0f)
+                .nestedScroll(tabsOffsetNestedScrollConnection)
                 .clip(
                     RoundedCornerShape(
                         topStart = 16.dp,
@@ -635,26 +702,92 @@ private fun TabbedSearchResults(
                     ),
                 ),
             state = pagerState,
-            key = { page -> page },
+            key = { page ->
+                updatedSearchStateHolders[page].state.value.key
+            },
             pageContent = { page ->
-                val searchResultStateHolder = remember { state.searchStateHolders[page] }
-                SearchResults(
-                    paneScaffoldState = paneMovableElementSharedTransitionScope,
-                    searchResultStateHolder = searchResultStateHolder,
-                    feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
-                    onProfileClicked = onProfileClicked,
-                    onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
-                    onPostSearchResultClicked = onPostSearchResultClicked,
-                    onLinkTargetClicked = onLinkTargetClicked,
-                    onReplyToPost = onReplyToPost,
-                    onMediaClicked = onMediaClicked,
-                    onPostInteraction = onPostInteraction,
-                    onViewerStateClicked = { onViewerStateClicked(it.profileWithViewerState) },
-                    onFeedGeneratorClicked = onFeedGeneratorClicked,
-                    onTimelineUpdateClicked = onTimelineUpdateClicked,
-                )
+                val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
+                val searchResultState by searchResultStateHolder.state.collectAsStateWithLifecycle()
+                val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
+
+                when (val resultState = searchResultState) {
+                    is SearchState.OfPosts -> {
+                        val gridState = rememberLazyStaggeredGridState()
+                        PostSearchResults(
+                            state = resultState,
+                            gridState = gridState,
+                            modifier = modifier,
+                            videoStates = videoStates,
+                            paneScaffoldState = paneScaffoldState,
+                            onLinkTargetClicked = onLinkTargetClicked,
+                            onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                            onPostSearchResultClicked = onPostSearchResultClicked,
+                            onReplyToPost = onReplyToPost,
+                            onMediaClicked = onMediaClicked,
+                            onPostInteraction = onPostInteraction,
+                            searchResultActions = searchResultStateHolder.accept,
+                        )
+                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+                            pagerState = pagerState,
+                            firstVisibleItemIndex = gridState::firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
+                            scrollBy = gridState::animateScrollBy,
+                        )
+                    }
+
+                    is SearchState.OfProfiles -> {
+                        val listState = rememberLazyListState()
+                        ProfileSearchResults(
+                            state = resultState,
+                            listState = listState,
+                            modifier = modifier,
+                            paneScaffoldState = paneScaffoldState,
+                            onProfileClicked = onProfileClicked,
+                            onViewerStateClicked = {
+                                onViewerStateClicked(it.profileWithViewerState)
+                            },
+                            searchResultActions = searchResultStateHolder.accept,
+                        )
+                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+                            pagerState = pagerState,
+                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                            scrollBy = listState::animateScrollBy,
+                        )
+                    }
+
+                    is SearchState.OfFeedGenerators -> {
+                        val listState = rememberLazyListState()
+                        FeedSearchResults(
+                            state = resultState,
+                            listState = listState,
+                            modifier = modifier,
+                            paneScaffoldState = paneScaffoldState,
+                            feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
+                            onFeedGeneratorClicked = onFeedGeneratorClicked,
+                            onTimelineUpdateClicked = onTimelineUpdateClicked,
+                            searchResultActions = searchResultStateHolder.accept,
+                        )
+                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+                            pagerState = pagerState,
+                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                            scrollBy = listState::animateScrollBy,
+                        )
+                    }
+                }
             },
         )
+
+        LaunchedEffect(tabsOffsetNestedScrollConnection) {
+            snapshotFlow {
+                tabsOffsetNestedScrollConnection.verticalOffsetProgress() > 0.5f
+            }
+                .distinctUntilChanged()
+                .collect { isCollapsed ->
+                    tabsCollapsed = isCollapsed
+                }
+        }
     }
 }
 
@@ -671,169 +804,185 @@ private fun searchTabs(
     .map { Tab(title = it, hasUpdate = false) }
 
 @Composable
-private fun SearchResults(
-    modifier: Modifier = Modifier,
+private fun PostSearchResults(
+    state: SearchState.OfPosts,
+    gridState: LazyStaggeredGridState,
+    modifier: Modifier,
+    videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
-    searchResultStateHolder: SearchResultStateHolder,
-    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
-    onProfileClicked: (SearchResult.OfProfile) -> Unit,
-    onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
     onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
-    onTimelineUpdateClicked: (Timeline.Update) -> Unit,
+    searchResultActions: (SearchState.Tile) -> Unit,
 ) {
-    val searchState = searchResultStateHolder.state.collectAsStateWithLifecycle()
-    val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
-
-    when (val state = searchState.value) {
-        is SearchState.OfPosts -> {
-            val gridState = rememberLazyStaggeredGridState()
-            val now = remember { Clock.System.now() }
-            val results by rememberUpdatedState(state.tiledItems)
-            LazyVerticalStaggeredGrid(
-                modifier = modifier,
-                state = gridState,
-                columns = StaggeredGridCells.Adaptive(
-                    Timeline.Presentation.Text.WithEmbed.cardSize,
-                ),
-                verticalItemSpacing = 16.dp,
-                contentPadding = bottomNavAndInsetPaddingValues(),
-            ) {
-                items(
-                    items = results,
-                    key = { it.post.cid.id },
-                    itemContent = { result ->
-                        PostSearchResult(
-                            modifier = Modifier
-                                .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(result),
-                                ),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            result = result,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onProfileClicked = onPostSearchResultProfileClicked,
-                            onPostClicked = onPostSearchResultClicked,
-                            onReplyToPost = onReplyToPost,
-                            onMediaClicked = onMediaClicked,
-                            onPostInteraction = onPostInteraction,
+    val now = remember { Clock.System.now() }
+    val results by rememberUpdatedState(state.tiledItems)
+    LazyVerticalStaggeredGrid(
+        modifier = modifier,
+        state = gridState,
+        columns = StaggeredGridCells.Adaptive(
+            Timeline.Presentation.Text.WithEmbed.cardSize,
+        ),
+        verticalItemSpacing = 16.dp,
+        contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+        ),
+    ) {
+        items(
+            items = results,
+            key = { it.post.cid.id },
+            itemContent = { result ->
+                PostSearchResult(
+                    modifier = Modifier
+                        .threadedVideoPosition(
+                            state = videoStates.getOrCreateStateFor(result),
                         )
-                    },
+                        .animateItem(),
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    now = now,
+                    result = result,
+                    onLinkTargetClicked = onLinkTargetClicked,
+                    onProfileClicked = onPostSearchResultProfileClicked,
+                    onPostClicked = onPostSearchResultClicked,
+                    onReplyToPost = onReplyToPost,
+                    onMediaClicked = onMediaClicked,
+                    onPostInteraction = onPostInteraction,
                 )
-            }
-            if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
-                val videoPlayerController = LocalVideoPlayerController.current
-                gridState.interpolatedVisibleIndexEffect(
-                    denominator = 10,
-                    itemsAvailable = results.size,
-                ) { interpolatedIndex ->
-                    val flooredIndex = floor(interpolatedIndex).toInt()
-                    val fraction = interpolatedIndex - flooredIndex
-                    results.getOrNull(flooredIndex)
-                        ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
-                        ?.let(videoStates::retrieveStateFor)
-                        ?.videoIdAt(fraction)
-                        ?.let(videoPlayerController::play)
-                        ?: videoPlayerController.pauseActiveVideo()
-                }
-            }
-            gridState.PivotedTilingEffect(
-                items = results,
-                onQueryChanged = { query ->
-                    searchResultStateHolder.accept(
-                        SearchState.Tile(
-                            tilingAction = TilingState.Action.LoadAround(
-                                query ?: state.tilingData.currentQuery,
-                            ),
-                        ),
-                    )
-                },
-            )
-        }
-
-        is SearchState.OfProfiles -> {
-            val listState = rememberLazyListState()
-            val results by rememberUpdatedState(state.tiledItems)
-            LazyColumn(
-                modifier = modifier,
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = bottomNavAndInsetPaddingValues(),
-            ) {
-                items(
-                    items = results,
-                    key = { it.profileWithViewerState.profile.did.id },
-                    itemContent = { result ->
-                        ProfileSearchResult(
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            result = result,
-                            onProfileClicked = onProfileClicked,
-                            onViewerStateClicked = onViewerStateClicked,
-                        )
-                    },
-                )
-            }
-            listState.PivotedTilingEffect(
-                items = results,
-                onQueryChanged = { query ->
-                    searchResultStateHolder.accept(
-                        SearchState.Tile(
-                            tilingAction = TilingState.Action.LoadAround(
-                                query ?: state.tilingData.currentQuery,
-                            ),
-                        ),
-                    )
-                },
-            )
-        }
-
-        is SearchState.OfFeedGenerators -> {
-            val listState = rememberLazyListState()
-            val results by rememberUpdatedState(state.tiledItems)
-            LazyColumn(
-                modifier = modifier,
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = bottomNavAndInsetPaddingValues(),
-            ) {
-                items(
-                    items = results,
-                    key = { it.feedGenerator.cid.id },
-                    itemContent = { result ->
-                        FeedGenerator(
-                            movableElementSharedTransitionScope = paneScaffoldState,
-                            sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
-                            feedGenerator = result.feedGenerator,
-                            status = when (feedGeneratorUrisToPinnedStatus[result.feedGenerator.uri]) {
-                                true -> FeedGenerator.Status.Pinned
-                                false -> FeedGenerator.Status.Saved
-                                null -> FeedGenerator.Status.None
-                            },
-                            onFeedGeneratorClicked = onFeedGeneratorClicked,
-                            onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
-                        )
-                    },
-                )
-            }
-            listState.PivotedTilingEffect(
-                items = results,
-                onQueryChanged = { query ->
-                    searchResultStateHolder.accept(
-                        SearchState.Tile(
-                            tilingAction = TilingState.Action.LoadAround(
-                                query ?: state.tilingData.currentQuery,
-                            ),
-                        ),
-                    )
-                },
-            )
+            },
+        )
+    }
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+        val videoPlayerController = LocalVideoPlayerController.current
+        gridState.interpolatedVisibleIndexEffect(
+            denominator = 10,
+            itemsAvailable = results.size,
+        ) { interpolatedIndex ->
+            val flooredIndex = floor(interpolatedIndex).toInt()
+            val fraction = interpolatedIndex - flooredIndex
+            results.getOrNull(flooredIndex)
+                ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
+                ?.let(videoStates::retrieveStateFor)
+                ?.videoIdAt(fraction)
+                ?.let(videoPlayerController::play)
+                ?: videoPlayerController.pauseActiveVideo()
         }
     }
+    gridState.PivotedTilingEffect(
+        items = results,
+        onQueryChanged = { query ->
+            searchResultActions(
+                SearchState.Tile(
+                    tilingAction = TilingState.Action.LoadAround(
+                        query ?: state.tilingData.currentQuery,
+                    ),
+                ),
+            )
+        },
+    )
+}
+
+@Composable
+private fun ProfileSearchResults(
+    state: SearchState.OfProfiles,
+    listState: LazyListState,
+    modifier: Modifier,
+    paneScaffoldState: PaneScaffoldState,
+    onProfileClicked: (SearchResult.OfProfile) -> Unit,
+    onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
+    searchResultActions: (SearchState.Tile) -> Unit,
+) {
+    val results by rememberUpdatedState(state.tiledItems)
+    LazyColumn(
+        modifier = modifier,
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+        ),
+    ) {
+        items(
+            items = results,
+            key = { it.profileWithViewerState.profile.did.id },
+            itemContent = { result ->
+                ProfileSearchResult(
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    result = result,
+                    onProfileClicked = onProfileClicked,
+                    onViewerStateClicked = onViewerStateClicked,
+                )
+            },
+        )
+    }
+    listState.PivotedTilingEffect(
+        items = results,
+        onQueryChanged = { query ->
+            searchResultActions(
+                SearchState.Tile(
+                    tilingAction = TilingState.Action.LoadAround(
+                        query ?: state.tilingData.currentQuery,
+                    ),
+                ),
+            )
+        },
+    )
+}
+
+@Composable
+private fun FeedSearchResults(
+    state: SearchState.OfFeedGenerators,
+    listState: LazyListState,
+    modifier: Modifier,
+    paneScaffoldState: PaneScaffoldState,
+    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
+    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
+    onTimelineUpdateClicked: (Timeline.Update) -> Unit,
+    searchResultActions: (SearchState.Tile) -> Unit,
+) {
+    val results by rememberUpdatedState(state.tiledItems)
+    LazyColumn(
+        modifier = modifier,
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+        ),
+    ) {
+        items(
+            items = results,
+            key = { it.feedGenerator.cid.id },
+            itemContent = { result ->
+                FeedGenerator(
+                    modifier = Modifier
+                        .animateItem(),
+                    movableElementSharedTransitionScope = paneScaffoldState,
+                    sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
+                    feedGenerator = result.feedGenerator,
+                    status = when (feedGeneratorUrisToPinnedStatus[result.feedGenerator.uri]) {
+                        true -> FeedGenerator.Status.Pinned
+                        false -> FeedGenerator.Status.Saved
+                        null -> FeedGenerator.Status.None
+                    },
+                    onFeedGeneratorClicked = onFeedGeneratorClicked,
+                    onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
+                )
+            },
+        )
+    }
+    listState.PivotedTilingEffect(
+        items = results,
+        onQueryChanged = { query ->
+            searchResultActions(
+                SearchState.Tile(
+                    tilingAction = TilingState.Action.LoadAround(
+                        query ?: state.tilingData.currentQuery,
+                    ),
+                ),
+            )
+        },
+    )
 }
 
 private fun Profile.searchProfileAvatarSharedElementKey(): String =
