@@ -464,7 +464,7 @@ internal class OfflinePostRepository @Inject constructor(
 
     private suspend fun upsertInteraction(
         partial: PostViewerStatisticsEntity.Partial,
-    ) = transactionWriter.inTransaction {
+    ) {
         partialUpsert(
             items = listOf(partial.asFull()),
             partialMapper = { listOf(partial) },
