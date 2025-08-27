@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.scaffold.ui
+package com.tunjid.heron.ui
 
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -25,7 +25,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.ui.UiTokens
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor

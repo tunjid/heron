@@ -77,7 +77,7 @@ import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.ui.PagerTopGapCloseEffect
+import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems

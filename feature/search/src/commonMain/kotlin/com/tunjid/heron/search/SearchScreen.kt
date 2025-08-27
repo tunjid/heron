@@ -109,8 +109,8 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
-import com.tunjid.heron.scaffold.ui.PagerTopGapCloseEffect
-import com.tunjid.heron.scaffold.ui.verticalOffsetProgress
+import com.tunjid.heron.ui.PagerTopGapCloseEffect
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.heron.search.ui.PostSearchResult
 import com.tunjid.heron.search.ui.ProfileSearchResult
 import com.tunjid.heron.search.ui.SuggestedStarterPack
