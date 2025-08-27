@@ -116,7 +116,7 @@ fun Tabs(
     Box(modifier = modifier) {
         val lazyListState = rememberLazyListState()
         LazyRow(
-            modifier = modifier,
+            modifier = Modifier,
             state = lazyListState,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {

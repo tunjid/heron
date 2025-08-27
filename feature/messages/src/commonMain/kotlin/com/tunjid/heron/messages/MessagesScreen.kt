@@ -80,7 +80,9 @@ internal fun MessagesScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+        ),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         items(

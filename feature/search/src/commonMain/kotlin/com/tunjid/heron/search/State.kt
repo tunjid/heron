@@ -92,6 +92,13 @@ sealed class SearchState {
     )
 }
 
+val SearchState.key
+    get() = when (this) {
+        is SearchState.OfFeedGenerators -> tilingData.currentQuery.sourceId
+        is SearchState.OfPosts -> tilingData.currentQuery.sourceId
+        is SearchState.OfProfiles -> tilingData.currentQuery.sourceId
+    }
+
 @Serializable
 data class State(
     val currentQuery: String = "",
