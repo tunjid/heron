@@ -389,21 +389,29 @@ internal class OfflinePostRepository @Inject constructor(
                 .getOrNull()
                 ?.let {
                     if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
-                    upsertInteraction(
-                        partial = when (interaction) {
-                            is Post.Interaction.Create.Like -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = it.uri.atUri.let(::GenericUri),
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
+                    transactionWriter.inTransaction {
+                        upsertInteraction(
+                            partial = when (interaction) {
+                                is Post.Interaction.Create.Like -> {
+                                    PostViewerStatisticsEntity.Partial.Like(
+                                        likeUri = it.uri.atUri.let(::GenericUri),
+                                        postUri = interaction.postUri,
+                                        viewingProfileId = authorId,
+                                    )
+                                }
 
-                            is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
-                                repostUri = it.uri.atUri.let(::GenericUri),
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
-                        },
-                    )
+                                is Post.Interaction.Create.Repost -> PostViewerStatisticsEntity.Partial.Repost(
+                                    repostUri = it.uri.atUri.let(::GenericUri),
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                )
+                            },
+                        )
+                        postDao.updateLikeCount(
+                            postUri = interaction.postUri.uri,
+                            isIncrement = true,
+                        )
+                    }
                 }
 
             is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
@@ -427,28 +435,36 @@ internal class OfflinePostRepository @Inject constructor(
             }
                 .getOrNull()
                 ?.let {
-                    upsertInteraction(
-                        partial = when (interaction) {
-                            is Post.Interaction.Delete.Unlike -> PostViewerStatisticsEntity.Partial.Like(
-                                likeUri = null,
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
+                    transactionWriter.inTransaction {
+                        upsertInteraction(
+                            partial = when (interaction) {
+                                is Post.Interaction.Delete.Unlike -> {
+                                    PostViewerStatisticsEntity.Partial.Like(
+                                        likeUri = null,
+                                        postUri = interaction.postUri,
+                                        viewingProfileId = authorId,
+                                    )
+                                }
 
-                            is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
-                                repostUri = null,
-                                postUri = interaction.postUri,
-                                viewingProfileId = authorId,
-                            )
-                        },
-                    )
+                                is Post.Interaction.Delete.RemoveRepost -> PostViewerStatisticsEntity.Partial.Repost(
+                                    repostUri = null,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                )
+                            },
+                        )
+                        postDao.updateLikeCount(
+                            postUri = interaction.postUri.uri,
+                            isIncrement = false,
+                        )
+                    }
                 }
         }
     }
 
     private suspend fun upsertInteraction(
         partial: PostViewerStatisticsEntity.Partial,
-    ) = transactionWriter.inTransaction {
+    ) {
         partialUpsert(
             items = listOf(partial.asFull()),
             partialMapper = { listOf(partial) },
