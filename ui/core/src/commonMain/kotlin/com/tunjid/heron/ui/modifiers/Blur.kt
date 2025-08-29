@@ -23,8 +23,13 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 
+/**
+ * A blur [Modifier] with lambda arguments to prevent relayouts and recomposition.
+ * Lambda arguments that update should be backed with compose state
+ */
 fun Modifier.blur(
     shape: Shape,
+    clip: () -> Boolean = { false },
     radius: () -> Dp,
     progress: () -> Float,
 ): Modifier = graphicsLayer {
@@ -45,5 +50,5 @@ fun Modifier.blur(
     )
 
     this.shape = shape
-    this.clip = true
+    this.clip = clip()
 }

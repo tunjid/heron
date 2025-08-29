@@ -70,6 +70,7 @@ internal fun Modifier.sensitiveContentBlur(
     .blur(
         shape = shape,
         radius = ::SensitiveContentBlurRadius,
+        clip = ::SensitiveContentBlurClip,
         progress = { 1f },
     )
 
@@ -92,3 +93,4 @@ internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
 
 private val SensitiveContentBlurRadius = 120.dp
+private const val SensitiveContentBlurClip = true
