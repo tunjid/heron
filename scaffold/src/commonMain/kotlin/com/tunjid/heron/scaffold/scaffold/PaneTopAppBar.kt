@@ -41,16 +41,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.scaffold.generated.resources.Res
@@ -188,25 +186,11 @@ private fun Modifier.rootAppBarBackground(
 
 private fun Modifier.rootAppBarBlur(
     progress: () -> Float,
-): Modifier = graphicsLayer {
-    val currentProgress = progress()
-    if (currentProgress <= 0f) return@graphicsLayer
-
-    val horizontalBlurPixels = RootAppBarBlurRadius.toPx() * currentProgress
-    val verticalBlurPixels = RootAppBarBlurRadius.toPx() * currentProgress
-
-    // Only non-zero blur radii are valid BlurEffect parameters
-    if (horizontalBlurPixels <= 0f || verticalBlurPixels <= 0f) return@graphicsLayer
-
-    renderEffect = BlurEffect(
-        radiusX = horizontalBlurPixels,
-        radiusY = verticalBlurPixels,
-        edgeTreatment = TileMode.Clamp,
-    )
-
-    shape = RectangleShape
-    clip = false
-}
+): Modifier = blur(
+    shape = RectangleShape,
+    radius = ::RootAppBarBlurRadius,
+    progress = progress,
+)
 
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }

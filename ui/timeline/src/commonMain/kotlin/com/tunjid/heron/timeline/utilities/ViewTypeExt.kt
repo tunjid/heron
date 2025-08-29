@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -31,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 internal fun Modifier.presentationPadding(
@@ -53,26 +52,26 @@ internal fun Modifier.presentationPadding(
 
 internal fun Modifier.sensitiveContentBlur(
     shape: Shape,
-) =
-    drawWithCache {
-        val density = Density(density)
-        val color = Color.Black.copy(alpha = 0.5f)
-        onDrawWithContent {
-            drawContent()
-            drawOutline(
-                outline = shape.createOutline(
-                    size = size,
-                    layoutDirection = layoutDirection,
-                    density = density,
-                ),
-                color = color,
-            )
-        }
-    }
-        .blur(
-            radius = 120.dp,
-            edgeTreatment = BlurredEdgeTreatment(shape),
+) = drawWithCache {
+    val density = Density(density)
+    val color = Color.Black.copy(alpha = 0.5f)
+    onDrawWithContent {
+        drawContent()
+        drawOutline(
+            outline = shape.createOutline(
+                size = size,
+                layoutDirection = layoutDirection,
+                density = density,
+            ),
+            color = color,
         )
+    }
+}
+    .blur(
+        shape = shape,
+        radius = ::SensitiveContentBlurRadius,
+        progress = { 1f },
+    )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val FeedGeneratorCollectionShape = RoundedPolygonShape.Custom(
@@ -91,3 +90,5 @@ internal val StarterPackCollectionShape = RoundedPolygonShape.Custom(
 
 internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
+
+private val SensitiveContentBlurRadius = 120.dp
