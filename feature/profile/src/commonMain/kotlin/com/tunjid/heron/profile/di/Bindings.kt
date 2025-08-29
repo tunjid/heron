@@ -50,6 +50,7 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
+import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
@@ -155,6 +156,7 @@ class ProfileBindings(
                     PoppableDestinationTopAppBar(
                         // Limit width so tabs may be tapped
                         modifier = Modifier.width(60.dp),
+                        transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

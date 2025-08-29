@@ -20,6 +20,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +37,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
@@ -185,7 +187,10 @@ internal fun NotificationsScreen(
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .offset {
+                        IntOffset(x = 0, y = listState.layoutInfo.beforeContentPadding)
+                    },
                 state = pullToRefreshState,
                 isRefreshing = state.isRefreshing,
             )

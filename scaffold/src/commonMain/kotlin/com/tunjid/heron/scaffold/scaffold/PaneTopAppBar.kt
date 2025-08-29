@@ -170,13 +170,19 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     )
 }
 
+@Suppress("UnusedReceiverParameter")
+fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
+
 private fun Modifier.rootAppBarBackground(
     backgroundColor: Color,
     progress: () -> Float,
 ): Modifier = drawBehind {
     drawRect(
         color = backgroundColor,
-        alpha = HundredPercent - (progress() * 0.1f),
+        alpha = when (val currentProgress = progress()) {
+            in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
+            else -> 0F
+        },
     )
 }
 
@@ -208,4 +214,5 @@ private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 private val RootAppBarBlurRadius = 60.dp
 
 private const val SignedInUserAvatarSharedElementKey = "self"
+private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
