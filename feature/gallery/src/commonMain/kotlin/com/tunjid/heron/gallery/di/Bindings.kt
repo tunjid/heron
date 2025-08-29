@@ -117,8 +117,7 @@ class GalleryBindings(
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this)
-                    .dragToPop(),
+                    .predictiveBackPlacement(paneScope = this),
                 showNavigation = false,
                 containerColor = Color.Transparent,
                 snackBarMessages = state.messages,
@@ -127,7 +126,8 @@ class GalleryBindings(
                 content = {
                     GalleryScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .dragToPop(),
                         state = state,
                         actions = viewModel.accept,
                     )

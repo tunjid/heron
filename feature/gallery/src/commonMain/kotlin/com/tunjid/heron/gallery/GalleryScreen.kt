@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
+import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -88,6 +89,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 @Composable
@@ -151,7 +153,14 @@ internal fun GalleryScreen(
                 ) {
                     when (val item = updatedItems[page]) {
                         is GalleryItem.Photo -> {
-                            val zoomState = rememberGestureZoomState()
+                            val zoomState = rememberGestureZoomState(
+                                options = remember {
+                                    Options(
+                                        scale = Options.Scale.Layout,
+                                        offset = Options.Offset.Layout,
+                                    )
+                                },
+                            )
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
                                 modifier = Modifier
@@ -162,7 +171,7 @@ internal fun GalleryScreen(
                                     )
                                     .gestureZoomable(zoomState)
                                     .combinedClickable(
-                                        onClick = { },
+                                        onClick = playerControlsUiState::toggleVisibility,
                                         onDoubleClick = {
                                             coroutineScope.launch {
                                                 zoomState.toggleZoom()
@@ -193,13 +202,13 @@ internal fun GalleryScreen(
             },
         )
 
-        videoPlayerController.VideoOverlay(
+        videoPlayerController.MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
             galleryItem = updatedItems.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { videoPlayerState ->
-            VideoPoster(
+            MediaPoster(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .statusBarsPadding()
@@ -225,7 +234,7 @@ internal fun GalleryScreen(
                 },
             )
 
-            VideoInteractions(
+            MediaInteractions(
                 post = state.post,
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
@@ -272,7 +281,7 @@ internal fun GalleryScreen(
                         )
                     },
                 )
-                PlaybackStatus(
+                if (videoPlayerState != null) PlaybackStatus(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth(),
@@ -282,7 +291,8 @@ internal fun GalleryScreen(
             }
 
             LaunchedEffect(Unit) {
-                snapshotFlow { videoPlayerState.status }
+                snapshotFlow { videoPlayerState?.status }
+                    .filterNotNull()
                     .collectLatest {
                         playerControlsUiState.update(it)
                     }
@@ -403,15 +413,29 @@ private fun Modifier.aspectRatioFor(
 }
 
 @Composable
-fun VideoPlayerController.VideoOverlay(
+fun VideoPlayerController.MediaOverlay(
     modifier: Modifier = Modifier,
     galleryItem: GalleryItem?,
     isVisible: Boolean,
-    content: @Composable BoxScope.(VideoPlayerState) -> Unit,
+    content: @Composable BoxScope.(VideoPlayerState?) -> Unit,
 ) {
     when (galleryItem) {
         null -> Unit
-        is GalleryItem.Photo -> Unit
+        is GalleryItem.Photo -> {
+            AnimatedVisibility(
+                modifier = modifier,
+                visible = isVisible,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.Black.copy(alpha = 0.8f)),
+                    content = {
+                        content(null)
+                    },
+                )
+            }
+        }
         is GalleryItem.Video -> {
             val videoPlayerState = getVideoStateById(
                 videoId = galleryItem.video.playlist.uri,
@@ -435,7 +459,7 @@ fun VideoPlayerController.VideoOverlay(
 }
 
 @Composable
-fun VideoPoster(
+fun MediaPoster(
     post: Post?,
     sharedElementPrefix: String,
     paneScaffoldState: PaneScaffoldState,
@@ -483,7 +507,7 @@ fun VideoText(
 }
 
 @Composable
-fun VideoInteractions(
+fun MediaInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
