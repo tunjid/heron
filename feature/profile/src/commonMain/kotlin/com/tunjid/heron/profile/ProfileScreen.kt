@@ -66,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
@@ -142,6 +143,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -528,7 +530,12 @@ private fun ProfileBanner(
             .height(headerState.profileBannerHeight)
             .graphicsLayer {
                 alpha = headerState.bannerAlpha
-            },
+            }
+            .blur(
+                shape = RectangleShape,
+                radius = ::BannerBlurRadius,
+                progress = headerState::progress,
+            ),
         args = remember(
             key1 = profile.banner?.uri,
             key2 = profile.displayName,
@@ -1105,7 +1112,7 @@ private class HeaderState(
 
     val sizeToken = 24.dp
 
-    private val progress get() = max(0f, headerState.progress)
+    val progress get() = max(0f, headerState.progress)
 
     private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
 
@@ -1121,3 +1128,4 @@ private class HeaderState(
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 36.dp
+private val BannerBlurRadius = 40.dp

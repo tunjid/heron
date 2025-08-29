@@ -131,79 +131,83 @@ internal fun ListScreen(
         initialExpandedHeight = with(density) { 800.dp.toPx() },
     )
 
-    CollapsingHeaderLayout(
+    val pullToRefreshState = rememberPullToRefreshState()
+    val isRefreshing by produceState(
+        initialValue = false,
+        key1 = pagerState.currentPage,
+        key2 = updatedStateHolders.size,
+    ) {
+        updatedStateHolders.getOrNull(pagerState.currentPage)
+            ?.tilingState
+            ?.collect {
+                value = it.isRefreshing
+            }
+    }
+
+    PullToRefreshBox(
         modifier = modifier
-            .fillMaxSize(),
-        state = collapsingHeaderState,
-        headerContent = {
-            Column(
+            .fillMaxSize()
+            .paneClip(),
+        isRefreshing = isRefreshing,
+        state = pullToRefreshState,
+        onRefresh = {
+            updatedStateHolders[pagerState.currentPage].refresh()
+        },
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
                     .offset {
-                        IntOffset(
-                            x = 0,
-                            y = -collapsingHeaderState.translation.roundToInt(),
-                        )
+                        IntOffset(x = 0, y = collapsingHeaderState.expandedHeight.roundToInt())
                     },
-            ) {
-                Text(
-                    modifier = Modifier
-                        .padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp,
-                        ),
-                    text = state.timelineState?.timeline?.description ?: "",
-                )
-                Tabs(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+            )
+        },
+    ) {
+        CollapsingHeaderLayout(
+            modifier = Modifier
+                .fillMaxSize(),
+            state = collapsingHeaderState,
+            headerContent = {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(CircleShape),
-                    tabsState = rememberTabsState(
-                        tabs = listTabs(
-                            hasUpdate = state.timelineState?.hasUpdates == true,
-                        ),
-                        selectedTabIndex = pagerState::tabIndex,
-                        onTabSelected = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(it)
-                            }
+                        .offset {
+                            IntOffset(
+                                x = 0,
+                                y = -collapsingHeaderState.translation.roundToInt(),
+                            )
                         },
-                        onTabReselected = { },
-                    ),
-                )
-            }
-        },
-        body = {
-            val pullToRefreshState = rememberPullToRefreshState()
-            val isRefreshing by produceState(
-                initialValue = false,
-                key1 = pagerState.currentPage,
-                key2 = updatedStateHolders.size,
-            ) {
-                updatedStateHolders.getOrNull(pagerState.currentPage)
-                    ?.tilingState
-                    ?.collect {
-                        value = it.isRefreshing
-                    }
-            }
-            PullToRefreshBox(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .paneClip(),
-                isRefreshing = isRefreshing,
-                state = pullToRefreshState,
-                onRefresh = {
-                    updatedStateHolders[pagerState.currentPage].refresh()
-                },
-                indicator = {
-                    PullToRefreshDefaults.LoadingIndicator(
+                ) {
+                    Text(
                         modifier = Modifier
-                            .align(Alignment.TopCenter),
-                        state = pullToRefreshState,
-                        isRefreshing = isRefreshing,
+                            .padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp,
+                            ),
+                        text = state.timelineState?.timeline?.description ?: "",
                     )
-                },
-            ) {
+                    Tabs(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(CircleShape),
+                        tabsState = rememberTabsState(
+                            tabs = listTabs(
+                                hasUpdate = state.timelineState?.hasUpdates == true,
+                            ),
+                            selectedTabIndex = pagerState::tabIndex,
+                            onTabSelected = { page ->
+                                scope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            },
+                            onTabReselected = { },
+                        ),
+                    )
+                }
+            },
+            body = {
                 HorizontalPager(
                     modifier = Modifier
                         .fillMaxSize(),
@@ -225,9 +229,9 @@ internal fun ListScreen(
                         }
                     },
                 )
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Composable
