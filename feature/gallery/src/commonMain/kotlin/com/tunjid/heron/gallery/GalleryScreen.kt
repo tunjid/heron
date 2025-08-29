@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
+import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -151,7 +152,14 @@ internal fun GalleryScreen(
                 ) {
                     when (val item = updatedItems[page]) {
                         is GalleryItem.Photo -> {
-                            val zoomState = rememberGestureZoomState()
+                            val zoomState = rememberGestureZoomState(
+                                options = remember {
+                                    Options(
+                                        scale = Options.Scale.Layout,
+                                        offset = Options.Offset.Layout,
+                                    )
+                                }
+                            )
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
                                 modifier = Modifier

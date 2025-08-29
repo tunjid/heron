@@ -17,21 +17,27 @@
 package com.tunjid.heron.profile.avatar
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
+import com.tunjid.composables.gesturezoom.GestureZoomState.Options
+import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -49,6 +55,15 @@ internal fun AvatarScreen(
         modifier = modifier
             .fillMaxSize(),
     ) {
+        val coroutineScope = rememberCoroutineScope()
+        val zoomState = rememberGestureZoomState(
+            options = remember {
+                Options(
+                    scale = Options.Scale.Layout,
+                    offset = Options.Offset.Layout,
+                )
+            },
+        )
         paneScaffoldState.updatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
@@ -59,7 +74,13 @@ internal fun AvatarScreen(
                 .align(Alignment.Center)
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .dragToPop(),
+                .gestureZoomable(zoomState)
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        coroutineScope.launch { zoomState.toggleZoom() }
+                    },
+                ),
             state = remember(avatar) {
                 ImageArgs(
                     url = avatar?.uri,
