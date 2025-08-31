@@ -58,6 +58,8 @@ kotlin {
                 implementation(libs.compose.material.icons.extended)
                 implementation(libs.compose.material3)
 
+                implementation(libs.filekit.coil)
+
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
