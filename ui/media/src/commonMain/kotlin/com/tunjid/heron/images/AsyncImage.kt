@@ -84,36 +84,7 @@ class ImageState internal constructor(
     private var requestSize by mutableStateOf(IntSize.Zero)
 
     internal val request
-        get() = coil3.request.ImageRequest.Builder(platformContext).apply {
-            when (val request = args.request) {
-                is ImageRequest.Local -> {
-                    data(request.file)
-                }
-                is ImageRequest.Network -> {
-                    data(request.url)
-                    crossfade(true)
-                    request.thumbnailUrl
-                        ?.let(MemoryCache::Key)
-                        ?.let { cacheKey ->
-                            placeholder {
-                                SingletonImageLoader.get(platformContext)
-                                    .memoryCache
-                                    ?.get(cacheKey)
-                                    ?.image
-                            }
-                        }
-                    // TODO: This is only done for network images for now. This is bc
-                    // Local images need to be loaded as is to obtain the proper dimensions
-                    if (requestSize.isUsable) size(
-                        CoilSize(
-                            width = min(requestSize.width, windowSize().width),
-                            height = min(requestSize.height, windowSize().height),
-                        ),
-                    )
-                }
-            }
-        }
-            .build()
+        get() = imageRequest(requestSize)
 
     internal suspend fun updateRequest() {
         snapshotFlow { layoutSize }
@@ -133,6 +104,39 @@ class ImageState internal constructor(
             height = success.result.image.height,
         )
     }
+
+    private fun imageRequest(
+        requestSize: IntSize
+    ) = coil3.request.ImageRequest.Builder(platformContext).apply {
+        when (val request = args.request) {
+            is ImageRequest.Local -> {
+                data(request.file)
+            }
+            is ImageRequest.Network -> {
+                data(request.url)
+                crossfade(true)
+                request.thumbnailUrl
+                    ?.let(MemoryCache::Key)
+                    ?.let { cacheKey ->
+                        placeholder {
+                            SingletonImageLoader.get(platformContext)
+                                .memoryCache
+                                ?.get(cacheKey)
+                                ?.image
+                        }
+                    }
+                // TODO: This is only done for network images for now. This is bc
+                // Local images need to be loaded as is to obtain the proper dimensions
+                if (requestSize.isUsable) size(
+                    CoilSize(
+                        width = min(requestSize.width, windowSize().width),
+                        height = min(requestSize.height, windowSize().height),
+                    ),
+                )
+            }
+        }
+    }
+        .build()
 }
 
 @Composable
