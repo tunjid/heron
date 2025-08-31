@@ -24,6 +24,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.random.Random
@@ -52,7 +53,9 @@ fun JiggleBox(
         targetValue = JiggleAngle,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = JiggleDurationMillis + Random.nextInt(JiggleVariationDeltaMillis),
+                durationMillis = JiggleDurationMillis + remember {
+                    Random.nextInt(JiggleVariationDeltaMillis)
+                },
                 easing = LinearEasing,
             ),
             repeatMode = RepeatMode.Reverse,
