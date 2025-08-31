@@ -327,9 +327,8 @@ private inline fun DrawScope.scaleAndAlignTo(
             scale(
                 scaleX = scaleFactor.scaleX,
                 scaleY = scaleFactor.scaleY,
-            ) {
-                block()
-            }
+                block = block,
+            )
         },
     )
 }
