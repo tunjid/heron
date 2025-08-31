@@ -101,6 +101,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
+import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.Tab
@@ -473,64 +474,66 @@ private fun TabsState.ExpandedTab(
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
 ) = with(sharedTransitionScope) {
-    InputChip(
-        modifier = modifier
-            .skipToLookaheadSize()
-            .timelinePreferenceDragAndDrop(
-                state = timelinePreferencesState,
-                sourceId = timeline.sourceId,
-            ),
-        shape = CircleShape,
-        selected = timelinePreferencesState.isHoveredId(timeline.sourceId),
-        onClick = click@{
-            val index = currentTimelines.indexOfFirst { it.sourceId == timeline.sourceId }
-            if (index >= 0) onTabSelected(index)
-        },
-        avatar = {
-            val url = when (timeline) {
-                is Timeline.Home.Feed -> timeline.feedGenerator.avatar?.uri
-                is Timeline.Home.Following -> null
-                is Timeline.Home.List -> timeline.feedList.avatar?.uri
-            }
-            if (url != null) AsyncImage(
-                modifier = Modifier
-                    .size(24.dp),
-                args = remember(url) {
-                    ImageArgs(
-                        url = url,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-            )
-        },
-        label = {
-            Text(
-                modifier = Modifier
-                    .width(IntrinsicSize.Max)
-                    .sharedElement(
-                        sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                            timeline.name,
-                        ),
-                        animatedVisibilityScope = animatedContentScope,
-                        boundsTransform = TabsBoundsTransform,
-                    ),
-                text = timeline.name,
-                maxLines = 1,
-            )
-        },
-        trailingIcon = {
-            Icon(
-                modifier = Modifier
-                    .clickable {
-                        timelinePreferencesState.remove(timeline)
+    JiggleBox {
+        InputChip(
+            modifier = modifier
+                .skipToLookaheadSize()
+                .timelinePreferenceDragAndDrop(
+                    state = timelinePreferencesState,
+                    sourceId = timeline.sourceId,
+                ),
+            shape = CircleShape,
+            selected = timelinePreferencesState.isHoveredId(timeline.sourceId),
+            onClick = click@{
+                val index = currentTimelines.indexOfFirst { it.sourceId == timeline.sourceId }
+                if (index >= 0) onTabSelected(index)
+            },
+            avatar = {
+                val url = when (timeline) {
+                    is Timeline.Home.Feed -> timeline.feedGenerator.avatar?.uri
+                    is Timeline.Home.Following -> null
+                    is Timeline.Home.List -> timeline.feedList.avatar?.uri
+                }
+                if (url != null) AsyncImage(
+                    modifier = Modifier
+                        .size(24.dp),
+                    args = remember(url) {
+                        ImageArgs(
+                            url = url,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = RoundedPolygonShape.Circle,
+                        )
                     },
-                imageVector = Icons.Rounded.Remove,
-                contentDescription = "",
-            )
-        },
-    )
+                )
+            },
+            label = {
+                Text(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                        .sharedElement(
+                            sharedContentState = sharedTransitionScope.rememberSharedContentState(
+                                timeline.name,
+                            ),
+                            animatedVisibilityScope = animatedContentScope,
+                            boundsTransform = TabsBoundsTransform,
+                        ),
+                    text = timeline.name,
+                    maxLines = 1,
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    modifier = Modifier
+                        .clickable {
+                            timelinePreferencesState.remove(timeline)
+                        },
+                    imageVector = Icons.Rounded.Remove,
+                    contentDescription = "",
+                )
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
