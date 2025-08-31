@@ -21,5 +21,5 @@ import androidx.compose.ui.graphics.nativeCanvas
 import coil3.Image
 
 actual fun Image.renderInto(
-    canvas: Canvas
+    canvas: Canvas,
 ) = draw(canvas.nativeCanvas)
