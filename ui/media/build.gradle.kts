@@ -47,6 +47,7 @@ kotlin {
                 implementation(libs.filekit.coil)
 
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.datetime)
 
                 implementation(libs.tunjid.composables)
             }

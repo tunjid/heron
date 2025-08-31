@@ -18,24 +18,38 @@ package com.tunjid.heron.images
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntSize
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage as CoilAsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.memory.MemoryCache
+import coil3.request.crossfade
+import coil3.size.Size as CoilSize
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.coil.AsyncImage as FileAsyncImage
+import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 
 sealed class ImageRequest {
     data class Network(
@@ -57,12 +71,59 @@ data class ImageArgs(
 )
 
 @Stable
-class ImageState(
+class ImageState internal constructor(
     args: ImageArgs,
+    private val platformContext: PlatformContext,
+    private val windowSize: () -> IntSize,
 ) {
     var args by mutableStateOf(args)
     var imageSize by mutableStateOf(IntSize.Zero)
         private set
+
+    internal var layoutSize by mutableStateOf(IntSize.Zero)
+    private var requestSize by mutableStateOf(IntSize.Zero)
+
+    internal val request
+        get() = coil3.request.ImageRequest.Builder(platformContext).apply {
+            when (val request = args.request) {
+                is ImageRequest.Local -> {
+                    data(request.file)
+                }
+                is ImageRequest.Network -> {
+                    data(request.url)
+                    crossfade(true)
+                    request.thumbnailUrl
+                        ?.let(MemoryCache::Key)
+                        ?.let { cacheKey ->
+                            placeholder {
+                                SingletonImageLoader.get(platformContext)
+                                    .memoryCache
+                                    ?.get(cacheKey)
+                                    ?.image
+                            }
+                        }
+                    // TODO: This is only done for network images for now. This is bc
+                    // Local images need to be loaded as is to obtain the proper dimensions
+                    if (requestSize.isUsable) size(
+                        CoilSize(
+                            width = min(requestSize.width, windowSize().width),
+                            height = min(requestSize.height, windowSize().height),
+                        ),
+                    )
+                }
+            }
+        }
+            .build()
+
+    internal suspend fun updateRequest() {
+        snapshotFlow { layoutSize }
+            .filter { it.isUsable }
+            .distinctUntilChanged()
+            .debounce(ImageLayoutSizeRefetchDebounce.milliseconds)
+            .collect {
+                requestSize = it
+            }
+    }
 
     internal fun updateFromSuccess(
         success: AsyncImagePainter.State.Success,
@@ -77,9 +138,18 @@ class ImageState(
 @Composable
 fun rememberUpdatedImageState(
     args: ImageArgs,
-): ImageState =
-    remember { ImageState(args) }
+): ImageState {
+    val platformContext = LocalPlatformContext.current
+    val windowSize = rememberUpdatedState(LocalWindowInfo.current.containerSize)
+    return remember {
+        ImageState(
+            args = args,
+            platformContext = platformContext,
+            windowSize = windowSize::value,
+        )
+    }
         .also { it.args = args }
+}
 
 fun ImageArgs(
     url: String?,
@@ -144,60 +214,51 @@ fun AsyncImage(
         modifier = modifier
             .clip(args.shape.animate()),
     ) {
-        val contentScale = args.contentScale.animate()
+        CoilAsyncImage(
+            modifier = Modifier.fillMaxConstraints {
+                state.layoutSize = it
+            },
+            model = state.request,
+            contentDescription = state.args.contentDescription,
+            contentScale = args.contentScale.animate(),
+            onSuccess = state::updateFromSuccess,
+        )
+    }
 
-        when (val request = args.request) {
-            is ImageRequest.Local -> {
-                FileAsyncImage(
-                    modifier = Modifier.fillMaxConstraints(),
-                    file = request.file,
-                    contentDescription = args.contentDescription,
-                    contentScale = contentScale,
-                    onSuccess = state::updateFromSuccess,
-                )
-            }
-
-            is ImageRequest.Network -> {
-                var thumbnailVisible by remember(request.thumbnailUrl) {
-                    mutableStateOf(request.thumbnailUrl != null)
-                }
-                CoilAsyncImage(
-                    modifier = Modifier.fillMaxConstraints(),
-                    model = request.url,
-                    contentDescription = args.contentDescription,
-                    contentScale = contentScale,
-                    onSuccess = { thumbnailVisible = false },
-                )
-                if (thumbnailVisible) CoilAsyncImage(
-                    modifier = Modifier.fillMaxConstraints(),
-                    model = request.thumbnailUrl,
-                    contentDescription = args.contentDescription,
-                    contentScale = contentScale,
-                    onSuccess = state::updateFromSuccess,
-                )
-            }
-        }
+    LaunchedEffect(Unit) {
+        state.updateRequest()
     }
 }
 
-private fun Modifier.fillMaxConstraints() =
-    layout { measurable, constraints ->
-        val placeable = measurable.measure(
-            constraints.copy(
-                minWidth = when {
-                    constraints.hasBoundedWidth -> constraints.maxWidth
-                    else -> constraints.minWidth
-                },
-                minHeight = when {
-                    constraints.hasBoundedHeight -> constraints.maxHeight
-                    else -> constraints.minHeight
-                },
-            ),
-        )
-        layout(
-            width = placeable.width,
-            height = placeable.height,
-        ) {
-            placeable.place(0, 0)
-        }
+private fun Modifier.fillMaxConstraints(
+    onConstraintsSized: (IntSize) -> Unit,
+) = layout { measurable, constraints ->
+    val placeable = measurable.measure(
+        constraints.copy(
+            minWidth = when {
+                constraints.hasBoundedWidth -> constraints.maxWidth
+                else -> constraints.minWidth
+            },
+            minHeight = when {
+                constraints.hasBoundedHeight -> constraints.maxHeight
+                else -> constraints.minHeight
+            },
+        ).also {
+            onConstraintsSized(IntSize(it.minWidth, it.minHeight))
+        },
+    )
+    layout(
+        width = placeable.width,
+        height = placeable.height,
+    ) {
+        placeable.place(0, 0)
     }
+}
+
+private val IntSize.isUsable: Boolean
+    get() = width > IntSize.Zero.width &&
+        width < Int.MAX_VALUE &&
+        height > IntSize.Zero.height &&
+        height < Int.MAX_VALUE
+
+private const val ImageLayoutSizeRefetchDebounce = 100
