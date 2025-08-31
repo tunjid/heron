@@ -16,27 +16,40 @@
 
 package com.tunjid.heron.images
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.roundToIntSize
+import androidx.compose.ui.unit.toSize
+import coil3.Image as CoilImage
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.compose.AsyncImage as CoilAsyncImage
-import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
@@ -47,9 +60,13 @@ import com.tunjid.heron.ui.shapes.animate
 import io.github.vinceglb.filekit.PlatformFile
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.launch
 
 sealed class ImageRequest {
     data class Network(
@@ -77,38 +94,35 @@ class ImageState internal constructor(
     private val windowSize: () -> IntSize,
 ) {
     var args by mutableStateOf(args)
-    var imageSize by mutableStateOf(IntSize.Zero)
-        private set
+    val imageSize
+        get() = when (val currentImage = image) {
+            null -> IntSize.Zero
+            else -> IntSize(currentImage.width, currentImage.height)
+        }
 
-    internal val request
-        get() = imageRequest(requestSize)
-
+    internal var image by mutableStateOf<CoilImage?>(null)
     internal var layoutSize by mutableStateOf(IntSize.Zero)
-    private var requestSize by mutableStateOf(IntSize.Zero)
 
     private val imageLoader = SingletonImageLoader.get(platformContext)
 
-    internal suspend fun updateRequest() {
+    internal suspend fun loadImagesForLayoutSize() {
         snapshotFlow { layoutSize }
             .filter { it.isUsable }
             .distinctUntilChanged()
-            .debounce(ImageLayoutSizeRefetchDebounce.milliseconds)
-            .collect {
-                requestSize = it
+            .withIndex()
+            .debounce { (index) ->
+                if (index == 0) 0.milliseconds
+                else ImageLayoutSizeRefetchDebounce.milliseconds
+            }
+            .collectLatest { (_, size) ->
+                imageLoader.execute(imageRequest(size))
+                    .image
+                    ?.let(::image::set)
             }
     }
 
-    internal fun updateFromSuccess(
-        success: AsyncImagePainter.State.Success,
-    ) {
-        imageSize = IntSize(
-            width = success.result.image.width,
-            height = success.result.image.height,
-        )
-    }
-
     private fun imageRequest(
-        requestSize: IntSize
+        requestSize: IntSize,
     ) = coil3.request.ImageRequest.Builder(platformContext).apply {
         when (val request = args.request) {
             is ImageRequest.Local -> {
@@ -220,19 +234,42 @@ fun AsyncImage(
         modifier = modifier
             .clip(args.shape.animate()),
     ) {
-        CoilAsyncImage(
-            modifier = Modifier.fillMaxConstraints {
-                state.layoutSize = it
+        val contentScale = args.contentScale.animate()
+        AnimatedContent(
+            modifier = Modifier
+                .fillMaxConstraints {
+                    state.layoutSize = it
+                },
+            targetState = state.image,
+            transitionSpec = {
+                EnterTransition.None togetherWith ExitTransition.None
             },
-            model = state.request,
-            contentDescription = state.args.contentDescription,
-            contentScale = args.contentScale.animate(),
-            onSuccess = state::updateFromSuccess,
-        )
+        ) { image ->
+            if (image != null) Box(
+                modifier = Modifier
+                    .drawBehind {
+                        scaleAndAlignTo(
+                            srcSize = IntSize(image.width, image.height),
+                            destSize = size.roundToIntSize(),
+                            contentScale = contentScale,
+                            alignment = Alignment.Center,
+                            block = {
+                                drawIntoCanvas(image::renderInto)
+                            },
+                        )
+                    },
+            )
+        }
     }
 
-    LaunchedEffect(Unit) {
-        state.updateRequest()
+    val scope = rememberCoroutineScope(
+        Dispatchers.Main::immediate,
+    )
+    DisposableEffect(scope) {
+        val job = scope.launch {
+            state.loadImagesForLayoutSize()
+        }
+        onDispose(job::cancel)
     }
 }
 
@@ -260,6 +297,45 @@ private fun Modifier.fillMaxConstraints(
         placeable.place(0, 0)
     }
 }
+
+private inline fun DrawScope.scaleAndAlignTo(
+    srcSize: IntSize,
+    destSize: IntSize,
+    contentScale: ContentScale,
+    alignment: Alignment,
+    crossinline block: DrawScope.() -> Unit,
+) {
+    val scaleFactor = contentScale.computeScaleFactor(
+        srcSize = srcSize.toSize(),
+        dstSize = destSize.toSize(),
+    )
+
+    val alignmentOffset = alignment.align(
+        size = srcSize,
+        space = destSize,
+        layoutDirection = layoutDirection,
+    )
+
+    val translationOffset = Offset(
+        x = alignmentOffset.x * scaleFactor.scaleX,
+        y = alignmentOffset.y * scaleFactor.scaleY,
+    )
+
+    translate(
+        left = translationOffset.x,
+        top = translationOffset.y,
+        block = {
+            scale(
+                scaleX = scaleFactor.scaleX,
+                scaleY = scaleFactor.scaleY,
+            ) {
+                block()
+            }
+        },
+    )
+}
+
+expect fun CoilImage.renderInto(canvas: Canvas)
 
 private val IntSize.isUsable: Boolean
     get() = width > IntSize.Zero.width &&
