@@ -229,12 +229,11 @@ fun AsyncImage(
         """.trimIndent()
     }
 
-    val args = state.args
     Box(
         modifier = modifier
-            .clip(args.shape.animate()),
+            .clip(state.args.shape.animate()),
     ) {
-        val contentScale = args.contentScale.animate()
+        val contentScale = state.args.contentScale.animate()
         AnimatedContent(
             modifier = Modifier
                 .fillMaxConstraints {
