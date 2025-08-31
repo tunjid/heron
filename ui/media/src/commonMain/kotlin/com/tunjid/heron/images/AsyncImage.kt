@@ -80,11 +80,13 @@ class ImageState internal constructor(
     var imageSize by mutableStateOf(IntSize.Zero)
         private set
 
+    internal val request
+        get() = imageRequest(requestSize)
+
     internal var layoutSize by mutableStateOf(IntSize.Zero)
     private var requestSize by mutableStateOf(IntSize.Zero)
 
-    internal val request
-        get() = imageRequest(requestSize)
+    private val imageLoader = SingletonImageLoader.get(platformContext)
 
     internal suspend fun updateRequest() {
         snapshotFlow { layoutSize }
@@ -119,7 +121,7 @@ class ImageState internal constructor(
                     ?.let(MemoryCache::Key)
                     ?.let { cacheKey ->
                         placeholder {
-                            SingletonImageLoader.get(platformContext)
+                            imageLoader
                                 .memoryCache
                                 ?.get(cacheKey)
                                 ?.image
