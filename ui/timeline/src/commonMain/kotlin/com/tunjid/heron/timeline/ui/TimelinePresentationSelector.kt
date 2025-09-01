@@ -18,7 +18,7 @@ package com.tunjid.heron.timeline.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.ItemSelection
+import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.timeline.utilities.icon
 import heron.ui.timeline.generated.resources.Res
