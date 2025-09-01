@@ -77,9 +77,9 @@ class KtorNetworkService(
                     savedStateDataSource.signedInAuth.first()
                 }
                 this.saveAuth = {
-                    savedStateDataSource.updateState {
-                        copy(auth = it)
-                    }
+                    savedStateDataSource.setAuth(
+                        auth = it
+                    )
                 }
             }
             install(Logging) {
