@@ -110,8 +110,8 @@ inline fun <T> ItemSelection(
                                             item.stringResource(),
                                         ),
                                         tint =
-                                        if (item == selectedItem) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface,
+                                            if (item == selectedItem) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurface,
                                     )
                                 },
                             )
