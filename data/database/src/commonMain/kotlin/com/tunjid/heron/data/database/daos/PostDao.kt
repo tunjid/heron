@@ -109,7 +109,7 @@ interface PostDao {
                 SELECT * FROM postViewerStatistics
                 WHERE viewingProfileId = :viewingProfileId
             )
-            ON uri = postUri            
+            ON uri = postUri
 	        WHERE uri IN (:postUris)
         """,
     )
@@ -121,9 +121,9 @@ interface PostDao {
     @Transaction
     @Query(
         """
-            SELECT 
+            SELECT
                 posts.*,
-                postViewerStatistics.*, 
+                postViewerStatistics.*,
                 postPosts.postUri AS parentPostUri,
                 postPosts.embeddedPostUri AS embeddedPostUri
             FROM posts AS posts
@@ -146,7 +146,7 @@ interface PostDao {
     @Query(
         """
             SELECT
-                posts.*, 
+                posts.*,
                 postViewerStatistics.*,
                 postPosts.postUri AS parentPostUri
             FROM posts AS posts
@@ -196,7 +196,7 @@ interface PostDao {
     SET likeCount =
         CASE
             WHEN :isIncrement THEN COALESCE(likeCount, 0) + 1
-            ELSE CASE 
+            ELSE CASE
                      WHEN COALESCE(likeCount, 0) > 0 THEN likeCount - 1
                      ELSE 0
                  END
@@ -205,6 +205,26 @@ interface PostDao {
     """,
     )
     suspend fun updateLikeCount(
+        postUri: String,
+        isIncrement: Boolean,
+    )
+
+    @Transaction
+    @Query(
+        """
+    UPDATE posts
+    SET repostCount =
+        CASE
+            WHEN :isIncrement THEN COALESCE(repostCount, 0) + 1
+            ELSE CASE
+                     WHEN COALESCE(repostCount, 0) > 0 THEN repostCount - 1
+                     ELSE 0
+                 END
+        END
+    WHERE uri = :postUri
+    """,
+    )
+    suspend fun updateRepostCount(
         postUri: String,
         isIncrement: Boolean,
     )
@@ -260,7 +280,7 @@ interface PostDao {
     @Transaction
     @Query(
         """
-            WITH RECURSIVE 
+            WITH RECURSIVE
             parentGeneration AS (
                 SELECT postUri,
                     parentPostUri,
@@ -280,7 +300,7 @@ interface PostDao {
                     sort1-1 AS sort1
                 FROM postThreads parent
                 JOIN parentGeneration g
-                  ON parent.postUri = g.parentPostUri 
+                  ON parent.postUri = g.parentPostUri
             ),
             replyGeneration AS (
                 SELECT postUri,
@@ -313,9 +333,9 @@ interface PostDao {
                 ON uri = parents.postUri
                 WHERE uri != :postUri
             )
-            
+
             UNION
-            
+
             SELECT * FROM(
                 SELECT posts.*,
                 posts.uri,
@@ -328,9 +348,9 @@ interface PostDao {
                 WHERE uri == :postUri
                 LIMIT 1
             )
-            
+
             UNION
-            
+
             SELECT * FROM(
                 SELECT *
                 FROM posts
@@ -338,7 +358,7 @@ interface PostDao {
                 ON uri = replies.postUri
                 WHERE uri != :postUri
             )
-            
+
             ORDER BY sort1, generation
         """,
     )

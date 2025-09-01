@@ -411,6 +411,10 @@ internal class OfflinePostRepository @Inject constructor(
                             postUri = interaction.postUri.uri,
                             isIncrement = true,
                         )
+                        postDao.updateRepostCount(
+                            postUri = interaction.postUri.uri,
+                            isIncrement = true,
+                        )
                     }
                 }
 
@@ -454,6 +458,10 @@ internal class OfflinePostRepository @Inject constructor(
                             },
                         )
                         postDao.updateLikeCount(
+                            postUri = interaction.postUri.uri,
+                            isIncrement = false,
+                        )
+                        postDao.updateRepostCount(
                             postUri = interaction.postUri.uri,
                             isIncrement = false,
                         )
