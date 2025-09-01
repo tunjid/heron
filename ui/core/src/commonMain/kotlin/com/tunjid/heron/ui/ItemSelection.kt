@@ -14,11 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -33,12 +35,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
@@ -68,9 +72,8 @@ inline fun <T> ItemSelection(
             shape = CircleShape,
         ) {
             Row(
-                modifier = Modifier.animateBounds(
-                    lookaheadScope = this@LookaheadScope,
-                ),
+                modifier = Modifier
+                    .animateContentSize(),
                 horizontalArrangement = Arrangement.aligned(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -85,8 +88,13 @@ inline fun <T> ItemSelection(
                             enter = fadeIn() + scaleIn(),
                             exit = fadeOut() + scaleOut(),
                         ) {
+                            var entered by remember { mutableStateOf(false) }
+                            val progress = animateFloatAsState(if (entered) 1f else 0f)
                             IconButton(
                                 modifier = Modifier
+                                    .graphicsLayer {
+                                        alpha = progress.value
+                                    }
                                     .size(40.dp),
                                 onClick = {
                                     when (expandedItem) {
@@ -101,12 +109,16 @@ inline fun <T> ItemSelection(
                                         contentDescription = org.jetbrains.compose.resources.stringResource(
                                             item.stringResource(),
                                         ),
-                                        tint =
-                                        if (item == selectedItem) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface,
+                                        tint = when (item) {
+                                            selectedItem -> MaterialTheme.colorScheme.primary
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        },
                                     )
                                 },
                             )
+                            LaunchedEffect(Unit) {
+                                entered = true
+                            }
                         }
                     }
                 }
