@@ -165,15 +165,15 @@ fun SavedState.isSignedIn() =
 internal suspend fun SavedStateDataSource.guestSignIn() =
     updateState { copy(auth = GuestAuth) }
 
-sealed class SavedStateDataSource{
-    abstract  val savedState: StateFlow<SavedState>
+sealed class SavedStateDataSource {
+    abstract val savedState: StateFlow<SavedState>
 
     abstract suspend fun setNavigationState(
         navigation: SavedState.Navigation,
     )
 
     internal abstract suspend fun setAuth(
-        auth: SavedState.AuthTokens?
+        auth: SavedState.AuthTokens?,
     )
 
     internal abstract suspend fun updateSignedInUserPreferences(
@@ -217,9 +217,9 @@ internal class DataStoreSavedStateDataSource(
     }
 
     override suspend fun setAuth(auth: SavedState.AuthTokens?) {
-       updateState {
-           copy(auth = auth)
-       }
+        updateState {
+            copy(auth = auth)
+        }
     }
 
     override suspend fun updateSignedInUserPreferences(preferences: Preferences) {

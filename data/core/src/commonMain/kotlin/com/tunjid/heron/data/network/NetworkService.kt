@@ -78,7 +78,7 @@ class KtorNetworkService(
                 }
                 this.saveAuth = {
                     savedStateDataSource.setAuth(
-                        auth = it
+                        auth = it,
                     )
                 }
             }

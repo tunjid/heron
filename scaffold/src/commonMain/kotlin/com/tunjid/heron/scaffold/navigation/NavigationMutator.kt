@@ -390,7 +390,7 @@ private fun CoroutineScope.persistNavigationState(
     savedStateDataSource: SavedStateDataSource,
 ) = launch {
     if (navigationState != InitialNavigationState) savedStateDataSource.setNavigationState(
-        navigation = navigationState.toSavedState()
+        navigation = navigationState.toSavedState(),
     )
 }
 

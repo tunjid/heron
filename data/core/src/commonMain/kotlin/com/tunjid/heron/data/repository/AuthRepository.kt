@@ -135,7 +135,7 @@ internal class AuthTokenRepository(
 
     override suspend fun signOut() {
         savedStateDataSource.setAuth(
-            auth = null
+            auth = null,
         )
     }
 
