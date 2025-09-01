@@ -389,9 +389,9 @@ private fun CoroutineScope.persistNavigationState(
     navigationState: MultiStackNav,
     savedStateDataSource: SavedStateDataSource,
 ) = launch {
-    if (navigationState != InitialNavigationState) savedStateDataSource.updateState {
-        this.copy(navigation = navigationState.toSavedState())
-    }
+    if (navigationState != InitialNavigationState) savedStateDataSource.setNavigationState(
+        navigation = navigationState.toSavedState(),
+    )
 }
 
 private fun RouteParser.parseMultiStackNav(savedState: SavedState) =

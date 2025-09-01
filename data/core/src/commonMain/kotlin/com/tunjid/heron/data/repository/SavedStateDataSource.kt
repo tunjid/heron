@@ -165,9 +165,26 @@ fun SavedState.isSignedIn() =
 internal suspend fun SavedStateDataSource.guestSignIn() =
     updateState { copy(auth = GuestAuth) }
 
-interface SavedStateDataSource {
-    val savedState: StateFlow<SavedState>
-    suspend fun updateState(update: SavedState.() -> SavedState)
+sealed class SavedStateDataSource {
+    abstract val savedState: StateFlow<SavedState>
+
+    abstract suspend fun setNavigationState(
+        navigation: SavedState.Navigation,
+    )
+
+    internal abstract suspend fun setAuth(
+        auth: SavedState.AuthTokens?,
+    )
+
+    internal abstract suspend fun updateSignedInUserPreferences(
+        preferences: Preferences,
+    )
+
+    internal abstract suspend fun updateSignedInUserNotifications(
+        block: SavedState.Notifications.() -> SavedState.Notifications,
+    )
+
+    internal abstract suspend fun updateState(update: SavedState.() -> SavedState)
 }
 
 @Inject
@@ -176,7 +193,7 @@ internal class DataStoreSavedStateDataSource(
     fileSystem: FileSystem,
     @Named("AppScope") appScope: CoroutineScope,
     protoBuf: ProtoBuf,
-) : SavedStateDataSource {
+) : SavedStateDataSource() {
 
     private val dataStore: DataStore<SavedState> = DataStoreFactory.create(
         storage = OkioStorage(
@@ -193,6 +210,30 @@ internal class DataStoreSavedStateDataSource(
         initialValue = InitialSavedState,
     )
 
+    override suspend fun setNavigationState(navigation: SavedState.Navigation) {
+        updateState {
+            copy(navigation = navigation)
+        }
+    }
+
+    override suspend fun setAuth(auth: SavedState.AuthTokens?) {
+        updateState {
+            copy(auth = auth)
+        }
+    }
+
+    override suspend fun updateSignedInUserPreferences(preferences: Preferences) {
+        updateSignedInProfileData {
+            copy(preferences = preferences)
+        }
+    }
+
+    override suspend fun updateSignedInUserNotifications(block: SavedState.Notifications.() -> SavedState.Notifications) {
+        updateSignedInProfileData {
+            copy(notifications = notifications.block())
+        }
+    }
+
     override suspend fun updateState(update: SavedState.() -> SavedState) {
         dataStore.updateData(update)
     }
@@ -208,22 +249,6 @@ private class SavedStateOkioSerializer(
 
     override suspend fun writeTo(t: SavedState, sink: BufferedSink) {
         sink.write(protoBuf.encodeToByteArray(value = t))
-    }
-}
-
-internal suspend inline fun SavedStateDataSource.updateSignedInUserPreferences(
-    preferences: Preferences,
-) {
-    updateSignedInProfileData {
-        copy(preferences = preferences)
-    }
-}
-
-internal suspend inline fun SavedStateDataSource.updateSignedInUserNotifications(
-    crossinline block: SavedState.Notifications.() -> SavedState.Notifications,
-) {
-    updateSignedInProfileData {
-        copy(notifications = notifications.block())
     }
 }
 

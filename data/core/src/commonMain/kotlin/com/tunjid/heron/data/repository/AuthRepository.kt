@@ -134,9 +134,9 @@ internal class AuthTokenRepository(
     }
 
     override suspend fun signOut() {
-        savedStateDataSource.updateState {
-            copy(auth = null)
-        }
+        savedStateDataSource.setAuth(
+            auth = null,
+        )
     }
 
     override suspend fun updateSignedInUser(): Boolean {
