@@ -25,6 +25,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.home.di.HomeBindings
+import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
@@ -86,6 +87,7 @@ interface AppGraph {
         authRepository: AuthRepository,
         notificationsRepository: NotificationsRepository,
         navigationStateHolder: NavigationStateHolder,
+        imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
     ): AppState = AppState(
@@ -93,6 +95,7 @@ interface AppGraph {
         authRepository = authRepository,
         notificationsRepository = notificationsRepository,
         navigationStateHolder = navigationStateHolder,
+        imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         writeQueue = writeQueue,
     )

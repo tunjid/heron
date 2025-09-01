@@ -35,9 +35,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
-import coil3.ImageLoader
-import coil3.compose.setSingletonImageLoaderFactory
 import com.tunjid.composables.splitlayout.SplitLayout
+import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
@@ -48,7 +47,6 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
-import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 
 /**
  * Root scaffold for the app
@@ -59,16 +57,10 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    setSingletonImageLoaderFactory { context ->
-        ImageLoader.Builder(context)
-            .components {
-                addPlatformFileSupport()
-            }
-            .build()
-    }
     AppTheme {
         CompositionLocalProvider(
             LocalAppState provides appState,
+            LocalImageLoader provides appState.imageLoader,
             LocalVideoPlayerController provides appState.videoPlayerController,
         ) {
             Surface {

@@ -31,6 +31,7 @@ import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.gallery.di.GalleryNavigationBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
+import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -69,6 +70,7 @@ interface Platform {
 expect fun getPlatform(): Platform
 
 fun createAppState(
+    imageLoader: () -> ImageLoader,
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
     args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
@@ -99,6 +101,7 @@ fun createAppState(
 
     val scaffoldBindings = ScaffoldBindings(
         args = ScaffoldBindingArgs(
+            imageLoader = imageLoader(),
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers,
         ),

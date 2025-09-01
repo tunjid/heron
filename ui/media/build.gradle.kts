@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Companion.android
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -61,6 +63,7 @@ kotlin {
                 implementation(libs.androidx.media3.exoplayer.hls)
 
                 implementation(libs.andrew.bailey.difference)
+                implementation(libs.coil.gif.android)
             }
         }
         desktopMain {
