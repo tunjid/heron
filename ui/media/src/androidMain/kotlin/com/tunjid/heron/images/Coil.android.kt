@@ -24,7 +24,7 @@ import coil3.SingletonImageLoader
 import coil3.gif.AnimatedImageDecoder
 import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 
-actual fun Image.renderInto(
+internal actual fun Image.renderInto(
     canvas: Canvas,
 ) = draw(canvas.nativeCanvas)
 

@@ -72,11 +72,13 @@ internal class CoilImageLoader(
                                     ?.image
                             }
                         }
-                    // TODO: This is only done for network images for now. This is bc
+                    // TODO: This is only done for network images for now. This is because
                     // Local images need to be loaded as is to obtain the proper dimensions
-                    CoilSize(
-                        width = size.width,
-                        height = size.height,
+                    size(
+                        CoilSize(
+                            width = size.width,
+                            height = size.height,
+                        )
                     )
                 }
             }
