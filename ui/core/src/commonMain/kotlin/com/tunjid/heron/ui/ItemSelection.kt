@@ -109,9 +109,10 @@ inline fun <T> ItemSelection(
                                         contentDescription = org.jetbrains.compose.resources.stringResource(
                                             item.stringResource(),
                                         ),
-                                        tint =
-                                            if (item == selectedItem) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface,
+                                        tint = when (item) {
+                                            selectedItem -> MaterialTheme.colorScheme.primary
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        },
                                     )
                                 },
                             )

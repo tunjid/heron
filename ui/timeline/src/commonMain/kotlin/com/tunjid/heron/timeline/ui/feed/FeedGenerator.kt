@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.images.AsyncImage
@@ -38,6 +37,7 @@ import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.CollectionLayout
+import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
