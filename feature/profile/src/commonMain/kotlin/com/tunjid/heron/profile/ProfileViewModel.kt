@@ -64,6 +64,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.merge
@@ -96,9 +97,8 @@ class ActualProfileViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            loadProfileMutations(
+            commonFollowerMutations(
                 profileId = route.profileHandleOrId,
-                scope = scope,
                 profileRepository = profileRepository,
             ),
             profileRelationshipMutations(
@@ -111,6 +111,14 @@ class ActualProfileViewModel(
         ),
         actionTransform = transform@{ actions ->
             merge(
+                loadProfileMutations(
+                    currentState = { state() },
+                    profileId = route.profileHandleOrId,
+                    scope = scope,
+                    authRepository = authRepository,
+                    profileRepository = profileRepository,
+                    timelineRepository = timelineRepository,
+                ),
                 actions.toMutationStream(
                     keySelector = Action::key,
                 ) {
@@ -133,75 +141,54 @@ class ActualProfileViewModel(
                         )
                     }
                 },
-                loadSignedInProfileMutations(
-                    currentState = { state() },
-                    profileId = route.profileHandleOrId,
-                    scope = scope,
-                    authRepository = authRepository,
-                    timelineRepository = timelineRepository,
-                ),
             )
         },
     )
 
-private fun loadProfileMutations(
+private fun commonFollowerMutations(
     profileId: Id.Profile,
-    scope: CoroutineScope,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
-    merge(
-        profileRepository.profile(profileId).mapToMutation { profile ->
-            copy(
-                profile = profile,
-                stateHolders = when {
-                    // Only replace collectionStateHolders if they were previously empty
-                    stateHolders.none { stateHolder ->
-                        stateHolder is ProfileScreenStateHolders.Collections<*>
-                    } -> stateHolders + scope.profileCollectionStateHolders(
-                        profileId = profileId,
-                        profileRepository = profileRepository,
-                        metadata = profile.metadata,
-                    )
+    profileRepository.commonFollowers(
+        otherProfileId = profileId,
+        limit = 6,
+    ).mapToMutation {
+        copy(commonFollowers = it)
+    }
 
-                    else -> stateHolders
-                },
-            )
-        },
-        profileRepository.commonFollowers(
-            otherProfileId = profileId,
-            limit = 6,
-        ).mapToMutation {
-            copy(commonFollowers = it)
-        },
-    )
-
-private fun loadSignedInProfileMutations(
+private fun loadProfileMutations(
     currentState: suspend () -> State,
     profileId: Id.Profile,
     scope: CoroutineScope,
     authRepository: AuthRepository,
+    profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    authRepository.signedInUser
-        .distinctUntilChangedBy { it?.handle }
-        .mapToManyMutations { signedInProfile ->
+    combine(
+        profileRepository.profile(profileId),
+        authRepository.signedInUser,
+        ::Pair,
+    )
+        .distinctUntilChanged()
+        .mapToManyMutations { (profile, signedInProfile) ->
             val isSignedIn = signedInProfile != null
-            val isSignedInProfile = signedInProfile != null &&
-                (
-                    signedInProfile.did.id == profileId.id ||
-                        signedInProfile.handle.id == profileId.id
-                    )
+            val isSignedInProfile = signedInProfile?.let {
+                it.did.id == profileId.id || it.handle.id == profileId.id
+            } ?: false
+
             emit {
                 copy(
+                    profile = profile,
                     signedInProfileId = signedInProfile?.did,
                     isSignedInProfile = isSignedInProfile,
                 )
             }
 
             val state = currentState()
-            val hasProfileStateHolders = state.stateHolders.any { stateHolder ->
-                stateHolder is ProfileScreenStateHolders.Timeline
-            }
+            val hasProfileStateHolders = state.stateHolders.isNotEmpty()
+
+            // TODO: This logic assumes that the tabs for the profile are static.
+            // Revisit this.
             if (hasProfileStateHolders) return@mapToManyMutations
 
             emitAll(
@@ -234,10 +221,7 @@ private fun loadSignedInProfileMutations(
                     }
                     .mapToMutation { timelines ->
                         when {
-                            stateHolders.any { stateHolder ->
-                                stateHolder is ProfileScreenStateHolders.Timeline
-                            } -> this
-
+                            stateHolders.isNotEmpty() -> this
                             else -> copy(
                                 stateHolders = timelines.map { timeline ->
                                     ProfileScreenStateHolders.Timeline(
@@ -248,7 +232,11 @@ private fun loadSignedInProfileMutations(
                                             timelineRepository = timelineRepository,
                                         ),
                                     )
-                                } + stateHolders,
+                                } + scope.profileCollectionStateHolders(
+                                    profileId = profileId,
+                                    profileRepository = profileRepository,
+                                    metadata = profile.metadata,
+                                ),
                             )
                         }
                     },
