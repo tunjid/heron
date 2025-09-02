@@ -52,10 +52,13 @@ import io.github.vinceglb.filekit.PlatformFile
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 
@@ -108,17 +111,15 @@ class ImageState internal constructor(
     internal var layoutSize by mutableStateOf(IntSize.Zero)
 
     internal suspend fun loadImagesForLayoutSize() {
-        snapshotFlow { layoutSize }
-            .filter { it.isUsable }
+        combine(
+            requests(),
+            layoutSizes(),
+            ::Pair,
+        )
             .distinctUntilChanged()
-            .withIndex()
-            .debounce { (index) ->
-                if (index == 0) 0.milliseconds
-                else ImageLayoutSizeRefetchDebounce.milliseconds
-            }
-            .collectLatest { (_, size) ->
+            .collectLatest { (request, size) ->
                 imageLoader.fetchImage(
-                    request = args.request,
+                    request = request,
                     size = IntSize(
                         width = min(size.width, windowSize().width),
                         height = min(size.height, windowSize().height),
@@ -127,6 +128,19 @@ class ImageState internal constructor(
                     ?.let(::image::set)
             }
     }
+
+    private fun requests(): Flow<ImageRequest> =
+        snapshotFlow { args.request }
+
+    private fun layoutSizes(): Flow<IntSize> =
+        snapshotFlow { layoutSize }
+            .filter { it.isUsable }
+            .withIndex()
+            .debounce { (index) ->
+                if (index == 0) 0.milliseconds
+                else ImageLayoutSizeRefetchDebounce.milliseconds
+            }
+            .map { it.value }
 }
 
 @Composable
