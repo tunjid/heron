@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
@@ -56,14 +57,18 @@ data class State(
 fun State(route: Route): State = when (val model = route.model) {
     is Post.Create -> State(
         postText = TextFieldValue(
-            AnnotatedString(
+            annotatedString = AnnotatedString(
                 when (model) {
-                    is Post.Create.Mention -> "@${model.profile.handle}"
+                    is Post.Create.Mention -> "@${model.profile.handle.id} "
                     is Post.Create.Reply,
                     is Post.Create.Quote,
                     Post.Create.Timeline,
                     -> ""
                 },
+            ),
+            selection = TextRange(
+                if (model is Post.Create.Mention) model.profile.handle.id.length + 2
+                else 0,
             ),
         ),
         sharedElementPrefix = route.sharedElementPrefix,
