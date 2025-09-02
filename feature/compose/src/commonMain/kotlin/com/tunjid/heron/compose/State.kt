@@ -59,7 +59,7 @@ fun State(route: Route): State = when (val model = route.model) {
         postText = TextFieldValue(
             annotatedString = AnnotatedString(
                 when (model) {
-                    is Post.Create.Mention -> "@${model.profile.handle} "
+                    is Post.Create.Mention -> "@${model.profile.handle.id} "
                     is Post.Create.Reply,
                     is Post.Create.Quote,
                     Post.Create.Timeline,
