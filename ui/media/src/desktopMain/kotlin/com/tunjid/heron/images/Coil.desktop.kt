@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.images
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
 import coil3.Image
@@ -38,3 +39,6 @@ fun imageLoader(): ImageLoader {
     }
     return CoilImageLoader(context)
 }
+
+@Composable
+internal actual fun Image.AnimationEffect() = Unit

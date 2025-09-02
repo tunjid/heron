@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.images
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Canvas
@@ -30,7 +31,7 @@ import coil3.size.Size as CoilSize
 
 @Immutable
 internal class CoilImage(
-    private val image: coil3.Image,
+    val image: coil3.Image,
 ) : Image {
 
     override val size: IntSize
@@ -92,6 +93,9 @@ internal class CoilImageLoader(
 }
 
 internal expect fun coil3.Image.renderInto(canvas: Canvas)
+
+@Composable
+internal expect fun coil3.Image.AnimationEffect()
 
 val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
     throw IllegalArgumentException("Image Fetcher has not been provided")
