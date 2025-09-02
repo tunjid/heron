@@ -17,8 +17,13 @@
 package com.tunjid.heron.images
 
 import android.content.Context
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.Animatable2
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
+import coil3.DrawableImage
 import coil3.Image
 import coil3.SingletonImageLoader
 import coil3.gif.AnimatedImageDecoder
@@ -40,4 +45,15 @@ fun imageLoader(
             .build()
     }
     return CoilImageLoader(context)
+}
+
+@Composable
+internal actual fun Image.AnimationEffect() {
+    DisposableEffect(this) {
+        val animatable = (this@AnimationEffect as? DrawableImage)?.drawable as? Animatable
+        animatable?.start()
+        onDispose {
+            animatable?.stop()
+        }
+    }
 }

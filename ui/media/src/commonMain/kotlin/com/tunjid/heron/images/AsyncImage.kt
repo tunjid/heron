@@ -218,18 +218,21 @@ fun AsyncImage(
                 EnterTransition.None togetherWith ExitTransition.None
             },
         ) { image ->
-            if (image != null) Box(
-                modifier = Modifier
-                    .drawBehind {
-                        scaleAndAlignTo(
-                            srcSize = image.size,
-                            destSize = size.roundToIntSize(),
-                            contentScale = contentScale,
-                            alignment = Alignment.Center,
-                            block = image::drawWith,
-                        )
-                    },
-            )
+            if (image != null) {
+                Box(
+                    modifier = Modifier
+                        .drawBehind {
+                            scaleAndAlignTo(
+                                srcSize = image.size,
+                                destSize = size.roundToIntSize(),
+                                contentScale = contentScale,
+                                alignment = Alignment.Center,
+                                block = image::drawWith,
+                            )
+                        },
+                )
+                image.AnimationEffect()
+            }
         }
     }
 
@@ -241,6 +244,13 @@ fun AsyncImage(
             state.loadImagesForLayoutSize()
         }
         onDispose(job::cancel)
+    }
+}
+
+@Composable
+internal fun Image.AnimationEffect() {
+    when (this) {
+        is CoilImage -> image.AnimationEffect()
     }
 }
 

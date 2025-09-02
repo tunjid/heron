@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -55,6 +56,7 @@ internal fun PostExternal(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClick: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
+    val isGif = feature.isGif()
     FeatureContainer(
         modifier = Modifier.paneStickySharedElement(
             sharedContentState = rememberSharedContentState(
@@ -86,33 +88,37 @@ internal fun PostExternal(
                                 ),
                             ),
                         ),
-                    args = ImageArgs(
-                        url = feature.thumb?.uri,
-                        contentDescription = feature.title,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Rectangle,
-                    ),
+                    args = remember(isGif, feature.uri, feature.thumb) {
+                        ImageArgs(
+                            url = if (isGif) feature.uri.uri else feature.thumb?.uri,
+                            contentDescription = feature.title,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Rectangle,
+                        )
+                    },
                 )
             }
-            if (presentation == Timeline.Presentation.Text.WithEmbed) PostFeatureTextContent(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 16.dp,
-                    )
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = embedSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postUri = postUri,
-                                text = feature.title,
+            if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
+                PostFeatureTextContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 16.dp,
+                        )
+                        .paneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = embedSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postUri = postUri,
+                                    text = feature.title,
+                                ),
                             ),
                         ),
-                    ),
-                title = feature.title,
-                description = null,
-                uri = feature.uri,
-            )
+                    title = feature.title,
+                    description = null,
+                    uri = feature.uri,
+                )
+            }
         }
     }
 }
@@ -157,8 +163,15 @@ fun PostFeatureTextContent(
     }
 }
 
+private fun ExternalEmbed.isGif(): Boolean {
+    val path = uri.uri.substringBefore('?')
+    return path.endsWith(Gif_Format, ignoreCase = true)
+}
+
 private fun embedSharedElementKey(
     prefix: String,
     postUri: PostUri,
     text: String?,
 ): String = "$prefix-${postUri.uri}-$text"
+
+private const val Gif_Format = ".gif"
