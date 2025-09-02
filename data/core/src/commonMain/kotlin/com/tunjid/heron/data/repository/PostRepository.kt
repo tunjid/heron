@@ -147,7 +147,7 @@ internal class OfflinePostRepository @Inject constructor(
     ) { postEntity ->
         combine(
             postDao.likedBy(
-                postUri = postEntity.cid.id,
+                postUri = postEntity.uri.uri,
                 viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
@@ -191,7 +191,7 @@ internal class OfflinePostRepository @Inject constructor(
     ) { postEntity ->
         combine(
             postDao.repostedBy(
-                postUri = postEntity.cid.id,
+                postUri = postEntity.uri.uri,
                 viewingProfileId = savedStateDataSource.signedInProfileId?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
