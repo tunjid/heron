@@ -78,7 +78,7 @@ internal class CoilImageLoader(
                         CoilSize(
                             width = size.width,
                             height = size.height,
-                        )
+                        ),
                     )
                 }
             }
