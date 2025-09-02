@@ -50,13 +50,7 @@ fun imageLoader(
 @Composable
 internal actual fun Image.AnimationEffect() {
     DisposableEffect(this) {
-        val animatable = when (this@AnimationEffect) {
-            is DrawableImage -> when (val drawable = drawable) {
-                is Animatable -> drawable
-                else -> null
-            }
-            else -> null
-        }
+        val animatable = (this@AnimationEffect as? DrawableImage)?.drawable as? Animatable
         animatable?.start()
         onDispose {
             animatable?.stop()

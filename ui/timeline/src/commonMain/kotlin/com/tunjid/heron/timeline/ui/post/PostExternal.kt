@@ -164,11 +164,8 @@ fun PostFeatureTextContent(
 }
 
 private fun ExternalEmbed.isGif(): Boolean {
-    val uri = uri.uri
-    return uri.startsWith(TenorHost) &&
-        uri.split("?")
-            .firstOrNull()
-            ?.endsWith(Gif_Format) == true
+    val path = uri.uri.substringBefore('?')
+    return path.endsWith(Gif_Format, ignoreCase = true)
 }
 
 private fun embedSharedElementKey(
@@ -177,5 +174,4 @@ private fun embedSharedElementKey(
     text: String?,
 ): String = "$prefix-${postUri.uri}-$text"
 
-private const val TenorHost = "https://media.tenor.com"
 private const val Gif_Format = ".gif"
