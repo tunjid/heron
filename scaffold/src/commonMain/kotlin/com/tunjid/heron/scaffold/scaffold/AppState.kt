@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
@@ -74,6 +75,7 @@ class AppState(
     private val authRepository: AuthRepository,
     private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
+    internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
 ) {

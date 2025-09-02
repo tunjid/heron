@@ -36,9 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
@@ -47,13 +45,6 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toSize
-import coil3.Image as CoilImage
-import coil3.PlatformContext
-import coil3.SingletonImageLoader
-import coil3.compose.LocalPlatformContext
-import coil3.memory.MemoryCache
-import coil3.request.crossfade
-import coil3.size.Size as CoilSize
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
@@ -67,6 +58,19 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
+
+sealed interface Image {
+    val size: IntSize
+
+    fun drawWith(scope: DrawScope)
+}
+
+interface ImageLoader {
+    suspend fun fetchImage(
+        request: ImageRequest,
+        size: IntSize,
+    ): Image?
+}
 
 sealed class ImageRequest {
     data class Network(
@@ -90,20 +94,18 @@ data class ImageArgs(
 @Stable
 class ImageState internal constructor(
     args: ImageArgs,
-    private val platformContext: PlatformContext,
+    private val imageLoader: ImageLoader,
     private val windowSize: () -> IntSize,
 ) {
     var args by mutableStateOf(args)
     val imageSize
         get() = when (val currentImage = image) {
             null -> IntSize.Zero
-            else -> IntSize(currentImage.width, currentImage.height)
+            else -> currentImage.size
         }
 
-    internal var image by mutableStateOf<CoilImage?>(null)
+    internal var image by mutableStateOf<Image?>(null)
     internal var layoutSize by mutableStateOf(IntSize.Zero)
-
-    private val imageLoader = SingletonImageLoader.get(platformContext)
 
     internal suspend fun loadImagesForLayoutSize() {
         snapshotFlow { layoutSize }
@@ -115,56 +117,28 @@ class ImageState internal constructor(
                 else ImageLayoutSizeRefetchDebounce.milliseconds
             }
             .collectLatest { (_, size) ->
-                imageLoader.execute(imageRequest(size))
-                    .image
+                imageLoader.fetchImage(
+                    request = args.request,
+                    size = IntSize(
+                        width = min(size.width, windowSize().width),
+                        height = min(size.height, windowSize().height),
+                    ),
+                )
                     ?.let(::image::set)
             }
     }
-
-    private fun imageRequest(
-        requestSize: IntSize,
-    ) = coil3.request.ImageRequest.Builder(platformContext).apply {
-        when (val request = args.request) {
-            is ImageRequest.Local -> {
-                data(request.file)
-            }
-            is ImageRequest.Network -> {
-                data(request.url)
-                crossfade(true)
-                request.thumbnailUrl
-                    ?.let(MemoryCache::Key)
-                    ?.let { cacheKey ->
-                        placeholder {
-                            imageLoader
-                                .memoryCache
-                                ?.get(cacheKey)
-                                ?.image
-                        }
-                    }
-                // TODO: This is only done for network images for now. This is bc
-                // Local images need to be loaded as is to obtain the proper dimensions
-                if (requestSize.isUsable) size(
-                    CoilSize(
-                        width = min(requestSize.width, windowSize().width),
-                        height = min(requestSize.height, windowSize().height),
-                    ),
-                )
-            }
-        }
-    }
-        .build()
 }
 
 @Composable
 fun rememberUpdatedImageState(
     args: ImageArgs,
 ): ImageState {
-    val platformContext = LocalPlatformContext.current
+    val imageLoader = LocalImageLoader.current
     val windowSize = rememberUpdatedState(LocalWindowInfo.current.containerSize)
-    return remember {
+    return remember(imageLoader) {
         ImageState(
             args = args,
-            platformContext = platformContext,
+            imageLoader = imageLoader,
             windowSize = windowSize::value,
         )
     }
@@ -248,13 +222,11 @@ fun AsyncImage(
                 modifier = Modifier
                     .drawBehind {
                         scaleAndAlignTo(
-                            srcSize = IntSize(image.width, image.height),
+                            srcSize = image.size,
                             destSize = size.roundToIntSize(),
                             contentScale = contentScale,
                             alignment = Alignment.Center,
-                            block = {
-                                drawIntoCanvas(image::renderInto)
-                            },
+                            block = image::drawWith,
                         )
                     },
             )
@@ -332,8 +304,6 @@ private inline fun DrawScope.scaleAndAlignTo(
         },
     )
 }
-
-expect fun CoilImage.renderInto(canvas: Canvas)
 
 private val IntSize.isUsable: Boolean
     get() = width > IntSize.Zero.width &&
