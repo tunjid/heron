@@ -63,7 +63,7 @@ fun State(route: Route): State = when (val model = route.model) {
                     is Post.Create.Reply,
                     is Post.Create.Quote,
                     Post.Create.Timeline,
-                        -> ""
+                    -> ""
                 },
             ),
             selection = TextRange(
