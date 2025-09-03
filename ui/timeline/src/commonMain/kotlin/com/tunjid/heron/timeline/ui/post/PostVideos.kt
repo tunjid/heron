@@ -66,6 +66,10 @@ import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.mute_video
+import heron.ui.timeline.generated.resources.unmute_video
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -135,9 +139,6 @@ internal fun PostVideo(
         PlayerInfo(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(
-                    horizontal = 8.dp,
-                )
                 .fillMaxWidth(),
             videoPlayerState = videoPlayerState,
             videoPlayerController = videoPlayerController,
@@ -171,7 +172,8 @@ private fun PlayerInfo(
         Row {
             PlayerControlBackground {
                 BasicText(
-                    modifier = Modifier.padding(horizontal = 4.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp),
                     text = videoPlayerState.lastPositionMs.formatVideoDuration(),
                     style = MaterialTheme.typography.bodySmall,
                     autoSize = TextAutoSize.StepBased(
@@ -189,11 +191,14 @@ private fun PlayerInfo(
                 content = {
                     Icon(
                         modifier = Modifier
-                            .padding(2.dp),
-                        contentDescription = "",
+                            .padding(4.dp),
+                        contentDescription = stringResource(
+                            if (videoPlayerController.isMuted) Res.string.mute_video
+                            else Res.string.unmute_video,
+                        ),
                         imageVector =
-                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeUp
-                        else Icons.AutoMirrored.Rounded.VolumeOff,
+                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                        else Icons.AutoMirrored.Rounded.VolumeUp,
                     )
                 },
             )
@@ -240,16 +245,16 @@ private fun PlayerControlBackground(
     val color = Color.Black.copy(alpha = 0.6f)
     Box(
         modifier = Modifier
-            .padding(vertical = 8.dp)
-            .background(
-                color = color,
-                shape = CircleShape,
-            )
             .clip(CircleShape)
             .clickable {
                 onClicked()
             }
-            .height(16.dp),
+            .padding(all = 8.dp)
+            .background(
+                color = color,
+                shape = CircleShape,
+            )
+            .height(24.dp),
     ) {
         Box(
             modifier = Modifier.align(Alignment.Center),
