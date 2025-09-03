@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities.migrations
+package com.tunjid.heron.data.database.migrations
 
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
@@ -38,11 +38,11 @@ internal object Migration18To19PostViewerStatistics : Migration(18, 19) {
                 FOREIGN KEY(`postId`)
                     REFERENCES `posts`(`cid`)
                     ON UPDATE NO ACTION
-                    ON DELETE CASCADE 
+                    ON DELETE CASCADE
                 FOREIGN KEY(`viewingProfileId`)
                     REFERENCES `profiles`(`did`)
                     ON UPDATE NO ACTION
-                    ON DELETE CASCADE 
+                    ON DELETE CASCADE
             )
             """.trimIndent(),
         )

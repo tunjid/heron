@@ -55,9 +55,6 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
-import com.tunjid.heron.data.database.entities.migrations.Migration17To18TimelineViewer
-import com.tunjid.heron.data.database.entities.migrations.Migration18To19PostViewerStatistics
-import com.tunjid.heron.data.database.entities.migrations.Migration19To20UriPrimaryKeys
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -67,6 +64,14 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCreatedAt
+import com.tunjid.heron.data.database.migrations.Migration17To18TimelineViewer
+import com.tunjid.heron.data.database.migrations.Migration18To19PostViewerStatistics
+import com.tunjid.heron.data.database.migrations.Migration19To20UriPrimaryKeys
+import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
+import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
+import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
+import com.tunjid.heron.data.database.migrations.Migration9To10TimelineItemEntityAutoMigration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
@@ -117,7 +122,7 @@ import kotlinx.coroutines.IO
         AutoMigration(
             from = 6,
             to = 7,
-            spec = PostViewerStatisticsAutoMigration::class,
+            spec = Migration6To7PostViewerStatisticsAutoMigration::class,
         ),
         // Migration 5 - 6 is a manual migration
         // postLikes and postReposts
@@ -126,13 +131,13 @@ import kotlinx.coroutines.IO
         AutoMigration(
             from = 8,
             to = 9,
-            spec = ProfileViewersAutoMigration::class,
+            spec = Migration8To9ProfileViewersAutoMigration::class,
         ),
         // TimelineFetchKeyEntity to TimelinePreferencesEntity
         AutoMigration(
             from = 9,
             to = 10,
-            spec = TimelineItemEntityAutoMigration::class,
+            spec = Migration9To10TimelineItemEntityAutoMigration::class,
         ),
         // Add StarterPackEntity and ListItemEntity
         AutoMigration(from = 10, to = 11),
@@ -188,8 +193,8 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
         dropAllTables = true,
     )
         .addMigrations(
-            NonNullPostUriAndAuthorMigration,
-            FeedAndListsCreatedAtAutoMigration,
+            Migration5To6NonNullPostUriAndAuthor,
+            Migration12To13FeedAndListsCreatedAt,
             Migration17To18TimelineViewer,
             Migration18To19PostViewerStatistics,
             Migration19To20UriPrimaryKeys,

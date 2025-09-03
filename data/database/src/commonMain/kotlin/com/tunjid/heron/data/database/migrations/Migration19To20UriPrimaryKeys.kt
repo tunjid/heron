@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.database.entities.migrations
+package com.tunjid.heron.data.database.migrations
 
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
@@ -27,17 +27,17 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL(
             """
             INSERT INTO profiles (
-                did, 
-                handle, 
-                displayName, 
-                description, 
-                avatar, 
-                banner, 
-                followersCount, 
-                followsCount, 
-                postsCount, 
-                joinedViaStarterPack, 
-                indexedAt, 
+                did,
+                handle,
+                displayName,
+                description,
+                avatar,
+                banner,
+                followersCount,
+                followsCount,
+                postsCount,
+                joinedViaStarterPack,
+                indexedAt,
                 createdAt,
                 createdListCount,
                 createdFeedGeneratorCount,
@@ -46,22 +46,22 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 allowDms
             )
             VALUES (
-                '${Constants.unknownAuthorId}', 
-                '${Constants.UNKNOWN}', 
-                '', 
-                '', 
-                NULL, 
-                NULL, 
-                0, 
-                0, 
-                0, 
-                NULL, 
-                0, 
+                '${Constants.unknownAuthorId}',
+                '${Constants.UNKNOWN}',
+                '',
+                '',
+                NULL,
+                NULL,
                 0,
-                NULL, 
-                NULL, 
-                NULL, 
-                NULL, 
+                0,
+                0,
+                NULL,
+                0,
+                0,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
                 NULL
            );
             """.trimIndent(),
@@ -83,9 +83,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                     `base64EncodedRecord` TEXT,
                     `createdAt` INTEGER,
                     PRIMARY KEY(`uri`),
-                    FOREIGN KEY(`authorId`) 
-                        REFERENCES `profiles`(`did`) 
-                        ON UPDATE NO ACTION 
+                    FOREIGN KEY(`authorId`)
+                        REFERENCES `profiles`(`did`)
+                        ON UPDATE NO ACTION
                         ON DELETE CASCADE
                 )
             """.trimIndent(),
@@ -93,30 +93,30 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
         connection.execSQL(
             """
                 INSERT INTO posts_new (
-                    cid, 
-                    uri, 
-                    authorId, 
+                    cid,
+                    uri,
+                    authorId,
                     replyCount,
-                    repostCount, 
-                    likeCount, 
-                    quoteCount, 
-                    indexedAt, 
-                    text, 
-                    base64EncodedRecord, 
+                    repostCount,
+                    likeCount,
+                    quoteCount,
+                    indexedAt,
+                    text,
+                    base64EncodedRecord,
                     createdAt
                 )
                 SELECT
-                    cid, 
-                    uri, 
-                    authorId, 
-                    replyCount, 
-                    repostCount, 
-                    likeCount, 
-                    quoteCount, 
-                    indexedAt, 
-                    text, 
-                    base64EncodedRecord, 
-                    createdAt 
+                    cid,
+                    uri,
+                    authorId,
+                    replyCount,
+                    repostCount,
+                    likeCount,
+                    quoteCount,
+                    indexedAt,
+                    text,
+                    base64EncodedRecord,
+                    createdAt
                 FROM posts
                 WHERE cid in (SELECT MAX(cid) FROM posts GROUP BY uri)
             """.trimIndent(),
@@ -143,9 +143,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 `indexedAt` INTEGER NOT NULL,
                 `createdAt` INTEGER NOT NULL,
                 PRIMARY KEY(`uri`),
-                FOREIGN KEY(`creatorId`) 
-                    REFERENCES `profiles`(`did`) 
-                    ON UPDATE NO ACTION 
+                FOREIGN KEY(`creatorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
                     ON DELETE CASCADE
             )
             """.trimIndent(),
@@ -205,9 +205,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 `indexedAt` INTEGER NOT NULL,
                 `createdAt` INTEGER NOT NULL,
                 PRIMARY KEY(`uri`),
-                FOREIGN KEY(`creatorId`) 
-                    REFERENCES `profiles`(`did`) 
-                    ON UPDATE NO ACTION 
+                FOREIGN KEY(`creatorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
                     ON DELETE CASCADE
             )
             """.trimIndent(),
@@ -269,9 +269,9 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 `indexedAt` INTEGER NOT NULL,
                 `createdAt` INTEGER NOT NULL,
                 PRIMARY KEY(`uri`),
-                FOREIGN KEY(`creatorId`) 
-                    REFERENCES `profiles`(`did`) 
-                    ON UPDATE NO ACTION 
+                FOREIGN KEY(`creatorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
                     ON DELETE CASCADE
             )
             """.trimIndent(),
@@ -327,13 +327,13 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                 `isRead` INTEGER NOT NULL,
                 `indexedAt` INTEGER NOT NULL,
                 PRIMARY KEY(`uri`),
-                FOREIGN KEY(`associatedPostUri`) 
-                    REFERENCES `posts`(`uri`) 
-                    ON UPDATE NO ACTION 
+                FOREIGN KEY(`associatedPostUri`)
+                    REFERENCES `posts`(`uri`)
+                    ON UPDATE NO ACTION
                     ON DELETE CASCADE
-                FOREIGN KEY(`authorId`) 
-                    REFERENCES `profiles`(`did`) 
-                    ON UPDATE NO ACTION 
+                FOREIGN KEY(`authorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
                     ON DELETE CASCADE
             )
             """.trimIndent(),
@@ -461,7 +461,7 @@ internal object Migration19To20UriPrimaryKeys : Migration(19, 20) {
                  FOREIGN KEY(`grandParentPostAuthorId`)
                      REFERENCES `profiles`(`did`)
                      ON UPDATE NO ACTION
-                     ON DELETE CASCADE   
+                     ON DELETE CASCADE
              )
             """.trimIndent(),
         )
