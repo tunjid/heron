@@ -14,19 +14,14 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.database
+package com.tunjid.heron.data.database.migrations
 
-import androidx.room.DeleteColumn
-import androidx.room.DeleteTable
-import androidx.room.RenameColumn
-import androidx.room.RenameTable
-import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import com.tunjid.heron.data.core.models.Constants
 
-internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
+internal object Migration5To6NonNullPostUriAndAuthor : Migration(5, 6) {
     override fun migrate(connection: SQLiteConnection) {
         // Add Unknown user to the db
         connection.execSQL(
@@ -41,15 +36,15 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
                 CREATE TABLE IF NOT EXISTS posts_new (
                 cid TEXT NOT NULL,
                 uri TEXT NOT NULL,
-                authorId TEXT NOT NULL, 
-                replyCount INTEGER, 
-                repostCount INTEGER, 
-                likeCount INTEGER, 
-                quoteCount INTEGER, 
-                indexedAt INTEGER NOT NULL, 
-                text TEXT, 
-                base64EncodedRecord TEXT, 
-                createdAt INTEGER, 
+                authorId TEXT NOT NULL,
+                replyCount INTEGER,
+                repostCount INTEGER,
+                likeCount INTEGER,
+                quoteCount INTEGER,
+                indexedAt INTEGER NOT NULL,
+                text TEXT,
+                base64EncodedRecord TEXT,
+                createdAt INTEGER,
                 PRIMARY KEY(cid)
               )
             """.trimIndent(),
@@ -67,7 +62,7 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
                 quoteCount,
                 indexedAt,
                 text,
-                base64EncodedRecord, 
+                base64EncodedRecord,
                 createdAt
                 )
                 SELECT
@@ -80,7 +75,7 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
                 quoteCount,
                 indexedAt,
                 text,
-                base64EncodedRecord, 
+                base64EncodedRecord,
                 createdAt
                 FROM posts
             """.trimIndent(),
@@ -91,36 +86,5 @@ internal object NonNullPostUriAndAuthorMigration : Migration(5, 6) {
 
         // Change the table name to the correct one
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
-    }
-}
-
-@DeleteColumn(tableName = "postViewerStatistics", columnName = "liked")
-@DeleteColumn(tableName = "postViewerStatistics", columnName = "reposted")
-internal class PostViewerStatisticsAutoMigration : AutoMigrationSpec
-
-@DeleteTable(tableName = "profileProfileRelationships")
-internal class ProfileViewersAutoMigration : AutoMigrationSpec
-
-@RenameColumn(
-    tableName = "timelineFetchKeys",
-    fromColumnName = "filterDescription",
-    toColumnName = "preferredPresentation",
-)
-@RenameTable(
-    fromTableName = "timelineFetchKeys",
-    toTableName = "timelinePreferences",
-)
-internal class TimelineItemEntityAutoMigration : AutoMigrationSpec
-
-internal object FeedAndListsCreatedAtAutoMigration : Migration(12, 13) {
-    override fun migrate(connection: SQLiteConnection) {
-        // Add columns
-        connection.execSQL("ALTER TABLE feedGenerators ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0;")
-        connection.execSQL("ALTER TABLE lists ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0;")
-
-        // Create indices
-        connection.execSQL("CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);")
-        connection.execSQL("CREATE INDEX `index_lists_createdAt` ON lists (`createdAt`);")
-        connection.execSQL("CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);")
     }
 }
