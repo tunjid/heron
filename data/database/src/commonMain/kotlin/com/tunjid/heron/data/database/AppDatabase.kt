@@ -23,6 +23,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -199,6 +200,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration18To19PostViewerStatistics,
             Migration19To20UriPrimaryKeys,
         )
+        .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
