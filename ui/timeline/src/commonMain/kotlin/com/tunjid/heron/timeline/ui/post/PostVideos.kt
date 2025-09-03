@@ -193,12 +193,12 @@ private fun PlayerInfo(
                         modifier = Modifier
                             .padding(4.dp),
                         contentDescription = stringResource(
-                            if (videoPlayerController.isMuted) Res.string.unmute_video
-                            else Res.string.mute_video,
+                            if (videoPlayerController.isMuted) Res.string.mute_video
+                            else Res.string.unmute_video,
                         ),
                         imageVector =
-                            if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeUp
-                            else Icons.AutoMirrored.Rounded.VolumeOff,
+                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                        else Icons.AutoMirrored.Rounded.VolumeUp,
                     )
                 },
             )
