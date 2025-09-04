@@ -26,11 +26,13 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -43,16 +45,22 @@ internal fun PostSearchResult(
     now: Instant,
     result: SearchResult.OfPost,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
-    onProfileClicked: (SearchResult.OfPost) -> Unit,
-    onPostClicked: (SearchResult.OfPost) -> Unit,
+    onProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
+    onPostClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
+    val sharedElementPrefix = remember(result.sharedElementPrefix) {
+        result.sharedElementPrefix
+    }
     ElevatedCard(
         modifier = modifier,
         onClick = {
-            onPostClicked(result)
+            onPostClicked(
+                result.post,
+                sharedElementPrefix,
+            )
         },
         content = {
             Post(
@@ -77,11 +85,18 @@ internal fun PostSearchResult(
                         onLinkTargetClicked = { _, linkTarget ->
                             onLinkTargetClicked(result, linkTarget)
                         },
-                        onPostClicked = { _, _ ->
-                            onPostClicked(result)
+                        onPostClicked = { post, quotingPostUri ->
+                            onPostClicked(
+                                post,
+                                sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+                            )
                         },
-                        onProfileClicked = { _, _, _ ->
-                            onProfileClicked(result)
+                        onProfileClicked = { profile, post, quotingPostUri ->
+                            onProfileClicked(
+                                profile,
+                                post,
+                                sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+                            )
                         },
                         onPostMediaClicked = { media, index, _, quotingPostId ->
                             onMediaClicked(media, index, result, quotingPostId)

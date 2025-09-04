@@ -237,14 +237,14 @@ internal fun SearchScreen(
         }
     }
     val onPostSearchResultProfileClicked = remember {
-        { result: SearchResult.OfPost ->
+        { profile: Profile, post: Post, sharedElementPrefix: String ->
             actions(
                 Action.Navigate.To(
                     profileDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        profile = result.post.author,
-                        avatarSharedElementKey = result.post.avatarSharedElementKey(
-                            result.sharedElementPrefix,
+                        profile = profile,
+                        avatarSharedElementKey = post.avatarSharedElementKey(
+                            sharedElementPrefix,
                         ),
                     ),
                 ),
@@ -297,13 +297,13 @@ internal fun SearchScreen(
         }
     }
     val onPostSearchResultClicked = remember {
-        { result: SearchResult.OfPost ->
+        { post: Post, sharedElementPrefix: String  ->
             actions(
                 Action.Navigate.To(
                     postDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = result.sharedElementPrefix,
-                        post = result.post,
+                        sharedElementPrefix = sharedElementPrefix,
+                        post = post,
                     ),
                 ),
             )
@@ -620,8 +620,8 @@ private fun TabbedSearchResults(
     onProfileClicked: (SearchResult.OfProfile) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
-    onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
-    onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
+    onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
+    onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
@@ -811,8 +811,8 @@ private fun PostSearchResults(
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (SearchResult.OfPost, LinkTarget) -> Unit,
-    onPostSearchResultProfileClicked: (SearchResult.OfPost) -> Unit,
-    onPostSearchResultClicked: (SearchResult.OfPost) -> Unit,
+    onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
+    onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
