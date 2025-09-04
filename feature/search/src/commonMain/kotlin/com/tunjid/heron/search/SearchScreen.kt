@@ -297,7 +297,7 @@ internal fun SearchScreen(
         }
     }
     val onPostSearchResultClicked = remember {
-        { post: Post, sharedElementPrefix: String  ->
+        { post: Post, sharedElementPrefix: String ->
             actions(
                 Action.Navigate.To(
                     postDestination(

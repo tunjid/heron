@@ -51,9 +51,7 @@ internal fun PostSearchResult(
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
-    val sharedElementPrefix = remember(result.sharedElementPrefix) {
-        result.sharedElementPrefix
-    }
+    val sharedElementPrefix = result.sharedElementPrefix
     ElevatedCard(
         modifier = modifier,
         onClick = {
