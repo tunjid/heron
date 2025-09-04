@@ -20,7 +20,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
@@ -34,17 +36,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.roundToIntSize
-import androidx.compose.ui.unit.toSize
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
@@ -64,8 +64,7 @@ import kotlinx.coroutines.launch
 
 sealed interface Image {
     val size: IntSize
-
-    fun drawWith(scope: DrawScope)
+    val painter: Painter
 }
 
 interface ImageLoader {
@@ -108,7 +107,35 @@ class ImageState internal constructor(
         }
 
     internal var image by mutableStateOf<Image?>(null)
-    internal var layoutSize by mutableStateOf(IntSize.Zero)
+    private var layoutSize by mutableStateOf(IntSize.Zero)
+
+    internal fun layoutImage(
+        measureScope: MeasureScope,
+        measurable: Measurable,
+        constraints: Constraints,
+    ): MeasureResult = with(measureScope) {
+        val imageConstraints = constraints.copy(
+            minWidth = when {
+                constraints.hasBoundedWidth -> constraints.maxWidth
+                else -> constraints.minWidth
+            },
+            minHeight = when {
+                constraints.hasBoundedHeight -> constraints.maxHeight
+                else -> constraints.minHeight
+            },
+        )
+        layoutSize = IntSize(
+            width = imageConstraints.minWidth,
+            height = imageConstraints.minHeight,
+        )
+        val placeable = measurable.measure(imageConstraints)
+        return layout(
+            width = placeable.width,
+            height = placeable.height,
+        ) {
+            placeable.place(0, 0)
+        }
+    }
 
     internal suspend fun loadImagesForLayoutSize() {
         combine(
@@ -217,33 +244,31 @@ fun AsyncImage(
         """.trimIndent()
     }
 
+    val contentDescription = state.args.contentDescription
+    val contentScale = state.args.contentScale.animate()
+    val alignment = state.args.alignment.animate()
+    val shape = state.args.shape.animate()
+
     Box(
         modifier = modifier
-            .clip(state.args.shape.animate()),
+            .clip(shape),
     ) {
-        val contentScale = state.args.contentScale.animate()
         AnimatedContent(
             modifier = Modifier
-                .fillMaxConstraints {
-                    state.layoutSize = it
-                },
+                .layout(state::layoutImage),
             targetState = state.image,
             transitionSpec = {
                 EnterTransition.None togetherWith ExitTransition.None
             },
         ) { image ->
             if (image != null) {
-                Box(
+                Image(
                     modifier = Modifier
-                        .drawBehind {
-                            scaleAndAlignTo(
-                                srcSize = image.size,
-                                destSize = size.roundToIntSize(),
-                                contentScale = contentScale,
-                                alignment = Alignment.Center,
-                                block = image::drawWith,
-                            )
-                        },
+                        .fillMaxSize(),
+                    painter = image.painter,
+                    contentDescription = contentDescription,
+                    alignment = alignment,
+                    contentScale = contentScale,
                 )
                 image.AnimationEffect()
             }
@@ -266,67 +291,6 @@ internal fun Image.AnimationEffect() {
     when (this) {
         is CoilImage -> image.AnimationEffect()
     }
-}
-
-private fun Modifier.fillMaxConstraints(
-    onConstraintsSized: (IntSize) -> Unit,
-) = layout { measurable, constraints ->
-    val placeable = measurable.measure(
-        constraints.copy(
-            minWidth = when {
-                constraints.hasBoundedWidth -> constraints.maxWidth
-                else -> constraints.minWidth
-            },
-            minHeight = when {
-                constraints.hasBoundedHeight -> constraints.maxHeight
-                else -> constraints.minHeight
-            },
-        ).also {
-            onConstraintsSized(IntSize(it.minWidth, it.minHeight))
-        },
-    )
-    layout(
-        width = placeable.width,
-        height = placeable.height,
-    ) {
-        placeable.place(0, 0)
-    }
-}
-
-private inline fun DrawScope.scaleAndAlignTo(
-    srcSize: IntSize,
-    destSize: IntSize,
-    contentScale: ContentScale,
-    alignment: Alignment,
-    crossinline block: DrawScope.() -> Unit,
-) {
-    val scaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
-
-    val alignmentOffset = alignment.align(
-        size = srcSize,
-        space = destSize,
-        layoutDirection = layoutDirection,
-    )
-
-    val translationOffset = Offset(
-        x = alignmentOffset.x * scaleFactor.scaleX,
-        y = alignmentOffset.y * scaleFactor.scaleY,
-    )
-
-    translate(
-        left = translationOffset.x,
-        top = translationOffset.y,
-        block = {
-            scale(
-                scaleX = scaleFactor.scaleX,
-                scaleY = scaleFactor.scaleY,
-                block = block,
-            )
-        },
-    )
 }
 
 private val IntSize.isUsable: Boolean
