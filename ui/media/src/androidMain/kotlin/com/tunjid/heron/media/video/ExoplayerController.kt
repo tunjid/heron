@@ -71,7 +71,7 @@ class ExoplayerController(
 ) : VideoPlayerController,
     Player.Listener {
 
-    override var isMuted: Boolean by mutableStateOf(false)
+    override var isMuted: Boolean by mutableStateOf(true)
 
     /**
      * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not discard buffered
