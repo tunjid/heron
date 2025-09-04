@@ -112,18 +112,16 @@ internal class AuthTokenRepository(
         )
     }
         .mapCatching { result ->
-            savedStateDataSource.updateState {
-                copy(
-                    auth = SavedState.AuthTokens(
-                        authProfileId = ProfileId(result.did.did),
-                        auth = result.accessJwt,
-                        refresh = result.refreshJwt,
-                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                            jsonContent = result.didDoc,
-                        ),
+            savedStateDataSource.setAuth(
+                auth = SavedState.AuthTokens(
+                    authProfileId = ProfileId(result.did.did),
+                    auth = result.accessJwt,
+                    refresh = result.refreshJwt,
+                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                        jsonContent = result.didDoc,
                     ),
-                )
-            }
+                ),
+            )
             // Suspend till auth token has been saved and is readable
             savedStateDataSource.savedState.first { it.auth != null }
             updateSignedInUser(result.did)

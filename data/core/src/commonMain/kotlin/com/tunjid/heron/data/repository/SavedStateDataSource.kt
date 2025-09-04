@@ -157,13 +157,14 @@ fun SavedState.signedInProfileNotifications() =
         ?.let { profileData[it.authProfileId] }
         ?.notifications
 
-internal val SavedState.signedInProfileId get() =
-    auth.ifSignedIn()?.authProfileId
+internal val SavedState.signedInProfileId
+    get() = auth.ifSignedIn()?.authProfileId
+
 fun SavedState.isSignedIn() =
     auth.ifSignedIn() != null
 
 internal suspend fun SavedStateDataSource.guestSignIn() =
-    updateState { copy(auth = GuestAuth) }
+    setAuth(auth = GuestAuth)
 
 sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
@@ -176,15 +177,9 @@ sealed class SavedStateDataSource {
         auth: SavedState.AuthTokens?,
     )
 
-    internal abstract suspend fun updateSignedInUserPreferences(
-        preferences: Preferences,
+    internal abstract suspend fun updateSignedInProfileData(
+        block: SavedState.ProfileData.() -> SavedState.ProfileData,
     )
-
-    internal abstract suspend fun updateSignedInUserNotifications(
-        block: SavedState.Notifications.() -> SavedState.Notifications,
-    )
-
-    internal abstract suspend fun updateState(update: SavedState.() -> SavedState)
 }
 
 @Inject
@@ -210,31 +205,32 @@ internal class DataStoreSavedStateDataSource(
         initialValue = InitialSavedState,
     )
 
-    override suspend fun setNavigationState(navigation: SavedState.Navigation) {
-        updateState {
-            copy(navigation = navigation)
-        }
+    override suspend fun setNavigationState(
+        navigation: SavedState.Navigation,
+    ) = updateState {
+        copy(navigation = navigation)
     }
 
-    override suspend fun setAuth(auth: SavedState.AuthTokens?) {
-        updateState {
-            copy(auth = auth)
-        }
+    override suspend fun setAuth(
+        auth: SavedState.AuthTokens?,
+    ) = updateState {
+        copy(auth = auth)
     }
 
-    override suspend fun updateSignedInUserPreferences(preferences: Preferences) {
-        updateSignedInProfileData {
-            copy(preferences = preferences)
-        }
+    override suspend fun updateSignedInProfileData(
+        block: SavedState.ProfileData.() -> SavedState.ProfileData,
+    ) = updateState {
+        val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
+        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
+            notifications = SavedState.Notifications(),
+            preferences = Preferences.DefaultPreferences,
+        )
+        copy(
+            profileData = profileData + (signedInProfileId to signedInProfileData.block()),
+        )
     }
 
-    override suspend fun updateSignedInUserNotifications(block: SavedState.Notifications.() -> SavedState.Notifications) {
-        updateSignedInProfileData {
-            copy(notifications = notifications.block())
-        }
-    }
-
-    override suspend fun updateState(update: SavedState.() -> SavedState) {
+    private suspend fun updateState(update: SavedState.() -> SavedState) {
         dataStore.updateData(update)
     }
 }
@@ -252,17 +248,14 @@ private class SavedStateOkioSerializer(
     }
 }
 
-private suspend inline fun SavedStateDataSource.updateSignedInProfileData(
-    crossinline block: SavedState.ProfileData.() -> SavedState.ProfileData,
-) {
-    updateState {
-        val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
-        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
-            notifications = SavedState.Notifications(),
-            preferences = Preferences.DefaultPreferences,
-        )
-        copy(
-            profileData = profileData + (signedInProfileId to signedInProfileData.block()),
-        )
-    }
+internal suspend fun SavedStateDataSource.updateSignedInUserPreferences(
+    preferences: Preferences,
+) = updateSignedInProfileData {
+    copy(preferences = preferences)
+}
+
+internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
+    block: SavedState.Notifications.() -> SavedState.Notifications,
+) = updateSignedInProfileData {
+    copy(notifications = notifications.block())
 }
