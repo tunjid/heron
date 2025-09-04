@@ -20,11 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.compose.asPainter
 import coil3.memory.MemoryCache
 import coil3.request.ImageRequest as CoilImageRequest
 import coil3.size.Size as CoilSize
@@ -32,6 +32,7 @@ import coil3.size.Size as CoilSize
 @Immutable
 internal class CoilImage(
     val image: coil3.Image,
+    override val painter: Painter,
 ) : Image {
 
     override val size: IntSize
@@ -39,12 +40,6 @@ internal class CoilImage(
             width = image.width,
             height = image.height,
         )
-
-    override fun drawWith(
-        scope: DrawScope,
-    ) {
-        scope.drawIntoCanvas(image::renderInto)
-    }
 }
 
 internal class CoilImageLoader(
@@ -86,9 +81,12 @@ internal class CoilImageLoader(
         }
             .build()
 
-        return coilImageLoader.execute(coilRequest)
-            .image
-            ?.let(::CoilImage)
+        val image = coilImageLoader.execute(coilRequest).image ?: return null
+
+        return CoilImage(
+            image = image,
+            painter = image.asPainter(platformContext),
+        )
     }
 }
 
