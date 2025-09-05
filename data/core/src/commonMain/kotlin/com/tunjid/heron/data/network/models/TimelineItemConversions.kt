@@ -23,7 +23,6 @@ import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -72,7 +71,7 @@ internal fun FeedViewPost.feedItemEntity(
 
 internal fun ReplyRefRootUnion.profileEntity() = when (this) {
     is ReplyRefRootUnion.PostView -> value.profileEntity()
-    is ReplyRefRootUnion.BlockedPost,
+    is ReplyRefRootUnion.BlockedPost -> value.author.profileEntity()
     is ReplyRefRootUnion.NotFoundPost,
     is ReplyRefRootUnion.Unknown,
     -> null
@@ -80,7 +79,7 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
 
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.PostView -> value.profileEntity()
-    is ReplyRefParentUnion.BlockedPost,
+    is ReplyRefParentUnion.BlockedPost -> value.author.profileEntity()
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
     -> null
