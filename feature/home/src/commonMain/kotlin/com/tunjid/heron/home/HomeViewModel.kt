@@ -134,7 +134,7 @@ private fun timelineMutations(
             ?.lastViewedHomeTimelineUri
 
         copy(
-            currentTabUri = lastViewed ?: currentTabUri ?: homeTimelines.firstOrNull()?.uri,
+            currentTabUri = currentTabUri ?: lastViewed ?: homeTimelines.firstOrNull()?.uri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
