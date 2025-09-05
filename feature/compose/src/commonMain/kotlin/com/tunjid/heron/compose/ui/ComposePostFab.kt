@@ -56,17 +56,7 @@ fun PaneScaffoldState.TopAppBarFab(
             },
         shape = CircleShape,
         onClick = onClick@{
-            val authorId = state.signedInProfile?.did ?: return@onClick
-            val postText = state.postText
-            onCreatePost(
-                Action.CreatePost(
-                    postType = state.postType,
-                    authorId = authorId,
-                    text = postText.text,
-                    links = postText.annotatedString.links(),
-                    media = state.video?.let(::listOf) ?: state.photos,
-                ),
-            )
+            state.createPostAction()?.let(onCreatePost)
         },
         content = {
             Text(
@@ -108,19 +98,20 @@ private fun PaneScaffoldState.ComposePostFab(
         icon = Icons.AutoMirrored.Rounded.Send,
         expanded = state.fabExpanded,
         onClick = onClick@{
-            val authorId = state.signedInProfile?.did ?: return@onClick
-            val postText = state.postText
-
-            onCreatePost(
-                Action.CreatePost(
-                    postType = state.postType,
-                    authorId = authorId,
-                    text = postText.text,
-                    links = postText.annotatedString.links(),
-                    media = state.video?.let(::listOf) ?: state.photos,
-                ),
-            )
+            state.createPostAction()?.let(onCreatePost)
         },
+    )
+}
+
+private fun State.createPostAction(): Action.CreatePost? {
+    val authorId = signedInProfile?.did ?: return null
+    val postText = postText
+    return Action.CreatePost(
+        postType = postType,
+        authorId = authorId,
+        text = postText.text,
+        links = postText.annotatedString.links(),
+        media = video?.let(::listOf) ?: photos,
     )
 }
 
