@@ -18,11 +18,12 @@ package com.tunjid.heron.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
-import androidx.datastore.core.okio.OkioSerializer
 import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
+import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
@@ -33,21 +34,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import okio.BufferedSink
-import okio.BufferedSource
 import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
 @Serializable
-data class SavedState(
-    val auth: AuthTokens?,
-    val navigation: Navigation,
-    val profileData: Map<ProfileId, ProfileData>,
-) {
+abstract class SavedState {
+    abstract val auth: AuthTokens?
+    abstract val navigation: Navigation
+    abstract val profileData: Map<ProfileId, ProfileData>
 
     @Serializable
     data class AuthTokens(
@@ -114,17 +110,9 @@ private val GuestAuth = SavedState.AuthTokens(
     didDoc = SavedState.AuthTokens.DidDoc(),
 )
 
-val InitialSavedState = SavedState(
-    auth = null,
-    navigation = SavedState.Navigation(activeNav = -1),
-    profileData = emptyMap(),
-)
+val InitialSavedState: SavedState = VersionedSavedState.Initial
 
-val EmptySavedState = SavedState(
-    auth = null,
-    navigation = SavedState.Navigation(activeNav = 0),
-    profileData = emptyMap(),
-)
+val EmptySavedState: SavedState = VersionedSavedState.Empty
 
 internal val SavedStateDataSource.signedInProfileId
     get() = savedState
@@ -190,10 +178,10 @@ internal class DataStoreSavedStateDataSource(
     protoBuf: ProtoBuf,
 ) : SavedStateDataSource() {
 
-    private val dataStore: DataStore<SavedState> = DataStoreFactory.create(
+    private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
             fileSystem = fileSystem,
-            serializer = SavedStateOkioSerializer(protoBuf),
+            serializer = VersionedSavedStateOkioSerializer(protoBuf),
             producePath = { path },
         ),
         scope = appScope,
@@ -230,21 +218,8 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
-    private suspend fun updateState(update: SavedState.() -> SavedState) {
+    private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {
         dataStore.updateData(update)
-    }
-}
-
-private class SavedStateOkioSerializer(
-    private val protoBuf: ProtoBuf,
-) : OkioSerializer<SavedState> {
-    override val defaultValue: SavedState = EmptySavedState
-
-    override suspend fun readFrom(source: BufferedSource): SavedState =
-        protoBuf.decodeFromByteArray(source.readByteArray())
-
-    override suspend fun writeTo(t: SavedState, sink: BufferedSink) {
-        sink.write(protoBuf.encodeToByteArray(value = t))
     }
 }
 
