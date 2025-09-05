@@ -87,11 +87,16 @@ internal class VersionedSavedStateOkioSerializer(
     ): VersionedSavedState = with(protoBuf) {
         val data = source.readByteArray()
 
-        return when (data.savedStateVersion()) {
-            SavedStateVersion0.SnapshotVersion -> decodeFromByteArray<SavedStateVersion0>(data)
-            SavedStateVersion1.SnapshotVersion -> decodeFromByteArray<SavedStateVersion1>(data)
-            else -> throw IllegalArgumentException("Unknown saved state version")
-        }.toVersionedSavedState(CurrentVersion)
+        return if (data.isEmpty()) defaultValue
+        else try {
+            when (data.savedStateVersion()) {
+                SavedStateVersion0.SnapshotVersion -> decodeFromByteArray<SavedStateVersion0>(data)
+                SavedStateVersion1.SnapshotVersion -> decodeFromByteArray<SavedStateVersion1>(data)
+                else -> throw IllegalArgumentException("Unknown saved state version")
+            }.toVersionedSavedState(CurrentVersion)
+        } catch (e: Exception) {
+            defaultValue
+        }
     }
 
     override suspend fun writeTo(
@@ -141,6 +146,6 @@ private fun ByteArray.encodedSavedStateVersion(): Int {
         shift += 7
     }
 
-    // If we loop 10 times and still haven't finished, the data is malformed
+    // If we loop 5 times and still haven't finished, the data is malformed
     throw IllegalArgumentException("Malformed saved state version")
 }
