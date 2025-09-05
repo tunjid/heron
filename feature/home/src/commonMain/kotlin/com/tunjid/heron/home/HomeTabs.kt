@@ -100,6 +100,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.uri
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
@@ -135,7 +137,7 @@ internal fun HomeTabs(
     modifier: Modifier = Modifier,
     tabLayout: TabLayout,
     isSignedIn: Boolean,
-    currentSourceId: String?,
+    currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
@@ -214,7 +216,7 @@ internal fun HomeTabs(
                 tabsState = collapsedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
-                currentSourceId = currentSourceId,
+                currentTabUri = currentTabUri,
                 timelines = timelines,
                 onTimelinePresentationUpdated = onTimelinePresentationUpdated,
             )
@@ -408,7 +410,7 @@ private fun CollapsedTabs(
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
-    currentSourceId: String?,
+    currentTabUri: Uri?,
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) = with(sharedTransitionScope) {
@@ -452,7 +454,7 @@ private fun CollapsedTabs(
             )
         }
         TimelinePresentationSelector(
-            currentSourceId = currentSourceId,
+            currentTabUri = currentTabUri,
             timelines = timelines,
             onTimelinePresentationUpdated = onTimelinePresentationUpdated,
         )
@@ -650,12 +652,12 @@ private fun SectionTitle(
 @Composable
 private fun TimelinePresentationSelector(
     modifier: Modifier = Modifier,
-    currentSourceId: String?,
+    currentTabUri: Uri?,
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) {
     val timeline = timelines.firstOrNull {
-        it.sourceId == currentSourceId
+        it.uri == currentTabUri
     }
     if (timeline != null) Row(
         modifier = modifier.wrapContentWidth(),
@@ -666,7 +668,7 @@ private fun TimelinePresentationSelector(
             available = timeline.supportedPresentations,
             onPresentationSelected = { presentation ->
                 val index = timelines.indexOfFirst {
-                    it.sourceId == currentSourceId
+                    it.uri == currentTabUri
                 }
                 onTimelinePresentationUpdated(
                     index,

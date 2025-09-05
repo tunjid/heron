@@ -19,6 +19,7 @@ package com.tunjid.heron.home
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import kotlinx.serialization.Serializable
@@ -26,7 +27,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val currentSourceId: String? = null,
+    val currentTabUri: Uri? = null,
     val tabLayout: TabLayout = TabLayout.Collapsed.All,
     @Transient
     val timelinePreferenceSaveRequestId: String? = null,
@@ -78,7 +79,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SetCurrentTab(
-        val sourceId: String,
+        val currentTabUri: Uri,
     ) : Action(key = "SetCurrentTab")
 
     data class SetTabLayout(
