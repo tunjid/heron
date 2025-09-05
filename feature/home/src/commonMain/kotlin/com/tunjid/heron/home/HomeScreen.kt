@@ -118,11 +118,17 @@ internal fun HomeScreen(
     val updatedTimelineStateHolders by rememberUpdatedState(
         state.timelineStateHolders,
     )
+
     val pagerState = rememberPagerState {
         updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
+
+    pagerState.RestoreLastViewedTabEffect(
+        lastViewedTabUri = state.currentTabUri,
+        timelines = state.timelines,
+    )
 
     Box(
         modifier = modifier,
