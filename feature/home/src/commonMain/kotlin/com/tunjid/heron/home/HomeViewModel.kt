@@ -20,7 +20,9 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.signedInUserPreferences
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -70,6 +72,7 @@ class ActualHomeViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
+    savedStateDataSource: SavedStateDataSource,
 ) : ViewModel(viewModelScope = scope),
     HomeStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
@@ -78,6 +81,7 @@ class ActualHomeViewModel(
             timelineMutations(
                 scope = scope,
                 timelineRepository = timelineRepository,
+                savedStateDataSource = savedStateDataSource,
             ),
             loadProfileMutations(
                 authRepository,
@@ -101,7 +105,7 @@ class ActualHomeViewModel(
                         writeQueue = writeQueue,
                     )
 
-                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
+                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(savedStateDataSource)
                     is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -121,10 +125,16 @@ private fun loadProfileMutations(
 private fun timelineMutations(
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
+    savedStateDataSource: SavedStateDataSource,
 ): Flow<Mutation<State>> =
     timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
+
+        val lastViewed = savedStateDataSource.savedState.value
+            .signedInUserPreferences()
+            ?.lastViewedHomeTimelineUri
+
         copy(
-            currentTabUri = currentTabUri ?: homeTimelines.firstOrNull()?.uri,
+            currentTabUri = lastViewed ?: currentTabUri ?: homeTimelines.firstOrNull()?.uri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
@@ -185,9 +195,12 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
-private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(currentTabUri = action.currentTabUri)
+private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        savedStateDataSource.setLastViewedHomeTimelineUri(action.currentTabUri)
+        emit { copy(currentTabUri = action.currentTabUri) }
     }
 
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
