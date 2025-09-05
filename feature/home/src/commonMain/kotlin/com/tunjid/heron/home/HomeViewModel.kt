@@ -18,6 +18,7 @@ package com.tunjid.heron.home
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -123,7 +124,7 @@ private fun timelineMutations(
 ): Flow<Mutation<State>> =
     timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
         copy(
-            currentSourceId = currentSourceId ?: homeTimelines.firstOrNull()?.sourceId,
+            currentTabUri = currentTabUri ?: homeTimelines.firstOrNull()?.uri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
@@ -200,7 +201,7 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
     mapToManyMutations {
         val currentState = stateHolder.state()
         currentState.timelineStateHolders
-            .firstOrNull { it.state.value.timeline.sourceId == currentState.currentSourceId }
+            .firstOrNull { it.state.value.timeline.uri == currentState.currentTabUri }
             ?.accept
             ?.invoke(
                 TimelineState.Action.Tile(
