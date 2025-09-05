@@ -139,7 +139,7 @@ internal fun HomeScreen(
                     .state
                     .value
                     .timeline
-                    .uri!!
+                    .sourceId
             },
             pageContent = { page ->
                 val gridState = rememberLazyStaggeredGridState()
