@@ -27,7 +27,6 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val currentSourceId: String? = null,
     val currentTabUri: Uri? = null,
     val tabLayout: TabLayout = TabLayout.Collapsed.All,
     @Transient
