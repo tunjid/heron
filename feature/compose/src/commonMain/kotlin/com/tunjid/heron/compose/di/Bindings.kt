@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose.di
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
@@ -130,6 +132,7 @@ class ComposeBindings(
                                 state = state,
                                 onCreatePost = viewModel.accept,
                             )
+                            Spacer(Modifier.width(16.dp))
                         },
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)

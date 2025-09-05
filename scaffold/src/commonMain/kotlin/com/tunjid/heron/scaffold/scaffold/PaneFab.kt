@@ -80,7 +80,6 @@ fun PaneScaffoldState.PaneFab(
     text: String,
     icon: ImageVector?,
     expanded: Boolean,
-    visible: Boolean? = null,
     onClick: () -> Unit,
 ) {
     AnimatedVisibility(

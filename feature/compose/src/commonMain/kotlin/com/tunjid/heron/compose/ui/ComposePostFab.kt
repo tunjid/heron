@@ -16,9 +16,13 @@
 
 package com.tunjid.heron.compose.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,18 +37,32 @@ import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.TopAppBarFab(
     modifier: Modifier,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
-    ComposePostFab(
+    FloatingActionButton(
         modifier = modifier
-            .height(36.dp),
-        state = state,
-        isInTopAppBar = true,
-        onCreatePost = onCreatePost,
+            .height(36.dp)
+            .run {
+                if (isActive) sharedElementWithCallerManagedVisibility(
+                    sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
+                    visible = state.hasLongPost,
+                )
+                else this
+            },
+        shape = CircleShape,
+        onClick = onClick@{
+            state.createPostAction()?.let(onCreatePost)
+        },
+        content = {
+            Text(
+                text = stringResource(Res.string.post),
+            )
+        },
     )
 }
 
@@ -54,41 +72,47 @@ fun PaneScaffoldState.BottomAppBarFab(
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
-    ComposePostFab(
+    val show = if (inPredictiveBack) !state.hasLongPost else true
+    if (show) ComposePostFab(
         modifier = modifier,
         state = state,
-        isInTopAppBar = false,
         onCreatePost = onCreatePost,
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PaneScaffoldState.ComposePostFab(
     modifier: Modifier,
     state: State,
-    isInTopAppBar: Boolean,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
     PaneFab(
         modifier = modifier
-            .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
-        expanded = state.fabExpanded,
-        text = stringResource(Res.string.post),
-        icon = Icons.AutoMirrored.Rounded.Send.takeIf { !isInTopAppBar },
-        visible = if (isInTopAppBar) state.hasLongPost else !state.hasLongPost,
-        onClick = onClick@{
-            val authorId = state.signedInProfile?.did ?: return@onClick
-            val postText = state.postText
-
-            onCreatePost(
-                Action.CreatePost(
-                    postType = state.postType,
-                    authorId = authorId,
-                    text = postText.text,
-                    links = postText.annotatedString.links(),
-                    media = state.video?.let(::listOf) ?: state.photos,
-                ),
+            .sharedElementWithCallerManagedVisibility(
+                sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
+                visible = !state.hasLongPost,
             )
+            .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
+        text = stringResource(Res.string.post),
+        icon = Icons.AutoMirrored.Rounded.Send,
+        expanded = state.fabExpanded,
+        onClick = onClick@{
+            state.createPostAction()?.let(onCreatePost)
         },
     )
 }
+
+private fun State.createPostAction(): Action.CreatePost? {
+    val authorId = signedInProfile?.did ?: return null
+    val postText = postText
+    return Action.CreatePost(
+        postType = postType,
+        authorId = authorId,
+        text = postText.text,
+        links = postText.annotatedString.links(),
+        media = video?.let(::listOf) ?: photos,
+    )
+}
+
+private object ComposePostFabSharedElementKey

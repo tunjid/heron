@@ -194,7 +194,6 @@ class PostDetailBindings(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         text = stringResource(
                             when {
                                 isSignedOut -> ScaffoldStrings.sign_in
@@ -205,6 +204,7 @@ class PostDetailBindings(
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
                             else -> Icons.AutoMirrored.Rounded.Reply
                         },
+                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
