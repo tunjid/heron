@@ -186,7 +186,7 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
-        copy(currentSourceId = action.sourceId)
+        copy(currentTabUri = action.currentTabUri)
     }
 
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =

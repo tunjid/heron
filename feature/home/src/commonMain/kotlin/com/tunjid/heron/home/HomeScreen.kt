@@ -139,7 +139,7 @@ internal fun HomeScreen(
                     .state
                     .value
                     .timeline
-                    .sourceId
+                    .uri!!
             },
             pageContent = { page ->
                 val gridState = rememberLazyStaggeredGridState()
@@ -170,7 +170,7 @@ internal fun HomeScreen(
             sharedTransitionScope = paneScaffoldState,
             selectedTabIndex = pagerState::tabIndex,
             saveRequestId = state.timelinePreferenceSaveRequestId,
-            currentSourceId = state.currentSourceId,
+            currentTabUri = state.currentTabUri,
             isSignedIn = state.signedInProfile != null,
             tabLayout = state.tabLayout,
             timelines = state.timelines,
@@ -240,15 +240,13 @@ internal fun HomeScreen(
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
-                    if (page < updatedTimelineStateHolders.size) actions(
-                        Action.SetCurrentTab(
-                            updatedTimelineStateHolders[page]
-                                .state
-                                .value
-                                .timeline
-                                .sourceId,
-                        ),
-                    )
+                    val currentTabUri = updatedTimelineStateHolders[page]
+                        .state
+                        .value
+                        .timeline
+                        .uri
+                        ?: return@collect
+                    actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
                 }
         }
     }
