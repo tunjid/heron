@@ -21,6 +21,8 @@ import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
 import app.bsky.actor.ViewerState
+import app.bsky.feed.BlockedAuthor
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
@@ -97,6 +99,27 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
             createdStarterPackCount = associated?.starterPacks,
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
+        ),
+    )
+
+internal fun BlockedAuthor.profileEntity(): ProfileEntity =
+    ProfileEntity(
+        did = ProfileId(did.did),
+        handle = Constants.unknownAuthorHandle,
+        displayName = null,
+        description = null,
+        avatar = null,
+        banner = null,
+        followersCount = null,
+        followsCount = null,
+        postsCount = null,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = null,
+        associated = ProfileEntity.Associated(
+            createdListCount = 0,
+            createdFeedGeneratorCount = 0,
+            createdStarterPackCount = 0,
         ),
     )
 
