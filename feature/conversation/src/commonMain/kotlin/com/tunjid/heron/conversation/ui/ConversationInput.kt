@@ -220,10 +220,9 @@ fun PaneScaffoldState.SendButton(
     PaneFab(
         modifier = modifier
             .alpha(if (textFieldValue.text.isNotBlank()) 1f else 0.6f),
-        expanded = true,
         text = stringResource(Res.string.textfield_send),
         icon = null,
-        visible = true,
+        expanded = true,
         onClick = onClick@{
             onMessageSent(textFieldValue.annotatedString)
         },
