@@ -44,12 +44,16 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.take
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -130,13 +134,14 @@ private fun timelineMutations(
     combine(
         savedStateDataSource.savedState.take(1),
         timelineRepository.homeTimelines(),
-        ::Pair,
-    ) { (savedState, homeTimelines) ->
+    ) { savedState, homeTimelines ->
+        savedState to homeTimelines
+    }.mapToMutation { (savedState, homeTimelines) ->
         val tabUri = currentTabUri
             ?: savedState.signedInUserPreferences()
                 ?.lastViewedHomeTimelineUri
                 ?.takeIf { uri ->
-                    homeTimelines.any { it.isPinned && it.uri == uri } >= 0
+                    homeTimelines.any { it.isPinned && it.uri == uri }
                 }
             ?: homeTimelines.firstOrNull()?.uri
 
@@ -145,7 +150,6 @@ private fun timelineMutations(
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
-                    // Reuse existing holder or create a new one
                     .firstOrNull { holder ->
                         holder.state.value.timeline.sourceId == timeline.sourceId
                     }
