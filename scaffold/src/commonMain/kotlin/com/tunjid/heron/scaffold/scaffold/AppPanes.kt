@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.current
+import com.tunjid.treenav.pop
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -187,15 +189,15 @@ internal class PaneAnchorState {
             val thumbWidth by animateDpAsState(
                 label = "App Pane Draggable thumb",
                 targetValue =
-                if (active) DraggableDividerSizeDp
-                else when (paneAnchorState.targetPaneAnchor) {
-                    PaneAnchor.Zero -> DraggableDividerSizeDp
-                    PaneAnchor.OneThirds,
-                    PaneAnchor.Half,
-                    PaneAnchor.TwoThirds,
-                    PaneAnchor.Full,
-                    -> 2.dp
-                },
+                    if (active) DraggableDividerSizeDp
+                    else when (paneAnchorState.targetPaneAnchor) {
+                        PaneAnchor.Zero -> DraggableDividerSizeDp
+                        PaneAnchor.OneThirds,
+                        PaneAnchor.Half,
+                        PaneAnchor.TwoThirds,
+                        PaneAnchor.Full,
+                            -> 2.dp
+                    },
             )
             Box(
                 modifier = Modifier
@@ -277,7 +279,9 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
         derivedStateOf {
             paneState.pane == ThreePane.Primary &&
                 splitPaneState.filteredPaneOrder.size > 1 &&
-                appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
+                appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag &&
+                // Only enable if going back to a single pane layout
+                appState.navigation.pop().current?.children?.isEmpty() ?: false
         }
     }
 
@@ -310,6 +314,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
         } finally {
             appState.dismissBehavior = AppState.DismissBehavior.None
             started = false
+            appState.pop()
         }
     }
 
