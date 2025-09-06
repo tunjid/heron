@@ -281,85 +281,77 @@ interface PostDao {
     @Query(
         """
             WITH RECURSIVE
-            parentGeneration AS (
-                SELECT postUri,
-                    parentPostUri,
-                    -1 AS generation,
-                    postUri AS rootPostUri,
-                    -1 AS sort1
-                FROM postThreads
+              -- 1. ParentHierarchy CTE: Recursively finds all parent URIs for the given post
+              -- and calculates their generation (negative).
+              ParentHierarchy(uri, rootPostUri, generation, sort) AS (
+                SELECT
+                  pt.parentPostUri, -- each parent is its own root
+                  pt.postUri AS rootPostUri,
+                  -1 AS generation,
+                  -1 AS sort -- sort parents of the OP strictly by their generation
+                FROM
+                  postThreads pt
                 WHERE postUri = :postUri
-            ),
-            parents AS (
-                SELECT * FROM parentGeneration
                 UNION ALL
-                SELECT parent.postUri,
-                    parent.parentPostUri,
-                    generation-1 AS generation,
-                    rootPostUri,
-                    sort1-1 AS sort1
-                FROM postThreads parent
-                JOIN parentGeneration g
-                  ON parent.postUri = g.parentPostUri
-            ),
-            replyGeneration AS (
-                SELECT postUri,
-                    parentPostUri,
-                    1 AS generation,
-                    postUri AS rootPostUri,
-                    posts.createdAt AS sort1
-                FROM postThreads
-                INNER JOIN posts
-                ON postUri = posts.uri
-                WHERE parentPostUri = :postUri
-            ),
-            replies AS (
-                SELECT * FROM replyGeneration
+                SELECT
+                  pt.parentPostUri,
+                  ph.rootPostUri,
+                  ph.generation - 1,
+                  ph.sort -1
+                FROM
+                  postThreads pt
+                INNER JOIN
+                  ParentHierarchy ph ON pt.postUri = ph.uri
+              ),
+
+              -- 2. ChildHierarchy CTE: Recursively finds all child URIs for the given post
+              -- and calculates their generation (positive).
+              ChildHierarchy(uri, rootPostUri, generation, sort) AS (
+                SELECT
+                  pt.postUri,
+                  pt.postUri AS rootPostUri, -- add the very first reply to the OP as the root
+                  1 AS generation,
+                  p.createdAt as sort -- sort all replies by the very first reply to the OP
+                FROM
+                  postThreads pt
+                JOIN posts p ON pt.postUri = p.uri
+                WHERE
+                  parentPostUri = :postUri
                 UNION ALL
-                SELECT reply.postUri,
-                    reply.parentPostUri,
-                    generation+1 AS generation,
-                    rootPostUri,
-                    sort1 AS sort1
-                FROM postThreads reply
-                JOIN replyGeneration g
-                  ON reply.parentPostUri = g.postUri
-            )
+                SELECT
+                  pt.postUri,
+                  ch.rootPostUri,
+                  ch.generation + 1,
+                  ch.sort
+                FROM
+                  postThreads pt
+                INNER JOIN
+                  ChildHierarchy ch ON pt.parentPostUri = ch.uri
+              ),
 
-            SELECT * FROM(
-                SELECT *
-                FROM posts
-                INNER JOIN parents
-                ON uri = parents.postUri
-                WHERE uri != :postUri
-            )
+              -- 3. FullThread CTE: Combines the URIs and generations from parents, children,
+              -- and the post itself (generation 0).
+              FullThread(uri, rootPostUri, generation, sort) AS (
+                SELECT uri, rootPostUri, generation, sort FROM ParentHierarchy
+                UNION
+                SELECT uri, rootPostUri, generation, sort FROM ChildHierarchy
+                UNION
+                SELECT :postUri, NULL, 0, 0
+              )
 
-            UNION
-
-            SELECT * FROM(
-                SELECT posts.*,
-                posts.uri,
-                postThreads.parentPostUri,
-                0,
-                NULL,
-                0 AS sort1
-                FROM posts
-                INNER JOIN postThreads
-                WHERE uri == :postUri
-                LIMIT 1
-            )
-
-            UNION
-
-            SELECT * FROM(
-                SELECT *
-                FROM posts
-                INNER JOIN replies
-                ON uri = replies.postUri
-                WHERE uri != :postUri
-            )
-
-            ORDER BY sort1, generation
+            -- 4. Final SELECT: Fetches all columns from the `posts` table for every URI
+            -- identified in the FullThread CTE, along with its calculated generation and the root post URI.
+            SELECT
+              p.*,
+              ft.rootPostUri AS rootPostUri,
+              ft.generation AS generation,
+              ft.sort AS sort
+            FROM
+              posts p
+            JOIN
+              FullThread ft ON p.uri = ft.uri
+            ORDER BY
+              ft.sort, ft.generation; -- sort by the first reply to the op, then the generation
         """,
     )
     fun postThread(

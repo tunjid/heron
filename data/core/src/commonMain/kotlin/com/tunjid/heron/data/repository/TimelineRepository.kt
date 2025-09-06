@@ -564,7 +564,9 @@ internal class OfflineTimelineRepository(
                             postUri = postEntity.uri.uri,
                         )
                             .flatMapLatest { postThread ->
-                                val postUris = postThread.map(ThreadedPostEntity::postUri).toSet()
+                                val postUris = postThread.map {
+                                    it.entity.uri
+                                }.toSet()
                                 combine(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
@@ -1283,8 +1285,9 @@ internal class OfflineTimelineRepository(
         thread: ThreadedPostEntity,
         post: Post,
     ) = when {
+        // To start or for the OP, start a new thread
         list.isEmpty() || thread.generation == 0L -> list + TimelineItem.Thread(
-            id = thread.postUri.uri,
+            id = thread.entity.uri.uri,
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,
@@ -1294,13 +1297,14 @@ internal class OfflineTimelineRepository(
                 labelPreferences = labelPreferences,
             ),
         )
-
+        // For parents, edit the head
         thread.generation <= -1L -> list.dropLast(1) + list.last().let {
             it.copy(posts = it.posts + post)
         }
 
+        // New reply to the OP, start its own thread
         list.last().posts.first().uri != thread.rootPostUri -> list + TimelineItem.Thread(
-            id = thread.postUri.uri,
+            id = thread.entity.uri.uri,
             generation = thread.generation,
             anchorPostIndex = 0,
             hasBreak = false,
@@ -1311,6 +1315,7 @@ internal class OfflineTimelineRepository(
             ),
         )
 
+        // Just tack the post to the current thread
         else -> list.dropLast(1) + list.last().let {
             it.copy(posts = it.posts + post)
         }
