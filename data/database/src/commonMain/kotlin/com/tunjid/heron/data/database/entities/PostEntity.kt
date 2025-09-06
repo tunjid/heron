@@ -150,10 +150,7 @@ data class ThreadedPostEntity(
     @Embedded
     val entity: PostEntity,
     val generation: Long,
-    val postUri: PostUri,
-    val parentPostUri: PostUri?,
     val rootPostUri: PostUri?,
-    val sort1: Long?,
 )
 
 fun PopulatedPostEntity.asExternalModel(

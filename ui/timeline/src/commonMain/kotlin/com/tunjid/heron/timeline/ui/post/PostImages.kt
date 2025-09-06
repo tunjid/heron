@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
@@ -27,8 +26,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
@@ -53,15 +54,11 @@ internal fun PostImages(
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
-    val shape = animateDpAsState(
-        when (presentation) {
-            Timeline.Presentation.Text.WithEmbed -> 16.dp
-            Timeline.Presentation.Media.Condensed -> 8.dp
-            Timeline.Presentation.Media.Expanded -> 0.dp
-        },
-    ).value
-        .let(::RoundedCornerShape)
-        .toRoundedPolygonShape()
+    val shape = remember(presentation) {
+        presentation.imageShapeCornerSize
+            .let(::RoundedCornerShape)
+            .toRoundedPolygonShape()
+    }
 
     val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
     else Modifier
@@ -95,6 +92,10 @@ internal fun PostImages(
                         -> itemModifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
+                        Timeline.Presentation.Media.Grid ->
+                            itemModifier
+                                .fillParentMaxWidth()
+                                .aspectRatio(1f)
                     }
                         .clickable { onImageClicked(index) },
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
@@ -105,14 +106,19 @@ internal fun PostImages(
                             ),
                         )
                     },
-                    state = ImageArgs(
-                        url = image.thumb.uri,
-                        contentDescription = image.alt,
-                        contentScale =
-                        if (presentation == Timeline.Presentation.Media.Expanded)
-                            ContentScale.Crop else ContentScale.Fit,
-                        shape = shape,
-                    ),
+                    state = remember(image.thumb.uri, presentation, shape) {
+                        ImageArgs(
+                            url = image.thumb.uri,
+                            contentDescription = image.alt,
+                            contentScale = when (presentation) {
+                                Timeline.Presentation.Media.Expanded -> ContentScale.Crop
+                                Timeline.Presentation.Media.Grid -> ContentScale.Crop
+                                Timeline.Presentation.Media.Condensed -> ContentScale.Crop
+                                Timeline.Presentation.Text.WithEmbed -> ContentScale.Fit
+                            },
+                            shape = shape,
+                        )
+                    },
                     sharedElement = { state, innerModifier ->
                         AsyncImage(
                             modifier = innerModifier,
@@ -124,6 +130,14 @@ internal fun PostImages(
         )
     }
 }
+
+private val Timeline.Presentation.imageShapeCornerSize
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 16.dp
+        Timeline.Presentation.Media.Condensed -> Dp.Hairline
+        Timeline.Presentation.Media.Expanded -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
 
 fun Image.sharedElementKey(
     prefix: String,

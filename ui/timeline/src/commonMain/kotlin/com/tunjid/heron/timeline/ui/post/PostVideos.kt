@@ -18,7 +18,6 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,6 +40,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -86,18 +86,24 @@ internal fun PostVideo(
     val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
         videoUrl = video.playlist.uri,
         thumbnail = video.thumbnail?.uri,
-        shape = animateDpAsState(
-            when (presentation) {
-                Timeline.Presentation.Text.WithEmbed -> 8.dp
-                Timeline.Presentation.Media.Condensed -> 8.dp
-                Timeline.Presentation.Media.Expanded -> 0.dp
-            },
-        ).value.let(::RoundedCornerShape).toRoundedPolygonShape(),
+        shape = remember(presentation) {
+            presentation.videoShapeCornerSize
+                .let(::RoundedCornerShape)
+                .toRoundedPolygonShape()
+        },
     )
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(video.aspectRatioOrSquare),
+            .aspectRatio(
+                when (presentation) {
+                    Timeline.Presentation.Media.Condensed,
+                    Timeline.Presentation.Media.Expanded,
+                    Timeline.Presentation.Text.WithEmbed,
+                    -> video.aspectRatioOrSquare
+                    Timeline.Presentation.Media.Grid -> 1f
+                },
+            ),
     ) {
         val videoModifier = when {
             isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
@@ -262,6 +268,14 @@ private fun PlayerControlBackground(
         )
     }
 }
+
+private val Timeline.Presentation.videoShapeCornerSize
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 8.dp
+        Timeline.Presentation.Media.Expanded -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
 
 fun Video.sharedElementKey(
     prefix: String,

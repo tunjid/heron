@@ -107,15 +107,10 @@ fun PostInteractions(
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
 ) {
-    val arrangement: Arrangement.Horizontal = when (presentation) {
-        Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
-        Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
-        Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
-    }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = arrangement.animate(),
+        horizontalArrangement = presentation.postInteractionArrangement.animate(),
     ) {
         PostInteractionsButtons(
             replyCount = replyCount,
@@ -510,6 +505,14 @@ private fun PostInteractionsBottomSheet(
         },
     )
 }
+
+private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
+        Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
+        Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
+        Timeline.Presentation.Media.Grid -> Arrangement.SpaceBetween
+    }
 
 private fun postActionSharedElementKey(
     prefix: String,
