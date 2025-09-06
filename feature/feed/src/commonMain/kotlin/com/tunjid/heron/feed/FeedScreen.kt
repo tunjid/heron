@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
@@ -74,6 +73,8 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
@@ -184,11 +185,13 @@ private fun FeedTimeline(
             LazyVerticalStaggeredGrid(
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-                verticalItemSpacing = 8.dp,
+                verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
                 ),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(
+                    presentation.lazyGridHorizontalItemSpacing,
+                ),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(

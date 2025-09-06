@@ -134,6 +134,8 @@ import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
@@ -901,8 +903,10 @@ private fun ProfileTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+            horizontalArrangement = Arrangement.spacedBy(
+                presentation.lazyGridHorizontalItemSpacing,
+            ),
         ) {
             items(
                 items = items,
