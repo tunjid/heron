@@ -25,10 +25,10 @@ typealias ContentLabelPreferences = List<ContentLabelPreference>
 
 @Serializable
 data class Preferences(
-    val lastViewedHomeTimelineUri: Uri? = null,
     val timelinePreferences: List<TimelinePreference>,
     // Needs default value for serialization to disk
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    val lastViewedHomeTimelineUri: Uri? = null,
 ) : UrlEncodableModel {
     companion object {
         val DefaultPreferences = Preferences(
