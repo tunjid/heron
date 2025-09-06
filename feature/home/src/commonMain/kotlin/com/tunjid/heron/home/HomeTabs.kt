@@ -272,6 +272,25 @@ internal fun HomeTabs(
 }
 
 @Composable
+fun PagerState.RestoreLastViewedTabEffect(
+    lastViewedTabUri: Uri?,
+    timelines: List<Timeline.Home>,
+) {
+    val updatedTimelines = rememberUpdatedState(lastViewedTabUri to timelines)
+    LaunchedEffect(Unit) {
+        val (lastTabUri, initialTimelines) = snapshotFlow { updatedTimelines.value }
+            .filter { (_, timelines) -> timelines.isNotEmpty() }
+            .first()
+
+        val page = initialTimelines.indexOfFirst { it.uri == lastTabUri }
+        if (page < 0) return@LaunchedEffect
+        if (!initialTimelines[page].isPinned) return@LaunchedEffect
+
+        scrollToPage(page)
+    }
+}
+
+@Composable
 internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
     layout: TabLayout,
     onCollapsed: (TabLayout.Collapsed) -> Unit,
