@@ -127,18 +127,25 @@ private fun timelineMutations(
     timelineRepository: TimelineRepository,
     savedStateDataSource: SavedStateDataSource,
 ): Flow<Mutation<State>> =
-    timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
-
-        val lastViewed = savedStateDataSource.savedState.value
-            .signedInUserPreferences()
-            ?.lastViewedHomeTimelineUri
+    combine(
+        savedStateDataSource.savedState.take(1),
+        timelineRepository.homeTimelines(),
+        ::Pair,
+    ) { (savedState, homeTimelines) ->
+        val tabUri = currentTabUri
+            ?: savedState.signedInUserPreferences()
+                ?.lastViewedHomeTimelineUri
+                ?.takeIf { uri ->
+                    homeTimelines.any { it.isPinned && it.uri == uri } >= 0
+                }
+            ?: homeTimelines.firstOrNull()?.uri
 
         copy(
-            currentTabUri = currentTabUri ?: lastViewed ?: homeTimelines.firstOrNull()?.uri,
+            currentTabUri = tabUri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
                 val timelineStateHolder = timelineStateHolders
-                    // Preserve the existing state holder or create a new one
+                    // Reuse existing holder or create a new one
                     .firstOrNull { holder ->
                         holder.state.value.timeline.sourceId == timeline.sourceId
                     }
@@ -150,8 +157,11 @@ private fun timelineMutations(
                         timelineRepository = timelineRepository,
                     )
 
-                if (timeline.isPinned) HomeScreenStateHolders.Pinned(timelineStateHolder)
-                else HomeScreenStateHolders.Saved(timelineStateHolder)
+                if (timeline.isPinned) {
+                    HomeScreenStateHolders.Pinned(timelineStateHolder)
+                } else {
+                    HomeScreenStateHolders.Saved(timelineStateHolder)
+                }
             },
         )
     }
@@ -197,11 +207,15 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
     savedStateDataSource: SavedStateDataSource,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        savedStateDataSource.setLastViewedHomeTimelineUri(action.currentTabUri)
-        emit { copy(currentTabUri = action.currentTabUri) }
-    }
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    // Write to memory in state immediately
+    emit { copy(currentTabUri = action.currentTabUri) }
+
+    // Wait until we're sure the user has settled on this tab
+    delay(1400.milliseconds)
+    // Write to disk
+    savedStateDataSource.setLastViewedHomeTimelineUri(action.currentTabUri)
+}
 
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
