@@ -65,6 +65,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualHomeViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
+    savedStateDataSource: SavedStateDataSource,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -72,7 +73,6 @@ class ActualHomeViewModel(
     @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-    savedStateDataSource: SavedStateDataSource,
 ) : ViewModel(viewModelScope = scope),
     HomeStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
