@@ -25,10 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -168,36 +164,8 @@ val Timeline.description: String
 
         is Timeline.Home.Following,
         is Timeline.Profile,
-        -> null
+            -> null
     } ?: ""
-
-val Timeline.Presentation.cardSize
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 340.dp
-        Timeline.Presentation.Media.Condensed -> 160.dp
-        Timeline.Presentation.Media.Expanded -> 340.dp
-    }
-
-val Timeline.Presentation.timelineHorizontalPadding
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 0.dp
-    }
-
-val Timeline.Presentation.actionIconSize
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Expanded -> 24.dp
-    }
-
-internal val Timeline.Presentation.icon
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> Icons.AutoMirrored.Rounded.Article
-        Timeline.Presentation.Media.Condensed -> Icons.Rounded.Dashboard
-        Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
-    }
 
 @Composable
 private fun Timeline.creator(): String = when (this) {
@@ -218,7 +186,7 @@ private fun Timeline.creator(): String = when (this) {
 
     is Timeline.Home.Following,
     is Timeline.Profile,
-    -> null
+        -> null
 } ?: ""
 
 val Timeline.sharedElementPrefix get() = sourceId
@@ -248,7 +216,7 @@ private val Timeline.avatar: ImageUri
         is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
         is Timeline.Profile,
-        -> BlueskyClouds
+            -> BlueskyClouds
     } ?: BlueskyClouds
 
 private fun Timeline.avatarSharedElementKey(
@@ -312,5 +280,5 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.StarterPack -> StarterPackCollectionShape
         is Timeline.Home.Following,
         is Timeline.Profile,
-        -> RoundedPolygonShape.Circle
+            -> RoundedPolygonShape.Circle
     }

@@ -43,6 +43,7 @@
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>
     <string name="expanded_media">expanded media</string>
+    <string name="grid_media">grid media</string>
     <string name="sensitive_content">Sensitive Content</string>
     <string name="feed_by">Feed by %1$s</string>
     <string name="liked_by">Liked by %1$s users</string>

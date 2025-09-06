@@ -53,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -65,7 +66,6 @@ import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.timeline.utilities.presentationPadding
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -100,12 +100,10 @@ fun TimelineItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .presentationPadding(
+                    .timelineCardPresentationPadding(
                         presentation = presentation,
-                        top = if (item.isThreadedAnchor) 0.dp
-                        else 16.dp,
-                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp
-                        else 8.dp,
+                        top = if (item.isThreadedAnchor) 0.dp else 16.dp,
+                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp else 8.dp,
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
@@ -188,8 +186,7 @@ private fun ThreadedPost(
                         now = now,
                         post = post,
                         isAnchoredInTimeline = item.generation == 0L,
-                        avatarShape =
-                        when {
+                        avatarShape = when {
                             item.isThreadedAnchor -> RoundedPolygonShape.Circle
                             item.isThreadedAncestor ->
                                 if (item.posts.size == 1) ReplyThreadStartImageShape
@@ -374,23 +371,21 @@ fun TimelineCard(
     onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val isFlat = item.isThreadedAncestorOrAnchor ||
-        presentation == Timeline.Presentation.Media.Expanded
+    val cornerRadius =
+        if (item.isThreadedAncestorOrAnchor) 0.dp
+        else presentation.timelineCardPadding
+
+    val isFlat = cornerRadius == 0.dp
 
     ElevatedCard(
         modifier = modifier,
-        shape = animateDpAsState(
-            if (isFlat) 0.dp
-            else when (presentation) {
-                Timeline.Presentation.Text.WithEmbed -> 8.dp
-                Timeline.Presentation.Media.Condensed -> 8.dp
-                Timeline.Presentation.Media.Expanded -> 0.dp
-            },
-        ).value.let(::RoundedCornerShape),
-        colors = if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        else CardDefaults.elevatedCardColors(),
-        elevation = if (isFlat) CardDefaults.cardElevation()
-        else CardDefaults.elevatedCardElevation(),
+        shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
+        colors =
+            if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            else CardDefaults.elevatedCardColors(),
+        elevation =
+            if (isFlat) CardDefaults.cardElevation()
+            else CardDefaults.elevatedCardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )
@@ -428,6 +423,33 @@ fun Post.avatarSharedElementKey(
         ?.let { "$prefix-$it" }
         ?: prefix
     return "$finalPrefix-${uri.uri}-${author.did.id}"
+}
+
+private val Timeline.Presentation.timelineCardPadding: Dp
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 8.dp
+        Timeline.Presentation.Media.Expanded -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
+
+private fun Modifier.timelineCardPresentationPadding(
+    presentation: Timeline.Presentation,
+    start: Dp = 0.dp,
+    top: Dp = 0.dp,
+    end: Dp = 0.dp,
+    bottom: Dp = 0.dp,
+) = when (presentation) {
+    Timeline.Presentation.Text.WithEmbed -> padding(
+        start = start,
+        top = top,
+        end = end,
+        bottom = bottom,
+    )
+
+    Timeline.Presentation.Media.Condensed -> this
+    Timeline.Presentation.Media.Expanded -> this
+    Timeline.Presentation.Media.Grid -> this
 }
 
 internal fun FeedGenerator.avatarSharedElementKey(
