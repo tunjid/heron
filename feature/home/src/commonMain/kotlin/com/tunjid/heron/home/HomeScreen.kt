@@ -240,11 +240,11 @@ internal fun HomeScreen(
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
-                    val currentTabUri = updatedTimelineStateHolders[page]
-                        .state
-                        .value
-                        .timeline
-                        .uri
+                    val currentTabUri = updatedTimelineStateHolders.getOrNull(page)
+                        ?.state
+                        ?.value
+                        ?.timeline
+                        ?.uri
                         ?: return@collect
                     actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
                 }
