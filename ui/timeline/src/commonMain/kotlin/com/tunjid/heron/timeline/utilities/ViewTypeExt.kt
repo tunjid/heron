@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.Modifier
@@ -25,30 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-
-internal fun Modifier.presentationPadding(
-    presentation: Timeline.Presentation,
-    start: Dp = 0.dp,
-    top: Dp = 0.dp,
-    end: Dp = 0.dp,
-    bottom: Dp = 0.dp,
-) = when (presentation) {
-    Timeline.Presentation.Text.WithEmbed -> padding(
-        start = start,
-        top = top,
-        end = end,
-        bottom = bottom,
-    )
-
-    Timeline.Presentation.Media.Condensed -> this
-    Timeline.Presentation.Media.Expanded -> this
-}
 
 internal fun Modifier.sensitiveContentBlur(
     shape: Shape,

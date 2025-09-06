@@ -211,6 +211,10 @@ sealed interface Timeline {
             data object Condensed : Presentation(
                 key = "presentation-condensed-media",
             )
+
+            data object Grid : Presentation(
+                key = "presentation-grid-media",
+            )
         }
     }
 }
@@ -280,4 +284,5 @@ private val AllPresentations = listOf(
     Text.WithEmbed,
     Media.Expanded,
     Media.Condensed,
+    Media.Grid,
 )

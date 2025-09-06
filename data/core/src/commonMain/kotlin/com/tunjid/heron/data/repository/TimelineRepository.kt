@@ -1175,6 +1175,9 @@ internal class OfflineTimelineRepository(
                             Timeline.Presentation.Media.Condensed.takeIf {
                                 populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
                             },
+                            Timeline.Presentation.Media.Grid.takeIf {
+                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
+                            },
                         ),
                         isPinned = isPinned,
                     )
@@ -1327,6 +1330,7 @@ private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
         Timeline.Presentation.Media.Expanded.key -> Timeline.Presentation.Media.Expanded
         Timeline.Presentation.Media.Condensed.key -> Timeline.Presentation.Media.Condensed
+        Timeline.Presentation.Media.Grid.key -> Timeline.Presentation.Media.Grid
         Timeline.Presentation.Text.WithEmbed.key -> Timeline.Presentation.Text.WithEmbed
         else -> Timeline.Presentation.Text.WithEmbed
     }
