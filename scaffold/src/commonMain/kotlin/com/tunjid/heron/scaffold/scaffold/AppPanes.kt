@@ -207,6 +207,7 @@ internal class PaneAnchorState {
                     }
                     .fillMaxHeight()
                     .width(DraggableDividerSizeDp)
+                    .platformSystemGestureExclusion()
                     .hoverable(paneAnchorState.thumbMutableInteractionSource)
                     .anchoredDraggable(
                         state = paneAnchorState.anchoredDraggableState,
@@ -350,6 +351,8 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
             }
     }
 }
+
+internal expect fun Modifier.platformSystemGestureExclusion(): Modifier
 
 private val DraggableDividerSizeDp = 48.dp
 internal val SecondaryPaneMinWidthBreakpointDp = 600.dp
