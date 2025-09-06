@@ -164,7 +164,7 @@ val Timeline.description: String
 
         is Timeline.Home.Following,
         is Timeline.Profile,
-            -> null
+        -> null
     } ?: ""
 
 @Composable
@@ -186,7 +186,7 @@ private fun Timeline.creator(): String = when (this) {
 
     is Timeline.Home.Following,
     is Timeline.Profile,
-        -> null
+    -> null
 } ?: ""
 
 val Timeline.sharedElementPrefix get() = sourceId
@@ -216,7 +216,7 @@ private val Timeline.avatar: ImageUri
         is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
         is Timeline.Profile,
-            -> BlueskyClouds
+        -> BlueskyClouds
     } ?: BlueskyClouds
 
 private fun Timeline.avatarSharedElementKey(
@@ -280,5 +280,5 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.StarterPack -> StarterPackCollectionShape
         is Timeline.Home.Following,
         is Timeline.Profile,
-            -> RoundedPolygonShape.Circle
+        -> RoundedPolygonShape.Circle
     }

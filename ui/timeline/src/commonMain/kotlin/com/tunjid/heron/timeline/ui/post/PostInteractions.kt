@@ -411,7 +411,7 @@ private fun PostInteractionsBottomSheet(
             is Post.Interaction.Create.Like,
             is Post.Interaction.Delete.RemoveRepost,
             is Post.Interaction.Delete.Unlike,
-                -> {
+            -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)
                     state.currentInteraction = null

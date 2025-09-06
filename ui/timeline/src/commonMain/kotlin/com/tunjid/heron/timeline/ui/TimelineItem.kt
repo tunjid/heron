@@ -381,11 +381,11 @@ fun TimelineCard(
         modifier = modifier,
         shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
         colors =
-            if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            else CardDefaults.elevatedCardColors(),
+        if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        else CardDefaults.elevatedCardColors(),
         elevation =
-            if (isFlat) CardDefaults.cardElevation()
-            else CardDefaults.elevatedCardElevation(),
+        if (isFlat) CardDefaults.cardElevation()
+        else CardDefaults.elevatedCardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )

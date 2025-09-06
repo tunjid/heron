@@ -88,12 +88,13 @@ internal fun PostImages(
 
                         Timeline.Presentation.Media.Condensed,
                         Timeline.Presentation.Media.Expanded,
-                            -> itemModifier
+                        -> itemModifier
                             .fillParentMaxWidth()
                             .aspectRatio(tallestAspectRatio)
-                        Timeline.Presentation.Media.Grid -> itemModifier
-                            .fillParentMaxWidth()
-                            .aspectRatio(1f)
+                        Timeline.Presentation.Media.Grid ->
+                            itemModifier
+                                .fillParentMaxWidth()
+                                .aspectRatio(1f)
                     }
                         .clickable { onImageClicked(index) },
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {

@@ -96,12 +96,13 @@ internal fun PostVideo(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(
-                when(presentation) {
+                when (presentation) {
                     Timeline.Presentation.Media.Condensed,
                     Timeline.Presentation.Media.Expanded,
-                    Timeline.Presentation.Text.WithEmbed -> video.aspectRatioOrSquare
+                    Timeline.Presentation.Text.WithEmbed,
+                    -> video.aspectRatioOrSquare
                     Timeline.Presentation.Media.Grid -> 1f
-                }
+                },
             ),
     ) {
         val videoModifier = when {
