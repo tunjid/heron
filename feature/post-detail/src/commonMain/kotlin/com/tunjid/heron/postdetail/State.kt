@@ -33,7 +33,7 @@ data class State(
     val items: List<TimelineItem> = listOfNotNull(
         anchorPost?.let {
             TimelineItem.Thread(
-                id = it.cid.id,
+                id = it.uri.uri,
                 anchorPostIndex = 0,
                 posts = listOf(it),
                 generation = 0,
