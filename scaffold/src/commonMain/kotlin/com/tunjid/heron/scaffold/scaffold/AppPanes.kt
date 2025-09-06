@@ -314,8 +314,8 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
         } finally {
             appState.dismissBehavior = AppState.DismissBehavior.None
             started = false
-            appState.pop()
         }
+        appState.pop()
     }
 
     // Make sure desiredPaneWidth is synced with paneSplitState.width before the back gesture
