@@ -51,6 +51,7 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
@@ -90,8 +91,6 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
@@ -241,12 +240,8 @@ internal fun HomeScreen(
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
-                    val currentTabUri = updatedTimelineStateHolders.getOrNull(page)
-                        ?.state
-                        ?.value
-                        ?.timeline
-                        ?.uri
-                        ?: return@collect
+                    val holder = updatedTimelineStateHolders.getOrNull(page) ?: return@collect
+                    val currentTabUri = holder.state.value.timeline.uri ?: return@collect
                     actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
                 }
         }
@@ -337,13 +332,11 @@ private fun HomeTimeline(
                     },
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-                verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+                verticalItemSpacing = 8.dp,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
                 ),
-                horizontalArrangement = Arrangement.spacedBy(
-                    presentation.lazyGridHorizontalItemSpacing,
-                ),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
