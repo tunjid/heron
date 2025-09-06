@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
@@ -133,7 +134,7 @@ internal fun PostImages(
 private val Timeline.Presentation.imageShapeCornerSize
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
+        Timeline.Presentation.Media.Condensed -> Dp.Hairline
         Timeline.Presentation.Media.Expanded -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
     }

@@ -43,3 +43,19 @@ val Timeline.Presentation.actionIconSize
         Timeline.Presentation.Media.Expanded -> 24.dp
         Timeline.Presentation.Media.Grid -> 0.dp
     }
+
+val Timeline.Presentation.lazyGridHorizontalItemSpacing
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 4.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Grid -> 2.dp
+    }
+
+val Timeline.Presentation.lazyGridVerticalItemSpacing
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 4.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Grid -> 2.dp
+    }
