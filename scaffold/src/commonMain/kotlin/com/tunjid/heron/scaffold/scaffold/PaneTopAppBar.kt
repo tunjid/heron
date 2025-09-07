@@ -128,7 +128,11 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         modifier = modifier
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = PoppableDestinationTopAppBarSharedElementZIndex,
-                renderInOverlay = { isTransitionActive && isActive },
+                renderInOverlay = {
+                    paneState.pane == ThreePane.Primary &&
+                        isTransitionActive &&
+                        isActive
+                },
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
