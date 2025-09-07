@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
@@ -117,7 +116,6 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PoppableDestinationTopAppBar(
     modifier: Modifier = Modifier,
@@ -128,6 +126,14 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
 ) {
     TopAppBar(
         modifier = modifier
+            .renderInSharedTransitionScopeOverlay(
+                zIndexInOverlay = PoppableDestinationTopAppBarSharedElementZIndex,
+                renderInOverlay = {
+                    paneState.pane == ThreePane.Primary &&
+                        isTransitionActive &&
+                        isActive
+                },
+            )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 progress = transparencyFactor,
@@ -138,8 +144,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         navigationIcon = {
             AnimatedVisibility(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .animateBounds(lookaheadScope = this),
+                    .padding(horizontal = 8.dp),
                 visible = paneState.pane == ThreePane.Primary,
                 enter = BackArrowEnter,
                 exit = BackArrowExit,
@@ -158,8 +163,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         },
         title = {
             Box(
-                modifier = Modifier
-                    .animateBounds(lookaheadScope = this),
+                modifier = Modifier,
             ) {
                 title()
             }
@@ -198,5 +202,6 @@ private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 private val RootAppBarBlurRadius = 60.dp
 
 private const val SignedInUserAvatarSharedElementKey = "self"
+private const val PoppableDestinationTopAppBarSharedElementZIndex = 2f
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
