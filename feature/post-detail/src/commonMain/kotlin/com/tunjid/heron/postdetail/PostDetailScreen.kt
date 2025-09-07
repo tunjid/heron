@@ -145,7 +145,6 @@ internal fun PostDetailScreen(
                                 )
                             },
                             onPostClicked = { post: Post, quotingPostUri: PostUri? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
                                 actions(
                                     Action.Navigate.To(
                                         postDestination(
