@@ -29,6 +29,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.metro) apply false
+    alias(libs.plugins.ozoneLexiconGenerator) apply false
     alias(libs.plugins.spotless) apply false
 }
 

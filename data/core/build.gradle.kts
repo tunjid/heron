@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
+                implementation(project(":data:lexicons"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
