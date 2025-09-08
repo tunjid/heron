@@ -64,6 +64,7 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsNotificationReason.Unverified -> Notification.Reason.Unverified
                     ListNotificationsNotificationReason.LikeViaRepost -> Notification.Reason.LikedRepost
                     ListNotificationsNotificationReason.RepostViaRepost -> Notification.Reason.RepostedRepost
+                    // TODO: Treat as unknown for now
                     ListNotificationsNotificationReason.SubscribedPost -> Notification.Reason.Unknown
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),

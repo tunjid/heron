@@ -41,6 +41,7 @@ import heron.feature.notifications.generated.resources.multiple_reposted_your_po
 import heron.feature.notifications.generated.resources.multiple_reposted_your_repost
 import heron.feature.notifications.generated.resources.reposted_your_post
 import heron.feature.notifications.generated.resources.reposted_your_post_description
+import heron.feature.notifications.generated.resources.reposted_your_repost
 import heron.feature.notifications.generated.resources.reposted_your_repost_description
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
@@ -87,7 +88,7 @@ fun RepostRow(
                             aggregatedSize = aggregatedProfiles.size,
                             singularResource = when (notification) {
                                 is Notification.Reposted.OriginalPost -> Res.string.reposted_your_post
-                                is Notification.Reposted.Repost -> Res.string.multiple_reposted_your_repost
+                                is Notification.Reposted.Repost -> Res.string.reposted_your_repost
                             },
                             pluralResource = when (notification) {
                                 is Notification.Reposted.OriginalPost -> Res.string.multiple_reposted_your_post

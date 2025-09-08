@@ -30,7 +30,7 @@
     <string name="reposted_your_repost_description">Reposted your repost</string>
     <string name="reposted_your_repost">%1$s reposted your repost</string>
     <string name="multiple_reposted_your_repost">%1$s and %2$d others reposted your repost</string>
-    <string name="joined_from_your_started_pack_description">Liked your post</string>
+    <string name="joined_from_your_started_pack_description">Joined from your starter pack</string>
     <string name="joined_from_your_starter_pack">%1$s joined from your starter pack</string>
     <string name="multiple_joined_from_your_starter_pack">%1$s and %2$d others joined from your starter pack</string>
     <string name="account_verified">Your account has been verified</string>
