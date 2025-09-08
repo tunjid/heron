@@ -37,6 +37,14 @@ kotlin {
     }
 }
 
+dependencies {
+    lexicons(
+        fileTree("schemas") {
+            include("**/*.json")
+        },
+    )
+}
+
 lexicons {
     namespace.set(modulePackageName)
     defaults {

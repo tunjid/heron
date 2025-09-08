@@ -27,10 +27,6 @@
         "verification": {
           "type": "ref",
           "ref": "#verificationState"
-        },
-        "status": {
-          "type": "ref",
-          "ref": "#statusView"
         }
       }
     },
@@ -65,10 +61,6 @@
         "verification": {
           "type": "ref",
           "ref": "#verificationState"
-        },
-        "status": {
-          "type": "ref",
-          "ref": "#statusView"
         }
       }
     },
@@ -115,10 +107,6 @@
         "verification": {
           "type": "ref",
           "ref": "#verificationState"
-        },
-        "status": {
-          "type": "ref",
-          "ref": "#statusView"
         }
       }
     },
@@ -129,11 +117,7 @@
         "feedgens": { "type": "integer" },
         "starterPacks": { "type": "integer" },
         "labeler": { "type": "boolean" },
-        "chat": { "type": "ref", "ref": "#profileAssociatedChat" },
-        "activitySubscription": {
-          "type": "ref",
-          "ref": "#profileAssociatedActivitySubscription"
-        }
+        "chat": { "type": "ref", "ref": "#profileAssociatedChat" }
       }
     },
     "profileAssociatedChat": {
@@ -143,16 +127,6 @@
         "allowIncoming": {
           "type": "string",
           "knownValues": ["all", "none", "following"]
-        }
-      }
-    },
-    "profileAssociatedActivitySubscription": {
-      "type": "object",
-      "required": ["allowSubscriptions"],
-      "properties": {
-        "allowSubscriptions": {
-          "type": "string",
-          "knownValues": ["followers", "mutuals", "none"]
         }
       }
     },
@@ -174,14 +148,8 @@
         "following": { "type": "string", "format": "at-uri" },
         "followedBy": { "type": "string", "format": "at-uri" },
         "knownFollowers": {
-          "description": "This property is present only in selected cases, as an optimization.",
           "type": "ref",
           "ref": "#knownFollowers"
-        },
-        "activitySubscription": {
-          "description": "This property is present only in selected cases, as an optimization.",
-          "type": "ref",
-          "ref": "app.bsky.notification.defs#activitySubscription"
         }
       }
     },
@@ -602,32 +570,6 @@
             "type": "union",
             "refs": ["app.bsky.feed.postgate#disableRule"]
           }
-        }
-      }
-    },
-    "statusView": {
-      "type": "object",
-      "required": ["status", "record"],
-      "properties": {
-        "status": {
-          "type": "string",
-          "description": "The status for the account.",
-          "knownValues": ["app.bsky.actor.status#live"]
-        },
-        "record": { "type": "unknown" },
-        "embed": {
-          "type": "union",
-          "description": "An optional embed associated with the status.",
-          "refs": ["app.bsky.embed.external#view"]
-        },
-        "expiresAt": {
-          "type": "string",
-          "description": "The date when this status will expire. The application might choose to no longer return the status after expiration.",
-          "format": "datetime"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "True if the status is not expired, false if it is expired. Only present if expiration was set."
         }
       }
     }

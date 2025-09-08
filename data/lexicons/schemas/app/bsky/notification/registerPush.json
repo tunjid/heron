@@ -17,11 +17,7 @@
               "type": "string",
               "knownValues": ["ios", "android", "web"]
             },
-            "appId": { "type": "string" },
-            "ageRestricted": {
-              "type": "boolean",
-              "description": "Set to true when the actor is age restricted"
-            }
+            "appId": { "type": "string" }
           }
         }
       }
