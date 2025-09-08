@@ -63,6 +63,7 @@ include(
     ":feature:messages",
     ":feature:notifications",
     ":feature:post-detail",
+    ":feature:posts",
     ":feature:profile",
     ":feature:profile-avatar",
     ":feature:profiles",
