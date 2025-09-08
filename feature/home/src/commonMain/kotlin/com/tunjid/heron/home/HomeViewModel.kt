@@ -20,7 +20,9 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.signedInUserPreferences
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -42,12 +44,16 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.take
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -63,6 +69,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualHomeViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
+    savedStateDataSource: SavedStateDataSource,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -78,6 +85,7 @@ class ActualHomeViewModel(
             timelineMutations(
                 scope = scope,
                 timelineRepository = timelineRepository,
+                savedStateDataSource = savedStateDataSource,
             ),
             loadProfileMutations(
                 authRepository,
@@ -101,7 +109,7 @@ class ActualHomeViewModel(
                         writeQueue = writeQueue,
                     )
 
-                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations()
+                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(savedStateDataSource)
                     is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -121,17 +129,27 @@ private fun loadProfileMutations(
 private fun timelineMutations(
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
+    savedStateDataSource: SavedStateDataSource,
 ): Flow<Mutation<State>> =
-    timelineRepository.homeTimelines().mapToMutation { homeTimelines ->
+    combine(
+        savedStateDataSource.savedState.take(1),
+        timelineRepository.homeTimelines(),
+        ::Pair,
+    ).mapToMutation { (savedState, homeTimelines) ->
+        val tabUri = currentTabUri
+            ?: savedState.signedInUserPreferences()
+                ?.lastViewedHomeTimelineUri
+                ?.takeIf { uri ->
+                    homeTimelines.any { it.isPinned && it.uri == uri }
+                }
+            ?: homeTimelines.firstOrNull()?.uri
+
         copy(
-            currentTabUri = currentTabUri ?: homeTimelines.firstOrNull()?.uri,
+            currentTabUri = tabUri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
-                val timelineStateHolder = timelineStateHolders
-                    // Preserve the existing state holder or create a new one
-                    .firstOrNull { holder ->
-                        holder.state.value.timeline.sourceId == timeline.sourceId
-                    }
+                val holder = timelineStateHolders
+                    .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
                         refreshOnStart = false,
@@ -140,8 +158,10 @@ private fun timelineMutations(
                         timelineRepository = timelineRepository,
                     )
 
-                if (timeline.isPinned) HomeScreenStateHolders.Pinned(timelineStateHolder)
-                else HomeScreenStateHolders.Saved(timelineStateHolder)
+                if (timeline.isPinned)
+                    HomeScreenStateHolders.Pinned(holder)
+                else
+                    HomeScreenStateHolders.Saved(holder)
             },
         )
     }
@@ -185,10 +205,17 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         writeQueue.enqueue(Writable.Interaction(action.interaction))
     }
 
-private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(currentTabUri = action.currentTabUri)
-    }
+private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    // Write to memory in state immediately
+    emit { copy(currentTabUri = action.currentTabUri) }
+
+    // Wait until we're sure the user has settled on this tab
+    delay(1400.milliseconds)
+    // Write to disk
+    savedStateDataSource.setLastViewedHomeTimelineUri(action.currentTabUri)
+}
 
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

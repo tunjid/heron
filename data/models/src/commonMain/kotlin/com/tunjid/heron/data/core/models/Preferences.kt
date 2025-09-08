@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
 
 typealias ContentLabelPreferences = List<ContentLabelPreference>
@@ -27,6 +28,7 @@ data class Preferences(
     val timelinePreferences: List<TimelinePreference>,
     // Needs default value for serialization to disk
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    val lastViewedHomeTimelineUri: Uri? = null,
 ) : UrlEncodableModel {
     companion object {
         val DefaultPreferences = Preferences(

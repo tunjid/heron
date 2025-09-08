@@ -22,6 +22,7 @@ import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import dev.zacsweers.metro.Inject
@@ -154,6 +155,11 @@ fun SavedState.isSignedIn() =
 internal suspend fun SavedStateDataSource.guestSignIn() =
     setAuth(auth = GuestAuth)
 
+fun SavedState.signedInUserPreferences() =
+    auth?.authProfileId
+        ?.let { profileData[it] }
+        ?.preferences
+
 sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
 
@@ -168,6 +174,8 @@ sealed class SavedStateDataSource {
     internal abstract suspend fun updateSignedInProfileData(
         block: SavedState.ProfileData.() -> SavedState.ProfileData,
     )
+
+    abstract suspend fun setLastViewedHomeTimelineUri(uri: Uri)
 }
 
 @Inject
@@ -217,6 +225,11 @@ internal class DataStoreSavedStateDataSource(
             profileData = profileData + (signedInProfileId to signedInProfileData.block()),
         )
     }
+
+    override suspend fun setLastViewedHomeTimelineUri(uri: Uri) =
+        updateSignedInProfileData {
+            copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
+        }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {
         dataStore.updateData(update)
