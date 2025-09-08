@@ -54,7 +54,7 @@ class ActualPostsViewModel(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
-                keySelector = com.tunjid.heron.settings.Action::key,
+                keySelector = Action::key,
             ) {
                 when (val action = type()) {
                     is Action.Navigate -> TODO()
