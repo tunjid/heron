@@ -19,8 +19,8 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.PutPreferencesRequest
 import app.bsky.actor.SavedFeed
-import app.bsky.actor.SavedFeedsPrefV2
 import app.bsky.actor.SavedFeedType
+import app.bsky.actor.SavedFeedsPrefV2
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetActorLikesQueryParams
 import app.bsky.feed.GetActorLikesResponse
