@@ -55,6 +55,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -123,6 +124,8 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 
 expect fun timelinePreferenceDragAndDropTransferData(title: String): DragAndDropTransferData
@@ -268,6 +271,25 @@ internal fun HomeTabs(
                 },
             )
         }
+    }
+}
+
+@Composable
+fun PagerState.RestoreLastViewedTabEffect(
+    lastViewedTabUri: Uri?,
+    timelines: List<Timeline.Home>,
+) {
+    val updatedTimelines = rememberUpdatedState(lastViewedTabUri to timelines)
+    LaunchedEffect(Unit) {
+        val (lastTabUri, initialTimelines) = snapshotFlow { updatedTimelines.value }
+            .filter { (_, timelines) -> timelines.isNotEmpty() }
+            .first()
+
+        val page = initialTimelines.indexOfFirst { it.uri == lastTabUri }
+        if (page < 0) return@LaunchedEffect
+        if (!initialTimelines[page].isPinned) return@LaunchedEffect
+
+        scrollToPage(page)
     }
 }
 
