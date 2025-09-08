@@ -37,8 +37,6 @@ import kotlinx.serialization.json.Json
 import sh.christian.ozone.api.response.AtpResponse
 import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 
-internal val BlueskyJson: Json = buildXrpcJsonConfiguration(XrpcSerializersModule)
-
 interface NetworkService {
     val api: BlueskyApi
 
@@ -110,3 +108,5 @@ class KtorNetworkService(
         block = { block(api) },
     )
 }
+
+internal val BlueskyJson: Json = buildXrpcJsonConfiguration(XrpcSerializersModule)
