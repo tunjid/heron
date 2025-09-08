@@ -31,7 +31,6 @@ internal fun PostsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -39,5 +38,4 @@ internal fun PostsScreen(
     ) {
         Text("Posts Screen")
     }
-
 }
