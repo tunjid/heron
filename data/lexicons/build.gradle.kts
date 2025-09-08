@@ -52,9 +52,9 @@ lexicons {
         generateUnknownsForEnums.set(true)
     }
 
-    generateApi("HeronApi") {
+    generateApi("BlueskyApi") {
         packageName.set(modulePackageName)
-        withKtorImplementation("XrpcHeronApi")
+        withKtorImplementation("XrpcBlueskyApi")
         returnType.set(ApiReturnType.Response)
         suspending.set(true)
     }

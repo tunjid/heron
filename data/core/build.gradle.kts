@@ -52,7 +52,7 @@ kotlin {
                 implementation(libs.connectivity.core)
 
                 implementation(libs.okio)
-                implementation(libs.ozone.bluesky.api)
+                implementation(libs.ozone.atproto.runtime)
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.mutator.core.common)

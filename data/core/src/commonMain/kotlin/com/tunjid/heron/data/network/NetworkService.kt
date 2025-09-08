@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.lexicons.BlueskyApi
+import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
+import com.tunjid.heron.data.lexicons.XrpcSerializersModule
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -31,9 +34,10 @@ import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
-import sh.christian.ozone.BlueskyApi
-import sh.christian.ozone.XrpcBlueskyApi
 import sh.christian.ozone.api.response.AtpResponse
+import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
+
+internal val BlueskyJson: Json = buildXrpcJsonConfiguration(XrpcSerializersModule)
 
 interface NetworkService {
     val api: BlueskyApi
@@ -49,7 +53,6 @@ interface NetworkService {
 
 @Inject
 class KtorNetworkService(
-    private val json: Json,
     savedStateDataSource: SavedStateDataSource,
     private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
@@ -63,14 +66,14 @@ class KtorNetworkService(
 
             install(ContentNegotiation) {
                 json(
-                    json = json,
+                    json = BlueskyJson,
                     contentType = ContentType.Application.Json,
                 )
             }
 
             install(AuthPlugin) {
                 this.networkErrorConverter = {
-                    json.decodeFromString(it)
+                    BlueskyJson.decodeFromString(it)
                 }
                 this.readAuth = {
                     // Must be signed in to use
