@@ -19,7 +19,7 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.PreferencesUnion
-import app.bsky.actor.Type
+import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.atproto.server.CreateSessionRequest
@@ -158,7 +158,7 @@ internal class AuthTokenRepository(
             },
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferences()
+                    getPreferencesForActor()
                 }
                     .getOrNull()
                     ?.let { savePreferences(it) } != null
@@ -178,7 +178,7 @@ internal class AuthTokenRepository(
             keySelector = TimelinePreference::type,
         )
 
-        val feeds = types[Type.Feed.value]?.map {
+        val feeds = types[SavedFeedType.Feed.value]?.map {
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getFeedGenerator(
@@ -189,7 +189,7 @@ internal class AuthTokenRepository(
                 }
             }
         } ?: emptyList()
-        val lists = types[Type.List.value]?.map {
+        val lists = types[SavedFeedType.List.value]?.map {
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                     getList(

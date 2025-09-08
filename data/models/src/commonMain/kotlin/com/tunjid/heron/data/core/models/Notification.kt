@@ -35,25 +35,49 @@ sealed class Notification {
     abstract val isRead: Boolean
     abstract val indexedAt: Instant
 
-    data class Liked(
-        override val uri: GenericUri,
-        override val cid: GenericId,
-        override val author: Profile,
-        override val reasonSubject: GenericUri?,
-        override val isRead: Boolean,
-        override val indexedAt: Instant,
-        override val associatedPost: Post,
-    ) : PostAssociated()
+    sealed class Liked : PostAssociated() {
+        data class OriginalPost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: Post,
+        ) : Liked()
 
-    data class Reposted(
-        override val uri: GenericUri,
-        override val cid: GenericId,
-        override val author: Profile,
-        override val reasonSubject: GenericUri?,
-        override val isRead: Boolean,
-        override val indexedAt: Instant,
-        override val associatedPost: Post,
-    ) : PostAssociated()
+        data class Repost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: Post,
+        ) : Liked()
+    }
+
+    sealed class Reposted : PostAssociated() {
+        data class OriginalPost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: Post,
+        ) : Reposted()
+
+        data class Repost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: Post,
+        ) : Reposted()
+    }
 
     data class Followed(
         override val uri: GenericUri,
@@ -141,6 +165,8 @@ sealed class Notification {
         JoinedStarterPack,
         Verified,
         Unverified,
+        LikedRepost,
+        RepostedRepost,
     }
 }
 

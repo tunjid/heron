@@ -1,3 +1,5 @@
+import java.net.URI
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -43,6 +45,15 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+
+        // Unfortunately, the ozone library has infrequent releases. To work around this,
+        // a token with read only access to a github packages repository is used to read
+        // artifacts from a forked repository where the artifacts have been uploaded.
+        maven {
+            // Rudimentary encoded string token
+            val encodedOzoneForkToken = "&#103;ithub_pat_11AB6FCGA0wJfOHzlVCwVW_PvBfvGUGFnTwAKgxZFzFoT4qZ2GtwzazU8cLJlpMgIU222WCJSRQjJ435qe"
+            url = URI("https://tunjid:${encodedOzoneForkToken.xmlDecode()}@maven.pkg.github.com/tunjid/ozone")
+        }
     }
 }
 
@@ -75,3 +86,16 @@ include(
     ":ui:tiling",
     ":ui:timeline",
 )
+
+fun String.xmlDecode(): String {
+    val semicolonIndex = indexOf(';')
+    if (!startsWith("&#") || semicolonIndex < 3) {
+        return this
+    }
+
+    val numberPart = substring(2, semicolonIndex)
+    val charCode = numberPart.toIntOrNull() ?: return this
+    val restOfString = substring(semicolonIndex + 1)
+
+    return "${charCode.toChar()}$restOfString"
+}

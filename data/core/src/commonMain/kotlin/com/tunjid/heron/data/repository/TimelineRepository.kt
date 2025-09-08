@@ -20,7 +20,7 @@ import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.PutPreferencesRequest
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedsPrefV2
-import app.bsky.actor.Type
+import app.bsky.actor.SavedFeedType
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetActorLikesQueryParams
 import app.bsky.feed.GetActorLikesResponse
@@ -643,29 +643,29 @@ internal class OfflineTimelineRepository(
             .distinctUntilChanged()
             .flatMapLatest { (signedInProfileId, timelinePreferences) ->
                 timelinePreferences.mapIndexed { index, preference ->
-                    when (Type.safeValueOf(preference.type)) {
-                        Type.Feed -> feedGeneratorTimeline(
+                    when (SavedFeedType.safeValueOf(preference.type)) {
+                        SavedFeedType.Feed -> feedGeneratorTimeline(
                             signedInProfileId = signedInProfileId,
                             uri = FeedGeneratorUri(preference.value),
                             position = index,
                             isPinned = preference.pinned,
                         )
 
-                        Type.List -> listTimeline(
+                        SavedFeedType.List -> listTimeline(
                             signedInProfileId = signedInProfileId,
                             uri = ListUri(preference.value),
                             position = index,
                             isPinned = preference.pinned,
                         )
 
-                        Type.Timeline -> followingTimeline(
+                        SavedFeedType.Timeline -> followingTimeline(
                             signedInProfileId = signedInProfileId,
                             name = preference.value,
                             position = index,
                             isPinned = preference.pinned,
                         )
 
-                        is Type.Unknown -> emptyFlow()
+                        is SavedFeedType.Unknown -> emptyFlow()
                     }
                 }
                     .merge()
@@ -801,7 +801,7 @@ internal class OfflineTimelineRepository(
                             signedInProfileId = signedInProfileId,
                             position = 0,
                             isPinned = preferences.firstOrNull {
-                                Type.safeValueOf(it.type) is Type.Timeline
+                                SavedFeedType.safeValueOf(it.type) is SavedFeedType.Timeline
                             }?.pinned ?: false,
                         ),
                     )
@@ -828,7 +828,7 @@ internal class OfflineTimelineRepository(
         update: Timeline.Update,
     ): Boolean {
         val existing = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferences()
+            getPreferencesForActor()
         }
             .getOrNull()
             ?.preferences ?: return false
@@ -1369,7 +1369,7 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                         ]?.let { id ->
                             SavedFeed(
                                 id = id,
-                                type = Type.Feed,
+                                type = SavedFeedType.Feed,
                                 value = timeline.feedGenerator.uri.uri,
                                 pinned = timeline.isPinned,
                             )
@@ -1380,7 +1380,7 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                         ]?.let { id ->
                             SavedFeed(
                                 id = id,
-                                type = Type.Timeline,
+                                type = SavedFeedType.Timeline,
                                 value = "following",
                                 pinned = timeline.isPinned,
                             )
@@ -1391,7 +1391,7 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                         ]?.let { id ->
                             SavedFeed(
                                 id = id,
-                                type = Type.List,
+                                type = SavedFeedType.List,
                                 value = timeline.feedList.uri.uri,
                                 pinned = timeline.isPinned,
                             )
@@ -1407,14 +1407,14 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                 .let { (pinned, saved) ->
                     pinned + SavedFeed(
                         id = tidGenerator.generate(),
-                        type = Type.Feed,
+                        type = SavedFeedType.Feed,
                         value = update.uri.uri,
                         pinned = true,
                     ) + saved
                 }
 
             is Timeline.Update.OfFeedGenerator.Remove -> value.items.filter { savedFeed ->
-                if (savedFeed.type != Type.Feed) return@filter true
+                if (savedFeed.type != SavedFeedType.Feed) return@filter true
                 savedFeed.value != update.uri.uri
             }
 
@@ -1422,7 +1422,7 @@ private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
                 it.value != update.uri.uri
             } + SavedFeed(
                 id = tidGenerator.generate(),
-                type = Type.Feed,
+                type = SavedFeedType.Feed,
                 value = update.uri.uri,
                 pinned = false,
             )

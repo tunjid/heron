@@ -82,7 +82,7 @@ fun PopulatedNotificationEntity.asExternalModel(
 
     Notification.Reason.Like ->
         if (associatedPost == null) unknown()
-        else Notification.Liked(
+        else Notification.Liked.OriginalPost(
             cid = entity.cid,
             uri = entity.uri,
             indexedAt = entity.indexedAt,
@@ -91,10 +91,20 @@ fun PopulatedNotificationEntity.asExternalModel(
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
-
+    Notification.Reason.LikedRepost ->
+        if (associatedPost == null) unknown()
+        else Notification.Liked.Repost(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost,
+        )
     Notification.Reason.Repost ->
         if (associatedPost == null) unknown()
-        else Notification.Reposted(
+        else Notification.Reposted.OriginalPost(
             cid = entity.cid,
             uri = entity.uri,
             indexedAt = entity.indexedAt,
@@ -103,7 +113,17 @@ fun PopulatedNotificationEntity.asExternalModel(
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
-
+    Notification.Reason.RepostedRepost ->
+        if (associatedPost == null) unknown()
+        else Notification.Reposted.Repost(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost,
+        )
     Notification.Reason.Follow -> Notification.Followed(
         cid = entity.cid,
         uri = entity.uri,
