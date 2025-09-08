@@ -51,7 +51,6 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
@@ -249,7 +248,12 @@ internal fun HomeScreen(
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
                     val holder = updatedTimelineStateHolders.getOrNull(page) ?: return@collect
-                    val currentTabUri = holder.state.value.timeline.uri ?: return@collect
+                    val currentTabUri = holder
+                        .state
+                        .value
+                        .timeline
+                        .uri
+                        ?: return@collect
                     actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
                 }
         }
