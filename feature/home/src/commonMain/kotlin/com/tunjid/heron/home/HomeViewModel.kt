@@ -134,9 +134,8 @@ private fun timelineMutations(
     combine(
         savedStateDataSource.savedState.take(1),
         timelineRepository.homeTimelines(),
-    ) { savedState, homeTimelines ->
-        savedState to homeTimelines
-    }.mapToMutation { (savedState, homeTimelines) ->
+        ::Pair,
+    ).mapToMutation { (savedState, homeTimelines) ->
         val tabUri = currentTabUri
             ?: savedState.signedInUserPreferences()
                 ?.lastViewedHomeTimelineUri
@@ -149,10 +148,8 @@ private fun timelineMutations(
             currentTabUri = tabUri,
             timelines = homeTimelines,
             timelineStateHolders = homeTimelines.map { timeline ->
-                val timelineStateHolder = timelineStateHolders
-                    .firstOrNull { holder ->
-                        holder.state.value.timeline.sourceId == timeline.sourceId
-                    }
+                val holder = timelineStateHolders
+                    .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
                         refreshOnStart = false,
@@ -161,11 +158,10 @@ private fun timelineMutations(
                         timelineRepository = timelineRepository,
                     )
 
-                if (timeline.isPinned) {
-                    HomeScreenStateHolders.Pinned(timelineStateHolder)
-                } else {
-                    HomeScreenStateHolders.Saved(timelineStateHolder)
-                }
+                if (timeline.isPinned)
+                    HomeScreenStateHolders.Pinned(holder)
+                else
+                    HomeScreenStateHolders.Saved(holder)
             },
         )
     }
