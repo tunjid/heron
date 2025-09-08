@@ -25,6 +25,7 @@ import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.messages.di.MessagesNavigationBindings
 import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
 import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.posts.di.PostsNavigationBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
 import com.tunjid.heron.profile.di.ProfileNavigationBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
@@ -55,6 +56,7 @@ interface AppNavigationGraph {
             @Includes messagesNavigationBindings: MessagesNavigationBindings,
             @Includes notificationsNavigationBindings: NotificationsNavigationBindings,
             @Includes postDetailNavigationBindings: PostDetailNavigationBindings,
+            @Includes postsNavigationBindings: PostsNavigationBindings,
             @Includes profileNavigationBindings: ProfileNavigationBindings,
             @Includes profileAvatarNavigationBindings: ProfileAvatarNavigationBindings,
             @Includes profilesNavigationBindings: ProfilesNavigationBindings,

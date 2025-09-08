@@ -41,6 +41,8 @@ import com.tunjid.heron.notifications.di.NotificationsBindings
 import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
 import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
+import com.tunjid.heron.posts.di.PostsBindings
+import com.tunjid.heron.posts.di.PostsNavigationBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
 import com.tunjid.heron.profile.di.ProfileBindings
@@ -87,6 +89,7 @@ fun createAppState(
         messagesNavigationBindings = MessagesNavigationBindings,
         notificationsNavigationBindings = NotificationsNavigationBindings,
         postDetailNavigationBindings = PostDetailNavigationBindings,
+        postsNavigationBindings = PostsNavigationBindings,
         profileNavigationBindings = ProfileNavigationBindings,
         profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
         profilesNavigationBindings = ProfilesNavigationBindings,
@@ -148,6 +151,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         postDetailBindings = PostDetailBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        postsBindings = PostsBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
