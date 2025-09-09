@@ -47,12 +47,14 @@ data class Profile(
         abstract val profileId: ProfileId
         abstract val followedBy: GenericUri?
 
+        @Serializable
         data class Follow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,
             override val followedBy: GenericUri?,
         ) : Connection()
 
+        @Serializable
         data class Unfollow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,

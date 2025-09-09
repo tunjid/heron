@@ -22,6 +22,12 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import kotlinx.serialization.Serializable
 
+/**
+ * Interface definition for data that is written to disk or over the wire.
+ * If written to dis, it is using protobufs and all the rules about constructor argument
+ * order apply.
+ */
+@Serializable
 sealed interface Writable {
     /**
      * An id to identify if a [Writable] is in the [WriteQueue]
