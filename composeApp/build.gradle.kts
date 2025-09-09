@@ -69,6 +69,7 @@ kotlin {
             implementation(project(":feature:messages"))
             implementation(project(":feature:notifications"))
             implementation(project(":feature:post-detail"))
+            implementation(project(":feature:posts"))
             implementation(project(":feature:profile"))
             implementation(project(":feature:profile-avatar"))
             implementation(project(":feature:profiles"))
