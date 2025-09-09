@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
+                implementation(project(":data:lexicons"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
@@ -51,7 +52,7 @@ kotlin {
                 implementation(libs.connectivity.core)
 
                 implementation(libs.okio)
-                implementation(libs.ozone.bluesky.api)
+                implementation(libs.ozone.atproto.runtime)
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.mutator.core.common)

@@ -63,11 +63,9 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
 import okio.Path
-import sh.christian.ozone.BlueskyJson
 
 class DataBindingArgs(
     val appScope: CoroutineScope,
@@ -184,10 +182,6 @@ class DataBindings(
             }
         }
     }
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideAppJson(): Json = BlueskyJson
 
     @SingleIn(AppScope::class)
     @Provides

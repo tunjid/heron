@@ -78,6 +78,7 @@ import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
+import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.TidGenerator
@@ -112,7 +113,6 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import sh.christian.ozone.BlueskyApi
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
