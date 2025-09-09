@@ -130,6 +130,12 @@ data class Post(
                 val postId: PostId,
                 override val postUri: PostUri,
             ) : Create()
+
+            @Serializable
+            data class Bookmark(
+                val postId: PostId,
+                override val postUri: PostUri,
+            ) : Create()
         }
 
         @Serializable
@@ -145,6 +151,11 @@ data class Post(
             data class RemoveRepost(
                 override val postUri: PostUri,
                 val repostUri: GenericUri,
+            ) : Delete()
+
+            @Serializable
+            data class RemoveBookmark(
+                override val postUri: PostUri,
             ) : Delete()
         }
     }

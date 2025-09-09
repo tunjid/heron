@@ -41,7 +41,7 @@ fun format(value: Long): String {
         in 10_000_000..1_000_000_000 -> format(value, 1_000_000f, "M", wholeNumber = true)
         in 1_000_000..10_000_000 -> format(value, 1_000_000f, "M")
         in 100_000..1_000_000 -> format(value, 1_000f, "K", wholeNumber = true)
-        in 10_000..1_000_000 -> format(value, 1_000f, "K")
+        in 1_000..1_000_000 -> format(value, 1_000f, "K")
         else -> format(value, 1f, "", wholeNumber = true)
     }
 }

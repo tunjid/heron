@@ -41,6 +41,8 @@ sealed interface Writable {
                 is Post.Interaction.Create.Repost -> "repost-${interaction.postUri}"
                 is Post.Interaction.Delete.RemoveRepost -> "repost-${interaction.postUri}"
                 is Post.Interaction.Delete.Unlike -> "like-${interaction.postUri}"
+                is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
+                is Post.Interaction.Delete.RemoveBookmark -> "bookmark-${interaction.postUri}"
             }
 
         override suspend fun WriteQueue.write() {

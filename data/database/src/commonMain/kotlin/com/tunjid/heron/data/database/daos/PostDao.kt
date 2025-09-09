@@ -232,6 +232,26 @@ interface PostDao {
     @Transaction
     @Query(
         """
+    UPDATE posts
+    SET bookmarkCount =
+        CASE
+            WHEN :isBookmarked THEN COALESCE(bookmarkCount, 0) + 1
+            ELSE CASE
+                     WHEN COALESCE(bookmarkCount, 0) > 0 THEN bookmarkCount - 1
+                     ELSE 0
+                 END
+        END
+    WHERE uri = :postUri
+    """,
+    )
+    suspend fun updateBookmarkCount(
+        postUri: String,
+        isBookmarked: Boolean,
+    )
+
+    @Transaction
+    @Query(
+        """
             SELECT * FROM profiles
             INNER JOIN postReposts
                 ON did = authorId
@@ -270,6 +290,11 @@ interface PostDao {
     @Update(entity = PostViewerStatisticsEntity::class)
     suspend fun updatePostStatisticsReposts(
         entities: List<PostViewerStatisticsEntity.Partial.Repost>,
+    )
+
+    @Update(entity = PostViewerStatisticsEntity::class)
+    suspend fun updatePostStatisticsBookmarks(
+        entities: List<PostViewerStatisticsEntity.Partial.Bookmark>,
     )
 
     @Upsert
