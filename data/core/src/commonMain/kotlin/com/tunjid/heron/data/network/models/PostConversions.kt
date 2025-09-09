@@ -122,6 +122,7 @@ private fun post(
     repostCount = postEntity.repostCount.orZero(),
     likeCount = postEntity.likeCount.orZero(),
     quoteCount = postEntity.quoteCount.orZero(),
+    bookmarkCount = postEntity.bookmarkCount.orZero(),
     indexedAt = postEntity.indexedAt,
     record = postEntity.record?.asExternalModel(),
     embed = when (val embedEntity = embeds.firstOrNull()) {
@@ -148,6 +149,7 @@ internal fun PostView.postEntity() =
         repostCount = repostCount,
         likeCount = likeCount,
         quoteCount = quoteCount,
+        bookmarkCount = bookmarkCount,
         indexedAt = indexedAt,
         record = record.asPostEntityRecordData(),
     )
@@ -235,10 +237,11 @@ internal fun ViewerState.postViewerStatisticsEntity(
         viewingProfileId = viewingProfileId,
         likeUri = like?.atUri?.let(::GenericUri),
         repostUri = repost?.atUri?.let(::GenericUri),
-        threadMuted = threadMuted == true,
-        replyDisabled = replyDisabled == true,
-        embeddingDisabled = embeddingDisabled == true,
-        pinned = pinned == true,
+        threadMuted = threadMuted ?: false,
+        replyDisabled = replyDisabled ?: false,
+        embeddingDisabled = embeddingDisabled ?: false,
+        pinned = pinned ?: false,
+        bookmarked = bookmarked ?: false,
     )
 
 internal fun ReplyRefRootUnion.postViewerStatisticsEntity(

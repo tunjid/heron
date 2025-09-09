@@ -62,6 +62,8 @@ data class PostViewerStatisticsEntity(
     val replyDisabled: Boolean,
     val embeddingDisabled: Boolean,
     val pinned: Boolean,
+    @ColumnInfo(defaultValue = "0")
+    val bookmarked: Boolean,
 ) {
     sealed class Partial {
         abstract val postUri: PostUri
@@ -94,6 +96,7 @@ data class PostViewerStatisticsEntity(
             replyDisabled = false,
             embeddingDisabled = false,
             pinned = false,
+            bookmarked = false,
         )
     }
 }

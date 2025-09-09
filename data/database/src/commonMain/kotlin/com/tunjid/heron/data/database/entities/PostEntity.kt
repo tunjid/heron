@@ -65,6 +65,7 @@ data class PostEntity(
     val repostCount: Long?,
     val likeCount: Long?,
     val quoteCount: Long?,
+    val bookmarkCount: Long?,
     val indexedAt: Instant,
     @Embedded
     val record: RecordData?,
@@ -88,6 +89,7 @@ fun emptyPostEntity(
     repostCount = null,
     likeCount = null,
     quoteCount = null,
+    bookmarkCount = null,
     indexedAt = Clock.System.now(),
     record = null,
 )
@@ -162,6 +164,7 @@ fun PopulatedPostEntity.asExternalModel(
     repostCount = entity.repostCount.orZero(),
     likeCount = entity.likeCount.orZero(),
     quoteCount = entity.quoteCount.orZero(),
+    bookmarkCount = entity.bookmarkCount.orZero(),
     indexedAt = entity.indexedAt,
     author = author.asExternalModel(),
     embed = when {
@@ -187,6 +190,7 @@ fun PostViewerStatisticsEntity.asExternalModel() =
         replyDisabled = replyDisabled,
         embeddingDisabled = embeddingDisabled,
         pinned = pinned,
+        bookmarked = bookmarked,
     )
 
 fun PostEntity.RecordData.asExternalModel(): Post.Record? =
