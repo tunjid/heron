@@ -303,6 +303,17 @@ private fun ActionsContent(
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
         -> PostInteractions(
+            replyCount = format(data.post.replyCount),
+            repostCount = format(data.post.repostCount),
+            likeCount = format(data.post.likeCount),
+            repostUri = data.post.viewerStats?.repostUri,
+            likeUri = data.post.viewerStats?.likeUri,
+            isBookmarked = data.post.viewerStats?.bookmarked ?: false,
+            postId = data.post.cid,
+            postUri = data.post.uri,
+            sharedElementPrefix = data.sharedElementPrefix,
+            presentation = data.presentation,
+            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Actions,
@@ -312,16 +323,6 @@ private fun ActionsContent(
                     lookaheadScope = data.presentationLookaheadScope,
                     boundsTransform = data.boundsTransform,
                 ),
-            replyCount = format(data.post.replyCount),
-            repostCount = format(data.post.repostCount),
-            likeCount = format(data.post.likeCount),
-            repostUri = data.post.viewerStats?.repostUri,
-            likeUri = data.post.viewerStats?.likeUri,
-            postId = data.post.cid,
-            postUri = data.post.uri,
-            presentation = data.presentation,
-            sharedElementPrefix = data.sharedElementPrefix,
-            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
             onReplyToPost = {
                 data.postActions.onReplyToPost(data.post)
             },

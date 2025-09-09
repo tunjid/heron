@@ -81,22 +81,30 @@ data class PostViewerStatisticsEntity(
             val repostUri: GenericUri?,
         ) : Partial()
 
+        data class Bookmark(
+            override val postUri: PostUri,
+            override val viewingProfileId: ProfileId,
+            val bookmarked: Boolean,
+        ) : Partial()
+
         fun asFull() = PostViewerStatisticsEntity(
             postUri = postUri,
             viewingProfileId = viewingProfileId,
             likeUri = when (this) {
                 is Like -> likeUri
                 is Repost -> null
+                is Bookmark -> null
             },
             repostUri = when (this) {
                 is Like -> null
                 is Repost -> repostUri
+                is Bookmark -> null
             },
             threadMuted = false,
             replyDisabled = false,
             embeddingDisabled = false,
             pinned = false,
-            bookmarked = false,
+            bookmarked = this is Bookmark && bookmarked,
         )
     }
 }

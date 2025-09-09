@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.bookmark.CreateBookmarkRequest
+import app.bsky.bookmark.DeleteBookmarkRequest
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetQuotesQueryParams
@@ -30,6 +32,7 @@ import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
 import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.StrongRef
@@ -357,44 +360,53 @@ internal class OfflinePostRepository @Inject constructor(
         val authorId = savedStateDataSource.signedInProfileId ?: return
         when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
-                createRecord(
-                    CreateRecordRequest(
-                        repo = authorId.id.let(::Did),
-                        collection = Nsid(
-                            when (interaction) {
-                                is Post.Interaction.Create.Like -> Collections.Like
-                                is Post.Interaction.Create.Repost -> Collections.Repost
-                            },
+                when (interaction) {
+                    is Post.Interaction.Create.Bookmark -> createBookmark(
+                        CreateBookmarkRequest(
+                            uri = interaction.postUri.uri.let(::AtUri),
+                            cid = interaction.postId.id.let(::Cid),
                         ),
-                        record = when (interaction) {
-                            is Post.Interaction.Create.Like -> BskyLike(
+                    )
+                        .map { true to interaction.postId.id }
+                    is Post.Interaction.Create.Like -> createRecord(
+                        CreateRecordRequest(
+                            repo = authorId.id.let(::Did),
+                            collection = Nsid(Collections.Like),
+                            record = BskyLike(
                                 subject = StrongRef(
                                     cid = interaction.postId.id.let(::Cid),
                                     uri = interaction.postUri.uri.let(::AtUri),
                                 ),
                                 createdAt = Clock.System.now(),
-                            ).asJsonContent(Like.serializer())
-
-                            is Post.Interaction.Create.Repost -> BskyRepost(
+                            ).asJsonContent(Like.serializer()),
+                        ),
+                    )
+                        .map(CreateRecordResponse::successWithUri)
+                    is Post.Interaction.Create.Repost -> createRecord(
+                        CreateRecordRequest(
+                            repo = authorId.id.let(::Did),
+                            collection = Nsid(Collections.Repost),
+                            record = BskyRepost(
                                 subject = StrongRef(
                                     cid = interaction.postId.id.let(::Cid),
                                     uri = interaction.postUri.uri.let(::AtUri),
                                 ),
                                 createdAt = Clock.System.now(),
-                            ).asJsonContent(Repost.serializer())
-                        },
-                    ),
-                )
+                            ).asJsonContent(Repost.serializer()),
+                        ),
+                    )
+                        .map(CreateRecordResponse::successWithUri)
+                }
             }
                 .getOrNull()
-                ?.let {
-                    if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
+                ?.let { (succeeded, uriOrCidString) ->
+                    if (!succeeded) return@let
                     transactionWriter.inTransaction {
                         when (interaction) {
                             is Post.Interaction.Create.Like -> {
                                 upsertInteraction(
                                     partial = PostViewerStatisticsEntity.Partial.Like(
-                                        likeUri = it.uri.atUri.let(::GenericUri),
+                                        likeUri = uriOrCidString.let(::GenericUri),
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
                                     ),
@@ -408,7 +420,7 @@ internal class OfflinePostRepository @Inject constructor(
                             is Post.Interaction.Create.Repost -> {
                                 upsertInteraction(
                                     partial = PostViewerStatisticsEntity.Partial.Repost(
-                                        repostUri = it.uri.atUri.let(::GenericUri),
+                                        repostUri = uriOrCidString.let(::GenericUri),
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
                                     ),
@@ -418,28 +430,43 @@ internal class OfflinePostRepository @Inject constructor(
                                     isIncrement = true,
                                 )
                             }
+                            is Post.Interaction.Create.Bookmark -> {
+                                upsertInteraction(
+                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                        bookmarked = true,
+                                        postUri = interaction.postUri,
+                                        viewingProfileId = authorId,
+                                    ),
+                                )
+                                postDao.updateBookmarkCount(
+                                    postUri = interaction.postUri.uri,
+                                    isBookmarked = true,
+                                )
+                            }
                         }
                     }
                 }
 
             is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
-                deleteRecord(
-                    DeleteRecordRequest(
-                        repo = authorId.id.let(::Did),
-                        collection = Nsid(
-                            when (interaction) {
-                                is Post.Interaction.Delete.RemoveRepost -> Collections.Repost
-                                is Post.Interaction.Delete.Unlike -> Collections.Like
-                            },
+                when (interaction) {
+                    is Post.Interaction.Delete.RemoveBookmark -> deleteBookmark(
+                        DeleteBookmarkRequest(uri = interaction.postUri.uri.let(::AtUri)),
+                    )
+                    is Post.Interaction.Delete.RemoveRepost -> deleteRecord(
+                        DeleteRecordRequest(
+                            repo = authorId.id.let(::Did),
+                            collection = Nsid(Collections.Repost),
+                            rkey = Collections.rKey(interaction.repostUri),
                         ),
-                        rkey = Collections.rKey(
-                            when (interaction) {
-                                is Post.Interaction.Delete.RemoveRepost -> interaction.repostUri
-                                is Post.Interaction.Delete.Unlike -> interaction.likeUri
-                            },
+                    )
+                    is Post.Interaction.Delete.Unlike -> deleteRecord(
+                        DeleteRecordRequest(
+                            repo = authorId.id.let(::Did),
+                            collection = Nsid(Collections.Like),
+                            rkey = Collections.rKey(interaction.likeUri),
                         ),
-                    ),
-                )
+                    )
+                }
             }
                 .getOrNull()
                 ?.let {
@@ -472,6 +499,19 @@ internal class OfflinePostRepository @Inject constructor(
                                     isIncrement = false,
                                 )
                             }
+                            is Post.Interaction.Delete.RemoveBookmark -> {
+                                upsertInteraction(
+                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                        bookmarked = false,
+                                        postUri = interaction.postUri,
+                                        viewingProfileId = authorId,
+                                    ),
+                                )
+                                postDao.updateBookmarkCount(
+                                    postUri = interaction.postUri.uri,
+                                    isBookmarked = false,
+                                )
+                            }
                         }
                     }
                 }
@@ -492,6 +532,9 @@ internal class OfflinePostRepository @Inject constructor(
 
                     is PostViewerStatisticsEntity.Partial.Repost ->
                         postDao.updatePostStatisticsReposts(listOf(partial))
+
+                    is PostViewerStatisticsEntity.Partial.Bookmark ->
+                        postDao.updatePostStatisticsBookmarks(listOf(partial))
                 }
             },
         )
@@ -541,6 +584,9 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
             viewerState = it.relationship?.asExternalModel(),
         )
     }
+
+private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
+    Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
 private suspend fun NetworkService.uploadVideoBlob(
     data: ByteArray,
