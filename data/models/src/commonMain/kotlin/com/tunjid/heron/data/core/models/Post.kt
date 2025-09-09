@@ -33,6 +33,8 @@ data class Post(
     val repostCount: Long,
     val likeCount: Long,
     val quoteCount: Long,
+    // Default value needed in serialization
+    val bookmarkCount: Long = 0,
     val indexedAt: Instant,
     val embed: Embed?,
     val quote: Post?,
@@ -58,6 +60,8 @@ data class Post(
         val replyDisabled: Boolean,
         val embeddingDisabled: Boolean,
         val pinned: Boolean,
+        // Default value needed for migration
+        val bookmarked: Boolean = false,
     )
 
     @Serializable

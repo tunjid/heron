@@ -188,6 +188,7 @@ private fun RecordViewRecordUnion.postEntity() =
                 repostCount = value.repostCount,
                 likeCount = value.likeCount,
                 quoteCount = value.quoteCount,
+                bookmarkCount = value.bookmarkCount,
                 indexedAt = value.indexedAt,
                 record = value.value.asPostEntityRecordData(),
             )

@@ -44,6 +44,7 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
+import com.tunjid.heron.data.database.entities.PostBookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
@@ -77,7 +78,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 20,
+    version = 21,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -92,6 +93,7 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
+        PostBookmarkEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
@@ -156,6 +158,8 @@ import kotlinx.coroutines.IO
         // Migration 17 - 18 is a manual migration
         // Migration 18 - 19 is a manual migration
         // Migration 19 - 20 is a manual migration
+        // Add post bookmarks
+        AutoMigration(from = 20, to = 21),
     ],
     exportSchema = true,
 )
