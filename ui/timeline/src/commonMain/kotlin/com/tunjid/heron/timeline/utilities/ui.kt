@@ -37,11 +37,11 @@ fun Duration.roundComponent() =
 fun format(value: Long): String {
     return when (value) {
         in 10_000_000_000..Long.MAX_VALUE -> format(value, 1_000_000f, "B", wholeNumber = true)
-        in 1_000_000_000..10_000_000_000 -> format(value, 1_000_000_000f, "B")
-        in 10_000_000..1_000_000_000 -> format(value, 1_000_000f, "M", wholeNumber = true)
-        in 1_000_000..10_000_000 -> format(value, 1_000_000f, "M")
-        in 100_000..1_000_000 -> format(value, 1_000f, "K", wholeNumber = true)
-        in 1_000..1_000_000 -> format(value, 1_000f, "K")
+        in 1_000_000_000..<10_000_000_000 -> format(value, 1_000_000_000f, "B")
+        in 10_000_000..<1_000_000_000 -> format(value, 1_000_000f, "M", wholeNumber = true)
+        in 1_000_000..<10_000_000 -> format(value, 1_000_000f, "M")
+        in 100_000..<1_000_000 -> format(value, 1_000f, "K", wholeNumber = true)
+        in 1_000..<1_000_000 -> format(value, 1_000f, "K")
         else -> format(value, 1f, "", wholeNumber = true)
     }
 }

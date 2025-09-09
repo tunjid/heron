@@ -32,6 +32,7 @@ import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
 import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.StrongRef
@@ -365,9 +366,8 @@ internal class OfflinePostRepository @Inject constructor(
                             uri = interaction.postUri.uri.let(::AtUri),
                             cid = interaction.postId.id.let(::Cid),
                         ),
-                    ).map {
-                        true to interaction.postId.id
-                    }
+                    )
+                        .map { true to interaction.postId.id }
                     is Post.Interaction.Create.Like -> createRecord(
                         CreateRecordRequest(
                             repo = authorId.id.let(::Did),
@@ -380,12 +380,8 @@ internal class OfflinePostRepository @Inject constructor(
                                 createdAt = Clock.System.now(),
                             ).asJsonContent(Like.serializer()),
                         ),
-                    ).map { status ->
-                        Pair(
-                            status.validationStatus is CreateRecordValidationStatus.Valid,
-                            status.uri.atUri,
-                        )
-                    }
+                    )
+                        .map(CreateRecordResponse::successWithUri)
                     is Post.Interaction.Create.Repost -> createRecord(
                         CreateRecordRequest(
                             repo = authorId.id.let(::Did),
@@ -398,12 +394,8 @@ internal class OfflinePostRepository @Inject constructor(
                                 createdAt = Clock.System.now(),
                             ).asJsonContent(Repost.serializer()),
                         ),
-                    ).map { status ->
-                        Pair(
-                            status.validationStatus is CreateRecordValidationStatus.Valid,
-                            status.uri.atUri,
-                        )
-                    }
+                    )
+                        .map(CreateRecordResponse::successWithUri)
                 }
             }
                 .getOrNull()
@@ -592,6 +584,9 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
             viewerState = it.relationship?.asExternalModel(),
         )
     }
+
+private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
+    Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
 private suspend fun NetworkService.uploadVideoBlob(
     data: ByteArray,

@@ -104,7 +104,7 @@ data class PostViewerStatisticsEntity(
             replyDisabled = false,
             embeddingDisabled = false,
             pinned = false,
-            bookmarked = this is Bookmark,
+            bookmarked = this is Bookmark && bookmarked,
         )
     }
 }
