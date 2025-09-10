@@ -31,6 +31,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -121,9 +122,6 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override val queueChanges: Flow<List<Writable>>
         get() = savedStateDataSource.signedInProfileWrites()
-            .distinctUntilChangedBy {
-                it.map(Writable::queueId)
-            }
 
     override suspend fun enqueue(
         writable: Writable,
@@ -187,6 +185,7 @@ internal class PersistedWriteQueue @Inject constructor(
 
 private fun SavedStateDataSource.signedInProfileWrites() = savedState
     .mapNotNull { it.signedInProfileId }
+    .distinctUntilChanged()
     .flatMapLatest { profileId ->
         savedState
             .mapNotNull { savedState ->
@@ -194,6 +193,9 @@ private fun SavedStateDataSource.signedInProfileWrites() = savedState
                     ?.writes
                     ?.pendingWrites
             }
+    }
+    .distinctUntilChangedBy { pendingWrites ->
+        pendingWrites.map(Writable::queueId)
     }
 
 private suspend inline fun SavedStateDataSource.updateWrites(
