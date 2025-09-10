@@ -58,8 +58,14 @@ internal data class VersionedSavedState(
     @ProtoNumber(3)
     override val navigation: Navigation,
     @ProtoNumber(4)
-    override val profileData: Map<ProfileId, ProfileData>,
+    val profileData: Map<ProfileId, ProfileData>,
 ) : SavedState() {
+
+    override val signedInProfileData: ProfileData?
+        get() = auth
+            ?.authProfileId
+            ?.let(profileData::get)
+
     companion object {
         internal val Initial: VersionedSavedState = VersionedSavedState(
             version = CurrentVersion,
