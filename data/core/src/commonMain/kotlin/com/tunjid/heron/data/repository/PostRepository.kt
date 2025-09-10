@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -70,6 +71,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.with
@@ -126,11 +128,11 @@ interface PostRepository {
 
     suspend fun sendInteraction(
         interaction: Post.Interaction,
-    )
+    ): Outcome
 
     suspend fun createPost(
         request: Post.Create.Request,
-    )
+    ): Outcome
 }
 
 internal class OfflinePostRepository @Inject constructor(
@@ -286,7 +288,7 @@ internal class OfflinePostRepository @Inject constructor(
 
     override suspend fun createPost(
         request: Post.Create.Request,
-    ) {
+    ): Outcome {
         val resolvedLinks: List<Link> = resolveLinks(
             profileDao = profileDao,
             networkService = networkService,
@@ -333,6 +335,10 @@ internal class OfflinePostRepository @Inject constructor(
         }
         else emptyList()
 
+        if (blobs.size != request.metadata.mediaFiles.size) return Outcome.Failure(
+            Exception("Image upload failed")
+        )
+
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
             collection = Nsid(Collections.Post),
@@ -349,16 +355,18 @@ internal class OfflinePostRepository @Inject constructor(
                 .asJsonContent(BskyPost.serializer()),
         )
 
-        networkService.runCatchingWithMonitoredNetworkRetry {
+        return networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(createRecordRequest)
-        }
+        }.toOutcome()
     }
 
     override suspend fun sendInteraction(
         interaction: Post.Interaction,
-    ) {
-        val authorId = savedStateDataSource.signedInProfileId ?: return
-        when (interaction) {
+    ): Outcome {
+        val authorId = savedStateDataSource.signedInProfileId ?: return Outcome.Failure(
+            Exception("Not signed in")
+        )
+        return when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
                 when (interaction) {
                     is Post.Interaction.Create.Bookmark -> createBookmark(
@@ -398,9 +406,8 @@ internal class OfflinePostRepository @Inject constructor(
                         .map(CreateRecordResponse::successWithUri)
                 }
             }
-                .getOrNull()
-                ?.let { (succeeded, uriOrCidString) ->
-                    if (!succeeded) return@let
+                .toOutcome { (succeeded, uriOrCidString) ->
+                    if (!succeeded) return@toOutcome
                     transactionWriter.inTransaction {
                         when (interaction) {
                             is Post.Interaction.Create.Like -> {
@@ -468,8 +475,7 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                 }
             }
-                .getOrNull()
-                ?.let {
+                .toOutcome {
                     transactionWriter.inTransaction {
                         when (interaction) {
                             is Post.Interaction.Delete.Unlike -> {

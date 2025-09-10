@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
@@ -98,9 +99,17 @@ abstract class SavedState {
     )
 
     @Serializable
+    data class Writes(
+        val pendingWrites: List<Writable> = emptyList(),
+        val failedWrites: List<Writable> = emptyList(),
+    )
+
+    @Serializable
     data class ProfileData(
         val preferences: Preferences,
         val notifications: Notifications,
+        // Need default for migration
+        val writes: Writes = Writes(),
     )
 }
 
@@ -172,7 +181,7 @@ sealed class SavedStateDataSource {
     )
 
     internal abstract suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.() -> SavedState.ProfileData,
+        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
 
     abstract suspend fun setLastViewedHomeTimelineUri(uri: Uri)
@@ -214,15 +223,17 @@ internal class DataStoreSavedStateDataSource(
     }
 
     override suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.() -> SavedState.ProfileData,
+        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     ) = updateState {
         val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
         val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
             notifications = SavedState.Notifications(),
             preferences = Preferences.DefaultPreferences,
+            writes = SavedState.Writes(),
         )
+        val update = signedInProfileId to signedInProfileData.block(signedInProfileId)
         copy(
-            profileData = profileData + (signedInProfileId to signedInProfileData.block()),
+            profileData = profileData + update,
         )
     }
 

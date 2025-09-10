@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import kotlinx.serialization.Serializable
+import com.tunjid.heron.data.core.utilities.Outcome
 
 /**
  * Interface definition for data that is written to disk or over the wire.
@@ -34,7 +35,7 @@ sealed interface Writable {
      */
     val queueId: String
 
-    suspend fun WriteQueue.write()
+    suspend fun WriteQueue.write(): Outcome
 
     @Serializable
     data class Interaction(
@@ -51,9 +52,8 @@ sealed interface Writable {
                 is Post.Interaction.Delete.RemoveBookmark -> "bookmark-${interaction.postUri}"
             }
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             postRepository.sendInteraction(interaction)
-        }
     }
 
     @Serializable
@@ -64,9 +64,8 @@ sealed interface Writable {
         override val queueId: String
             get() = "create-post-$request"
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             postRepository.createPost(request)
-        }
     }
 
     @Serializable
@@ -77,9 +76,8 @@ sealed interface Writable {
         override val queueId: String
             get() = "send-message-$request"
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             messageRepository.sendMessage(request)
-        }
     }
 
     @Serializable
@@ -90,9 +88,8 @@ sealed interface Writable {
         override val queueId: String
             get() = "update-reaction-$update"
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             messageRepository.updateReaction(update)
-        }
     }
 
     @Serializable
@@ -106,9 +103,8 @@ sealed interface Writable {
                 is Profile.Connection.Unfollow -> "unfollow-${connection.profileId}"
             }
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             profileRepository.sendConnection(connection)
-        }
     }
 
     @Serializable
@@ -127,8 +123,7 @@ sealed interface Writable {
                 is Timeline.Update.OfFeedGenerator.Save -> "save-${update.uri}"
             }
 
-        override suspend fun WriteQueue.write() {
+        override suspend fun WriteQueue.write(): Outcome =
             timelineRepository.updateHomeTimelines(update)
-        }
     }
 }

@@ -134,8 +134,9 @@ private fun pendingMessageFlushMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     writeQueue.queueChanges.mapToMutation {
-        val updatedPendingMessages = pendingItems.filter {
-            writeQueue.contains(Writable.Send(it.message))
+        val queuedIds = it.mapTo(mutableSetOf(), Writable::queueId)
+        val updatedPendingMessages = pendingItems.filter { item ->
+            queuedIds.contains(Writable.Send(item.message).queueId)
         }
         copy(
             pendingItems = updatedPendingMessages,

@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -86,6 +87,7 @@ import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
@@ -212,11 +214,11 @@ interface TimelineRepository {
     suspend fun updatePreferredPresentation(
         timeline: Timeline,
         presentation: Timeline.Presentation,
-    ): Boolean
+    ): Outcome
 
     suspend fun updateHomeTimelines(
         update: Timeline.Update,
-    ): Boolean
+    ): Outcome
 }
 
 @Inject
@@ -812,42 +814,41 @@ internal class OfflineTimelineRepository(
     override suspend fun updatePreferredPresentation(
         timeline: Timeline,
         presentation: Timeline.Presentation,
-    ): Boolean {
-        return runCatchingUnlessCancelled {
-            timelineDao.updatePreferredTimelinePresentation(
-                partial = preferredPresentationPartial(
-                    signedInProfileId = savedStateDataSource.signedInProfileId,
-                    sourceId = timeline.sourceId,
-                    presentation = presentation,
-                ),
-            )
-        }.isSuccess
-    }
+    ): Outcome = runCatchingUnlessCancelled {
+        timelineDao.updatePreferredTimelinePresentation(
+            partial = preferredPresentationPartial(
+                signedInProfileId = savedStateDataSource.signedInProfileId,
+                sourceId = timeline.sourceId,
+                presentation = presentation,
+            ),
+        )
+    }.toOutcome()
 
     override suspend fun updateHomeTimelines(
         update: Timeline.Update,
-    ): Boolean {
-        val existing = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferences()
-        }
-            .getOrNull()
-            ?.preferences ?: return false
-
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = existing.updateFeed {
-                        updateFeedPreferencesFrom(
-                            tidGenerator = tidGenerator,
-                            update = update,
-                        )
-                    },
-                ),
-            )
-        }.getOrNull() ?: return false
-
-        return authRepository.updateSignedInUser()
-    }
+    ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
+         getPreferences()
+     }
+         .fold(
+             onSuccess = { preferencesResponse ->
+                 networkService.runCatchingWithMonitoredNetworkRetry {
+                     putPreferences(
+                         PutPreferencesRequest(
+                             preferences = preferencesResponse.preferences.updateFeed {
+                                 updateFeedPreferencesFrom(
+                                     tidGenerator = tidGenerator,
+                                     update = update,
+                                 )
+                             },
+                         ),
+                     )
+                 }.fold(
+                     onSuccess = { authRepository.updateSignedInUser() },
+                     onFailure = Outcome::Failure,
+                 )
+             },
+             onFailure = Outcome::Failure,
+         )
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -1051,7 +1052,8 @@ internal class OfflineTimelineRepository(
 
                                 if (shouldHide) return@mapNotNull null
 
-                                val replyParent = entity.reply?.let { urisToPosts[it.parentPostUri] }
+                                val replyParent =
+                                    entity.reply?.let { urisToPosts[it.parentPostUri] }
                                 val replyRoot = entity.reply?.let { urisToPosts[it.rootPostUri] }
                                 val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
 
@@ -1447,7 +1449,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
         "app.bsky.feed.defs#contentModePhoto",
         "app.bsky.feed.defs#contentModeImage",
         "app.bsky.feed.defs#contentModeMedia",
-        -> true
+            -> true
 
         else -> false
     }
