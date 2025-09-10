@@ -26,8 +26,8 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.inCurrentProfileSession
+import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.signedInProfileId
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
