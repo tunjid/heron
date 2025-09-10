@@ -44,9 +44,10 @@ import sh.christian.ozone.api.model.JsonContent
 
 @Serializable
 abstract class SavedState {
-    abstract val auth: AuthTokens?
+//    abstract val auth: AuthTokens?
     abstract val navigation: Navigation
-    abstract val profileData: Map<ProfileId, ProfileData>
+//    abstract val profileData: Map<ProfileId, ProfileData>
+    abstract val signedInProfileData: ProfileData?
 
     @Serializable
     data class AuthTokens(
@@ -125,50 +126,89 @@ val InitialSavedState: SavedState = VersionedSavedState.Initial
 
 val EmptySavedState: SavedState = VersionedSavedState.Empty
 
-internal val SavedStateDataSource.signedInProfileId
-    get() = savedState
-        .value
-        .auth
-        .ifSignedIn()
-        ?.authProfileId
+//internal val SavedStateDataSource.signedInProfileId
+//    get() = savedState
+//        .value
+//        .auth
+//        .ifSignedIn()
+//        ?.authProfileId
 
-internal val SavedStateDataSource.observedSignedInProfileId
+internal val SavedStateDataSource.signedInProfileId2: ProfileId?
+    get() = (savedState.value as? VersionedSavedState)?.auth.ifSignedIn()?.authProfileId
+
+
+//internal val SavedStateDataSource.observedSignedInProfileId
+//    get() = savedState
+//        .map { it.auth.ifSignedIn()?.authProfileId }
+//        .distinctUntilChanged()
+
+internal val SavedStateDataSource.observedSignedInProfileId2
     get() = savedState
-        .map { it.auth.ifSignedIn()?.authProfileId }
+        .map { (it as? VersionedSavedState)?.auth.ifSignedIn()?.authProfileId }
         .distinctUntilChanged()
+
+
+//internal val SavedStateDataSource.signedInAuth
+//    get() = savedState
+//        .map { it.auth.ifSignedIn() }
+//        .distinctUntilChanged()
 
 internal val SavedStateDataSource.signedInAuth
     get() = savedState
-        .map { it.auth.ifSignedIn() }
+        .map { (it as? VersionedSavedState)?.auth.ifSignedIn() }
         .distinctUntilChanged()
 
 private fun SavedState.AuthTokens?.ifSignedIn() =
     this?.takeUnless(GuestAuth::equals)
 
-fun SavedState.signedProfilePreferencesOrDefault() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
-        ?.preferences
-        ?: Preferences.DefaultPreferences
+//fun SavedState.signedProfilePreferencesOrDefault() =
+//    auth.ifSignedIn()
+//        ?.let { profileData[it.authProfileId] }
+//        ?.preferences
+//        ?: Preferences.DefaultPreferences
 
-fun SavedState.signedInProfileNotifications() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
-        ?.notifications
+fun SavedState.signedProfilePreferencesOrDefault2() =
+    signedInProfileData?.preferences ?: Preferences.DefaultPreferences
 
-internal val SavedState.signedInProfileId
-    get() = auth.ifSignedIn()?.authProfileId
 
-fun SavedState.isSignedIn() =
-    auth.ifSignedIn() != null
+//fun SavedState.signedInProfileNotifications() =
+//    auth.ifSignedIn()
+//        ?.let { profileData[it.authProfileId] }
+//        ?.notifications
+
+fun SavedState.signedInProfileNotifications2() =
+    signedInProfileData?.notifications
+
+
+//internal val SavedState.signedInProfileId
+//    get() = auth.ifSignedIn()?.authProfileId
+
+internal val SavedState.signedInProfileId2: ProfileId?
+    get() = (this as? VersionedSavedState)?.auth.ifSignedIn()?.authProfileId
+
+internal val SavedState.signedInProfileId3: ProfileId?
+    get() = signedInProfileData?.let { (this as? VersionedSavedState)?.auth?.authProfileId }
+
+
+
+//fun SavedState.isSignedIn() =
+//    auth.ifSignedIn() != null
+
+fun SavedState.isSignedIn2() =
+    signedInProfileData != null
+
 
 internal suspend fun SavedStateDataSource.guestSignIn() =
     setAuth(auth = GuestAuth)
 
-fun SavedState.signedInUserPreferences() =
-    auth?.authProfileId
-        ?.let { profileData[it] }
-        ?.preferences
+//fun SavedState.signedInUserPreferences() =
+//    auth?.authProfileId
+//        ?.let { profileData[it] }
+//        ?.preferences
+
+fun SavedState.signedInUserPreferences2() =
+    signedInProfileData?.preferences
+
 
 sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
