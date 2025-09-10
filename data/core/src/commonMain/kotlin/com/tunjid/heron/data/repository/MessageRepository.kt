@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
@@ -60,6 +61,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
+import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -100,11 +102,11 @@ interface MessageRepository {
 
     suspend fun sendMessage(
         message: Message.Create,
-    )
+    ): Outcome
 
     suspend fun updateReaction(
         reaction: Message.UpdateReaction,
-    )
+    ): Outcome
 }
 
 internal class OfflineMessageRepository @Inject constructor(
@@ -340,13 +342,13 @@ internal class OfflineMessageRepository @Inject constructor(
 
     override suspend fun sendMessage(
         message: Message.Create,
-    ) {
+    ): Outcome {
         val resolvedLinks: List<Link> = resolveLinks(
             profileDao = profileDao,
             networkService = networkService,
             links = message.links,
         )
-        val sentMessage = networkService.runCatchingWithMonitoredNetworkRetry {
+        return networkService.runCatchingWithMonitoredNetworkRetry {
             sendMessage(
                 SendMessageRequest(
                     convoId = message.conversationId.id,
@@ -357,41 +359,40 @@ internal class OfflineMessageRepository @Inject constructor(
                     ),
                 ),
             )
-        }.getOrNull() ?: return
+        }.toOutcome { sentMessage ->
+            val signedInProfileId = savedStateDataSource.signedInProfileId
 
-        val signedInProfileId = savedStateDataSource.signedInProfileId
-
-        multipleEntitySaverProvider.saveInTransaction {
-            add(
-                viewingProfileId = signedInProfileId,
-                conversationId = message.conversationId,
-                messageView = sentMessage,
-            )
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    viewingProfileId = signedInProfileId,
+                    conversationId = message.conversationId,
+                    messageView = sentMessage,
+                )
+            }
         }
     }
 
     override suspend fun updateReaction(
         reaction: Message.UpdateReaction,
-    ) {
-        val message = networkService.runCatchingWithMonitoredNetworkRetry {
-            when (reaction) {
-                is Message.UpdateReaction.Add -> addReaction(
-                    AddReactionRequest(
-                        convoId = reaction.convoId.id,
-                        messageId = reaction.messageId.id,
-                        value = reaction.value,
-                    ),
-                ).map(AddReactionResponse::message)
+    ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
+        when (reaction) {
+            is Message.UpdateReaction.Add -> addReaction(
+                AddReactionRequest(
+                    convoId = reaction.convoId.id,
+                    messageId = reaction.messageId.id,
+                    value = reaction.value,
+                ),
+            ).map(AddReactionResponse::message)
 
-                is Message.UpdateReaction.Remove -> removeReaction(
-                    RemoveReactionRequest(
-                        convoId = reaction.convoId.id,
-                        messageId = reaction.messageId.id,
-                        value = reaction.value,
-                    ),
-                ).map(RemoveReactionResponse::message)
-            }
-        }.getOrNull() ?: return
+            is Message.UpdateReaction.Remove -> removeReaction(
+                RemoveReactionRequest(
+                    convoId = reaction.convoId.id,
+                    messageId = reaction.messageId.id,
+                    value = reaction.value,
+                ),
+            ).map(RemoveReactionResponse::message)
+        }
+    }.toOutcome { message ->
         val signedInProfileId = savedStateDataSource.signedInProfileId
 
         multipleEntitySaverProvider.saveInTransaction {

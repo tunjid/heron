@@ -53,7 +53,7 @@ import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.TidGenerator
-import com.tunjid.heron.data.utilities.writequeue.SnapshotWriteQueue
+import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
 import dev.zacsweers.metro.AppScope
@@ -195,9 +195,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideSnapshotWriteQueue(
-        snapshotWriteQueue: SnapshotWriteQueue,
-    ): WriteQueue = snapshotWriteQueue
+    internal fun provideWriteQueue(
+        writeQueue: PersistedWriteQueue,
+    ): WriteQueue = writeQueue
 
     @SingleIn(AppScope::class)
     @Provides

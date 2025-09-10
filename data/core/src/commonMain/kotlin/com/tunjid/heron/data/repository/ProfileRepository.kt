@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -71,6 +72,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
 import com.tunjid.heron.data.utilities.refreshProfile
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -149,7 +151,7 @@ interface ProfileRepository {
 
     suspend fun sendConnection(
         connection: Profile.Connection,
-    )
+    ): Outcome
 }
 
 internal class OfflineProfileRepository @Inject constructor(
@@ -538,58 +540,56 @@ internal class OfflineProfileRepository @Inject constructor(
 
     override suspend fun sendConnection(
         connection: Profile.Connection,
-    ) {
-        when (connection) {
-            is Profile.Connection.Follow -> networkService.runCatchingWithMonitoredNetworkRetry {
-                createRecord(
-                    CreateRecordRequest(
-                        repo = connection.signedInProfileId.id.let(::Did),
-                        collection = Nsid(Collections.Follow),
-                        record = BskyFollow(
-                            subject = connection.profileId.id.let(::Did),
-                            createdAt = Clock.System.now(),
-                        ).asJsonContent(BskyFollow.serializer()),
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.let {
-                    if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@let
-                    profileDao.updatePartialProfileViewers(
-                        listOf(
-                            ProfileViewerStateEntity.Partial(
-                                profileId = connection.signedInProfileId,
-                                otherProfileId = connection.profileId,
-                                following = it.uri.atUri.let(::GenericUri),
-                                followedBy = connection.followedBy,
-                            ),
-                        ),
-                    )
-                }
-
-            is Profile.Connection.Unfollow -> networkService.runCatchingWithMonitoredNetworkRetry {
-                deleteRecord(
-                    DeleteRecordRequest(
-                        repo = connection.signedInProfileId.id.let(::Did),
-                        collection = Nsid(Collections.Follow),
-                        rkey = Collections.rKey(connection.followUri),
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.let {
-                    profileDao.updatePartialProfileViewers(
-                        listOf(
-                            ProfileViewerStateEntity.Partial(
-                                profileId = connection.signedInProfileId,
-                                otherProfileId = connection.profileId,
-                                following = null,
-                                followedBy = connection.followedBy,
-                            ),
-                        ),
-                    )
-                }
+    ): Outcome = when (connection) {
+        is Profile.Connection.Follow -> networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = connection.signedInProfileId.id.let(::Did),
+                    collection = Nsid(Collections.Follow),
+                    record = BskyFollow(
+                        subject = connection.profileId.id.let(::Did),
+                        createdAt = Clock.System.now(),
+                    ).asJsonContent(BskyFollow.serializer()),
+                ),
+            )
         }
+            .toOutcome {
+                if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                    throw Exception("Record creation failed validation")
+                }
+                profileDao.updatePartialProfileViewers(
+                    listOf(
+                        ProfileViewerStateEntity.Partial(
+                            profileId = connection.signedInProfileId,
+                            otherProfileId = connection.profileId,
+                            following = it.uri.atUri.let(::GenericUri),
+                            followedBy = connection.followedBy,
+                        ),
+                    ),
+                )
+            }
+
+        is Profile.Connection.Unfollow -> networkService.runCatchingWithMonitoredNetworkRetry {
+            deleteRecord(
+                DeleteRecordRequest(
+                    repo = connection.signedInProfileId.id.let(::Did),
+                    collection = Nsid(Collections.Follow),
+                    rkey = Collections.rKey(connection.followUri),
+                ),
+            )
+        }
+            .toOutcome {
+                profileDao.updatePartialProfileViewers(
+                    listOf(
+                        ProfileViewerStateEntity.Partial(
+                            profileId = connection.signedInProfileId,
+                            otherProfileId = connection.profileId,
+                            following = null,
+                            followedBy = connection.followedBy,
+                        ),
+                    ),
+                )
+            }
     }
 
     private fun signedInProfileId() = savedStateDataSource.savedState

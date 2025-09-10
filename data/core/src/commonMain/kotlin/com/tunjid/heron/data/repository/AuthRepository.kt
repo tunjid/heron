@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -66,7 +67,7 @@ interface AuthRepository {
 
     suspend fun signOut()
 
-    suspend fun updateSignedInUser(): Boolean
+    suspend fun updateSignedInUser(): Outcome
 }
 
 @Inject
@@ -132,22 +133,25 @@ internal class AuthTokenRepository(
     }
 
     override suspend fun signOut() {
+        savedStateDataSource.updateSignedInProfileData {
+            // Clear any pending writes
+            copy(writes = writes.copy(pendingWrites = emptyList()))
+        }
         savedStateDataSource.setAuth(
             auth = null,
         )
     }
 
-    override suspend fun updateSignedInUser(): Boolean {
-        return networkService.runCatchingWithMonitoredNetworkRetry {
+    override suspend fun updateSignedInUser(): Outcome =
+        networkService.runCatchingWithMonitoredNetworkRetry {
             getSession()
-        }
-            .getOrNull()
-            ?.did
-            ?.let { updateSignedInUser(it) } == true
-    }
+        }.fold(
+            onSuccess = { updateSignedInUser(it.did) },
+            onFailure = Outcome::Failure,
+        )
 
-    private suspend fun updateSignedInUser(did: Did) = supervisorScope {
-        listOf(
+    private suspend fun updateSignedInUser(did: Did): Outcome = supervisorScope {
+        val succeeded = listOf(
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     getProfile(GetProfileQueryParams(actor = did))
@@ -164,6 +168,8 @@ internal class AuthTokenRepository(
                     ?.let { savePreferences(it) } != null
             },
         ).awaitAll().all(true::equals)
+
+        if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
     }
 
     private suspend fun savePreferences(

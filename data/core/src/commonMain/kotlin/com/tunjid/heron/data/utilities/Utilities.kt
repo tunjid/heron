@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities
 
 import androidx.collection.MutableObjectIntMap
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
@@ -55,6 +56,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
         isConnected.collect { connected = it }
     }
     var currentDelay = initialDelay
+    var lastError: Throwable? = null
     repeat(times) { retry ->
         try {
             return@scope when (val atpResponse = block()) {
@@ -67,9 +69,11 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
                 )
             }.also { connectivityJob.cancel() }
         } catch (e: IOException) {
+            lastError = e
             // TODO: Log this exception
             e.printStackTrace()
         } catch (e: ResponseException) {
+            lastError = e
             // TODO: Log this exception
             e.printStackTrace()
         }
@@ -83,7 +87,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     // Cancel the connectivity job before returning
     connectivityJob.cancel()
     // TODO: Be more descriptive with this error
-    return@scope Result.failure(Exception("There was an error")) // last attempt
+    return@scope Result.failure(lastError ?: Exception("There was an error")) // last attempt
 }
 
 /**
@@ -94,7 +98,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
  */
 @JvmInline
 internal value class LazyList<T>(
-    val lazyList: Lazy<MutableList<T>> = lazy(
+    private val lazyList: Lazy<MutableList<T>> = lazy(
         mode = LazyThreadSafetyMode.SYNCHRONIZED,
         initializer = ::mutableListOf,
     ),
@@ -128,6 +132,18 @@ internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     return sortedBy { idToIndices[databaseId(it)] }
 }
 
-// Heuristically defined method for debouncing flows produced by
-// Room's invalidation tracker
-internal const val InvalidationTrackerDebounceMillis = 120L
+internal inline fun <T> Result<T>.toOutcome(
+    onSuccess: (T) -> Unit = {},
+): Outcome = fold(
+    onSuccess = {
+        try {
+            onSuccess(it)
+            Outcome.Success
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Outcome.Failure(e)
+        }
+    },
+    onFailure = Outcome::Failure,
+)
