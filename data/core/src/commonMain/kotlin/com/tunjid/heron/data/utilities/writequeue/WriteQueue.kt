@@ -177,7 +177,8 @@ internal class PersistedWriteQueue @Inject constructor(
                         },
                         // Always dequeue write
                         pendingWrites = pendingWrites
-                            .filter { it.queueId != writable.queueId },
+                            .filter { it.queueId != writable.queueId }
+                            .take(MaximumPendingWrites),
                     )
                 }
             }
