@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import kotlinx.serialization.Serializable
 
+@Serializable
 sealed interface Embed {
     @Serializable
     sealed interface Media :

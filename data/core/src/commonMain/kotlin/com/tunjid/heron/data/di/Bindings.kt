@@ -19,7 +19,6 @@ package com.tunjid.heron.data.di
 import androidx.room.RoomDatabase
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
-import com.tunjid.heron.data.core.models.ModelSerializersModule
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
@@ -186,7 +185,6 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {
-        serializersModule = ModelSerializersModule
     }
 
     @SingleIn(AppScope::class)

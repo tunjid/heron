@@ -23,6 +23,7 @@ import kotlinx.serialization.Serializable
 sealed interface Id {
     val id: String
 
+    @Serializable
     sealed interface Profile : Id
 }
 

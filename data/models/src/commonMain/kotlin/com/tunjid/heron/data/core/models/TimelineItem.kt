@@ -171,6 +171,8 @@ sealed interface Timeline {
 
     @Serializable
     sealed class Update {
+
+        @Serializable
         data class Bulk(
             val timelines: List<Home>,
         ) : Update()
@@ -179,14 +181,17 @@ sealed interface Timeline {
         sealed class OfFeedGenerator : Update() {
             abstract val uri: FeedGeneratorUri
 
+            @Serializable
             data class Pin(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
 
+            @Serializable
             data class Save(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
 
+            @Serializable
             data class Remove(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator()
