@@ -42,8 +42,10 @@ sealed interface LinkTarget {
     ) : OfProfile,
         Navigable
 
+    @Serializable
     sealed interface OfProfile : LinkTarget
 
+    @Serializable
     sealed interface Navigable : LinkTarget
 
     @Serializable
