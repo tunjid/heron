@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import kotlinx.serialization.Serializable
 import com.tunjid.heron.data.core.utilities.Outcome
+import kotlinx.datetime.Instant
 
 /**
  * Interface definition for data that is written to disk or over the wire.
@@ -125,5 +126,17 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             timelineRepository.updateHomeTimelines(update)
+    }
+}
+
+@Serializable
+data class FailedWrite(
+    val writable: Writable,
+    val failedAt: Instant,
+    val reason: Reason?,
+) {
+    @Serializable
+    enum class Reason {
+        IO;
     }
 }

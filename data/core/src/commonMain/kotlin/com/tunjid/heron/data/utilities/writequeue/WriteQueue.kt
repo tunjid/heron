@@ -37,6 +37,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import okio.IOException
 
 sealed class WriteQueue {
 
@@ -158,8 +160,17 @@ internal class PersistedWriteQueue @Inject constructor(
                 savedStateDataSource.updateWrites {
                     copy(
                         failedWrites = when (outcome) {
-                            is Outcome.Failure -> (failedWrites + writable)
-                                .distinctBy(Writable::queueId)
+                            is Outcome.Failure -> failedWrites
+                                .plus(
+                                    FailedWrite(
+                                        writable = writable,
+                                        failedAt = Clock.System.now(),
+                                        reason =
+                                            if (outcome.exception is IOException) FailedWrite.Reason.IO
+                                            else null,
+                                    ),
+                                )
+                                .distinctBy { it.writable.queueId }
                                 .takeLast(MaximumFailedWrites)
                             Outcome.Success -> failedWrites
                         },

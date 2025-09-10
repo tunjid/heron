@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
@@ -101,7 +102,7 @@ abstract class SavedState {
     @Serializable
     data class Writes(
         val pendingWrites: List<Writable> = emptyList(),
-        val failedWrites: List<Writable> = emptyList(),
+        val failedWrites: List<FailedWrite> = emptyList(),
     )
 
     @Serializable
