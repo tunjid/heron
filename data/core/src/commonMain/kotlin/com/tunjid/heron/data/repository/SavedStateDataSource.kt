@@ -52,7 +52,7 @@ import sh.christian.ozone.api.model.JsonContent
 abstract class SavedState {
     abstract val auth: AuthTokens?
     abstract val navigation: Navigation
-    abstract val profileData: Map<ProfileId, ProfileData>
+    abstract val signedInProfileData: ProfileData?
 
     @Serializable
     data class AuthTokens(
@@ -152,14 +152,12 @@ private fun SavedState.AuthTokens?.ifSignedIn() =
     this?.takeUnless(GuestAuth::equals)
 
 fun SavedState.signedProfilePreferencesOrDefault() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
+    signedInProfileData
         ?.preferences
         ?: Preferences.DefaultPreferences
 
 fun SavedState.signedInProfileNotifications() =
-    auth.ifSignedIn()
-        ?.let { profileData[it.authProfileId] }
+    signedInProfileData
         ?.notifications
 
 internal val SavedState.signedInProfileId
@@ -172,9 +170,7 @@ internal suspend fun SavedStateDataSource.guestSignIn() =
     setAuth(auth = GuestAuth)
 
 fun SavedState.signedInUserPreferences() =
-    auth?.authProfileId
-        ?.let { profileData[it] }
-        ?.preferences
+    signedInProfileData?.preferences
 
 sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
