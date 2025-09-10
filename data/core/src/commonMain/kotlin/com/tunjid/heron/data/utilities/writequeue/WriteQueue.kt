@@ -26,6 +26,8 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.onEachSignedInProfile
+import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.signedInProfileId
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
@@ -125,15 +127,11 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override suspend fun enqueue(
         writable: Writable,
-    ) {
-        val currentSignedInProfileId = savedStateDataSource.signedInProfileId ?: return
-        savedStateDataSource.updateWrites { signedInProfileId ->
+    ) = savedStateDataSource.inCurrentProfileSession {
+        savedStateDataSource.updateWrites {
             when {
                 pendingWrites.any { writable.queueId == it.queueId } -> this
-                currentSignedInProfileId != signedInProfileId -> this
-                else -> copy(
-                    pendingWrites = listOf(writable) + pendingWrites,
-                )
+                else -> copy(pendingWrites = listOf(writable) + pendingWrites)
             }
         }
     }
@@ -145,7 +143,7 @@ internal class PersistedWriteQueue @Inject constructor(
             }
     }
 
-    override suspend fun drain() {
+    override suspend fun drain() = savedStateDataSource.onEachSignedInProfile {
         savedStateDataSource.signedInProfileWrites()
             .mapNotNull(List<Writable>::lastOrNull)
             .distinctUntilChangedBy(Writable::queueId)
@@ -164,9 +162,10 @@ internal class PersistedWriteQueue @Inject constructor(
                                         FailedWrite(
                                             writable = writable,
                                             failedAt = Clock.System.now(),
-                                            reason =
-                                            if (outcome.exception is IOException) FailedWrite.Reason.IO
-                                            else null,
+                                            reason = when (outcome.exception) {
+                                                is IOException -> FailedWrite.Reason.IO
+                                                else -> null
+                                            },
                                         ),
                                     )
                                     .distinctBy { it.writable.queueId }
