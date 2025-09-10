@@ -179,7 +179,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 .getOrNull()
                 ?: return@flow
 
-            val authProfileId = savedStateDataSource.signedInProfileId
+            val authProfileId = savedStateDataSource.signedInProfileId2
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.posts.forEach { postView ->
@@ -222,7 +222,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 .getOrNull()
                 ?: return@flow
 
-            val signedInProfileId = savedStateDataSource.signedInProfileId
+            val signedInProfileId = savedStateDataSource.signedInProfileId2
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.actors
@@ -330,7 +330,7 @@ internal class OfflineSearchRepository @Inject constructor(
             .getOrNull()
             ?.actors ?: return@flow
 
-        val signedInProfileId = savedStateDataSource.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId2
 
         multipleEntitySaverProvider.saveInTransaction {
             profileViews.forEach { profileView ->
@@ -377,7 +377,7 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun suggestedProfiles(
         category: String?,
     ): Flow<List<ProfileWithViewerState>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+        savedStateDataSource.observedSignedInProfileId2.flatMapLatest { signedInProfileId ->
             if (signedInProfileId == null) return@flatMapLatest emptyFlow()
             val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 getSuggestedUsersUnspecced(
@@ -408,7 +408,7 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+        savedStateDataSource.observedSignedInProfileId2.flatMapLatest { signedInProfileId ->
             if (signedInProfileId == null) return@flatMapLatest emptyFlow()
 
             val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
@@ -442,7 +442,7 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+        savedStateDataSource.observedSignedInProfileId2.flatMapLatest { signedInProfileId ->
 
             val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 if (signedInProfileId == null) getPopularFeedGeneratorsUnspecced(

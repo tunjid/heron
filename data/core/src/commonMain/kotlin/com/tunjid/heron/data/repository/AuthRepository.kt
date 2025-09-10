@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profileEntity
@@ -84,7 +85,7 @@ internal class AuthTokenRepository(
         }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.observedSignedInProfileId
+        savedStateDataSource.observedSignedInProfileId2
             .flatMapLatest { signedInProfileId ->
                 val signedInUserFlow = signedInProfileId
                     ?.let(::listOf)
@@ -99,7 +100,7 @@ internal class AuthTokenRepository(
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
         savedStateDataSource.savedState
-            .map { it.signedInProfileId == id }
+            .map { it.signedInProfileId2 == id }
             .distinctUntilChanged()
 
     override suspend fun createSession(
@@ -124,7 +125,9 @@ internal class AuthTokenRepository(
                 ),
             )
             // Suspend till auth token has been saved and is readable
-            savedStateDataSource.savedState.first { it.auth != null }
+//            savedStateDataSource.savedState.first { it.auth != null }
+            savedStateDataSource.savedState
+                .first { (it as? VersionedSavedState)?.auth != null }
             updateSignedInUser(result.did)
         }
 

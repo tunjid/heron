@@ -153,7 +153,7 @@ internal class OfflinePostRepository @Inject constructor(
         combine(
             postDao.likedBy(
                 postUri = postEntity.uri.uri,
-                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
+                viewingProfileId = savedStateDataSource.signedInProfileId2?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
@@ -174,7 +174,7 @@ internal class OfflinePostRepository @Inject constructor(
                     multipleEntitySaverProvider.saveInTransaction {
                         likes.forEach {
                             add(
-                                viewingProfileId = savedStateDataSource.signedInProfileId,
+                                viewingProfileId = savedStateDataSource.signedInProfileId2,
                                 postUri = postEntity.uri,
                                 like = it,
                             )
@@ -197,7 +197,7 @@ internal class OfflinePostRepository @Inject constructor(
         combine(
             postDao.repostedBy(
                 postUri = postEntity.uri.uri,
-                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
+                viewingProfileId = savedStateDataSource.signedInProfileId2?.id,
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
@@ -231,7 +231,7 @@ internal class OfflinePostRepository @Inject constructor(
         profileId = query.profileId,
         postRecordKey = query.postRecordKey,
     ) { postEntity ->
-        savedStateDataSource.observedSignedInProfileId
+        savedStateDataSource.observedSignedInProfileId2
             .flatMapLatest { signedInProfileId ->
                 combine(
                     postDao.quotedPosts(
@@ -259,7 +259,7 @@ internal class OfflinePostRepository @Inject constructor(
                             multipleEntitySaverProvider.saveInTransaction {
                                 posts.forEach {
                                     add(
-                                        viewingProfileId = savedStateDataSource.signedInProfileId,
+                                        viewingProfileId = savedStateDataSource.signedInProfileId2,
                                         postView = it,
                                     )
                                 }
@@ -275,7 +275,7 @@ internal class OfflinePostRepository @Inject constructor(
     override fun post(
         uri: PostUri,
     ): Flow<Post> =
-        savedStateDataSource.observedSignedInProfileId
+        savedStateDataSource.observedSignedInProfileId2
             .flatMapLatest { signedInProfileId ->
                 postDao.posts(
                     viewingProfileId = signedInProfileId?.id,
@@ -363,7 +363,7 @@ internal class OfflinePostRepository @Inject constructor(
     override suspend fun sendInteraction(
         interaction: Post.Interaction,
     ): Outcome {
-        val authorId = savedStateDataSource.signedInProfileId ?: return Outcome.Failure(
+        val authorId = savedStateDataSource.signedInProfileId2 ?: return Outcome.Failure(
             Exception("Not signed in"),
         )
         return when (interaction) {
@@ -550,7 +550,7 @@ internal class OfflinePostRepository @Inject constructor(
         profileId: Id.Profile,
         postRecordKey: RecordKey,
         block: (PostEntity) -> Flow<T>,
-    ): Flow<T> = savedStateDataSource.observedSignedInProfileId
+    ): Flow<T> = savedStateDataSource.observedSignedInProfileId2
         .flatMapLatest { signedInProfileId ->
             postDao.postEntitiesByUri(
                 viewingProfileId = signedInProfileId?.id,

@@ -61,6 +61,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
@@ -296,7 +297,7 @@ internal class OfflineProfileRepository @Inject constructor(
             .getOrNull()
             ?: return@flow
 
-        val signedInProfileId = savedStateDataSource.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId2
 
         multipleEntitySaverProvider.saveInTransaction {
             response.followers
@@ -364,7 +365,7 @@ internal class OfflineProfileRepository @Inject constructor(
             .getOrNull()
             ?: return@flow
 
-        val signedInProfileId = savedStateDataSource.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId2
 
         multipleEntitySaverProvider.saveInTransaction {
             response.follows
@@ -592,7 +593,15 @@ internal class OfflineProfileRepository @Inject constructor(
             }
     }
 
-    private fun signedInProfileId() = savedStateDataSource.savedState
-        .mapNotNull { it.auth?.authProfileId }
-        .distinctUntilChanged()
+//    private fun signedInProfileId() = savedStateDataSource.savedState
+//        .mapNotNull { it.auth?.authProfileId }
+//        .distinctUntilChanged()
+
+
+    private fun signedInProfileId(): Flow<ProfileId> =
+        savedStateDataSource.savedState
+            .mapNotNull { it.signedInProfileId2 }
+            .distinctUntilChanged()
+
+
 }

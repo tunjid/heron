@@ -145,7 +145,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = ListConvosResponse::cursor,
                 onResponse = {
-                    val signedInProfileId = savedStateDataSource.signedInProfileId
+                    val signedInProfileId = savedStateDataSource.signedInProfileId2
 
                     multipleEntitySaverProvider.saveInTransaction {
                         convos.forEach {
@@ -165,7 +165,7 @@ internal class OfflineMessageRepository @Inject constructor(
         query: MessageQuery,
         cursor: Cursor,
     ): Flow<CursorList<Message>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
+        savedStateDataSource.observedSignedInProfileId2.flatMapLatest { signedInProfileId ->
             combine(
                 messageDao.messages(
                     conversationId = query.conversationId.id,
@@ -318,7 +318,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 // No changes
                 if (currentCursor <= latestCursor) return@scan latestCursor
 
-                val signedInProfileId = savedStateDataSource.signedInProfileId
+                val signedInProfileId = savedStateDataSource.signedInProfileId2
 
                 multipleEntitySaverProvider.saveInTransaction {
                     deletedMessages.list.forEach { (conversationId, message) ->
@@ -360,7 +360,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 ),
             )
         }.toOutcome { sentMessage ->
-            val signedInProfileId = savedStateDataSource.signedInProfileId
+            val signedInProfileId = savedStateDataSource.signedInProfileId2
 
             multipleEntitySaverProvider.saveInTransaction {
                 add(
@@ -393,7 +393,7 @@ internal class OfflineMessageRepository @Inject constructor(
             ).map(RemoveReactionResponse::message)
         }
     }.toOutcome { message ->
-        val signedInProfileId = savedStateDataSource.signedInProfileId
+        val signedInProfileId = savedStateDataSource.signedInProfileId2
 
         multipleEntitySaverProvider.saveInTransaction {
             add(

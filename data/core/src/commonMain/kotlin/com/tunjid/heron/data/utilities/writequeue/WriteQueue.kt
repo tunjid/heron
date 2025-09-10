@@ -26,7 +26,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.signedInProfileId
+import com.tunjid.heron.data.repository.signedInProfileId2
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -128,16 +128,27 @@ internal class PersistedWriteQueue @Inject constructor(
     override suspend fun enqueue(
         writable: Writable,
     ) {
-        val currentSignedInProfileId = savedStateDataSource.signedInProfileId ?: return
-        savedStateDataSource.updateWrites { signedInProfileId ->
+//        val currentSignedInProfileId = savedStateDataSource.signedInProfileId2 ?: return
+
+        /* We don't care about profileId now since SavedState already restricts writes to the signed-in profile */
+        savedStateDataSource.updateWrites {
             when {
                 pendingWrites.any { writable.queueId == it.queueId } -> this
-                currentSignedInProfileId != signedInProfileId -> this
                 else -> copy(
                     pendingWrites = listOf(writable) + pendingWrites,
                 )
             }
         }
+
+//        savedStateDataSource.updateWrites { signedInProfileId ->
+//            when {
+//                pendingWrites.any { writable.queueId == it.queueId } -> this
+//                currentSignedInProfileId != signedInProfileId -> this
+//                else -> copy(
+//                    pendingWrites = listOf(writable) + pendingWrites,
+//                )
+//            }
+//        }
     }
 
     override suspend fun awaitDequeue(writable: Writable) {
@@ -185,24 +196,36 @@ internal class PersistedWriteQueue @Inject constructor(
     }
 }
 
+//private fun SavedStateDataSource.signedInProfileWrites() = savedState
+//    .mapNotNull { it.signedInProfileId2 }
+//    .flatMapLatest { profileId ->
+//        savedState
+//            .mapNotNull { savedState ->
+//                savedState.profileData[profileId]
+//                    ?.writes
+//                    ?.pendingWrites
+//            }
+//    }
 private fun SavedStateDataSource.signedInProfileWrites() = savedState
-    .mapNotNull { it.signedInProfileId }
-    .flatMapLatest { profileId ->
-        savedState
-            .mapNotNull { savedState ->
-                savedState.profileData[profileId]
-                    ?.writes
-                    ?.pendingWrites
-            }
-    }
+    .mapNotNull { it.signedInProfileData?.writes?.pendingWrites }
+
 
 private suspend inline fun SavedStateDataSource.updateWrites(
-    crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
+    crossinline block: SavedState.Writes.() -> SavedState.Writes,
 ) {
-    updateSignedInProfileData { signedInProfileId ->
-        copy(writes = writes.block(signedInProfileId))
+    updateSignedInProfileData {
+        copy(writes = writes.block())
     }
 }
+
+
+//private suspend inline fun SavedStateDataSource.updateWrites(
+//    crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
+//) {
+//    updateSignedInProfileData { signedInProfileId ->
+//        copy(writes = writes.block(signedInProfileId))
+//    }
+//}
 
 private const val MaximumPendingWrites = 15
 private const val MaximumFailedWrites = 10

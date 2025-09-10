@@ -80,7 +80,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
 ) : NotificationsRepository {
 
     override val unreadCount: Flow<Long> =
-        savedStateDataSource.observedSignedInProfileId
+        savedStateDataSource.observedSignedInProfileId2
             .filterNotNull()
             .flatMapLatest {
                 flow {
@@ -103,7 +103,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             )
 
     override val lastRefreshed: Flow<Instant?> = savedStateDataSource.savedState
-        .map { it.signedInProfileNotifications()?.lastRefreshed }
+        .map { it.signedInProfileNotifications2()?.lastRefreshed }
         .distinctUntilChanged()
 
     override fun notifications(
@@ -151,7 +151,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     first.cursor
                 },
                 onResponse = {
-                    val authProfileId = savedStateDataSource.savedState.value.auth?.authProfileId
+//                    val authProfileId = savedStateDataSource.savedState.value.auth?.authProfileId
+                    val authProfileId = savedStateDataSource.savedState.value.signedInProfileId2
                     if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         if (query.data.page == 0) {
                             notificationsDao.deleteAllNotifications()
@@ -175,7 +176,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     override suspend fun markRead(at: Instant) {
         val lastReadAt = savedStateDataSource.savedState
             .value
-            .signedInProfileNotifications()
+            .signedInProfileNotifications2()
             ?.lastRead
         if (lastReadAt != null && lastReadAt > at) return
 
@@ -209,7 +210,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private fun observeNotifications(
         query: NotificationsQuery,
     ): Flow<List<Notification>> =
-        savedStateDataSource.observedSignedInProfileId
+        savedStateDataSource.observedSignedInProfileId2
             .flatMapLatest { signedInProfileId ->
                 notificationsDao.notifications(
                     before = query.data.cursorAnchor,

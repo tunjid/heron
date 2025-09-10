@@ -38,7 +38,7 @@ import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.isSignedIn
+import com.tunjid.heron.data.repository.isSignedIn2
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -334,7 +334,7 @@ class PersistedNavigationStateHolder(
 
                 val multiStackNav = when {
                     savedState == EmptySavedState -> SignedOutNavigationState
-                    !savedState.isSignedIn() -> SignedOutNavigationState
+                    !savedState.isSignedIn2() -> SignedOutNavigationState
                     else -> routeParser.parseMultiStackNav(savedState)
                 }
 
@@ -379,8 +379,10 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
 
 private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> =
     savedState
-        // No auth token and is displaying main navigation
-        .filter { it.auth == null && it != EmptySavedState }
+//        // No auth token and is displaying main navigation
+//        .filter { it.authTokens == null && it != EmptySavedState }
+        // Not signed in and we have a non-empty saved state -> force signed out nav
+        .filter { !it.isSignedIn2() && it != EmptySavedState }
         .mapToMutation { _ ->
             SignedOutNavigationState
         }
@@ -398,7 +400,7 @@ private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
     savedState.navigation.backStacks
         .foldIndexed(
             initial = MultiStackNav(
-                name = if (savedState.isSignedIn()) SignedInNavigationState.name
+                name = if (savedState.isSignedIn2()) SignedInNavigationState.name
                 else SignedOutNavigationState.name,
             ),
             operation = { index, multiStackNav, routesForStack ->
@@ -407,7 +409,7 @@ private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
                         routesForStack.fold(
                             initial = StackNav(
                                 name = when {
-                                    savedState.isSignedIn() -> SignedInNavigationState
+                                    savedState.isSignedIn2() -> SignedInNavigationState
                                     else -> SignedOutNavigationState
                                 }.stacks.getOrNull(index)?.name ?: "Unknown",
                             ),

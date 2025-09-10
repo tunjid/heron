@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.signedInUserPreferences
+import com.tunjid.heron.data.repository.signedInUserPreferences2
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -137,7 +137,7 @@ private fun timelineMutations(
         ::Pair,
     ).mapToMutation { (savedState, homeTimelines) ->
         val tabUri = currentTabUri
-            ?: savedState.signedInUserPreferences()
+            ?: savedState.signedInUserPreferences2()
                 ?.lastViewedHomeTimelineUri
                 ?.takeIf { uri ->
                     homeTimelines.any { it.isPinned && it.uri == uri }

@@ -238,7 +238,7 @@ internal class OfflineTimelineRepository(
 
     override fun preferences(): Flow<Preferences> =
         savedStateDataSource.savedState
-            .map(SavedState::signedProfilePreferencesOrDefault)
+            .map(SavedState::signedProfilePreferencesOrDefault2)
 
     override fun labelers(): Flow<List<Labeler>> =
         // TODO: Get labeler from bluesky moderation service
@@ -626,7 +626,7 @@ internal class OfflineTimelineRepository(
                                         multipleEntitySaverProvider
                                             .saveInTransaction {
                                                 add(
-                                                    viewingProfileId = savedStateDataSource.signedInProfileId,
+                                                    viewingProfileId = savedStateDataSource.signedInProfileId2,
                                                     threadViewPost = thread.value,
                                                 )
                                             }
@@ -817,7 +817,7 @@ internal class OfflineTimelineRepository(
     ): Outcome = runCatchingUnlessCancelled {
         timelineDao.updatePreferredTimelinePresentation(
             partial = preferredPresentationPartial(
-                signedInProfileId = savedStateDataSource.signedInProfileId,
+                signedInProfileId = savedStateDataSource.signedInProfileId2,
                 sourceId = timeline.sourceId,
                 presentation = presentation,
             ),
@@ -857,7 +857,7 @@ internal class OfflineTimelineRepository(
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
     ): Flow<Cursor> = savedStateDataSource
-        .observedSignedInProfileId
+        .observedSignedInProfileId2
         .flatMapLatest { signedInProfileId ->
             nextCursorFlow(
                 currentCursor = currentCursor,
@@ -894,7 +894,7 @@ internal class OfflineTimelineRepository(
         networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = combine(
-        flow = savedStateDataSource.observedSignedInProfileId,
+        flow = savedStateDataSource.observedSignedInProfileId2,
         flow2 = flow {
             while (true) {
                 val pollInstant = Clock.System.now()
@@ -904,7 +904,7 @@ internal class OfflineTimelineRepository(
                     ?.let { fetchedFeedViewPosts ->
                         multipleEntitySaverProvider.saveInTransaction {
                             add(
-                                viewingProfileId = savedStateDataSource.signedInProfileId,
+                                viewingProfileId = savedStateDataSource.signedInProfileId2,
                                 timeline = timeline,
                                 feedViewPosts = fetchedFeedViewPosts,
                             )
@@ -1326,12 +1326,12 @@ internal class OfflineTimelineRepository(
 
 private fun signedInProfileIdToContentLabelPreferences(state: SavedState): Pair<ProfileId?, ContentLabelPreferences> =
     Pair(
-        first = state.signedInProfileId,
-        second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
+        first = state.signedInProfileId2,
+        second = state.signedProfilePreferencesOrDefault2().contentLabelPreferences,
     )
 
 private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
-    savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
+    savedState.signedInProfileId2 to savedState.signedProfilePreferencesOrDefault2().timelinePreferences
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {
