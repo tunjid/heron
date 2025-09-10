@@ -188,7 +188,7 @@ private fun SavedStateDataSource.signedInProfileWrites() = savedState
     .flatMapLatest { profileId ->
         savedState
             .mapNotNull { savedState ->
-                savedState.profileData[profileId]
+                savedState.signedInProfileData
                     ?.writes
                     ?.pendingWrites
             }
