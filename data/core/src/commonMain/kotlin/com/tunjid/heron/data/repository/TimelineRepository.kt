@@ -87,9 +87,9 @@ import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
-import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Duration
@@ -827,28 +827,28 @@ internal class OfflineTimelineRepository(
     override suspend fun updateHomeTimelines(
         update: Timeline.Update,
     ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
-         getPreferences()
-     }
-         .fold(
-             onSuccess = { preferencesResponse ->
-                 networkService.runCatchingWithMonitoredNetworkRetry {
-                     putPreferences(
-                         PutPreferencesRequest(
-                             preferences = preferencesResponse.preferences.updateFeed {
-                                 updateFeedPreferencesFrom(
-                                     tidGenerator = tidGenerator,
-                                     update = update,
-                                 )
-                             },
-                         ),
-                     )
-                 }.fold(
-                     onSuccess = { authRepository.updateSignedInUser() },
-                     onFailure = Outcome::Failure,
-                 )
-             },
-             onFailure = Outcome::Failure,
-         )
+        getPreferences()
+    }
+        .fold(
+            onSuccess = { preferencesResponse ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    putPreferences(
+                        PutPreferencesRequest(
+                            preferences = preferencesResponse.preferences.updateFeed {
+                                updateFeedPreferencesFrom(
+                                    tidGenerator = tidGenerator,
+                                    update = update,
+                                )
+                            },
+                        ),
+                    )
+                }.fold(
+                    onSuccess = { authRepository.updateSignedInUser() },
+                    onFailure = Outcome::Failure,
+                )
+            },
+            onFailure = Outcome::Failure,
+        )
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -1449,7 +1449,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
         "app.bsky.feed.defs#contentModePhoto",
         "app.bsky.feed.defs#contentModeImage",
         "app.bsky.feed.defs#contentModeMedia",
-            -> true
+        -> true
 
         else -> false
     }

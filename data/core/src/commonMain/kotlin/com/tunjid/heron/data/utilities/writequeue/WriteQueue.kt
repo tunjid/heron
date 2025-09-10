@@ -160,22 +160,24 @@ internal class PersistedWriteQueue @Inject constructor(
                 savedStateDataSource.updateWrites {
                     copy(
                         failedWrites = when (outcome) {
-                            is Outcome.Failure -> failedWrites
-                                .plus(
-                                    FailedWrite(
-                                        writable = writable,
-                                        failedAt = Clock.System.now(),
-                                        reason =
+                            is Outcome.Failure ->
+                                failedWrites
+                                    .plus(
+                                        FailedWrite(
+                                            writable = writable,
+                                            failedAt = Clock.System.now(),
+                                            reason =
                                             if (outcome.exception is IOException) FailedWrite.Reason.IO
                                             else null,
-                                    ),
-                                )
-                                .distinctBy { it.writable.queueId }
-                                .takeLast(MaximumFailedWrites)
+                                        ),
+                                    )
+                                    .distinctBy { it.writable.queueId }
+                                    .takeLast(MaximumFailedWrites)
                             Outcome.Success -> failedWrites
                         },
                         // Always dequeue write
-                        pendingWrites = pendingWrites.filter { it.queueId != writable.queueId },
+                        pendingWrites = pendingWrites
+                            .filter { it.queueId != writable.queueId },
                     )
                 }
             }
@@ -201,4 +203,5 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     }
 }
 
+private const val MaximumPendingWrites = 15
 private const val MaximumFailedWrites = 10

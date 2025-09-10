@@ -136,9 +136,14 @@ internal inline fun <T> Result<T>.toOutcome(
     onSuccess: (T) -> Unit = {},
 ): Outcome = fold(
     onSuccess = {
-        onSuccess(it)
-        Outcome.Success
+        try {
+            onSuccess(it)
+            Outcome.Success
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Outcome.Failure(e)
+        }
     },
     onFailure = Outcome::Failure,
 )
-

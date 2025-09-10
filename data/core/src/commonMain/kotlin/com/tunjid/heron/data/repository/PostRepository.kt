@@ -71,9 +71,9 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
-import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -336,7 +336,7 @@ internal class OfflinePostRepository @Inject constructor(
         else emptyList()
 
         if (blobs.size != request.metadata.mediaFiles.size) return Outcome.Failure(
-            Exception("Image upload failed")
+            Exception("Media upload failed"),
         )
 
         val createRecordRequest = CreateRecordRequest(
@@ -364,7 +364,7 @@ internal class OfflinePostRepository @Inject constructor(
         interaction: Post.Interaction,
     ): Outcome {
         val authorId = savedStateDataSource.signedInProfileId ?: return Outcome.Failure(
-            Exception("Not signed in")
+            Exception("Not signed in"),
         )
         return when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
@@ -407,7 +407,7 @@ internal class OfflinePostRepository @Inject constructor(
                 }
             }
                 .toOutcome { (succeeded, uriOrCidString) ->
-                    if (!succeeded) return@toOutcome
+                    if (!succeeded) throw Exception("Record creation failed validation")
                     transactionWriter.inTransaction {
                         when (interaction) {
                             is Post.Interaction.Create.Like -> {

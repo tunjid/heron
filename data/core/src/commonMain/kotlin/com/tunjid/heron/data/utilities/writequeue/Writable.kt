@@ -20,9 +20,9 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import kotlinx.serialization.Serializable
 import com.tunjid.heron.data.core.utilities.Outcome
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
 /**
  * Interface definition for data that is written to disk or over the wire.
@@ -137,6 +137,6 @@ data class FailedWrite(
 ) {
     @Serializable
     enum class Reason {
-        IO;
+        IO,
     }
 }

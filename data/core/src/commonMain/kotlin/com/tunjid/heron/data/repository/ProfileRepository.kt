@@ -71,8 +71,8 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
-import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.refreshProfile
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -554,7 +554,9 @@ internal class OfflineProfileRepository @Inject constructor(
             )
         }
             .toOutcome {
-                if (it.validationStatus !is CreateRecordValidationStatus.Valid) return@toOutcome
+                if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                    throw Exception("Record creation failed validation")
+                }
                 profileDao.updatePartialProfileViewers(
                     listOf(
                         ProfileViewerStateEntity.Partial(

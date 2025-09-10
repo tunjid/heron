@@ -195,7 +195,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideSnapshotWriteQueue(
+    internal fun provideWriteQueue(
         writeQueue: PersistedWriteQueue,
     ): WriteQueue = writeQueue
 
