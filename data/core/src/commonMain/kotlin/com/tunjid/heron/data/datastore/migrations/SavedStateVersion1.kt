@@ -42,6 +42,7 @@ internal class SavedStateVersion1(
             auth = auth,
             navigation = navigation,
             profileData = profileData,
+            signedInProfileData = null,
         )
 
     companion object {

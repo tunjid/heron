@@ -54,11 +54,13 @@ internal data class VersionedSavedState(
     @ProtoNumber(1)
     val version: Int,
     @ProtoNumber(2)
-    override val auth: AuthTokens?,
+    val auth: AuthTokens?,
     @ProtoNumber(3)
     override val navigation: Navigation,
     @ProtoNumber(4)
-    override val profileData: Map<ProfileId, ProfileData>,
+    val profileData: Map<ProfileId, ProfileData>,
+    @ProtoNumber(5)
+    override val signedInProfileData: ProfileData?,
 ) : SavedState() {
     companion object {
         internal val Initial: VersionedSavedState = VersionedSavedState(
@@ -66,6 +68,7 @@ internal data class VersionedSavedState(
             auth = null,
             navigation = Navigation(activeNav = -1),
             profileData = emptyMap(),
+            signedInProfileData = null,
         )
 
         internal val Empty: VersionedSavedState = VersionedSavedState(
@@ -73,6 +76,7 @@ internal data class VersionedSavedState(
             auth = null,
             navigation = Navigation(activeNav = 0),
             profileData = emptyMap(),
+            signedInProfileData = null
         )
     }
 }

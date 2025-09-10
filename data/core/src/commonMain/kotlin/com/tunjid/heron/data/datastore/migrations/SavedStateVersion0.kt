@@ -39,6 +39,7 @@ internal class SavedStateVersion0(
             auth = auth,
             navigation = navigation,
             profileData = profileData.mapKeys { (id) -> ProfileId(id) },
+            signedInProfileData = null,
         )
 
     companion object {
