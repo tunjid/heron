@@ -30,11 +30,17 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.selects.select
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -258,4 +264,32 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
     block: SavedState.Notifications.() -> SavedState.Notifications,
 ) = updateSignedInProfileData {
     copy(notifications = notifications.block())
+}
+
+/**
+ * Runs the [block] in the context of a single profile's session
+ */
+internal suspend inline fun SavedStateDataSource.inCurrentProfileSession(
+    crossinline block: suspend () -> Unit,
+) {
+    val currentProfileId = savedState.value.signedInProfileId ?: return
+    coroutineScope {
+        select {
+            async {
+                savedState.first { it.signedInProfileId != currentProfileId }
+            }.onAwait {}
+            async {
+                block()
+            }.onAwait {}
+        }.also { coroutineContext.cancelChildren() }
+    }
+}
+
+/**
+ * Repeats [block] for each signed in user
+ */
+internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
+    crossinline block: suspend () -> Unit,
+) = observedSignedInProfileId.collectLatest { profileId ->
+    if (profileId != null) block()
 }
