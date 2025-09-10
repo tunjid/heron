@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * Interface definition for data that is written to disk or over the wire.
- * If written to dis, it is using protobufs and all the rules about constructor argument
+ * If written to disk, it is using protobufs and all the rules about constructor argument
  * order apply.
  */
 @Serializable
