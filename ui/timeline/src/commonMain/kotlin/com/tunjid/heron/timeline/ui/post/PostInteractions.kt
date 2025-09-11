@@ -74,8 +74,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Post.Interaction.Create.*
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete.*
+import com.tunjid.heron.data.core.models.Post.Interaction.Create
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -245,12 +245,12 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Like(
+                                null -> Create.Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Unlike(
+                                else -> Delete.Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -259,12 +259,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Repost(
+                                null -> Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> RemoveRepost(
+                                else -> Delete.RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -272,18 +272,17 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Bookmark(
+                                false -> Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> RemoveBookmark(
+                                true -> Delete.RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
                         )
                         PostInteractionButton.Download -> {
-
                         }
                     }
                 },
@@ -603,7 +602,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
-            Download
+            Download,
         )
     }
 }
