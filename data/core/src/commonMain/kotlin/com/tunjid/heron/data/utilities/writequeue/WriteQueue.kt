@@ -199,7 +199,6 @@ private fun SavedStateDataSource.signedInProfileWrites() = savedState
         pendingWrites.map(Writable::queueId)
     }
 
-
 private suspend inline fun SavedStateDataSource.updateWrites(
     crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
 ) {
