@@ -212,7 +212,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                     PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
-                    PostInteractionButton.Download -> button.icon(isChecked = !isDownloaded)
+                    PostInteractionButton.Download -> button.icon(isChecked = isDownloaded)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
@@ -237,8 +237,8 @@ private inline fun PostInteractionsButtons(
                         if (isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.Download ->
-                        if (!isDownloaded) MaterialTheme.colorScheme.outline
-                        else Color.Transparent
+                        if (isDownloaded) DownloadedColor
+                        else MaterialTheme.colorScheme.outline
                 },
                 onClick = {
                     when (button) {
@@ -546,6 +546,7 @@ private fun PostInteractionsBottomSheet(
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
 private val BookmarkBlue = Color(0xFF1D9BF0)
+private val DownloadedColor = Color.Transparent
 
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
     get() = when (this) {
