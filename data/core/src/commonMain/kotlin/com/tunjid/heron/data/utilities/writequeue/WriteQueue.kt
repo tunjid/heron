@@ -188,7 +188,9 @@ private fun SavedStateDataSource.signedInProfileWrites() = savedState
     .flatMapLatest { profileId ->
         savedState
             .mapNotNull { savedState ->
-                savedState.signedInProfileData
+                savedState
+                    .takeIf { it.signedInProfileId == profileId }
+                    ?.signedInProfileData
                     ?.writes
                     ?.pendingWrites
             }
@@ -196,6 +198,7 @@ private fun SavedStateDataSource.signedInProfileWrites() = savedState
     .distinctUntilChangedBy { pendingWrites ->
         pendingWrites.map(Writable::queueId)
     }
+
 
 private suspend inline fun SavedStateDataSource.updateWrites(
     crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
