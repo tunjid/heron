@@ -194,7 +194,6 @@ private inline fun PostInteractionsButtons(
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
-
     val buttons = when (orientation) {
         Orientation.Vertical -> PostInteractionButton.All
         Orientation.Horizontal -> PostInteractionButton.All.filterNot { it is PostInteractionButton.Download }
