@@ -166,7 +166,7 @@ class ProfileBindings(
                         modifier = Modifier
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            }
+                            },
                     )
                 },
                 floatingActionButton = {

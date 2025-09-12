@@ -160,7 +160,7 @@ fun PaneScaffoldState.PaneScaffold(
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.Drag,
-                        -> Modifier.animateBounds(lookaheadScope = this)
+                    -> Modifier.animateBounds(lookaheadScope = this)
                     AppState.DismissBehavior.Gesture.Slide -> Modifier
                 }
                     .padding(

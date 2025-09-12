@@ -167,7 +167,7 @@ class HomeBindings(
                         modifier = Modifier
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            }
+                            },
                     )
                 },
                 floatingActionButton = {
