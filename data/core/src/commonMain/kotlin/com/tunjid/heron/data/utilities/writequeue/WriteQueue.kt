@@ -165,10 +165,8 @@ internal class PersistedWriteQueue @Inject constructor(
             .mapNotNull(List<Writable>::lastOrNull)
             .distinctUntilChangedBy(Writable::queueId)
             .collect { writable ->
-                val outcome = withContext(Dispatchers.IO) {
-                    with(writable) {
-                        write()
-                    }
+                val outcome = with(writable) {
+                    write()
                 }
                 savedStateDataSource.updateWrites {
                     copy(
