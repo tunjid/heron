@@ -127,6 +127,7 @@ class ActualProfileViewModel(
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                             writeQueue = writeQueue,
@@ -276,6 +277,11 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
     }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(

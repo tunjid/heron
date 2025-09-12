@@ -22,12 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.gallery.Action
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.RouteViewModelInitializer
@@ -122,6 +120,7 @@ class GalleryBindings(
                 containerColor = Color.Transparent,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 content = {
                     GalleryScreen(

@@ -208,6 +208,7 @@ class ProfileBindings(
                 },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 content = {
                     ProfileScreen(

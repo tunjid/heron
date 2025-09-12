@@ -142,6 +142,10 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
+    data class SnackbarDismissed(
+        val message: SnackbarMessage,
+    ) : Action(key = "SnackbarDismissed")
+
     data class UpdatePageWithUpdates(
         val sourceId: String,
         val hasUpdates: Boolean,
