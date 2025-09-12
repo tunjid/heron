@@ -555,7 +555,7 @@ private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizo
         Timeline.Presentation.Media.Grid -> Arrangement.SpaceBetween
     }
 
-val Timeline.Presentation.actionIconSize
+private val Timeline.Presentation.actionIconSize
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
