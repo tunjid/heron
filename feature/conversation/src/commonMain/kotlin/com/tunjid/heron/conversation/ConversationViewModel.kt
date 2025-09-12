@@ -109,6 +109,7 @@ class ActualConversationViewModel(
                     is Action.SendMessage -> action.flow.sendMessageMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                     is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
                         writeQueue = writeQueue,
@@ -161,6 +162,11 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Interaction(action.interaction))
+    }
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
     }
 
 private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(

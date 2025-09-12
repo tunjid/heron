@@ -149,6 +149,7 @@ class SearchBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     if (state.isQueryEditable) RootDestinationTopAppBar(
