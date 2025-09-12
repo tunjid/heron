@@ -24,6 +24,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -121,7 +122,13 @@ private fun Flow<Action.Submit>.submissionMutations(
                 null -> navActions(NavigationContext::resetAuthNavigation)
 
                 else -> emit {
-                    copy(messages = exception.message?.let(messages::plus)?.distinct() ?: messages)
+                    copy(
+                        messages = exception.message
+                            ?.let(SnackbarMessage::Text)
+                            ?.let(messages::plus)
+                            ?.distinct()
+                            ?: messages,
+                    )
                 }
             }
             emit { copy(isSubmitting = false) }

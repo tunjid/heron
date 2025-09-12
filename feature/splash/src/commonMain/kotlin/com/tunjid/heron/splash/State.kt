@@ -18,6 +18,7 @@ package com.tunjid.heron.splash
 
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import com.tunjid.treenav.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -25,7 +26,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 )
 
 sealed class Action(val key: String) {

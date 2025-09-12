@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import com.tunjid.treenav.strings.Route
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -51,7 +52,7 @@ data class State(
     @Transient
     val video: MediaItem.Video? = null,
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 )
 
 fun State(route: Route): State = when (val model = route.model) {
