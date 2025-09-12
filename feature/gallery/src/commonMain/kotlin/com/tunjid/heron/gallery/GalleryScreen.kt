@@ -18,6 +18,7 @@ package com.tunjid.heron.gallery
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -57,6 +58,7 @@ import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
@@ -254,6 +256,8 @@ internal fun GalleryScreen(
                     )
                 },
                 onPostInteraction = postInteractionState::onInteraction,
+                onDownloadClick = {
+                },
             )
 
             Column(
@@ -513,6 +517,7 @@ fun MediaInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onDownloadClick: () -> Unit,
 ) {
     if (post == null) return
 
@@ -525,6 +530,7 @@ fun MediaInteractions(
             onReplyToPost(post)
         },
         onPostInteraction = onPostInteraction,
+        onDownloadClick = onDownloadClick,
     )
 }
 
