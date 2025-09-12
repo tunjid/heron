@@ -122,11 +122,13 @@ private fun Flow<Action.Submit>.submissionMutations(
                 null -> navActions(NavigationContext::resetAuthNavigation)
 
                 else -> emit {
-                    copy(messages = exception.message
-                        ?.let(SnackbarMessage::Text)
-                        ?.let(messages::plus)
-                        ?.distinct()
-                        ?: messages)
+                    copy(
+                        messages = exception.message
+                            ?.let(SnackbarMessage::Text)
+                            ?.let(messages::plus)
+                            ?.distinct()
+                            ?: messages,
+                    )
                 }
             }
             emit { copy(isSubmitting = false) }

@@ -158,7 +158,7 @@ fun PaneScaffoldState.PaneScaffold(
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.Drag,
-                        ->
+                    ->
                         Modifier
                             .animateBounds(
                                 lookaheadScope = this,
@@ -200,7 +200,7 @@ fun PaneScaffoldState.PaneScaffold(
                         )
                         else -> getString(
                             resource = message.stringResource,
-                            formatArgs = (message.args.toTypedArray()),
+                            *(message.args.toTypedArray()),
                         )
                     }
                     is SnackbarMessage.Text -> message.message
