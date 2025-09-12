@@ -246,12 +246,12 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Like(
+                                null -> Post.Interaction.Create.Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.Unlike(
+                                else -> Post.Interaction.Delete.Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -260,12 +260,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Repost(
+                                null -> Post.Interaction.Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveRepost(
+                                else -> Post.Interaction.Delete.RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -273,12 +273,12 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark(
+                                false -> Post.Interaction.Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveBookmark(
+                                true -> Post.Interaction.Delete.RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
