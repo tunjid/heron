@@ -59,6 +59,8 @@ class PaneScaffoldState internal constructor(
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
+    internal val snackbarHostState = SnackbarHostState()
+
     val isMediumScreenWidthOrWider: Boolean
         get() = splitPaneState.isMediumScreenWidthOrWider
 
@@ -136,12 +138,12 @@ fun PaneScaffoldState.PaneScaffold(
     snackBarMessages: List<SnackbarMessage> = emptyList(),
     onSnackBarMessageConsumed: (SnackbarMessage) -> Unit = {},
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
+    snackBarHost: @Composable PaneScaffoldState.() -> Unit = { PaneSnackbarHost() },
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     PaneNavigationRailScaffold(
         modifier = modifier
             .constrainedSizePlacement(
@@ -158,12 +160,7 @@ fun PaneScaffoldState.PaneScaffold(
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.Drag,
-                    ->
-                        Modifier
-                            .animateBounds(
-                                lookaheadScope = this,
-                            )
-
+                    -> Modifier.animateBounds(lookaheadScope = this)
                     AppState.DismissBehavior.Gesture.Slide -> Modifier
                 }
                     .padding(
@@ -180,7 +177,7 @@ fun PaneScaffoldState.PaneScaffold(
                     navigationBar()
                 },
                 snackbarHost = {
-                    SnackbarHost(snackbarHostState)
+                    snackBarHost()
                 },
                 content = { paddingValues ->
                     content(paddingValues)
@@ -221,6 +218,16 @@ fun PaneScaffoldState.PaneScaffold(
             appState.showNavigation = showNavigation
         }
     }
+}
+
+@Composable
+fun PaneScaffoldState.PaneSnackbarHost(
+    modifier: Modifier = Modifier,
+) {
+    SnackbarHost(
+        modifier = modifier,
+        hostState = snackbarHostState,
+    )
 }
 
 @Composable

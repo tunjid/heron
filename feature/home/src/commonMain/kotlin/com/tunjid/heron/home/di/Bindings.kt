@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.fabOffset
@@ -159,6 +160,14 @@ class HomeBindings(
                                 ),
                             )
                         },
+                    )
+                },
+                snackBarHost = {
+                    PaneSnackbarHost(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
                     )
                 },
                 floatingActionButton = {

@@ -34,8 +34,10 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -196,6 +198,14 @@ class SearchBindings(
                         onBackPressed = {
                             viewModel.accept(Action.Navigate.Pop)
                         },
+                    )
+                },
+                snackBarHost = {
+                    PaneSnackbarHost(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
                     )
                 },
                 navigationBar = {
