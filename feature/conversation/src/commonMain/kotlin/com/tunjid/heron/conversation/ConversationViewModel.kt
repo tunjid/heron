@@ -31,6 +31,8 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
+import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
@@ -161,7 +163,15 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Interaction(action.interaction))
+        when (writeQueue.enqueue(Writable.Interaction(action.interaction))) {
+            WriteQueue.Status.Dropped -> emit {
+                copy(messages = messages + action.interaction.failedWriteMessage())
+            }
+            WriteQueue.Status.Duplicate -> emit {
+                copy(messages = messages + action.interaction.duplicateWriteMessage())
+            }
+            WriteQueue.Status.Enqueued -> Unit
+        }
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

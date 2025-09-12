@@ -16,25 +16,40 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import com.tunjid.heron.data.core.models.Post
+import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.bookmark
+import heron.scaffold.generated.resources.bookmark_removal
+import heron.scaffold.generated.resources.duplicate_post_interaction
+import heron.scaffold.generated.resources.failed_post_interaction
+import heron.scaffold.generated.resources.like
+import heron.scaffold.generated.resources.repost
+import heron.scaffold.generated.resources.repost_removal
+import heron.scaffold.generated.resources.unlike
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-
-@Composable
-internal inline fun <T> rememberUpdatedStateIf(
-    value: T,
-    predicate: (T) -> Boolean,
-): State<T> = remember {
-    mutableStateOf(value)
-}.also { if (predicate(value)) it.value = value }
 
 fun viewModelCoroutineScope() = CoroutineScope(
     SupervisorJob() + Dispatchers.Main.immediate,
 )
 
-internal val BottomNavSharedElementZIndex = 2f
+fun Post.Interaction.duplicateWriteMessage() = SnackbarMessage.Resource(
+    stringResource = Res.string.duplicate_post_interaction,
+    args = listOf(
+        when (this) {
+            is Post.Interaction.Create.Bookmark -> Res.string.bookmark
+            is Post.Interaction.Create.Like -> Res.string.like
+            is Post.Interaction.Create.Repost -> Res.string.repost
+            is Post.Interaction.Delete.RemoveBookmark -> Res.string.bookmark_removal
+            is Post.Interaction.Delete.RemoveRepost -> Res.string.repost_removal
+            is Post.Interaction.Delete.Unlike -> Res.string.unlike
+        },
+    ),
+)
+
+fun Post.Interaction.failedWriteMessage() = SnackbarMessage.Resource(
+    stringResource = Res.string.failed_post_interaction,
+)
+
 internal val FabSharedElementZIndex = 4f
