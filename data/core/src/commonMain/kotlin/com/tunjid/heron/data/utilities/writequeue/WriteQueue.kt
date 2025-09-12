@@ -56,13 +56,18 @@ sealed class WriteQueue {
 
     abstract suspend fun enqueue(
         writable: Writable,
-    )
+    ): Status
 
     abstract suspend fun awaitDequeue(
         writable: Writable,
     )
 
     abstract suspend fun drain()
+
+    sealed interface Status {
+        data object Enqueued : Status
+        data object Duplicate : Status
+    }
 }
 
 internal class SnapshotWriteQueue @Inject constructor(
@@ -82,12 +87,13 @@ internal class SnapshotWriteQueue @Inject constructor(
 
     override suspend fun enqueue(
         writable: Writable,
-    ) {
+    ): Status {
         // Enqueue on main
-        withContext(Dispatchers.Main) {
+        return withContext(Dispatchers.Main) {
             // De-dup
-            if (queue.any { writable.queueId == it.queueId }) return@withContext
+            if (queue.any { writable.queueId == it.queueId }) return@withContext Status.Duplicate
             queue.add(writable)
+            Status.Enqueued
         }
     }
 
@@ -127,13 +133,23 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override suspend fun enqueue(
         writable: Writable,
-    ) = savedStateDataSource.inCurrentProfileSession {
-        savedStateDataSource.updateWrites {
-            when {
-                pendingWrites.any { writable.queueId == it.queueId } -> this
-                else -> copy(pendingWrites = listOf(writable) + pendingWrites)
+    ): Status {
+        var status: Status? = null
+        savedStateDataSource.inCurrentProfileSession {
+            savedStateDataSource.updateWrites {
+                when {
+                    pendingWrites.any { writable.queueId == it.queueId } -> {
+                        status = Status.Duplicate
+                        this
+                    }
+                    else -> {
+                        status = Status.Enqueued
+                        copy(pendingWrites = listOf(writable) + pendingWrites)
+                    }
+                }
             }
         }
+        return status ?: Status.Enqueued
     }
 
     override suspend fun awaitDequeue(writable: Writable) {
