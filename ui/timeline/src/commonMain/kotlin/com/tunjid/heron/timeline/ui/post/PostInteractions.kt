@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -105,7 +106,6 @@ fun PostInteractions(
     repostUri: GenericUri?,
     likeUri: GenericUri?,
     isBookmarked: Boolean,
-    isDownloaded: Boolean,
     postId: PostId,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -127,7 +127,6 @@ fun PostInteractions(
             repostUri = repostUri,
             likeUri = likeUri,
             isBookmarked = isBookmarked,
-            isDownloaded = isDownloaded,
             postId = postId,
             postUri = postUri,
             sharedElementPrefix = sharedElementPrefix,
@@ -149,6 +148,7 @@ fun MediaPostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onDownloadClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -162,7 +162,6 @@ fun MediaPostInteractions(
             repostUri = post.viewerStats?.repostUri,
             likeUri = post.viewerStats?.likeUri,
             isBookmarked = post.viewerStats?.bookmarked ?: false,
-            isDownloaded = false,
             postId = post.cid,
             postUri = post.uri,
             sharedElementPrefix = sharedElementPrefix,
@@ -172,6 +171,16 @@ fun MediaPostInteractions(
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
         )
+        IconButton(
+            onClick = onDownloadClick,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Download,
+                contentDescription = stringResource(Res.string.download),
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(40.dp),
+            )
+        }
     }
 }
 
@@ -184,7 +193,6 @@ private inline fun PostInteractionsButtons(
     repostUri: GenericUri?,
     likeUri: GenericUri?,
     isBookmarked: Boolean,
-    isDownloaded: Boolean,
     postId: PostId,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -194,12 +202,8 @@ private inline fun PostInteractionsButtons(
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
-    val buttons = when (orientation) {
-        Orientation.Vertical -> PostInteractionButton.All
-        Orientation.Horizontal -> PostInteractionButton.All.filterNot { it is PostInteractionButton.Download }
-    }
 
-    buttons.forEach { button ->
+    PostInteractionButton.All.forEach { button ->
         key(button) {
             PostInteraction(
                 modifier = Modifier
@@ -217,7 +221,6 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                     PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
-                    PostInteractionButton.Download -> button.icon(isChecked = isDownloaded)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
@@ -227,7 +230,6 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> likeCount
                     PostInteractionButton.Repost -> repostCount
                     PostInteractionButton.Bookmark -> ""
-                    PostInteractionButton.Download -> ""
                 },
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
@@ -240,9 +242,6 @@ private inline fun PostInteractionsButtons(
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.Bookmark ->
                         if (isBookmarked) BookmarkBlue
-                        else MaterialTheme.colorScheme.outline
-                    PostInteractionButton.Download ->
-                        if (isDownloaded) DownloadedColor
                         else MaterialTheme.colorScheme.outline
                 },
                 onClick = {
@@ -287,8 +286,6 @@ private inline fun PostInteractionsButtons(
                                 )
                             },
                         )
-                        PostInteractionButton.Download -> {
-                        }
                     }
                 },
             )
@@ -550,7 +547,6 @@ private fun PostInteractionsBottomSheet(
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
 private val BookmarkBlue = Color(0xFF1D9BF0)
-private val DownloadedColor = Color.Transparent
 
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
     get() = when (this) {
@@ -560,7 +556,7 @@ private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizo
         Timeline.Presentation.Media.Grid -> Arrangement.SpaceBetween
     }
 
-private val Timeline.Presentation.actionIconSize
+val Timeline.Presentation.actionIconSize
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
@@ -580,7 +576,6 @@ private sealed class PostInteractionButton {
     data object Repost : PostInteractionButton()
     data object Like : PostInteractionButton()
     data object Bookmark : PostInteractionButton()
-    data object Download : PostInteractionButton()
 
     companion object {
         fun PostInteractionButton.icon(
@@ -590,7 +585,6 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            Download -> Icons.Rounded.Download
         }
 
         val PostInteractionButton.stringResource
@@ -599,7 +593,6 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
-                Download -> Res.string.download
             }
 
         val All = listOf(
@@ -607,7 +600,6 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
-            Download,
         )
     }
 }

@@ -309,7 +309,6 @@ private fun ActionsContent(
             repostUri = data.post.viewerStats?.repostUri,
             likeUri = data.post.viewerStats?.likeUri,
             isBookmarked = data.post.viewerStats?.bookmarked ?: false,
-            isDownloaded = false,
             postId = data.post.cid,
             postUri = data.post.uri,
             sharedElementPrefix = data.sharedElementPrefix,

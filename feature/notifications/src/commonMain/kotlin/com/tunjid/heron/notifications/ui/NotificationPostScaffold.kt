@@ -132,7 +132,6 @@ internal fun NotificationPostScaffold(
                     repostUri = notification.associatedPost.viewerStats?.repostUri,
                     likeUri = notification.associatedPost.viewerStats?.likeUri,
                     isBookmarked = notification.associatedPost.viewerStats?.bookmarked ?: false,
-                    isDownloaded = false,
                     postId = notification.associatedPost.cid,
                     postUri = notification.associatedPost.uri,
                     sharedElementPrefix = notification.sharedElementPrefix(),
