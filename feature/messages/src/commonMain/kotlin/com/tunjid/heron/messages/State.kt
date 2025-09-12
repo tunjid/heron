@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import com.tunjid.heron.tiling.TilingState
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
@@ -40,7 +41,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 ) : TilingState<ConversationQuery, Conversation>
 
 sealed class Action(val key: String) {

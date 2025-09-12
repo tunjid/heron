@@ -38,6 +38,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -64,7 +65,7 @@ data class State(
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 )
 
 fun State(route: Route) = State(

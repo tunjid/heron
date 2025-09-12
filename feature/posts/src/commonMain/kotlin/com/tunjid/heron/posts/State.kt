@@ -17,13 +17,14 @@
 package com.tunjid.heron.posts
 
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 )
 
 sealed class Action(val key: String) {

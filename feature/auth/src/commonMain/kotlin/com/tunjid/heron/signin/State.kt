@@ -32,6 +32,7 @@ import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -106,7 +107,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<String> = emptyList(),
+    val messages: List<SnackbarMessage> = emptyList(),
 )
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
@@ -132,7 +133,7 @@ sealed class Action(val key: String) {
         ) : Submit()
     }
     data class MessageConsumed(
-        val message: String,
+        val message: SnackbarMessage,
     ) : Action("MessageConsumed")
 
     sealed class Navigate :

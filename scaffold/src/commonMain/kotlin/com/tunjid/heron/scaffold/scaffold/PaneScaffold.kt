@@ -49,8 +49,9 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
-import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 
 class PaneScaffoldState internal constructor(
     internal val appState: AppState,
@@ -64,11 +65,13 @@ class PaneScaffoldState internal constructor(
     val dismissBehavior: AppState.DismissBehavior
         get() = appState.dismissBehavior
 
-    val isSignedOut get() =
-        !appState.isSignedIn
+    val isSignedOut
+        get() =
+            !appState.isSignedIn
 
-    val isSignedIn get() =
-        appState.isSignedIn
+    val isSignedIn
+        get() =
+            appState.isSignedIn
 
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
@@ -130,8 +133,8 @@ fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
     containerColor: Color = defaultContainerColor,
-    snackBarMessages: List<String> = emptyList(),
-    onSnackBarMessageConsumed: (String) -> Unit = {},
+    snackBarMessages: List<SnackbarMessage> = emptyList(),
+    onSnackBarMessageConsumed: (SnackbarMessage) -> Unit = {},
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
@@ -155,7 +158,7 @@ fun PaneScaffoldState.PaneScaffold(
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.Drag,
-                    ->
+                        ->
                         Modifier
                             .animateBounds(
                                 lookaheadScope = this,
@@ -189,10 +192,21 @@ fun PaneScaffoldState.PaneScaffold(
     LaunchedEffect(Unit) {
         snapshotFlow { updatedMessages.value }
             .filterNotNull()
-            .filterNot(String::isNullOrBlank)
             .collect { message ->
+                val text = when (message) {
+                    is SnackbarMessage.Resource -> when {
+                        message.args.isEmpty() -> getString(
+                            resource = message.stringResource,
+                        )
+                        else -> getString(
+                            resource = message.stringResource,
+                            formatArgs = (message.args.toTypedArray()),
+                        )
+                    }
+                    is SnackbarMessage.Text -> message.message
+                }
                 snackbarHostState.showSnackbar(
-                    message = message,
+                    message = text,
                 )
                 onSnackBarMessageConsumed(message)
             }
@@ -243,3 +257,14 @@ private val PaneClipModifier = Modifier.clip(
         topEnd = 16.dp,
     ),
 )
+
+sealed interface SnackbarMessage {
+    data class Resource(
+        val stringResource: StringResource,
+        val args: List<Any> = emptyList(),
+    ) : SnackbarMessage
+
+    data class Text(
+        val message: String,
+    ) : SnackbarMessage
+}
