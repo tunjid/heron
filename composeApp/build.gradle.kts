@@ -109,13 +109,15 @@ kotlin {
     }
 }
 
+val appVersion = "1.0.3"
+
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = appVersion
     }
     packaging {
         resources {
@@ -138,6 +140,9 @@ android {
         all {
             signingConfig = releaseSigning
         }
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -159,7 +164,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.tunjid.heron"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
         }
     }
 }
