@@ -66,6 +66,7 @@ sealed class WriteQueue {
 
     sealed interface Status {
         data object Enqueued : Status
+        data object Dropped : Status
         data object Duplicate : Status
     }
 }
@@ -134,7 +135,7 @@ internal class PersistedWriteQueue @Inject constructor(
     override suspend fun enqueue(
         writable: Writable,
     ): Status {
-        var status: Status? = null
+        var status: Status = Status.Dropped
         savedStateDataSource.inCurrentProfileSession {
             savedStateDataSource.updateWrites {
                 when {
@@ -149,7 +150,7 @@ internal class PersistedWriteQueue @Inject constructor(
                 }
             }
         }
-        return status ?: Status.Enqueued
+        return status
     }
 
     override suspend fun awaitDequeue(writable: Writable) {
