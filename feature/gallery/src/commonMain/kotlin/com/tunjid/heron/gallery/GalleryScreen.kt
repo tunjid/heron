@@ -258,7 +258,6 @@ internal fun GalleryScreen(
                 },
                 onPostInteraction = postInteractionState::onInteraction,
                 onDownloadClick = {
-
                 },
             )
 
@@ -519,7 +518,7 @@ fun MediaInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-    onDownloadClick: () -> Unit
+    onDownloadClick: () -> Unit,
 ) {
     if (post == null) return
 

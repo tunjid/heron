@@ -202,7 +202,6 @@ private inline fun PostInteractionsButtons(
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
-
     PostInteractionButton.All.forEach { button ->
         key(button) {
             PostInteraction(
