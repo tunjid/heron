@@ -47,10 +47,10 @@ sealed interface Writable {
             get() = when (interaction) {
                 is Post.Interaction.Create.Like -> "like-${interaction.postUri}"
                 is Post.Interaction.Create.Repost -> "repost-${interaction.postUri}"
-                is Post.Interaction.Delete.RemoveRepost -> "repost-${interaction.postUri}"
-                is Post.Interaction.Delete.Unlike -> "like-${interaction.postUri}"
+                is Post.Interaction.Delete.RemoveRepost -> "remove-repost-${interaction.postUri}"
+                is Post.Interaction.Delete.Unlike -> "remove-like-${interaction.postUri}"
                 is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
-                is Post.Interaction.Delete.RemoveBookmark -> "bookmark-${interaction.postUri}"
+                is Post.Interaction.Delete.RemoveBookmark -> "remove-bookmark-${interaction.postUri}"
             }
 
         override suspend fun WriteQueue.write(): Outcome =
