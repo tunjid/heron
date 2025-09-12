@@ -75,8 +75,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Post.Interaction.Create
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -248,12 +246,12 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Create.Like(
+                                null -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Delete.Unlike(
+                                else -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -262,12 +260,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Create.Repost(
+                                null -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Delete.RemoveRepost(
+                                else -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -275,12 +273,12 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Create.Bookmark(
+                                false -> com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> Delete.RemoveBookmark(
+                                true -> com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
