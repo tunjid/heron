@@ -200,7 +200,11 @@ fun PaneScaffoldState.PaneScaffold(
                         )
                         else -> getString(
                             resource = message.stringResource,
-                            *(message.args.toTypedArray()),
+                            *(
+                                message.args
+                                    .map { if (it is StringResource) getString(it) else it }
+                                    .toTypedArray()
+                                ),
                         )
                     }
                     is SnackbarMessage.Text -> message.message
