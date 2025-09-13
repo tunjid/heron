@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
@@ -30,9 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.local.models.SessionRequest
-import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
@@ -47,8 +44,6 @@ data class FormField(
     val leadingIcon: ImageVector? = null,
     @Transient
     val transformation: VisualTransformation = VisualTransformation.None,
-    @Transient
-    val autofillTypes: List<AutofillType> = emptyList(),
     @Transient
     val contentType: ContentType? = null,
     @Transient
@@ -82,7 +77,6 @@ data class State(
             maxLines = 1,
             leadingIcon = Icons.Rounded.AccountCircle,
             transformation = VisualTransformation.None,
-            autofillTypes = listOf(AutofillType.Username),
             contentType = ContentType.Username,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -97,7 +91,6 @@ data class State(
             maxLines = 1,
             leadingIcon = Icons.Rounded.Lock,
             transformation = PasswordVisualTransformation(),
-            autofillTypes = listOf(AutofillType.Password),
             contentType = ContentType.Password,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -113,9 +106,10 @@ data class State(
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 
-val State.canSignInLater: Boolean get() = fields.all { field ->
-    field.value.isBlank()
-}
+val State.canSignInLater: Boolean
+    get() = fields.all { field ->
+        field.value.isBlank()
+    }
 
 val State.sessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
@@ -133,17 +127,12 @@ sealed class Action(val key: String) {
             val request: SessionRequest,
         ) : Submit()
     }
+
     data class MessageConsumed(
         val message: SnackbarMessage,
     ) : Action("MessageConsumed")
 
     sealed class Navigate :
         Action(key = "Navigate"),
-        NavigationAction {
-        data object Home :
-            Navigate(),
-            NavigationAction by pathDestination(
-                path = AppStack.Home.rootRoute.routeParams.pathAndQueries,
-            )
-    }
+        NavigationAction
 }
