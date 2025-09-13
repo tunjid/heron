@@ -95,15 +95,12 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
     override fun parseResult(
         resultCode: Int,
         intent: Intent?,
-    ): OauthFlowResult = when (val code = intent?.data?.getQueryParameter(OauthCode)) {
-        null -> OauthFlowResult.Failure
-        else -> when (resultCode) {
-            Activity.RESULT_OK -> OauthFlowResult.Success(
-                code = code,
-            )
-
-            else -> OauthFlowResult.Failure
+    ): OauthFlowResult = when (resultCode) {
+        Activity.RESULT_OK -> when (val code = intent?.data?.getQueryParameter(OauthCode)) {
+            null -> OauthFlowResult.Failure
+            else -> OauthFlowResult.Success(code = code)
         }
+        else -> OauthFlowResult.Failure
     }
 }
 
