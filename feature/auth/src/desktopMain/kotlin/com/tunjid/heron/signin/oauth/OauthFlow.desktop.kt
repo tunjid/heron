@@ -23,7 +23,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 actual fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState =
     NoOpOauthFlowState
 
-private object NoOpOauthFlowState: OauthFlowState {
+private object NoOpOauthFlowState : OauthFlowState {
 
     override val supportsOauth: Boolean
         get() = false

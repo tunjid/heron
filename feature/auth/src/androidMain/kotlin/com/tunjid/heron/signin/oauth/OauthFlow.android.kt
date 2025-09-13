@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.core.net.toUri
 import com.tunjid.heron.data.core.types.GenericUri
 
-
 @Composable
 actual fun rememberOauthFlowState(
     onResult: (OauthFlowResult) -> Unit,
@@ -96,14 +95,16 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
     override fun parseResult(
         resultCode: Int,
         intent: Intent?,
-    ): OauthFlowResult = when (val redirectUri = intent?.dataString) {
+    ): OauthFlowResult = when (val code = intent?.data?.getQueryParameter(OauthCode)) {
         null -> OauthFlowResult.Failure
         else -> when (resultCode) {
             Activity.RESULT_OK -> OauthFlowResult.Success(
-                code = redirectUri,
+                code = code,
             )
 
             else -> OauthFlowResult.Failure
         }
     }
 }
+
+private const val OauthCode = "code"

@@ -35,5 +35,5 @@ sealed class OauthFlowResult {
 
 @Composable
 expect fun rememberOauthFlowState(
-    onResult: (OauthFlowResult) -> Unit
+    onResult: (OauthFlowResult) -> Unit,
 ): OauthFlowState
