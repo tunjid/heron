@@ -40,5 +40,11 @@ kotlin {
                 implementation(libs.tunjid.tiler.tiler)
             }
         }
+        androidMain {
+            dependencies {
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.browser)
+            }
+        }
     }
 }

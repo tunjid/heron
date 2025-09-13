@@ -14,20 +14,26 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.local.models
+package com.tunjid.heron.signin.oauth
 
-import com.tunjid.heron.data.core.types.ProfileHandle
-import kotlinx.serialization.Serializable
+import androidx.compose.runtime.Composable
+import com.tunjid.heron.data.core.types.GenericUri
 
-@Serializable
-sealed class SessionRequest {
-    data class Credentials(
-        val handle: ProfileHandle,
-        val password: String,
-    ) : SessionRequest()
+interface OauthFlowState {
+    val supportsOauth: Boolean
 
-    data class Oauth(
-        val handle: ProfileHandle,
-        val code: String,
-    ) : SessionRequest()
+    fun launch(uri: GenericUri)
 }
+
+sealed class OauthFlowResult {
+    data class Success(
+        val code: String,
+    ) : OauthFlowResult()
+
+    data object Failure : OauthFlowResult()
+}
+
+@Composable
+expect fun rememberOauthFlowState(
+    onResult: (OauthFlowResult) -> Unit,
+): OauthFlowState
