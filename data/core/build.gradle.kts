@@ -32,6 +32,9 @@ kotlin {
                 implementation(project(":data:database"))
                 implementation(project(":data:lexicons"))
 
+                implementation(libs.crypto.core)
+                implementation(libs.crypto.random)
+
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
@@ -66,8 +69,14 @@ kotlin {
                 implementation(libs.ktor.client.android)
             }
         }
+        iosMain {
+            dependencies {
+                implementation(libs.crypto.apple)
+            }
+        }
         desktopMain {
             dependencies {
+                implementation(libs.crypto.jdk)
                 implementation(libs.ktor.client.java)
             }
         }

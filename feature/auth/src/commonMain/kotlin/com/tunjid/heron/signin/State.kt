@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.signin.oauth.OauthFlowResult
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -70,6 +71,7 @@ internal val Password = FormField.Id("password")
 data class State(
     val isSignedIn: Boolean = false,
     val isSubmitting: Boolean = false,
+    val isOauthAvailable: Boolean = false,
     val fields: List<FormField> = listOf(
         FormField(
             id = Username,
@@ -121,6 +123,15 @@ val State.sessionRequest: SessionRequest
 
 sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
+
+    data class OauthAvailabilityChanged(
+        val isOauthAvailable: Boolean,
+    ) : Action("OauthAvailabilityChanged")
+
+    data class OauthFlowResultAvailable(
+        val result: OauthFlowResult,
+    ) : Action("OauthFlowResultAvailable")
+
     sealed class Submit : Action("Submit") {
         data object GuestAuth : Submit()
         data class Auth(

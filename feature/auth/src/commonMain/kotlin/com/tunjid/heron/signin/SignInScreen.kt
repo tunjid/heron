@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -35,6 +36,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.username
@@ -56,6 +58,9 @@ internal fun SignInScreen(
     ) {
         val focusManager = LocalFocusManager.current
         val keyboardController = LocalSoftwareKeyboardController.current
+        val oauthFlowState = rememberOauthFlowState {
+            actions(Action.OauthFlowResultAvailable(it))
+        }
 
         state.fields.forEach { field ->
             OutlinedTextField(
@@ -108,6 +113,10 @@ internal fun SignInScreen(
                     }
                 },
             )
+        }
+
+        LaunchedEffect(oauthFlowState.supportsOauth) {
+            actions(Action.OauthAvailabilityChanged(oauthFlowState.supportsOauth))
         }
     }
 }

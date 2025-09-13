@@ -80,7 +80,8 @@ class ActualSignInViewModel(
                         authRepository = authRepository,
                         navActions = navActions,
                     )
-
+                    is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations()
+                    is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -92,6 +93,16 @@ class ActualSignInViewModel(
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
     mapToMutation { (updatedField) ->
         copy(fields = fields.update(updatedField))
+    }
+
+private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(isOauthAvailable = it.isOauthAvailable)
+    }
+
+private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        throw NotImplementedError("Oauth flow result processing not yet implemented")
     }
 
 /**

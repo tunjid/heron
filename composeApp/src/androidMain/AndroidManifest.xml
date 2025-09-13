@@ -63,6 +63,16 @@
 
                 <data android:scheme="at" />
             </intent-filter>
+          <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <!-- The scheme, host, and path that this activity will respond to -->
+            <data
+              android:scheme="https"
+              android:host="heron-d0ff3.web.app"
+              android:path="/oauth/callback" />
+          </intent-filter>
         </activity>
     </application>
 
