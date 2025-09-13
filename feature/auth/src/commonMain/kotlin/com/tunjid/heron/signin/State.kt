@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -118,8 +119,8 @@ val State.canSignInLater: Boolean get() = fields.all { field ->
 
 val State.sessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
-        SessionRequest(
-            username = formMap.getValue(Username).value,
+        SessionRequest.Credentials(
+            handle = ProfileHandle(formMap.getValue(Username).value),
             password = formMap.getValue(Password).value,
         )
     }

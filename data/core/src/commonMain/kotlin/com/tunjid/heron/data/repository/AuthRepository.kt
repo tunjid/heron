@@ -105,12 +105,15 @@ internal class AuthTokenRepository(
     override suspend fun createSession(
         request: SessionRequest,
     ): Result<Unit> = networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-        createSession(
-            CreateSessionRequest(
-                identifier = request.username,
-                password = request.password,
-            ),
-        )
+        when (request) {
+            is SessionRequest.Credentials -> createSession(
+                CreateSessionRequest(
+                    identifier = request.handle.id,
+                    password = request.password,
+                ),
+            )
+            is SessionRequest.Oauth -> TODO()
+        }
     }
         .mapCatching { result ->
             savedStateDataSource.setAuth(

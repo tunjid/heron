@@ -16,10 +16,17 @@
 
 package com.tunjid.heron.data.local.models
 
+import com.tunjid.heron.data.core.types.ProfileHandle
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SessionRequest(
-    val username: String,
-    val password: String,
-)
+sealed class SessionRequest {
+    data class Credentials(
+        val handle: ProfileHandle,
+        val password: String,
+    ) : SessionRequest()
+
+    data class Oauth(
+        val handle: ProfileHandle,
+    ) : SessionRequest()
+}
