@@ -49,9 +49,11 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
+import com.tunjid.heron.signin.AuthMode
 import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.canSignInLater
+import com.tunjid.heron.signin.profileHandle
 import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.treenav.compose.PaneEntry
@@ -156,7 +158,15 @@ class SignInBindings(
                             if (state.submitButtonEnabled) viewModel.accept(
                                 when {
                                     state.canSignInLater -> Action.Submit.GuestAuth
-                                    else -> Action.Submit.Auth(state.sessionRequest)
+                                    else -> when (state.authMode) {
+                                        AuthMode.Undecided -> Action.Submit.GuestAuth
+                                        AuthMode.UserSelectable.Oauth -> Action.BeginOauthFlow(
+                                            state.profileHandle,
+                                        )
+                                        AuthMode.UserSelectable.Password -> Action.Submit.Auth(
+                                            state.sessionRequest,
+                                        )
+                                    }
                                 },
                             )
                         },
@@ -164,6 +174,7 @@ class SignInBindings(
                 },
                 content = { paddingValues ->
                     SignInScreen(
+                        paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier

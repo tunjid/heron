@@ -17,6 +17,7 @@
 package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -25,6 +26,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -36,6 +38,9 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.oauth_flow_failed
+import heron.feature.auth.generated.resources.oauth_start_error
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -80,8 +85,14 @@ class ActualSignInViewModel(
                         authRepository = authRepository,
                         navActions = navActions,
                     )
-                    is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations()
+                    is Action.BeginOauthFlow -> action.flow.beginOauthMutations(
+                        authRepository = authRepository,
+                    )
+                    is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations(
+                        authRepository = authRepository,
+                    )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
+                    is Action.SetAuthMode -> action.flow.setAuthModeMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -95,14 +106,63 @@ private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>>
         copy(fields = fields.update(updatedField))
     }
 
-private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(isOauthAvailable = it.isOauthAvailable)
+private fun Flow<Action.SetAuthMode>.setAuthModeMutations(): Flow<Mutation<State>> =
+    mapToMutation { (authMode) ->
+        copy(authMode = authMode)
     }
 
-private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        throw NotImplementedError("Oauth flow result processing not yet implemented")
+private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
+    mapToMutation { (isOauthAvailable) ->
+        copy(
+            isOauthAvailable = isOauthAvailable,
+            authMode = when (authMode) {
+                AuthMode.UserSelectable.Oauth ->
+                    if (!isOauthAvailable) AuthMode.UserSelectable.Password
+                    else authMode
+                AuthMode.UserSelectable.Password -> authMode
+                AuthMode.Undecided ->
+                    if (isOauthAvailable) AuthMode.UserSelectable.Oauth
+                    else AuthMode.UserSelectable.Password
+            },
+        )
+    }
+
+private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        when (val result = action.result) {
+            OauthFlowResult.Failure -> emit {
+                copy(
+                    messages = messages + SnackbarMessage.Resource(Res.string.oauth_flow_failed)
+                )
+            }
+            is OauthFlowResult.Success -> {
+                authRepository.createSession(
+                    SessionRequest.Oauth(
+                        handle = action.handle,
+                        code = result.code,
+                    ),
+                )
+            }
+        }
+    }
+
+private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations {
+        val result = authRepository.oauthRequestUri(it.handle)
+        result.fold(
+            onSuccess = {
+                emit { copy(oauthRequestUri = it) }
+            },
+            onFailure = {
+                emit {
+                    copy(messages = messages + SnackbarMessage.Resource(Res.string.oauth_start_error))
+                }
+            },
+        )
     }
 
 /**
@@ -131,7 +191,6 @@ private fun Flow<Action.Submit>.submissionMutations(
             }
             when (exception) {
                 null -> navActions(NavigationContext::resetAuthNavigation)
-
                 else -> emit {
                     copy(
                         messages = exception.message

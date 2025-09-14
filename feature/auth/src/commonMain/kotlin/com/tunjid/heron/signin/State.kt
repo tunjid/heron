@@ -27,6 +27,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -68,10 +70,25 @@ internal val Username = FormField.Id("username")
 internal val Password = FormField.Id("password")
 
 @Serializable
+sealed class AuthMode {
+    @Serializable
+    data object Undecided : AuthMode()
+    @Serializable
+    sealed class UserSelectable: AuthMode() {
+        @Serializable
+        data object Oauth : UserSelectable()
+        @Serializable
+        data object Password : UserSelectable()
+    }
+}
+
+@Serializable
 data class State(
     val isSignedIn: Boolean = false,
     val isSubmitting: Boolean = false,
     val isOauthAvailable: Boolean = false,
+    val oauthRequestUri: GenericUri? = null,
+    val authMode: AuthMode = AuthMode.Undecided,
     val fields: List<FormField> = listOf(
         FormField(
             id = Username,
@@ -108,6 +125,9 @@ data class State(
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 
+val State.profileHandle: ProfileHandle
+    get() = ProfileHandle(id = fields.first { it.id == Username }.value)
+
 val State.canSignInLater: Boolean
     get() = fields.all { field ->
         field.value.isBlank()
@@ -121,6 +141,25 @@ val State.sessionRequest: SessionRequest
         )
     }
 
+internal inline fun State.onFormFieldMatchingAuth(
+    block: (FormField) -> Unit,
+) = fields.forEach { field ->
+    when (authMode) {
+        AuthMode.UserSelectable.Oauth -> when (field.id) {
+            Username -> block(field)
+            // Ignore password field
+            Password -> Unit
+        }
+        // Unconditionally invoke
+        AuthMode.UserSelectable.Password -> block(field)
+        AuthMode.Undecided -> when (field.id) {
+            Username -> block(field)
+            // Ignore password field
+            Password -> Unit
+        }
+    }
+}
+
 sealed class Action(val key: String) {
     data class FieldChanged(val field: FormField) : Action("FieldChanged")
 
@@ -128,9 +167,18 @@ sealed class Action(val key: String) {
         val isOauthAvailable: Boolean,
     ) : Action("OauthAvailabilityChanged")
 
+    data class BeginOauthFlow(
+        val handle: ProfileHandle,
+    ) : Action("BeginOauthFlow")
+
     data class OauthFlowResultAvailable(
+        val handle: ProfileHandle,
         val result: OauthFlowResult,
     ) : Action("OauthFlowResultAvailable")
+
+    data class SetAuthMode(
+        val mode: AuthMode.UserSelectable,
+    ) : Action("SetAuthMode")
 
     sealed class Submit : Action("Submit") {
         data object GuestAuth : Submit()
