@@ -150,7 +150,7 @@ internal inline fun State.onFormFieldMatchingAuth(
         AuthMode.UserSelectable.Password -> block(field)
         AuthMode.UserSelectable.Oauth,
         AuthMode.Undecided,
-            -> if (field.id == Username) block(field)
+        -> if (field.id == Username) block(field)
     }
 }
 
