@@ -61,8 +61,7 @@ abstract class SavedState {
 
         @Serializable
         data object Guest : AuthTokens() {
-            override val authProfileId: ProfileId
-                get() = Constants.unknownAuthorId
+            override val authProfileId: ProfileId = Constants.unknownAuthorId
 
             override val didDoc: DidDoc = DidDoc()
         }
@@ -165,7 +164,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Authenticated -> this
         SavedState.AuthTokens.Guest,
         null,
-            -> null
+        -> null
     }
 
 fun SavedState.signedProfilePreferencesOrDefault() =
