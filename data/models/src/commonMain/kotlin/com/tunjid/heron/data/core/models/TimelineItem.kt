@@ -253,7 +253,7 @@ sealed class TimelineItem {
             is Pinned,
             is Thread,
             is Single,
-                -> post.indexedAt
+            -> post.indexedAt
 
             is Repost -> at
         }
