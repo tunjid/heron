@@ -73,16 +73,18 @@ internal fun SignInScreen(
     ) {
         val focusManager = LocalFocusManager.current
         val keyboardController = LocalSoftwareKeyboardController.current
+
+        val oauthFlowUri = rememberUpdatedState(state.oauthRequestUri)
+        val currentProfileHandle = rememberUpdatedState(state.profileHandle)
+
         val oauthFlowState = rememberOauthFlowState { result ->
             actions(
                 Action.OauthFlowResultAvailable(
-                    handle = state.profileHandle,
+                    handle = currentProfileHandle.value,
                     result = result,
                 ),
             )
         }
-
-        val oauthFlowUri = rememberUpdatedState(state.oauthRequestUri)
 
         state.onFormFieldMatchingAuth { field ->
             key(field.id) {
