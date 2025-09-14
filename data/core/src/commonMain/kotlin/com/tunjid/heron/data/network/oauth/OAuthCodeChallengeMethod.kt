@@ -16,7 +16,8 @@
 
 package com.tunjid.heron.data.network.oauth
 
-import io.ktor.util.Digest
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.algorithms.SHA256
 
 /**
  * Represents an OAuth code challenge method that the OAuth server will use to verify the code challenge.
@@ -42,9 +43,10 @@ abstract class OAuthCodeChallengeMethod(open val method: String) {
      */
     data object S256 : OAuthCodeChallengeMethod("S256") {
         override suspend fun provideCodeChallenge(codeVerifier: String): String {
-            val sha256 = Digest("SHA-256").also { it += codeVerifier.encodeToByteArray() }.build()
-            val base64UrlSafe = sha256.encodeBase64Url()
-            return base64UrlSafe
+            val digest = CryptographyProvider.Default.get(SHA256)
+                .hasher()
+                .hash(codeVerifier.encodeToByteArray())
+            return digest.encodeBase64Url()
         }
     }
 }
