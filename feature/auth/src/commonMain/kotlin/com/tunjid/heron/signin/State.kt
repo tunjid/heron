@@ -27,7 +27,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.local.models.SessionRequest
@@ -73,10 +72,12 @@ internal val Password = FormField.Id("password")
 sealed class AuthMode {
     @Serializable
     data object Undecided : AuthMode()
+
     @Serializable
-    sealed class UserSelectable: AuthMode() {
+    sealed class UserSelectable : AuthMode() {
         @Serializable
         data object Oauth : UserSelectable()
+
         @Serializable
         data object Password : UserSelectable()
     }
@@ -145,18 +146,11 @@ internal inline fun State.onFormFieldMatchingAuth(
     block: (FormField) -> Unit,
 ) = fields.forEach { field ->
     when (authMode) {
-        AuthMode.UserSelectable.Oauth -> when (field.id) {
-            Username -> block(field)
-            // Ignore password field
-            Password -> Unit
-        }
         // Unconditionally invoke
         AuthMode.UserSelectable.Password -> block(field)
-        AuthMode.Undecided -> when (field.id) {
-            Username -> block(field)
-            // Ignore password field
-            Password -> Unit
-        }
+        AuthMode.UserSelectable.Oauth,
+        AuthMode.Undecided,
+            -> if (field.id == Username) block(field)
     }
 }
 

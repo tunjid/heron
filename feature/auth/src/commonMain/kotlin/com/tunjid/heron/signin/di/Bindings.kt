@@ -159,7 +159,9 @@ class SignInBindings(
                                 when {
                                     state.canSignInLater -> Action.Submit.GuestAuth
                                     else -> when (state.authMode) {
-                                        AuthMode.Undecided -> Action.Submit.GuestAuth
+                                        AuthMode.Undecided -> Action.BeginOauthFlow(
+                                            state.profileHandle,
+                                        )
                                         AuthMode.UserSelectable.Oauth -> Action.BeginOauthFlow(
                                             state.profileHandle,
                                         )

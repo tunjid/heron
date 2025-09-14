@@ -52,6 +52,7 @@ import heron.feature.auth.generated.resources.sign_with_password
 import heron.feature.auth.generated.resources.username
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -164,16 +165,17 @@ internal fun SignInScreen(
         }
 
         LaunchedEffect(Unit) {
-            snapshotFlow { oauthFlowState.supportsOauth }
-                .collectLatest { supportsOauth ->
-                    actions(Action.OauthAvailabilityChanged(supportsOauth))
-                }
-        }
-
-        LaunchedEffect(Unit) {
-            snapshotFlow { oauthFlowUri.value }
-                .filterNotNull()
-                .collectLatest(oauthFlowState::launch)
+            launch {
+                snapshotFlow { oauthFlowState.supportsOauth }
+                    .collectLatest { supportsOauth ->
+                        actions(Action.OauthAvailabilityChanged(supportsOauth))
+                    }
+            }
+            launch {
+                snapshotFlow { oauthFlowUri.value }
+                    .filterNotNull()
+                    .collectLatest(oauthFlowState::launch)
+            }
         }
     }
 }

@@ -144,9 +144,12 @@ internal class AuthTokenRepository(
                 updateSignedInUser(result.did)
                 Unit
             }
-        is SessionRequest.Oauth -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+        is SessionRequest.Oauth -> runCatchingUnlessCancelled {
             networkService.finishOauthFlow(request)
-            TODO()
+            // TODO: The rest of the OAuth sign-in flow needs to be implemented.
+            // This includes obtaining tokens from the network response, saving them,
+            // and updating the signed-in user state, similar to the Credentials flow.
+            throw NotImplementedError("OAuth sign-in is not fully implemented.")
         }
     }
 

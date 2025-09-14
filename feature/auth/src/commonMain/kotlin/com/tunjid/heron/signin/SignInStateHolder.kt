@@ -43,6 +43,7 @@ import heron.feature.auth.generated.resources.oauth_flow_failed
 import heron.feature.auth.generated.resources.oauth_start_error
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -90,6 +91,7 @@ class ActualSignInViewModel(
                     )
                     is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations(
                         authRepository = authRepository,
+                        navActions = navActions,
                     )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
                     is Action.SetAuthMode -> action.flow.setAuthModeMutations()
@@ -129,20 +131,25 @@ private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutati
 
 private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
     authRepository: AuthRepository,
+    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
         when (val result = action.result) {
             OauthFlowResult.Failure -> emit {
                 copy(
-                    messages = messages + SnackbarMessage.Resource(Res.string.oauth_flow_failed)
+                    messages = messages + SnackbarMessage.Resource(Res.string.oauth_flow_failed),
                 )
             }
             is OauthFlowResult.Success -> {
-                authRepository.createSession(
-                    SessionRequest.Oauth(
-                        handle = action.handle,
-                        code = result.code,
+                createSessionMutations(
+                    action = Action.Submit.Auth(
+                        request = SessionRequest.Oauth(
+                            handle = action.handle,
+                            code = result.code,
+                        ),
                     ),
+                    authRepository = authRepository,
+                    navActions = navActions,
                 )
             }
         }
@@ -179,27 +186,39 @@ private fun Flow<Action.Submit>.submissionMutations(
 ): Flow<Mutation<State>> =
     debounce(200)
         .mapLatestToManyMutations { action ->
-            emit { copy(isSubmitting = true) }
-            val exception = when (action) {
-                is Action.Submit.Auth -> {
-                    authRepository.createSession(action.request).exceptionOrNull()
-                }
-                Action.Submit.GuestAuth -> {
-                    authRepository.guestSignIn()
-                    null
-                }
-            }
-            when (exception) {
-                null -> navActions(NavigationContext::resetAuthNavigation)
-                else -> emit {
-                    copy(
-                        messages = exception.message
-                            ?.let(SnackbarMessage::Text)
-                            ?.let(messages::plus)
-                            ?.distinct()
-                            ?: messages,
-                    )
-                }
-            }
-            emit { copy(isSubmitting = false) }
+            createSessionMutations(
+                action = action,
+                authRepository = authRepository,
+                navActions = navActions,
+            )
         }
+
+private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
+    action: Action.Submit,
+    authRepository: AuthRepository,
+    navActions: (NavigationMutation) -> Unit,
+) {
+    emit { copy(isSubmitting = true) }
+    val exception = when (action) {
+        is Action.Submit.Auth -> {
+            authRepository.createSession(action.request).exceptionOrNull()
+        }
+        Action.Submit.GuestAuth -> {
+            authRepository.guestSignIn()
+            null
+        }
+    }
+    when (exception) {
+        null -> navActions(NavigationContext::resetAuthNavigation)
+        else -> emit {
+            copy(
+                messages = exception.message
+                    ?.let(SnackbarMessage::Text)
+                    ?.let(messages::plus)
+                    ?.distinct()
+                    ?: messages,
+            )
+        }
+    }
+    emit { copy(isSubmitting = false) }
+}
