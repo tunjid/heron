@@ -21,4 +21,7 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="sign_in_later">Sign in later</string>
+    <string name="sign_with_password">Sign in with password</string>
+    <string name="oauth_flow_failed">Authorization failed</string>
+  <string name="oauth_start_error">There was an error starting the authorization flow. Please check your username and try again.</string>
 </resources>

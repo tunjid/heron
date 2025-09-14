@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
+import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -39,6 +42,14 @@ import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 
 interface NetworkService {
     val api: BlueskyApi
+
+    suspend fun beginOauthFlowUri(
+        handle: ProfileHandle,
+    ): GenericUri
+
+    suspend fun finishOauthFlow(
+        request: SessionRequest.Oauth,
+    )
 
     suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int = 3,
@@ -93,6 +104,14 @@ class KtorNetworkService(
             }
         },
     )
+
+    override suspend fun beginOauthFlowUri(handle: ProfileHandle): GenericUri {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun finishOauthFlow(request: SessionRequest.Oauth) {
+        TODO("Not yet implemented")
+    }
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int,

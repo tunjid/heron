@@ -28,7 +28,9 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -39,6 +41,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
@@ -61,7 +64,13 @@ interface AuthRepository {
 
     fun isSignedInProfile(id: Id): Flow<Boolean>
 
-    suspend fun createSession(request: SessionRequest): Result<Unit>
+    suspend fun oauthRequestUri(
+        handle: ProfileHandle,
+    ): Result<GenericUri>
+
+    suspend fun createSession(
+        request: SessionRequest,
+    ): Result<Unit>
 
     suspend fun guestSignIn()
 
@@ -102,34 +111,47 @@ internal class AuthTokenRepository(
             .map { it.signedInProfileId == id }
             .distinctUntilChanged()
 
+    override suspend fun oauthRequestUri(
+        handle: ProfileHandle,
+    ): Result<GenericUri> = runCatchingUnlessCancelled {
+        networkService.beginOauthFlowUri(handle)
+    }
+
     override suspend fun createSession(
         request: SessionRequest,
-    ): Result<Unit> = networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-        when (request) {
-            is SessionRequest.Credentials -> createSession(
+    ): Result<Unit> = when (request) {
+        is SessionRequest.Credentials -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+            createSession(
                 CreateSessionRequest(
                     identifier = request.handle.id,
                     password = request.password,
                 ),
             )
-            is SessionRequest.Oauth -> TODO()
+        }
+            .mapCatching { result ->
+                savedStateDataSource.setAuth(
+                    auth = SavedState.AuthTokens(
+                        authProfileId = ProfileId(result.did.did),
+                        auth = result.accessJwt,
+                        refresh = result.refreshJwt,
+                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                            jsonContent = result.didDoc,
+                        ),
+                    ),
+                )
+                // Suspend till auth token has been saved and is readable
+                savedStateDataSource.savedState.first { it.auth != null }
+                updateSignedInUser(result.did)
+                Unit
+            }
+        is SessionRequest.Oauth -> runCatchingUnlessCancelled {
+            networkService.finishOauthFlow(request)
+            // TODO: The rest of the OAuth sign-in flow needs to be implemented.
+            // This includes obtaining tokens from the network response, saving them,
+            // and updating the signed-in user state, similar to the Credentials flow.
+            throw NotImplementedError("OAuth sign-in is not fully implemented.")
         }
     }
-        .mapCatching { result ->
-            savedStateDataSource.setAuth(
-                auth = SavedState.AuthTokens(
-                    authProfileId = ProfileId(result.did.did),
-                    auth = result.accessJwt,
-                    refresh = result.refreshJwt,
-                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                        jsonContent = result.didDoc,
-                    ),
-                ),
-            )
-            // Suspend till auth token has been saved and is readable
-            savedStateDataSource.savedState.first { it.auth != null }
-            updateSignedInUser(result.did)
-        }
 
     override suspend fun guestSignIn() {
         savedStateDataSource.guestSignIn()
