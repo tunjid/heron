@@ -55,12 +55,29 @@ abstract class SavedState {
     abstract val signedInProfileData: ProfileData?
 
     @Serializable
-    data class AuthTokens(
-        val authProfileId: ProfileId,
-        val auth: String,
-        val refresh: String,
-        val didDoc: DidDoc = DidDoc(),
-    ) {
+    sealed class AuthTokens {
+        abstract val authProfileId: ProfileId
+        abstract val didDoc: DidDoc
+
+        @Serializable
+        data object Guest : AuthTokens() {
+            override val authProfileId: ProfileId
+                get() = Constants.unknownAuthorId
+
+            override val didDoc: DidDoc = DidDoc()
+        }
+
+        @Serializable
+        sealed class Authenticated : AuthTokens() {
+            @Serializable
+            data class Bearer(
+                override val authProfileId: ProfileId,
+                val auth: String,
+                val refresh: String,
+                override val didDoc: DidDoc = DidDoc(),
+            ) : Authenticated()
+        }
+
         @Serializable
         data class DidDoc(
             val verificationMethod: List<VerificationMethod> = emptyList(),
@@ -120,12 +137,7 @@ abstract class SavedState {
     )
 }
 
-private val GuestAuth = SavedState.AuthTokens(
-    authProfileId = Constants.unknownAuthorId,
-    auth = "",
-    refresh = "",
-    didDoc = SavedState.AuthTokens.DidDoc(),
-)
+private val GuestAuth = SavedState.AuthTokens.Guest
 
 val InitialSavedState: SavedState = VersionedSavedState.Initial
 
@@ -148,8 +160,13 @@ internal val SavedStateDataSource.signedInAuth
         .map { it.auth.ifSignedIn() }
         .distinctUntilChanged()
 
-private fun SavedState.AuthTokens?.ifSignedIn() =
-    this?.takeUnless(GuestAuth::equals)
+private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
+    when (this) {
+        is SavedState.AuthTokens.Authenticated -> this
+        SavedState.AuthTokens.Guest,
+        null,
+            -> null
+    }
 
 fun SavedState.signedProfilePreferencesOrDefault() =
     signedInProfileData

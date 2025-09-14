@@ -40,8 +40,8 @@ import sh.christian.ozone.api.response.AtpErrorDescription
 
 class ErrorInterceptorConfig {
     internal var networkErrorConverter: ((String) -> AtpErrorDescription)? = null
-    internal var readAuth: (suspend () -> SavedState.AuthTokens?)? = null
-    internal var saveAuth: (suspend (SavedState.AuthTokens?) -> Unit)? = null
+    internal var readAuth: (suspend () -> SavedState.AuthTokens.Authenticated?)? = null
+    internal var saveAuth: (suspend (SavedState.AuthTokens.Authenticated?) -> Unit)? = null
 }
 
 /**
@@ -49,8 +49,8 @@ class ErrorInterceptorConfig {
  */
 internal class AuthPlugin(
     private val networkErrorConverter: ((String) -> AtpErrorDescription)?,
-    private val readAuth: (suspend () -> SavedState.AuthTokens?)?,
-    private val saveAuth: (suspend (SavedState.AuthTokens?) -> Unit)?,
+    private val readAuth: (suspend () -> SavedState.AuthTokens.Authenticated?)?,
+    private val saveAuth: (suspend (SavedState.AuthTokens.Authenticated?) -> Unit)?,
 ) {
 
     companion object : HttpClientPlugin<ErrorInterceptorConfig, AuthPlugin> {
@@ -94,8 +94,12 @@ internal class AuthPlugin(
                     )
                 }
 
-                if (!context.headers.contains(Authorization)) {
-                    authTokens?.auth?.let { context.bearerAuth(it) }
+                if (!context.headers.contains(Authorization) && authTokens != null) {
+                    when (authTokens) {
+                        is SavedState.AuthTokens.Authenticated.Bearer -> context.bearerAuth(
+                            token = authTokens.auth,
+                        )
+                    }
                 }
 
                 var result: HttpClientCall = execute(context)
@@ -112,27 +116,38 @@ internal class AuthPlugin(
 
                 if (response.getOrNull()?.error == "ExpiredToken") {
                     try {
-                        scope.post(RefreshTokenEndpoint) {
-                            plugin.readAuth?.invoke()?.refresh?.let { bearerAuth(it) }
-                        }.body<RefreshSessionResponse>()
-                            .let { refreshed ->
-                                val newAccessToken = refreshed.accessJwt
-                                val newRefreshToken = refreshed.refreshJwt
+                        val currentToken = plugin.readAuth?.invoke()
+                        if (currentToken == null) {
+                            // Delete existing token and force a log out
+                            plugin.saveAuth?.invoke(null)
+                            return@intercept result
+                        }
 
-                                plugin.saveAuth?.invoke(
-                                    SavedState.AuthTokens(
-                                        authProfileId = ProfileId(refreshed.did.did),
-                                        auth = newAccessToken,
-                                        refresh = newRefreshToken,
-                                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                                            jsonContent = refreshed.didDoc,
+                        when (currentToken) {
+                            is SavedState.AuthTokens.Authenticated.Bearer -> scope.post(
+                                RefreshTokenEndpoint,
+                            ) {
+                                bearerAuth(currentToken.refresh)
+                            }.body<RefreshSessionResponse>()
+                                .let { refreshed ->
+                                    val newAccessToken = refreshed.accessJwt
+                                    val newRefreshToken = refreshed.refreshJwt
+
+                                    plugin.saveAuth?.invoke(
+                                        SavedState.AuthTokens.Authenticated.Bearer(
+                                            authProfileId = ProfileId(refreshed.did.did),
+                                            auth = newAccessToken,
+                                            refresh = newRefreshToken,
+                                            didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                                                jsonContent = refreshed.didDoc,
+                                            ),
                                         ),
-                                    ),
-                                )
-                                context.headers.remove(Authorization)
-                                context.bearerAuth(newAccessToken)
-                                result = execute(context)
-                            }
+                                    )
+                                    context.headers.remove(Authorization)
+                                    context.bearerAuth(newAccessToken)
+                                    result = execute(context)
+                                }
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (_: Throwable) {
