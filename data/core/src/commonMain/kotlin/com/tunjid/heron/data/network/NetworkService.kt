@@ -22,6 +22,10 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
 import com.tunjid.heron.data.local.models.SessionRequest
+import com.tunjid.heron.data.network.oauth.OAuthApi
+import com.tunjid.heron.data.network.oauth.OAuthAuthorizationRequest
+import com.tunjid.heron.data.network.oauth.OAuthClient
+import com.tunjid.heron.data.network.oauth.OAuthScope
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -65,52 +69,74 @@ class KtorNetworkService(
     savedStateDataSource: SavedStateDataSource,
     private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
-    override val api = XrpcBlueskyApi(
-        HttpClient {
-            expectSuccess = true
 
-            install(DefaultRequest) {
-                url.takeFrom("https://bsky.social")
+    private var pendingAuthorizationRequest: OAuthAuthorizationRequest? = null
+
+    private val httpClient = HttpClient {
+        expectSuccess = true
+
+        install(DefaultRequest) {
+            url.takeFrom("https://bsky.social")
+        }
+
+        install(ContentNegotiation) {
+            json(
+                json = BlueskyJson,
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        install(AuthPlugin) {
+            this.networkErrorConverter = {
+                BlueskyJson.decodeFromString(it)
             }
-
-            install(ContentNegotiation) {
-                json(
-                    json = BlueskyJson,
-                    contentType = ContentType.Application.Json,
+            this.readAuth = {
+                // Must be signed in to use
+                savedStateDataSource.signedInAuth.first()
+            }
+            this.saveAuth = {
+                savedStateDataSource.setAuth(
+                    auth = it,
                 )
             }
-
-            install(AuthPlugin) {
-                this.networkErrorConverter = {
-                    BlueskyJson.decodeFromString(it)
-                }
-                this.readAuth = {
-                    // Must be signed in to use
-                    savedStateDataSource.signedInAuth.first()
-                }
-                this.saveAuth = {
-                    savedStateDataSource.setAuth(
-                        auth = it,
-                    )
-                }
-            }
-            install(Logging) {
-                level = LogLevel.INFO
-                logger = object : Logger {
-                    override fun log(message: String) {
+        }
+        install(Logging) {
+            level = LogLevel.INFO
+            logger = object : Logger {
+                override fun log(message: String) {
 //                        println("Logger Ktor => $message")
-                    }
                 }
             }
-        },
-    )
-
-    override suspend fun beginOauthFlowUri(handle: ProfileHandle): GenericUri {
-        TODO("Not yet implemented")
+        }
     }
 
-    override suspend fun finishOauthFlow(request: SessionRequest.Oauth) {
-        TODO("Not yet implemented")
+    private val oAuthApi: OAuthApi = OAuthApi(
+        httpClient = httpClient,
+    )
+
+    override val api = XrpcBlueskyApi(httpClient)
+
+    override suspend fun beginOauthFlowUri(
+        handle: ProfileHandle,
+    ) = oAuthApi.buildAuthorizationRequest(
+        oauthClient = HeronOauthClient,
+        scopes = HeronOauthScopes,
+        loginHandleHint = handle.id,
+    )
+        .also(::pendingAuthorizationRequest::set)
+        .authorizeRequestUrl
+        .let(::GenericUri)
+
+    override suspend fun finishOauthFlow(
+        request: SessionRequest.Oauth,
+    ) {
+        val pendingRequest = pendingAuthorizationRequest ?: return
+        oAuthApi.requestToken(
+            oauthClient = HeronOauthClient,
+            nonce = pendingRequest.nonce,
+            codeVerifier = pendingRequest.codeVerifier,
+            code = request.code,
+        )
     }
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
@@ -129,3 +155,14 @@ class KtorNetworkService(
 }
 
 internal val BlueskyJson: Json = buildXrpcJsonConfiguration(XrpcSerializersModule)
+
+private val HeronOauthClient = OAuthClient(
+    clientId = "https://heron-d0ff3.web.app/oauth-client.json",
+    redirectUri = "https://heron-d0ff3.web.app/oauth/callback",
+)
+
+private val HeronOauthScopes = listOf(
+    OAuthScope.AtProto,
+    OAuthScope.Generic,
+    OAuthScope.BlueskyChat,
+)
