@@ -130,7 +130,7 @@ internal class AuthTokenRepository(
         }
             .mapCatching { result ->
                 savedStateDataSource.setAuth(
-                    auth = SavedState.AuthTokens(
+                    auth = SavedState.AuthTokens.Authenticated.Bearer(
                         authProfileId = ProfileId(result.did.did),
                         auth = result.accessJwt,
                         refresh = result.refreshJwt,
