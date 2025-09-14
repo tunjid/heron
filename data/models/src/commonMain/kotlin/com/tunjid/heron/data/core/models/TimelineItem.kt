@@ -199,25 +199,35 @@ sealed interface Timeline {
     }
 
     @Serializable
-    sealed class Presentation(
-        val key: String,
-    ) {
-        sealed class Text {
-            data object WithEmbed : Presentation(
+    sealed class Presentation {
+        abstract val key: String
+
+        @Serializable
+        sealed class Text(
+            override val key: String,
+        ) : Presentation() {
+            @Serializable
+            data object WithEmbed : Text(
                 key = "presentation-text-and-embed",
             )
         }
 
-        sealed class Media {
-            data object Expanded : Presentation(
+        @Serializable
+        sealed class Media(
+            override val key: String,
+        ) : Presentation() {
+            @Serializable
+            data object Expanded : Media(
                 key = "presentation-expanded-media",
             )
 
-            data object Condensed : Presentation(
+            @Serializable
+            data object Condensed : Media(
                 key = "presentation-condensed-media",
             )
 
-            data object Grid : Presentation(
+            @Serializable
+            data object Grid : Media(
                 key = "presentation-grid-media",
             )
         }
