@@ -104,7 +104,7 @@ class OAuthApi(
 
         require(unsupportedScopes.isEmpty()) {
             "Requested scope(s) not supported by OAuth server: " +
-                    unsupportedScopes.joinToString(separator = ", ") { it.value }
+                unsupportedScopes.joinToString(separator = ", ") { it.value }
         }
 
         val codeChallengeMethod = challengeSelector.selectCodeChallengeMethod(
