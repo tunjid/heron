@@ -162,14 +162,12 @@ fun MediaPostInteractions(
     ) {
         IconButton(
             onClick = onMuteClick,
-            modifier = Modifier.background(Color.Red)
         ) {
             Icon(
                 imageVector = if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
                 else Icons.AutoMirrored.Rounded.VolumeUp,
                 contentDescription = stringResource(if (isMuted) Res.string.unmute_video else Res.string.mute_video),
                 modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.outline,
             )
         }
         PostInteractionsButtons(
