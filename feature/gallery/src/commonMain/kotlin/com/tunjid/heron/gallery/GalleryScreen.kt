@@ -258,6 +258,10 @@ internal fun GalleryScreen(
                 onPostInteraction = postInteractionState::onInteraction,
                 onDownloadClick = {
                 },
+                isMuted = videoPlayerController.isMuted,
+                onMuteClick = {
+                    videoPlayerController.isMuted = !videoPlayerController.isMuted
+                },
             )
 
             Column(
@@ -515,9 +519,11 @@ fun MediaInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
+    isMuted: Boolean,
     onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onDownloadClick: () -> Unit,
+    onMuteClick: () -> Unit
 ) {
     if (post == null) return
 
@@ -531,6 +537,8 @@ fun MediaInteractions(
         },
         onPostInteraction = onPostInteraction,
         onDownloadClick = onDownloadClick,
+        isMuted = isMuted,
+        onMuteClick = onMuteClick,
     )
 }
 
