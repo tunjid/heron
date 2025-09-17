@@ -264,6 +264,7 @@ internal fun GalleryScreen(
                 isMuted = videoPlayerController.isMuted
             )
 
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
