@@ -147,29 +147,33 @@ class KtorNetworkService(
         val pendingRequest = pendingOauthSession
             ?: throw IllegalStateException("Expired authentication session")
 
-        val callbackUrl = Url(request.callbackUri.uri)
+        try {
+            val callbackUrl = Url(request.callbackUri.uri)
 
-        val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
-            ?: throw IllegalStateException("No auth code")
+            val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
+                ?: throw IllegalStateException("No auth code")
 
-        val oAuthToken = oAuthApi.requestToken(
-            oauthClient = HeronOauthClient,
-            nonce = pendingRequest.request.nonce,
-            codeVerifier = pendingRequest.request.codeVerifier,
-            code = code,
-        )
+            val oAuthToken = oAuthApi.requestToken(
+                oauthClient = HeronOauthClient,
+                nonce = pendingRequest.request.nonce,
+                codeVerifier = pendingRequest.request.codeVerifier,
+                code = code,
+            )
 
-        val callingDid = api.resolveHandle(
-            ResolveHandleQueryParams(Handle(pendingRequest.handle.id)),
-        )
-            .requireResponse()
-            .did
+            val callingDid = api.resolveHandle(
+                ResolveHandleQueryParams(Handle(pendingRequest.handle.id)),
+            )
+                .requireResponse()
+                .did
 
-        if (oAuthToken.subject != callingDid) {
-            throw IllegalStateException("Invalid login session")
+            if (oAuthToken.subject != callingDid) {
+                throw IllegalStateException("Invalid login session")
+            }
+
+            return oAuthToken.toAppToken()
+        } finally {
+            pendingOauthSession = null
         }
-
-        return oAuthToken.toAppToken()
     }
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
