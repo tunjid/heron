@@ -18,12 +18,12 @@ class PostCreateSerializationTest {
     @MethodSource("postCreateCases")
     fun `round trip Post Create`(
         format: SerializationTestHelper.Format,
-        original: Post.Create
+        original: Post.Create,
     ) {
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = Post.Create.serializer()
+            serializer = Post.Create.serializer(),
         )
         assertEquals(original, decoded)
     }
@@ -40,7 +40,7 @@ class PostCreateSerializationTest {
                         postUri = PostUri("at://post/xyz"),
                     ),
                 ),
-                Post.Create.Timeline
+                Post.Create.Timeline,
             )
             return SerializationTestHelper.Format.entries.flatMap { format ->
                 postCreates.map { postCreate ->

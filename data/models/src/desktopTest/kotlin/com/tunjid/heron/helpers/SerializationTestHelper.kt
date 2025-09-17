@@ -9,7 +9,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 object SerializationTestHelper {
 
     private val cbor = Cbor { ignoreUnknownKeys = true }
-    private val proto = ProtoBuf { ignoreUnknownKeys = true }
+    private val proto = ProtoBuf
 
     enum class Format {
         CBOR,
