@@ -86,7 +86,6 @@ internal fun atProtoAuth(
             UseDPoPNonce -> maybeUpdateDPoPNonce(
                 response = result.response,
                 readAuth = readAuth,
-                saveAuth = saveAuth,
             )
             else -> null
         }
@@ -101,8 +100,7 @@ internal fun atProtoAuth(
         maybeUpdateDPoPNonce(
             response = result.response,
             readAuth = readAuth,
-            saveAuth = saveAuth,
-        )
+        ).also { saveAuth(it) }
 
         result
     }
@@ -111,7 +109,6 @@ internal fun atProtoAuth(
 private suspend fun maybeUpdateDPoPNonce(
     response: HttpResponse,
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
-    saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
 ): SavedState.AuthTokens.Authenticated.DPoP? {
     val currentDPoPNonce = response.headers[DPoPNonceHeaderKey] ?: return null
     val existingToken = readAuth() ?: return null
@@ -120,7 +117,6 @@ private suspend fun maybeUpdateDPoPNonce(
     if (currentDPoPNonce == existingToken.nonce) return null
 
     return existingToken.copy(nonce = currentDPoPNonce)
-        .also { saveAuth(it) }
 }
 
 private fun HttpRequestBuilder.clearAuth() {

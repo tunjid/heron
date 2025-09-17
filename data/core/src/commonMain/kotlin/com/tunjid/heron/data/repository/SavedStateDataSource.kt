@@ -68,9 +68,10 @@ abstract class SavedState {
 
             internal val serviceUrl: String?
                 get() = when (this) {
-                    is Bearer -> didDoc.service
-                        .firstOrNull()
-                        ?.serviceEndpoint
+                    is Bearer ->
+                        didDoc.service
+                            .firstOrNull()
+                            ?.serviceEndpoint
                     is DPoP -> pdsUrl
                 }
 

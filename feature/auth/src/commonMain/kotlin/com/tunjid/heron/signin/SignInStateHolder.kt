@@ -120,7 +120,7 @@ private fun authDeeplinkMutations(
     createSessionMutations(
         action = Action.Submit.Auth(
             request = SessionRequest.Oauth(
-                callbackUri = GenericUri("https://place.com$pathAndQueries"),
+                callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
             ),
         ),
         authRepository = authRepository,
@@ -247,3 +247,5 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     }
     emit { copy(isSubmitting = false) }
 }
+
+private const val PLACEHOLDER_OAUTH_HOST = "https://placeholder.com"
