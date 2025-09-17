@@ -34,6 +34,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -88,10 +90,12 @@ import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.cancel
 import heron.ui.timeline.generated.resources.download
 import heron.ui.timeline.generated.resources.liked
+import heron.ui.timeline.generated.resources.mute_video
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
 import heron.ui.timeline.generated.resources.sign_in
+import heron.ui.timeline.generated.resources.unmute_video
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -143,16 +147,32 @@ fun MediaPostInteractions(
     post: Post,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    isMuted: Boolean,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onDownloadClick: () -> Unit,
+    onMuteClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        IconButton(
+            onClick = onMuteClick,
+        ) {
+            Icon(
+                imageVector = if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                else Icons.AutoMirrored.Rounded.VolumeUp,
+                contentDescription = stringResource(
+                    if (isMuted) Res.string.mute_video
+                    else Res.string.unmute_video,
+                ),
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(40.dp),
+            )
+        }
         PostInteractionsButtons(
             replyCount = format(post.replyCount),
             repostCount = format(post.repostCount),
