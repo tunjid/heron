@@ -20,18 +20,30 @@ plugins {
     id("ksp-convention")
     kotlin("plugin.serialization")
 }
+
 android {
     namespace = "com.tunjid.heron.data"
 }
 
 kotlin {
     sourceSets {
+        val commonTest = getByName("commonTest")
+
+        val desktopTest by getting {
+            dependsOn(commonTest)
+            dependencies {
+                implementation(kotlin("test-junit5"))
+                implementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+                implementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
+                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+            }
+        }
+
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)
-
                 implementation(libs.ktor.core)
             }
         }
@@ -41,4 +53,21 @@ kotlin {
             }
         }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
+}
+
+// Bridge desktopTest - jvmTest so that IDE/Gradle can run it
+tasks.register("jvmTest") {
+    dependsOn("desktopTest")
+}
+tasks.register("cleanJvmTest") {
+    dependsOn("cleanDesktopTest")
 }
