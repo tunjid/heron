@@ -14,22 +14,10 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.local.models
+package com.tunjid.heron.data.network.oauth.crypto
 
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ProfileHandle
-import kotlinx.serialization.Serializable
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.providers.apple.Apple
 
-@Serializable
-sealed class SessionRequest {
-    @Serializable
-    data class Credentials(
-        val handle: ProfileHandle,
-        val password: String,
-    ) : SessionRequest()
-
-    @Serializable
-    data class Oauth(
-        val callbackUri: GenericUri,
-    ) : SessionRequest()
-}
+actual fun platformCryptographyProvider(): CryptographyProvider =
+    CryptographyProvider.Companion.Apple

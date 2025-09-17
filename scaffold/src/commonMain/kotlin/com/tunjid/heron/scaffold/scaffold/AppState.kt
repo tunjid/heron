@@ -44,6 +44,7 @@ import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
@@ -57,7 +58,6 @@ import com.tunjid.treenav.compose.panedecorators.PaneDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.pop
-import com.tunjid.treenav.push
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
@@ -181,9 +181,7 @@ class AppState(
         }
 
     fun onDeepLink(uri: GenericUri) =
-        navigationStateHolder.accept {
-            navState.push(uri.uri.toRoute)
-        }
+        navigationStateHolder.accept(deepLinkTo(uri))
 
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value

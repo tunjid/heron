@@ -76,6 +76,7 @@ import heron.feature.auth.generated.resources.sign_in_later
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
+private const val OAuthPattern = "/oauth/callback"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -94,6 +95,15 @@ object SignInNavigationBindings {
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )
+
+    @Provides
+    @IntoMap
+    @StringKey(OAuthPattern)
+    fun provideOAuthRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = OAuthPattern,
+            routeMapper = ::createRoute,
+        )
 }
 
 @BindingContainer
@@ -106,6 +116,15 @@ class SignInBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(OAuthPattern)
+    fun provideOAuthPaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,

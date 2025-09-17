@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
@@ -48,6 +49,7 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
+import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
@@ -217,6 +219,22 @@ fun pathDestination(
     referringRouteOption = referringRouteOption,
 )
 
+internal fun deepLinkTo(
+    deepLink: GenericUri,
+): NavigationMutation = {
+    when {
+        deepLink.uri.lowercase().contains(OAuthUrlPathSegment) -> navState.copy(
+            stacks = navState.stacks.mapIndexed { index, stackNav ->
+                if (index == navState.currentIndex) stackNav.copy(
+                    children = listOf(deepLink.uri.toRoute),
+                )
+                else stackNav
+            },
+        )
+        else -> navState.push(deepLink.uri.toRoute)
+    }
+}
+
 /**
  * An action that causes mutations to navigation
  */
@@ -335,7 +353,10 @@ class PersistedNavigationStateHolder(
                 val multiStackNav = when {
                     savedState == EmptySavedState -> SignedOutNavigationState
                     !savedState.isSignedIn() -> SignedOutNavigationState
-                    else -> routeParser.parseMultiStackNav(savedState)
+                    else -> routeParser.parseMultiStackNav(savedState).let {
+                        val wasInOauthFlow = it.current?.id?.contains(OAuthUrlPathSegment) == true
+                        if (wasInOauthFlow) SignedOutNavigationState else it
+                    }
                 }
 
                 emit { multiStackNav }
@@ -382,7 +403,11 @@ private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiSta
         // No auth token and is displaying main navigation
         .filter { it.auth == null && it != EmptySavedState }
         .mapToMutation { _ ->
-            SignedOutNavigationState
+            when (stacks[currentIndex].name) {
+                // If on the auth stack already, keep the navigation state as is
+                AppStack.Auth.stackName -> this
+                else -> SignedOutNavigationState
+            }
         }
 
 private fun CoroutineScope.persistNavigationState(
@@ -486,7 +511,6 @@ enum class AppStack(
         titleRes = Res.string.messages,
         icon = Icons.Rounded.Mail,
         rootRoute = routeOf("/messages"),
-
     ),
     Notifications(
         stackName = "notifications-stack",
@@ -514,3 +538,4 @@ private fun AppStack.toStackNav() = StackNav(
 )
 
 private const val ReferringRouteQueryParam = "referringRoute"
+private const val OAuthUrlPathSegment = "oauth"

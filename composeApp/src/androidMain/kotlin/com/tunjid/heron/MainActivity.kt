@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLink(intent: Intent) {
         intent.data
-            ?.path
+            ?.let { it.path + "?" + it.query }
             ?.let(::GenericUri)
             ?.let(appState::onDeepLink)
             ?.also {
