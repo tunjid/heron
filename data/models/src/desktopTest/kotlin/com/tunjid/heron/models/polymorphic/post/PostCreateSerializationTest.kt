@@ -8,44 +8,45 @@ import com.tunjid.heron.fakes.sampleProfile
 import com.tunjid.heron.helpers.SerializationTestHelper
 import kotlin.test.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.MethodSource
 
 class PostCreateSerializationTest {
 
-    @ParameterizedTest
-    @EnumSource(SerializationTestHelper.Format::class)
-    fun `round trip Post Create Reply`(format: SerializationTestHelper.Format) {
-        val original = Post.Create.Reply(parent = samplePost())
-        val decoded = SerializationTestHelper.roundTrip(format, original, Post.Create.serializer())
-        assertEquals(original, decoded)
-    }
-
-    @ParameterizedTest
-    @EnumSource(SerializationTestHelper.Format::class)
-    fun `round trip Post Create Mention`(format: SerializationTestHelper.Format) {
-        val original = Post.Create.Mention(profile = sampleProfile())
-        val decoded = SerializationTestHelper.roundTrip(format, original, Post.Create.serializer())
-        assertEquals(original, decoded)
-    }
-
-    @ParameterizedTest
-    @EnumSource(SerializationTestHelper.Format::class)
-    fun `round trip Post Create Quote`(format: SerializationTestHelper.Format) {
-        val original = Post.Create.Quote(
-            interaction = Post.Interaction.Create.Repost(
-                postId = PostId("pid-1"),
-                postUri = PostUri("at://post/xyz"),
-            ),
+    @ParameterizedTest(name = "[{index}] {1} can be serialized with {0}")
+    @MethodSource("postCreateCases")
+    fun `round trip Post Create`(
+        format: SerializationTestHelper.Format,
+        original: Post.Create
+    ) {
+        val decoded = SerializationTestHelper.roundTrip(
+            format = format,
+            value = original,
+            serializer = Post.Create.serializer()
         )
-        val decoded = SerializationTestHelper.roundTrip(format, original, Post.Create.serializer())
         assertEquals(original, decoded)
     }
 
-    @ParameterizedTest
-    @EnumSource(SerializationTestHelper.Format::class)
-    fun `round trip Post Create Timeline`(format: SerializationTestHelper.Format) {
-        val original = Post.Create.Timeline
-        val decoded = SerializationTestHelper.roundTrip(format, original, Post.Create.serializer())
-        assertEquals(original, decoded)
+    companion object {
+        @JvmStatic
+        private fun postCreateCases(): List<Arguments> {
+            val postCreates = listOf(
+                Post.Create.Reply(parent = samplePost()),
+                Post.Create.Mention(profile = sampleProfile()),
+                Post.Create.Quote(
+                    interaction = Post.Interaction.Create.Repost(
+                        postId = PostId("pid-1"),
+                        postUri = PostUri("at://post/xyz"),
+                    ),
+                ),
+                Post.Create.Timeline
+            )
+            return SerializationTestHelper.Format.entries.flatMap { format ->
+                postCreates.map { postCreate ->
+                    Arguments.of(format, postCreate)
+                }
+            }
+        }
     }
 }
