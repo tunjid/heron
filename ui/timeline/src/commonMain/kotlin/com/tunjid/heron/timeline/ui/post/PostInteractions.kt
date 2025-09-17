@@ -146,12 +146,12 @@ fun MediaPostInteractions(
     post: Post,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    isMuted : Boolean,
+    isMuted: Boolean,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onDownloadClick: () -> Unit,
-    onMuteClick : () -> Unit
+    onMuteClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,

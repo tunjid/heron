@@ -261,9 +261,8 @@ internal fun GalleryScreen(
                 onMuteClick = {
                     videoPlayerController.isMuted = !videoPlayerController.isMuted
                 },
-                isMuted = videoPlayerController.isMuted
+                isMuted = videoPlayerController.isMuted,
             )
-
 
             Column(
                 modifier = Modifier
@@ -519,12 +518,12 @@ fun VideoText(
 fun MediaInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
-    isMuted : Boolean,
+    isMuted: Boolean,
     modifier: Modifier = Modifier,
     onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onDownloadClick: () -> Unit,
-    onMuteClick : () -> Unit
+    onMuteClick: () -> Unit,
 ) {
     if (post == null) return
 
