@@ -44,7 +44,6 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -91,10 +90,12 @@ import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.cancel
 import heron.ui.timeline.generated.resources.download
 import heron.ui.timeline.generated.resources.liked
+import heron.ui.timeline.generated.resources.mute_video
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
 import heron.ui.timeline.generated.resources.sign_in
+import heron.ui.timeline.generated.resources.unmute_video
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -164,7 +165,10 @@ fun MediaPostInteractions(
             Icon(
                 imageVector = if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
                 else Icons.AutoMirrored.Rounded.VolumeUp,
-                contentDescription = stringResource(Res.string.download),
+                contentDescription = stringResource(
+                    if (isMuted) Res.string.mute_video
+                    else Res.string.unmute_video,
+                ),
                 tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(40.dp),
             )
