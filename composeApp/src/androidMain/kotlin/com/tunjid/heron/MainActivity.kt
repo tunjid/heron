@@ -57,7 +57,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLink(intent: Intent) {
         intent.data
-            ?.path
+            ?.let { uri ->
+                val path = uri.path
+                uri.query?.let { "$path?$it" } ?: path
+            }
             ?.let(::GenericUri)
             ?.let(appState::onDeepLink)
             ?.also {

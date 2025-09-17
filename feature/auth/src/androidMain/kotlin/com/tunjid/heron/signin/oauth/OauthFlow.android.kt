@@ -96,12 +96,10 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
         resultCode: Int,
         intent: Intent?,
     ): OauthFlowResult = when (resultCode) {
-        Activity.RESULT_OK -> when (val code = intent?.data?.getQueryParameter(OauthCode)) {
+        Activity.RESULT_OK -> when (val callbackUri = intent?.data) {
             null -> OauthFlowResult.Failure
-            else -> OauthFlowResult.Success(code = code)
+            else -> OauthFlowResult.Success(callbackUri = GenericUri(callbackUri.toString()))
         }
         else -> OauthFlowResult.Failure
     }
 }
-
-private const val OauthCode = "code"

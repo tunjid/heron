@@ -129,28 +129,24 @@ internal class AuthTokenRepository(
             )
         }
             .mapCatching { result ->
-                savedStateDataSource.setAuth(
-                    auth = SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = ProfileId(result.did.did),
-                        auth = result.accessJwt,
-                        refresh = result.refreshJwt,
-                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                            jsonContent = result.didDoc,
-                        ),
+                SavedState.AuthTokens.Authenticated.Bearer(
+                    authProfileId = ProfileId(result.did.did),
+                    auth = result.accessJwt,
+                    refresh = result.refreshJwt,
+                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                        jsonContent = result.didDoc,
                     ),
                 )
-                // Suspend till auth token has been saved and is readable
-                savedStateDataSource.savedState.first { it.auth != null }
-                updateSignedInUser(result.did)
-                Unit
             }
         is SessionRequest.Oauth -> runCatchingUnlessCancelled {
             networkService.finishOauthFlow(request)
-            // TODO: The rest of the OAuth sign-in flow needs to be implemented.
-            // This includes obtaining tokens from the network response, saving them,
-            // and updating the signed-in user state, similar to the Credentials flow.
-            throw NotImplementedError("OAuth sign-in is not fully implemented.")
         }
+    }.mapCatching { authToken ->
+        savedStateDataSource.setAuth(authToken)
+        // Suspend till auth token has been saved and is readable
+        savedStateDataSource.savedState.first { it.auth != null }
+        updateSignedInUser(authToken.authProfileId.id.let(::Did))
+        Unit
     }
 
     override suspend fun guestSignIn() {

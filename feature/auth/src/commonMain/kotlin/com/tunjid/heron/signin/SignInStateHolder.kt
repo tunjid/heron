@@ -17,6 +17,7 @@
 package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -65,7 +67,6 @@ class ActualSignInViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
@@ -74,6 +75,11 @@ class ActualSignInViewModel(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
             authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
+            authDeeplinkMutations(
+                route = route,
+                authRepository = authRepository,
+                navActions = navActions,
+            ),
         ),
         actionTransform = { actions ->
             actions.toMutationStream(
@@ -102,6 +108,25 @@ class ActualSignInViewModel(
             }
         },
     )
+
+private fun authDeeplinkMutations(
+    route: Route,
+    authRepository: AuthRepository,
+    navActions: (NavigationMutation) -> Unit,
+) = flow {
+    if (route.routeParams.queryParams.isEmpty()) return@flow
+    val pathAndQueries = route.routeParams.pathAndQueries
+
+    createSessionMutations(
+        action = Action.Submit.Auth(
+            request = SessionRequest.Oauth(
+                callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
+            ),
+        ),
+        authRepository = authRepository,
+        navActions = navActions,
+    )
+}
 
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
     mapToMutation { (updatedField) ->
@@ -144,8 +169,7 @@ private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
                 createSessionMutations(
                     action = Action.Submit.Auth(
                         request = SessionRequest.Oauth(
-                            handle = action.handle,
-                            code = result.code,
+                            callbackUri = result.callbackUri,
                         ),
                     ),
                     authRepository = authRepository,
@@ -212,13 +236,16 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
         null -> navActions(NavigationContext::resetAuthNavigation)
         else -> emit {
             copy(
-                messages = exception.message
-                    ?.let(SnackbarMessage::Text)
-                    ?.let(messages::plus)
-                    ?.distinct()
-                    ?: messages,
+                messages = messages.plus(
+                    exception.message
+                        ?.let(SnackbarMessage::Text)
+                        ?: SnackbarMessage.Resource(Res.string.oauth_flow_failed),
+                )
+                    .distinct(),
             )
         }
     }
     emit { copy(isSubmitting = false) }
 }
+
+private const val PLACEHOLDER_OAUTH_HOST = "https://placeholder.com"

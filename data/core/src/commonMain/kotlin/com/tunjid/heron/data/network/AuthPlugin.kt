@@ -16,149 +16,112 @@
 
 package com.tunjid.heron.data.network
 
-import com.atproto.server.RefreshSessionResponse
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
-import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
-import io.ktor.client.call.body
 import io.ktor.client.call.save
-import io.ktor.client.plugins.HttpClientPlugin
-import io.ktor.client.plugins.HttpSend
-import io.ktor.client.plugins.plugin
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.post
+import io.ktor.client.plugins.api.Send
+import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
-import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.Url
 import io.ktor.http.encodedPath
+import io.ktor.http.isSuccess
 import io.ktor.http.set
-import io.ktor.util.AttributeKey
-import kotlinx.coroutines.CancellationException
 import sh.christian.ozone.api.response.AtpErrorDescription
-
-class ErrorInterceptorConfig {
-    internal var networkErrorConverter: ((String) -> AtpErrorDescription)? = null
-    internal var readAuth: (suspend () -> SavedState.AuthTokens.Authenticated?)? = null
-    internal var saveAuth: (suspend (SavedState.AuthTokens.Authenticated?) -> Unit)? = null
-}
 
 /**
  * Invalidates session cookies that have expired or are otherwise invalid
  */
-internal class AuthPlugin(
-    private val networkErrorConverter: ((String) -> AtpErrorDescription)?,
-    private val readAuth: (suspend () -> SavedState.AuthTokens.Authenticated?)?,
-    private val saveAuth: (suspend (SavedState.AuthTokens.Authenticated?) -> Unit)?,
-) {
+internal fun atProtoAuth(
+    networkErrorConverter: (String) -> AtpErrorDescription,
+    readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
+    saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
+    authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
+    refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated?,
+) = createClientPlugin("AtProtoAuthPlugin") {
+    on(Send) intercept@{ context ->
+        val authTokens = readAuth.invoke()
 
-    companion object : HttpClientPlugin<ErrorInterceptorConfig, AuthPlugin> {
-        override val key: AttributeKey<AuthPlugin> =
-            AttributeKey("ClientNetworkErrorInterceptor")
+        if (ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
+            context.headers.append(
+                name = AtProtoProxyHeader,
+                value = ChatAtProtoProxyHeaderValue,
+            )
+            authTokens?.serviceUrl?.let {
+                context.url.set(host = Url(urlString = it).host)
+            }
+        }
 
-        override fun prepare(block: ErrorInterceptorConfig.() -> Unit): AuthPlugin {
-            val config = ErrorInterceptorConfig().apply(block)
-            return AuthPlugin(
-                networkErrorConverter = config.networkErrorConverter,
-                readAuth = config.readAuth,
-                saveAuth = config.saveAuth,
+        if (authTokens == null && SignedOutPaths.any(predicate = context.url.encodedPath::endsWith)) {
+            context.url.set(
+                host = Url(urlString = SignedOutUrl).host,
             )
         }
 
-        override fun install(
-            plugin: AuthPlugin,
-            scope: HttpClient,
-        ) {
-            scope.plugin(HttpSend).intercept { context ->
-                val authTokens = plugin.readAuth?.invoke()
-
-                if (ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
-                    context.headers.append(
-                        name = AtProtoProxyHeader,
-                        value = ChatAtProtoProxyHeaderValue,
-                    )
-                    authTokens?.didDoc
-                        ?.service
-                        ?.firstOrNull()
-                        ?.let {
-                            context.url.set(
-                                host = Url(urlString = it.serviceEndpoint).host,
-                            )
-                        }
-                }
-
-                if (authTokens == null && SignedOutPaths.any(predicate = context.url.encodedPath::endsWith)) {
-                    context.url.set(
-                        host = Url(urlString = SignedOutUrl).host,
-                    )
-                }
-
-                if (!context.headers.contains(Authorization) && authTokens != null) {
-                    when (authTokens) {
-                        is SavedState.AuthTokens.Authenticated.Bearer -> context.bearerAuth(
-                            token = authTokens.auth,
-                        )
-                    }
-                }
-
-                var result: HttpClientCall = execute(context)
-                if (result.response.status != BadRequest) {
-                    return@intercept result
-                }
-
-                // Cache the response in memory since we will need to decode it potentially more than once.
-                result = result.save()
-
-                val response = runCatching<AtpErrorDescription?> {
-                    plugin.networkErrorConverter?.invoke(result.response.bodyAsText())
-                }
-
-                if (response.getOrNull()?.error == "ExpiredToken") {
-                    try {
-                        val currentToken = plugin.readAuth?.invoke()
-                        if (currentToken == null) {
-                            // Delete existing token and force a log out
-                            plugin.saveAuth?.invoke(null)
-                            return@intercept result
-                        }
-
-                        when (currentToken) {
-                            is SavedState.AuthTokens.Authenticated.Bearer -> scope.post(
-                                RefreshTokenEndpoint,
-                            ) {
-                                bearerAuth(currentToken.refresh)
-                            }.body<RefreshSessionResponse>()
-                                .let { refreshed ->
-                                    val newAccessToken = refreshed.accessJwt
-                                    val newRefreshToken = refreshed.refreshJwt
-
-                                    plugin.saveAuth?.invoke(
-                                        SavedState.AuthTokens.Authenticated.Bearer(
-                                            authProfileId = ProfileId(refreshed.did.did),
-                                            auth = newAccessToken,
-                                            refresh = newRefreshToken,
-                                            didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                                                jsonContent = refreshed.didDoc,
-                                            ),
-                                        ),
-                                    )
-                                    context.headers.remove(Authorization)
-                                    context.bearerAuth(newAccessToken)
-                                    result = execute(context)
-                                }
-                        }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (_: Throwable) {
-                        // Delete existing token and force a log out
-                        plugin.saveAuth?.invoke(null)
-                    }
-                }
-                result
-            }
+        if (!context.headers.contains(Authorization) && authTokens != null) {
+            context.authenticate(authTokens)
         }
+
+        var result: HttpClientCall = proceed(context)
+        if (result.response.status.isSuccess()) {
+            return@intercept result
+        }
+
+        // Cache the response in memory since we will need to decode it potentially more than once.
+        result = result.save()
+
+        val response = runCatching<AtpErrorDescription?> {
+            networkErrorConverter(result.response.bodyAsText())
+        }
+
+        val updatedTokens = when (response.getOrNull()?.error) {
+            ExpiredTokenError -> readAuth()?.let { existingToken ->
+                refresh(existingToken).also { refreshedToken ->
+                    // Delete existing token and force a log out
+                    if (refreshedToken == null) saveAuth(null)
+                }
+            }
+            UseDPoPNonce -> maybeUpdateDPoPNonce(
+                response = result.response,
+                readAuth = readAuth,
+            )
+            else -> null
+        }
+
+        if (updatedTokens != null) {
+            saveAuth(updatedTokens)
+            context.clearAuth()
+            context.authenticate(updatedTokens)
+            result = proceed(context)
+        }
+
+        maybeUpdateDPoPNonce(
+            response = result.response,
+            readAuth = readAuth,
+        )?.also { saveAuth(it) }
+
+        result
     }
+}
+
+private suspend fun maybeUpdateDPoPNonce(
+    response: HttpResponse,
+    readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
+): SavedState.AuthTokens.Authenticated.DPoP? {
+    val currentDPoPNonce = response.headers[DPoPNonceHeaderKey] ?: return null
+    val existingToken = readAuth() ?: return null
+    if (existingToken !is SavedState.AuthTokens.Authenticated.DPoP) return null
+
+    if (currentDPoPNonce == existingToken.nonce) return null
+
+    return existingToken.copy(nonce = currentDPoPNonce)
+}
+
+private fun HttpRequestBuilder.clearAuth() {
+    headers.remove(Authorization)
+    headers.remove(DPoP)
 }
 
 private val ChatProxyPaths = listOf(
@@ -186,4 +149,6 @@ private val SignedOutPaths = listOf(
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
 private const val SignedOutUrl = "https://public.api.bsky.app"
-private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
+private const val ExpiredTokenError = "ExpiredToken"
+private const val UseDPoPNonce = "use_dpop_nonce"
+private const val DPoPNonceHeaderKey = "DPoP-Nonce"

@@ -36,6 +36,7 @@ import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
@@ -56,6 +57,8 @@ import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.CryptographyProviderApi
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
@@ -103,6 +106,13 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideTidGenerator(): TidGenerator = TidGenerator()
+
+    @OptIn(CryptographyProviderApi::class)
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideCryptographyProvider(): CryptographyProvider =
+        platformCryptographyProvider()
+            .also(CryptographyProvider.Registry::registerProvider)
 
     @SingleIn(AppScope::class)
     @Provides

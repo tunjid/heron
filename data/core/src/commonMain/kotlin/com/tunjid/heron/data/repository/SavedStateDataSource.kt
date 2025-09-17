@@ -57,24 +57,48 @@ abstract class SavedState {
     @Serializable
     sealed class AuthTokens {
         abstract val authProfileId: ProfileId
-        abstract val didDoc: DidDoc
 
         @Serializable
         data object Guest : AuthTokens() {
             override val authProfileId: ProfileId = Constants.unknownAuthorId
-
-            override val didDoc: DidDoc = DidDoc()
         }
 
         @Serializable
         sealed class Authenticated : AuthTokens() {
+
+            internal val serviceUrl: String?
+                get() = when (this) {
+                    is Bearer ->
+                        didDoc.service
+                            .firstOrNull()
+                            ?.serviceEndpoint
+                    is DPoP -> pdsUrl
+                }
+
             @Serializable
             data class Bearer(
                 override val authProfileId: ProfileId,
                 val auth: String,
                 val refresh: String,
-                override val didDoc: DidDoc = DidDoc(),
+                val didDoc: DidDoc = DidDoc(),
             ) : Authenticated()
+
+            @Serializable
+            data class DPoP(
+                override val authProfileId: ProfileId,
+                val auth: String,
+                val refresh: String,
+                val pdsUrl: String,
+                val clientId: String,
+                val nonce: String,
+                val keyPair: DERKeyPair,
+            ) : Authenticated() {
+                @Serializable
+                class DERKeyPair(
+                    val publicKey: ByteArray,
+                    val privateKey: ByteArray,
+                )
+            }
         }
 
         @Serializable
