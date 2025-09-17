@@ -33,9 +33,9 @@ kotlin {
             dependsOn(commonTest)
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-                implementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+                implementation(libs.junit.jupiter.api)
+                implementation(libs.junit.jupiter.params)
+                runtimeOnly(libs.junit.jupiter.engine)
             }
         }
 
