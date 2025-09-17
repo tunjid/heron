@@ -100,7 +100,7 @@ internal fun atProtoAuth(
         maybeUpdateDPoPNonce(
             response = result.response,
             readAuth = readAuth,
-        ).also { saveAuth(it) }
+        )?.also { saveAuth(it) }
 
         result
     }
