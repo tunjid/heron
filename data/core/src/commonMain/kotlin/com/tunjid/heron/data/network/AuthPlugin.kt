@@ -118,6 +118,7 @@ internal fun atProtoAuth(
                     is InvalidTokenException,
                     is AtpException,
                     -> saveAuth(null)
+                    else -> throw it
                 }
             },
         )
