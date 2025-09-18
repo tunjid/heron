@@ -613,9 +613,9 @@ private sealed class PostInteractionButton {
             }
 
         val All = listOf(
+            Like,
             Comment,
             Repost,
-            Like,
             Bookmark,
         )
     }
