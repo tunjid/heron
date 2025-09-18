@@ -89,7 +89,7 @@ class KtorNetworkService(
     private var pendingOauthSession: OauthSession? = null
 
     private val httpClient = HttpClient {
-        expectSuccess = true
+        expectSuccess = false
 
         install(DefaultRequest) {
             url.takeFrom("https://bsky.social")

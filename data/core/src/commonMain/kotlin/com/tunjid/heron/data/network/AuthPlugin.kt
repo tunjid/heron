@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.save
 import io.ktor.client.plugins.api.Send
@@ -25,6 +26,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
@@ -76,26 +78,42 @@ internal fun atProtoAuth(
             networkErrorConverter(result.response.bodyAsText())
         }
 
-        val updatedTokens = when (response.getOrNull()?.error) {
-            ExpiredTokenError -> readAuth()?.let { existingToken ->
-                refresh(existingToken).also { refreshedToken ->
-                    // Delete existing token and force a log out
-                    if (refreshedToken == null) saveAuth(null)
+        val updatedTokensResult = runCatchingUnlessCancelled {
+            when (response.getOrNull()?.error) {
+                InvalidTokenError,
+                ExpiredTokenError -> readAuth()?.let { existingToken ->
+                    refresh(existingToken)
+                } ?: throw IllegalArgumentException("Invalid tokens")
+                // If this returns null, do not throw an exception.
+                // This header value is sometimes returned when a new token is issued,
+                // and concurrent requests may see it. The value eventually becomes consistent.
+                UseDPoPNonce -> maybeUpdateDPoPNonce(
+                    response = result.response,
+                    readAuth = readAuth,
+                )
+                else -> when (result.response.status) {
+                    HttpStatusCode.Unauthorized ->
+                        if (authTokens != null) throw IllegalArgumentException("Invalid tokens")
+                        else null
+                    else -> null
                 }
             }
-            UseDPoPNonce -> maybeUpdateDPoPNonce(
-                response = result.response,
-                readAuth = readAuth,
-            )
-            else -> null
         }
 
-        if (updatedTokens != null) {
-            saveAuth(updatedTokens)
-            context.clearAuth()
-            context.authenticate(updatedTokens)
-            result = proceed(context)
-        }
+        updatedTokensResult.fold(
+            onSuccess = { updatedTokens ->
+                if (updatedTokens != null) {
+                    saveAuth(updatedTokens)
+                    context.clearAuth()
+                    context.authenticate(updatedTokens)
+                    result = proceed(context)
+                }
+            },
+            onFailure = {
+                // Delete existing token and force a log out
+                saveAuth(null)
+            },
+        )
 
         maybeUpdateDPoPNonce(
             response = result.response,
@@ -150,5 +168,6 @@ private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val ExpiredTokenError = "ExpiredToken"
+private const val InvalidTokenError = "invalid_token"
 private const val UseDPoPNonce = "use_dpop_nonce"
 private const val DPoPNonceHeaderKey = "DPoP-Nonce"
