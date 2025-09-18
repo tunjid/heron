@@ -34,7 +34,7 @@ import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
-import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -89,7 +89,7 @@ class KtorNetworkService(
     private var pendingOauthSession: OauthSession? = null
 
     private val httpClient = HttpClient {
-        expectSuccess = true
+        expectSuccess = false
 
         install(DefaultRequest) {
             url.takeFrom("https://bsky.social")
@@ -219,36 +219,34 @@ class KtorNetworkService(
 
     private suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
-    ): SavedState.AuthTokens.Authenticated? = runCatchingUnlessCancelled {
-        when (tokens) {
-            is SavedState.AuthTokens.Authenticated.Bearer -> httpClient.post(
-                urlString = RefreshTokenEndpoint,
-                block = { bearerAuth(tokens.refresh) },
-            )
-                .takeIf { it.status.isSuccess() }
-                ?.body<RefreshSessionResponse>()
-                ?.let { refreshed ->
-                    SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = ProfileId(refreshed.did.did),
-                        auth = refreshed.accessJwt,
-                        refresh = refreshed.refreshJwt,
-                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                            jsonContent = refreshed.didDoc,
-                        ),
-                    )
-                }
-
-            is SavedState.AuthTokens.Authenticated.DPoP -> {
-                oAuthApi.refreshToken(
-                    clientId = tokens.clientId,
-                    nonce = tokens.nonce,
-                    refreshToken = tokens.refresh,
-                    keyPair = tokens.toKeyPair(),
-                ).toAppToken()
+    ): SavedState.AuthTokens.Authenticated = when (tokens) {
+        is SavedState.AuthTokens.Authenticated.Bearer -> httpClient.post(
+            urlString = RefreshTokenEndpoint,
+            block = { bearerAuth(tokens.refresh) },
+        )
+            .takeIf { it.status.isSuccess() }
+            ?.body<RefreshSessionResponse>()
+            ?.let { refreshed ->
+                SavedState.AuthTokens.Authenticated.Bearer(
+                    authProfileId = ProfileId(refreshed.did.did),
+                    auth = refreshed.accessJwt,
+                    refresh = refreshed.refreshJwt,
+                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                        jsonContent = refreshed.didDoc,
+                    ),
+                )
             }
+            ?: throw InvalidTokenException()
+
+        is SavedState.AuthTokens.Authenticated.DPoP -> {
+            oAuthApi.refreshToken(
+                clientId = tokens.clientId,
+                nonce = tokens.nonce,
+                refreshToken = tokens.refresh,
+                keyPair = tokens.toKeyPair(),
+            ).toAppToken()
         }
     }
-        .getOrNull()
 }
 
 private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
