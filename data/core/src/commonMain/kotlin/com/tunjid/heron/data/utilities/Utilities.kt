@@ -147,3 +147,5 @@ internal inline fun <T> Result<T>.toOutcome(
     },
     onFailure = Outcome::Failure,
 )
+
+internal class InvalidTokenException: Exception("Invalid tokens")

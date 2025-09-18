@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.save
@@ -32,6 +33,7 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import sh.christian.ozone.api.response.AtpErrorDescription
+import sh.christian.ozone.api.response.AtpException
 
 /**
  * Invalidates session cookies that have expired or are otherwise invalid
@@ -41,7 +43,7 @@ internal fun atProtoAuth(
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
     saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
-    refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated?,
+    refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
 ) = createClientPlugin("AtProtoAuthPlugin") {
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
@@ -81,9 +83,10 @@ internal fun atProtoAuth(
         val updatedTokensResult = runCatchingUnlessCancelled {
             when (response.getOrNull()?.error) {
                 InvalidTokenError,
-                ExpiredTokenError -> readAuth()?.let { existingToken ->
+                ExpiredTokenError,
+                    -> readAuth()?.let { existingToken ->
                     refresh(existingToken)
-                } ?: throw IllegalArgumentException("Invalid tokens")
+                }
                 // If this returns null, do not throw an exception.
                 // This header value is sometimes returned when a new token is issued,
                 // and concurrent requests may see it. The value eventually becomes consistent.
@@ -93,7 +96,7 @@ internal fun atProtoAuth(
                 )
                 else -> when (result.response.status) {
                     HttpStatusCode.Unauthorized ->
-                        if (authTokens != null) throw IllegalArgumentException("Invalid tokens")
+                        if (authTokens != null) throw InvalidTokenException()
                         else null
                     else -> null
                 }
@@ -111,7 +114,11 @@ internal fun atProtoAuth(
             },
             onFailure = {
                 // Delete existing token and force a log out
-                saveAuth(null)
+                when (it) {
+                    is InvalidTokenException,
+                    is AtpException,
+                        -> saveAuth(null)
+                }
             },
         )
 
