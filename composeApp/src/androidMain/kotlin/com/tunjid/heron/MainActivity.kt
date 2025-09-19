@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.scaffold.scaffold.App
 import io.github.vinceglb.filekit.FileKit
@@ -37,6 +38,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         enableEdgeToEdge()
         // Fix for three-button nav not properly going edge-to-edge.
         // TODO: https://issuetracker.google.com/issues/298296168
