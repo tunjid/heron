@@ -16,6 +16,7 @@ androidxNavigationEvent = "1.0.0-alpha02"
 androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 androidx-espresso-core = "3.7.0"
+coreSplashscreen = "1.0.1"
 javaDiffUtils = "4.16"
 # TODO: Compose runtime crashes when this is bumped
 # Figure out what changed between versions 2.9.1 and 2.9.2
@@ -48,6 +49,7 @@ vinceglb-filekit = "0.10.0"
 junit-jupiter = "5.13.4"
 
 [libraries]
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
