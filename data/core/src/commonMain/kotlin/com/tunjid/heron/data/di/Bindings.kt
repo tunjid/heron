@@ -32,13 +32,13 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PersistedSessionManager
 import com.tunjid.heron.data.network.SessionManager
-import com.tunjid.heron.data.network.defaultHttpClient
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -68,6 +68,8 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
@@ -121,9 +123,14 @@ class DataBindings(
         savedStateDataSource = savedStateDataSource,
     )
 
-    // Note the http client provided is not a singleton
+    @SingleIn(AppScope::class)
     @Provides
-    internal fun provideHttpClient(): HttpClient = defaultHttpClient()
+    internal fun provideHttpClient(): HttpClient = HttpClient {
+        expectSuccess = false
+        install(ContentNegotiation) {
+            json(BlueskyJson)
+        }
+    }
 
     @OptIn(CryptographyProviderApi::class)
     @SingleIn(AppScope::class)
