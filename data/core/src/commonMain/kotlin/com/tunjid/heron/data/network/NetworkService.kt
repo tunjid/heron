@@ -92,7 +92,7 @@ class KtorNetworkService(
         expectSuccess = false
 
         install(DefaultRequest) {
-            url.takeFrom("https://bsky.social")
+            url.takeFrom(BaseEndpoint)
         }
 
         install(ContentNegotiation) {
@@ -279,8 +279,8 @@ private class OauthSession(
 internal val BlueskyJson: Json = buildXrpcJsonConfiguration(XrpcSerializersModule)
 
 private val HeronOauthClient = OAuthClient(
-    clientId = "https://heron-d0ff3.web.app/oauth-client.json",
-    redirectUri = "https://heron-d0ff3.web.app/oauth/callback",
+    clientId = "https://heron.tunji.dev/oauth-client.json",
+    redirectUri = "https://heron.tunji.dev/oauth/callback",
 )
 
 private val HeronOauthScopes = listOf(
@@ -289,6 +289,7 @@ private val HeronOauthScopes = listOf(
     OAuthScope.BlueskyChat,
 )
 
+private const val BaseEndpoint = "https://bsky.social"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"
 internal const val DPoP = "DPoP"

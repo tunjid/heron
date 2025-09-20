@@ -140,8 +140,6 @@ private suspend fun maybeUpdateDPoPNonce(
     val existingToken = readAuth() ?: return null
     if (existingToken !is SavedState.AuthTokens.Authenticated.DPoP) return null
 
-    if (currentDPoPNonce == existingToken.nonce) return null
-
     return existingToken.copy(nonce = currentDPoPNonce)
 }
 
