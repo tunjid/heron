@@ -86,7 +86,6 @@ internal class PersistedSessionManager @Inject constructor(
 ) : SessionManager {
 
     private val oauthHttpClient = httpClient.config {
-
         install(DefaultRequest) {
             url.takeFrom(BaseEndpoint)
         }
