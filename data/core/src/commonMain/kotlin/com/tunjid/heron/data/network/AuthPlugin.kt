@@ -316,7 +316,7 @@ private fun atProtoAuth(
                 when (it) {
                     is InvalidTokenException,
                     is AtpException,
-                        -> saveAuth(null)
+                    -> saveAuth(null)
                     else -> throw it
                 }
             },
