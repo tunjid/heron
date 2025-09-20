@@ -38,6 +38,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -85,6 +86,7 @@ internal class AuthTokenRepository(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
+    private val sessionManager: SessionManager,
 ) : AuthRepository {
 
     override val isSignedIn: Flow<Boolean> =
@@ -114,7 +116,7 @@ internal class AuthTokenRepository(
     override suspend fun oauthRequestUri(
         handle: ProfileHandle,
     ): Result<GenericUri> = runCatchingUnlessCancelled {
-        networkService.beginOauthFlowUri(handle)
+        sessionManager.startOauthSessionUri(handle)
     }
 
     override suspend fun createSession(
@@ -139,7 +141,7 @@ internal class AuthTokenRepository(
                 )
             }
         is SessionRequest.Oauth -> runCatchingUnlessCancelled {
-            networkService.finishOauthFlow(request)
+            sessionManager.createOauthSession(request)
         }
     }.mapCatching { authToken ->
         savedStateDataSource.setAuth(authToken)
