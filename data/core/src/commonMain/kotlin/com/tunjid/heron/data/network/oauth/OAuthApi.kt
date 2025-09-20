@@ -34,7 +34,6 @@ import dev.whyoleg.cryptography.random.CryptographyRandom
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.call.save
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -46,7 +45,6 @@ import io.ktor.http.Url
 import io.ktor.http.buildUrl
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
-import io.ktor.serialization.kotlinx.json.json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.coroutineScope
@@ -64,24 +62,19 @@ import sh.christian.ozone.api.response.StatusCode
  *
  * @constructor Construct a new OAuth API instance.
  *
- * @param httpClient The HTTP client to use for requests.
+ * @param client The HTTP client to use for requests.
  * @param challengeSelector The strategy to select the code challenge method.
  * @param random The random number generator to use for generating state and code challenges.
  * @param clock The clock to use for generating timestamps.
  */
 class OAuthApi(
-    private val httpClient: HttpClient,
+    private val client: HttpClient,
     private val challengeSelector: OAuthCodeChallengeMethodSelector = OAuthCodeChallengeMethodSelector {
         OAuthCodeChallengeMethod.S256
     },
     private val random: Random = CryptographyRandom,
     private val clock: Clock = Clock.System,
 ) {
-    private val client: HttpClient = httpClient.config {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-    }
 
     private lateinit var oauthServer: OAuthAuthorizationServer
     private var dpopKeyPair: DpopKeyPair? = null

@@ -36,6 +36,9 @@ import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PersistedSessionManager
+import com.tunjid.heron.data.network.SessionManager
+import com.tunjid.heron.data.network.defaultHttpClient
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -64,6 +67,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
@@ -106,6 +110,20 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideTidGenerator(): TidGenerator = TidGenerator()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideSessionManager(
+        httpClient: HttpClient,
+        savedStateDataSource: SavedStateDataSource,
+    ): SessionManager = PersistedSessionManager(
+        httpClient = httpClient,
+        savedStateDataSource = savedStateDataSource,
+    )
+
+    // Note the http client provided is not a singleton
+    @Provides
+    internal fun provideHttpClient(): HttpClient = defaultHttpClient()
 
     @OptIn(CryptographyProviderApi::class)
     @SingleIn(AppScope::class)
@@ -199,7 +217,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideKtorNetworkService(
+    internal fun provideKtorNetworkService(
         ktorNetworkService: KtorNetworkService,
     ): NetworkService = ktorNetworkService
 
