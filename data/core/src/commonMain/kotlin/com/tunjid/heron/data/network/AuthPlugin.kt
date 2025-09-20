@@ -283,7 +283,7 @@ private fun atProtoAuth(
             when (response.getOrNull()?.error) {
                 InvalidTokenError,
                 ExpiredTokenError,
-                    -> readAuth()?.let { existingToken ->
+                -> readAuth()?.let { existingToken ->
                     refresh(existingToken)
                 }
                 // If this returns null, do not throw an exception.
