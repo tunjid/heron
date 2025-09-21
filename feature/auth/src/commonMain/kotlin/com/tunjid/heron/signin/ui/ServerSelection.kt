@@ -166,6 +166,13 @@ private fun ServerSelectionBottomSheet(
                 var customServerFormField by remember {
                     mutableStateOf(CustomServerFormField)
                 }
+                val maybeSelectServer = {
+                    customServerFormField = customServerFormField.validated()
+                    if (customServerFormField.isValid) {
+                        onServerConfirmed(customServerFormField.asServer())
+                        state.hideSheet()
+                    }
+                }
                 FormField(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -174,9 +181,7 @@ private fun ServerSelectionBottomSheet(
                         customServerFormField = customServerFormField.copyWithValidation(newValue)
                     },
                     keyboardActions = {
-                        customServerFormField = customServerFormField
-                            .validated()
-                            .also { it.maybeSelectServer(onServerConfirmed) }
+                        maybeSelectServer()
                     },
                 )
 
@@ -184,9 +189,7 @@ private fun ServerSelectionBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = {
-                        customServerFormField = customServerFormField
-                            .validated()
-                            .also { it.maybeSelectServer(onServerConfirmed) }
+                        maybeSelectServer()
                     },
                     content = {
                         Text(
@@ -219,16 +222,11 @@ private fun ServerSelectionBottomSheet(
     )
 }
 
-private fun FormField.maybeSelectServer(
-    onServerConfirmed: (Server) -> Unit
-) {
-    if (errorMessage == null) onServerConfirmed(
-        Server(
-            endpoint = value,
-            supportsOauth = false,
-        )
-    )
-}
+private fun FormField.asServer(
+) = Server(
+    endpoint = value,
+    supportsOauth = false,
+)
 
 private val CustomServerFormField = FormField(
     id = FormField.Id("custom_server"),
@@ -236,7 +234,6 @@ private val CustomServerFormField = FormField(
     maxLines = 1,
     leadingIcon = Icons.Rounded.Public,
     transformation = VisualTransformation.None,
-//    contentType = ContentType.Username,
     keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.None,
         autoCorrectEnabled = false,
