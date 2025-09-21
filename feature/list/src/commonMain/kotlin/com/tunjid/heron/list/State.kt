@@ -30,7 +30,7 @@ import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -50,7 +50,7 @@ data class State(
     @Transient
     val stateHolders: List<ListScreenStateHolders> = emptyList(),
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 )
 
 fun State(
@@ -155,7 +155,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(

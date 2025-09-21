@@ -28,7 +28,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
@@ -120,7 +120,7 @@ data class State(
     @Transient
     val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 )
 
 sealed class Action(val key: String) {
@@ -144,7 +144,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(

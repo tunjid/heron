@@ -135,8 +135,8 @@ fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
     containerColor: Color = defaultContainerColor,
-    snackBarMessages: List<SnackbarMessage> = emptyList(),
-    onSnackBarMessageConsumed: (SnackbarMessage) -> Unit = {},
+    snackBarMessages: List<ScaffoldMessage> = emptyList(),
+    onSnackBarMessageConsumed: (ScaffoldMessage) -> Unit = {},
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
     snackBarHost: @Composable PaneScaffoldState.() -> Unit = { PaneSnackbarHost() },
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
@@ -191,7 +191,7 @@ fun PaneScaffoldState.PaneScaffold(
             .filterNotNull()
             .collect { message ->
                 val text = when (message) {
-                    is SnackbarMessage.Resource -> when {
+                    is ScaffoldMessage.Resource -> when {
                         message.args.isEmpty() -> getString(
                             resource = message.stringResource,
                         )
@@ -204,7 +204,7 @@ fun PaneScaffoldState.PaneScaffold(
                                 ),
                         )
                     }
-                    is SnackbarMessage.Text -> message.message
+                    is ScaffoldMessage.Text -> message.message
                 }
                 snackbarHostState.showSnackbar(
                     message = text,
@@ -269,13 +269,13 @@ private val PaneClipModifier = Modifier.clip(
     ),
 )
 
-sealed interface SnackbarMessage {
+sealed interface ScaffoldMessage {
     data class Resource(
         val stringResource: StringResource,
         val args: List<Any> = emptyList(),
-    ) : SnackbarMessage
+    ) : ScaffoldMessage
 
     data class Text(
         val message: String,
-    ) : SnackbarMessage
+    ) : ScaffoldMessage
 }

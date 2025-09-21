@@ -29,10 +29,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.data.local.models.Server
-import com.tunjid.heron.data.local.models.SessionRequest
+import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
@@ -123,7 +123,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 )
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
@@ -185,7 +185,7 @@ sealed class Action(val key: String) {
     }
 
     data class MessageConsumed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action("MessageConsumed")
 
     sealed class Navigate :

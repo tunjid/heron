@@ -18,7 +18,7 @@ package com.tunjid.heron.data.datastore.migrations
 
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.local.models.Server
+import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import kotlinx.serialization.Serializable

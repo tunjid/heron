@@ -35,8 +35,8 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.local.models.Server
-import com.tunjid.heron.data.local.models.SessionRequest
+import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity

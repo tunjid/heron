@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -41,7 +41,7 @@ data class State(
     @Transient
     val signedInProfile: Profile? = null,
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 )
 
 @Serializable
@@ -80,7 +80,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
     data class SetCurrentTab(

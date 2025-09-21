@@ -23,7 +23,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.tiler.buildTiledList
@@ -46,7 +46,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 ) : TilingState<NotificationsQuery, Notification>
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
@@ -86,7 +86,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
     data class MarkNotificationsRead(

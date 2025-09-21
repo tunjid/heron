@@ -24,8 +24,8 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
-import com.tunjid.heron.data.local.models.Server
-import com.tunjid.heron.data.local.models.SessionRequest
+import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.network.oauth.DpopKeyPair
 import com.tunjid.heron.data.network.oauth.OAuthApi
 import com.tunjid.heron.data.network.oauth.OAuthAuthorizationRequest
