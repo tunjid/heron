@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
@@ -59,7 +60,9 @@ abstract class SavedState {
         abstract val authProfileId: ProfileId
 
         @Serializable
-        data object Guest : AuthTokens() {
+        data class Guest(
+            val server: Server,
+        ) : AuthTokens() {
             override val authProfileId: ProfileId = Constants.unknownAuthorId
         }
 
@@ -81,6 +84,7 @@ abstract class SavedState {
                 val auth: String,
                 val refresh: String,
                 val didDoc: DidDoc = DidDoc(),
+                val authEndpoint: String,
             ) : Authenticated()
 
             @Serializable
@@ -92,6 +96,7 @@ abstract class SavedState {
                 val clientId: String,
                 val nonce: String,
                 val keyPair: DERKeyPair,
+                val issuerEndpoint: String,
             ) : Authenticated() {
                 @Serializable
                 class DERKeyPair(
@@ -160,8 +165,6 @@ abstract class SavedState {
     )
 }
 
-private val GuestAuth = SavedState.AuthTokens.Guest
-
 val InitialSavedState: SavedState = VersionedSavedState.Initial
 
 val EmptySavedState: SavedState = VersionedSavedState.Empty
@@ -186,7 +189,7 @@ internal val SavedStateDataSource.signedInAuth
 private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
     when (this) {
         is SavedState.AuthTokens.Authenticated -> this
-        SavedState.AuthTokens.Guest,
+        is SavedState.AuthTokens.Guest,
         null,
         -> null
     }
@@ -205,9 +208,6 @@ internal val SavedState.signedInProfileId
 
 fun SavedState.isSignedIn() =
     auth.ifSignedIn() != null
-
-internal suspend fun SavedStateDataSource.guestSignIn() =
-    setAuth(auth = GuestAuth)
 
 fun SavedState.signedInUserPreferences() =
     signedInProfileData?.preferences

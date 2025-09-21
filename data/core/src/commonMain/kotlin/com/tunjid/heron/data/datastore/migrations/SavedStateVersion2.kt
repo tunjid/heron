@@ -17,7 +17,9 @@
 package com.tunjid.heron.data.datastore.migrations
 
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.repository.SavedState
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
@@ -27,7 +29,7 @@ internal class SavedStateVersion2(
     @ProtoNumber(1)
     private val version: Int,
     @ProtoNumber(2)
-    private val auth: SavedState.AuthTokens?,
+    private val auth: AuthTokensV2?,
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
@@ -39,10 +41,67 @@ internal class SavedStateVersion2(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = auth,
+            auth = when (auth) {
+                is AuthTokensV2.Authenticated.Bearer -> SavedState.AuthTokens.Authenticated.Bearer(
+                    authProfileId = auth.authProfileId,
+                    auth = auth.auth,
+                    refresh = auth.refresh,
+                    didDoc = auth.didDoc,
+                    authEndpoint = Server.BlueSky.endpoint,
+                )
+                is AuthTokensV2.Authenticated.DPoP -> SavedState.AuthTokens.Authenticated.DPoP(
+                    authProfileId = auth.authProfileId,
+                    auth = auth.auth,
+                    refresh = auth.refresh,
+                    pdsUrl = auth.pdsUrl,
+                    clientId = auth.clientId,
+                    nonce = auth.nonce,
+                    keyPair = auth.keyPair,
+                    issuerEndpoint = Server.BlueSky.endpoint,
+                )
+                AuthTokensV2.Guest -> SavedState.AuthTokens.Guest(
+                    server = Server.BlueSky,
+                )
+                null -> null
+            },
             navigation = navigation,
             profileData = profileData,
         )
+
+    @Serializable
+    @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens")
+    sealed class AuthTokensV2 {
+
+        @Serializable
+        @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Guest")
+        data object Guest : AuthTokensV2()
+
+        @Serializable
+        @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Guest.Authenticated")
+        sealed class Authenticated : AuthTokensV2() {
+
+            @Serializable
+            @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Authenticated.Bearer")
+            data class Bearer(
+                val authProfileId: ProfileId,
+                val auth: String,
+                val refresh: String,
+                val didDoc: SavedState.AuthTokens.DidDoc = SavedState.AuthTokens.DidDoc(),
+            ) : Authenticated()
+
+            @Serializable
+            @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Authenticated.DPoP")
+            data class DPoP(
+                val authProfileId: ProfileId,
+                val auth: String,
+                val refresh: String,
+                val pdsUrl: String,
+                val clientId: String,
+                val nonce: String,
+                val keyPair: SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair,
+            ) : Authenticated()
+        }
+    }
 
     companion object {
         const val SnapshotVersion = 2

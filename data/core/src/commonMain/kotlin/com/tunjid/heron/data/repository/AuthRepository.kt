@@ -22,7 +22,6 @@ import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.Type
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
-import com.atproto.server.CreateSessionRequest
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
@@ -36,10 +35,12 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -63,6 +64,8 @@ interface AuthRepository {
 
     val signedInUser: Flow<Profile?>
 
+    val supportedServers: Flow<List<Server>>
+
     fun isSignedInProfile(id: Id): Flow<Boolean>
 
     suspend fun oauthRequestUri(
@@ -72,8 +75,6 @@ interface AuthRepository {
     suspend fun createSession(
         request: SessionRequest,
     ): Result<Unit>
-
-    suspend fun guestSignIn()
 
     suspend fun signOut()
 
@@ -108,6 +109,13 @@ internal class AuthTokenRepository(
                 }
             }
 
+    override val supportedServers: Flow<List<Server>> = flowOf(
+        listOf(
+            Server.BlueSky,
+            Server.BlackSky,
+        ),
+    )
+
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
         savedStateDataSource.savedState
             .map { it.signedInProfileId == id }
@@ -121,39 +129,18 @@ internal class AuthTokenRepository(
 
     override suspend fun createSession(
         request: SessionRequest,
-    ): Result<Unit> = when (request) {
-        is SessionRequest.Credentials -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-            createSession(
-                CreateSessionRequest(
-                    identifier = request.handle.id,
-                    password = request.password,
-                ),
-            )
-        }
-            .mapCatching { result ->
-                SavedState.AuthTokens.Authenticated.Bearer(
-                    authProfileId = ProfileId(result.did.did),
-                    auth = result.accessJwt,
-                    refresh = result.refreshJwt,
-                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                        jsonContent = result.didDoc,
-                    ),
-                )
+    ): Result<Unit> = runCatchingUnlessCancelled {
+        sessionManager.createSession(request)
+    }
+        .mapCatchingUnlessCancelled { authToken ->
+            savedStateDataSource.setAuth(authToken)
+            // Suspend till auth token has been saved and is readable
+            savedStateDataSource.savedState.first { it.auth != null }
+            if (authToken is SavedState.AuthTokens.Authenticated) {
+                updateSignedInUser(authToken.authProfileId.id.let(::Did))
             }
-        is SessionRequest.Oauth -> runCatchingUnlessCancelled {
-            sessionManager.createOauthSession(request)
+            Unit
         }
-    }.mapCatching { authToken ->
-        savedStateDataSource.setAuth(authToken)
-        // Suspend till auth token has been saved and is readable
-        savedStateDataSource.savedState.first { it.auth != null }
-        updateSignedInUser(authToken.authProfileId.id.let(::Did))
-        Unit
-    }
-
-    override suspend fun guestSignIn() {
-        savedStateDataSource.guestSignIn()
-    }
 
     override suspend fun signOut() {
         savedStateDataSource.updateSignedInProfileData {

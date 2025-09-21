@@ -43,6 +43,15 @@ internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     }
 }
 
+internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
+    transform: (value: T) -> R,
+): Result<R> = fold(
+    onSuccess = {
+        runCatchingUnlessCancelled { transform(it) }
+    },
+    onFailure = { Result.failure(it) },
+)
+
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
     times: Int = 3,
     initialDelay: Long = 100, // 0.1 second

@@ -28,6 +28,7 @@ interface OauthFlowState {
 sealed class OauthFlowResult {
     data class Success(
         val callbackUri: GenericUri,
+        val issuer: String,
     ) : OauthFlowResult()
 
     data object Failure : OauthFlowResult()

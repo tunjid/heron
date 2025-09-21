@@ -21,11 +21,6 @@ import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.http.takeFrom
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
@@ -48,20 +43,7 @@ internal class KtorNetworkService(
 ) : NetworkService {
     override val api = XrpcBlueskyApi(
         httpClient = httpClient.config {
-            install(DefaultRequest) {
-                url.takeFrom(BaseEndpoint)
-            }
-
-            sessionManager.manage(this)
-
-            install(Logging) {
-                level = LogLevel.INFO
-                logger = object : Logger {
-                    override fun log(message: String) {
-//                        println("Logger Ktor => $message")
-                    }
-                }
-            }
+            sessionManager.manage(config = this)
         },
     )
 
@@ -79,5 +61,3 @@ internal class KtorNetworkService(
         block = { block(api) },
     )
 }
-
-internal const val BaseEndpoint = "https://bsky.social"
