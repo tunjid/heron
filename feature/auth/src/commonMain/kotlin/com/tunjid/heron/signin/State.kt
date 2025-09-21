@@ -171,10 +171,6 @@ sealed class Action(val key: String) {
         val result: OauthFlowResult,
     ) : Action("OauthFlowResultAvailable")
 
-    data class SetAuthMode(
-        val mode: AuthMode.UserSelectable,
-    ) : Action("SetAuthMode")
-
     data class SetServer(
         val server: Server,
     ) : Action("SetServer")

@@ -103,7 +103,6 @@ class ActualSignInViewModel(
                         navActions = navActions,
                     )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
-                    is Action.SetAuthMode -> action.flow.setAuthModeMutations()
                     is Action.SetServer -> action.flow.setServerMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -139,11 +138,6 @@ private fun authDeeplinkMutations(
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
     mapToMutation { (id, text) ->
         copy(fields = fields.copyWithValidation(id, text))
-    }
-
-private fun Flow<Action.SetAuthMode>.setAuthModeMutations(): Flow<Mutation<State>> =
-    mapToMutation { (authMode) ->
-        copy(authMode = authMode)
     }
 
 private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =

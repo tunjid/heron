@@ -128,30 +128,6 @@ internal fun SignInScreen(
             }
         }
 
-        AnimatedVisibility(
-            visible = state.isOauthAvailable && state.profileHandle.id.isNotBlank(),
-            modifier = Modifier
-                .animateBounds(paneScaffoldState),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(
-                    checked = state.authMode == AuthMode.UserSelectable.Password,
-                    onCheckedChange = { checked ->
-                        actions(
-                            Action.SetAuthMode(
-                                if (checked) AuthMode.UserSelectable.Password
-                                else AuthMode.UserSelectable.Oauth,
-                            ),
-                        )
-                    },
-                )
-                Text(stringResource(Res.string.sign_with_password))
-            }
-        }
-
         LaunchedEffect(Unit) {
             launch {
                 snapshotFlow { oauthFlowState.supportsOauth }
