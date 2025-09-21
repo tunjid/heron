@@ -98,7 +98,7 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
     ): OauthFlowResult = when (resultCode) {
         Activity.RESULT_OK -> when (val callbackUri = intent?.data) {
             null -> OauthFlowResult.Failure
-            else -> when(val issuer = intent.data?.getQueryParameter(OauthIssuerKey)) {
+            else -> when (val issuer = intent.data?.getQueryParameter(OauthIssuerKey)) {
                 null -> OauthFlowResult.Failure
                 else -> OauthFlowResult.Success(
                     callbackUri = GenericUri(callbackUri.toString()),
