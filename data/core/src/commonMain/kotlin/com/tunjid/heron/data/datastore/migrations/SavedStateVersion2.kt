@@ -77,7 +77,7 @@ internal class SavedStateVersion2(
         data object Guest : AuthTokensV2()
 
         @Serializable
-        @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Guest.Authenticated")
+        @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Authenticated")
         sealed class Authenticated : AuthTokensV2() {
 
             @Serializable
