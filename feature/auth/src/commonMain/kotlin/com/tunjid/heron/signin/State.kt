@@ -27,10 +27,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.oauth.OauthFlowResult

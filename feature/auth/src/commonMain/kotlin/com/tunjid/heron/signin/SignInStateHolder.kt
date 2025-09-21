@@ -17,9 +17,9 @@
 package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
