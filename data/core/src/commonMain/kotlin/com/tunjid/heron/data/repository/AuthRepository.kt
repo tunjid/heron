@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
@@ -63,8 +62,6 @@ interface AuthRepository {
     val isSignedIn: Flow<Boolean>
 
     val signedInUser: Flow<Profile?>
-
-    val supportedServers: Flow<List<Server>>
 
     fun isSignedInProfile(id: Id): Flow<Boolean>
 
@@ -108,13 +105,6 @@ internal class AuthTokenRepository(
                     if (signedInProfileId != null) updateSignedInUser()
                 }
             }
-
-    override val supportedServers: Flow<List<Server>> = flowOf(
-        listOf(
-            Server.BlueSky,
-            Server.BlackSky,
-        ),
-    )
 
     override fun isSignedInProfile(id: Id): Flow<Boolean> =
         savedStateDataSource.savedState

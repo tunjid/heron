@@ -23,5 +23,11 @@
     <string name="sign_in_later">Sign in later</string>
     <string name="sign_with_password">Sign in with password</string>
     <string name="oauth_flow_failed">Authorization failed</string>
-  <string name="oauth_start_error">There was an error starting the authorization flow. Please check your username and try again.</string>
+    <string name="oauth_start_error">There was an error starting the authorization flow. Please check your username and try again.</string>
+    <string name="cancel">Cancel</string>
+    <string name="invalid_domain">Invalid domain</string>
+    <string name="empty_form">%1$s should not be empty</string>
+    <string name="bluesky_server">Bluesky</string>
+    <string name="blacksky_server">Blacksky</string>
+    <string name="custom_server">Custom server</string>
 </resources>

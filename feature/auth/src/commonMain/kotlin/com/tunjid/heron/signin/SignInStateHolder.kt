@@ -30,6 +30,7 @@ import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
+import com.tunjid.heron.signin.ui.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -103,6 +104,7 @@ class ActualSignInViewModel(
                     )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
                     is Action.SetAuthMode -> action.flow.setAuthModeMutations()
+                    is Action.SetServer -> action.flow.setServerMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -135,13 +137,18 @@ private fun authDeeplinkMutations(
 }
 
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
-    mapToMutation { (updatedField) ->
-        copy(fields = fields.update(updatedField))
+    mapToMutation { (id, text) ->
+        copy(fields = fields.copyWithValidation(id, text))
     }
 
 private fun Flow<Action.SetAuthMode>.setAuthModeMutations(): Flow<Mutation<State>> =
     mapToMutation { (authMode) ->
         copy(authMode = authMode)
+    }
+
+private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
+    mapToMutation { (server) ->
+        copy(selectedServer = server)
     }
 
 private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =

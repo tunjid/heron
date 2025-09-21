@@ -24,12 +24,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,15 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.semantics.contentType
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
+import com.tunjid.heron.signin.ui.FormField
+import com.tunjid.heron.signin.ui.ServerSelection
+import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import heron.feature.auth.generated.resources.Res
-import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.sign_with_password
-import heron.feature.auth.generated.resources.username
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -86,24 +81,34 @@ internal fun SignInScreen(
             )
         }
 
-        state.onFormFieldMatchingAuth { field ->
+        val serverSelectionSheetState = rememberUpdatedServerSelectionState(
+            onServerConfirmed = {
+                actions(Action.SetServer(it))
+            },
+        )
+
+        ServerSelection(
+            selectedServer = state.selectedServer,
+            availableServers = state.availableServers,
+            onServerSelected = serverSelectionSheetState::onServer,
+        )
+
+        state.fields.forEach { field ->
             key(field.id) {
-                OutlinedTextField(
+                FormField(
                     modifier = Modifier
-                        .semantics {
-                            field.contentType?.let { contentType = it }
-                        }
                         .animateBounds(paneScaffoldState),
-                    value = field.value,
-                    maxLines = field.maxLines,
-                    onValueChange = {
-                        actions(Action.FieldChanged(field = field.copy(value = it)))
+                    field = field,
+                    onValueChange = { field, newValue ->
+                        actions(
+                            Action.FieldChanged(
+                                id = field.id,
+                                text = newValue,
+                            ),
+                        )
                     },
-                    shape = MaterialTheme.shapes.large,
-                    visualTransformation = field.transformation,
-                    keyboardOptions = field.keyboardOptions,
-                    keyboardActions = KeyboardActions {
-                        when (field.id) {
+                    keyboardActions = {
+                        when (it.id) {
                             Username -> focusManager.moveFocus(
                                 focusDirection = FocusDirection.Next,
                             )
@@ -117,25 +122,6 @@ internal fun SignInScreen(
                                 )
                                 keyboardController?.hide()
                             }
-                        }
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(
-                                when (field.id) {
-                                    Username -> Res.string.username
-                                    Password -> Res.string.password
-                                    else -> throw IllegalArgumentException()
-                                },
-                            ),
-                        )
-                    },
-                    leadingIcon = {
-                        if (field.leadingIcon != null) {
-                            Icon(
-                                imageVector = field.leadingIcon,
-                                contentDescription = stringResource(Res.string.password),
-                            )
                         }
                     },
                 )

@@ -52,6 +52,7 @@ import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNotNull
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 class PaneScaffoldState internal constructor(
     internal val appState: AppState,
@@ -190,22 +191,7 @@ fun PaneScaffoldState.PaneScaffold(
         snapshotFlow { updatedMessages.value }
             .filterNotNull()
             .collect { message ->
-                val text = when (message) {
-                    is ScaffoldMessage.Resource -> when {
-                        message.args.isEmpty() -> getString(
-                            resource = message.stringResource,
-                        )
-                        else -> getString(
-                            resource = message.stringResource,
-                            *(
-                                message.args
-                                    .map { if (it is StringResource) getString(it) else it }
-                                    .toTypedArray()
-                                ),
-                        )
-                    }
-                    is ScaffoldMessage.Text -> message.message
-                }
+                val text = message.message()
                 snackbarHostState.showSnackbar(
                     message = text,
                 )
@@ -268,6 +254,43 @@ private val PaneClipModifier = Modifier.clip(
         topEnd = 16.dp,
     ),
 )
+
+suspend fun ScaffoldMessage.message(): String =
+    when (this) {
+        is ScaffoldMessage.Resource -> when {
+            args.isEmpty() -> getString(
+                resource = stringResource,
+            )
+            else -> getString(
+                resource = stringResource,
+                *(
+                    args
+                        .map { if (it is StringResource) getString(it) else it }
+                        .toTypedArray()
+                    ),
+            )
+        }
+        is ScaffoldMessage.Text -> message
+    }
+
+val ScaffoldMessage.message: String
+    @Composable get() =
+        when (this) {
+            is ScaffoldMessage.Resource -> when {
+                args.isEmpty() -> stringResource(
+                    resource = stringResource,
+                )
+                else -> stringResource(
+                    resource = stringResource,
+                    *(
+                        args
+                            .map { if (it is StringResource) stringResource(it) else it }
+                            .toTypedArray()
+                        ),
+                )
+            }
+            is ScaffoldMessage.Text -> message
+        }
 
 sealed interface ScaffoldMessage {
     data class Resource(
