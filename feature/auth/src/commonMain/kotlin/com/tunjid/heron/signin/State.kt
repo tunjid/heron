@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
@@ -89,6 +90,7 @@ data class State(
     val isSubmitting: Boolean = false,
     val isOauthAvailable: Boolean = false,
     val oauthRequestUri: GenericUri? = null,
+    val selectedServer: Server = Server.BlueSky,
     val authMode: AuthMode = AuthMode.Undecided,
     val fields: List<FormField> = listOf(
         FormField(
@@ -139,6 +141,7 @@ val State.sessionRequest: SessionRequest
         SessionRequest.Credentials(
             handle = ProfileHandle(formMap.getValue(Username).value),
             password = formMap.getValue(Password).value,
+            server = selectedServer,
         )
     }
 

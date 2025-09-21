@@ -17,12 +17,14 @@
 package com.tunjid.heron.data.network
 
 import com.atproto.identity.ResolveHandleQueryParams
+import com.atproto.server.CreateSessionRequest
 import com.atproto.server.RefreshSessionResponse
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.network.oauth.DpopKeyPair
 import com.tunjid.heron.data.network.oauth.OAuthApi
@@ -60,7 +62,9 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import sh.christian.ozone.api.Handle
 import sh.christian.ozone.api.response.AtpErrorDescription
@@ -73,9 +77,9 @@ internal interface SessionManager {
         handle: ProfileHandle,
     ): GenericUri
 
-    suspend fun createOauthSession(
-        request: SessionRequest.Oauth,
-    ): SavedState.AuthTokens.Authenticated.DPoP
+    suspend fun createSession(
+        request: SessionRequest,
+    ): SavedState.AuthTokens
 
     fun manage(config: HttpClientConfig<*>)
 }
@@ -85,9 +89,14 @@ internal class PersistedSessionManager @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
 ) : SessionManager {
 
-    private val oauthHttpClient = httpClient.config {
+    private val sessionRequestUrl = MutableStateFlow<Url?>(null)
+
+    private val authHttpClient = httpClient.config {
         install(DefaultRequest) {
-            url.takeFrom(BaseEndpoint)
+            // Authentication requests use the most recent value from
+            // create session requests, or the latest token value.
+            sessionRequestUrl.value?.let(url::takeFrom)
+                ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
 
         install(Logging) {
@@ -101,11 +110,11 @@ internal class PersistedSessionManager @Inject constructor(
     }
 
     private val api = XrpcBlueskyApi(
-        httpClient = oauthHttpClient,
+        httpClient = authHttpClient,
     )
 
     private val oAuthApi: OAuthApi = OAuthApi(
-        client = oauthHttpClient,
+        client = authHttpClient,
     )
 
     private var pendingOauthSession: OauthSession? = null
@@ -123,44 +132,77 @@ internal class PersistedSessionManager @Inject constructor(
         .authorizeRequestUrl
         .let(::GenericUri)
 
-    override suspend fun createOauthSession(
-        request: SessionRequest.Oauth,
-    ): SavedState.AuthTokens.Authenticated.DPoP {
-        val pendingRequest = pendingOauthSession
-            ?: throw IllegalStateException("Expired authentication session")
-
-        try {
-            val callbackUrl = Url(request.callbackUri.uri)
-
-            val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
-                ?: throw IllegalStateException("No auth code")
-
-            val oAuthToken = oAuthApi.requestToken(
-                oauthClient = HeronOauthClient,
-                nonce = pendingRequest.request.nonce,
-                codeVerifier = pendingRequest.request.codeVerifier,
-                code = code,
+    override suspend fun createSession(
+        request: SessionRequest,
+    ): SavedState.AuthTokens = try {
+        // Update the auth server to use the endpoint from the request's server.
+        sessionRequestUrl.update { Url(request.server.endpoint) }
+        when (request) {
+            is SessionRequest.Credentials -> api.createSession(
+                CreateSessionRequest(
+                    identifier = request.handle.id,
+                    password = request.password,
+                ),
             )
-
-            val callingDid = api.resolveHandle(
-                ResolveHandleQueryParams(Handle(pendingRequest.handle.id)),
-            )
+                .map { result ->
+                    SavedState.AuthTokens.Authenticated.Bearer(
+                        authProfileId = ProfileId(result.did.did),
+                        auth = result.accessJwt,
+                        refresh = result.refreshJwt,
+                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                            jsonContent = result.didDoc,
+                        ),
+                        authEndpoint = request.server.endpoint,
+                    )
+                }
                 .requireResponse()
-                .did
+            is SessionRequest.Oauth -> {
+                val pendingRequest = pendingOauthSession
+                    ?: throw IllegalStateException("Expired authentication session")
 
-            if (oAuthToken.subject != callingDid) {
-                throw IllegalStateException("Invalid login session")
+                try {
+                    val callbackUrl = Url(request.callbackUri.uri)
+
+                    val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
+                        ?: throw IllegalStateException("No auth code")
+
+                    val oAuthToken = oAuthApi.requestToken(
+                        oauthClient = HeronOauthClient,
+                        nonce = pendingRequest.request.nonce,
+                        codeVerifier = pendingRequest.request.codeVerifier,
+                        code = code,
+                    )
+
+                    val callingDid = api.resolveHandle(
+                        ResolveHandleQueryParams(Handle(pendingRequest.handle.id)),
+                    )
+                        .requireResponse()
+                        .did
+
+                    if (oAuthToken.subject != callingDid) {
+                        throw IllegalStateException("Invalid login session")
+                    }
+
+                    oAuthToken.toAppToken(authEndpoint = request.server.endpoint)
+                } finally {
+                    pendingOauthSession = null
+                }
             }
-
-            return oAuthToken.toAppToken()
-        } finally {
-            pendingOauthSession = null
+            SessionRequest.Guest -> SavedState.AuthTokens.Guest(
+                server = request.server,
+            )
         }
+    } finally {
+        sessionRequestUrl.update { null }
     }
 
     override fun manage(
         config: HttpClientConfig<*>,
     ) = with(config) {
+        install(DefaultRequest) {
+            // The managed session must take its default URL from the current auth token
+            url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
+        }
         install(
             atProtoAuth(
                 networkErrorConverter = BlueskyJson::decodeFromString,
@@ -170,6 +212,14 @@ internal class PersistedSessionManager @Inject constructor(
                 refresh = ::refresh,
             ),
         )
+        install(Logging) {
+            level = LogLevel.INFO
+            logger = object : Logger {
+                override fun log(message: String) {
+//                        println("Logger Ktor => $message")
+                }
+            }
+        }
     }
 
     private suspend fun authenticate(
@@ -177,9 +227,11 @@ internal class PersistedSessionManager @Inject constructor(
         tokens: SavedState.AuthTokens.Authenticated,
     ) = with(context) {
         when (tokens) {
-            is SavedState.AuthTokens.Authenticated.Bearer -> bearerAuth(
-                token = tokens.auth,
-            )
+            is SavedState.AuthTokens.Authenticated.Bearer -> {
+                val bearerAuthUrl = Url(tokens.authEndpoint)
+                url.host = bearerAuthUrl.host
+                bearerAuth(token = tokens.auth)
+            }
             is SavedState.AuthTokens.Authenticated.DPoP -> {
                 val pdsUrl = Url(tokens.pdsUrl)
                 url.protocol = pdsUrl.protocol
@@ -204,7 +256,7 @@ internal class PersistedSessionManager @Inject constructor(
     private suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
     ): SavedState.AuthTokens.Authenticated = when (tokens) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> oauthHttpClient.post(
+        is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
             urlString = RefreshTokenEndpoint,
             block = { bearerAuth(tokens.refresh) },
         )
@@ -218,6 +270,7 @@ internal class PersistedSessionManager @Inject constructor(
                     didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                         jsonContent = refreshed.didDoc,
                     ),
+                    authEndpoint = tokens.authEndpoint,
                 )
             }
             ?: throw InvalidTokenException()
@@ -228,7 +281,7 @@ internal class PersistedSessionManager @Inject constructor(
                 nonce = tokens.nonce,
                 refreshToken = tokens.refresh,
                 keyPair = tokens.toKeyPair(),
-            ).toAppToken()
+            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
         }
     }
 }
@@ -354,19 +407,29 @@ private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
         privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
     )
 
-private suspend fun OAuthToken.toAppToken() =
-    SavedState.AuthTokens.Authenticated.DPoP(
-        authProfileId = subject.did.let(::ProfileId),
-        auth = accessToken,
-        refresh = refreshToken,
-        pdsUrl = pds.toString(),
-        keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
-            publicKey = keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
-            privateKey = keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
-        ),
-        clientId = clientId,
-        nonce = nonce,
-    )
+private suspend fun OAuthToken.toAppToken(
+    authEndpoint: String,
+) = SavedState.AuthTokens.Authenticated.DPoP(
+    authProfileId = subject.did.let(::ProfileId),
+    auth = accessToken,
+    refresh = refreshToken,
+    pdsUrl = pds.toString(),
+    keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
+        publicKey = keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
+        privateKey = keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
+    ),
+    clientId = clientId,
+    nonce = nonce,
+    issuerEndpoint = authEndpoint,
+)
+
+private val SavedState.AuthTokens?.defaultUrl
+    get() = when (this) {
+        is SavedState.AuthTokens.Authenticated.Bearer -> authEndpoint
+        is SavedState.AuthTokens.Authenticated.DPoP -> issuerEndpoint
+        is SavedState.AuthTokens.Guest -> server.endpoint
+        null -> Server.BlueSky.endpoint
+    }
 
 private class OauthSession(
     val handle: ProfileHandle,

@@ -16,21 +16,18 @@
 
 package com.tunjid.heron.data.datastore.migrations
 
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.repository.SavedState
-import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
-internal class SavedStateVersion1(
+internal class SavedStateVersion3(
     @Suppress("unused")
     @ProtoNumber(1)
     private val version: Int,
     @ProtoNumber(2)
-    private val auth: AuthTokens?,
+    private val auth: SavedState.AuthTokens?,
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
@@ -42,33 +39,12 @@ internal class SavedStateVersion1(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = auth?.let {
-                when (it.authProfileId) {
-                    Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
-                        server = Server.BlueSky,
-                    )
-                    else -> SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = it.authProfileId,
-                        auth = it.auth,
-                        refresh = it.refresh,
-                        didDoc = it.didDoc,
-                        authEndpoint = Server.BlueSky.endpoint,
-                    )
-                }
-            },
+            auth = auth,
             navigation = navigation,
             profileData = profileData,
         )
 
-    @Serializable
-    data class AuthTokens(
-        val authProfileId: ProfileId,
-        val auth: String,
-        val refresh: String,
-        val didDoc: DidDoc = DidDoc(),
-    )
-
     companion object {
-        const val SnapshotVersion = 1
+        const val SnapshotVersion = 3
     }
 }

@@ -22,14 +22,43 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class SessionRequest {
+
+    abstract val server: Server
+
     @Serializable
     data class Credentials(
         val handle: ProfileHandle,
         val password: String,
+        override val server: Server,
     ) : SessionRequest()
 
     @Serializable
     data class Oauth(
         val callbackUri: GenericUri,
+        override val server: Server,
     ) : SessionRequest()
+
+    @Serializable
+    data object Guest : SessionRequest() {
+        override val server: Server = Server.BlueSky
+    }
+}
+
+@Serializable
+data class Server(
+    val endpoint: String,
+    val supportsOauth: Boolean,
+) {
+
+    companion object {
+        val BlueSky = Server(
+            endpoint = "https://bsky.social",
+            supportsOauth = true,
+        )
+
+        val BlackSky = Server(
+            endpoint = "https://blacksky.app",
+            supportsOauth = false,
+        )
+    }
 }

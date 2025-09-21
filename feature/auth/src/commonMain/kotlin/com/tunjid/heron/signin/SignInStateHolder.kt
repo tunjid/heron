@@ -18,6 +18,7 @@ package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.local.models.Server
 import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -27,6 +28,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -115,12 +117,16 @@ private fun authDeeplinkMutations(
     navActions: (NavigationMutation) -> Unit,
 ) = flow {
     if (route.routeParams.queryParams.isEmpty()) return@flow
+    val oauthTokenIssuer = route.iss ?: return@flow
+
     val pathAndQueries = route.routeParams.pathAndQueries
 
     createSessionMutations(
-        action = Action.Submit.Auth(
-            request = SessionRequest.Oauth(
-                callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
+        request = SessionRequest.Oauth(
+            callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
+            server = Server(
+                endpoint = oauthTokenIssuer,
+                supportsOauth = true,
             ),
         ),
         authRepository = authRepository,
@@ -167,9 +173,11 @@ private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
             }
             is OauthFlowResult.Success -> {
                 createSessionMutations(
-                    action = Action.Submit.Auth(
-                        request = SessionRequest.Oauth(
-                            callbackUri = result.callbackUri,
+                    request = SessionRequest.Oauth(
+                        callbackUri = result.callbackUri,
+                        server = Server(
+                            endpoint = result.issuer,
+                            supportsOauth = true,
                         ),
                     ),
                     authRepository = authRepository,
@@ -211,28 +219,22 @@ private fun Flow<Action.Submit>.submissionMutations(
     debounce(200)
         .mapLatestToManyMutations { action ->
             createSessionMutations(
-                action = action,
+                request = when (action) {
+                    is Action.Submit.Auth -> action.request
+                    Action.Submit.GuestAuth -> SessionRequest.Guest
+                },
                 authRepository = authRepository,
                 navActions = navActions,
             )
         }
 
 private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
-    action: Action.Submit,
+    request: SessionRequest,
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ) {
     emit { copy(isSubmitting = true) }
-    val exception = when (action) {
-        is Action.Submit.Auth -> {
-            authRepository.createSession(action.request).exceptionOrNull()
-        }
-        Action.Submit.GuestAuth -> {
-            authRepository.guestSignIn()
-            null
-        }
-    }
-    when (exception) {
+    when (val exception = authRepository.createSession(request).exceptionOrNull()) {
         null -> navActions(NavigationContext::resetAuthNavigation)
         else -> emit {
             copy(

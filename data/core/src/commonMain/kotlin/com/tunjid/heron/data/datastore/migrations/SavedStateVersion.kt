@@ -27,7 +27,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import okio.BufferedSink
 import okio.BufferedSource
 
-private const val CurrentVersion = 2
+private const val CurrentVersion = 3
 
 /**
  * Defines a method of versioning the proto based saved state.
@@ -99,6 +99,7 @@ internal class VersionedSavedStateOkioSerializer(
                 SavedStateVersion0.SnapshotVersion -> decodeFromByteArray<SavedStateVersion0>(data)
                 SavedStateVersion1.SnapshotVersion -> decodeFromByteArray<SavedStateVersion1>(data)
                 SavedStateVersion2.SnapshotVersion -> decodeFromByteArray<SavedStateVersion2>(data)
+                SavedStateVersion3.SnapshotVersion -> decodeFromByteArray<SavedStateVersion3>(data)
                 else -> throw IllegalArgumentException("Unknown saved state version")
             }.toVersionedSavedState(CurrentVersion)
         } catch (e: Exception) {
