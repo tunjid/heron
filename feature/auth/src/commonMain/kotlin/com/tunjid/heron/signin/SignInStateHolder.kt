@@ -17,9 +17,9 @@
 package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.local.models.Server
-import com.tunjid.heron.data.local.models.SessionRequest
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -27,7 +27,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.mutator.ActionStateMutator
@@ -168,7 +168,7 @@ private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
         when (val result = action.result) {
             OauthFlowResult.Failure -> emit {
                 copy(
-                    messages = messages + SnackbarMessage.Resource(Res.string.oauth_flow_failed),
+                    messages = messages + ScaffoldMessage.Resource(Res.string.oauth_flow_failed),
                 )
             }
             is OauthFlowResult.Success -> {
@@ -198,7 +198,7 @@ private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
             },
             onFailure = {
                 emit {
-                    copy(messages = messages + SnackbarMessage.Resource(Res.string.oauth_start_error))
+                    copy(messages = messages + ScaffoldMessage.Resource(Res.string.oauth_start_error))
                 }
             },
         )
@@ -240,8 +240,8 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
             copy(
                 messages = messages.plus(
                     exception.message
-                        ?.let(SnackbarMessage::Text)
-                        ?: SnackbarMessage.Resource(Res.string.oauth_flow_failed),
+                        ?.let(ScaffoldMessage::Text)
+                        ?: ScaffoldMessage.Resource(Res.string.oauth_flow_failed),
                 )
                     .distinct(),
             )

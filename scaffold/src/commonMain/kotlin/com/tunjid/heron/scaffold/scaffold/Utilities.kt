@@ -34,7 +34,7 @@ fun viewModelCoroutineScope() = CoroutineScope(
     SupervisorJob() + Dispatchers.Main.immediate,
 )
 
-fun Post.Interaction.duplicateWriteMessage() = SnackbarMessage.Resource(
+fun Post.Interaction.duplicateWriteMessage() = ScaffoldMessage.Resource(
     stringResource = Res.string.duplicate_post_interaction,
     args = listOf(
         when (this) {
@@ -48,7 +48,7 @@ fun Post.Interaction.duplicateWriteMessage() = SnackbarMessage.Resource(
     ),
 )
 
-fun Post.Interaction.failedWriteMessage() = SnackbarMessage.Resource(
+fun Post.Interaction.failedWriteMessage() = ScaffoldMessage.Resource(
     stringResource = Res.string.failed_post_interaction,
 )
 

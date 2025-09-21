@@ -27,7 +27,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
-import com.tunjid.heron.scaffold.scaffold.SnackbarMessage
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.treenav.strings.Route
 import kotlin.collections.filterIsInstance
@@ -47,7 +47,7 @@ data class State(
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Transient
-    val messages: List<SnackbarMessage> = emptyList(),
+    val messages: List<ScaffoldMessage> = emptyList(),
 ) : TilingState<MessageQuery, MessageItem>
 
 fun State(
@@ -137,7 +137,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: SnackbarMessage,
+        val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
     data class SendMessage(
