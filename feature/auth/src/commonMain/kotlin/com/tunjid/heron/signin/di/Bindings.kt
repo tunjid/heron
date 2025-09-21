@@ -52,10 +52,12 @@ import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
 import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
+import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
+import com.tunjid.heron.signin.credentialSessionRequest
 import com.tunjid.heron.signin.profileHandle
-import com.tunjid.heron.signin.sessionRequest
 import com.tunjid.heron.signin.submitButtonEnabled
+import com.tunjid.heron.signin.ui.stringResource
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -72,8 +74,9 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.create_an_account
-import heron.feature.auth.generated.resources.sign_in
 import heron.feature.auth.generated.resources.sign_in_later
+import heron.feature.auth.generated.resources.sign_with_oauth
+import heron.feature.auth.generated.resources.sign_with_password
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
@@ -169,8 +172,12 @@ class SignInBindings(
                         text = stringResource(
                             when {
                                 state.canSignInLater -> Res.string.sign_in_later
-                                else -> Res.string.sign_in
+                                else -> when (state.authMode) {
+                                    AuthMode.Oauth -> Res.string.sign_with_oauth
+                                    AuthMode.Password -> Res.string.sign_with_password
+                                }
                             },
+                            stringResource(state.selectedServer.stringResource),
                         ),
                         icon = when {
                             state.canSignInLater -> Icons.Rounded.Timer
@@ -182,14 +189,11 @@ class SignInBindings(
                                 when {
                                     state.canSignInLater -> Action.Submit.GuestAuth
                                     else -> when (state.authMode) {
-                                        AuthMode.Undecided -> Action.BeginOauthFlow(
+                                        AuthMode.Oauth -> Action.BeginOauthFlow(
                                             state.profileHandle,
                                         )
-                                        AuthMode.UserSelectable.Oauth -> Action.BeginOauthFlow(
-                                            state.profileHandle,
-                                        )
-                                        AuthMode.UserSelectable.Password -> Action.Submit.Auth(
-                                            state.sessionRequest,
+                                        AuthMode.Password -> Action.Submit.Auth(
+                                            state.credentialSessionRequest,
                                         )
                                     }
                                 },

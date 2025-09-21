@@ -16,17 +16,13 @@
 
 package com.tunjid.heron.signin
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
@@ -43,12 +39,9 @@ import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import com.tunjid.heron.signin.ui.FormField
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
-import heron.feature.auth.generated.resources.Res
-import heron.feature.auth.generated.resources.sign_with_password
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -117,7 +110,7 @@ internal fun SignInScreen(
                                 actions(
                                     when {
                                         state.canSignInLater -> Action.Submit.GuestAuth
-                                        else -> Action.Submit.Auth(state.sessionRequest)
+                                        else -> Action.Submit.Auth(state.credentialSessionRequest)
                                     },
                                 )
                                 keyboardController?.hide()

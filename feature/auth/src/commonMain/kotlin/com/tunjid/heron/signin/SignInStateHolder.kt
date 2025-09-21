@@ -147,18 +147,7 @@ private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
 
 private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
     mapToMutation { (isOauthAvailable) ->
-        copy(
-            isOauthAvailable = isOauthAvailable,
-            authMode = when (authMode) {
-                AuthMode.UserSelectable.Oauth ->
-                    if (!isOauthAvailable) AuthMode.UserSelectable.Password
-                    else authMode
-                AuthMode.UserSelectable.Password -> authMode
-                AuthMode.Undecided ->
-                    if (isOauthAvailable) AuthMode.UserSelectable.Oauth
-                    else AuthMode.UserSelectable.Password
-            },
-        )
+        copy(isOauthAvailable = isOauthAvailable)
     }
 
 private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(

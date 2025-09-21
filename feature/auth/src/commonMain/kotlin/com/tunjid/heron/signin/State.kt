@@ -53,16 +53,10 @@ internal val DomainRegex = Regex(
 @Serializable
 sealed class AuthMode {
     @Serializable
-    data object Undecided : AuthMode()
+    data object Oauth : AuthMode()
 
     @Serializable
-    sealed class UserSelectable : AuthMode() {
-        @Serializable
-        data object Oauth : UserSelectable()
-
-        @Serializable
-        data object Password : UserSelectable()
-    }
+    data object Password : AuthMode()
 }
 
 @Serializable
@@ -81,7 +75,6 @@ data class State(
         ),
     ),
     val showCustomServerPopup: Boolean = false,
-    val authMode: AuthMode = AuthMode.Undecided,
     val fields: List<FormField> = listOf(
         FormField(
             id = Username,
@@ -143,7 +136,7 @@ val State.canSignInLater: Boolean
         field.value.isBlank()
     }
 
-val State.sessionRequest: SessionRequest
+val State.credentialSessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
         SessionRequest.Credentials(
             handle = ProfileHandle(formMap.getValue(Username).value),
@@ -151,6 +144,20 @@ val State.sessionRequest: SessionRequest
             server = selectedServer,
         )
     }
+
+val State.hasEnteredPassword: Boolean
+    get() = fields
+        .firstOrNull { it.id == Password }
+        ?.value
+        ?.isNotBlank()
+        ?: false
+
+val State.authMode: AuthMode
+    get() = when {
+        isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword -> AuthMode.Oauth
+        else -> AuthMode.Password
+    }
+
 
 sealed class Action(val key: String) {
     data class FieldChanged(

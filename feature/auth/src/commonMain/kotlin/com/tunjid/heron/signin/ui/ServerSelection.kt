@@ -53,6 +53,8 @@ import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.DomainRegex
 import com.tunjid.heron.ui.ItemSelection
 import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.blacksky_server
+import heron.feature.auth.generated.resources.bluesky_server
 import heron.feature.auth.generated.resources.cancel
 import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
@@ -267,9 +269,9 @@ private val Server.logo
         else -> Icons.Rounded.AlternateEmail
     }
 
-private val Server.stringResource
+internal val Server.stringResource
     get() = when (endpoint) {
-        Server.BlueSky.endpoint -> Res.string.submit
-        Server.BlackSky.endpoint -> Res.string.submit
-        else -> Res.string.submit
+        Server.BlueSky.endpoint -> Res.string.bluesky_server
+        Server.BlackSky.endpoint -> Res.string.blacksky_server
+        else -> Res.string.custom_server
     }
