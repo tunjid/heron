@@ -30,6 +30,7 @@ import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
+import com.tunjid.heron.signin.ui.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -102,7 +103,7 @@ class ActualSignInViewModel(
                         navActions = navActions,
                     )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
-                    is Action.SetAuthMode -> action.flow.setAuthModeMutations()
+                    is Action.SetServer -> action.flow.setServerMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -135,29 +136,27 @@ private fun authDeeplinkMutations(
 }
 
 private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
-    mapToMutation { (updatedField) ->
-        copy(fields = fields.update(updatedField))
+    mapToMutation { (id, text) ->
+        copy(fields = fields.copyWithValidation(id, text))
     }
 
-private fun Flow<Action.SetAuthMode>.setAuthModeMutations(): Flow<Mutation<State>> =
-    mapToMutation { (authMode) ->
-        copy(authMode = authMode)
+private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
+    mapToMutation { (server) ->
+        copy(
+            selectedServer = server,
+            availableServers = when (server) {
+                // Do not accidentally duplicate a custom server with an
+                // endpoint that is the same as a known server
+                in Server.KnownServers -> StartingServers
+                // Add the custom server as the last server
+                else -> Server.KnownServers.toList() + server
+            },
+        )
     }
 
 private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
     mapToMutation { (isOauthAvailable) ->
-        copy(
-            isOauthAvailable = isOauthAvailable,
-            authMode = when (authMode) {
-                AuthMode.UserSelectable.Oauth ->
-                    if (!isOauthAvailable) AuthMode.UserSelectable.Password
-                    else authMode
-                AuthMode.UserSelectable.Password -> authMode
-                AuthMode.Undecided ->
-                    if (isOauthAvailable) AuthMode.UserSelectable.Oauth
-                    else AuthMode.UserSelectable.Password
-            },
-        )
+        copy(isOauthAvailable = isOauthAvailable)
     }
 
 private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(

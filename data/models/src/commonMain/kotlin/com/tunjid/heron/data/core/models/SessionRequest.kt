@@ -60,5 +60,10 @@ data class Server(
             endpoint = "https://blacksky.app",
             supportsOauth = false,
         )
+
+        val KnownServers = setOf(
+            BlueSky,
+            BlackSky,
+        )
     }
 }

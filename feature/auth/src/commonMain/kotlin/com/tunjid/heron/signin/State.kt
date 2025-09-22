@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,54 +33,36 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.oauth.OauthFlowResult
-import kotlin.jvm.JvmInline
+import com.tunjid.heron.signin.ui.FormField
+import com.tunjid.heron.signin.ui.Validator
+import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.empty_form
+import heron.feature.auth.generated.resources.invalid_domain
+import heron.feature.auth.generated.resources.password
+import heron.feature.auth.generated.resources.username
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-
-@Serializable
-data class FormField(
-    val id: Id,
-    val value: String,
-    val maxLines: Int,
-    @Transient
-    val leadingIcon: ImageVector? = null,
-    @Transient
-    val transformation: VisualTransformation = VisualTransformation.None,
-    @Transient
-    val contentType: ContentType? = null,
-    @Transient
-    val keyboardOptions: KeyboardOptions = KeyboardOptions(),
-) {
-    @Serializable
-    @JvmInline
-    value class Id(
-        private val id: String,
-    ) {
-        override fun toString(): String = id
-    }
-}
-
-fun List<FormField>.update(updatedField: FormField) = map { field ->
-    if (field.id == updatedField.id) updatedField
-    else field
-}
 
 internal val Username = FormField.Id("username")
 internal val Password = FormField.Id("password")
 
+internal val DomainRegex = Regex(
+    pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}\$",
+)
+
+internal val StartingServers = Server.KnownServers.toList() +
+    Server(
+        endpoint = "https://custom.app",
+        supportsOauth = false,
+    )
+
 @Serializable
 sealed class AuthMode {
     @Serializable
-    data object Undecided : AuthMode()
+    data object Oauth : AuthMode()
 
     @Serializable
-    sealed class UserSelectable : AuthMode() {
-        @Serializable
-        data object Oauth : UserSelectable()
-
-        @Serializable
-        data object Password : UserSelectable()
-    }
+    data object Password : AuthMode()
 }
 
 @Serializable
@@ -91,7 +72,8 @@ data class State(
     val isOauthAvailable: Boolean = false,
     val oauthRequestUri: GenericUri? = null,
     val selectedServer: Server = Server.BlueSky,
-    val authMode: AuthMode = AuthMode.Undecided,
+    val availableServers: List<Server> = StartingServers,
+    val showCustomServerPopup: Boolean = false,
     val fields: List<FormField> = listOf(
         FormField(
             id = Username,
@@ -106,6 +88,16 @@ data class State(
                 keyboardType = KeyboardType.Uri,
                 imeAction = ImeAction.Next,
             ),
+            contentDescription = ScaffoldMessage.Resource(Res.string.username),
+            validator = Validator(
+                String::isNotBlank to ScaffoldMessage.Resource(
+                    Res.string.empty_form,
+                    listOf(Res.string.username),
+                ),
+                DomainRegex::matches to ScaffoldMessage.Resource(
+                    Res.string.invalid_domain,
+                ),
+            ),
         ),
         FormField(
             id = Password,
@@ -119,6 +111,13 @@ data class State(
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
+            ),
+            contentDescription = ScaffoldMessage.Resource(Res.string.password),
+            validator = Validator(
+                String::isNotBlank to ScaffoldMessage.Resource(
+                    Res.string.empty_form,
+                    listOf(Res.string.password),
+                ),
             ),
         ),
     ),
@@ -136,7 +135,7 @@ val State.canSignInLater: Boolean
         field.value.isBlank()
     }
 
-val State.sessionRequest: SessionRequest
+val State.credentialSessionRequest: SessionRequest
     get() = fields.associateBy { it.id }.let { formMap ->
         SessionRequest.Credentials(
             handle = ProfileHandle(formMap.getValue(Username).value),
@@ -145,20 +144,24 @@ val State.sessionRequest: SessionRequest
         )
     }
 
-internal inline fun State.onFormFieldMatchingAuth(
-    block: (FormField) -> Unit,
-) = fields.forEach { field ->
-    when (authMode) {
-        // Unconditionally invoke
-        AuthMode.UserSelectable.Password -> block(field)
-        AuthMode.UserSelectable.Oauth,
-        AuthMode.Undecided,
-        -> if (field.id == Username) block(field)
+val State.hasEnteredPassword: Boolean
+    get() = fields
+        .firstOrNull { it.id == Password }
+        ?.value
+        ?.isNotBlank()
+        ?: false
+
+val State.authMode: AuthMode
+    get() = when {
+        isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword -> AuthMode.Oauth
+        else -> AuthMode.Password
     }
-}
 
 sealed class Action(val key: String) {
-    data class FieldChanged(val field: FormField) : Action("FieldChanged")
+    data class FieldChanged(
+        val id: FormField.Id,
+        val text: String,
+    ) : Action("FieldChanged")
 
     data class OauthAvailabilityChanged(
         val isOauthAvailable: Boolean,
@@ -173,9 +176,9 @@ sealed class Action(val key: String) {
         val result: OauthFlowResult,
     ) : Action("OauthFlowResultAvailable")
 
-    data class SetAuthMode(
-        val mode: AuthMode.UserSelectable,
-    ) : Action("SetAuthMode")
+    data class SetServer(
+        val server: Server,
+    ) : Action("SetServer")
 
     sealed class Submit : Action("Submit") {
         data object GuestAuth : Submit()
