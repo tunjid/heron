@@ -195,6 +195,7 @@ private fun ServerSelectionBottomSheet(
                         Text(
                             text = stringResource(Res.string.submit)
                                 .capitalize(Locale.current),
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                     },
@@ -210,7 +211,8 @@ private fun ServerSelectionBottomSheet(
                         Text(
                             text = stringResource(Res.string.cancel)
                                 .capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelLarge,
                         )
                     },
                 )
