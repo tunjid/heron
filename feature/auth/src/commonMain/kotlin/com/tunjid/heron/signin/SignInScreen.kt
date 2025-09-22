@@ -21,6 +21,9 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -55,9 +58,11 @@ internal fun SignInScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .widthIn(max = 360.dp)
+            .padding(horizontal = 56.dp)
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val focusManager = LocalFocusManager.current
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -74,22 +79,11 @@ internal fun SignInScreen(
             )
         }
 
-        val serverSelectionSheetState = rememberUpdatedServerSelectionState(
-            onServerConfirmed = {
-                actions(Action.SetServer(it))
-            },
-        )
-
-        ServerSelection(
-            selectedServer = state.selectedServer,
-            availableServers = state.availableServers,
-            onServerSelected = serverSelectionSheetState::onServer,
-        )
-
         state.fields.forEach { field ->
             key(field.id) {
                 FormField(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .animateBounds(paneScaffoldState),
                     field = field,
                     onValueChange = { field, newValue ->
@@ -120,6 +114,20 @@ internal fun SignInScreen(
                 )
             }
         }
+
+        val serverSelectionSheetState = rememberUpdatedServerSelectionState(
+            onServerConfirmed = {
+                actions(Action.SetServer(it))
+            },
+        )
+
+        ServerSelection(
+            modifier = Modifier
+                .align(Alignment.End),
+            selectedServer = state.selectedServer,
+            availableServers = state.availableServers,
+            onServerSelected = serverSelectionSheetState::onServer,
+        )
 
         LaunchedEffect(Unit) {
             launch {

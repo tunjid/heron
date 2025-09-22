@@ -264,7 +264,7 @@ private val Server.logo
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Bluesky
         Server.BlackSky.endpoint -> Blacksky
-        else -> Icons.Rounded.AlternateEmail
+        else -> Icons.Rounded.Public
     }
 
 internal val Server.stringResource
