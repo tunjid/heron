@@ -39,9 +39,9 @@ sealed class SessionRequest {
     ) : SessionRequest()
 
     @Serializable
-    data object Guest : SessionRequest() {
-        override val server: Server = Server.BlueSky
-    }
+    data class Guest(
+        override val server: Server,
+    ) : SessionRequest()
 }
 
 @Serializable
