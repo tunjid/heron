@@ -157,13 +157,11 @@ fun State.createSessionAction() = when {
             handle = profileHandle,
         )
         AuthMode.Password -> Action.CreateSession(
-            request = fields.associateBy(FormField::id).let { formMap ->
-                SessionRequest.Credentials(
-                    handle = ProfileHandle(formMap.getValue(Username).value),
-                    password = formMap.getValue(Password).value,
-                    server = selectedServer,
-                )
-            },
+            request = SessionRequest.Credentials(
+                handle = profileHandle,
+                password = fields.first { it.id == Password }.value,
+                server = selectedServer,
+            ),
         )
     }
 }
