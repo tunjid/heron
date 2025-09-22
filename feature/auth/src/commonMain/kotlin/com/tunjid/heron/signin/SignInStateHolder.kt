@@ -142,7 +142,6 @@ private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>>
 
 private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
     mapToMutation { (server) ->
-        println("Selected: $server")
         copy(
             selectedServer = server,
             availableServers = when (server) {
