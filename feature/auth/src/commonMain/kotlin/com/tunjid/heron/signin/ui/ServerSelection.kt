@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -93,7 +92,6 @@ class ServerSelectionSheetState private constructor(
     var showBottomSheet by mutableStateOf(false)
         internal set
 
-
     fun onServer(interaction: Server) {
         currentServer = interaction
     }
@@ -143,7 +141,7 @@ private fun ServerSelectionBottomSheet(
             null -> Unit
             Server.BlueSky.endpoint,
             Server.BlackSky.endpoint,
-                -> {
+            -> {
                 onServerConfirmed(server)
                 state.currentServer = null
             }
@@ -224,8 +222,7 @@ private fun ServerSelectionBottomSheet(
     )
 }
 
-private fun FormField.asServer(
-) = Server(
+private fun FormField.asServer() = Server(
     endpoint = value,
     supportsOauth = false,
 )

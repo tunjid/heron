@@ -32,7 +32,7 @@ val Bluesky: ImageVector
             defaultWidth = 64.dp,
             defaultHeight = 57.dp,
             viewportWidth = 64f,
-            viewportHeight = 57f
+            viewportHeight = 57f,
         ).apply {
             path(fill = SolidColor(Color(0xFF0085FF))) {
                 moveTo(13.873f, 3.805f)

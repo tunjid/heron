@@ -157,7 +157,6 @@ val State.authMode: AuthMode
         else -> AuthMode.Password
     }
 
-
 sealed class Action(val key: String) {
     data class FieldChanged(
         val id: FormField.Id,

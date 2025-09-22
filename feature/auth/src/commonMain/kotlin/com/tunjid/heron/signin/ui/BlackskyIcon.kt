@@ -34,7 +34,7 @@ val Blacksky: ImageVector
             defaultWidth = 285.dp,
             defaultHeight = 243.dp,
             viewportWidth = 285f,
-            viewportHeight = 243f
+            viewportHeight = 243f,
         ).apply {
             group(
                 clipPathData = PathData {
@@ -43,7 +43,7 @@ val Blacksky: ImageVector
                     verticalLineToRelative(243f)
                     horizontalLineToRelative(-285f)
                     close()
-                }
+                },
             ) {
                 path(fill = SolidColor(Color(0xFFF8FAF9))) {
                     moveTo(148.85f, 144.56f)
