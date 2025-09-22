@@ -40,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -161,6 +163,8 @@ private fun ServerSelectionBottomSheet(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                val focusRequester = remember { FocusRequester() }
+
                 var customServerFormField by remember {
                     mutableStateOf(CustomServerFormField)
                 }
@@ -173,7 +177,8 @@ private fun ServerSelectionBottomSheet(
                 }
                 FormField(
                     modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
                     field = customServerFormField,
                     onValueChange = { _, newValue ->
                         customServerFormField = customServerFormField.copyWithValidation(newValue)
@@ -217,6 +222,10 @@ private fun ServerSelectionBottomSheet(
                 Spacer(
                     Modifier.height(16.dp),
                 )
+
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
             }
         },
     )

@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,6 +73,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.sign_in
 import heron.feature.auth.generated.resources.sign_in_later
 import heron.feature.auth.generated.resources.sign_with_oauth
 import heron.feature.auth.generated.resources.sign_with_password
@@ -218,12 +221,15 @@ private fun PaneScaffoldState.TopBar() {
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
-                    .padding(start = 8.dp)
+                    .padding(horizontal = 8.dp)
                     .size(36.dp),
             )
         },
-        title = {},
-        actions = {
+        title = {
+            Text(
+                text = stringResource(Res.string.sign_in),
+                style = MaterialTheme.typography.titleMedium,
+            )
         },
     )
 }
