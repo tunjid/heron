@@ -1,0 +1,19 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:drawable="@drawable/ic_launcher_foreground"
+  android:width="288dp"
+  android:height="288dp"
+  android:viewportWidth="35"
+  android:viewportHeight="48">
+  <target
+    android:name="head"
+    android:animation="@animator/splash_heron_head_animation" />
+  <target
+    android:name="beak"
+    android:animation="@animator/splash_heron_body_animation" />
+  <target
+    android:name="torso"
+    android:animation="@animator/splash_heron_body_animation" />
+  <target
+    android:name="feet"
+    android:animation="@animator/splash_heron_body_animation" />
+</animated-vector>

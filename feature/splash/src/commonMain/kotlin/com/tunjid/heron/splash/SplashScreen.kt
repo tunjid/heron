@@ -37,7 +37,7 @@ internal fun SplashScreen(
     ) {
         paneMovableElementSharedTransitionScope.AppLogo(
             modifier = Modifier
-                .size(100.dp)
+                .size(128.dp)
                 .align(Alignment.Center),
         )
     }

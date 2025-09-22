@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
+import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
@@ -216,6 +217,9 @@ class AppState(
         }
     }
 }
+
+val AppState.isShowingSplashScreen: Boolean
+    get() = navigation.isShowingSplashScreen
 
 @Stable
 internal class SplitPaneState(
