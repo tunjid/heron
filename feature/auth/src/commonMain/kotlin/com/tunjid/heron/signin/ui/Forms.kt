@@ -24,8 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -118,10 +123,14 @@ inline fun FormField(
     crossinline onValueChange: (field: FormField, newValue: String) -> Unit,
     crossinline keyboardActions: KeyboardActionScope.(FormField) -> Unit,
 ) {
+    var hasFocus by remember { mutableStateOf(false) }
     OutlinedTextField(
         modifier = modifier
             .semantics {
                 field.contentType?.let { contentType = it }
+            }
+            .onFocusChanged {
+                hasFocus = it.hasFocus
             },
         value = field.value,
         maxLines = field.maxLines,
@@ -148,7 +157,7 @@ inline fun FormField(
             }
         },
         supportingText = {
-            field.errorMessage?.let {
+            if (hasFocus) field.errorMessage?.let {
                 Text(
                     text = it.message,
                     color = MaterialTheme.colorScheme.error,
