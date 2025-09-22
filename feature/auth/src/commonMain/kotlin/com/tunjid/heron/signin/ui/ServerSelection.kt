@@ -253,9 +253,8 @@ private val CustomServerFormField = FormField(
 )
 
 private val Server.key
-    get() = when (endpoint) {
-        Server.BlueSky.endpoint -> endpoint
-        Server.BlackSky.endpoint -> endpoint
+    get() = when (this) {
+        in Server.KnownServers -> endpoint
         else -> "custom"
     }
 

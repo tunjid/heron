@@ -15,10 +15,10 @@
   -->
 
 <resources>
-    <string name="create_an_account">Create an account</string>
     <string name="submit">Submit</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="choose_your_provider">Choose your provider</string>
     <string name="sign_in_later">Sign in later to %1$s</string>
     <string name="sign_with_oauth">Sign in directly on %1$s</string>
     <string name="sign_with_password">Sign in with password to %1$s</string>

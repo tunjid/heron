@@ -142,21 +142,16 @@ private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>>
 
 private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
     mapToMutation { (server) ->
+        println("Selected: $server")
         copy(
             selectedServer = server,
-            availableServers = listOf(
-                Server.BlueSky,
-                Server.BlackSky,
-                when (server.endpoint) {
-                    // Do not accidentally duplicate a custom server with an
-                    // endpoint that is the same as a known server
-                    Server.BlueSky.endpoint,
-                    Server.BlackSky.endpoint,
-                        -> availableServers.last()
-                    // Add the custom server as the last server
-                    else -> selectedServer
-                },
-            ),
+            availableServers = when (server) {
+                // Do not accidentally duplicate a custom server with an
+                // endpoint that is the same as a known server
+                in Server.KnownServers -> StartingServers
+                // Add the custom server as the last server
+                else -> Server.KnownServers.toList() + server
+            },
         )
     }
 

@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -73,7 +71,6 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.auth.generated.resources.Res
-import heron.feature.auth.generated.resources.create_an_account
 import heron.feature.auth.generated.resources.sign_in_later
 import heron.feature.auth.generated.resources.sign_with_oauth
 import heron.feature.auth.generated.resources.sign_with_password
@@ -227,15 +224,6 @@ private fun PaneScaffoldState.TopBar() {
         },
         title = {},
         actions = {
-            TextButton(
-                onClick = {},
-                content = {
-                    Text(
-                        text = stringResource(Res.string.create_an_account),
-                        maxLines = 1,
-                    )
-                },
-            )
         },
     )
 }

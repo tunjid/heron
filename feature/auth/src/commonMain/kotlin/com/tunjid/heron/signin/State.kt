@@ -50,6 +50,12 @@ internal val DomainRegex = Regex(
     pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}\$",
 )
 
+internal val StartingServers = Server.KnownServers.toList() +
+    Server(
+        endpoint = "https://custom.app",
+        supportsOauth = false,
+    )
+
 @Serializable
 sealed class AuthMode {
     @Serializable
@@ -66,14 +72,7 @@ data class State(
     val isOauthAvailable: Boolean = false,
     val oauthRequestUri: GenericUri? = null,
     val selectedServer: Server = Server.BlueSky,
-    val availableServers: List<Server> = listOf(
-        Server.BlueSky,
-        Server.BlackSky,
-        Server(
-            endpoint = "https://custom.app",
-            supportsOauth = false,
-        ),
-    ),
+    val availableServers: List<Server> = StartingServers,
     val showCustomServerPopup: Boolean = false,
     val fields: List<FormField> = listOf(
         FormField(
