@@ -188,7 +188,7 @@ internal class PersistedSessionManager @Inject constructor(
                     pendingOauthSession = null
                 }
             }
-            SessionRequest.Guest -> SavedState.AuthTokens.Guest(
+            is SessionRequest.Guest -> SavedState.AuthTokens.Guest(
                 server = request.server,
             )
         }

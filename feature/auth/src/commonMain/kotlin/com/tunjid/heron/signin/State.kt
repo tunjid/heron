@@ -135,15 +135,6 @@ val State.canSignInLater: Boolean
         field.value.isBlank()
     }
 
-val State.credentialSessionRequest: SessionRequest
-    get() = fields.associateBy { it.id }.let { formMap ->
-        SessionRequest.Credentials(
-            handle = ProfileHandle(formMap.getValue(Username).value),
-            password = formMap.getValue(Password).value,
-            server = selectedServer,
-        )
-    }
-
 val State.hasEnteredPassword: Boolean
     get() = fields
         .firstOrNull { it.id == Password }
@@ -156,6 +147,24 @@ val State.authMode: AuthMode
         isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword -> AuthMode.Oauth
         else -> AuthMode.Password
     }
+
+fun State.createSessionAction() = when {
+    canSignInLater -> Action.CreateSession(
+        request = SessionRequest.Guest(selectedServer),
+    )
+    else -> when (authMode) {
+        AuthMode.Oauth -> Action.BeginOauthFlow(
+            handle = profileHandle,
+        )
+        AuthMode.Password -> Action.CreateSession(
+            request = SessionRequest.Credentials(
+                handle = profileHandle,
+                password = fields.first { it.id == Password }.value,
+                server = selectedServer,
+            ),
+        )
+    }
+}
 
 sealed class Action(val key: String) {
     data class FieldChanged(
@@ -180,12 +189,9 @@ sealed class Action(val key: String) {
         val server: Server,
     ) : Action("SetServer")
 
-    sealed class Submit : Action("Submit") {
-        data object GuestAuth : Submit()
-        data class Auth(
-            val request: SessionRequest,
-        ) : Submit()
-    }
+    data class CreateSession(
+        val request: SessionRequest,
+    ) : Action("CreateSession")
 
     data class MessageConsumed(
         val message: ScaffoldMessage,

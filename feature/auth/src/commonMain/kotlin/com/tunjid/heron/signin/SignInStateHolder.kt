@@ -91,7 +91,7 @@ class ActualSignInViewModel(
                 when (val action = type()) {
                     is Action.FieldChanged -> action.flow.formEditMutations()
                     is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
-                    is Action.Submit -> action.flow.submissionMutations(
+                    is Action.CreateSession -> action.flow.submissionMutations(
                         authRepository = authRepository,
                         navActions = navActions,
                     )
@@ -211,17 +211,14 @@ private fun Flow<Action.MessageConsumed>.messageConsumptionMutations(): Flow<Mut
         copy(messages = messages - message)
     }
 
-private fun Flow<Action.Submit>.submissionMutations(
+private fun Flow<Action.CreateSession>.submissionMutations(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     debounce(200)
-        .mapLatestToManyMutations { action ->
+        .mapLatestToManyMutations { (sessionRequest) ->
             createSessionMutations(
-                request = when (action) {
-                    is Action.Submit.Auth -> action.request
-                    Action.Submit.GuestAuth -> SessionRequest.Guest
-                },
+                request = sessionRequest,
                 authRepository = authRepository,
                 navActions = navActions,
             )

@@ -54,8 +54,7 @@ import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
-import com.tunjid.heron.signin.credentialSessionRequest
-import com.tunjid.heron.signin.profileHandle
+import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.signin.ui.stringResource
 import com.tunjid.treenav.compose.PaneEntry
@@ -186,17 +185,7 @@ class SignInBindings(
                         expanded = true,
                         onClick = {
                             if (state.submitButtonEnabled) viewModel.accept(
-                                when {
-                                    state.canSignInLater -> Action.Submit.GuestAuth
-                                    else -> when (state.authMode) {
-                                        AuthMode.Oauth -> Action.BeginOauthFlow(
-                                            state.profileHandle,
-                                        )
-                                        AuthMode.Password -> Action.Submit.Auth(
-                                            state.credentialSessionRequest,
-                                        )
-                                    }
-                                },
+                                state.createSessionAction(),
                             )
                         },
                     )
