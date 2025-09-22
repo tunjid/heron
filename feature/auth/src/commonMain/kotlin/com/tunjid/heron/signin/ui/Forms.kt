@@ -123,14 +123,15 @@ inline fun FormField(
     crossinline onValueChange: (field: FormField, newValue: String) -> Unit,
     crossinline keyboardActions: KeyboardActionScope.(FormField) -> Unit,
 ) {
-    var hasFocus by remember { mutableStateOf(false) }
+    var hasBeenFocused by remember { mutableStateOf(false) }
+    val showError = hasBeenFocused && field.errorMessage != null
     OutlinedTextField(
         modifier = modifier
             .semantics {
                 field.contentType?.let { contentType = it }
             }
             .onFocusChanged {
-                hasFocus = it.hasFocus
+                if (!it.isFocused) hasBeenFocused = true
             },
         value = field.value,
         maxLines = field.maxLines,
@@ -157,7 +158,7 @@ inline fun FormField(
             }
         },
         supportingText = {
-            if (hasFocus) field.errorMessage?.let {
+            if (showError) field.errorMessage?.let {
                 Text(
                     text = it.message,
                     color = MaterialTheme.colorScheme.error,
