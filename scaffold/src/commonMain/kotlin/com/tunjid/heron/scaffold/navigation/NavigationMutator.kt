@@ -464,6 +464,9 @@ private fun MultiStackNav.toSavedState() = SavedState.Navigation(
     },
 )
 
+internal val MultiStackNav.isShowingSplashScreen
+    get() = this == InitialNavigationState
+
 private val InitialNavigationState = MultiStackNav(
     name = "splash-app",
     stacks = listOf(
