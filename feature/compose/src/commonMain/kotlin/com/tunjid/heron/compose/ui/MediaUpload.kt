@@ -43,10 +43,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
