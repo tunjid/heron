@@ -98,7 +98,6 @@ internal class PersistedSessionManager @Inject constructor(
         install(DefaultRequest) {
             // Authentication requests use the most recent value from
             // create session requests, or the latest token value.
-            println("URL: ${sessionRequestUrl.value}")
             sessionRequestUrl.value?.let(url::takeFrom)
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
@@ -139,7 +138,6 @@ internal class PersistedSessionManager @Inject constructor(
                 )
             }
             .authorizeRequestUrl
-            .also { println("REQUEST URL: $it") }
             .let(::GenericUri)
     }
 
@@ -213,7 +211,7 @@ internal class PersistedSessionManager @Inject constructor(
             is SavedState.AuthTokens.Authenticated.DPoP -> oAuthApi.revokeToken(
                 accessToken = authTokens.auth,
                 clientId = HeronOauthClient.clientId,
-                nonce = authTokens.auth,
+                nonce = authTokens.nonce,
                 keyPair = authTokens.toKeyPair(),
             )
             is SavedState.AuthTokens.Guest,
