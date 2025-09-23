@@ -76,7 +76,6 @@ class OAuthApi(
     private val clock: Clock = Clock.System,
 ) {
 
-    private lateinit var oauthServer: OAuthAuthorizationServer
     private var dpopKeyPair: DpopKeyPair? = null
 
     /**
@@ -262,7 +261,7 @@ class OAuthApi(
                 // If the response indicates we need to use a new DPoP nonce, we can retry with the new nonce.
                 requestOrRefreshToken(requestParameters, newNonce, dpopKeyPair)
             },
-            onFailure = { errorDescription ->
+            onFailure = { _ ->
                 throw AtpException(StatusCode.fromCode(status.value))
             },
         )
@@ -394,16 +393,13 @@ class OAuthApi(
     }
 
     private suspend fun resolveOAuthAuthorizationServer(): OAuthAuthorizationServer {
-        if (!::oauthServer.isInitialized) {
-            oauthServer = client.get("/.well-known/oauth-authorization-server").decodeResponse(
-                onSuccess = { it },
-                onNewNonce = { error("Should not happen") },
-                onFailure = {
-                    throw AtpException(StatusCode.fromCode(status.value))
-                },
-            )
-        }
-        return oauthServer
+        return client.get("/.well-known/oauth-authorization-server").decodeResponse(
+            onSuccess = { it },
+            onNewNonce = { error("Should not happen") },
+            onFailure = {
+                throw AtpException(StatusCode.fromCode(status.value))
+            },
+        )
     }
 
     private suspend fun resolveDpopKeyPair(providedKeyPair: DpopKeyPair?): DpopKeyPair {
@@ -413,17 +409,15 @@ class OAuthApi(
     }
 
     private suspend inline fun <reified T : Any> HttpResponse.decodeResponse(
-        onSuccess: suspend HttpResponse.(T) -> T,
-        onNewNonce: suspend HttpResponse.(String) -> T,
-        onFailure: suspend HttpResponse.(AtpErrorDescription?) -> T,
-    ): T {
-        return mapResponse<T, T>(onSuccess, onNewNonce, onFailure)
-    }
+        onSuccess: HttpResponse.(T) -> T,
+        onNewNonce: HttpResponse.(String) -> T,
+        onFailure: HttpResponse.(AtpErrorDescription?) -> T,
+    ): T = mapResponse<T, T>(onSuccess, onNewNonce, onFailure)
 
     private suspend inline fun <reified T : Any, R> HttpResponse.mapResponse(
-        onSuccess: suspend HttpResponse.(T) -> R,
-        onNewNonce: suspend HttpResponse.(String) -> R,
-        onFailure: suspend HttpResponse.(AtpErrorDescription?) -> R,
+        onSuccess: HttpResponse.(T) -> R,
+        onNewNonce: HttpResponse.(String) -> R,
+        onFailure: HttpResponse.(AtpErrorDescription?) -> R,
     ): R {
         call.save()
         return if (status.isSuccess()) {

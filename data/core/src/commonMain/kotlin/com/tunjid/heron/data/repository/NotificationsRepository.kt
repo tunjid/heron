@@ -235,3 +235,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     }
             }
 }
+
+private fun SavedState.signedInProfileNotifications() =
+    signedInProfileData
+        ?.notifications

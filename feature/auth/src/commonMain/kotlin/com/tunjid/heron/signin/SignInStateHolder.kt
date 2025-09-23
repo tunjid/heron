@@ -17,6 +17,7 @@
 package com.tunjid.heron.signin
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
@@ -190,7 +191,12 @@ private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations {
-        val result = authRepository.oauthRequestUri(it.handle)
+        val result = authRepository.oauthRequestUri(
+            request = OauthUriRequest(
+                handle = it.handle,
+                server = it.server,
+            ),
+        )
         result.fold(
             onSuccess = {
                 emit { copy(oauthRequestUri = it) }

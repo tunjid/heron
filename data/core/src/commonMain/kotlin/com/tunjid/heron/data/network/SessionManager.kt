@@ -19,6 +19,7 @@ package com.tunjid.heron.data.network
 import com.atproto.identity.ResolveHandleQueryParams
 import com.atproto.server.CreateSessionRequest
 import com.atproto.server.RefreshSessionResponse
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
@@ -74,12 +75,14 @@ import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 internal interface SessionManager {
 
     suspend fun startOauthSessionUri(
-        handle: ProfileHandle,
+        request: OauthUriRequest,
     ): GenericUri
 
     suspend fun createSession(
         request: SessionRequest,
     ): SavedState.AuthTokens
+
+    suspend fun endSession()
 
     fun manage(config: HttpClientConfig<*>)
 }
@@ -120,17 +123,23 @@ internal class PersistedSessionManager @Inject constructor(
     private var pendingOauthSession: OauthSession? = null
 
     override suspend fun startOauthSessionUri(
-        handle: ProfileHandle,
-    ) = oAuthApi.buildAuthorizationRequest(
-        oauthClient = HeronOauthClient,
-        scopes = HeronOauthScopes,
-        loginHandleHint = handle.id,
-    )
-        .also {
-            pendingOauthSession = OauthSession(handle = handle, request = it)
-        }
-        .authorizeRequestUrl
-        .let(::GenericUri)
+        request: OauthUriRequest,
+    ): GenericUri {
+        sessionRequestUrl.update { Url(request.server.endpoint) }
+        return oAuthApi.buildAuthorizationRequest(
+            oauthClient = HeronOauthClient,
+            scopes = HeronOauthScopes,
+            loginHandleHint = request.handle.id,
+        )
+            .also {
+                pendingOauthSession = OauthSession(
+                    handle = request.handle,
+                    request = it,
+                )
+            }
+            .authorizeRequestUrl
+            .let(::GenericUri)
+    }
 
     override suspend fun createSession(
         request: SessionRequest,
@@ -194,6 +203,21 @@ internal class PersistedSessionManager @Inject constructor(
         }
     } finally {
         sessionRequestUrl.update { null }
+    }
+
+    override suspend fun endSession() {
+        when (val authTokens = savedStateDataSource.savedState.value.auth) {
+            is SavedState.AuthTokens.Authenticated.Bearer -> api.deleteSession()
+            is SavedState.AuthTokens.Authenticated.DPoP -> oAuthApi.revokeToken(
+                accessToken = authTokens.auth,
+                clientId = HeronOauthClient.clientId,
+                nonce = authTokens.nonce,
+                keyPair = authTokens.toKeyPair(),
+            )
+            is SavedState.AuthTokens.Guest,
+            null,
+            -> Unit
+        }
     }
 
     override fun manage(

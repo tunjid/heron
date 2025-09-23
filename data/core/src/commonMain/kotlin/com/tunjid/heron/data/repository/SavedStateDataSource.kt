@@ -194,23 +194,31 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         -> null
     }
 
-fun SavedState.signedProfilePreferencesOrDefault() =
+internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
     signedInProfileData
         ?.preferences
-        ?: Preferences.DefaultPreferences
+        ?: when (val authTokens = auth) {
+            is SavedState.AuthTokens.Authenticated.Bearer -> authTokens.authEndpoint
+            is SavedState.AuthTokens.Authenticated.DPoP -> authTokens.issuerEndpoint
+            is SavedState.AuthTokens.Guest -> authTokens.server.endpoint
+            null -> Server.BlueSky.endpoint
+        }.let(::preferencesForUrl)
 
-fun SavedState.signedInProfileNotifications() =
-    signedInProfileData
-        ?.notifications
-
-internal val SavedState.signedInProfileId
+internal val SavedState.signedInProfileId: ProfileId?
     get() = auth.ifSignedIn()?.authProfileId
 
-fun SavedState.isSignedIn() =
+fun SavedState.isSignedIn(): Boolean =
     auth.ifSignedIn() != null
 
-fun SavedState.signedInUserPreferences() =
+fun SavedState.signedInProfilePreferences() =
     signedInProfileData?.preferences
+
+private fun preferencesForUrl(url: String) =
+    when (url) {
+        Server.BlueSky.endpoint -> Preferences.BlueSkyGuestPreferences
+        Server.BlackSky.endpoint -> Preferences.BlackSkyGuestPreferences
+        else -> Preferences.BlueSkyGuestPreferences
+    }
 
 sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
@@ -271,7 +279,7 @@ internal class DataStoreSavedStateDataSource(
         val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
         val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
             notifications = SavedState.Notifications(),
-            preferences = Preferences.DefaultPreferences,
+            preferences = Preferences.EmptyPreferences,
             writes = SavedState.Writes(),
         )
         val update = signedInProfileId to signedInProfileData.block(signedInProfileId)

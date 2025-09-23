@@ -45,6 +45,12 @@ sealed class SessionRequest {
 }
 
 @Serializable
+data class OauthUriRequest(
+    val handle: ProfileHandle,
+    val server: Server,
+)
+
+@Serializable
 data class Server(
     val endpoint: String,
     val supportsOauth: Boolean,
@@ -58,7 +64,7 @@ data class Server(
 
         val BlackSky = Server(
             endpoint = "https://blacksky.app",
-            supportsOauth = false,
+            supportsOauth = true,
         )
 
         val KnownServers = setOf(
