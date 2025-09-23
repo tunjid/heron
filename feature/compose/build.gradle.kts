@@ -33,7 +33,6 @@ kotlin {
                 implementation(project(":feature:template"))
 
                 implementation(libs.codepoints.deluxe)
-                implementation(libs.filekit.dialogs.compose)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)

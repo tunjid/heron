@@ -45,11 +45,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.tunjid.heron.compose.Action
-import com.tunjid.heron.compose.MediaItem
+import com.tunjid.heron.media.picker.MediaItem
+import com.tunjid.heron.media.picker.MediaType
+import com.tunjid.heron.media.picker.rememberMediaPicker
 import de.cketti.codepoints.codePointCount
-import io.github.vinceglb.filekit.dialogs.FileKitMode
-import io.github.vinceglb.filekit.dialogs.FileKitType
-import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlin.math.max
 import kotlin.math.min
 
@@ -67,25 +66,26 @@ internal fun ComposePostBottomBar(
         horizontalArrangement = spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val imagePickerLauncher = rememberFilePickerLauncher(
-            type = FileKitType.Image,
-            mode = FileKitMode.Multiple(
-                maxItems = max(
-                    a = 0,
-                    b = PhotoUploadLimit - photos.size,
-                ).takeUnless(0::equals),
-            ),
+        val imagePickerLauncher = rememberMediaPicker(
+            mediaType = MediaType.Photo,
+            maxItems = max(
+                a = 0,
+                b = PhotoUploadLimit - photos.size,
+            ).takeUnless(0::equals),
         ) { images ->
             images
-                ?.let(Action.EditMedia::AddPhotos)
-                ?.let(onMediaEdited)
+                .filterIsInstance<MediaItem.Photo>()
+                .let(Action.EditMedia::AddPhotos)
+                .let(onMediaEdited)
         }
 
-        val videoPickerLauncher = rememberFilePickerLauncher(
-            type = FileKitType.Video,
-            mode = FileKitMode.Single,
-        ) { video ->
-            video
+        val videoPickerLauncher = rememberMediaPicker(
+            mediaType = MediaType.Video,
+            maxItems = 1,
+        ) { videos ->
+            videos
+                .filterIsInstance<MediaItem.Video>()
+                .firstOrNull()
                 ?.let(Action.EditMedia::AddVideo)
                 ?.let(onMediaEdited)
         }
@@ -94,8 +94,8 @@ internal fun ComposePostBottomBar(
             IconButton(
                 onClick = {
                     when (index) {
-                        0 -> if (photos.size < PhotoUploadLimit) imagePickerLauncher.launch()
-                        1 -> videoPickerLauncher.launch()
+                        0 -> if (photos.size < PhotoUploadLimit) imagePickerLauncher()
+                        1 -> videoPickerLauncher()
                     }
                 },
                 content = {

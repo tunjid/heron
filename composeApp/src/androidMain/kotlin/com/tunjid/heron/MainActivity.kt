@@ -30,8 +30,6 @@ import androidx.core.splashscreen.SplashScreenViewProvider
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.scaffold.scaffold.App
 import com.tunjid.heron.scaffold.scaffold.isShowingSplashScreen
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.init
 
 class MainActivity : ComponentActivity() {
 
@@ -51,7 +49,6 @@ class MainActivity : ComponentActivity() {
         window.isNavigationBarContrastEnforced = false
 
         super.onCreate(savedInstanceState)
-        FileKit.init(this)
 
         setContent {
             App(

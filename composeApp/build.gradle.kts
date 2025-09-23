@@ -52,7 +52,6 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.connectivity.device)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.filekit.dialogs)
             implementation(libs.androidx.core.splashscreen)
         }
         commonMain.dependencies {
