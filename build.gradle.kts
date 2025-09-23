@@ -56,3 +56,12 @@ allprojects {
         }
     }
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("app.cash.burst:burst-gradle-plugin:2.8.1")
+    }
+}
