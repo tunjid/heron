@@ -62,7 +62,7 @@ tasks.withType<Test>().configureEach {
         "junit.platform.discovery.exclude.classnames",
         // Regex to match classes in 'com.tunjid.heron.models.polymorphic' and subpackages
         // that end with 'SerializationTest'
-        "com\\.tunjid\\.heron\\.models\\.polymorphic\\..SerializationTest*",
+        "com\\.tunjid\\.heron\\.models\\.polymorphic\\..*SerializationTest",
     )
     testLogging {
         events("passed", "skipped", "failed")
