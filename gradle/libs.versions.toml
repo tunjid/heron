@@ -16,8 +16,6 @@ androidxNavigationEvent = "1.0.0-alpha02"
 androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 androidx-espresso-core = "3.7.0"
-burstCoroutinesVersion = "2.8.1"
-burstVersion = "2.8.1"
 burst = "2.8.1"
 javaDiffUtils = "4.16"
 # TODO: Compose runtime crashes when this is bumped
@@ -175,3 +173,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 ozoneLexiconGenerator = { id = "sh.christian.ozone.generator", version.ref = "ozone-atproto" }
 spotless = "com.diffplug.spotless:7.2.1"
+burst = { id = "app.cash.burst", version.ref = "burst" }
