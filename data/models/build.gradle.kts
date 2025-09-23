@@ -18,6 +18,7 @@ plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
+    id("app.cash.burst")
     kotlin("plugin.serialization")
 }
 
@@ -27,17 +28,6 @@ android {
 
 kotlin {
     sourceSets {
-        val commonTest = getByName("commonTest")
-
-        val desktopTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                implementation(kotlin("test-junit5"))
-                implementation(libs.junit.jupiter.api)
-                implementation(libs.junit.jupiter.params)
-                runtimeOnly(libs.junit.jupiter.engine)
-            }
-        }
 
         commonMain {
             dependencies {
@@ -50,24 +40,33 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.burst)
+                implementation(kotlin("test-junit5"))
             }
         }
     }
 }
 
+dependencies {
+    // For Android JUnit runner to see Burst
+    testImplementation(libs.burst)
+}
+
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        includeEngines("junit-jupiter", "burst")
+    }
+    // This property tells JUnit Platform to exclude matching classes from discovery
+    // which should prevent JUnit Jupiter from trying to initialize them.
+    systemProperty(
+        "junit.platform.discovery.exclude.classnames",
+        // Regex to match classes in 'com.tunjid.heron.models.polymorphic' and subpackages
+        // that end with 'SerializationTest'
+        "com\\.tunjid\\.heron\\.models\\.polymorphic\\..SerializationTest*",
+    )
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         showStandardStreams = true
     }
-}
-
-// Bridge desktopTest - jvmTest so that IDE/Gradle can run it
-tasks.register("jvmTest") {
-    dependsOn("desktopTest")
-}
-tasks.register("cleanJvmTest") {
-    dependsOn("cleanDesktopTest")
 }
