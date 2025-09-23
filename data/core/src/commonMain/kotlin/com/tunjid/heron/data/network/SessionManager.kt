@@ -19,6 +19,7 @@ package com.tunjid.heron.data.network
 import com.atproto.identity.ResolveHandleQueryParams
 import com.atproto.server.CreateSessionRequest
 import com.atproto.server.RefreshSessionResponse
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
@@ -74,12 +75,14 @@ import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 internal interface SessionManager {
 
     suspend fun startOauthSessionUri(
-        handle: ProfileHandle,
+        request: OauthUriRequest,
     ): GenericUri
 
     suspend fun createSession(
         request: SessionRequest,
     ): SavedState.AuthTokens
+
+    suspend fun endSession()
 
     fun manage(config: HttpClientConfig<*>)
 }
@@ -95,6 +98,7 @@ internal class PersistedSessionManager @Inject constructor(
         install(DefaultRequest) {
             // Authentication requests use the most recent value from
             // create session requests, or the latest token value.
+            println("URL: ${sessionRequestUrl.value}")
             sessionRequestUrl.value?.let(url::takeFrom)
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
@@ -120,17 +124,24 @@ internal class PersistedSessionManager @Inject constructor(
     private var pendingOauthSession: OauthSession? = null
 
     override suspend fun startOauthSessionUri(
-        handle: ProfileHandle,
-    ) = oAuthApi.buildAuthorizationRequest(
-        oauthClient = HeronOauthClient,
-        scopes = HeronOauthScopes,
-        loginHandleHint = handle.id,
-    )
-        .also {
-            pendingOauthSession = OauthSession(handle = handle, request = it)
-        }
-        .authorizeRequestUrl
-        .let(::GenericUri)
+        request: OauthUriRequest,
+    ): GenericUri {
+        sessionRequestUrl.update { Url(request.server.endpoint) }
+        return oAuthApi.buildAuthorizationRequest(
+            oauthClient = HeronOauthClient,
+            scopes = HeronOauthScopes,
+            loginHandleHint = request.handle.id,
+        )
+            .also {
+                pendingOauthSession = OauthSession(
+                    handle = request.handle,
+                    request = it,
+                )
+            }
+            .authorizeRequestUrl
+            .also { println("REQUEST URL: $it") }
+            .let(::GenericUri)
+    }
 
     override suspend fun createSession(
         request: SessionRequest,
@@ -194,6 +205,21 @@ internal class PersistedSessionManager @Inject constructor(
         }
     } finally {
         sessionRequestUrl.update { null }
+    }
+
+    override suspend fun endSession() {
+        when (val authTokens = savedStateDataSource.savedState.value.auth) {
+            is SavedState.AuthTokens.Authenticated.Bearer -> api.deleteSession()
+            is SavedState.AuthTokens.Authenticated.DPoP -> oAuthApi.revokeToken(
+                accessToken = authTokens.auth,
+                clientId = HeronOauthClient.clientId,
+                nonce = authTokens.auth,
+                keyPair = authTokens.toKeyPair(),
+            )
+            is SavedState.AuthTokens.Guest,
+            null,
+            -> Unit
+        }
     }
 
     override fun manage(

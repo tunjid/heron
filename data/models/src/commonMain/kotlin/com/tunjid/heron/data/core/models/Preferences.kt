@@ -31,12 +31,41 @@ data class Preferences(
     val lastViewedHomeTimelineUri: Uri? = null,
 ) : UrlEncodableModel {
     companion object {
-        val DefaultPreferences = Preferences(
+        val EmptyPreferences = Preferences(
+            timelinePreferences = emptyList(),
+            contentLabelPreferences = emptyList(),
+        )
+
+        val BlueSkyGuestPreferences = Preferences(
             timelinePreferences = listOf(
                 TimelinePreference(
-                    id = Constants.discoverFeed.uri,
+                    id = Constants.blueSkyDiscoverFeed.uri,
                     type = "feed",
-                    value = Constants.discoverFeed.uri,
+                    value = Constants.blueSkyDiscoverFeed.uri,
+                    pinned = true,
+                ),
+                TimelinePreference(
+                    id = Constants.heronsFeed.uri,
+                    type = "feed",
+                    value = Constants.heronsFeed.uri,
+                    pinned = true,
+                ),
+            ),
+            contentLabelPreferences = emptyList(),
+        )
+
+        val BlackSkyGuestPreferences = Preferences(
+            timelinePreferences = listOf(
+                TimelinePreference(
+                    id = Constants.blackSkyTrendingFeed.uri,
+                    type = "feed",
+                    value = Constants.blackSkyTrendingFeed.uri,
+                    pinned = true,
+                ),
+                TimelinePreference(
+                    id = Constants.heronsFeed.uri,
+                    type = "feed",
+                    value = Constants.heronsFeed.uri,
                     pinned = true,
                 ),
             ),

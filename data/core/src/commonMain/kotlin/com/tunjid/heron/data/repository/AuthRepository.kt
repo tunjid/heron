@@ -24,13 +24,13 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -66,7 +66,7 @@ interface AuthRepository {
     fun isSignedInProfile(id: Id): Flow<Boolean>
 
     suspend fun oauthRequestUri(
-        handle: ProfileHandle,
+        request: OauthUriRequest,
     ): Result<GenericUri>
 
     suspend fun createSession(
@@ -112,9 +112,9 @@ internal class AuthTokenRepository(
             .distinctUntilChanged()
 
     override suspend fun oauthRequestUri(
-        handle: ProfileHandle,
+        request: OauthUriRequest,
     ): Result<GenericUri> = runCatchingUnlessCancelled {
-        sessionManager.startOauthSessionUri(handle)
+        sessionManager.startOauthSessionUri(request)
     }
 
     override suspend fun createSession(
@@ -133,6 +133,9 @@ internal class AuthTokenRepository(
         }
 
     override suspend fun signOut() {
+        runCatchingUnlessCancelled {
+            sessionManager.endSession()
+        }
         savedStateDataSource.updateSignedInProfileData {
             // Clear any pending writes
             copy(writes = writes.copy(pendingWrites = emptyList()))
@@ -219,7 +222,7 @@ internal class AuthTokenRepository(
 
 private fun GetPreferencesResponse.toExternalModel() =
     preferences.fold(
-        initial = Preferences.DefaultPreferences,
+        initial = Preferences.EmptyPreferences,
         operation = { preferences, preferencesUnion ->
             when (preferencesUnion) {
                 is PreferencesUnion.AdultContentPref -> preferences

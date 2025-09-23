@@ -155,6 +155,7 @@ fun State.createSessionAction() = when {
     else -> when (authMode) {
         AuthMode.Oauth -> Action.BeginOauthFlow(
             handle = profileHandle,
+            server = selectedServer,
         )
         AuthMode.Password -> Action.CreateSession(
             request = SessionRequest.Credentials(
@@ -178,6 +179,7 @@ sealed class Action(val key: String) {
 
     data class BeginOauthFlow(
         val handle: ProfileHandle,
+        val server: Server,
     ) : Action("BeginOauthFlow")
 
     data class OauthFlowResultAvailable(
