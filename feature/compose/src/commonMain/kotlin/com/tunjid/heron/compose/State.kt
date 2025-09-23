@@ -19,20 +19,18 @@ package com.tunjid.heron.compose
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.treenav.strings.Route
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.path
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -94,58 +92,6 @@ val State.hasLongPost
         null -> 0
     } + postText.text.length > 180
 
-// On Android, a content resolver may be invoked for the path.
-// Make sure it is only ever invoked off the main thread by enforcing with this class
-sealed class MediaItem(
-    val path: String?,
-) {
-
-    abstract val file: PlatformFile
-    abstract val size: IntSize
-
-    class Photo(
-        override val file: PlatformFile,
-        override val size: IntSize = IntSize.Zero,
-    ) : MediaItem(file.path)
-
-    class Video(
-        override val file: PlatformFile,
-        override val size: IntSize = IntSize.Zero,
-    ) : MediaItem(file.path)
-
-    fun updateSize(
-        size: IntSize,
-    ) = when (this) {
-        is Photo -> Photo(
-            file = file,
-            size = size,
-        )
-
-        is Video -> Video(
-            file = file,
-            size = size,
-        )
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as MediaItem
-
-        if (path != other.path) return false
-        if (size != other.size) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = path?.hashCode() ?: 0
-        result = 31 * result + size.hashCode()
-        return result
-    }
-}
-
 sealed class Action(val key: String) {
 
     data class PostTextChanged(
@@ -166,11 +112,11 @@ sealed class Action(val key: String) {
 
     sealed class EditMedia : Action("EditMedia") {
         data class AddPhotos(
-            val photos: List<PlatformFile>,
+            val photos: List<MediaItem.Photo>,
         ) : EditMedia()
 
         data class AddVideo(
-            val video: PlatformFile?,
+            val video: MediaItem.Video?,
         ) : EditMedia()
 
         data class RemoveMedia(

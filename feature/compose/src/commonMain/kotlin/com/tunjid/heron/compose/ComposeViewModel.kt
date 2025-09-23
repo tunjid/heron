@@ -28,6 +28,7 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
@@ -41,7 +42,6 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
-import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -163,8 +163,8 @@ private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
         // Invoke in IO context as creating media items may perform IO
         withContext(Dispatchers.IO) {
             action to when (action) {
-                is Action.EditMedia.AddPhotos -> action.photos.map(MediaItem::Photo)
-                is Action.EditMedia.AddVideo -> listOfNotNull(action.video?.let(MediaItem::Video))
+                is Action.EditMedia.AddPhotos -> action.photos
+                is Action.EditMedia.AddVideo -> listOfNotNull(action.video)
                 is Action.EditMedia.RemoveMedia -> emptyList()
                 is Action.EditMedia.UpdateMedia -> listOfNotNull(action.media)
             }
@@ -218,14 +218,14 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                         mediaFiles = action.media.mapNotNull { item ->
                             when (item) {
                                 is MediaItem.Photo -> if (item.size != IntSize.Zero) MediaFile.Photo(
-                                    data = item.file.readBytes(),
+                                    data = item.readBytes(),
                                     width = item.size.width.toLong(),
                                     height = item.size.height.toLong(),
                                 )
                                 else null
 
                                 is MediaItem.Video -> MediaFile.Video(
-                                    data = item.file.readBytes(),
+                                    data = item.readBytes(),
                                     width = item.size.width.toLong(),
                                     height = item.size.height.toLong(),
                                 )

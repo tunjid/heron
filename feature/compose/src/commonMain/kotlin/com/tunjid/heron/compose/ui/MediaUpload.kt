@@ -43,7 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.compose.MediaItem
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
@@ -86,7 +86,6 @@ internal fun MediaUploadItems(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ImageUpload(
     modifier: Modifier = Modifier,
@@ -99,7 +98,7 @@ private fun ImageUpload(
     ) {
         val state = rememberUpdatedImageState(
             args = ImageArgs(
-                file = photo.file,
+                item = photo,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 shape = MediaUploadItemShape,

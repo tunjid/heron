@@ -47,6 +47,7 @@ kotlin {
                 implementation(libs.coil.ktor)
 
                 implementation(libs.filekit.coil)
+                implementation(libs.filekit.dialogs.compose)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)

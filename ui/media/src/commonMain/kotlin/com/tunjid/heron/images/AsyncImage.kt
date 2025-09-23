@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.composables.ui.animate
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
 import io.github.vinceglb.filekit.PlatformFile
@@ -80,7 +81,7 @@ sealed class ImageRequest {
         val thumbnailUrl: String? = null,
     ) : ImageRequest()
 
-    data class Local(
+    internal data class Local(
         val file: PlatformFile,
     ) : ImageRequest()
 }
@@ -205,14 +206,14 @@ fun ImageArgs(
 )
 
 fun ImageArgs(
-    file: PlatformFile,
+    item: MediaItem.Photo,
     contentDescription: String? = null,
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape,
 ) = ImageArgs(
     request = ImageRequest.Local(
-        file = file,
+        file = item.file,
     ),
     contentDescription = contentDescription,
     contentScale = contentScale,
