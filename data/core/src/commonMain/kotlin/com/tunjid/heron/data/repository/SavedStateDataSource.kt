@@ -198,11 +198,11 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
     signedInProfileData
         ?.preferences
         ?: when (val authTokens = auth) {
-            is SavedState.AuthTokens.Authenticated.Bearer -> preferencesForUrl(authTokens.authEndpoint)
-            is SavedState.AuthTokens.Authenticated.DPoP -> preferencesForUrl(authTokens.issuerEndpoint)
-            is SavedState.AuthTokens.Guest -> preferencesForUrl(authTokens.server.endpoint)
-            null -> Preferences.BlueSkyGuestPreferences
-        }
+            is SavedState.AuthTokens.Authenticated.Bearer -> authTokens.authEndpoint
+            is SavedState.AuthTokens.Authenticated.DPoP -> authTokens.issuerEndpoint
+            is SavedState.AuthTokens.Guest -> authTokens.server.endpoint
+            null -> Server.BlueSky.endpoint
+        }.let(::preferencesForUrl)
 
 internal val SavedState.signedInProfileId: ProfileId?
     get() = auth.ifSignedIn()?.authProfileId
