@@ -20,8 +20,7 @@
     <string name="repost_by">Repost by %1$s</string>
     <string name="pinned">Pinned</string>
     <string name="liked">Liked</string>
-  <string name="bookmarked">Bookmarked</string>
-  <string name="download">Download</string>
+    <string name="bookmarked">Bookmarked</string>
     <string name="see_more_posts">See more posts</string>
     <string name="followers">Followers</string>
     <string name="following">Following</string>

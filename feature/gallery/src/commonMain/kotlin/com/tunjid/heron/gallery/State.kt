@@ -21,9 +21,12 @@ import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
 import com.tunjid.heron.gallery.di.startIndex
@@ -41,6 +44,9 @@ data class State(
     val postUri: PostUri,
     val sharedElementPrefix: String,
     val post: Post?,
+    val viewedProfileId: ProfileId,
+    val signedInProfileId: ProfileId? = null,
+    val viewerState: ProfileViewerState?,
     @Transient
     val items: List<GalleryItem> = emptyList(),
     @Transient
@@ -56,6 +62,8 @@ fun State(
         route.postRecordKey,
     ),
     post = null,
+    viewerState = null,
+    viewedProfileId = route.profileId,
     sharedElementPrefix = route.sharedElementPrefix,
     items = when (val media = route.model<Embed.Media>()) {
         is ImageList -> media.images.map(GalleryItem::Photo)
@@ -89,6 +97,13 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
+
+    data class ToggleViewerState(
+        val signedInProfileId: ProfileId,
+        val viewedProfileId: ProfileId,
+        val following: GenericUri?,
+        val followedBy: GenericUri?,
+    ) : Action(key = "ToggleViewerState")
 
     sealed class Navigate :
         Action(key = "Navigate"),

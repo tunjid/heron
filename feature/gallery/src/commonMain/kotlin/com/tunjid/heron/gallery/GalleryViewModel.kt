@@ -18,6 +18,9 @@ package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -61,6 +64,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
+    authRepository: AuthRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
@@ -78,6 +82,13 @@ class ActualGalleryViewModel(
                 postRepository = postRepository,
                 profileRepository = profileRepository,
             ),
+            loadSignedInProfileIdMutations(
+                authRepository = authRepository,
+            ),
+            profileRelationshipMutations(
+                profileId = route.profileId,
+                profileRepository = profileRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -85,6 +96,9 @@ class ActualGalleryViewModel(
             ) {
                 when (val action = type()) {
                     is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                         writeQueue = writeQueue,
                     )
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
@@ -117,6 +131,21 @@ private fun loadPostMutations(
     )
 }
 
+private fun loadSignedInProfileIdMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation {
+        copy(signedInProfileId = it?.did)
+    }
+
+private fun profileRelationshipMutations(
+    profileId: Id.Profile,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
+        copy(viewerState = it.firstOrNull())
+    }
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -130,6 +159,30 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
+    }
+
+private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.Connection(
+                when (val following = action.following) {
+                    null -> Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
+
+                    else -> Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+                },
+            ),
+        )
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
