@@ -88,7 +88,7 @@ class ActualGalleryViewModel(
             profileRelationshipMutations(
                 profileId = route.profileId,
                 profileRepository = profileRepository,
-            )
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(

@@ -20,7 +20,7 @@
     <string name="pause">Pause</string>
     <string name="skip_5">Skip 5 seconds</string>
     <string name="rewind_5">Rewind 5 second</string>
-    <string name="mute_video">mute video</string>
-    <string name="unmute_video">unmute video</string>
+    <string name="mute_video">Mute video</string>
+    <string name="unmute_video">Unmute video</string>
     <string name="download">Download</string>
 </resources>

@@ -301,7 +301,7 @@ internal fun GalleryScreen(
                 Box(
                     modifier = Modifier
                         .align(Alignment.End)
-                        .padding(horizontal = 12.dp)
+                        .padding(horizontal = 12.dp),
                 ) {
                     when (item) {
                         is GalleryItem.Photo -> DownloadButton()
@@ -585,8 +585,8 @@ private fun VideoPlayerController.MuteButton(
     ) {
         Icon(
             imageVector =
-                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-                else Icons.AutoMirrored.Rounded.VolumeUp,
+            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+            else Icons.AutoMirrored.Rounded.VolumeUp,
             contentDescription = stringResource(
                 if (isMuted) Res.string.mute_video
                 else Res.string.unmute_video,
@@ -595,7 +595,6 @@ private fun VideoPlayerController.MuteButton(
             modifier = Modifier.size(40.dp),
         )
     }
-
 }
 
 @Composable
@@ -604,7 +603,7 @@ private fun DownloadButton(
 ) {
     IconButton(
         modifier = modifier,
-        onClick = {  },
+        onClick = { },
     ) {
         Icon(
             imageVector = Icons.Rounded.Download,
