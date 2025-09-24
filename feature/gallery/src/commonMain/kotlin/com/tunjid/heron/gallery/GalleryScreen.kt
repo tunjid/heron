@@ -18,7 +18,6 @@ package com.tunjid.heron.gallery
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -32,10 +31,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,10 +65,11 @@ import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -89,10 +97,15 @@ import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.feature.gallery.generated.resources.Res
+import heron.feature.gallery.generated.resources.download
+import heron.feature.gallery.generated.resources.mute_video
+import heron.feature.gallery.generated.resources.unmute_video
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun GalleryScreen(
@@ -204,12 +217,15 @@ internal fun GalleryScreen(
             },
         )
 
+        val item = updatedItems.getOrNull(pagerState.currentPage)
         videoPlayerController.MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
-            galleryItem = updatedItems.getOrNull(pagerState.currentPage),
+            galleryItem = item,
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { videoPlayerState ->
+            val viewedProfileId = state.viewedProfileId
+            val signedInProfileId = state.signedInProfileId
             MediaPoster(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -219,6 +235,8 @@ internal fun GalleryScreen(
                         vertical = 20.dp,
                     ),
                 post = state.post,
+                signedInProfileId = state.signedInProfileId,
+                viewerState = state.viewerState,
                 sharedElementPrefix = state.sharedElementPrefix,
                 paneScaffoldState = paneScaffoldState,
                 onProfileClicked = { post ->
@@ -233,6 +251,20 @@ internal fun GalleryScreen(
                             ),
                         ),
                     )
+                },
+                onViewerStateToggled = remember(signedInProfileId, viewedProfileId) {
+                    { viewerState ->
+                        signedInProfileId?.let {
+                            actions(
+                                Action.ToggleViewerState(
+                                    signedInProfileId = it,
+                                    viewedProfileId = viewedProfileId,
+                                    following = viewerState?.following,
+                                    followedBy = viewerState?.followedBy,
+                                ),
+                            )
+                        }
+                    }
                 },
             )
 
@@ -256,22 +288,27 @@ internal fun GalleryScreen(
                     )
                 },
                 onPostInteraction = postInteractionState::onInteraction,
-                onDownloadClick = {
-                },
-                onMuteClick = {
-                    videoPlayerController.isMuted = !videoPlayerController.isMuted
-                },
-                isMuted = videoPlayerController.isMuted,
             )
 
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(horizontal = 12.dp)
+                ) {
+                    when (item) {
+                        is GalleryItem.Photo -> DownloadButton()
+                        is GalleryItem.Video -> videoPlayerController.MuteButton()
+                        null -> Unit
+                    }
+                }
                 VideoText(
                     post = state.post,
                     paneScaffoldState = paneScaffoldState,
@@ -421,7 +458,7 @@ private fun Modifier.aspectRatioFor(
 }
 
 @Composable
-fun VideoPlayerController.MediaOverlay(
+private fun VideoPlayerController.MediaOverlay(
     modifier: Modifier = Modifier,
     galleryItem: GalleryItem?,
     isVisible: Boolean,
@@ -467,29 +504,31 @@ fun VideoPlayerController.MediaOverlay(
 }
 
 @Composable
-fun MediaPoster(
+private fun MediaPoster(
     post: Post?,
+    signedInProfileId: ProfileId?,
+    viewerState: ProfileViewerState?,
     sharedElementPrefix: String,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     onProfileClicked: (Post) -> Unit,
+    onViewerStateToggled: (ProfileViewerState?) -> Unit,
 ) {
     if (post == null) return
 
     ProfileWithViewerState(
         modifier = modifier,
         movableElementSharedTransitionScope = paneScaffoldState,
-        signedInProfileId = null,
+        signedInProfileId = signedInProfileId,
         profile = post.author,
-        viewerState = null,
+        viewerState = viewerState,
         profileSharedElementKey = {
             post.avatarSharedElementKey(sharedElementPrefix)
         },
         onProfileClicked = {
             onProfileClicked(post)
         },
-        onViewerStateClicked = {
-        },
+        onViewerStateClicked = onViewerStateToggled,
     )
 }
 
@@ -515,15 +554,12 @@ fun VideoText(
 }
 
 @Composable
-fun MediaInteractions(
+private fun MediaInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
-    isMuted: Boolean,
     modifier: Modifier = Modifier,
     onReplyToPost: (Post) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
-    onDownloadClick: () -> Unit,
-    onMuteClick: () -> Unit,
 ) {
     if (post == null) return
 
@@ -536,10 +572,47 @@ fun MediaInteractions(
             onReplyToPost(post)
         },
         onPostInteraction = onPostInteraction,
-        onDownloadClick = onDownloadClick,
-        isMuted = isMuted,
-        onMuteClick = onMuteClick,
     )
+}
+
+@Composable
+private fun VideoPlayerController.MuteButton(
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        modifier = modifier,
+        onClick = { isMuted = !isMuted },
+    ) {
+        Icon(
+            imageVector =
+                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                else Icons.AutoMirrored.Rounded.VolumeUp,
+            contentDescription = stringResource(
+                if (isMuted) Res.string.mute_video
+                else Res.string.unmute_video,
+            ),
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(40.dp),
+        )
+    }
+
+}
+
+@Composable
+private fun DownloadButton(
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        modifier = modifier,
+        onClick = {  },
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Download,
+            contentDescription = stringResource(Res.string.download),
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(40.dp),
+        )
+    }
 }
 
 private const val UnmatchedPrefix = "UnmatchedPrefix"
