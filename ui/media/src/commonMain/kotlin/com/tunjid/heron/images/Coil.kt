@@ -19,7 +19,6 @@ package com.tunjid.heron.images
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import coil3.PlatformContext
@@ -45,13 +44,12 @@ import io.ktor.client.request.prepareGet
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentLength
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.core.remaining
-import io.ktor.utils.io.exhausted
-import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
+import kotlinx.io.buffered
 
 @Immutable
 internal class CoilImage(
@@ -121,7 +119,7 @@ internal class CoilImageLoader private constructor(
         else -> flow {
             var tempFile: PlatformFile? = null
             try {
-                val fileName = "${Clock.System.now()}.jpg"
+                val fileName = "${Clock.System.now().toEpochMilliseconds()}.jpg"
                 if (!MediaDownloadsDir.exists()) MediaDownloadsDir.createDirectories(true)
                 val file = (MediaDownloadsDir / fileName).also { tempFile = it }
 
@@ -135,11 +133,13 @@ internal class CoilImageLoader private constructor(
 
                     val channel: ByteReadChannel = httpResponse.body()
                     var count = 0L
-                    sink.use {
-                        while (!channel.exhausted()) {
-                            val chunk = channel.readRemaining()
-                            count += chunk.remaining
-                            chunk.transferTo(sink)
+                    sink.buffered().use { bufferedSink ->
+                        val buffer = ByteArray(DownloadBufferSize)
+                        while (true) {
+                            val read = channel.readAvailable(buffer)
+                            if (read <= 0) break
+                            bufferedSink.write(buffer, 0, read)
+                            count += read
 
                             val contentLength = httpResponse.contentLength()
                             emit(
@@ -188,3 +188,4 @@ val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
 }
 
 private val MediaDownloadsDir = FileKit.cacheDir / "media-downloads"
+private const val DownloadBufferSize = 8192
