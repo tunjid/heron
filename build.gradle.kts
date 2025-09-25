@@ -31,6 +31,7 @@ plugins {
     alias(libs.plugins.metro) apply false
     alias(libs.plugins.ozoneLexiconGenerator) apply false
     alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.burst) apply false
 }
 
 allprojects {
@@ -57,11 +58,4 @@ allprojects {
     }
 }
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("app.cash.burst:burst-gradle-plugin:2.8.1")
-    }
-}
+
