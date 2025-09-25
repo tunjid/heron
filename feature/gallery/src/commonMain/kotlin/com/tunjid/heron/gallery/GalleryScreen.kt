@@ -53,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -131,6 +132,7 @@ internal fun GalleryScreen(
     val playerControlsUiState = remember(videoPlayerController) {
         PlayerControlsUiState(videoPlayerController)
     }
+    val imageDownloadState = remember(::ImageDownloadState)
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -311,6 +313,7 @@ internal fun GalleryScreen(
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
                 item = item,
                 videoPlayerController = videoPlayerController,
+                imageDownloadState = imageDownloadState,
                 post = state.post,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
@@ -422,6 +425,7 @@ private fun GalleryFooter(
     modifier: Modifier,
     item: GalleryItem,
     videoPlayerController: VideoPlayerController,
+    imageDownloadState: ImageDownloadState,
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
@@ -437,7 +441,7 @@ private fun GalleryFooter(
                 .padding(horizontal = 12.dp),
         ) {
             when (item) {
-                is GalleryItem.Photo -> DownloadButton(url = item.image.fullsize.uri)
+                is GalleryItem.Photo -> imageDownloadState.DownloadButton(item)
                 is GalleryItem.Video -> videoPlayerController.MuteButton()
             }
         }
@@ -638,13 +642,13 @@ private fun VideoPlayerController.MuteButton(
 }
 
 @Composable
-private fun DownloadButton(
-    url: String,
+private fun ImageDownloadState.DownloadButton(
+    item: GalleryItem.Photo,
     modifier: Modifier = Modifier,
 ) {
     val imageLoader = LocalImageLoader.current
     val coroutineScope = rememberCoroutineScope()
-    var downloadStatusState by remember { mutableStateOf<DownloadStatus?>(null) }
+    val downloadStatusState = stateFor(item)
 
     Box(
         modifier = modifier,
@@ -653,10 +657,12 @@ private fun DownloadButton(
             .align(Alignment.Center)
             .size(40.dp)
 
-        val onDownloadClicked: () -> Unit = {
-            coroutineScope.launch {
-                imageLoader.download(ImageRequest.Network(url))
-                    .collectLatest { downloadStatusState = it }
+        val onDownloadClicked: () -> Unit = remember(item.image.fullsize) {
+            {
+                coroutineScope.launch {
+                    imageLoader.download(ImageRequest.Network(item.image.fullsize.uri))
+                        .collectLatest { updateStateFor(item, it) }
+                }
             }
         }
 
@@ -673,7 +679,7 @@ private fun DownloadButton(
                 )
                 DownloadStatus.Failed -> IconButton(
                     modifier = contentModifier,
-                    onClick = { downloadStatusState = null },
+                    onClick = { updateStateFor(item, null) },
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Error,
@@ -687,7 +693,10 @@ private fun DownloadButton(
                 )
                 is DownloadStatus.Progress -> CircularProgressIndicator(
                     modifier = contentModifier,
-                    progress = { status.fraction },
+                    // let is needed bc of compose lint about method references
+                    progress = animateFloatAsState(status.fraction).let { state ->
+                        state::value
+                    },
                 )
                 null -> IconButton(
                     modifier = contentModifier,
@@ -710,6 +719,21 @@ private val DownloadStatus?.contentKey
         null -> "-"
         else -> this::class.simpleName
     }
+
+private class ImageDownloadState {
+    private val states = mutableStateMapOf<String, DownloadStatus?>()
+
+    fun stateFor(
+        item: GalleryItem.Photo,
+    ): DownloadStatus? = states[item.image.fullsize.uri]
+
+    fun updateStateFor(
+        item: GalleryItem.Photo,
+        status: DownloadStatus?,
+    ) {
+        states[item.image.fullsize.uri] = status
+    }
+}
 
 private const val UnmatchedPrefix = "UnmatchedPrefix"
 private const val VisibleOverlayZIndex = 1f
