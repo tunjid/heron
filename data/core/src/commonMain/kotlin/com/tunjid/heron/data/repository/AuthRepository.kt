@@ -131,6 +131,9 @@ internal class AuthTokenRepository(
             }
             Unit
         }
+        .onFailure {
+            savedStateDataSource.setAuth(null)
+        }
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {

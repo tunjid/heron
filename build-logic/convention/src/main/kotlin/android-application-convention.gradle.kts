@@ -20,6 +20,13 @@ plugins {
 
 android {
     commonConfiguration(this)
+    buildTypes {
+        create("staging") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".staging"
+            isMinifyEnabled = false
+        }
+    }
 
     defaultConfig {
         targetSdk = 35
