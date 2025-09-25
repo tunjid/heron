@@ -73,6 +73,10 @@ interface ImageLoader {
         request: ImageRequest,
         size: IntSize,
     ): Image?
+
+    fun download(
+        request: ImageRequest.Network,
+    ): Flow<DownloadStatus>
 }
 
 sealed class ImageRequest {
@@ -84,6 +88,15 @@ sealed class ImageRequest {
     internal data class Local(
         val file: PlatformFile,
     ) : ImageRequest()
+}
+
+sealed class DownloadStatus {
+    data object Failed : DownloadStatus()
+    data object Indeterminate : DownloadStatus()
+    data object Complete : DownloadStatus()
+    data class Progress(
+        val fraction: Float,
+    ) : DownloadStatus()
 }
 
 data class ImageArgs(

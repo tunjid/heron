@@ -26,8 +26,32 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.compose.asPainter
 import coil3.memory.MemoryCache
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest as CoilImageRequest
 import coil3.size.Size as CoilSize
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.cacheDir
+import io.github.vinceglb.filekit.coil.addPlatformFileSupport
+import io.github.vinceglb.filekit.createDirectories
+import io.github.vinceglb.filekit.delete
+import io.github.vinceglb.filekit.div
+import io.github.vinceglb.filekit.exists
+import io.github.vinceglb.filekit.saveImageToGallery
+import io.github.vinceglb.filekit.sink
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.prepareGet
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentLength
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.core.remaining
+import io.ktor.utils.io.exhausted
+import io.ktor.utils.io.readRemaining
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.Clock
 
 @Immutable
 internal class CoilImage(
@@ -42,8 +66,9 @@ internal class CoilImage(
         )
 }
 
-internal class CoilImageLoader(
+internal class CoilImageLoader private constructor(
     private val platformContext: PlatformContext,
+    private val httpClient: HttpClient,
 ) : ImageLoader {
 
     override suspend fun fetchImage(
@@ -88,9 +113,72 @@ internal class CoilImageLoader(
             painter = image.asPainter(platformContext),
         )
     }
-}
 
-internal expect fun coil3.Image.renderInto(canvas: Canvas)
+    override fun download(
+        request: ImageRequest.Network,
+    ): Flow<DownloadStatus> = when (val url = request.url) {
+        null -> emptyFlow()
+        else -> flow {
+            var tempFile: PlatformFile? = null
+            try {
+                val fileName = "${Clock.System.now()}.jpg"
+                if (!MediaDownloadsDir.exists()) MediaDownloadsDir.createDirectories(true)
+                val file = (MediaDownloadsDir / fileName).also { tempFile = it }
+
+                val sink = file.sink(append = false)
+
+                httpClient.prepareGet(url).execute { httpResponse ->
+                    if (httpResponse.status != HttpStatusCode.OK) {
+                        emit(DownloadStatus.Failed)
+                        return@execute
+                    }
+
+                    val channel: ByteReadChannel = httpResponse.body()
+                    var count = 0L
+                    sink.use {
+                        while (!channel.exhausted()) {
+                            val chunk = channel.readRemaining()
+                            count += chunk.remaining
+                            chunk.transferTo(sink)
+
+                            val contentLength = httpResponse.contentLength()
+                            emit(
+                                if (contentLength == null) DownloadStatus.Indeterminate
+                                else DownloadStatus.Progress(count.toFloat() / contentLength),
+                            )
+                        }
+                    }
+                }
+                FileKit.saveImageToGallery(file)
+                emit(DownloadStatus.Complete)
+            } catch (e: Exception) {
+                emit(DownloadStatus.Failed)
+            } finally {
+                tempFile?.delete()
+            }
+        }
+    }
+
+    companion object {
+        internal fun create(
+            context: PlatformContext,
+        ): ImageLoader {
+            val httpClient = HttpClient()
+            SingletonImageLoader.setSafe {
+                coil3.ImageLoader.Builder(context)
+                    .components {
+                        addPlatformFileSupport()
+                        add(KtorNetworkFetcherFactory(httpClient))
+                    }
+                    .build()
+            }
+            return CoilImageLoader(
+                platformContext = context,
+                httpClient = httpClient,
+            )
+        }
+    }
+}
 
 @Composable
 internal expect fun coil3.Image.AnimationEffect()
@@ -98,3 +186,5 @@ internal expect fun coil3.Image.AnimationEffect()
 val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
     throw IllegalArgumentException("Image Fetcher has not been provided")
 }
+
+private val MediaDownloadsDir = FileKit.cacheDir / "media-downloads"

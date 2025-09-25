@@ -23,4 +23,6 @@
     <string name="mute_video">Mute video</string>
     <string name="unmute_video">Unmute video</string>
     <string name="download">Download</string>
+    <string name="download_complete">Download complete</string>
+    <string name="download_failed">Download failed</string>
 </resources>

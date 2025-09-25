@@ -18,34 +18,16 @@ package com.tunjid.heron.images
 
 import android.content.Context
 import android.graphics.drawable.Animatable
-import android.graphics.drawable.Animatable2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.nativeCanvas
 import coil3.DrawableImage
 import coil3.Image
-import coil3.SingletonImageLoader
-import coil3.gif.AnimatedImageDecoder
-import io.github.vinceglb.filekit.coil.addPlatformFileSupport
-
-internal actual fun Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
 
 fun imageLoader(
     context: Context,
-): ImageLoader {
-    SingletonImageLoader.setSafe {
-        coil3.ImageLoader.Builder(context)
-            .components {
-                addPlatformFileSupport()
-                add(AnimatedImageDecoder.Factory())
-            }
-            .build()
-    }
-    return CoilImageLoader(context)
-}
+): ImageLoader = CoilImageLoader.create(
+    context = context,
+)
 
 @Composable
 internal actual fun Image.AnimationEffect() {
