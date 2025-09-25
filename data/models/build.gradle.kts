@@ -41,7 +41,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.burst)
-                implementation(kotlin("test-junit5"))
             }
         }
     }
@@ -50,23 +49,4 @@ kotlin {
 dependencies {
     // For Android JUnit runner to see Burst
     testImplementation(libs.burst)
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform {
-        includeEngines("junit-jupiter", "burst")
-    }
-    // This property tells JUnit Platform to exclude matching classes from discovery
-    // which should prevent JUnit Jupiter from trying to initialize them.
-    systemProperty(
-        "junit.platform.discovery.exclude.classnames",
-        // Regex to match classes in 'com.tunjid.heron.models.polymorphic' and subpackages
-        // that end with 'SerializationTest'
-        "com\\.tunjid\\.heron\\.models\\.polymorphic\\..*SerializationTest",
-    )
-    testLogging {
-        events("passed", "skipped", "failed")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = true
-    }
 }
