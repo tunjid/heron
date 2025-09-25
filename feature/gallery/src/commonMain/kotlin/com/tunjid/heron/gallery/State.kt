@@ -72,6 +72,9 @@ fun State(
     },
 )
 
+val State.posterSharedElementPrefix
+    get() = "poster-$sharedElementPrefix"
+
 sealed class GalleryItem {
     data class Photo(
         val image: EmbeddedImage,

@@ -250,7 +250,7 @@ internal fun GalleryScreen(
                 post = state.post,
                 signedInProfileId = state.signedInProfileId,
                 viewerState = state.viewerState,
-                sharedElementPrefix = state.sharedElementPrefix,
+                sharedElementPrefix = state.posterSharedElementPrefix,
                 paneScaffoldState = paneScaffoldState,
                 onProfileClicked = { post ->
                     actions(
@@ -258,7 +258,7 @@ internal fun GalleryScreen(
                             profileDestination(
                                 profile = post.author,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = state.sharedElementPrefix,
+                                    prefix = state.posterSharedElementPrefix,
                                 ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             ),
