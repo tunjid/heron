@@ -24,7 +24,7 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
-actual fun timelinePreferenceDragAndDropTransferData(
+actual fun timelineEditDragAndDropTransferData(
     title: String,
 ): DragAndDropTransferData =
     DragAndDropTransferData(
@@ -36,14 +36,14 @@ actual fun DragAndDropEvent.draggedId(): String? =
     toAndroidDragEvent().localState as? String
 
 @Suppress("DEPRECATION")
-actual fun Modifier.timelinePreferenceDragAndDropSource(
+actual fun Modifier.timelineEditDragAndDropSource(
     sourceId: String,
 ): Modifier = dragAndDropSource(
     block = {
         detectDragGesturesAfterLongPress(
             onDragStart = {
                 startTransfer(
-                    timelinePreferenceDragAndDropTransferData(sourceId),
+                    timelineEditDragAndDropTransferData(sourceId),
                 )
             },
             onDrag = { _, _ -> },

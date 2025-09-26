@@ -35,7 +35,7 @@ import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.TabLayout
-import com.tunjid.heron.home.TabsExpansionEffect
+import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination

@@ -28,7 +28,7 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -38,24 +38,20 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -72,38 +68,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.home.TimelinePreferencesState.Companion.timelinePreferenceDragAndDrop
+import com.tunjid.heron.home.ui.EditableTimelineState
+import com.tunjid.heron.home.ui.EditableTimelineState.Companion.rememberEditableTimelineState
+import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDragAndDrop
+import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -111,28 +102,22 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.verticalOffsetProgress
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
+import heron.feature.home.generated.resources.timeline_drop_target_hint
 import heron.feature.home.generated.resources.timeline_preferences
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 
-expect fun timelinePreferenceDragAndDropTransferData(title: String): DragAndDropTransferData
+expect fun timelineEditDragAndDropTransferData(title: String): DragAndDropTransferData
 
 expect fun DragAndDropEvent.draggedId(): String?
 
-expect fun Modifier.timelinePreferenceDragAndDropSource(sourceId: String): Modifier
+expect fun Modifier.timelineEditDragAndDropSource(sourceId: String): Modifier
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -274,76 +259,6 @@ internal fun HomeTabs(
     }
 }
 
-@Composable
-fun PagerState.RestoreLastViewedTabEffect(
-    lastViewedTabUri: Uri?,
-    timelines: List<Timeline.Home>,
-) {
-    val updatedTimelines = rememberUpdatedState(lastViewedTabUri to timelines)
-    LaunchedEffect(Unit) {
-        val (lastTabUri, initialTimelines) = snapshotFlow { updatedTimelines.value }
-            .filter { (_, timelines) -> timelines.isNotEmpty() }
-            .first()
-
-        val page = initialTimelines.indexOfFirst { it.uri == lastTabUri }
-        if (page < 0) return@LaunchedEffect
-        if (!initialTimelines[page].isPinned) return@LaunchedEffect
-
-        scrollToPage(page)
-    }
-}
-
-@Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
-    layout: TabLayout,
-    onCollapsed: (TabLayout.Collapsed) -> Unit,
-) {
-    LaunchedEffect(layout) {
-        if (layout is TabLayout.Collapsed) snapshotFlow {
-            verticalOffsetProgress() < 0.5f
-        }
-            .distinctUntilChanged()
-            .collect { showAllTabs ->
-                onCollapsed(
-                    if (showAllTabs) TabLayout.Collapsed.All
-                    else TabLayout.Collapsed.Selected,
-                )
-            }
-    }
-}
-
-@Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
-    isExpanded: Boolean,
-) {
-    val density = LocalDensity.current
-    val expandedHeight = rememberUpdatedState(
-        with(density) {
-            (UiTokens.statusBarHeight + UiTokens.toolbarHeight).toPx()
-        },
-    )
-
-    LaunchedEffect(isExpanded) {
-        if (!isExpanded) return@LaunchedEffect
-
-        var cumulative = 0f
-        animate(
-            initialValue = cumulative,
-            targetValue = expandedHeight.value,
-        ) { current, _ ->
-            val delta = current - cumulative
-            cumulative += delta
-            onPreScroll(
-                available = Offset(
-                    x = 0f,
-                    y = delta,
-                ),
-                source = NestedScrollSource.SideEffect,
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedTabs(
@@ -355,59 +270,92 @@ private fun ExpandedTabs(
     onDismissed: () -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
 ) = with(sharedTransitionScope) {
-    val timelinePreferencesState = remember {
-        timelines.toMutableStateList()
-        TimelinePreferencesState(
-            timelines = timelines.toMutableStateList(),
-        )
-    }
-
-    Box(
+    val editableTimelineState = rememberEditableTimelineState(
+        timelines = timelines,
+    )
+    FlowRow(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp)
+            .padding(
+                top = 40.dp,
+                start = 16.dp,
+                end = 16.dp,
+            )
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = onDismissed,
             ),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
+        val (pinned, saved) = remember(
+            editableTimelineState.firstUnpinnedIndex,
+            editableTimelineState.timelines.toList(),
         ) {
-            Spacer(
-                Modifier.height(40.dp),
-            )
-            FlowRow(
-                modifier = Modifier
-                    .skipToLookaheadSize()
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                timelinePreferencesState.timelines.forEachIndexed { index, timeline ->
-                    if (index == 0) {
-                        Spacer(Modifier.height(24.dp).fillMaxWidth())
-                        SectionTitle(stringResource(Res.string.pinned))
-                    } else if (index == timelinePreferencesState.firstUnpinnedIndex) {
-                        Spacer(Modifier.height(24.dp).fillMaxWidth())
-                        SectionTitle(stringResource(Res.string.saved))
-                    }
+            val allTimelines = editableTimelineState.timelines
+            val index = editableTimelineState.firstUnpinnedIndex
 
-                    key(timeline.sourceId) {
-                        if (!timelinePreferencesState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
-                            modifier = Modifier
-                                .animateBounds(this@with),
-                            timelinePreferencesState = timelinePreferencesState,
-                            currentTimelines = timelines,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedContentScope = animatedContentScope,
-                            timeline = timeline,
-                        )
-                    }
-                }
+            if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
+            else allTimelines.subList(0, index) to allTimelines.subList(index, allTimelines.size)
+        }
+
+        key(Res.string.pinned) {
+            SectionTitle(
+                modifier = Modifier
+                    .padding(top = 24.dp)
+                    .animateBounds(this@with),
+                title = stringResource(Res.string.pinned),
+            )
+        }
+        pinned.forEach { timeline ->
+            key(timeline.sourceId) {
+                if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                    modifier = Modifier
+                        .animateBounds(this@with),
+                    editableTimelineState = editableTimelineState,
+                    currentTimelines = timelines,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedContentScope = animatedContentScope,
+                    timeline = timeline,
+                )
             }
+        }
+        key(Res.string.saved) {
+            SectionTitle(
+                modifier = Modifier
+                    .padding(top = 24.dp)
+                    .animateBounds(this@with),
+                title = stringResource(Res.string.saved),
+            )
+        }
+        saved.forEach { timeline ->
+            key(timeline.sourceId) {
+                if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                    modifier = Modifier
+                        .animateBounds(this@with),
+                    editableTimelineState = editableTimelineState,
+                    currentTimelines = timelines,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedContentScope = animatedContentScope,
+                    timeline = timeline,
+                )
+            }
+        }
+        androidx.compose.animation.AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp),
+            visible = editableTimelineState.shouldShowHint,
+        ) {
+            DropTargetBox(
+                modifier = Modifier
+                    .timelineEditDropTarget(
+                        state = editableTimelineState,
+                    )
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
+                isHovered = editableTimelineState.isHintHovered,
+            )
         }
     }
 
@@ -419,7 +367,7 @@ private fun ExpandedTabs(
             .drop(1)
             .collectLatest { requestId ->
                 if (requestId != null) onTimelinePreferencesSaved(
-                    timelinePreferencesState.timelinesToSave(),
+                    editableTimelineState.timelinesToSave(),
                 )
             }
     }
@@ -458,15 +406,7 @@ private fun CollapsedTabs(
         ) {
             Tabs(
                 modifier = Modifier
-                    .drawBehind {
-                        val chipHeight = ChipHeight.toPx()
-                        drawRoundRect(
-                            color = backgroundColor,
-                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                            size = size.copy(height = chipHeight),
-                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                        )
-                    }
+                    .chipBackground { backgroundColor }
                     .wrapContentWidth()
                     .animateContentSize(),
                 tabsState = tabsState,
@@ -492,22 +432,29 @@ private fun CollapsedTabs(
 @Composable
 private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
-    timelinePreferencesState: TimelinePreferencesState,
+    editableTimelineState: EditableTimelineState,
     currentTimelines: List<Timeline.Home>,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
 ) = with(sharedTransitionScope) {
     JiggleBox {
+        val isHovered = editableTimelineState.isHoveredId(timeline.sourceId)
         InputChip(
             modifier = modifier
+                .chipBackground(
+                    animateColorAsState(
+                        if (isHovered) TabsState.TabBackgroundColor
+                        else Color.Transparent,
+                    ).let { it::value },
+                )
                 .skipToLookaheadSize()
-                .timelinePreferenceDragAndDrop(
-                    state = timelinePreferencesState,
+                .timelineEditDragAndDrop(
+                    state = editableTimelineState,
                     sourceId = timeline.sourceId,
                 ),
             shape = CircleShape,
-            selected = timelinePreferencesState.isHoveredId(timeline.sourceId),
+            selected = false,
             onClick = click@{
                 val index = currentTimelines.indexOfFirst { it.sourceId == timeline.sourceId }
                 if (index >= 0) onTabSelected(index)
@@ -550,7 +497,7 @@ private fun TabsState.ExpandedTab(
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            timelinePreferencesState.remove(timeline)
+                            editableTimelineState.remove(timeline)
                         },
                     imageVector = Icons.Rounded.Remove,
                     contentDescription = "",
@@ -629,6 +576,34 @@ private fun ExpandButton(
 }
 
 @Composable
+private fun DropTargetBox(
+    modifier: Modifier = Modifier,
+    isHovered: Boolean,
+) {
+    Box(
+        modifier = modifier
+            .roundedBorder(
+                isStroked = true,
+                cornerRadius = 8::dp,
+                borderColor = animateColorAsState(
+                    if (isHovered) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outline,
+                ).let { it::value },
+                strokeWidth = animateDpAsState(
+                    if (isHovered) 4.dp
+                    else Dp.Hairline,
+                ).let { it::value },
+            ),
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(vertical = 8.dp, horizontal = 16.dp),
+            text = stringResource(Res.string.timeline_drop_target_hint),
+        )
+    }
+}
+
+@Composable
 private fun SettingsIconButton(
     onActionClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -658,10 +633,11 @@ private fun SettingsIconButton(
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SectionTitle(
+    modifier: Modifier = Modifier,
     title: String,
 ) {
     Text(
-        modifier = Modifier
+        modifier = modifier
             .padding(
                 vertical = 8.dp,
             )
@@ -701,122 +677,44 @@ private fun TimelinePresentationSelector(
     }
 }
 
-@Stable
-private class TimelinePreferencesState(
-    val timelines: SnapshotStateList<Timeline.Home>,
-) {
-    var hoveredId by mutableStateOf<String?>(null)
-    var draggedId by mutableStateOf<String?>(null)
-
-    var firstUnpinnedIndex by mutableStateOf(timelines.indexOfFirst { !it.isPinned })
-
-    val children = mutableStateMapOf<String, Child>()
-
-    @Stable
-    fun isHoveredId(sourceId: String) = sourceId == hoveredId
-
-    @Stable
-    fun isDraggedId(sourceId: String) = sourceId == draggedId
-
-    fun remove(timeline: Timeline.Home) {
-        val index = timelines.indexOfFirst { it.sourceId == timeline.sourceId }
-        if (index < 0) return
-
-        timelines.removeAt(index)
-        if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(
-            a = firstUnpinnedIndex - 1,
-            b = 0,
+private fun Modifier.roundedBorder(
+    isStroked: Boolean,
+    borderColor: () -> Color,
+    cornerRadius: () -> Dp,
+    strokeWidth: () -> Dp,
+) = drawWithCache {
+    val style = Stroke(
+        width = strokeWidth().toPx(),
+        pathEffect =
+        if (isStroked) PathEffect.dashPathEffect(
+            intervals = floatArrayOf(10f, 10f), // Dash length and gap length
+            phase = 0f, // Optional: offset for the dash pattern
+        )
+        else null,
+    )
+    onDrawBehind {
+        val radius = cornerRadius()
+        drawRoundRect(
+            cornerRadius = CornerRadius(
+                x = radius.toPx(),
+                y = radius.toPx(),
+            ),
+            color = borderColor(),
+            style = style,
         )
     }
+}
 
-    fun timelinesToSave() = timelines.mapIndexed { index, timeline ->
-        when (timeline) {
-            is Timeline.Home.Feed -> timeline.copy(isPinned = index < firstUnpinnedIndex)
-            is Timeline.Home.Following -> timeline.copy(isPinned = index < firstUnpinnedIndex)
-            is Timeline.Home.List -> timeline.copy(isPinned = index < firstUnpinnedIndex)
-        }
-    }
-
-    @Stable
-    inner class Child(
-        sourceId: String,
-    ) : DragAndDropTarget {
-
-        var sourceId by mutableStateOf(sourceId)
-
-        override fun onStarted(event: DragAndDropEvent) {
-            draggedId = event.draggedId()
-        }
-
-        override fun onEntered(event: DragAndDropEvent) {
-            hoveredId = sourceId
-        }
-
-        override fun onExited(event: DragAndDropEvent) {
-            if (isHoveredId(sourceId)) hoveredId = null
-        }
-
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            val draggedIndex = event.draggedId()?.let { draggedId ->
-                timelines.indexOfFirst { it.sourceId == draggedId }
-            } ?: -1
-            val droppedIndex = timelines.indexOfFirst {
-                it.sourceId == sourceId
-            }
-
-            val acceptedDrop =
-                // Make sure at least 1 item is always pinned
-                if (firstUnpinnedIndex in draggedIndex..droppedIndex) firstUnpinnedIndex > 1
-                else draggedIndex >= 0 && droppedIndex >= 0
-
-            Snapshot.withMutableSnapshot {
-                if (acceptedDrop) {
-                    timelines.add(
-                        index = droppedIndex,
-                        element = timelines.removeAt(draggedIndex),
-                    )
-                    when (firstUnpinnedIndex) {
-                        // Moved out of pinned items
-                        in draggedIndex..droppedIndex -> firstUnpinnedIndex = max(
-                            a = firstUnpinnedIndex - 1,
-                            b = 0,
-                        )
-                        // Moved into pinned items
-                        in droppedIndex..draggedIndex -> firstUnpinnedIndex = min(
-                            a = firstUnpinnedIndex + 1,
-                            b = timelines.lastIndex,
-                        )
-                    }
-                }
-                hoveredId = null
-                draggedId = null
-            }
-
-            return acceptedDrop
-        }
-
-        override fun onEnded(event: DragAndDropEvent) {
-            Snapshot.withMutableSnapshot {
-                hoveredId = null
-                draggedId = null
-            }
-        }
-    }
-
-    companion object {
-        fun Modifier.timelinePreferenceDragAndDrop(
-            state: TimelinePreferencesState,
-            sourceId: String,
-        ) = timelinePreferenceDragAndDropSource(sourceId)
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event.draggedId() != null
-                },
-                target = state.children.getOrPut(sourceId) {
-                    state.Child(sourceId)
-                }.also { it.sourceId = sourceId },
-            )
-    }
+private fun Modifier.chipBackground(
+    backgroundColor: () -> Color,
+) = drawBehind {
+    val chipHeight = ChipHeight.toPx()
+    drawRoundRect(
+        color = backgroundColor(),
+        topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+        size = size.copy(height = chipHeight),
+        cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+    )
 }
 
 private val TabsBoundsTransform = BoundsTransform { _, _ ->
