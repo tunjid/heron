@@ -55,6 +55,7 @@
     <string name="pin_feed">Pin</string>
     <string name="save_feed">Save</string>
     <string name="remove_feed">Remove</string>
-    <string name="mute_video">mute video</string>
-    <string name="unmute_video">unmute video</string>
+    <string name="mute_video">Mute video</string>
+    <string name="unmute_video">Unmute video</string>
+    <string name="play_video">Play video</string>
 </resources>
