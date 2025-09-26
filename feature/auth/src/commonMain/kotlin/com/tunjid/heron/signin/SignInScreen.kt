@@ -79,7 +79,7 @@ internal fun SignInScreen(
             )
         }
 
-        state.fields.forEach { field ->
+        state.forEachField { field ->
             key(field.id) {
                 FormField(
                     modifier = Modifier

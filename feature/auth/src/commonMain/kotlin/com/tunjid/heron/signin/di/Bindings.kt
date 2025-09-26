@@ -18,6 +18,7 @@ package com.tunjid.heron.signin.di
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
@@ -26,17 +27,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.AppLogo
@@ -160,7 +170,14 @@ class SignInBindings(
                     viewModel.accept(Action.MessageConsumed(it))
                 },
                 topBar = {
-                    TopBar()
+                    TopBar(
+                        authMode = state.authMode,
+                        oauthAvailable = state.isOauthAvailable,
+                        selectedServer = state.selectedServer,
+                        onPasswordPreferenceToggled = {
+                            viewModel.accept(Action.TogglePasswordPreference)
+                        },
+                    )
                 },
                 floatingActionButton = {
                     PaneFab(
@@ -205,7 +222,12 @@ class SignInBindings(
 }
 
 @Composable
-private fun PaneScaffoldState.TopBar() {
+private fun PaneScaffoldState.TopBar(
+    authMode: AuthMode,
+    oauthAvailable: Boolean,
+    selectedServer: Server,
+    onPasswordPreferenceToggled: () -> Unit,
+) {
     TopAppBar(
         navigationIcon = {
             AppLogo(
@@ -219,6 +241,52 @@ private fun PaneScaffoldState.TopBar() {
                 text = stringResource(Res.string.sign_in),
                 style = MaterialTheme.typography.titleMedium,
             )
+        },
+        actions = {
+            if (oauthAvailable) Box(
+                modifier = Modifier
+                    .padding(8.dp),
+            ) {
+                var expanded by remember {
+                    mutableStateOf(false)
+                }
+                IconButton(
+                    onClick = {
+                        expanded = !expanded
+                    },
+                    content = {
+                        Icon(
+                            imageVector = Icons.Rounded.MoreVert,
+                            contentDescription = "More options",
+                        )
+                    },
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = {
+                        expanded = false
+                    },
+                    content = {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(
+                                        when (authMode) {
+                                            AuthMode.Oauth -> Res.string.sign_with_password
+                                            AuthMode.Password -> Res.string.sign_with_oauth
+                                        },
+                                        stringResource(selectedServer.stringResource),
+                                    ),
+                                )
+                            },
+                            onClick = {
+                                onPasswordPreferenceToggled()
+                                expanded = false
+                            },
+                        )
+                    },
+                )
+            }
         },
     )
 }

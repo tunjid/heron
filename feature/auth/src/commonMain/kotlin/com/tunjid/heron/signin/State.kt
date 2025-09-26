@@ -37,7 +37,7 @@ import com.tunjid.heron.signin.ui.FormField
 import com.tunjid.heron.signin.ui.Validator
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.empty_form
-import heron.feature.auth.generated.resources.invalid_domain
+import heron.feature.auth.generated.resources.invalid_handle
 import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.username
 import kotlinx.serialization.Serializable
@@ -69,6 +69,7 @@ sealed class AuthMode {
 data class State(
     val isSignedIn: Boolean = false,
     val isSubmitting: Boolean = false,
+    val prefersPassword: Boolean = false,
     val isOauthAvailable: Boolean = false,
     val oauthRequestUri: GenericUri? = null,
     val selectedServer: Server = Server.BlueSky,
@@ -95,7 +96,7 @@ data class State(
                     listOf(Res.string.username),
                 ),
                 DomainRegex::matches to ScaffoldMessage.Resource(
-                    Res.string.invalid_domain,
+                    Res.string.invalid_handle,
                 ),
             ),
         ),
@@ -144,6 +145,7 @@ val State.hasEnteredPassword: Boolean
 
 val State.authMode: AuthMode
     get() = when {
+        prefersPassword -> AuthMode.Password
         isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword -> AuthMode.Oauth
         else -> AuthMode.Password
     }
@@ -164,6 +166,18 @@ fun State.createSessionAction() = when {
                 server = selectedServer,
             ),
         )
+    }
+}
+
+internal inline fun State.forEachField(
+    block: (FormField) -> Unit,
+) {
+    fields.forEach {
+        if (it.id == Password) {
+            if (prefersPassword || !isOauthAvailable || !selectedServer.supportsOauth) block(it)
+        } else {
+            block(it)
+        }
     }
 }
 
@@ -190,6 +204,8 @@ sealed class Action(val key: String) {
     data class SetServer(
         val server: Server,
     ) : Action("SetServer")
+
+    data object TogglePasswordPreference : Action("TogglePasswordPreference")
 
     data class CreateSession(
         val request: SessionRequest,
