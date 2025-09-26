@@ -64,6 +64,9 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
+import com.tunjid.heron.home.ui.TabsCollapseEffect
+import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction

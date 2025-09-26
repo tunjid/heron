@@ -26,7 +26,7 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
-actual fun timelinePreferenceDragAndDropTransferData(
+actual fun timelineEditDragAndDropTransferData(
     title: String,
 ): DragAndDropTransferData = DragAndDropTransferData(
     transferable = DragAndDropTransferable(
@@ -41,8 +41,8 @@ actual fun DragAndDropEvent.draggedId(): String? {
     return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
 }
 
-actual fun Modifier.timelinePreferenceDragAndDropSource(
+actual fun Modifier.timelineEditDragAndDropSource(
     sourceId: String,
 ): Modifier = this.dragAndDropSource {
-    timelinePreferenceDragAndDropTransferData(sourceId)
+    timelineEditDragAndDropTransferData(sourceId)
 }
