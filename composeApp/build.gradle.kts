@@ -109,14 +109,14 @@ kotlin {
     }
 }
 
-val appVersion = "1.0.3"
+val appVersion = "1.0.4"
 
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = 4
+        versionCode = 5
         versionName = appVersion
     }
     packaging {
