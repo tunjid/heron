@@ -28,6 +28,7 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -85,6 +86,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
@@ -586,6 +588,10 @@ private fun DropTargetBox(
         if (isHovered) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outline,
     )
+    val strokeWidth = animateDpAsState(
+        if (isHovered) 4.dp
+        else Dp.Hairline,
+    )
     Box(
         modifier = modifier
             .drawWithCache {
@@ -594,6 +600,7 @@ private fun DropTargetBox(
                     y = 8.dp.toPx(),
                 )
                 val stroke = Stroke(
+                    width = strokeWidth.value.toPx(),
                     pathEffect = PathEffect.dashPathEffect(
                         intervals = floatArrayOf(10f, 10f), // Dash length and gap length
                         phase = 0f, // Optional: offset for the dash pattern

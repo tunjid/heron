@@ -79,6 +79,47 @@ internal class EditableTimelineState private constructor(
         }
     }
 
+    private fun DragAndDropEvent.draggedIndex() =
+        draggedId()?.let { draggedId ->
+            timelines.indexOfFirst { it.sourceId == draggedId }
+        } ?: -1
+
+    private fun dropItem(
+        acceptedDrop: Boolean,
+        draggedIndex: Int,
+        droppedIndex: Int,
+    ) {
+        Snapshot.withMutableSnapshot {
+            if (acceptedDrop) {
+                timelines.add(
+                    index = min(timelines.lastIndex, droppedIndex),
+                    element = timelines.removeAt(draggedIndex),
+                )
+                firstUnpinnedIndex = when {
+                    // Moved last saved item to pinned items
+                    draggedIndex == firstUnpinnedIndex && draggedIndex == timelines.lastIndex -> -1
+                    // Dropped in hint box
+                    droppedIndex >= timelines.size -> timelines.lastIndex
+                    else -> when (firstUnpinnedIndex) {
+                        // Moved out of pinned items
+                        in draggedIndex..droppedIndex -> max(
+                            a = firstUnpinnedIndex - 1,
+                            b = 0,
+                        )
+                        // Moved into pinned items
+                        in droppedIndex..draggedIndex -> min(
+                            a = firstUnpinnedIndex + 1,
+                            b = timelines.lastIndex,
+                        )
+                        else -> firstUnpinnedIndex
+                    }
+                }
+            }
+            hoveredId = null
+            draggedId = null
+        }
+    }
+
     @Stable
     private inner class TabTarget(
         sourceId: String,
@@ -99,9 +140,7 @@ internal class EditableTimelineState private constructor(
         }
 
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val draggedIndex = event.draggedId()?.let { draggedId ->
-                timelines.indexOfFirst { it.sourceId == draggedId }
-            } ?: -1
+            val draggedIndex = event.draggedIndex()
             val droppedIndex = timelines.indexOfFirst {
                 it.sourceId == sourceId
             }
@@ -111,28 +150,11 @@ internal class EditableTimelineState private constructor(
                 if (firstUnpinnedIndex in draggedIndex..droppedIndex) firstUnpinnedIndex > 1
                 else draggedIndex >= 0 && droppedIndex >= 0
 
-            Snapshot.withMutableSnapshot {
-                if (acceptedDrop) {
-                    timelines.add(
-                        index = droppedIndex,
-                        element = timelines.removeAt(draggedIndex),
-                    )
-                    when (firstUnpinnedIndex) {
-                        // Moved out of pinned items
-                        in draggedIndex..droppedIndex -> firstUnpinnedIndex = max(
-                            a = firstUnpinnedIndex - 1,
-                            b = 0,
-                        )
-                        // Moved into pinned items
-                        in droppedIndex..draggedIndex -> firstUnpinnedIndex = min(
-                            a = firstUnpinnedIndex + 1,
-                            b = timelines.lastIndex,
-                        )
-                    }
-                }
-                hoveredId = null
-                draggedId = null
-            }
+            dropItem(
+                acceptedDrop = acceptedDrop,
+                draggedIndex = draggedIndex,
+                droppedIndex = droppedIndex,
+            )
 
             return acceptedDrop
         }
@@ -163,14 +185,11 @@ internal class EditableTimelineState private constructor(
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val acceptedDrop = timelines.size >= 2
 
-            Snapshot.withMutableSnapshot {
-                if (acceptedDrop) {
-                    firstUnpinnedIndex = timelines.lastIndex
-                }
-                isHintHovered = false
-                hoveredId = null
-                draggedId = null
-            }
+            dropItem(
+                acceptedDrop = acceptedDrop,
+                draggedIndex = event.draggedIndex(),
+                droppedIndex = timelines.size,
+            )
 
             return acceptedDrop
         }
