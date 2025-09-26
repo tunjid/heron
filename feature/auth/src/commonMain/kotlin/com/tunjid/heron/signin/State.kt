@@ -169,17 +169,8 @@ fun State.createSessionAction() = when {
     }
 }
 
-internal inline fun State.forEachField(
-    block: (FormField) -> Unit,
-) {
-    fields.forEach {
-        if (it.id == Password) {
-            if (prefersPassword || !isOauthAvailable || !selectedServer.supportsOauth) block(it)
-        } else {
-            block(it)
-        }
-    }
-}
+fun State.isVisible(field: FormField) =
+    field.id != Password || authMode == AuthMode.Password
 
 sealed class Action(val key: String) {
     data class FieldChanged(

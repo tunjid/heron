@@ -18,6 +18,10 @@ package com.tunjid.heron.signin
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -79,34 +83,39 @@ internal fun SignInScreen(
             )
         }
 
-        state.forEachField { field ->
+        state.fields.forEach { field ->
             key(field.id) {
-                FormField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateBounds(paneScaffoldState),
-                    field = field,
-                    onValueChange = { field, newValue ->
-                        actions(
-                            Action.FieldChanged(
-                                id = field.id,
-                                text = newValue,
-                            ),
-                        )
-                    },
-                    keyboardActions = {
-                        when (it.id) {
-                            Username -> focusManager.moveFocus(
-                                focusDirection = FocusDirection.Next,
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = state.isVisible(field),
+                    enter = EnterTransition,
+                    exit = ExitTransition,
+                ) {
+                    FormField(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        field = field,
+                        onValueChange = { field, newValue ->
+                            actions(
+                                Action.FieldChanged(
+                                    id = field.id,
+                                    text = newValue,
+                                ),
                             )
+                        },
+                        keyboardActions = {
+                            when (it.id) {
+                                Username -> focusManager.moveFocus(
+                                    focusDirection = FocusDirection.Next,
+                                )
 
-                            Password -> if (state.submitButtonEnabled) {
-                                actions(state.createSessionAction())
-                                keyboardController?.hide()
+                                Password -> if (state.submitButtonEnabled) {
+                                    actions(state.createSessionAction())
+                                    keyboardController?.hide()
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
 
@@ -118,7 +127,8 @@ internal fun SignInScreen(
 
         ServerSelection(
             modifier = Modifier
-                .align(Alignment.End),
+                .align(Alignment.End)
+                .animateBounds(paneScaffoldState),
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,
@@ -139,3 +149,6 @@ internal fun SignInScreen(
         }
     }
 }
+
+private val ExitTransition = slideOutVertically { -it } + fadeOut()
+private val EnterTransition = fadeIn() + slideInVertically { -it }
