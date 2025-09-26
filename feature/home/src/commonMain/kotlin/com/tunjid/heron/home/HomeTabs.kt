@@ -276,7 +276,6 @@ private fun ExpandedTabs(
     FlowRow(
         modifier = Modifier
             .fillMaxSize()
-            .skipToLookaheadSize()
             .padding(
                 top = 40.dp,
                 start = 16.dp,
@@ -412,15 +411,7 @@ private fun CollapsedTabs(
         ) {
             Tabs(
                 modifier = Modifier
-                    .drawBehind {
-                        val chipHeight = ChipHeight.toPx()
-                        drawRoundRect(
-                            color = backgroundColor,
-                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                            size = size.copy(height = chipHeight),
-                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                        )
-                    }
+                    .chipBackground { backgroundColor }
                     .wrapContentWidth()
                     .animateContentSize(),
                 tabsState = tabsState,
@@ -456,16 +447,10 @@ private fun TabsState.ExpandedTab(
         val isHovered = editableTimelineState.isHoveredId(timeline.sourceId)
         InputChip(
             modifier = modifier
-                .roundedBorder(
-                    isStroked = false,
-                    cornerRadius = 120::dp,
-                    borderColor = animateColorAsState(
-                        if (isHovered) MaterialTheme.colorScheme.primary
+                .chipBackground(
+                    animateColorAsState(
+                        if (isHovered) TabsState.TabBackgroundColor
                         else Color.Transparent,
-                    ).let { it::value },
-                    strokeWidth = animateDpAsState(
-                        if (isHovered) 1.dp
-                        else 4.dp,
                     ).let { it::value },
                 )
                 .skipToLookaheadSize()
@@ -474,7 +459,7 @@ private fun TabsState.ExpandedTab(
                     sourceId = timeline.sourceId,
                 ),
             shape = CircleShape,
-            selected = isHovered,
+            selected = false,
             onClick = click@{
                 val index = currentTimelines.indexOfFirst { it.sourceId == timeline.sourceId }
                 if (index >= 0) onTabSelected(index)
@@ -706,11 +691,11 @@ private fun Modifier.roundedBorder(
     val style = Stroke(
         width = strokeWidth().toPx(),
         pathEffect =
-            if (isStroked) PathEffect.dashPathEffect(
-                intervals = floatArrayOf(10f, 10f), // Dash length and gap length
-                phase = 0f, // Optional: offset for the dash pattern
-            )
-            else null,
+        if (isStroked) PathEffect.dashPathEffect(
+            intervals = floatArrayOf(10f, 10f), // Dash length and gap length
+            phase = 0f, // Optional: offset for the dash pattern
+        )
+        else null,
     )
     onDrawBehind {
         val radius = cornerRadius()
@@ -723,6 +708,18 @@ private fun Modifier.roundedBorder(
             style = style,
         )
     }
+}
+
+private fun Modifier.chipBackground(
+    backgroundColor: () -> Color,
+) = drawBehind {
+    val chipHeight = ChipHeight.toPx()
+    drawRoundRect(
+        color = backgroundColor(),
+        topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+        size = size.copy(height = chipHeight),
+        cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+    )
 }
 
 private val TabsBoundsTransform = BoundsTransform { _, _ ->
