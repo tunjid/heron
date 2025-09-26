@@ -287,8 +287,18 @@ private fun ExpandedTabs(
             ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val (pinned, saved) = editableTimelineState.timelines
-            .partition(Timeline.Home::isPinned)
+        val (pinned, saved) = remember(editableTimelineState.firstUnpinnedIndex) {
+            val saved = mutableListOf<Timeline.Home>()
+            val pinned = mutableListOf<Timeline.Home>()
+
+            editableTimelineState.timelines.forEachIndexed { index, timeline ->
+                if (editableTimelineState.firstUnpinnedIndex < 0) pinned.add(timeline)
+                else if (index < editableTimelineState.firstUnpinnedIndex) pinned.add(timeline)
+                else saved.add(timeline)
+            }
+
+            pinned to saved
+        }
 
         key(Res.string.pinned) {
             SectionTitle(
