@@ -91,6 +91,7 @@ class ActualSignInViewModel(
             ) {
                 when (val action = type()) {
                     is Action.FieldChanged -> action.flow.formEditMutations()
+                    is Action.TogglePasswordPreference -> action.flow.passwordPreferenceMutations()
                     is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
                     is Action.CreateSession -> action.flow.submissionMutations(
                         authRepository = authRepository,
@@ -215,6 +216,19 @@ private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
 private fun Flow<Action.MessageConsumed>.messageConsumptionMutations(): Flow<Mutation<State>> =
     mapToMutation { (message) ->
         copy(messages = messages - message)
+    }
+
+private fun Flow<Action.TogglePasswordPreference>.passwordPreferenceMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        val preferPassword = !prefersPassword
+        copy(
+            prefersPassword = preferPassword,
+            fields = if (preferPassword) fields else fields.map { field ->
+                // Clear password when using oauth flow
+                if (field.id == Password) field.copy(value = "")
+                else field
+            },
+        )
     }
 
 private fun Flow<Action.CreateSession>.submissionMutations(
