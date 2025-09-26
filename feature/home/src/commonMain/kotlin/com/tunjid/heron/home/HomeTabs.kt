@@ -292,16 +292,11 @@ private fun ExpandedTabs(
             editableTimelineState.firstUnpinnedIndex,
             editableTimelineState.timelines.toList(),
         ) {
-            val saved = mutableListOf<Timeline.Home>()
-            val pinned = mutableListOf<Timeline.Home>()
+            val allTimelines = editableTimelineState.timelines
+            val index = editableTimelineState.firstUnpinnedIndex
 
-            editableTimelineState.timelines.forEachIndexed { index, timeline ->
-                if (editableTimelineState.firstUnpinnedIndex < 0) pinned.add(timeline)
-                else if (index < editableTimelineState.firstUnpinnedIndex) pinned.add(timeline)
-                else saved.add(timeline)
-            }
-
-            pinned to saved
+            if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
+            else allTimelines.subList(0, index) to allTimelines.subList(index, allTimelines.size)
         }
 
         key(Res.string.pinned) {
