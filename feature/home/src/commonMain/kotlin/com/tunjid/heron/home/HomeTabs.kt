@@ -289,7 +289,10 @@ private fun ExpandedTabs(
             ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val (pinned, saved) = remember(editableTimelineState.firstUnpinnedIndex) {
+        val (pinned, saved) = remember(
+            editableTimelineState.firstUnpinnedIndex,
+            editableTimelineState.timelines.toList(),
+        ) {
             val saved = mutableListOf<Timeline.Home>()
             val pinned = mutableListOf<Timeline.Home>()
 
