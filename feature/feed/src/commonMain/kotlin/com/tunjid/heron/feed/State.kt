@@ -79,6 +79,8 @@ sealed class Action(val key: String) {
         val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
 
+    data object ScrollToTop : Action(key = "ScrollToTop")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

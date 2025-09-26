@@ -17,6 +17,8 @@
 package com.tunjid.heron.feed.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,9 +37,11 @@ import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -64,6 +68,9 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.feed.generated.resources.Res
+import heron.feature.feed.generated.resources.scroll_to_top
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
 private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
@@ -207,6 +214,18 @@ class FeedBindings(
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
+                },
+                floatingActionButton = {
+                    PaneFab(
+                        text = stringResource(Res.string.scroll_to_top),
+                        icon = Icons.Rounded.Straight,
+                        expanded = isFabExpanded(topAppBarNestedScrollConnection.offset * -1f),
+                        onClick = {
+                            viewModel.accept(
+                                Action.ScrollToTop,
+                            )
+                        },
                     )
                 },
                 content = {

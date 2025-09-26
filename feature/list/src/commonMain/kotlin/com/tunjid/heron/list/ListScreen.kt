@@ -202,7 +202,10 @@ internal fun ListScreen(
                                     pagerState.animateScrollToPage(page)
                                 }
                             },
-                            onTabReselected = { },
+                            onTabReselected = { index ->
+                                updatedStateHolders.getOrNull(index = index)
+                                    ?.refresh()
+                            },
                         ),
                     )
                 }

@@ -30,11 +30,14 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -90,6 +93,9 @@ class ActualFeedViewModel(
                     when (val action = type()) {
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.ScrollToTop -> action.flow.scrollToTopMutations(
+                            stateHolder = this@transform,
                         )
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
@@ -154,6 +160,15 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
+    }
+
+private fun Flow<Action.ScrollToTop>.scrollToTopMutations(
+    stateHolder: SuspendingStateHolder<State>,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations {
+        stateHolder.state().timelineStateHolder
+            ?.accept
+            ?.invoke(TimelineState.Action.Tile(TilingState.Action.Refresh))
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

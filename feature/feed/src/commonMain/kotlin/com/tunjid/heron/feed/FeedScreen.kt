@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -39,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
@@ -175,7 +177,10 @@ private fun FeedTimeline(
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .offset {
+                        IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
+                    },
                 state = pullToRefreshState,
                 isRefreshing = timelineState.isRefreshing,
             )
