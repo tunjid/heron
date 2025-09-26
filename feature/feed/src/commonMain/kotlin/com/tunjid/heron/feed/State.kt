@@ -38,6 +38,7 @@ import kotlinx.serialization.Transient
 data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
+    val scrollToTopRequestId: String? = null,
     @Transient
     val timelineState: TimelineState? = null,
     @Transient

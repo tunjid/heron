@@ -30,14 +30,11 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -45,6 +42,8 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -94,9 +93,7 @@ class ActualFeedViewModel(
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
                         )
-                        is Action.ScrollToTop -> action.flow.scrollToTopMutations(
-                            stateHolder = this@transform,
-                        )
+                        is Action.ScrollToTop -> action.flow.scrollToTopMutations()
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.Navigate -> action.flow.consumeNavigationActions(
@@ -162,13 +159,10 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         }
     }
 
-private fun Flow<Action.ScrollToTop>.scrollToTopMutations(
-    stateHolder: SuspendingStateHolder<State>,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations {
-        stateHolder.state().timelineStateHolder
-            ?.accept
-            ?.invoke(TimelineState.Action.Tile(TilingState.Action.Refresh))
+@OptIn(ExperimentalUuidApi::class)
+private fun Flow<Action.ScrollToTop>.scrollToTopMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(scrollToTopRequestId = Uuid.random().toString())
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

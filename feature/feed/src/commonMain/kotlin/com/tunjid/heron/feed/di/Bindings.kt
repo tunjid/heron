@@ -16,11 +16,17 @@
 
 package com.tunjid.heron.feed.di
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Straight
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -196,6 +203,19 @@ class FeedBindings(
                     PoppableDestinationTopAppBar(
                         title = {
                             TimelineTitle(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = false),
+                                        onClick = {
+                                            state.timelineStateHolder?.accept?.invoke(
+                                                TimelineState.Action.Tile(
+                                                    TilingState.Action.Refresh,
+                                                ),
+                                            )
+                                        },
+                                    ),
                                 movableElementSharedTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
                                 sharedElementPrefix = state.sharedElementPrefix,
@@ -222,9 +242,7 @@ class FeedBindings(
                         icon = Icons.Rounded.Straight,
                         expanded = isFabExpanded(topAppBarNestedScrollConnection.offset * -1f),
                         onClick = {
-                            viewModel.accept(
-                                Action.ScrollToTop,
-                            )
+                            viewModel.accept(Action.ScrollToTop)
                         },
                     )
                 },

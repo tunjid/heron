@@ -32,9 +32,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
@@ -85,6 +87,8 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.Clock
 
 @Composable
@@ -101,6 +105,7 @@ internal fun FeedScreen(
         when (val timelineStateHolder = state.timelineStateHolder) {
             null -> Unit
             else -> FeedTimeline(
+                scrollToTopRequestId = state.scrollToTopRequestId,
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
@@ -112,6 +117,7 @@ internal fun FeedScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FeedTimeline(
+    scrollToTopRequestId: String?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
@@ -336,4 +342,15 @@ private fun FeedTimeline(
         timelineState = timelineState,
         onRefresh = { animateScrollToItem(index = 0) },
     )
+
+    val currentScrollToTopRequestId = rememberUpdatedState(scrollToTopRequestId)
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            currentScrollToTopRequestId.value
+        }
+            .drop(1)
+            .collectLatest { requestId ->
+                if (requestId != null) gridState.animateScrollToItem(0)
+            }
+    }
 }
