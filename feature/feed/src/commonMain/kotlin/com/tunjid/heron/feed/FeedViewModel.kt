@@ -42,6 +42,8 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -91,6 +93,7 @@ class ActualFeedViewModel(
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.ScrollToTop -> action.flow.scrollToTopMutations()
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.Navigate -> action.flow.consumeNavigationActions(
@@ -154,6 +157,12 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
+    }
+
+@OptIn(ExperimentalUuidApi::class)
+private fun Flow<Action.ScrollToTop>.scrollToTopMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(scrollToTopRequestId = Uuid.random().toString())
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

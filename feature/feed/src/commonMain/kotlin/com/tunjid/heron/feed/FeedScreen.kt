@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -31,14 +32,17 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.heron.data.core.models.Embed
@@ -83,6 +87,8 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.Clock
 
 @Composable
@@ -99,6 +105,7 @@ internal fun FeedScreen(
         when (val timelineStateHolder = state.timelineStateHolder) {
             null -> Unit
             else -> FeedTimeline(
+                scrollToTopRequestId = state.scrollToTopRequestId,
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
@@ -110,6 +117,7 @@ internal fun FeedScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FeedTimeline(
+    scrollToTopRequestId: String?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
@@ -175,7 +183,10 @@ private fun FeedTimeline(
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .offset {
+                        IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
+                    },
                 state = pullToRefreshState,
                 isRefreshing = timelineState.isRefreshing,
             )
@@ -331,4 +342,15 @@ private fun FeedTimeline(
         timelineState = timelineState,
         onRefresh = { animateScrollToItem(index = 0) },
     )
+
+    val currentScrollToTopRequestId = rememberUpdatedState(scrollToTopRequestId)
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            currentScrollToTopRequestId.value
+        }
+            .drop(1)
+            .collectLatest { requestId ->
+                if (requestId != null) gridState.animateScrollToItem(0)
+            }
+    }
 }
