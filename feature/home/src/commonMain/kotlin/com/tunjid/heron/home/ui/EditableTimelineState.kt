@@ -45,7 +45,7 @@ internal class EditableTimelineState private constructor(
 
     var firstUnpinnedIndex by mutableStateOf(
         when (val index = timelines.indexOfFirst { !it.isPinned }) {
-            in Int.MIN_VALUE..<0 -> timelines.size
+            -1 -> timelines.size
             else -> index
         },
     )
