@@ -49,11 +49,10 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.cancel
+import heron.feature.settings.generated.resources.open_source_licenses
 import heron.feature.settings.generated.resources.sign_out
 import heron.feature.settings.generated.resources.sign_out_confirmation
-import heron.feature.settings.generated.resources.open_source_licenses
 import org.jetbrains.compose.resources.stringResource
-
 
 @Composable
 internal fun SettingsScreen(
@@ -69,42 +68,41 @@ internal fun SettingsScreen(
         Res.readBytes("files/aboutlibraries.json").decodeToString()
     }
 
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-            .fillMaxHeight()
+            .fillMaxHeight(),
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showLibraries = !showLibraries }
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
                         text = stringResource(Res.string.open_source_licenses),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     Icon(
                         imageVector = if (showLibraries) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null
+                        contentDescription = null,
                     )
                 }
                 if (showLibraries) {
                     Spacer(Modifier.height(8.dp))
                     LibrariesContainer(
                         libraries = libraries,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -114,7 +112,7 @@ internal fun SettingsScreen(
 
         Button(
             onClick = { showSignOutDialog = true },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = stringResource(Res.string.sign_out))
         }
