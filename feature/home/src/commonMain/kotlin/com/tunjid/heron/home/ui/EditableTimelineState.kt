@@ -43,13 +43,18 @@ internal class EditableTimelineState private constructor(
     private var hoveredId by mutableStateOf<String?>(null)
     private var draggedId by mutableStateOf<String?>(null)
 
-    var firstUnpinnedIndex by mutableStateOf(timelines.indexOfFirst { !it.isPinned })
+    var firstUnpinnedIndex by mutableStateOf(
+        when( val index = timelines.indexOfFirst { !it.isPinned }) {
+           in Int.MIN_VALUE..<0 -> timelines.size
+           else -> index
+        }
+    )
         private set
 
     var isHintHovered by mutableStateOf(false)
         private set
 
-    val shouldShowHint get() = firstUnpinnedIndex < 0
+    val shouldShowHint get() = firstUnpinnedIndex == timelines.size
 
     private val tabTargets = mutableStateMapOf<String, TabTarget>()
     private val hintTarget = HintTarget()
@@ -97,7 +102,7 @@ internal class EditableTimelineState private constructor(
                 )
                 firstUnpinnedIndex = when {
                     // Moved last saved item to pinned items
-                    draggedIndex == firstUnpinnedIndex && draggedIndex == timelines.lastIndex -> -1
+                    draggedIndex == firstUnpinnedIndex && draggedIndex == timelines.lastIndex -> timelines.size
                     // Dropped in hint box
                     droppedIndex >= timelines.size -> timelines.lastIndex
                     else -> when (firstUnpinnedIndex) {
