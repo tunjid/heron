@@ -20,4 +20,5 @@
     <string name="sign_out">Sign Out</string>
     <string name="cancel">Cancel</string>
     <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
 </resources>
