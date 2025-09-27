@@ -19,7 +19,9 @@ plugins {
     id("kotlin-library-convention")
     id("ui-module-convention")
     id("ksp-convention")
+    alias(libs.plugins.aboutLibraries)
 }
+
 android {
     namespace = "com.tunjid.heron.feature.settings"
 }
@@ -39,7 +41,19 @@ kotlin {
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
+
+                implementation(libs.aboutlibraries.compose.m3)
+                implementation(libs.aboutlibraries.core)
             }
         }
+    }
+}
+
+aboutLibraries {
+    export {
+        outputFile = project.layout.projectDirectory
+            .file("src/commonMain/composeResources/files/aboutlibraries.json")
+            .asFile
+        variant = "release"
     }
 }
