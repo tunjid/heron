@@ -124,6 +124,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -829,6 +830,9 @@ private fun PostSearchResults(
         verticalItemSpacing = 16.dp,
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(
+            Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing,
         ),
     ) {
         items(
