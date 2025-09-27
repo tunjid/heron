@@ -36,6 +36,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +69,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
+import heron.ui.timeline.generated.resources.play_video
 import heron.ui.timeline.generated.resources.unmute_video
 import org.jetbrains.compose.resources.stringResource
 
@@ -150,7 +152,7 @@ internal fun PostVideo(
             videoPlayerController = videoPlayerController,
         )
 
-        if (presentation != Timeline.Presentation.Media.Condensed) PlayButton(
+        PlayButton(
             modifier = when {
                 isBlurred -> Modifier.blur(
                     radius = 2.dp,
@@ -158,7 +160,17 @@ internal fun PostVideo(
                 )
                 else -> Modifier
             }
-                .align(Alignment.Center),
+                .align(
+                    when (presentation) {
+                        Timeline.Presentation.Media.Condensed,
+                        Timeline.Presentation.Media.Grid,
+                        -> Alignment.TopEnd
+                        Timeline.Presentation.Media.Expanded,
+                        Timeline.Presentation.Text.WithEmbed,
+                        -> Alignment.Center
+                    },
+                ),
+            presentation = presentation,
             videoPlayerState = videoPlayerState,
             videoPlayerController = videoPlayerController,
         )
@@ -215,6 +227,7 @@ private fun PlayerInfo(
 @Composable
 private fun PlayButton(
     modifier: Modifier,
+    presentation: Timeline.Presentation,
     videoPlayerState: VideoPlayerState,
     videoPlayerController: VideoPlayerController,
 ) {
@@ -224,9 +237,9 @@ private fun PlayButton(
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(presentation.playButtonBackgroundSize)
                 .background(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = presentation.playButtonBackgroundColor,
                     shape = CircleShape,
                 )
                 .clip(CircleShape)
@@ -235,9 +248,9 @@ private fun PlayButton(
             Icon(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(36.dp),
-                contentDescription = "",
-                imageVector = Icons.Rounded.PlayArrow,
+                    .size(presentation.playButtonIconSize),
+                contentDescription = stringResource(Res.string.play_video),
+                imageVector = presentation.playButtonIcon,
             )
         }
     }
@@ -275,6 +288,50 @@ private val Timeline.Presentation.videoShapeCornerSize
         Timeline.Presentation.Media.Condensed -> 8.dp
         Timeline.Presentation.Media.Expanded -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
+    }
+
+private val Timeline.Presentation.playButtonBackgroundSize
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
+        -> 56.dp
+
+        Timeline.Presentation.Media.Condensed,
+        Timeline.Presentation.Media.Grid,
+        -> 36.dp
+    }
+
+private val Timeline.Presentation.playButtonIconSize
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
+        -> 36.dp
+
+        Timeline.Presentation.Media.Condensed,
+        Timeline.Presentation.Media.Grid,
+        -> 24.dp
+    }
+
+private val Timeline.Presentation.playButtonBackgroundColor
+    @Composable get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
+        -> MaterialTheme.colorScheme.secondaryContainer
+
+        Timeline.Presentation.Media.Condensed,
+        Timeline.Presentation.Media.Grid,
+        -> Color.Transparent
+    }
+
+private val Timeline.Presentation.playButtonIcon
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
+        -> Icons.Rounded.PlayArrow
+
+        Timeline.Presentation.Media.Condensed,
+        Timeline.Presentation.Media.Grid,
+        -> Icons.Rounded.Movie
     }
 
 fun Video.sharedElementKey(

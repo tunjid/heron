@@ -17,28 +17,12 @@
 package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.nativeCanvas
 import coil3.Image
 import coil3.PlatformContext
-import coil3.SingletonImageLoader
-import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 
-internal actual fun Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
-
-fun imageLoader(): ImageLoader {
-    val context = PlatformContext.INSTANCE
-    SingletonImageLoader.setSafe {
-        coil3.ImageLoader.Builder(context)
-            .components {
-                addPlatformFileSupport()
-            }
-            .build()
-    }
-    return CoilImageLoader(context)
-}
+fun imageLoader(): ImageLoader = CoilImageLoader.create(
+    context = PlatformContext.INSTANCE,
+)
 
 @Composable
 internal actual fun Image.AnimationEffect() = Unit

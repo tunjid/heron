@@ -23,6 +23,6 @@
     <string name="saved">Saved</string>
     <string name="save">Save</string>
     <string name="timeline_preferences">Timeline Preferences</string>
-
     <string name="create_post">Create Post</string>
+    <string name="timeline_drop_target_hint">Drop timelines here to remove them from your pinned feeds.</string>
 </resources>

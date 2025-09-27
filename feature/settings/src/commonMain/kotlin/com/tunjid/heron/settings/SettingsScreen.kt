@@ -49,6 +49,8 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.cancel
+import heron.feature.settings.generated.resources.collapse_icon
+import heron.feature.settings.generated.resources.expand_icon
 import heron.feature.settings.generated.resources.open_source_licenses
 import heron.feature.settings.generated.resources.sign_out
 import heron.feature.settings.generated.resources.sign_out_confirmation
@@ -71,8 +73,7 @@ internal fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .fillMaxHeight(),
+            .padding(16.dp),
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -95,7 +96,7 @@ internal fun SettingsScreen(
                     )
                     Icon(
                         imageVector = if (showLibraries) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
+                        contentDescription = stringResource(if (showLibraries) Res.string.collapse_icon else Res.string.expand_icon),
                     )
                 }
                 if (showLibraries) {

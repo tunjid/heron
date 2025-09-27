@@ -24,7 +24,12 @@ android {
     defaultConfig {
         lint.targetSdk = 35
     }
-
+    buildTypes {
+        create("staging") {
+            initWith(getByName("release"))
+            isMinifyEnabled = false
+        }
+    }
     sourceSets {
         named("main") {
             manifest.srcFile("src/androidMain/AndroidManifest.xml")

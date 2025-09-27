@@ -16,8 +16,11 @@
 
 package com.tunjid.heron.gallery
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -39,13 +42,18 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,10 +63,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
@@ -71,7 +81,10 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.DownloadStatus
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.images.ImageRequest
+import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -99,11 +112,12 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.download
+import heron.feature.gallery.generated.resources.download_complete
+import heron.feature.gallery.generated.resources.download_failed
 import heron.feature.gallery.generated.resources.mute_video
 import heron.feature.gallery.generated.resources.unmute_video
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -118,6 +132,7 @@ internal fun GalleryScreen(
     val playerControlsUiState = remember(videoPlayerController) {
         PlayerControlsUiState(videoPlayerController)
     }
+    val imageDownloadState = remember(::ImageDownloadState)
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -154,6 +169,7 @@ internal fun GalleryScreen(
 
         HorizontalPager(
             modifier = Modifier
+                .zIndex(MediaZIndex)
                 .fillMaxSize(),
             state = pagerState,
             key = { page -> updatedItems[page].key },
@@ -217,13 +233,12 @@ internal fun GalleryScreen(
             },
         )
 
-        val item = updatedItems.getOrNull(pagerState.currentPage)
-        videoPlayerController.MediaOverlay(
+        MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
-            galleryItem = item,
+            galleryItem = updatedItems.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
-        ) { videoPlayerState ->
+        ) { item ->
             val viewedProfileId = state.viewedProfileId
             val signedInProfileId = state.signedInProfileId
             MediaPoster(
@@ -237,7 +252,7 @@ internal fun GalleryScreen(
                 post = state.post,
                 signedInProfileId = state.signedInProfileId,
                 viewerState = state.viewerState,
-                sharedElementPrefix = state.sharedElementPrefix,
+                sharedElementPrefix = state.posterSharedElementPrefix,
                 paneScaffoldState = paneScaffoldState,
                 onProfileClicked = { post ->
                     actions(
@@ -245,7 +260,7 @@ internal fun GalleryScreen(
                             profileDestination(
                                 profile = post.author,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = state.sharedElementPrefix,
+                                    prefix = state.posterSharedElementPrefix,
                                 ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             ),
@@ -290,58 +305,20 @@ internal fun GalleryScreen(
                 onPostInteraction = postInteractionState::onInteraction,
             )
 
-            Column(
+            GalleryFooter(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(horizontal = 12.dp),
-                ) {
-                    when (item) {
-                        is GalleryItem.Photo -> DownloadButton()
-                        is GalleryItem.Video -> videoPlayerController.MuteButton()
-                        null -> Unit
-                    }
-                }
-                VideoText(
-                    post = state.post,
-                    paneScaffoldState = paneScaffoldState,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp),
-                    onClick = {},
-                    onLinkTargetClicked = { _, target ->
-                        if (target is LinkTarget.Navigable) actions(
-                            Action.Navigate.To(
-                                pathDestination(
-                                    path = target.path,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                ),
-                            ),
-                        )
-                    },
-                )
-                if (videoPlayerState != null) PlaybackStatus(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .fillMaxWidth(),
-                    videoPlayerState = videoPlayerState,
-                    controlsState = playerControlsUiState,
-                )
-            }
-
-            LaunchedEffect(Unit) {
-                snapshotFlow { videoPlayerState?.status }
-                    .filterNotNull()
-                    .collectLatest {
-                        playerControlsUiState.update(it)
-                    }
-            }
+                item = item,
+                videoPlayerController = videoPlayerController,
+                imageDownloadState = imageDownloadState,
+                post = state.post,
+                paneScaffoldState = paneScaffoldState,
+                actions = actions,
+                playerControlsUiState = playerControlsUiState,
+            )
         }
 
         pagerState.interpolatedVisibleIndexEffect(
@@ -443,6 +420,60 @@ private fun GalleryVideo(
     )
 }
 
+@Composable
+private fun GalleryFooter(
+    modifier: Modifier,
+    item: GalleryItem,
+    videoPlayerController: VideoPlayerController,
+    imageDownloadState: ImageDownloadState,
+    post: Post?,
+    paneScaffoldState: PaneScaffoldState,
+    actions: (Action) -> Unit,
+    playerControlsUiState: PlayerControlsUiState,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(horizontal = 12.dp),
+        ) {
+            when (item) {
+                is GalleryItem.Photo -> imageDownloadState.DownloadButton(item)
+                is GalleryItem.Video -> videoPlayerController.MuteButton()
+            }
+        }
+        GalleryText(
+            post = post,
+            paneScaffoldState = paneScaffoldState,
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            onClick = {},
+            onLinkTargetClicked = { _, target ->
+                if (target is LinkTarget.Navigable) actions(
+                    Action.Navigate.To(
+                        pathDestination(
+                            path = target.path,
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        ),
+                    ),
+                )
+            },
+        )
+
+        (item as? GalleryItem.Video)
+            ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
+            ?.let {
+                VideoPlayerControls(
+                    videoPlayerState = it,
+                    playerControlsUiState = playerControlsUiState,
+                )
+            }
+    }
+}
+
 private fun Modifier.aspectRatioFor(
     windowSize: IntSize,
     aspectRatio: AspectRatio,
@@ -458,49 +489,42 @@ private fun Modifier.aspectRatioFor(
 }
 
 @Composable
-private fun VideoPlayerController.MediaOverlay(
+private fun MediaOverlay(
     modifier: Modifier = Modifier,
     galleryItem: GalleryItem?,
     isVisible: Boolean,
-    content: @Composable BoxScope.(VideoPlayerState?) -> Unit,
+    content: @Composable BoxScope.(item: GalleryItem) -> Unit,
 ) {
-    when (galleryItem) {
-        null -> Unit
-        is GalleryItem.Photo -> {
-            AnimatedVisibility(
-                modifier = modifier,
-                visible = isVisible,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = Color.Black.copy(alpha = 0.8f)),
-                    content = {
-                        content(null)
-                    },
-                )
-            }
-        }
-        is GalleryItem.Video -> {
-            val videoPlayerState = getVideoStateById(
-                videoId = galleryItem.video.playlist.uri,
-            )
-
-            if (videoPlayerState != null) AnimatedVisibility(
-                modifier = modifier,
-                visible = isVisible,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = Color.Black.copy(alpha = 0.8f)),
-                    content = {
-                        content(videoPlayerState)
-                    },
-                )
+    val visible by rememberUpdatedState(galleryItem != null && isVisible)
+    val alphaState = animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+    )
+    val zIndex by remember {
+        derivedStateOf {
+            when {
+                // When animating in, raise the z index of the overlay
+                isVisible -> VisibleOverlayZIndex
+                // Only when fully transparent is the zIndex dropped below the actual media
+                alphaState.value == 0f -> InVisibleOverlayZIndex
+                // Animating out, keep on top
+                else -> VisibleOverlayZIndex
             }
         }
     }
+
+    // The Overlay is stateful, so it should not be removed from the composition.
+    // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
+    Box(
+        modifier = modifier
+            .zIndex(zIndex)
+            .fillMaxSize()
+            .graphicsLayer { alpha = alphaState.value }
+            .background(color = Color.Black.copy(alpha = 0.8f)),
+        content = {
+            if (galleryItem != null) content(galleryItem)
+        },
+    )
 }
 
 @Composable
@@ -533,7 +557,7 @@ private fun MediaPoster(
 }
 
 @Composable
-fun VideoText(
+fun GalleryText(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
@@ -576,6 +600,26 @@ private fun MediaInteractions(
 }
 
 @Composable
+private fun VideoPlayerControls(
+    videoPlayerState: VideoPlayerState,
+    playerControlsUiState: PlayerControlsUiState,
+) {
+    PlaybackStatus(
+        modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .fillMaxWidth(),
+        videoPlayerState = videoPlayerState,
+        controlsState = playerControlsUiState,
+    )
+    LaunchedEffect(Unit) {
+        snapshotFlow { videoPlayerState.status }
+            .collectLatest {
+                playerControlsUiState.update(it)
+            }
+    }
+}
+
+@Composable
 private fun VideoPlayerController.MuteButton(
     modifier: Modifier = Modifier,
 ) {
@@ -598,20 +642,100 @@ private fun VideoPlayerController.MuteButton(
 }
 
 @Composable
-private fun DownloadButton(
+private fun ImageDownloadState.DownloadButton(
+    item: GalleryItem.Photo,
     modifier: Modifier = Modifier,
 ) {
-    IconButton(
+    val imageLoader = LocalImageLoader.current
+    val coroutineScope = rememberCoroutineScope()
+    val downloadStatusState = stateFor(item)
+
+    Box(
         modifier = modifier,
-        onClick = { },
     ) {
-        Icon(
-            imageVector = Icons.Rounded.Download,
-            contentDescription = stringResource(Res.string.download),
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(40.dp),
-        )
+        val contentModifier = Modifier
+            .align(Alignment.Center)
+            .size(40.dp)
+
+        val onDownloadClicked: () -> Unit = remember(item.image.fullsize) {
+            {
+                coroutineScope.launch {
+                    imageLoader.download(ImageRequest.Network(item.image.fullsize.uri))
+                        .collectLatest { updateStateFor(item, it) }
+                }
+            }
+        }
+
+        AnimatedContent(
+            targetState = downloadStatusState,
+            contentKey = DownloadStatus?::contentKey,
+        ) { status ->
+            when (status) {
+                DownloadStatus.Complete -> Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = stringResource(Res.string.download_complete),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = contentModifier,
+                )
+                DownloadStatus.Failed -> IconButton(
+                    modifier = contentModifier,
+                    onClick = { updateStateFor(item, null) },
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Error,
+                        contentDescription = stringResource(Res.string.download_failed),
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = contentModifier,
+                    )
+                }
+                DownloadStatus.Indeterminate -> CircularProgressIndicator(
+                    modifier = contentModifier,
+                )
+                is DownloadStatus.Progress -> CircularProgressIndicator(
+                    modifier = contentModifier,
+                    // let is needed bc of compose lint about method references
+                    progress = animateFloatAsState(status.fraction).let { state ->
+                        state::value
+                    },
+                )
+                null -> IconButton(
+                    modifier = contentModifier,
+                    onClick = onDownloadClicked,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Download,
+                        contentDescription = stringResource(Res.string.download),
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = contentModifier,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val DownloadStatus?.contentKey
+    get() = when (this) {
+        null -> "-"
+        else -> this::class.simpleName
+    }
+
+private class ImageDownloadState {
+    private val states = mutableStateMapOf<String, DownloadStatus?>()
+
+    fun stateFor(
+        item: GalleryItem.Photo,
+    ): DownloadStatus? = states[item.image.fullsize.uri]
+
+    fun updateStateFor(
+        item: GalleryItem.Photo,
+        status: DownloadStatus?,
+    ) {
+        states[item.image.fullsize.uri] = status
     }
 }
 
 private const val UnmatchedPrefix = "UnmatchedPrefix"
+private const val VisibleOverlayZIndex = 1f
+private const val InVisibleOverlayZIndex = -1f
+private const val MediaZIndex = 0f

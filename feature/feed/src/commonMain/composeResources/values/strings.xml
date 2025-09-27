@@ -17,4 +17,5 @@
 <resources>
     <string name="heron">Heron</string>
     <string name="back">Back</string>
+    <string name="scroll_to_top">Scroll to top</string>
 </resources>

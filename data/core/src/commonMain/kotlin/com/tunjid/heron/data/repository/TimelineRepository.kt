@@ -1449,6 +1449,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
         "app.bsky.feed.defs#contentModePhoto",
         "app.bsky.feed.defs#contentModeImage",
         "app.bsky.feed.defs#contentModeMedia",
+        "com.tunjid.heron.defs#contentModeMedia",
         -> true
 
         else -> false

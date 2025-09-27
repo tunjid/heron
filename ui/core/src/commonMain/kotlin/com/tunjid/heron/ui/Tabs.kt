@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import com.tunjid.heron.ui.TabsState.Companion.TabBackgroundColor
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -104,6 +105,9 @@ class TabsState private constructor(
             }
             it.isCollapsed = isCollapsed
         }
+
+        val TabBackgroundColor
+            @Composable get() = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
     }
 }
 
@@ -236,7 +240,7 @@ private fun BoxScope.Indicator(
             .matchParentSize()
             .width(with(density) { interpolatedOffset.x.toDp() })
             .background(
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                color = TabBackgroundColor,
                 shape = TabShape,
             ),
     )

@@ -38,6 +38,7 @@ import kotlinx.serialization.Transient
 data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
+    val scrollToTopRequestId: String? = null,
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
@@ -78,6 +79,8 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: ScaffoldMessage,
     ) : Action(key = "SnackbarDismissed")
+
+    data object ScrollToTop : Action(key = "ScrollToTop")
 
     sealed class Navigate :
         Action(key = "Navigate"),

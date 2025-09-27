@@ -32,6 +32,7 @@ plugins {
     alias(libs.plugins.ozoneLexiconGenerator) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.aboutLibraries) apply false
+    alias(libs.plugins.burst) apply false
 }
 
 allprojects {

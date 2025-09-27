@@ -17,6 +17,7 @@ androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 androidx-espresso-core = "3.7.0"
 coreSplashscreen = "1.0.1"
+burst = "2.8.1"
 javaDiffUtils = "4.16"
 # TODO: Compose runtime crashes when this is bumped
 # Figure out what changed between versions 2.9.1 and 2.9.2
@@ -54,6 +55,7 @@ aboutLibraries = "12.2.4"
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+burst = { module = "app.cash.burst:burst", version.ref = "burst" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -178,3 +180,4 @@ metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 ozoneLexiconGenerator = { id = "sh.christian.ozone.generator", version.ref = "ozone-atproto" }
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 spotless = "com.diffplug.spotless:7.2.1"
+burst = { id = "app.cash.burst", version.ref = "burst" }
