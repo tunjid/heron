@@ -44,10 +44,10 @@ internal class EditableTimelineState private constructor(
     private var draggedId by mutableStateOf<String?>(null)
 
     var firstUnpinnedIndex by mutableStateOf(
-        when( val index = timelines.indexOfFirst { !it.isPinned }) {
-           in Int.MIN_VALUE..<0 -> timelines.size
-           else -> index
-        }
+        when (val index = timelines.indexOfFirst { !it.isPinned }) {
+            in Int.MIN_VALUE..<0 -> timelines.size
+            else -> index
+        },
     )
         private set
 
