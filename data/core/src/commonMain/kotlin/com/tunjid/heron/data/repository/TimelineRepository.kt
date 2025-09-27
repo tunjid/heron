@@ -681,13 +681,13 @@ internal class OfflineTimelineRepository(
                     .distinctUntilChangedBy { timelines ->
                         timelines.joinToString(
                             separator = "-",
-                            transform = { "${it.name}-${it.presentation.key}" },
+                            transform = { "${it.name}-${it.presentation.key}-${it.isPinned}" },
                         )
                     }
                     .filter(List<Timeline.Home>::isNotEmpty)
                     .debounce { timelines ->
                         if (timelines.size == timelinePreferences.size) 0.seconds
-                        else 5.seconds
+                        else 3.seconds
                     }
             }
             .distinctUntilChanged()
