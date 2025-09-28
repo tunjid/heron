@@ -37,7 +37,7 @@ fun FeedbackItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
-                uriHandler.openUri(FeedbackLink)
+                runCatching { uriHandler.openUri(FeedbackLink) }
             },
         title = stringResource(Res.string.give_feedback),
         icon = Icons.Rounded.Feedback,
