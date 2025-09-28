@@ -42,15 +42,14 @@ fun SignOutItem(
 ) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
-    Text(
+    SettingsItemRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
                 showSignOutDialog = true
             },
-        text = stringResource(Res.string.sign_out),
-        color = MaterialTheme.colorScheme.error,
-        style = MaterialTheme.typography.bodyMedium,
+        title = stringResource(Res.string.sign_out),
+        titleColor = MaterialTheme.colorScheme.error,
     )
 
     SignOutDialog(

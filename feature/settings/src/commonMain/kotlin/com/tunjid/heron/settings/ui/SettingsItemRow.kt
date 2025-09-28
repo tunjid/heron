@@ -14,36 +14,43 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.settings
+package com.tunjid.heron.settings.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
-import com.tunjid.heron.settings.ui.SignOutItem
 
 @Composable
-internal fun SettingsScreen(
-    paneScaffoldState: PaneScaffoldState,
-    state: State,
-    actions: (Action) -> Unit,
+fun SettingsItemRow(
+    title: String,
     modifier: Modifier = Modifier,
+    titleColor: Color = Color.Unspecified,
+    content: @Composable RowScope.() -> Unit = {},
 ) {
-    Column(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+            .fillMaxWidth()
+            .padding(
+                horizontal = 24.dp,
+                vertical = 8.dp,
+            ),
     ) {
-        OpenSourceLibrariesItem(
-            state.openSourceLibraries,
+        Text(
+            modifier = Modifier
+                .weight(1f),
+            text = title,
+            color = titleColor,
+            style = MaterialTheme.typography.bodyMedium,
         )
-        SignOutItem {
-            actions(Action.SignOut)
-        }
+        content()
     }
 }
