@@ -131,9 +131,11 @@ private fun LibrariesHorizontalGrid(
     modifier: Modifier = Modifier,
     libraries: Libs?,
 ) {
-    val libs = libraries?.libraries
-        ?.distinctBy(Library::name)
-        ?: persistentListOf()
+    val libs = remember(libraries) {
+        libraries?.libraries
+            ?.distinctBy(Library::name)
+            ?: persistentListOf()
+    }
     val selectedLibrary = remember { mutableStateOf<Library?>(null) }
 
     LazyHorizontalGrid(
@@ -171,8 +173,7 @@ private fun Library(
     Column(
         modifier = Modifier
             .clickable {
-                val license = library.licenses.firstOrNull()
-                if (!license?.htmlReadyLicenseContent.isNullOrBlank()) {
+                if (library.licenses.none { it.htmlReadyLicenseContent.isNullOrBlank() }) {
                     onLibraryClicked(library)
                 }
             },
