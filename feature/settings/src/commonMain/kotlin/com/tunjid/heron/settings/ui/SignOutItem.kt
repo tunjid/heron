@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,16 +37,21 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignOutItem(
+    modifier: Modifier = Modifier,
     onSignOutClicked: () -> Unit,
 ) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
-    Button(
-        onClick = { showSignOutDialog = true },
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(text = stringResource(Res.string.sign_out))
-    }
+    Text(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                showSignOutDialog = true
+            },
+        text = stringResource(Res.string.sign_out),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodyMedium,
+    )
 
     SignOutDialog(
         showSignOutDialog = showSignOutDialog,

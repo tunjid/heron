@@ -37,8 +37,10 @@ internal fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(
+                horizontal = 24.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         OpenSourceLibrariesItem(
             state.openSourceLibraries,

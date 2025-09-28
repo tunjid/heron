@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,41 +58,34 @@ fun OpenSourceLibrariesItem(
 ) {
     var showLibraries by rememberSaveable { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showLibraries = !showLibraries },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showLibraries = !showLibraries },
-        ) {
-            Title(
-                showLibraries = showLibraries,
-                modifier = Modifier
-                    .padding(16.dp),
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showLibraries,
-                enter = EnterTransition,
-                exit = ExitTransition,
-                content = {
-                    LibrariesContainer(
-                        libraries = libraries,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth(),
-                    )
-                },
-            )
-        }
+        Title(
+            showLibraries = showLibraries,
+        )
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showLibraries,
+            enter = EnterTransition,
+            exit = ExitTransition,
+            content = {
+                LibrariesContainer(
+                    libraries = libraries,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
+                )
+            },
+        )
     }
 }
 
 @Composable
 private fun Title(
     showLibraries: Boolean,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -101,7 +93,7 @@ private fun Title(
     ) {
         Text(
             text = stringResource(Res.string.open_source_licenses),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
         val iconRotation = animateFloatAsState(
