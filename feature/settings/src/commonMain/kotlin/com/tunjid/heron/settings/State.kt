@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.settings
 
+import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import kotlinx.serialization.Serializable
@@ -23,6 +24,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val openSourceLibraries: Libs? = null,
     @Transient
     val messages: List<ScaffoldMessage> = emptyList(),
 )

@@ -29,6 +29,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -57,6 +58,9 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.settings.generated.resources.Res
+import heron.feature.settings.generated.resources.settings
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/settings"
 
@@ -133,6 +137,7 @@ class SettingsBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
+                        title = { AppBarTitle(stringResource(Res.string.settings)) },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
