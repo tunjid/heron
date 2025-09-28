@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.settings
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +29,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.SignOutItem
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun SettingsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -40,9 +43,14 @@ internal fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         OpenSourceLibrariesItem(
-            state.openSourceLibraries,
+            modifier = Modifier
+                .animateBounds(paneScaffoldState),
+            libraries = state.openSourceLibraries,
         )
-        SignOutItem {
+        SignOutItem(
+            modifier = Modifier
+                .animateBounds(paneScaffoldState),
+        ) {
             actions(Action.SignOut)
         }
     }
