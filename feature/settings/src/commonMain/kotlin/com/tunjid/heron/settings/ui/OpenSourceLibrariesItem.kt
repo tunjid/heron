@@ -36,9 +36,12 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.rounded.Copyright
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,12 +50,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
-import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialog
 import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialogBody
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.util.author
@@ -62,6 +65,7 @@ import heron.feature.settings.generated.resources.close
 import heron.feature.settings.generated.resources.collapse_icon
 import heron.feature.settings.generated.resources.expand_icon
 import heron.feature.settings.generated.resources.open_source_licenses
+import heron.feature.settings.generated.resources.view_website
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.stringResource
 
@@ -81,6 +85,7 @@ fun OpenSourceLibrariesItem(
             modifier = Modifier
                 .fillMaxWidth(),
             title = stringResource(Res.string.open_source_licenses),
+            icon = Icons.Rounded.Copyright,
         ) {
             val iconRotation = animateFloatAsState(
                 targetValue = if (showLibraries) 0f
@@ -129,7 +134,7 @@ private fun LibrariesHorizontalGrid(
     val libs = libraries?.libraries
         ?.distinctBy(Library::name)
         ?: persistentListOf()
-    val openDialog = remember { mutableStateOf<Library?>(null) }
+    val selectedLibrary = remember { mutableStateOf<Library?>(null) }
 
     LazyHorizontalGrid(
         modifier = modifier,
@@ -141,31 +146,20 @@ private fun LibrariesHorizontalGrid(
             itemContent = { library ->
                 Library(
                     library = library,
-                    onLibraryClicked = openDialog::value::set,
+                    onLibraryClicked = selectedLibrary::value::set,
                 )
             },
         )
     }
 
-    val library = openDialog.value
-    val colors = LibraryDefaults.libraryColors()
-
+    val library = selectedLibrary.value
     if (library != null) {
         LicenseDialog(
             library = library,
-            colors = colors,
-            padding = LibraryDefaults.libraryPadding(),
-            confirmText = stringResource(Res.string.close),
-            body = { selectedLibrary, selectedLibraryModifier ->
-                LicenseDialogBody(
-                    library = selectedLibrary,
-                    colors = colors,
-                    modifier = selectedLibraryModifier,
-                )
+            onDismiss = {
+                selectedLibrary.value = null
             },
-        ) {
-            openDialog.value = null
-        }
+        )
     }
 }
 
@@ -203,6 +197,54 @@ private fun Library(
                 }
             }
         },
+    )
+}
+
+@Composable
+private fun LicenseDialog(
+    library: Library,
+    onDismiss: () -> Unit,
+) {
+    val uriHandler = LocalUriHandler.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = {
+            LicenseDialogBody(
+                library = library,
+                colors = LibraryDefaults.libraryColors(),
+                modifier = Modifier,
+            )
+        },
+        confirmButton = {
+            library.website?.let { website ->
+                TextButton(
+                    onClick = {
+                        runCatching { uriHandler.openUri(website) }
+                    },
+                ) {
+                    Text(
+                        text = stringResource(Res.string.view_website),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+            ) {
+                Text(
+                    stringResource(Res.string.close),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        shape = MaterialTheme.shapes.medium,
     )
 }
 
