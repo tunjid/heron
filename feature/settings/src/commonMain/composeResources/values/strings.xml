@@ -24,4 +24,6 @@
     <string name="expand_icon">Expand Icon</string>
     <string name="collapse_icon">Collapse icon</string>
     <string name="settings">Settings</string>
+    <string name="close">Close</string>
+    <string name="view_website">View website</string>
 </resources>
