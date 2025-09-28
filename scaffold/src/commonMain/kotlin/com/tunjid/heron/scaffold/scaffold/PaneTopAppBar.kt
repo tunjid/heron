@@ -34,6 +34,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -174,6 +175,16 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
 
 @Suppress("UnusedReceiverParameter")
 fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
+
+@Composable
+fun AppBarTitle(
+    title: String,
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+    )
+}
 
 private fun Modifier.rootAppBarBackground(
     backgroundColor: Color,

@@ -17,12 +17,14 @@
 package com.tunjid.heron.settings
 
 import androidx.lifecycle.ViewModel
+import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -30,9 +32,15 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import heron.feature.settings.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -50,11 +58,15 @@ class ActualSettingsViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER")
     @Assisted route: Route,
 ) : ViewModel(viewModelScope = scope),
     SettingsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadOpenSourceLibraryMutations(),
+        ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
                 keySelector = Action::key,
@@ -72,3 +84,12 @@ class ActualSettingsViewModel(
             }
         },
     )
+
+fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
+    val libs = withContext(Dispatchers.IO) {
+        Libs.Builder()
+            .withJson(Res.readBytes("files/aboutlibraries.json").decodeToString())
+            .build()
+    }
+    emit { copy(openSourceLibraries = libs) }
+}
