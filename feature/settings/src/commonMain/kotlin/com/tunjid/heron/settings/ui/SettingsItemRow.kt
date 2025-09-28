@@ -49,7 +49,7 @@ fun SettingsItemRow(
                 .weight(1f),
             text = title,
             color = titleColor,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
         )
         content()
     }

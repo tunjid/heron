@@ -30,7 +30,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +43,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.collapse_icon
@@ -48,6 +51,7 @@ import heron.feature.settings.generated.resources.expand_icon
 import heron.feature.settings.generated.resources.open_source_licenses
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OpenSourceLibrariesItem(
     libraries: Libs?,
@@ -89,8 +93,17 @@ fun OpenSourceLibrariesItem(
             content = {
                 LibrariesContainer(
                     libraries = libraries,
+                    textStyles = LibraryDefaults.libraryTextStyles(
+                        nameTextStyle = MaterialTheme.typography.bodyMedium,
+                        authorTextStyle = MaterialTheme.typography.bodySmall,
+                        licensesTextStyle = MaterialTheme.typography.bodySmall,
+                    ),
                     modifier = Modifier
-                        .padding(top = 8.dp)
+                        .padding(
+                            top = 8.dp,
+                            start = 8.dp,
+                            end = 8.dp,
+                        )
                         .fillMaxWidth(),
                 )
             },
