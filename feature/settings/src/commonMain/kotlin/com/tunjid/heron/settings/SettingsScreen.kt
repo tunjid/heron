@@ -22,10 +22,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.settings.ui.FeedbackItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.SignOutItem
 
@@ -39,9 +42,14 @@ internal fun SettingsScreen(
 ) {
     Column(
         modifier = modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        FeedbackItem(
+            modifier = Modifier
+                .animateBounds(paneScaffoldState),
+        )
         OpenSourceLibrariesItem(
             modifier = Modifier
                 .animateBounds(paneScaffoldState),

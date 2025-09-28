@@ -17,13 +17,14 @@
 <resources>
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
-    <string name="sign_out">Sign Out</string>
+    <string name="sign_out">Sign out</string>
     <string name="cancel">Cancel</string>
     <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
-    <string name="open_source_licenses">Open Source Licenses</string>
-    <string name="expand_icon">Expand Icon</string>
+    <string name="open_source_licenses">Open source licenses</string>
+    <string name="expand_icon">Expand icon</string>
     <string name="collapse_icon">Collapse icon</string>
     <string name="settings">Settings</string>
     <string name="close">Close</string>
+    <string name="give_feedback">Give feedback</string>
     <string name="view_website">View website</string>
 </resources>
