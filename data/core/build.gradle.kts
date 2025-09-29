@@ -18,6 +18,7 @@ plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
+    id("app.cash.burst")
     kotlin("plugin.serialization")
 }
 android {
