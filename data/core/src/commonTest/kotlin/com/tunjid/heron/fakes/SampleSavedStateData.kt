@@ -1,10 +1,19 @@
 package com.tunjid.heron.fakes
 
+import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.MessageId
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.writequeue.FailedWrite
+import com.tunjid.heron.data.utilities.writequeue.Writable
 import kotlinx.datetime.Instant
 
 object SampleSavedStateData {
@@ -73,8 +82,49 @@ object SampleSavedStateData {
 
     fun writes(): SavedState.Writes =
         SavedState.Writes(
-            pendingWrites = emptyList(),
-            failedWrites = emptyList(),
+            pendingWrites = listOf(
+                Writable.Interaction(
+                    interaction = Post.Interaction.Create.Like(
+                        postId = PostId("p1"),
+                        postUri = PostUri("at://post/123"),
+                    ),
+                ),
+                Writable.Create(
+                    request = Post.Create.Request(
+                        authorId = ProfileId("did:example:123"),
+                        text = "Hello world!",
+                        links = emptyList(),
+                        metadata = Post.Create.Metadata(),
+                    ),
+                ),
+                Writable.Send(
+                    request = Message.Create(
+                        conversationId = ConversationId("convo-1"),
+                        text = "Hey Bob!",
+                        links = emptyList(),
+                    ),
+                ),
+                Writable.Reaction(
+                    update = Message.UpdateReaction.Add(
+                        value = "like",
+                        messageId = MessageId("msg-1"),
+                        convoId = ConversationId("convo-1"),
+                    ),
+                ),
+            ),
+            failedWrites = listOf(
+                FailedWrite(
+                    writable = Writable.Connection(
+                        connection = Profile.Connection.Follow(
+                            signedInProfileId = ProfileId("did:example:123"),
+                            profileId = ProfileId("did:example:alice"),
+                            followedBy = GenericUri("at://follow/123"),
+                        ),
+                    ),
+                    failedAt = Instant.fromEpochMilliseconds(1727746200000), // fixed timestamp
+                    reason = FailedWrite.Reason.IO,
+                ),
+            ),
         )
 
     fun profileData(): SavedState.ProfileData =
