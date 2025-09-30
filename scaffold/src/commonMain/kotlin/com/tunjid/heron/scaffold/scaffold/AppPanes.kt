@@ -223,6 +223,7 @@ internal class PaneAnchorState {
                 Surface(
                     modifier = Modifier
                         .align(Alignment.Center)
+                        .platformSystemGestureExclusion()
                         .width(thumbWidth)
                         .height(DraggableDividerSizeDp),
                     shape = DraggableDividerShape,
@@ -355,6 +356,8 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
             }
     }
 }
+
+internal expect fun Modifier.platformSystemGestureExclusion(): Modifier
 
 private val DraggableDividerSizeDp = 48.dp
 internal val SecondaryPaneMinWidthBreakpointDp = 600.dp
