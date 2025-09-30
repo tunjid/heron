@@ -17,7 +17,7 @@ class ProfileDataSerializationTest(
         SerializationTestHelper.Format.PROTOBUF,
     ),
     val original: SavedState.ProfileData = burstValues(
-        SampleSavedStateData.profileData()
+        SampleSavedStateData.profileData(),
     ),
 ) {
     @Test
@@ -25,9 +25,8 @@ class ProfileDataSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.ProfileData.serializer()
+            serializer = SavedState.ProfileData.serializer(),
         )
         assertEquals(original, decoded)
     }
 }
-

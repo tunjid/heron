@@ -26,7 +26,7 @@ class WritesSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.Writes.serializer()
+            serializer = SavedState.Writes.serializer(),
         )
         assertEquals(original, decoded)
     }

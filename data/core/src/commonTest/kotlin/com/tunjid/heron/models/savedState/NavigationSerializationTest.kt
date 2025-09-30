@@ -26,7 +26,7 @@ class NavigationSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.Navigation.serializer()
+            serializer = SavedState.Navigation.serializer(),
         )
         assertEquals(original, decoded)
     }

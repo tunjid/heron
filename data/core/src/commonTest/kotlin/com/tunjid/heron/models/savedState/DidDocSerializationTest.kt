@@ -26,7 +26,7 @@ class DidDocSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.AuthTokens.DidDoc.serializer()
+            serializer = SavedState.AuthTokens.DidDoc.serializer(),
         )
         assertEquals(original, decoded)
     }

@@ -26,7 +26,7 @@ class NotificationsSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.Notifications.serializer()
+            serializer = SavedState.Notifications.serializer(),
         )
         assertEquals(original, decoded)
     }

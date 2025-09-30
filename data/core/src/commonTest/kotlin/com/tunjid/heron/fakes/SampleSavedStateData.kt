@@ -12,8 +12,8 @@ object SampleSavedStateData {
         SavedState.AuthTokens.Guest(
             server = Server(
                 "https://guest.example",
-                supportsOauth = false
-            )
+                supportsOauth = false,
+            ),
         )
 
     fun bearerAuth(): SavedState.AuthTokens.Authenticated.Bearer =
@@ -22,7 +22,7 @@ object SampleSavedStateData {
             auth = "access-token",
             refresh = "refresh-token",
             didDoc = didDoc(),
-            authEndpoint = "https://auth.example"
+            authEndpoint = "https://auth.example",
         )
 
     fun dpopAuth(): SavedState.AuthTokens.Authenticated.DPoP =
@@ -37,7 +37,7 @@ object SampleSavedStateData {
                 publicKey = byteArrayOf(0x01, 0x02),
                 privateKey = byteArrayOf(0x03, 0x04),
             ),
-            issuerEndpoint = "https://issuer.dpop"
+            issuerEndpoint = "https://issuer.dpop",
         )
 
     fun didDoc(): SavedState.AuthTokens.DidDoc =
@@ -47,34 +47,34 @@ object SampleSavedStateData {
                     id = "key1",
                     type = "Ed25519",
                     controller = "controller",
-                    publicKeyMultibase = "zDummyKey"
-                )
+                    publicKeyMultibase = "zDummyKey",
+                ),
             ),
             service = listOf(
                 SavedState.AuthTokens.DidDoc.Service(
                     id = "svc1",
                     type = "atproto",
-                    serviceEndpoint = "https://pds.example"
-                )
-            )
+                    serviceEndpoint = "https://pds.example",
+                ),
+            ),
         )
 
     fun navigation(): SavedState.Navigation =
         SavedState.Navigation(
             activeNav = 1,
-            backStacks = listOf(listOf("home", "settings"))
+            backStacks = listOf(listOf("home", "settings")),
         )
 
     fun notifications(): SavedState.Notifications =
         SavedState.Notifications(
             lastRead = Instant.DISTANT_PAST,
-            lastRefreshed = Instant.DISTANT_FUTURE
+            lastRefreshed = Instant.DISTANT_FUTURE,
         )
 
     fun writes(): SavedState.Writes =
         SavedState.Writes(
             pendingWrites = emptyList(),
-            failedWrites = emptyList()
+            failedWrites = emptyList(),
         )
 
     fun profileData(): SavedState.ProfileData =
@@ -82,10 +82,10 @@ object SampleSavedStateData {
             preferences = Preferences(
                 timelinePreferences = emptyList(),
                 contentLabelPreferences = emptyList(),
-                lastViewedHomeTimelineUri = GenericUri("feed://home/discover")
+                lastViewedHomeTimelineUri = GenericUri("feed://home/discover"),
             ),
             notifications = notifications(),
-            writes = writes()
+            writes = writes(),
         )
 
     fun savedStateWithGuest(): SavedState =

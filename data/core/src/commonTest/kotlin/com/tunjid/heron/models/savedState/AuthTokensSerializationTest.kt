@@ -27,9 +27,8 @@ class AuthTokensSerializationTest(
         val decoded = SerializationTestHelper.roundTrip(
             format = format,
             value = original,
-            serializer = SavedState.AuthTokens.serializer()
+            serializer = SavedState.AuthTokens.serializer(),
         )
         assertEquals(original, decoded)
     }
 }
-
