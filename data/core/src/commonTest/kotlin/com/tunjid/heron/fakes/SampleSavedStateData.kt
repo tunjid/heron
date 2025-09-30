@@ -89,23 +89,21 @@ object SampleSavedStateData {
         )
 
     fun savedStateWithGuest(): SavedState =
-        object : SavedState() {
-            override val auth = guestAuth()
-            override val navigation = navigation()
-            override val signedInProfileData: ProfileData? = null
-        }
+        GuestSavedState(
+            auth = guestAuth(),
+            navigation = navigation(),
+        )
 
     fun savedStateWithBearer(): SavedState =
-        object : SavedState() {
-            override val auth = bearerAuth()
-            override val navigation = navigation()
-            override val signedInProfileData = profileData()
-        }
+        BearerSavedState(
+            auth = bearerAuth(),
+            navigation = navigation(),
+            signedInProfileData = profileData(),
+        )
 
     fun savedStateWithDPoP(): SavedState =
-        object : SavedState() {
-            override val auth = dpopAuth()
-            override val navigation = navigation()
-            override val signedInProfileData: ProfileData? = null
-        }
+        DPoPSavedState(
+            auth = dpopAuth(),
+            navigation = navigation(),
+        )
 }
