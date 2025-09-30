@@ -18,14 +18,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 
 internal actual fun Modifier.platformSystemGestureExclusion(): Modifier =
-    systemGestureExclusion { layoutCoords ->
-        Rect(
-            left = 0f,
-            top = 0f,
-            right = layoutCoords.size.width.toFloat(),
-            bottom = layoutCoords.size.height.toFloat(),
-        )
-    }
+    systemGestureExclusion()

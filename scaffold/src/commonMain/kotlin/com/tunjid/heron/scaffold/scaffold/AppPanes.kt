@@ -209,7 +209,6 @@ internal class PaneAnchorState {
                     }
                     .fillMaxHeight()
                     .width(DraggableDividerSizeDp)
-                    .platformSystemGestureExclusion()
                     .hoverable(paneAnchorState.thumbMutableInteractionSource)
                     .anchoredDraggable(
                         state = paneAnchorState.anchoredDraggableState,
@@ -224,6 +223,7 @@ internal class PaneAnchorState {
                 Surface(
                     modifier = Modifier
                         .align(Alignment.Center)
+                        .platformSystemGestureExclusion()
                         .width(thumbWidth)
                         .height(DraggableDividerSizeDp),
                     shape = DraggableDividerShape,
