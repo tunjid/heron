@@ -23,6 +23,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +46,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
@@ -68,10 +70,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -148,6 +153,8 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.heron.ui.text.links
+import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -164,6 +171,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -273,6 +281,9 @@ internal fun ProfileScreen(
                             avatarSharedElementKey = state.avatarSharedElementKey,
                         ),
                     )
+                },
+                onLinkTargetClicked = { target ->
+                    actions(Action.BioLinkClicked(target))
                 },
             )
         },
@@ -428,6 +439,7 @@ private fun ProfileHeader(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -477,7 +489,11 @@ private fun ProfileHeader(
                     followsSignInProfile = viewerState?.followedBy != null,
                     onNavigateToProfiles = onNavigate,
                 )
-                Text(text = profile.description ?: "")
+//                Text(text = profile.description ?: "")
+                ProfileBio(
+                    description = profile.description ?: "",
+                    onLinkTargetClicked = onLinkTargetClicked,
+                )
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
                     Spacer(Modifier.height(Dp.Hairline))
                     CommonFollowers(
@@ -518,6 +534,45 @@ private fun ProfileHeader(
             onProfileAvatarClicked = onProfileAvatarClicked,
         )
     }
+}
+
+@Composable
+private fun ProfileBio(
+    description: String?,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
+) {
+    val bio = description.orEmpty()
+    val textLinks = AnnotatedString(bio).links()
+
+    val annotatedText = rememberFormattedTextPost(
+        text = bio,
+        textLinks = textLinks,
+        onLinkTargetClicked = onLinkTargetClicked,
+    )
+
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    BasicText(
+        text = annotatedText,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
+        onTextLayout = { textLayoutResult = it },
+        modifier = Modifier.pointerInput(annotatedText) {
+            detectTapGestures { tapOffset ->
+                textLayoutResult?.let { layout ->
+                    val position = layout.getOffsetForPosition(tapOffset)
+                    annotatedText
+                        .getStringAnnotations("link", position, position)
+                        .firstOrNull()
+                        ?.let { annotation ->
+                            val target = Json.decodeFromString<LinkTarget>(annotation.item)
+                            onLinkTargetClicked(target)
+                        }
+                }
+            }
+        },
+    )
 }
 
 @Composable
