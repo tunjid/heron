@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
@@ -138,6 +139,10 @@ data class ProfileCollectionState<T>(
 
 sealed class Action(val key: String) {
 
+    data class BioLinkClicked(
+        val target: LinkTarget,
+    ) : Action(key = "BioLinkClicked")
+
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
@@ -169,7 +174,7 @@ sealed class Action(val key: String) {
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(),
+        ) : Navigate(),a
             NavigationAction by delegate
 
         data class ToAvatar(
