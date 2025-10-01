@@ -174,7 +174,7 @@ sealed class Action(val key: String) {
 
         data class To(
             val delegate: NavigationAction.Destination,
-        ) : Navigate(),a
+        ) : Navigate(),
             NavigationAction by delegate
 
         data class ToAvatar(
