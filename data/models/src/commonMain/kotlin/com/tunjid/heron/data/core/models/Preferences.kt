@@ -29,6 +29,7 @@ data class Preferences(
     // Needs default value for serialization to disk
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
     val lastViewedHomeTimelineUri: Uri? = null,
+    val refreshHomeTimelineOnLaunch: Boolean = false,
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(

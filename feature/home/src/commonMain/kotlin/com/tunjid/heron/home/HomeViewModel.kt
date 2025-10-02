@@ -155,7 +155,8 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
-                        refreshOnStart = false,
+                        refreshOnStart = savedState.signedInProfilePreferences()
+                            ?.refreshHomeTimelineOnLaunch == true,
                         timeline = timeline,
                         startNumColumns = 1,
                         timelineRepository = timelineRepository,

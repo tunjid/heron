@@ -19,6 +19,8 @@ package com.tunjid.heron.settings
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.signedInProfilePreferences
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -27,6 +29,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -39,7 +42,9 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -55,6 +60,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualSettingsViewModel(
     authRepository: AuthRepository,
+    savedStateDataSource: SavedStateDataSource,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -65,6 +71,9 @@ class ActualSettingsViewModel(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
+            signedInProfileSavedStateMutations(
+                savedStateDataSource = savedStateDataSource,
+            ),
             loadOpenSourceLibraryMutations(),
         ),
         actionTransform = transform@{ actions ->
@@ -72,6 +81,9 @@ class ActualSettingsViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
+                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
+                        savedStateDataSource = savedStateDataSource,
+                    )
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -85,6 +97,16 @@ class ActualSettingsViewModel(
         },
     )
 
+fun signedInProfileSavedStateMutations(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> =
+    savedStateDataSource.savedState
+        .map { it.signedInProfilePreferences() }
+        .distinctUntilChanged()
+        .mapToMutation {
+            copy(signedInProfilePreferences = it)
+        }
+
 fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
     val libs = withContext(Dispatchers.IO) {
         Libs.Builder()
@@ -93,3 +115,10 @@ fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
     }
     emit { copy(openSourceLibraries = libs) }
 }
+
+private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (refreshOnLaunch) ->
+        savedStateDataSource.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+    }

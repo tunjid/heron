@@ -27,4 +27,6 @@
     <string name="close">Close</string>
     <string name="give_feedback">Give feedback</string>
     <string name="view_website">View website</string>
+    <string name="content_and_media">Content and media</string>
+    <string name="refresh_timelines_on_launch">Refresh timelines on launch</string>
 </resources>
