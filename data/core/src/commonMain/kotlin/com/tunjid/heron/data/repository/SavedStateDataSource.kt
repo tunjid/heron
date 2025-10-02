@@ -191,7 +191,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Authenticated -> this
         is SavedState.AuthTokens.Guest,
         null,
-            -> null
+        -> null
     }
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
