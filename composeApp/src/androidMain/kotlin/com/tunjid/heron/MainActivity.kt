@@ -21,15 +21,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
+import androidx.core.view.WindowCompat
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.scaffold.scaffold.App
 import com.tunjid.heron.scaffold.scaffold.isShowingSplashScreen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -50,11 +56,23 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+        val windowInsetsController = WindowCompat.getInsetsController(
+            window,
+            window.decorView,
+        )
         setContent {
             App(
                 appState = appState,
                 modifier = Modifier.fillMaxSize(),
             )
+            // Something, somewhere is toggling this flag, and I'm not sure where
+            val isSystemInDarkTheme = isSystemInDarkTheme()
+            LaunchedEffect(isSystemInDarkTheme) {
+                snapshotFlow { appState.isShowingSplashScreen }
+                    .first { !it }
+                delay(STATUS_BAR_ICON_DELAY_MS)
+                windowInsetsController.isAppearanceLightStatusBars = !isSystemInDarkTheme
+            }
         }
 
         handleDeepLink(intent)
@@ -79,3 +97,5 @@ class MainActivity : ComponentActivity() {
 fun AppAndroidPreview() {
     App()
 }
+
+private const val STATUS_BAR_ICON_DELAY_MS = 500L
