@@ -17,6 +17,7 @@
 package com.tunjid.heron.settings
 
 import com.mikepenz.aboutlibraries.Libs
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import kotlinx.serialization.Serializable
@@ -24,12 +25,17 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
     @Transient
     val messages: List<ScaffoldMessage> = emptyList(),
 )
 
 sealed class Action(val key: String) {
+
+    data class SetRefreshHomeTimelinesOnLaunch(
+        val refreshHomeTimelinesOnLaunch: Boolean,
+    ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
     data object SignOut : Action(key = "SignOut")
 

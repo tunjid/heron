@@ -181,10 +181,15 @@ internal class AuthTokenRepository(
     private suspend fun savePreferences(
         preferencesResponse: GetPreferencesResponse,
     ) = supervisorScope {
-        val preferences = preferencesResponse.toExternalModel()
+        val preferences = savedStateDataSource.savedState
+            .map { it.signedInProfileData?.preferences ?: Preferences.EmptyPreferences }
+            .first()
+            .update(preferencesResponse)
 
         val saveTimelinePreferences = async {
-            savedStateDataSource.updateSignedInUserPreferences(preferences)
+            savedStateDataSource.updateSignedInProfileData {
+                copy(preferences = preferences)
+            }
         }
         val types = preferences.timelinePreferences.groupBy(
             keySelector = TimelinePreference::type,
@@ -223,9 +228,9 @@ internal class AuthTokenRepository(
     }
 }
 
-private fun GetPreferencesResponse.toExternalModel() =
-    preferences.fold(
-        initial = Preferences.EmptyPreferences,
+private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
+    getPreferencesResponse.preferences.fold(
+        initial = this,
         operation = { preferences, preferencesUnion ->
             when (preferencesUnion) {
                 is PreferencesUnion.AdultContentPref -> preferences

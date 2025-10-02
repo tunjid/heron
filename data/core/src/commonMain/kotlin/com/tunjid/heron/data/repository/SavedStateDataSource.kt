@@ -191,7 +191,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Authenticated -> this
         is SavedState.AuthTokens.Guest,
         null,
-        -> null
+            -> null
     }
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
@@ -235,7 +235,13 @@ sealed class SavedStateDataSource {
         block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
 
-    abstract suspend fun setLastViewedHomeTimelineUri(uri: Uri)
+    abstract suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    )
+
+    abstract suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    )
 }
 
 @Inject
@@ -288,20 +294,21 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
-    override suspend fun setLastViewedHomeTimelineUri(uri: Uri) =
-        updateSignedInProfileData {
-            copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
-        }
+    override suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    ) = updateSignedInProfileData {
+        copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
+    }
+
+    override suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    ) = updateSignedInProfileData {
+        copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
+    }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {
         dataStore.updateData(update)
     }
-}
-
-internal suspend fun SavedStateDataSource.updateSignedInUserPreferences(
-    preferences: Preferences,
-) = updateSignedInProfileData {
-    copy(preferences = preferences)
 }
 
 internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
