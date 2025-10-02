@@ -4,8 +4,8 @@ Heron is a Jetpack Compose adaptive, reactive and offline-first bluesky client.
 
 ## Screenshots
 
-| ![split layouts desktop](./docs/images/portrait.gif) | ![split layouts desktop](./docs/images/landscape.gif) |
-|------------------------------------------------------|-------------------------------------------------------|
+| ![Scroll animations](./docs/images/1.gif) | ![Screen transitions](./docs/images/2.gif) | ![Thread diving](./docs/images/3.gif) |
+|-------------------------------------------|--------------------------------------------|---------------------------------------|
 
 ## UI/UX and App Design
 
