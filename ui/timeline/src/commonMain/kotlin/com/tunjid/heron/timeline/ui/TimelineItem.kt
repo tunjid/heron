@@ -383,9 +383,7 @@ fun TimelineCard(
         colors =
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         else CardDefaults.elevatedCardColors(),
-        elevation =
-        if (isFlat) CardDefaults.cardElevation()
-        else CardDefaults.elevatedCardElevation(),
+        elevation = CardDefaults.cardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
     )

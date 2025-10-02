@@ -116,6 +116,7 @@ fun PostInteractions(
         horizontalArrangement = presentation.postInteractionArrangement.animate(),
     ) {
         PostInteractionsButtons(
+            interactionButtons = PostInteractionButton.PostButtons,
             replyCount = replyCount,
             repostCount = repostCount,
             likeCount = likeCount,
@@ -150,6 +151,7 @@ fun MediaPostInteractions(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PostInteractionsButtons(
+            interactionButtons = PostInteractionButton.MediaButtons,
             replyCount = format(post.replyCount),
             repostCount = format(post.repostCount),
             likeCount = format(post.likeCount),
@@ -171,6 +173,7 @@ fun MediaPostInteractions(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private inline fun PostInteractionsButtons(
+    interactionButtons: List<PostInteractionButton>,
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,
@@ -186,7 +189,7 @@ private inline fun PostInteractionsButtons(
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
-    PostInteractionButton.All.forEach { button ->
+    interactionButtons.forEach { button ->
         key(button) {
             PostInteraction(
                 modifier = Modifier
@@ -578,7 +581,14 @@ private sealed class PostInteractionButton {
                 Bookmark -> Res.string.bookmarked
             }
 
-        val All = listOf(
+        val PostButtons = listOf(
+            Comment,
+            Repost,
+            Like,
+            Bookmark,
+        )
+
+        val MediaButtons = listOf(
             Like,
             Comment,
             Repost,
