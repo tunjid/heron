@@ -22,11 +22,13 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
+import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -53,7 +55,9 @@ import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.distinctBy
+import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
+import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
@@ -142,6 +146,16 @@ class ActualProfileViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
+                        is Action.BioLinkClicked -> action.flow.mapToManyMutations {
+                            when (val target = action.target) {
+                                is LinkTarget.Navigable -> navActions {
+                                    routeString(target.path, queryParams = emptyMap())
+                                        .toRoute
+                                        .let(navState::push)
+                                }
+                                else -> Unit
+                            }
+                        }
                     }
                 },
             )

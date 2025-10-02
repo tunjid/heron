@@ -72,6 +72,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -146,8 +147,11 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.heron.ui.text.links
+import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -271,6 +275,16 @@ internal fun ProfileScreen(
                         Action.Navigate.ToAvatar(
                             profile = state.profile,
                             avatarSharedElementKey = state.avatarSharedElementKey,
+                        ),
+                    )
+                },
+                onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
+                    actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = navigable.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
                         ),
                     )
                 },
@@ -428,6 +442,7 @@ private fun ProfileHeader(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -477,7 +492,11 @@ private fun ProfileHeader(
                     followsSignInProfile = viewerState?.followedBy != null,
                     onNavigateToProfiles = onNavigate,
                 )
-                Text(text = profile.description ?: "")
+//                Text(text = profile.description ?: "")
+                ProfileBio(
+                    description = profile.description ?: "",
+                    onLinkTargetClicked = onLinkTargetClicked,
+                )
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
                     Spacer(Modifier.height(Dp.Hairline))
                     CommonFollowers(
@@ -518,6 +537,28 @@ private fun ProfileHeader(
             onProfileAvatarClicked = onProfileAvatarClicked,
         )
     }
+}
+
+@Composable
+private fun ProfileBio(
+    description: String?,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
+) {
+    val bio = description.orEmpty()
+    val textLinks = AnnotatedString(bio).links()
+
+    val annotatedText = rememberFormattedTextPost(
+        text = bio,
+        textLinks = textLinks,
+        onLinkTargetClicked = onLinkTargetClicked,
+    )
+
+    Text(
+        text = annotatedText,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
+    )
 }
 
 @Composable
