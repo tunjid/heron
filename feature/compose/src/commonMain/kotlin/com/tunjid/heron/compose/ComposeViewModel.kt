@@ -261,7 +261,7 @@ private fun Flow<Action.CreatePost>.createPostMutations(
 private fun Flow<Action.SearchProfiles>.searchMutations(
     searchRepository: SearchRepository,
 ): Flow<Mutation<State>> =
-    debounce(300)
+    debounce(SEARCH_DEBOUNCE_MILLIS)
         .flatMapLatest { action ->
             searchRepository.autoCompleteProfileSearch(
                 query = SearchQuery.OfProfiles(
@@ -270,7 +270,7 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
                     data = CursorQuery.Data(
                         page = 0,
                         cursorAnchor = Clock.System.now(),
-                        limit = 10,
+                        limit = MAX_SUGGESTED_PROFILES.toLong(),
                     ),
                 ),
                 cursor = Cursor.Initial,
@@ -285,3 +285,6 @@ private fun Flow<Action.ClearSuggestions>.clearSuggestionsMutations(): Flow<Muta
     mapToMutation {
         copy(suggestedProfiles = emptyList())
     }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 300L
+const val MAX_SUGGESTED_PROFILES = 5

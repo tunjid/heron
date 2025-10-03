@@ -87,7 +87,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-
 @Composable
 internal fun ComposeScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -134,7 +133,7 @@ internal fun ComposeScreen(
         if (state.suggestedProfiles.isNotEmpty()) {
             AutoCompletePostProfileSearchResults(
                 paneMovableElementSharedTransitionScope = paneScaffoldState,
-                results = state.suggestedProfiles.take(5), // cut to 5
+                results = state.suggestedProfiles.take(MAX_SUGGESTED_PROFILES),
                 onProfileClicked = { profile ->
                     // insert handle into text field
                     actions(
@@ -346,7 +345,7 @@ private fun PostComposition(
             when (val target = detectActiveLink(annotated, it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
                 is LinkTarget.Hashtag -> {
-                    // fire hashtag search here
+                    // TODO: Implement hashtag search
                 }
                 else -> Unit
             }
@@ -428,8 +427,7 @@ fun ProfileResultItem(
         avatar = {
             updatedMovableStickySharedElementOf(
                 modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clickable { onProfileClicked(profile) },
+                    .size(UiTokens.avatarSize),
                 sharedContentState = rememberSharedContentState(
                     key = "${profile.did.id}-avatar",
                 ),
