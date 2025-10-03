@@ -17,6 +17,8 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,10 +31,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,12 +53,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
@@ -61,12 +70,16 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
+import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.detectActiveLink
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.formatTextPost
+import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
@@ -114,7 +127,25 @@ internal fun ComposeScreen(
                     ),
                 )
             },
+            onMentionDetected = {
+                actions(Action.SearchProfiles(it))
+            },
         )
+        if (state.suggestedProfiles.isNotEmpty()) {
+            AutoCompletePostProfileSearchResults(
+                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                results = state.suggestedProfiles.take(5), // cut to 5
+                onProfileClicked = { profile ->
+                    // insert handle into text field
+                    actions(
+                        Action.PostTextChanged(
+                            insertMention(state.postText, profile.handle.id),
+                        ),
+                    )
+                    actions(Action.ClearSuggestions)
+                },
+            )
+        }
         MediaUploadItems(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -153,6 +184,7 @@ private fun Post(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
+    onMentionDetected: (String) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -182,6 +214,7 @@ private fun Post(
                     onCreatePost = onCreatePost@{
                         onCreatePost()
                     },
+                    onMentionDetected = onMentionDetected,
                 )
             },
         )
@@ -287,6 +320,7 @@ private fun PostComposition(
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onCreatePost: () -> Unit,
+    onMentionDetected: (String) -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -308,6 +342,14 @@ private fun PostComposition(
                     ),
                 ),
             )
+            val annotated = AnnotatedString(it.text)
+            when (val target = detectActiveLink(annotated, it.selection)) {
+                is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
+                is LinkTarget.Hashtag -> {
+                    // fire hashtag search here
+                }
+                else -> Unit
+            }
         },
         onTextLayout = {
             val cursorRect = it.getCursorRect(postText.selection.start)
@@ -332,6 +374,86 @@ private fun PostComposition(
     LaunchedEffect(Unit) {
         textFieldFocusRequester.requestFocus()
     }
+}
+
+@Composable
+fun AutoCompletePostProfileSearchResults(
+    paneMovableElementSharedTransitionScope: PaneScaffoldState,
+    modifier: Modifier = Modifier,
+    results: List<Profile>,
+    onProfileClicked: (Profile) -> Unit,
+) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+    ) {
+        Column {
+            results.forEachIndexed { index, profile ->
+                ProfileResultItem(
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    profile = profile,
+                    onProfileClicked = onProfileClicked,
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                )
+
+                if (index != results.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 0.8.dp,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun ProfileResultItem(
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    profile: Profile,
+    onProfileClicked: (Profile) -> Unit,
+    modifier: Modifier = Modifier, // 👈 allow external padding
+) = with(paneMovableElementSharedTransitionScope) {
+    AttributionLayout(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onProfileClicked(profile) },
+        avatar = {
+            updatedMovableStickySharedElementOf(
+                modifier = Modifier
+                    .size(UiTokens.avatarSize)
+                    .clickable { onProfileClicked(profile) },
+                sharedContentState = rememberSharedContentState(
+                    key = "${profile.did.id}-avatar",
+                ),
+                state = remember(profile.avatar) {
+                    ImageArgs(
+                        url = profile.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = profile.contentDescription,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                },
+            )
+        },
+        label = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                ProfileName(profile = profile)
+                ProfileHandle(profile = profile)
+            }
+        },
+        action = { /* no follow/edit chip for mention autocomplete */ },
+    )
 }
 
 @OptIn(ExperimentalUuidApi::class)
