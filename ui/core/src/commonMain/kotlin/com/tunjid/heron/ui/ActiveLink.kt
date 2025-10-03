@@ -1,15 +1,12 @@
 package com.tunjid.heron.ui
 
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.ui.text.links
 
-fun detectActiveLink(
-    annotated: AnnotatedString,
+fun List<Link>.detectActiveLink(
     selection: TextRange,
 ): LinkTarget? {
-    val links = annotated.links()
     val cursor = selection.start
-    return links.firstOrNull { cursor in it.start..it.end }?.target
+    return this.firstOrNull { cursor in it.start..it.end }?.target
 }

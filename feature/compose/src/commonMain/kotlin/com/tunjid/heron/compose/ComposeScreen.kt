@@ -36,7 +36,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -53,7 +52,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -87,6 +85,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+
 @Composable
 internal fun ComposeScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -331,18 +330,17 @@ private fun PostComposition(
             .bringIntoViewRequester(bringIntoViewRequester),
         value = postText,
         onValueChange = {
-            onPostTextChanged(
-                it.copy(
-                    annotatedString = formatTextPost(
-                        text = it.text,
-                        textLinks = it.annotatedString.links(),
-                        onLinkTargetClicked = {
-                        },
-                    ),
-                ),
+            val links = it.annotatedString.links()
+            val annotated = formatTextPost(
+                text = it.text,
+                textLinks = links,
+                onLinkTargetClicked = {
+                },
             )
-            val annotated = AnnotatedString(it.text)
-            when (val target = detectActiveLink(annotated, it.selection)) {
+            onPostTextChanged(
+                it.copy(annotatedString = annotated),
+            )
+            when (val target = links.detectActiveLink(it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
                 is LinkTarget.Hashtag -> {
                     // TODO: Implement hashtag search
@@ -412,26 +410,20 @@ fun AutoCompletePostProfileSearchResults(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileResultItem(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     profile: Profile,
     onProfileClicked: (Profile) -> Unit,
-    modifier: Modifier = Modifier, // 👈 allow external padding
+    modifier: Modifier = Modifier,
 ) = with(paneMovableElementSharedTransitionScope) {
     AttributionLayout(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onProfileClicked(profile) },
         avatar = {
-            updatedMovableStickySharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize),
-                sharedContentState = rememberSharedContentState(
-                    key = "${profile.did.id}-avatar",
-                ),
-                state = remember(profile.avatar) {
+            AsyncImage(
+                args = remember(profile.avatar) {
                     ImageArgs(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
@@ -439,9 +431,8 @@ fun ProfileResultItem(
                         shape = RoundedPolygonShape.Circle,
                     )
                 },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                },
+                modifier = Modifier
+                    .size(36.dp),
             )
         },
         label = {
