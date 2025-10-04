@@ -37,7 +37,9 @@ internal class DeferredMutex<K, V> {
         key: K,
         crossinline block: suspend () -> V,
     ): V {
-        checkResult(key)?.let { return@withSingleAccess it }
+        checkResult(key)?.let {
+            return@withSingleAccess it
+        }
 
         return coroutineScope {
             checkResult(key)?.let {
