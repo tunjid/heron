@@ -18,11 +18,16 @@ package com.tunjid.heron.compose
 
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -48,11 +53,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -69,6 +77,7 @@ class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     postRepository: PostRepository,
+    searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     @Assisted
@@ -113,6 +122,10 @@ class ActualComposeViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.SearchProfiles -> action.flow.searchMutations(
+                        searchRepository = searchRepository,
+                    )
+                    is Action.ClearSuggestions -> action.flow.clearSuggestionsMutations()
                 }
             }
         },
@@ -244,3 +257,34 @@ private fun Flow<Action.CreatePost>.createPostMutations(
             ),
         )
     }
+
+private fun Flow<Action.SearchProfiles>.searchMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    debounce(SEARCH_DEBOUNCE_MILLIS)
+        .flatMapLatest { action ->
+            searchRepository.autoCompleteProfileSearch(
+                query = SearchQuery.OfProfiles(
+                    query = action.query,
+                    isLocalOnly = false,
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                        limit = MAX_SUGGESTED_PROFILES.toLong(),
+                    ),
+                ),
+                cursor = Cursor.Initial,
+            ).mapToMutation { profiles ->
+                copy(
+                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
+                )
+            }
+        }
+
+private fun Flow<Action.ClearSuggestions>.clearSuggestionsMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(suggestedProfiles = emptyList())
+    }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 300L
+const val MAX_SUGGESTED_PROFILES = 5
