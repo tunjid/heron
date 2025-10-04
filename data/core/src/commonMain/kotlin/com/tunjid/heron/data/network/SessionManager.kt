@@ -36,6 +36,7 @@ import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
+import com.tunjid.heron.data.utilities.DeferredMutex
 import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
@@ -119,6 +120,8 @@ internal class PersistedSessionManager @Inject constructor(
     private val oAuthApi: OAuthApi = OAuthApi(
         client = authHttpClient,
     )
+
+    private val tokenRefreshDeferredMutex = DeferredMutex<SavedState.AuthTokens.Authenticated>()
 
     private var pendingOauthSession: OauthSession? = null
 
@@ -279,33 +282,35 @@ internal class PersistedSessionManager @Inject constructor(
 
     private suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
-    ): SavedState.AuthTokens.Authenticated = when (tokens) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
-            urlString = RefreshTokenEndpoint,
-            block = { bearerAuth(tokens.refresh) },
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.body<RefreshSessionResponse>()
-            ?.let { refreshed ->
-                SavedState.AuthTokens.Authenticated.Bearer(
-                    authProfileId = ProfileId(refreshed.did.did),
-                    auth = refreshed.accessJwt,
-                    refresh = refreshed.refreshJwt,
-                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                        jsonContent = refreshed.didDoc,
-                    ),
-                    authEndpoint = tokens.authEndpoint,
-                )
-            }
-            ?: throw InvalidTokenException()
+    ): SavedState.AuthTokens.Authenticated = tokenRefreshDeferredMutex.withSingleAccess {
+        when (tokens) {
+            is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
+                urlString = RefreshTokenEndpoint,
+                block = { bearerAuth(tokens.refresh) },
+            )
+                .takeIf { it.status.isSuccess() }
+                ?.body<RefreshSessionResponse>()
+                ?.let { refreshed ->
+                    SavedState.AuthTokens.Authenticated.Bearer(
+                        authProfileId = ProfileId(refreshed.did.did),
+                        auth = refreshed.accessJwt,
+                        refresh = refreshed.refreshJwt,
+                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                            jsonContent = refreshed.didDoc,
+                        ),
+                        authEndpoint = tokens.authEndpoint,
+                    )
+                }
+                ?: throw InvalidTokenException()
 
-        is SavedState.AuthTokens.Authenticated.DPoP -> {
-            oAuthApi.refreshToken(
-                clientId = tokens.clientId,
-                nonce = tokens.nonce,
-                refreshToken = tokens.refresh,
-                keyPair = tokens.toKeyPair(),
-            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            is SavedState.AuthTokens.Authenticated.DPoP -> {
+                oAuthApi.refreshToken(
+                    clientId = tokens.clientId,
+                    nonce = tokens.nonce,
+                    refreshToken = tokens.refresh,
+                    keyPair = tokens.toKeyPair(),
+                ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            }
         }
     }
 }
@@ -320,6 +325,8 @@ private fun atProtoAuth(
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
 ) = createClientPlugin("AtProtoAuthPlugin") {
+    val nonceDeferredMutex = DeferredMutex<SavedState.AuthTokens.Authenticated.DPoP?>()
+
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
 
@@ -365,10 +372,12 @@ private fun atProtoAuth(
                 // If this returns null, do not throw an exception.
                 // This header value is sometimes returned when a new token is issued,
                 // and concurrent requests may see it. The value eventually becomes consistent.
-                UseDPoPNonce -> maybeUpdateDPoPNonce(
-                    response = result.response,
-                    readAuth = readAuth,
-                )
+                UseDPoPNonce -> nonceDeferredMutex.withSingleAccess {
+                    maybeUpdateDPoPNonce(
+                        response = result.response,
+                        readAuth = readAuth,
+                    )
+                }
                 else -> when (result.response.status) {
                     HttpStatusCode.Unauthorized ->
                         if (authTokens != null) throw InvalidTokenException()

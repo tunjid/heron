@@ -68,8 +68,10 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
@@ -129,6 +131,9 @@ class DataBindings(
         expectSuccess = false
         install(ContentNegotiation) {
             json(BlueskyJson)
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 4.seconds.inWholeMilliseconds
         }
     }
 
