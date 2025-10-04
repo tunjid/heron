@@ -22,33 +22,49 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-internal class DeferredMutex<T> {
+internal class DeferredMutex<K, V> {
 
     private val mutex = Mutex()
-    private var deferred: Deferred<T>? = null
+    private var lastDeferred: Deferred<V>? = null
+    private var lastResult: Pair<K, V>? = null
 
     suspend inline fun withSingleAccess(
-        crossinline block: suspend () -> T,
-    ): T = coroutineScope {
-        val existingDeferred = deferred
-        if (existingDeferred != null && existingDeferred.isActive) {
-            return@coroutineScope existingDeferred.await()
-        }
+        key: K,
+        crossinline block: suspend () -> V,
+    ): V {
+        checkResult(key)?.let { return@withSingleAccess it }
 
-        mutex.withLock {
-            // Double-check inside the lock. Another coroutine might have
-            // created the refresh while this one was waiting for the lock.
-            val currentDeferred = deferred
-            if (currentDeferred != null && currentDeferred.isActive) {
-                return@withLock currentDeferred.await()
+        return coroutineScope {
+            checkResult(key)?.let {
+                return@coroutineScope async { it }
+            }
+            checkDeferred()?.let {
+                return@coroutineScope it
             }
 
-            // This is the chosen coroutine. Start the new refresh operation.
-            val newRefresh = async {
-                block()
+            mutex.withLock {
+                checkResult(key)?.let {
+                    return@coroutineScope async { it }
+                }
+                checkDeferred()?.let {
+                    return@coroutineScope it
+                }
+                async {
+                    block().also { lastResult = key to it }
+                }.also { lastDeferred = it }
             }
-            deferred = newRefresh
-            newRefresh.await()
-        }
+        }.await()
+    }
+
+    private fun checkResult(key: K): V? {
+        val result = lastResult
+        return if (result != null && result.first == key) result.second
+        else null
+    }
+
+    private fun checkDeferred(): Deferred<V>? {
+        val existingDeferred = lastDeferred
+        return if (existingDeferred != null && existingDeferred.isActive) existingDeferred
+        else null
     }
 }
