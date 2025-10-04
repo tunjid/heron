@@ -19,7 +19,6 @@ package com.tunjid.heron.compose
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -131,7 +130,6 @@ internal fun ComposeScreen(
         )
         if (state.suggestedProfiles.isNotEmpty()) {
             AutoCompletePostProfileSearchResults(
-                paneMovableElementSharedTransitionScope = paneScaffoldState,
                 results = state.suggestedProfiles.take(MAX_SUGGESTED_PROFILES),
                 onProfileClicked = { profile ->
                     // insert handle into text field
@@ -186,7 +184,7 @@ private fun Post(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AuthorAndPost(
             modifier = modifier,
@@ -305,7 +303,7 @@ private inline fun AuthorAndPost(
     Row(
         modifier = modifier
             .padding(16.dp),
-        horizontalArrangement = spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         avatar()
         postContent()
@@ -375,7 +373,6 @@ private fun PostComposition(
 
 @Composable
 fun AutoCompletePostProfileSearchResults(
-    paneMovableElementSharedTransitionScope: PaneScaffoldState,
     modifier: Modifier = Modifier,
     results: List<Profile>,
     onProfileClicked: (Profile) -> Unit,
@@ -391,7 +388,6 @@ fun AutoCompletePostProfileSearchResults(
         Column {
             results.forEachIndexed { index, profile ->
                 ProfileResultItem(
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     profile = profile,
                     onProfileClicked = onProfileClicked,
                     modifier = Modifier
@@ -412,11 +408,10 @@ fun AutoCompletePostProfileSearchResults(
 
 @Composable
 fun ProfileResultItem(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     profile: Profile,
     onProfileClicked: (Profile) -> Unit,
     modifier: Modifier = Modifier,
-) = with(paneMovableElementSharedTransitionScope) {
+) {
     AttributionLayout(
         modifier = modifier
             .fillMaxWidth()

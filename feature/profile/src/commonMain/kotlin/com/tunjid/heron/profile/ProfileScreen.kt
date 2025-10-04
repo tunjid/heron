@@ -492,7 +492,6 @@ private fun ProfileHeader(
                     followsSignInProfile = viewerState?.followedBy != null,
                     onNavigateToProfiles = onNavigate,
                 )
-//                Text(text = profile.description ?: "")
                 ProfileBio(
                     description = profile.description ?: "",
                     onLinkTargetClicked = onLinkTargetClicked,
