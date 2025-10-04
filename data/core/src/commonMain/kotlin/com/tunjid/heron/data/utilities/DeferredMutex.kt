@@ -27,8 +27,8 @@ internal class DeferredMutex<T> {
     private val mutex = Mutex()
     private var deferred: Deferred<T>? = null
 
-   suspend inline fun withSingleAccess(
-       crossinline block: suspend () -> T,
+    suspend inline fun withSingleAccess(
+        crossinline block: suspend () -> T,
     ): T = coroutineScope {
         val existingDeferred = deferred
         if (existingDeferred != null && existingDeferred.isActive) {
