@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.withLock
 internal class DeferredMutex<K, V> {
 
     private val mutex = Mutex()
-    private var lastDeferred: Deferred<V>? = null
+    private var lastDeferred: Pair<K, Deferred<V>>? = null
     private var lastResult: Pair<K, V>? = null
 
     suspend inline fun withSingleAccess(
@@ -38,7 +38,7 @@ internal class DeferredMutex<K, V> {
             checkResult(key)?.let {
                 return@coroutineScope async { it }
             }
-            checkDeferred()?.let {
+            checkDeferred(key)?.let {
                 return@coroutineScope it
             }
 
@@ -46,12 +46,12 @@ internal class DeferredMutex<K, V> {
                 checkResult(key)?.let {
                     return@coroutineScope async { it }
                 }
-                checkDeferred()?.let {
+                checkDeferred(key)?.let {
                     return@coroutineScope it
                 }
                 async {
                     block().also { lastResult = key to it }
-                }.also { lastDeferred = it }
+                }.also { lastDeferred = key to it }
             }
         }.await()
     }
@@ -62,9 +62,9 @@ internal class DeferredMutex<K, V> {
         else null
     }
 
-    private fun checkDeferred(): Deferred<V>? {
+    private fun checkDeferred(key: K): Deferred<V>? {
         val existingDeferred = lastDeferred
-        return if (existingDeferred != null && existingDeferred.isActive) existingDeferred
+        return if (existingDeferred != null && existingDeferred.first == key && existingDeferred.second.isActive) existingDeferred.second
         else null
     }
 }

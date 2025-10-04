@@ -411,10 +411,12 @@ private fun atProtoAuth(
         )
 
         result.newDPoPNonce?.let { newNonce ->
-            maybeUpdateDPoPNonce(
-                newNonce = newNonce,
-                readAuth = readAuth,
-            )?.also { saveAuth(it) }
+            nonceDeferredMutex.withSingleAccess(newNonce) {
+                maybeUpdateDPoPNonce(
+                    newNonce = newNonce,
+                    readAuth = readAuth,
+                )
+            }?.also { saveAuth(it) }
         }
 
         result
