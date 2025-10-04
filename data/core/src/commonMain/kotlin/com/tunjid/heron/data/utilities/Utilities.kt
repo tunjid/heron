@@ -21,6 +21,9 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -54,8 +57,8 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
 
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
     times: Int = 3,
-    initialDelay: Long = 100, // 0.1 second
-    maxDelay: Long = 5000, // 1 second
+    initialDelay: Duration = 100.milliseconds,
+    maxDelay: Duration = 4.seconds,
     factor: Double = 2.0,
     crossinline block: suspend () -> AtpResponse<T>,
 ): Result<T> = coroutineScope scope@{
@@ -90,7 +93,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
             if (connected) delay(currentDelay)
             // Wait for a network connection
             else isConnected.first(true::equals)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+            currentDelay = (currentDelay * factor).coerceAtMost(maxDelay)
         }
     }
     // Cancel the connectivity job before returning

@@ -36,6 +36,7 @@ import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
+import com.tunjid.heron.data.utilities.DeferredMutex
 import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
@@ -54,7 +55,6 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode
@@ -119,6 +119,8 @@ internal class PersistedSessionManager @Inject constructor(
     private val oAuthApi: OAuthApi = OAuthApi(
         client = authHttpClient,
     )
+
+    private val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
 
     private var pendingOauthSession: OauthSession? = null
 
@@ -279,33 +281,37 @@ internal class PersistedSessionManager @Inject constructor(
 
     private suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
-    ): SavedState.AuthTokens.Authenticated = when (tokens) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
-            urlString = RefreshTokenEndpoint,
-            block = { bearerAuth(tokens.refresh) },
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.body<RefreshSessionResponse>()
-            ?.let { refreshed ->
-                SavedState.AuthTokens.Authenticated.Bearer(
-                    authProfileId = ProfileId(refreshed.did.did),
-                    auth = refreshed.accessJwt,
-                    refresh = refreshed.refreshJwt,
-                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                        jsonContent = refreshed.didDoc,
-                    ),
-                    authEndpoint = tokens.authEndpoint,
-                )
-            }
-            ?: throw InvalidTokenException()
+    ): SavedState.AuthTokens.Authenticated = tokenRefreshDeferredMutex.withSingleAccess(
+        key = tokens.refreshKey,
+    ) {
+        when (tokens) {
+            is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
+                urlString = RefreshTokenEndpoint,
+                block = { bearerAuth(tokens.refresh) },
+            )
+                .takeIf { it.status.isSuccess() }
+                ?.body<RefreshSessionResponse>()
+                ?.let { refreshed ->
+                    SavedState.AuthTokens.Authenticated.Bearer(
+                        authProfileId = ProfileId(refreshed.did.did),
+                        auth = refreshed.accessJwt,
+                        refresh = refreshed.refreshJwt,
+                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                            jsonContent = refreshed.didDoc,
+                        ),
+                        authEndpoint = tokens.authEndpoint,
+                    )
+                }
+                ?: throw InvalidTokenException()
 
-        is SavedState.AuthTokens.Authenticated.DPoP -> {
-            oAuthApi.refreshToken(
-                clientId = tokens.clientId,
-                nonce = tokens.nonce,
-                refreshToken = tokens.refresh,
-                keyPair = tokens.toKeyPair(),
-            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            is SavedState.AuthTokens.Authenticated.DPoP -> {
+                oAuthApi.refreshToken(
+                    clientId = tokens.clientId,
+                    nonce = tokens.nonce,
+                    refreshToken = tokens.refresh,
+                    keyPair = tokens.toKeyPair(),
+                ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            }
         }
     }
 }
@@ -320,6 +326,8 @@ private fun atProtoAuth(
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
 ) = createClientPlugin("AtProtoAuthPlugin") {
+    val nonceDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated.DPoP?>()
+
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
 
@@ -365,10 +373,14 @@ private fun atProtoAuth(
                 // If this returns null, do not throw an exception.
                 // This header value is sometimes returned when a new token is issued,
                 // and concurrent requests may see it. The value eventually becomes consistent.
-                UseDPoPNonce -> maybeUpdateDPoPNonce(
-                    response = result.response,
-                    readAuth = readAuth,
-                )
+                UseDPoPNonce -> result.newDPoPNonce?.let { newNonce ->
+                    nonceDeferredMutex.withSingleAccess(newNonce) {
+                        maybeUpdateDPoPNonce(
+                            newNonce = newNonce,
+                            readAuth = readAuth,
+                        )
+                    }
+                }
                 else -> when (result.response.status) {
                     HttpStatusCode.Unauthorized ->
                         if (authTokens != null) throw InvalidTokenException()
@@ -398,24 +410,27 @@ private fun atProtoAuth(
             },
         )
 
-        maybeUpdateDPoPNonce(
-            response = result.response,
-            readAuth = readAuth,
-        )?.also { saveAuth(it) }
+        result.newDPoPNonce?.let { newNonce ->
+            nonceDeferredMutex.withSingleAccess(newNonce) {
+                maybeUpdateDPoPNonce(
+                    newNonce = newNonce,
+                    readAuth = readAuth,
+                )
+            }?.also { saveAuth(it) }
+        }
 
         result
     }
 }
 
 private suspend fun maybeUpdateDPoPNonce(
-    response: HttpResponse,
+    newNonce: String,
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
 ): SavedState.AuthTokens.Authenticated.DPoP? {
-    val currentDPoPNonce = response.headers[DPoPNonceHeaderKey] ?: return null
     val existingToken = readAuth() ?: return null
     if (existingToken !is SavedState.AuthTokens.Authenticated.DPoP) return null
 
-    return existingToken.copy(nonce = currentDPoPNonce)
+    return existingToken.copy(nonce = newNonce)
 }
 
 private fun HttpRequestBuilder.clearAuth() {
@@ -455,6 +470,12 @@ private val SavedState.AuthTokens?.defaultUrl
         null -> Server.BlueSky.endpoint
     }
 
+private val SavedState.AuthTokens.Authenticated.refreshKey
+    get() = when (this) {
+        is SavedState.AuthTokens.Authenticated.Bearer -> refresh
+        is SavedState.AuthTokens.Authenticated.DPoP -> refresh
+    }
+
 private class OauthSession(
     val handle: ProfileHandle,
     val request: OAuthAuthorizationRequest,
@@ -466,6 +487,9 @@ internal val BlueskyJson: Json = Json(
         explicitNulls = false
     },
 )
+
+private val HttpClientCall.newDPoPNonce
+    get() = response.headers[DPoPNonceHeaderKey]
 
 private val HeronOauthClient = OAuthClient(
     clientId = "https://heron.tunji.dev/oauth-client.json",
