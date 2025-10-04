@@ -68,8 +68,8 @@ internal class DeferredMutex<K, V> {
     }
 
     private fun checkDeferred(key: K): Deferred<V>? {
-        val existingDeferred = lastDeferred
-        return if (existingDeferred != null && existingDeferred.first == key && existingDeferred.second.isActive) existingDeferred.second
-        else null
+        val existing = lastDeferred
+        if (existing == null || existing.first != key) return null
+        return if (existing.second.isActive) existing.second else null
     }
 }

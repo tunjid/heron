@@ -472,8 +472,8 @@ private val SavedState.AuthTokens?.defaultUrl
 
 private val SavedState.AuthTokens.Authenticated.refreshKey
     get() = when (this) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> auth
-        is SavedState.AuthTokens.Authenticated.DPoP -> auth
+        is SavedState.AuthTokens.Authenticated.Bearer -> refresh
+        is SavedState.AuthTokens.Authenticated.DPoP -> refresh
     }
 
 private class OauthSession(
