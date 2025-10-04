@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities
 
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -25,7 +26,11 @@ import kotlinx.coroutines.sync.withLock
 internal class DeferredMutex<K, V> {
 
     private val mutex = Mutex()
+
+    @Volatile
     private var lastDeferred: Pair<K, Deferred<V>>? = null
+
+    @Volatile
     private var lastResult: Pair<K, V>? = null
 
     suspend inline fun withSingleAccess(
