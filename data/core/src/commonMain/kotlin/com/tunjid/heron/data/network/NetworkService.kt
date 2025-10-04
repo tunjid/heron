@@ -21,6 +21,9 @@ import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
@@ -28,8 +31,8 @@ internal interface NetworkService {
 
     suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int = 3,
-        initialDelay: Long = 100, // 0.1 second
-        maxDelay: Long = 5000, // 1 second
+        initialDelay: Duration = 100.milliseconds,
+        maxDelay: Duration = 4.seconds,
         factor: Double = 2.0,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T>
@@ -49,8 +52,8 @@ internal class KtorNetworkService(
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int,
-        initialDelay: Long, // 0.1 second
-        maxDelay: Long, // 1 second
+        initialDelay: Duration,
+        maxDelay: Duration,
         factor: Double,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T> = networkMonitor.runCatchingWithNetworkRetry(
