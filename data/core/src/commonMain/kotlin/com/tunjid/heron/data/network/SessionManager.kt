@@ -65,7 +65,6 @@ import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -105,7 +104,7 @@ internal class PersistedSessionManager @Inject constructor(
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 15.seconds.toLong(DurationUnit.MILLISECONDS)
+            requestTimeoutMillis = 15.seconds.inWholeMilliseconds
         }
         install(Logging) {
             level = LogLevel.BODY
@@ -401,11 +400,11 @@ private fun atProtoAuth(
         updatedTokensResult.fold(
             onSuccess = { updatedTokens ->
                 if (updatedTokens != null) {
-                    saveAuth(updatedTokens)
                     context.clearAuth()
                     context.authenticate(updatedTokens)
                     result = proceed(context).also {
                         if (it.response.status.isSuccess()) {
+                            saveAuth(updatedTokens)
                             updatedTokens.maybeUpdateAndSaveDPoPNonce(it.newDPoPNonce)
                         }
                     }
