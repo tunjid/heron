@@ -46,6 +46,7 @@ import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.body
 import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.logging.LogLevel
@@ -63,6 +64,7 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -101,7 +103,9 @@ internal class PersistedSessionManager @Inject constructor(
             sessionRequestUrl.value?.let(url::takeFrom)
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
-
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15.seconds.inWholeMilliseconds
+        }
         install(Logging) {
             level = LogLevel.BODY
             logger = object : Logger {
@@ -119,8 +123,6 @@ internal class PersistedSessionManager @Inject constructor(
     private val oAuthApi: OAuthApi = OAuthApi(
         client = authHttpClient,
     )
-
-    private val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
 
     private var pendingOauthSession: OauthSession? = null
 
@@ -281,37 +283,33 @@ internal class PersistedSessionManager @Inject constructor(
 
     private suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
-    ): SavedState.AuthTokens.Authenticated = tokenRefreshDeferredMutex.withSingleAccess(
-        key = tokens.refreshKey,
-    ) {
-        when (tokens) {
-            is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
-                urlString = RefreshTokenEndpoint,
-                block = { bearerAuth(tokens.refresh) },
-            )
-                .takeIf { it.status.isSuccess() }
-                ?.body<RefreshSessionResponse>()
-                ?.let { refreshed ->
-                    SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = ProfileId(refreshed.did.did),
-                        auth = refreshed.accessJwt,
-                        refresh = refreshed.refreshJwt,
-                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                            jsonContent = refreshed.didDoc,
-                        ),
-                        authEndpoint = tokens.authEndpoint,
-                    )
-                }
-                ?: throw InvalidTokenException()
-
-            is SavedState.AuthTokens.Authenticated.DPoP -> {
-                oAuthApi.refreshToken(
-                    clientId = tokens.clientId,
-                    nonce = tokens.nonce,
-                    refreshToken = tokens.refresh,
-                    keyPair = tokens.toKeyPair(),
-                ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+    ): SavedState.AuthTokens.Authenticated = when (tokens) {
+        is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
+            urlString = RefreshTokenEndpoint,
+            block = { bearerAuth(tokens.refresh) },
+        )
+            .takeIf { it.status.isSuccess() }
+            ?.body<RefreshSessionResponse>()
+            ?.let { refreshed ->
+                SavedState.AuthTokens.Authenticated.Bearer(
+                    authProfileId = ProfileId(refreshed.did.did),
+                    auth = refreshed.accessJwt,
+                    refresh = refreshed.refreshJwt,
+                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                        jsonContent = refreshed.didDoc,
+                    ),
+                    authEndpoint = tokens.authEndpoint,
+                )
             }
+            ?: throw InvalidTokenException()
+
+        is SavedState.AuthTokens.Authenticated.DPoP -> {
+            oAuthApi.refreshToken(
+                clientId = tokens.clientId,
+                nonce = tokens.nonce,
+                refreshToken = tokens.refresh,
+                keyPair = tokens.toKeyPair(),
+            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
         }
     }
 }
@@ -326,7 +324,17 @@ private fun atProtoAuth(
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
 ) = createClientPlugin("AtProtoAuthPlugin") {
+    val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
     val nonceDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated.DPoP?>()
+
+    val maybeUpdateAndSaveDPoPNonce: suspend SavedState.AuthTokens.Authenticated?.(String?) -> Unit =
+        update@{ newNonce ->
+            this ?: return@update
+            newNonce ?: return@update
+            nonceDeferredMutex.withSingleAccess(newNonce) {
+                maybeUpdateDPoPNonce(newNonce)
+            }?.also { saveAuth(it) }
+        }
 
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
@@ -353,6 +361,7 @@ private fun atProtoAuth(
 
         var result: HttpClientCall = proceed(context)
         if (result.response.status.isSuccess()) {
+            authTokens.maybeUpdateAndSaveDPoPNonce(result.newDPoPNonce)
             return@intercept result
         }
 
@@ -367,20 +376,18 @@ private fun atProtoAuth(
             when (response.getOrNull()?.error) {
                 InvalidTokenError,
                 ExpiredTokenError,
-                -> readAuth()?.let { existingToken ->
-                    refresh(existingToken)
-                }
-                // If this returns null, do not throw an exception.
-                // This header value is sometimes returned when a new token is issued,
-                // and concurrent requests may see it. The value eventually becomes consistent.
-                UseDPoPNonce -> result.newDPoPNonce?.let { newNonce ->
-                    nonceDeferredMutex.withSingleAccess(newNonce) {
-                        maybeUpdateDPoPNonce(
-                            newNonce = newNonce,
-                            readAuth = readAuth,
-                        )
+                -> authTokens?.let { existingToken ->
+                    tokenRefreshDeferredMutex.withSingleAccess(
+                        key = existingToken.singleAccessKey,
+                    ) {
+                        refresh(existingToken)
                     }
                 }
+                // If this returns null, do not throw an exception or save the updated nonce.
+                // If the subsequent request with the update is successful, then save it.
+                UseDPoPNonce -> result.newDPoPNonce?.let(
+                    block = authTokens::maybeUpdateDPoPNonce,
+                )
                 else -> when (result.response.status) {
                     HttpStatusCode.Unauthorized ->
                         if (authTokens != null) throw InvalidTokenException()
@@ -393,10 +400,14 @@ private fun atProtoAuth(
         updatedTokensResult.fold(
             onSuccess = { updatedTokens ->
                 if (updatedTokens != null) {
-                    saveAuth(updatedTokens)
                     context.clearAuth()
                     context.authenticate(updatedTokens)
-                    result = proceed(context)
+                    result = proceed(context).also {
+                        if (it.response.status.isSuccess()) {
+                            saveAuth(updatedTokens)
+                            updatedTokens.maybeUpdateAndSaveDPoPNonce(it.newDPoPNonce)
+                        }
+                    }
                 }
             },
             onFailure = {
@@ -410,27 +421,15 @@ private fun atProtoAuth(
             },
         )
 
-        result.newDPoPNonce?.let { newNonce ->
-            nonceDeferredMutex.withSingleAccess(newNonce) {
-                maybeUpdateDPoPNonce(
-                    newNonce = newNonce,
-                    readAuth = readAuth,
-                )
-            }?.also { saveAuth(it) }
-        }
-
         result
     }
 }
 
-private suspend fun maybeUpdateDPoPNonce(
+private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
     newNonce: String,
-    readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
 ): SavedState.AuthTokens.Authenticated.DPoP? {
-    val existingToken = readAuth() ?: return null
-    if (existingToken !is SavedState.AuthTokens.Authenticated.DPoP) return null
-
-    return existingToken.copy(nonce = newNonce)
+    return if (this is SavedState.AuthTokens.Authenticated.DPoP) copy(nonce = newNonce)
+    else null
 }
 
 private fun HttpRequestBuilder.clearAuth() {
@@ -470,10 +469,10 @@ private val SavedState.AuthTokens?.defaultUrl
         null -> Server.BlueSky.endpoint
     }
 
-private val SavedState.AuthTokens.Authenticated.refreshKey
+private val SavedState.AuthTokens.Authenticated.singleAccessKey
     get() = when (this) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> refresh
-        is SavedState.AuthTokens.Authenticated.DPoP -> refresh
+        is SavedState.AuthTokens.Authenticated.Bearer -> "$auth-$refresh"
+        is SavedState.AuthTokens.Authenticated.DPoP -> "$auth-$refresh"
     }
 
 private class OauthSession(
