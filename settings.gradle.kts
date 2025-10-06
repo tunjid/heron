@@ -57,6 +57,7 @@ include(
     ":feature:auth",
     ":feature:compose",
     ":feature:conversation",
+    ":feature:edit-profile",
     ":feature:feed",
     ":feature:gallery",
     ":feature:home",

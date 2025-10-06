@@ -150,6 +150,11 @@ fun conversationDestination(
     referringRouteOption = referringRouteOption,
 )
 
+fun editProfileDestination(): NavigationAction.Destination = pathDestination(
+    path = "/editProfile",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun galleryDestination(
     post: Post,
     media: Embed.Media,

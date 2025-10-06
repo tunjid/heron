@@ -25,6 +25,8 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
+import com.tunjid.heron.editprofile.di.EditProfileBindings
+import com.tunjid.heron.editprofile.di.EditProfileNavigationBindings
 import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.feed.di.FeedNavigationBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
@@ -83,6 +85,7 @@ fun createAppState(
         composeNavigationBindings = ComposeNavigationBindings,
         conversationNavigationBindings = ConversationNavigationBindings,
         feedNavigationBindings = FeedNavigationBindings,
+        editProfileNavigationBindings = EditProfileNavigationBindings,
         galleryNavigationBindings = GalleryNavigationBindings,
         homeNavigationBindings = HomeNavigationBindings,
         listNavigationBindings = ListNavigationBindings,
@@ -125,6 +128,11 @@ fun createAppState(
         conversationBindings = ConversationBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
+        ),
+        editProfileBindings = EditProfileBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+
         ),
         feedBindings = FeedBindings(
             scaffoldBindings = scaffoldBindings,
@@ -183,6 +191,5 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
     )
-
     return appGraph.appState
 }
