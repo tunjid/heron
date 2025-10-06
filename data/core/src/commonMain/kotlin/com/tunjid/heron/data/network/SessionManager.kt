@@ -36,6 +36,7 @@ import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
+import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.DeferredMutex
 import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -56,7 +57,6 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
@@ -233,7 +233,6 @@ internal class PersistedSessionManager @Inject constructor(
         }
         install(
             atProtoAuth(
-                networkErrorConverter = BlueskyJson::decodeFromString,
                 readAuth = savedStateDataSource.signedInAuth::first,
                 saveAuth = savedStateDataSource::setAuth,
                 authenticate = ::authenticate,
@@ -318,7 +317,6 @@ internal class PersistedSessionManager @Inject constructor(
  * Invalidates session cookies that have expired or are otherwise invalid
  */
 private fun atProtoAuth(
-    networkErrorConverter: (String) -> AtpErrorDescription,
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
     saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
@@ -335,6 +333,28 @@ private fun atProtoAuth(
                 maybeUpdateDPoPNonce(newNonce)
             }?.also { saveAuth(it) }
         }
+
+    val proceedAndRetryIfDPoPNonceError: suspend Send.Sender.(
+        existingTokens: SavedState.AuthTokens.Authenticated?,
+        context: HttpRequestBuilder,
+    ) -> HttpClientCall = work@{ tokens, context ->
+        var call = proceed(context)
+        if (call.response.status.isSuccess()) return@work call
+
+        call = call.save()
+        val error = call.atProtoError()
+
+        if (error == UseDPoPNonce) {
+            val updatedTokens = call.newDPoPNonce
+                ?.let(tokens::maybeUpdateDPoPNonce)
+                ?: return@work call
+
+            context.clearAuth()
+            context.authenticate(updatedTokens)
+            return@work proceed(context).save()
+        }
+        return@work call
+    }
 
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
@@ -359,35 +379,25 @@ private fun atProtoAuth(
             context.authenticate(authTokens)
         }
 
-        var result: HttpClientCall = proceed(context)
+        var result: HttpClientCall = proceedAndRetryIfDPoPNonceError(
+            authTokens,
+            context,
+        )
         if (result.response.status.isSuccess()) {
             authTokens.maybeUpdateAndSaveDPoPNonce(result.newDPoPNonce)
             return@intercept result
         }
 
-        // Cache the response in memory since we will need to decode it potentially more than once.
-        result = result.save()
-
-        val response = runCatching<AtpErrorDescription?> {
-            networkErrorConverter(result.response.bodyAsText())
-        }
-
         val updatedTokensResult = runCatchingUnlessCancelled {
-            when (response.getOrNull()?.error) {
+            when (result.atProtoError()) {
                 InvalidTokenError,
                 ExpiredTokenError,
                 -> authTokens?.let { existingToken ->
                     tokenRefreshDeferredMutex.withSingleAccess(
                         key = existingToken.singleAccessKey,
-                    ) {
-                        refresh(existingToken)
-                    }
+                        block = { refresh(existingToken) },
+                    )
                 }
-                // If this returns null, do not throw an exception or save the updated nonce.
-                // If the subsequent request with the update is successful, then save it.
-                UseDPoPNonce -> result.newDPoPNonce?.let(
-                    block = authTokens::maybeUpdateDPoPNonce,
-                )
                 else -> when (result.response.status) {
                     HttpStatusCode.Unauthorized ->
                         if (authTokens != null) throw InvalidTokenException()
@@ -402,10 +412,17 @@ private fun atProtoAuth(
                 if (updatedTokens != null) {
                     context.clearAuth()
                     context.authenticate(updatedTokens)
-                    result = proceed(context).also {
-                        if (it.response.status.isSuccess()) {
-                            saveAuth(updatedTokens)
-                            updatedTokens.maybeUpdateAndSaveDPoPNonce(it.newDPoPNonce)
+                    result = proceedAndRetryIfDPoPNonceError(updatedTokens, context).also { call ->
+                        when {
+                            call.response.status.isSuccess() -> {
+                                saveAuth(updatedTokens)
+                                updatedTokens.maybeUpdateAndSaveDPoPNonce(call.newDPoPNonce)
+                            }
+                            else -> when (call.atProtoError()) {
+                                InvalidTokenError,
+                                ExpiredTokenError,
+                                -> saveAuth(null)
+                            }
                         }
                     }
                 }
@@ -415,6 +432,7 @@ private fun atProtoAuth(
                 when (it) {
                     is InvalidTokenException,
                     is AtpException,
+                    is AtProtoException,
                     -> saveAuth(null)
                     else -> throw it
                 }
@@ -424,6 +442,11 @@ private fun atProtoAuth(
         result
     }
 }
+
+private suspend fun HttpClientCall.atProtoError() =
+    runCatching<AtpErrorDescription?> {
+        response.body<AtpErrorDescription>()
+    }.getOrNull()?.error
 
 private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
     newNonce: String,

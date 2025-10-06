@@ -898,7 +898,9 @@ internal class OfflineTimelineRepository(
         flow2 = flow {
             while (true) {
                 val pollInstant = Clock.System.now()
-                networkService.runCatchingWithMonitoredNetworkRetry { networkRequestBlock() }
+                val succeeded = networkService.runCatchingWithMonitoredNetworkRetry(
+                    block = networkRequestBlock,
+                )
                     .getOrNull()
                     ?.let(networkResponseToFeedViews)
                     ?.let { fetchedFeedViewPosts ->
@@ -909,10 +911,9 @@ internal class OfflineTimelineRepository(
                                 feedViewPosts = fetchedFeedViewPosts,
                             )
                         }
-                    }
-                    ?: continue
+                    } != null
 
-                emit(pollInstant)
+                if (succeeded) emit(pollInstant)
                 delay(pollInterval.inWholeMilliseconds)
             }
         },
