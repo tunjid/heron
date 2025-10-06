@@ -31,7 +31,7 @@
     <string name="followed_by_profiles">Followed by %1$s</string>
     <string name="followed_by_others">, and %1$d others</string>
     <string name="follows_you">Follows you</string>
-    <string name="feed">Feed</string>
-    <string name="starter_pack">Starter Pack</string>
-    <string name="list">List</string>
+    <string name="feeds">Feeds</string>
+    <string name="starter_packs">Starter Packs</string>
+    <string name="lists">Lists</string>
 </resources>

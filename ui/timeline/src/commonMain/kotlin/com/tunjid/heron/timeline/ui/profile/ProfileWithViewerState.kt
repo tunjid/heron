@@ -94,7 +94,7 @@ fun ProfileWithViewerState(
         action = {
             val isSignedInProfile = signedInProfileId == profile.did
             AnimatedVisibility(
-                visible = viewerState != null || isSignedInProfile,
+                visible = !isSignedInProfile,
                 content = {
                     ProfileViewerState(
                         viewerState = viewerState,

@@ -62,9 +62,9 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
 import heron.feature.profile.generated.resources.Res
-import heron.feature.profile.generated.resources.feed
-import heron.feature.profile.generated.resources.list
-import heron.feature.profile.generated.resources.starter_pack
+import heron.feature.profile.generated.resources.feeds
+import heron.feature.profile.generated.resources.lists
+import heron.feature.profile.generated.resources.starter_packs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -252,7 +252,6 @@ private fun loadProfileMutations(
                                 } + scope.profileCollectionStateHolders(
                                     profileId = profileId,
                                     profileRepository = profileRepository,
-                                    metadata = profile.metadata,
                                 ),
                             )
                         }
@@ -342,13 +341,12 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
 private fun CoroutineScope.profileCollectionStateHolders(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-    metadata: Profile.Metadata,
 ): List<ProfileScreenStateHolders.Collections<*>> =
     listOfNotNull(
-        if (metadata.createdFeedGeneratorCount > 0) ProfileScreenStateHolders.Collections.Feeds(
+        ProfileScreenStateHolders.Collections.Feeds(
             mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
-                    stringResource = Res.string.feed,
+                    stringResource = Res.string.feeds,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
                             profileId = profileId,
@@ -359,12 +357,11 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 itemId = FeedGenerator::cid,
                 cursorListLoader = profileRepository::feedGenerators,
             ),
-        )
-        else null,
-        if (metadata.createdStarterPackCount > 0) ProfileScreenStateHolders.Collections.StarterPacks(
+        ),
+        ProfileScreenStateHolders.Collections.StarterPacks(
             mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
-                    stringResource = Res.string.starter_pack,
+                    stringResource = Res.string.starter_packs,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
                             profileId = profileId,
@@ -375,12 +372,11 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 itemId = StarterPack::cid,
                 cursorListLoader = profileRepository::starterPacks,
             ),
-        )
-        else null,
-        if (metadata.createdListCount > 0) ProfileScreenStateHolders.Collections.Lists(
+        ),
+        ProfileScreenStateHolders.Collections.Lists(
             mutator = profileCollectionStateHolder(
                 initialState = ProfileCollectionState(
-                    stringResource = Res.string.list,
+                    stringResource = Res.string.lists,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
                             profileId = profileId,
@@ -391,8 +387,7 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 itemId = FeedList::cid,
                 cursorListLoader = profileRepository::lists,
             ),
-        )
-        else null,
+        ),
     )
 
 private fun defaultQueryData() = CursorQuery.Data(
