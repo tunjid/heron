@@ -22,8 +22,6 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -56,10 +54,10 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
 )
 
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
-    times: Int = 3,
-    initialDelay: Duration = 100.milliseconds,
-    maxDelay: Duration = 4.seconds,
-    factor: Double = 2.0,
+    times: Int,
+    initialDelay: Duration,
+    maxDelay: Duration,
+    factor: Double,
     crossinline block: suspend () -> AtpResponse<T>,
 ): Result<T> = coroutineScope scope@{
     var connected = true
@@ -73,9 +71,12 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
         try {
             return@scope when (val atpResponse = block()) {
                 is AtpResponse.Failure -> Result.failure(
-                    Exception(atpResponse.error?.message),
+                    AtProtoException(
+                        statusCode = atpResponse.statusCode.code,
+                        error = atpResponse.error?.error,
+                        message = atpResponse.error?.message,
+                    ),
                 )
-
                 is AtpResponse.Success -> Result.success(
                     atpResponse.response,
                 )
@@ -161,3 +162,9 @@ internal inline fun <T> Result<T>.toOutcome(
 )
 
 internal class InvalidTokenException : Exception("Invalid tokens")
+
+internal data class AtProtoException(
+    val statusCode: Int,
+    val error: String?,
+    override val message: String?,
+) : Exception(message)
