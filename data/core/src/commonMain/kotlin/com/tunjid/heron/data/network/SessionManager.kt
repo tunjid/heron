@@ -337,9 +337,9 @@ private fun atProtoAuth(
     val proceedAndRetryIfDPoPNonceError: suspend Send.Sender.(
         existingTokens: SavedState.AuthTokens.Authenticated?,
         context: HttpRequestBuilder,
-    ) -> HttpClientCall = work@{ tokens, context ->
+    ) -> HttpClientCall = call@{ tokens, context ->
         var call = proceed(context)
-        if (call.response.status.isSuccess()) return@work call
+        if (call.response.status.isSuccess()) return@call call
 
         call = call.save()
         val error = call.atProtoError()
@@ -347,13 +347,13 @@ private fun atProtoAuth(
         if (error == UseDPoPNonce) {
             val updatedTokens = call.newDPoPNonce
                 ?.let(tokens::maybeUpdateDPoPNonce)
-                ?: return@work call
+                ?: return@call call
 
             context.clearAuth()
             context.authenticate(updatedTokens)
-            return@work proceed(context).save()
+            return@call proceed(context).save()
         }
-        return@work call
+        return@call call
     }
 
     on(Send) intercept@{ context ->
@@ -418,10 +418,14 @@ private fun atProtoAuth(
                                 saveAuth(updatedTokens)
                                 updatedTokens.maybeUpdateAndSaveDPoPNonce(call.newDPoPNonce)
                             }
-                            else -> when (call.atProtoError()) {
-                                InvalidTokenError,
-                                ExpiredTokenError,
-                                -> saveAuth(null)
+                            else -> {
+                                val error = call.atProtoError()
+                                if (call.response.status == HttpStatusCode.Unauthorized ||
+                                    error == InvalidTokenError ||
+                                    error == ExpiredTokenError
+                                ) {
+                                    saveAuth(null)
+                                }
                             }
                         }
                     }
