@@ -232,7 +232,7 @@ private fun ServerSelectionBottomSheet(
 }
 
 private fun FormField.asServer() = Server(
-    endpoint = value,
+    endpoint = "https://$value",
     supportsOauth = false,
 )
 
