@@ -51,7 +51,7 @@ class ActualEditProfileViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     EditProfileStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+        initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
