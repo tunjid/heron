@@ -71,7 +71,6 @@ class ActualEditProfileViewModel(
         },
     )
 
-
 private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(updatedAvatar = it.file)

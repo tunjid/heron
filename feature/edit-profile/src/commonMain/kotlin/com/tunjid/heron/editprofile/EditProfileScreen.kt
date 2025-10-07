@@ -71,14 +71,14 @@ internal fun EditProfileScreen(
 ) {
     val avatarPicker = rememberFilePickerLauncher(
         type = FileKitType.Image,
-        mode = FileKitMode.Single
+        mode = FileKitMode.Single,
     ) { file ->
         actions(Action.AvatarPicked(file))
     }
 
     val bannerPicker = rememberFilePickerLauncher(
         type = FileKitType.Image,
-        mode = FileKitMode.Single
+        mode = FileKitMode.Single,
     ) { file ->
         actions(Action.BannerPicked(file))
     }
@@ -119,7 +119,7 @@ fun EditProfileHeader(
                 .align(Alignment.TopCenter),
             profile = profile,
             onEditClick = onBannerEditClick,
-            localFile = bannerFile
+            localFile = bannerFile,
         )
 
         ProfileAvatarEditableImage(
@@ -131,7 +131,7 @@ fun EditProfileHeader(
             shape = CircleShape,
             onEditClick = onAvatarEditClick,
             size = 96.dp,
-            localFile = avatarFile
+            localFile = avatarFile,
         )
     }
 }
@@ -198,7 +198,7 @@ fun ProfileBannerEditableImage(
     profile: Profile,
     localFile: PlatformFile?,
     onEditClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier,
