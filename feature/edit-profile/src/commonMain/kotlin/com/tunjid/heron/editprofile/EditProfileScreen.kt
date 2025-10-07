@@ -50,15 +50,13 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.picker.MediaItem
+import com.tunjid.heron.media.picker.MediaType
+import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.edit_profile.generated.resources.Res
+import heron.feature.edit_profile.generated.resources.edit_avatar_icon
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.dialogs.FileKitMode
-import io.github.vinceglb.filekit.dialogs.FileKitType
-import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.path
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -68,18 +66,24 @@ internal fun EditProfileScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val avatarPicker = rememberFilePickerLauncher(
-        type = FileKitType.Image,
-        mode = FileKitMode.Single,
-    ) { file ->
-        actions(Action.AvatarPicked(file))
+    val avatarPicker = rememberMediaPicker(
+        mediaType = MediaType.Photo,
+        maxItems = 1,
+    ) { mediaItems ->
+        mediaItems
+            .filterIsInstance<MediaItem.Photo>()
+            .firstOrNull()
+            ?.let { actions(Action.AvatarPicked(it)) }
     }
 
-    val bannerPicker = rememberFilePickerLauncher(
-        type = FileKitType.Image,
-        mode = FileKitMode.Single,
-    ) { file ->
-        actions(Action.BannerPicked(file))
+    val bannerPicker = rememberMediaPicker(
+        mediaType = MediaType.Photo,
+        maxItems = 1,
+    ) { mediaItems ->
+        mediaItems
+            .filterIsInstance<MediaItem.Photo>()
+            .firstOrNull()
+            ?.let { actions(Action.BannerPicked(it)) }
     }
 
     Column(
@@ -89,8 +93,8 @@ internal fun EditProfileScreen(
     ) {
         EditProfileHeader(
             profile = state.profile,
-            onBannerEditClick = { bannerPicker.launch() },
-            onAvatarEditClick = { avatarPicker.launch() },
+            onBannerEditClick = { bannerPicker() },
+            onAvatarEditClick = { avatarPicker() },
             avatarFile = state.updatedAvatar,
             bannerFile = state.updatedBanner,
         )
@@ -99,8 +103,8 @@ internal fun EditProfileScreen(
 
 @Composable
 fun EditProfileHeader(
-    avatarFile: PlatformFile?,
-    bannerFile: PlatformFile?,
+    avatarFile: MediaItem.Photo?,
+    bannerFile: MediaItem.Photo?,
     profile: Profile,
     onBannerEditClick: () -> Unit,
     onAvatarEditClick: () -> Unit,
@@ -138,7 +142,7 @@ fun EditProfileHeader(
 @Composable
 fun ProfileAvatarEditableImage(
     profile: Profile,
-    localFile: PlatformFile?,
+    localFile: MediaItem.Photo?,
     shape: Shape,
     size: Dp? = null,
     modifier: Modifier = Modifier,
@@ -153,24 +157,11 @@ fun ProfileAvatarEditableImage(
                 .then(if (size != null) Modifier.size(size) else Modifier)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            args = remember(
-                key1 = localFile?.path ?: profile.avatar?.uri,
-            ) {
-                if (localFile != null)
-                    ImageArgs(
-                        item = MediaItem.Photo(localFile),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Rectangle,
-                    )
-                else
-                    ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Rectangle,
-                    )
-            },
+            args = rememberEditableImageArgs(
+                profile = profile,
+                localFile = localFile,
+                remoteUri = profile.avatar?.uri,
+            ),
         )
 
         IconButton(
@@ -184,7 +175,7 @@ fun ProfileAvatarEditableImage(
         ) {
             Icon(
                 imageVector = Icons.Rounded.Edit,
-                contentDescription = stringResource(Res.string.edit_banner_icon),
+                contentDescription = stringResource(Res.string.edit_avatar_icon),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
             )
@@ -195,7 +186,7 @@ fun ProfileAvatarEditableImage(
 @Composable
 fun ProfileBannerEditableImage(
     profile: Profile,
-    localFile: PlatformFile?,
+    localFile: MediaItem.Photo?,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -207,24 +198,11 @@ fun ProfileBannerEditableImage(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant),
-            args = remember(
-                key1 = localFile?.path ?: profile.banner?.uri,
-            ) {
-                if (localFile != null)
-                    ImageArgs(
-                        item = MediaItem.Photo(localFile),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Rectangle,
-                    )
-                else
-                    ImageArgs(
-                        url = profile.banner?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Rectangle,
-                    )
-            },
+            args = rememberEditableImageArgs(
+                profile = profile,
+                localFile = localFile,
+                remoteUri = profile.banner?.uri,
+            ),
         )
 
         IconButton(
@@ -243,5 +221,30 @@ fun ProfileBannerEditableImage(
                 modifier = Modifier.size(19.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun rememberEditableImageArgs(
+    profile: Profile,
+    localFile: MediaItem.Photo?,
+    remoteUri: String?,
+): ImageArgs {
+    return remember(localFile?.path, remoteUri) {
+        val contentDescription = profile.displayName ?: profile.handle.id
+        if (localFile != null)
+            ImageArgs(
+                item = localFile,
+                contentScale = ContentScale.Crop,
+                contentDescription = contentDescription,
+                shape = RoundedPolygonShape.Rectangle,
+            )
+        else
+            ImageArgs(
+                url = remoteUri,
+                contentScale = ContentScale.Crop,
+                contentDescription = contentDescription,
+                shape = RoundedPolygonShape.Rectangle,
+            )
     }
 }

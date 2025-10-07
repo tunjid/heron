@@ -21,21 +21,19 @@ import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.editprofile.di.profileHandleOrId
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.treenav.strings.Route
-import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     val profile: Profile,
-    @Transient
-    val updatedAvatar: PlatformFile? = null,
-    @Transient
-    val updatedBanner: PlatformFile? = null,
+    @Transient val updatedAvatar: MediaItem.Photo? = null,
+    @Transient val updatedBanner: MediaItem.Photo? = null,
     @Transient
     val messages: List<ScaffoldMessage> = emptyList(),
 )
@@ -50,11 +48,11 @@ fun State(route: Route) = State(
 
 sealed class Action(val key: String) {
     data class AvatarPicked(
-        val file: PlatformFile?,
+        val item: MediaItem.Photo,
     ) : Action(key = "AvatarPicked")
 
     data class BannerPicked(
-        val file: PlatformFile?,
+        val item: MediaItem.Photo,
     ) : Action(key = "BannerPicked")
 
     sealed class Navigate :

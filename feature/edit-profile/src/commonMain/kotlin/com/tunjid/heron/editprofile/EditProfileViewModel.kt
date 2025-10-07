@@ -73,10 +73,10 @@ class ActualEditProfileViewModel(
 
 private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
-        copy(updatedAvatar = it.file)
+        copy(updatedAvatar = it.item)
     }
 
 private fun Flow<Action.BannerPicked>.bannerPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
-        copy(updatedBanner = it.file)
+        copy(updatedBanner = it.item)
     }

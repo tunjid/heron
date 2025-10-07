@@ -21,7 +21,7 @@ plugins {
     id("ksp-convention")
 }
 android {
-    namespace = "com.tunjid.heron.feature.posts"
+    namespace = "com.tunjid.heron.feature.editprofile"
 }
 
 kotlin {
@@ -36,9 +36,6 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
-
-                implementation(libs.filekit.coil)
-                implementation(libs.filekit.dialogs.compose)
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
