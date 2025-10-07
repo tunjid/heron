@@ -52,7 +52,6 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.tetxfields.EditableProfileTextField
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
 import io.github.vinceglb.filekit.PlatformFile
