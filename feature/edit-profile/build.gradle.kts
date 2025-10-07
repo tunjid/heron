@@ -37,6 +37,9 @@ kotlin {
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
 
+                implementation(libs.filekit.coil)
+                implementation(libs.filekit.dialogs.compose)
+
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
             }

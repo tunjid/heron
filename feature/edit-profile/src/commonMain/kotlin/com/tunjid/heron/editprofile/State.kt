@@ -25,12 +25,17 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.treenav.strings.Route
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     val profile: Profile,
+    @Transient
+    val updatedAvatar: PlatformFile? = null,
+    @Transient
+    val updatedBanner: PlatformFile? = null,
     @Transient
     val messages: List<ScaffoldMessage> = emptyList(),
 )
@@ -44,6 +49,13 @@ fun State(route: Route) = State(
 )
 
 sealed class Action(val key: String) {
+    data class AvatarPicked(
+        val file: PlatformFile?,
+    ) : Action(key = "AvatarPicked")
+
+    data class BannerPicked(
+        val file: PlatformFile?,
+    ) : Action(key = "BannerPicked")
 
     sealed class Navigate :
         Action(key = "Navigate"),
