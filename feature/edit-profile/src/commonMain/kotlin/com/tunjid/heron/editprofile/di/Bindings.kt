@@ -26,6 +26,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.editprofile.ActualEditProfileViewModel
@@ -56,6 +57,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -68,7 +70,7 @@ import heron.feature.edit_profile.generated.resources.edit_profile
 import heron.feature.edit_profile.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/editProfile"
+private const val RoutePattern = "/editProfile/{profileHandleOrId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -77,6 +79,10 @@ private fun createRoute(
     children = listOfNotNull(
         routeParams.decodeReferringRoute(),
     ),
+)
+
+internal val Route.profileHandleOrId by mappedRoutePath(
+    mapper = ::ProfileHandleOrId,
 )
 
 @BindingContainer

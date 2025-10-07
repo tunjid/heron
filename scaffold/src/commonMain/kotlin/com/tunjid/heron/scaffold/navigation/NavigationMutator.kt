@@ -150,8 +150,11 @@ fun conversationDestination(
     referringRouteOption = referringRouteOption,
 )
 
-fun editProfileDestination(): NavigationAction.Destination = pathDestination(
-    path = "/editProfile",
+fun editProfileDestination(
+    profile: Profile,
+): NavigationAction.Destination = pathDestination(
+    path = "/editProfile/${profile.did.id}",
+    models = listOf(profile),
     referringRouteOption = ReferringRouteOption.Current,
 )
 
