@@ -70,7 +70,7 @@ import heron.feature.edit_profile.generated.resources.edit_profile
 import heron.feature.edit_profile.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/editProfile/{profileHandleOrId}"
+private const val RoutePattern = "/profile/{profileHandleOrId}/edit"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -176,6 +176,7 @@ class EditProfileBindings(
                         icon = Icons.Rounded.Save,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
+                            // TODO() Implement Save Action
                         },
                     )
                 },
