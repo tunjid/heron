@@ -19,4 +19,6 @@
     <string name="reply">Reply</string>
     <string name="save">Save</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="edit_banner_icon">Edit Banner</string>
+    <string name="edit_avatar_icon">Edit Avatar</string>
 </resources>
