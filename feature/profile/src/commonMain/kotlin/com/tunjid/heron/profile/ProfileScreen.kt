@@ -103,6 +103,7 @@ import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.editProfileDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
@@ -288,6 +289,9 @@ internal fun ProfileScreen(
                         ),
                     )
                 },
+                onEditClick = {
+                    actions(Action.Navigate.To(editProfileDestination(profile = state.profile)))
+                },
             )
         },
         body = {
@@ -443,6 +447,7 @@ private fun ProfileHeader(
     onNavigate: (NavigationAction.Destination) -> Unit,
     onProfileAvatarClicked: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
+    onEditClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -485,6 +490,7 @@ private fun ProfileHeader(
                     isSignedInProfile = isSignedInProfile,
                     viewerState = viewerState,
                     onViewerStateClicked = onViewerStateClicked,
+                    onEditClick = onEditClick,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -668,6 +674,7 @@ private fun ProfileHeadline(
     isSignedInProfile: Boolean,
     viewerState: ProfileViewerState?,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
+    onEditClick: () -> Unit,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -694,7 +701,7 @@ private fun ProfileHeadline(
                         viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
                         onClick = {
-                            onViewerStateClicked(viewerState)
+                            if (isSignedInProfile) onEditClick() else onViewerStateClicked(viewerState)
                         },
                     )
                 },

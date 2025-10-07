@@ -22,6 +22,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.home.di.HomeBindings
@@ -64,6 +65,7 @@ interface AppGraph {
             @Includes signInBindings: SignInBindings,
             @Includes composeBindings: ComposeBindings,
             @Includes conversationBindings: ConversationBindings,
+            @Includes editProfileBindings: EditProfileBindings,
             @Includes feedBindings: FeedBindings,
             @Includes galleryBindings: GalleryBindings,
             @Includes homeBindings: HomeBindings,
