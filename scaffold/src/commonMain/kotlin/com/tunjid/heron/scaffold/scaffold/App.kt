@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEvent
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -42,7 +45,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThu
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
-import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
@@ -105,13 +107,12 @@ fun App(
                     ) {
                         val splitPaneState = remember {
                             SplitPaneState(
-                                paneNavigationState = paneNavigationState,
+                                paneNavigationState = { this.paneNavigationState },
                                 density = density,
                                 windowWidth = windowWidth,
                             )
                         }.also {
                             it.update(
-                                paneNavigationState = paneNavigationState,
                                 density = density,
                             )
                         }
@@ -134,22 +135,31 @@ fun App(
                                 },
                             )
                         }
-                        NavigationEventHandler(
-                            enabled = displayState::canPop,
-                            passThrough = true,
-                        ) { progress ->
-                            try {
-                                progress.collect { event ->
-                                    appState.backPreviewState.progress = event.progress
-                                    appState.backPreviewState.atStart =
-                                        event.swipeEdge == NavigationEvent.EDGE_LEFT
-                                    appState.backPreviewState.pointerOffset =
-                                        Offset(event.touchX, event.touchY).round()
+
+                        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+                            .navigationEventDispatcher
+
+                        LaunchedEffect(navigationEventDispatcher) {
+                            navigationEventDispatcher.transitionState
+                                .collect { eventState ->
+                                    when (eventState) {
+                                        is NavigationEventTransitionState.Idle -> {
+                                            appState.backPreviewState.progress = 0f
+                                        }
+
+                                        is NavigationEventTransitionState.InProgress -> {
+                                            appState.backPreviewState.progress =
+                                                eventState.latestEvent.progress
+                                            appState.backPreviewState.atStart =
+                                                eventState.latestEvent.swipeEdge == NavigationEvent.EDGE_LEFT
+                                            appState.backPreviewState.pointerOffset =
+                                                Offset(
+                                                    eventState.latestEvent.touchX,
+                                                    eventState.latestEvent.touchY,
+                                                ).round()
+                                        }
+                                    }
                                 }
-                                appState.backPreviewState.progress = 0f
-                            } finally {
-                                appState.backPreviewState.progress = 0f
-                            }
                         }
                     }
                 }

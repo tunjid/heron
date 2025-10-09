@@ -68,7 +68,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import kotlinx.datetime.Instant
 
 @Composable
@@ -147,7 +147,7 @@ private fun AttributionContent(
                     presentation = data.presentation,
                 ),
             avatar = {
-                updatedMovableStickySharedElementOf(
+                UpdatedMovableStickySharedElementOf(
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .clip(data.avatarShape)

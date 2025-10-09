@@ -33,6 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.navigationevent.NavigationEvent
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
@@ -66,6 +69,7 @@ import com.tunjid.treenav.strings.toRouteTrie
 import heron.scaffold.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 typealias ScaffoldStrings = Res.string
@@ -99,6 +103,7 @@ class AppState(
     )
 
     internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
+        private set
 
     internal val movableNavigationBar =
         movableContentOf<Modifier, () -> Boolean> { modifier, onNavItemReselected ->
@@ -169,6 +174,28 @@ class AppState(
             }
         }
 
+        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+            .navigationEventDispatcher
+
+        LaunchedEffect(navigationEventDispatcher) {
+            navigationEventDispatcher
+                .transitionState
+                .collectLatest { state ->
+                    when (state) {
+                        NavigationEventTransitionState.Idle -> DismissBehavior.None
+                        is NavigationEventTransitionState.InProgress -> {
+                            val history = navigationEventDispatcher.history.value
+                            val info = history.mergedHistory.getOrNull(history.currentIndex)
+                            when {
+                                info is SecondaryPaneCloseNavigationEventInfo -> DismissBehavior.Gesture.Slide
+                                state.direction == NavigationEvent.EDGE_NONE -> DismissBehavior.Gesture.Drag
+                                else -> DismissBehavior.None
+                            }
+                        }
+                    }
+                }
+        }
+
         return displayState
     }
 
@@ -223,18 +250,17 @@ val AppState.isShowingSplashScreen: Boolean
 
 @Stable
 internal class SplitPaneState(
-    paneNavigationState: PaneNavigationState<ThreePane, Route>,
+    paneNavigationState: () -> PaneNavigationState<ThreePane, Route>,
     density: Density,
     private val windowWidth: State<Dp>,
 ) {
 
-    private var paneNavigationState by mutableStateOf(paneNavigationState)
     internal var density by mutableStateOf(density)
 
     internal val paneAnchorState = PaneAnchorState()
 
-    internal val filteredPaneOrder: List<ThreePane> by derivedStateOf {
-        PaneRenderOrder.filter { paneNavigationState.destinationIn(it) != null }
+    internal val filteredPaneOrder by derivedStateOf {
+        PaneRenderOrder.filter { paneNavigationState().destinationIn(it) != null }
     }
 
     internal val minPaneWidth: Dp
@@ -244,6 +270,9 @@ internal class SplitPaneState(
         orientation = Orientation.Horizontal,
         maxCount = PaneRenderOrder.size,
         minSize = MinPaneWidth,
+        visibleCount = {
+            filteredPaneOrder.size
+        },
         keyAtIndex = { index ->
             filteredPaneOrder[index]
         },
@@ -253,12 +282,9 @@ internal class SplitPaneState(
         get() = windowWidth.value >= SecondaryPaneMinWidthBreakpointDp
 
     fun update(
-        paneNavigationState: PaneNavigationState<ThreePane, Route>,
         density: Density,
     ) {
-        this.paneNavigationState = paneNavigationState
         this.density = density
-        splitLayoutState.visibleCount = filteredPaneOrder.size
         paneAnchorState.updateMaxWidth(
             density = density,
             maxWidth = with(density) { windowWidth.value.roundToPx() },

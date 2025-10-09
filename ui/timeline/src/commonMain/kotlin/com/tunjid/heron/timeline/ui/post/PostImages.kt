@@ -43,7 +43,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -76,7 +76,7 @@ internal fun PostImages(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
-                paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+                paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
                     modifier = when (presentation) {
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 ->
