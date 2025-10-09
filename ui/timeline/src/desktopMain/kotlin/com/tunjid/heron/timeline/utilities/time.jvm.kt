@@ -21,7 +21,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.toJavaInstant
 
 @Composable

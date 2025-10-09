@@ -74,6 +74,7 @@ import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.feeds
 import heron.feature.profile.generated.resources.lists
 import heron.feature.profile.generated.resources.starter_packs
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -86,7 +87,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
-import kotlinx.datetime.Clock
 
 internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 

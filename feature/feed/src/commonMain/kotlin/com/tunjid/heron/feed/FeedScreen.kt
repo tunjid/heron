@@ -23,17 +23,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +45,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -93,9 +96,9 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
-import kotlinx.datetime.Clock
 
 @Composable
 internal fun FeedScreen(
@@ -131,10 +134,20 @@ private fun FeedTimeline(
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
+    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
+    val gridState = rememberLazyScrollableState(
+        init = ::LazyStaggeredGridState,
+        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
+        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
+        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
+            LazyStaggeredGridState(
+                initialFirstVisibleItemIndex = firstVisibleItemIndex,
+                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
+            )
+        },
+    )
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
-    val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
@@ -277,8 +290,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onPostClicked = { post: Post ->
-                                        pendingScrollOffsetState.value =
-                                            gridState.pendingOffsetFor(item)
+                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -290,8 +302,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
-                                        pendingScrollOffsetState.value =
-                                            gridState.pendingOffsetFor(item)
+                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 profileDestination(
@@ -308,8 +319,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onPostRecordClicked = { record, owningPostUri ->
-                                        pendingScrollOffsetState.value =
-                                            gridState.pendingOffsetFor(item)
+                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -323,8 +333,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
-                                        pendingScrollOffsetState.value =
-                                            gridState.pendingOffsetFor(item)
+                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 galleryDestination(
@@ -339,8 +348,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onReplyToPost = { post: Post ->
-                                        pendingScrollOffsetState.value =
-                                            gridState.pendingOffsetFor(item)
+                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 if (paneScaffoldState.isSignedOut) signInDestination()

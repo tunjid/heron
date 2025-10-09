@@ -34,11 +34,12 @@ import com.tunjid.heron.profile.avatar.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.dragToPop
 import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
@@ -162,7 +163,7 @@ class ProfileAvatarBindings(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .dragToPop(),
+                            .dragToPop(rememberDragToPopState()),
                     )
                     SecondaryPaneCloseBackHandler()
                 },

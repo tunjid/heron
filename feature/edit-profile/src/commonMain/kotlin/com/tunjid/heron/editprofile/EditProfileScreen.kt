@@ -77,7 +77,7 @@ import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.FormField
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_avatar_icon
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
@@ -263,7 +263,7 @@ fun ProfileAvatarEditableImage(
                 )
                 .matchParentSize(),
         )
-        paneScaffoldState.updatedMovableStickySharedElementOf(
+        paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey,
@@ -319,7 +319,7 @@ fun ProfileBannerEditableImage(
         modifier = modifier,
         contentAlignment = Alignment.BottomEnd,
     ) {
-        paneScaffoldState.updatedMovableStickySharedElementOf(
+        paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),

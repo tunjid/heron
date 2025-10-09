@@ -31,7 +31,7 @@ import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Entity(
     tableName = "lists",

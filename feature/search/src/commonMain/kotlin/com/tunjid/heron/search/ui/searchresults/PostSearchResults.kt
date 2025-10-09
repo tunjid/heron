@@ -71,8 +71,8 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Composable
 internal fun PostSearchResults(

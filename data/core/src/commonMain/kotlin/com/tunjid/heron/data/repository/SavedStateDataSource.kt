@@ -33,6 +33,7 @@ import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
@@ -48,7 +49,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.selects.select
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem

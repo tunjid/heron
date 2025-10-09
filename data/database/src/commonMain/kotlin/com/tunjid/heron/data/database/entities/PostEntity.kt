@@ -39,8 +39,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Entity(
     tableName = "posts",

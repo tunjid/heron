@@ -57,7 +57,7 @@ import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.quotes
 import heron.ui.timeline.generated.resources.repost
 import heron.ui.timeline.generated.resources.reposts
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 

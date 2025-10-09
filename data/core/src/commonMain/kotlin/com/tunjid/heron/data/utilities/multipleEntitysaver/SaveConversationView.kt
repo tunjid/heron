@@ -26,7 +26,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,

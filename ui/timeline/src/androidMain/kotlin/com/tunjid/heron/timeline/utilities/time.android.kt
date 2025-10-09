@@ -20,8 +20,8 @@ import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import java.util.Date
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toJavaInstant
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 @Composable
 actual fun Instant.formatDate(): String {

@@ -30,6 +30,7 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
+import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +39,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import okio.IOException
 
 sealed class WriteQueue {

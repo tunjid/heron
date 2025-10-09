@@ -22,7 +22,7 @@ import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity.Partial.FetchedAt
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Entity(
     tableName = "timelinePreferences",

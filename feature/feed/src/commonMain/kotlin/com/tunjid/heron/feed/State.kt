@@ -32,7 +32,7 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 

@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**

@@ -26,8 +26,8 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.fetchedAtPartial
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 
 @Dao
 interface TimelineDao {

@@ -37,11 +37,11 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.filter
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 
 data class TimelineState(
     val timeline: Timeline,

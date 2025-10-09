@@ -34,7 +34,7 @@ import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.stubPostEntity
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 internal fun FeedViewPost.feedItemEntity(
     sourceId: String,

@@ -40,7 +40,7 @@ import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.multiple_post_subscription
 import heron.feature.notifications.generated.resources.post_subscription
 import heron.feature.notifications.generated.resources.post_subscription_description
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

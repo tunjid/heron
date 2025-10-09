@@ -19,7 +19,7 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable

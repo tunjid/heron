@@ -20,7 +20,7 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 object FakeTimeline {
 

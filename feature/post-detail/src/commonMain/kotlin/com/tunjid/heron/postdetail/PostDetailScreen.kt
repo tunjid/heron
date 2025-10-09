@@ -22,18 +22,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -75,7 +78,7 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 @Composable
 internal fun PostDetailScreen(
@@ -84,9 +87,19 @@ internal fun PostDetailScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
+    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
+    val gridState = rememberLazyScrollableState(
+        init = ::LazyStaggeredGridState,
+        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
+        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
+        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
+            LazyStaggeredGridState(
+                initialFirstVisibleItemIndex = firstVisibleItemIndex,
+                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
+            )
+        },
+    )
     val items by rememberUpdatedState(state.items)
-    val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val navigateTo = remember(actions) {
@@ -190,7 +203,7 @@ internal fun PostDetailScreen(
                                 )
                             },
                             onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                pendingScrollOffset = gridState.pendingOffsetFor(item)
                                 navigateTo(
                                     profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
@@ -214,7 +227,7 @@ internal fun PostDetailScreen(
                                 )
                             },
                             onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                pendingScrollOffset = gridState.pendingOffsetFor(item)
                                 navigateTo(
                                     galleryDestination(
                                         post = post,
@@ -227,7 +240,7 @@ internal fun PostDetailScreen(
                                 )
                             },
                             onReplyToPost = { post: Post ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                pendingScrollOffset = gridState.pendingOffsetFor(item)
                                 navigateTo(
                                     if (paneScaffoldState.isSignedOut) signInDestination()
                                     else composePostDestination(
@@ -240,7 +253,7 @@ internal fun PostDetailScreen(
                                 )
                             },
                             onPostMetadataClicked = onPostMetadataClicked@{ postMetadata ->
-                                pendingScrollOffsetState.value = gridState.pendingOffsetFor(item)
+                                pendingScrollOffset = gridState.pendingOffsetFor(item)
                                 when (postMetadata) {
                                     is PostMetadata.Likes -> navigateTo(
                                         postLikesDestination(

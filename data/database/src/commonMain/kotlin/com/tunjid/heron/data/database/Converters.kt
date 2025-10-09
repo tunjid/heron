@@ -42,7 +42,7 @@ import com.tunjid.heron.data.core.types.ThreadGateId
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 internal class DateConverters {
     @TypeConverter

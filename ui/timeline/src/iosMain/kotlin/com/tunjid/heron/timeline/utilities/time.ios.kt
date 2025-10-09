@@ -17,7 +17,7 @@
 package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.toNSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterShortStyle

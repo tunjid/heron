@@ -36,10 +36,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -57,11 +57,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,7 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
@@ -169,7 +171,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.followed_by_others
@@ -183,8 +185,8 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -478,7 +480,6 @@ private fun timelineTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfileHeader(
     paneScaffoldState: PaneScaffoldState,
@@ -648,7 +649,7 @@ private fun ProfileBanner(
     profile: Profile,
     avatarSharedElementKey: String,
 ) = with(paneScaffoldState) {
-    paneScaffoldState.updatedMovableStickySharedElementOf(
+    paneScaffoldState.UpdatedMovableStickySharedElementOf(
         sharedContentState = rememberSharedContentState(
             key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
         ),
@@ -682,7 +683,7 @@ private fun ProfileBanner(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileAvatar(
     modifier: Modifier = Modifier,
@@ -727,7 +728,7 @@ private fun ProfileAvatar(
                     scaleY = scale.value
                 },
         )
-        paneScaffoldState.updatedMovableStickySharedElementOf(
+        paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey,
@@ -1006,10 +1007,20 @@ private fun ProfileTimeline(
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
+    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
+    val gridState = rememberLazyScrollableState(
+        init = ::LazyStaggeredGridState,
+        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
+        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
+        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
+            LazyStaggeredGridState(
+                initialFirstVisibleItemIndex = firstVisibleItemIndex,
+                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
+            )
+        },
+    )
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
-    val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
@@ -1122,8 +1133,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostClicked = { post: Post ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
+                                    pendingScrollOffset = gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             recordDestination(
@@ -1135,8 +1145,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onProfileClicked = { profile: Profile, post: Post, quotingPostUri: PostUri? ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
+                                    pendingScrollOffset = gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             profileDestination(
@@ -1153,8 +1162,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostRecordClicked = { record, owningPostUri ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
+                                    pendingScrollOffset = gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             recordDestination(
@@ -1168,8 +1176,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
+                                    pendingScrollOffset = gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             galleryDestination(
@@ -1184,8 +1191,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onReplyToPost = { post: Post ->
-                                    pendingScrollOffsetState.value =
-                                        gridState.pendingOffsetFor(item)
+                                    pendingScrollOffset = gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
                                             if (paneScaffoldState.isSignedOut) signInDestination()

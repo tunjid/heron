@@ -38,6 +38,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,7 +48,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.response.AtpResponse
 

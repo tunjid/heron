@@ -53,8 +53,8 @@ import com.tunjid.heron.timeline.ui.post.PostVideo
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

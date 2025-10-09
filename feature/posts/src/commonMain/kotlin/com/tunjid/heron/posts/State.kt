@@ -27,7 +27,7 @@ import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 

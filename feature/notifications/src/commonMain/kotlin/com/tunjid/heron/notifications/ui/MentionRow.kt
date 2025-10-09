@@ -23,7 +23,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Composable
 fun MentionRow(

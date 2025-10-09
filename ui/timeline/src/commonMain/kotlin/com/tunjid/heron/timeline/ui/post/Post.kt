@@ -93,13 +93,13 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.dismiss
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.label_source
 import heron.ui.timeline.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.view_labeler
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -181,7 +181,7 @@ private fun AttributionContent(
                     presentation = data.presentation,
                 ),
             avatar = {
-                updatedMovableStickySharedElementOf(
+                UpdatedMovableStickySharedElementOf(
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .clip(data.avatarShape)

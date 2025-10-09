@@ -50,7 +50,7 @@ import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
@@ -96,7 +96,7 @@ fun SuggestedStarterPack(
                     }
                     else starterPackWithMembers.members.take(count)
                         .forEachIndexed { index, listMember ->
-                            updatedMovableStickySharedElementOf(
+                            UpdatedMovableStickySharedElementOf(
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()

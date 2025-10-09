@@ -81,6 +81,7 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -92,7 +93,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did

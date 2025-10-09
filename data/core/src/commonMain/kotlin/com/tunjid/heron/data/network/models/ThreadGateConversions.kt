@@ -24,7 +24,7 @@ import app.bsky.feed.ThreadgateListRule
 import app.bsky.feed.ThreadgateMentionRule
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.utilities.asJsonContent
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import sh.christian.ozone.api.AtUri
 
 fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(

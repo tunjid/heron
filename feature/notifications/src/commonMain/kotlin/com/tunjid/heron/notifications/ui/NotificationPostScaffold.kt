@@ -53,8 +53,8 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
-import kotlinx.datetime.Instant
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import kotlin.time.Instant
 
 @Composable
 internal fun NotificationPostScaffold(
@@ -163,7 +163,7 @@ private fun PostAttribution(
     val post = notification.associatedPost
     AttributionLayout(
         avatar = {
-            updatedMovableStickySharedElementOf(
+            UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clip(avatarShape)

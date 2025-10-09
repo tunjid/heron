@@ -21,8 +21,8 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 
 @Dao
 interface NotificationsDao {

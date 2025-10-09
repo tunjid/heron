@@ -28,7 +28,7 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Entity(
     tableName = "listMembers",

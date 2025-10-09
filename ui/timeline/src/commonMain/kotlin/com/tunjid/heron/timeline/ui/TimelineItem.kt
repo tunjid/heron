@@ -68,7 +68,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.see_more_posts
 import heron.ui.timeline.generated.resources.show_more
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

@@ -86,7 +86,7 @@ import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.remove_quoted_post
 import heron.feature.compose.generated.resources.remove_shared_record
@@ -274,7 +274,7 @@ private fun ReplyingTo(
         is Post.Create.Reply -> AuthorAndPost(
             modifier = modifier,
             avatar = {
-                paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+                paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
                     modifier = Modifier
                         .size(AvatarSize),
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
