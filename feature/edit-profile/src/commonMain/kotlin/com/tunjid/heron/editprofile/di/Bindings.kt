@@ -176,7 +176,15 @@ class EditProfileBindings(
                         icon = Icons.Rounded.Save,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
-                            // TODO() Implement Save Action
+                            viewModel.accept(
+                                Action.SaveProfile(
+                                    profileId = state.profile.did,
+                                    displayName = state.profile.displayName.orEmpty(),
+                                    bio = state.profile.description.orEmpty(),
+                                    avatar = state.updatedAvatar,
+                                    banner = state.updatedBanner,
+                                ),
+                            )
                         },
                     )
                 },
