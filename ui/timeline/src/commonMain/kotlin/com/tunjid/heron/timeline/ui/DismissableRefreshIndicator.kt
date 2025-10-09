@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicatorDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.PositionalThreshold
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -37,21 +36,21 @@ fun DismissableRefreshIndicator(
     isRefreshing: Boolean,
     onDismissRequest: () -> Unit,
 ) {
-    val threshold = PositionalThreshold
+    val maxDistance = PullToRefreshDefaults.IndicatorMaxDistance
     Box(
         modifier = modifier,
     ) {
         PullToRefreshDefaults.LoadingIndicator(
             state = state,
             isRefreshing = isRefreshing,
-            threshold = threshold,
+            maxDistance = maxDistance,
         )
         if (isRefreshing) Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset {
                     val indicatorHeight = LoadingIndicatorDefaults.ContainerHeight.toPx()
-                    val indicatorTranslation = state.distanceFraction * threshold.toPx()
+                    val indicatorTranslation = state.distanceFraction * maxDistance.toPx()
                     IntOffset(
                         x = 0,
                         y = (indicatorTranslation - indicatorHeight).roundToInt(),

@@ -37,7 +37,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -51,7 +51,7 @@ fun ProfileSearchResult(
         modifier = Modifier
             .clickable { onProfileClicked(result) },
         avatar = {
-            updatedMovableStickySharedElementOf(
+            UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(result) },
