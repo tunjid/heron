@@ -53,7 +53,7 @@ allprojects {
         resolutionStrategy.eachDependency {
             if (requested.module == libs.compose.multiplatform.runtime.get().module) {
                 // TODO: https://issuetracker.google.com/issues/420460328
-                useVersion("1.8.2")
+                useVersion("1.10.0-alpha02")
             }
         }
     }
