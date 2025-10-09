@@ -23,27 +23,33 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.editprofile.di.profileHandleOrId
 import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.treenav.strings.Route
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     val profile: Profile,
+    val avatarSharedElementKey: String,
     @Transient val updatedAvatar: MediaItem.Photo? = null,
     @Transient val updatedBanner: MediaItem.Photo? = null,
     @Transient
     val messages: List<ScaffoldMessage> = emptyList(),
 )
 
+@OptIn(ExperimentalUuidApi::class)
 fun State(route: Route) = State(
     profile = (route.model as? Profile) ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
         handle = ProfileHandle(route.profileHandleOrId.id),
         avatar = null,
     ),
+    avatarSharedElementKey = route.avatarSharedElementKey ?: Uuid.random().toString(),
 )
 
 sealed class Action(val key: String) {

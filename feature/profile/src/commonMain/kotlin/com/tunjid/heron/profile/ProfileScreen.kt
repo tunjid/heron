@@ -21,7 +21,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,7 +44,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
@@ -66,6 +65,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -290,7 +291,14 @@ internal fun ProfileScreen(
                     )
                 },
                 onEditClick = {
-                    actions(Action.Navigate.To(editProfileDestination(profile = state.profile)))
+                    actions(
+                        Action.Navigate.To(
+                            editProfileDestination(
+                                profile = state.profile,
+                                avatarSharedElementKey = state.avatarSharedElementKey,
+                            ),
+                        ),
+                    )
                 },
             )
         },
@@ -426,6 +434,7 @@ private fun timelineTabs(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfileHeader(
     paneScaffoldState: PaneScaffoldState,
@@ -448,19 +457,38 @@ private fun ProfileHeader(
     onProfileAvatarClicked: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onEditClick: () -> Unit,
-) {
+) = with(paneScaffoldState) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(),
     ) {
         ProfileBanner(
             modifier = Modifier
                 .align(Alignment.TopCenter),
+            paneScaffoldState = paneScaffoldState,
             headerState = headerState,
             profile = profile,
+            avatarSharedElementKey = avatarSharedElementKey,
+        )
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        Box(
+            modifier = Modifier
+                .offset {
+                    headerState.bioOffset()
+                }
+                .padding(top = headerState.bioTopPadding)
+                .paneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
+                    ),
+                    zIndexInOverlay = SurfaceZIndex,
+                )
+                .profileBioTabBackground {
+                    surfaceColor.copy(alpha = headerState.bioAlpha)
+                },
         )
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .padding(top = headerState.bioTopPadding)
                 .offset {
                     headerState.bioOffset()
@@ -469,15 +497,12 @@ private fun ProfileHeader(
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = headerState.bioAlpha),
-                        shape = remember {
-                            RoundedCornerShape(
-                                topStart = 16.dp,
-                                topEnd = 16.dp,
-                            )
-                        },
-                    )
+                    .drawBehind {
+                        drawRect(
+                            color = surfaceColor.copy(alpha = headerState.bioAlpha),
+                            topLeft = Offset(x = 0f, y = ProfileBioTabHeight.toPx()),
+                        )
+                    }
                     .padding(horizontal = 16.dp)
                     .graphicsLayer {
                         alpha = headerState.bioAlpha
@@ -566,16 +591,23 @@ private fun ProfileBio(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfileBanner(
     modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
     headerState: HeaderState,
     profile: Profile,
-) {
-    AsyncImage(
+    avatarSharedElementKey: String,
+) = with(paneScaffoldState) {
+    paneScaffoldState.updatedMovableStickySharedElementOf(
+        sharedContentState = rememberSharedContentState(
+            key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
+        ),
+        zIndexInOverlay = BannerZIndex,
         modifier = modifier
             .fillMaxWidth()
-            .height(headerState.profileBannerHeight)
+            .aspectRatio(BannerAspectRatio)
             .graphicsLayer {
                 alpha = headerState.bannerAlpha
             }
@@ -584,7 +616,7 @@ private fun ProfileBanner(
                 radius = ::BannerBlurRadius,
                 progress = headerState::progress,
             ),
-        args = remember(
+        state = remember(
             key1 = profile.banner?.uri,
             key2 = profile.displayName,
             key3 = profile.handle,
@@ -595,6 +627,9 @@ private fun ProfileBanner(
                 contentDescription = profile.displayName ?: profile.handle.id,
                 shape = RoundedPolygonShape.Rectangle,
             )
+        },
+        sharedElement = { state, modifier ->
+            AsyncImage(state, modifier)
         },
     )
 }
@@ -610,7 +645,7 @@ private fun ProfileAvatar(
     profile: Profile,
     avatarSharedElementKey: String,
     onProfileAvatarClicked: () -> Unit,
-) {
+) = with(paneScaffoldState) {
     val statusBarHeight = UiTokens.statusBarHeight
     Box(
         modifier = modifier
@@ -632,6 +667,12 @@ private fun ProfileAvatar(
             trackColor = MaterialTheme.colorScheme.surface,
             amplitude = { if (showWave) 1f else 0f },
             modifier = Modifier
+                .paneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
+                    ),
+                    zIndexInOverlay = AvatarHaloZIndex,
+                )
                 .fillMaxSize()
                 .graphicsLayer {
                     scaleX = scale.value
@@ -644,6 +685,7 @@ private fun ProfileAvatar(
                     key = avatarSharedElementKey,
                 )
             },
+            zIndexInOverlay = AvatarZIndex,
             modifier = modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
@@ -701,7 +743,8 @@ private fun ProfileHeadline(
                         viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
                         onClick = {
-                            if (isSignedInProfile) onEditClick() else onViewerStateClicked(viewerState)
+                            if (isSignedInProfile) onEditClick()
+                            else onViewerStateClicked(viewerState)
                         },
                     )
                 },
@@ -1133,11 +1176,11 @@ private class HeaderState(
     val headerState: CollapsingHeaderState,
 ) {
     var width by mutableStateOf(160.dp * 3)
+    private val profileBannerHeight by derivedStateOf { width / BannerAspectRatio }
 
     val bioTopPadding get() = profileBannerHeight - sizeToken
     val bioAlpha get() = 1f - headerState.progress
 
-    val profileBannerHeight by derivedStateOf { width * (9 / 16f) }
     val bannerAlpha get() = 1f - min(0.9f, (headerState.progress * 1.6f))
 
     val avatarTopPadding get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)

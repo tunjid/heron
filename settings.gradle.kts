@@ -75,6 +75,7 @@ include(
     ":feature:template",
     ":ui:core",
     ":ui:media",
+    ":ui:profile",
     ":ui:tiling",
     ":ui:timeline",
 )

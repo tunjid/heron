@@ -213,6 +213,6 @@ private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 private val RootAppBarBlurRadius = 60.dp
 
 private const val SignedInUserAvatarSharedElementKey = "self"
-private const val PoppableDestinationTopAppBarSharedElementZIndex = 2f
+private const val PoppableDestinationTopAppBarSharedElementZIndex = 10f
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
