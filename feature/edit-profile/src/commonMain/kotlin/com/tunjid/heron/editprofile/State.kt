@@ -55,6 +55,14 @@ sealed class Action(val key: String) {
         val item: MediaItem.Photo,
     ) : Action(key = "BannerPicked")
 
+    data class SaveProfile(
+        val profileId: ProfileId,
+        val displayName: String,
+        val bio: String,
+        val avatar: MediaItem.Photo?,
+        val banner: MediaItem.Photo?,
+    ) : Action(key = "SaveProfile")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
