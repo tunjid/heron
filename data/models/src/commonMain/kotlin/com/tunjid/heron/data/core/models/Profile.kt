@@ -69,6 +69,15 @@ data class Profile(
         val createdFeedGeneratorCount: Long,
         val createdStarterPackCount: Long,
     )
+
+    @Serializable
+    data class Update(
+        val profileId: ProfileId,
+        val displayName: String,
+        val bio: String,
+        val avatar: MediaFile.Photo?,
+        val banner: MediaFile.Photo?,
+    )
 }
 
 @Serializable
