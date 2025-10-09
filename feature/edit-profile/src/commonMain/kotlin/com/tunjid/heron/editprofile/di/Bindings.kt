@@ -43,6 +43,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
+import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
@@ -153,7 +154,7 @@ class EditProfileBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { AppBarTitle(stringResource(Res.string.edit_profile)) },
+                        transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

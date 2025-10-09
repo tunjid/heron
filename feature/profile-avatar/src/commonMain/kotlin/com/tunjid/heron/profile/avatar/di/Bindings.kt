@@ -17,12 +17,10 @@
 package com.tunjid.heron.profile.avatar.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Profile
@@ -148,8 +146,6 @@ class ProfileAvatarBindings(
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        // Limit width so tabs may be tapped
-                        modifier = Modifier.width(60.dp),
                         transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )

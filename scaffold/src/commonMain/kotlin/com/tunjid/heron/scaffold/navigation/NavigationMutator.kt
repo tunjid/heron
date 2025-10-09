@@ -152,9 +152,11 @@ fun conversationDestination(
 
 fun editProfileDestination(
     profile: Profile,
+    avatarSharedElementKey: String?,
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${profile.did.id}/edit",
     models = listOf(profile),
+    avatarSharedElementKey = avatarSharedElementKey,
     referringRouteOption = ReferringRouteOption.Current,
 )
 

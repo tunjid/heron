@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.editprofile
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -27,9 +29,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Icon
@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -52,13 +53,24 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
+import com.tunjid.heron.profile.AvatarHaloZIndex
+import com.tunjid.heron.profile.AvatarZIndex
+import com.tunjid.heron.profile.BannerAspectRatio
+import com.tunjid.heron.profile.BannerZIndex
+import com.tunjid.heron.profile.SurfaceZIndex
+import com.tunjid.heron.profile.profileBioTabBackground
+import com.tunjid.heron.profile.withProfileAvatarHaloSharedElementPrefix
+import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
+import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_avatar_icon
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun EditProfileScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -88,21 +100,44 @@ internal fun EditProfileScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .fillMaxSize(),
     ) {
         EditProfileHeader(
+            modifier = Modifier
+                .zIndex(1f),
+            paneScaffoldState = paneScaffoldState,
+            avatarSharedElementKey = state.avatarSharedElementKey,
             profile = state.profile,
             onBannerEditClick = { bannerPicker() },
             onAvatarEditClick = { avatarPicker() },
             avatarFile = state.updatedAvatar,
             bannerFile = state.updatedBanner,
         )
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        val bioTabColorState = animateColorAsState(
+            if (paneScaffoldState.inPredictiveBack) Color.Transparent
+            else surfaceColor,
+        )
+        Box(
+            modifier = with(paneScaffoldState) {
+                Modifier
+                    .zIndex(0f)
+                    .paneStickySharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
+                        ),
+                        zIndexInOverlay = SurfaceZIndex,
+                    )
+                    .profileBioTabBackground(bioTabColorState::value)
+            },
+        )
     }
 }
 
 @Composable
 fun EditProfileHeader(
+    paneScaffoldState: PaneScaffoldState,
+    avatarSharedElementKey: String,
     avatarFile: MediaItem.Photo?,
     bannerFile: MediaItem.Photo?,
     profile: Profile,
@@ -118,8 +153,10 @@ fun EditProfileHeader(
         ProfileBannerEditableImage(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(16f / 9f)
+                .aspectRatio(BannerAspectRatio)
                 .align(Alignment.TopCenter),
+            paneScaffoldState = paneScaffoldState,
+            avatarSharedElementKey = avatarSharedElementKey,
             profile = profile,
             onEditClick = onBannerEditClick,
             localFile = bannerFile,
@@ -130,6 +167,8 @@ fun EditProfileHeader(
                 .align(Alignment.BottomStart)
                 .offset(x = 16.dp, y = 40.dp)
                 .zIndex(2f),
+            paneScaffoldState = paneScaffoldState,
+            avatarSharedElementKey = avatarSharedElementKey,
             profile = profile,
             shape = CircleShape,
             onEditClick = onAvatarEditClick,
@@ -139,29 +178,58 @@ fun EditProfileHeader(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileAvatarEditableImage(
+    paneScaffoldState: PaneScaffoldState,
+    avatarSharedElementKey: String,
     profile: Profile,
     localFile: MediaItem.Photo?,
     shape: Shape,
-    size: Dp? = null,
+    size: Dp,
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit,
-) {
+) = with(paneScaffoldState) {
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .size(size),
         contentAlignment = Alignment.BottomEnd,
     ) {
-        AsyncImage(
+        Box(
             modifier = Modifier
-                .then(if (size != null) Modifier.size(size) else Modifier)
+                .paneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
+                    ),
+                    zIndexInOverlay = AvatarHaloZIndex,
+                )
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = CircleShape,
+                )
+                .matchParentSize(),
+        )
+        paneScaffoldState.updatedMovableStickySharedElementOf(
+            sharedContentState = with(paneScaffoldState) {
+                rememberSharedContentState(
+                    key = avatarSharedElementKey,
+                )
+            },
+            zIndexInOverlay = AvatarZIndex,
+            modifier = Modifier
+                .padding(4.dp)
+                .matchParentSize()
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            args = rememberEditableImageArgs(
+            state = rememberEditableImageArgs(
                 profile = profile,
                 localFile = localFile,
                 remoteUri = profile.avatar?.uri,
+                shape = RoundedPolygonShape.Circle,
             ),
+            sharedElement = { state, modifier ->
+                AsyncImage(state, modifier)
+            },
         )
 
         IconButton(
@@ -183,8 +251,11 @@ fun ProfileAvatarEditableImage(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileBannerEditableImage(
+    paneScaffoldState: PaneScaffoldState,
+    avatarSharedElementKey: String,
     profile: Profile,
     localFile: MediaItem.Photo?,
     onEditClick: () -> Unit,
@@ -194,15 +265,25 @@ fun ProfileBannerEditableImage(
         modifier = modifier,
         contentAlignment = Alignment.BottomEnd,
     ) {
-        AsyncImage(
+        paneScaffoldState.updatedMovableStickySharedElementOf(
+            sharedContentState = with(paneScaffoldState) {
+                rememberSharedContentState(
+                    key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
+                )
+            },
+            zIndexInOverlay = BannerZIndex,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant),
-            args = rememberEditableImageArgs(
+            state = rememberEditableImageArgs(
                 profile = profile,
                 localFile = localFile,
                 remoteUri = profile.banner?.uri,
+                shape = RoundedPolygonShape.Rectangle,
             ),
+            sharedElement = { state, modifier ->
+                AsyncImage(state, modifier)
+            },
         )
 
         IconButton(
@@ -229,6 +310,7 @@ private fun rememberEditableImageArgs(
     profile: Profile,
     localFile: MediaItem.Photo?,
     remoteUri: String?,
+    shape: RoundedPolygonShape,
 ): ImageArgs {
     return remember(localFile?.path, remoteUri) {
         val contentDescription = profile.displayName ?: profile.handle.id
@@ -237,14 +319,14 @@ private fun rememberEditableImageArgs(
                 item = localFile,
                 contentScale = ContentScale.Crop,
                 contentDescription = contentDescription,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = shape,
             )
         else
             ImageArgs(
                 url = remoteUri,
                 contentScale = ContentScale.Crop,
                 contentDescription = contentDescription,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = shape,
             )
     }
 }

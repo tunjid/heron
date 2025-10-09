@@ -31,6 +31,7 @@ kotlin {
                 implementation(project(":data:core"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
+                implementation(project(":ui:profile"))
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
