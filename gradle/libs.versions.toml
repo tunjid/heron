@@ -1,7 +1,7 @@
 [versions]
 agp = "8.12.1"
 android-desugar-jdk-libs = "2.1.5"
-androidx-activityCompose = "1.12.0-alpha02"
+androidx-activityCompose = "1.12.0-alpha09"
 androidx-appcompat = "1.7.1"
 androidx-browser = "1.9.0"
 androidx-constraintlayout = "2.2.1"
@@ -12,7 +12,6 @@ androidx-graphics-core = "1.0.3"
 androidx-graphics-path = "1.0.1"
 androidx-graphics-shapes = "1.0.1"
 androidx-media3 = "1.8.0"
-androidxNavigationEvent = "1.0.0-alpha02"
 androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 androidx-espresso-core = "3.7.0"
@@ -26,27 +25,30 @@ androidx-material = "1.12.0"
 androidx-test-junit = "1.3.0"
 coil = "3.3.0"
 connectivity = "2.2.0"
-compose-multiplatform = "1.8.2"
+compose-multiplatform = "1.10.0-alpha02"
 crypto = "0.4.0"
 # See https://github.com/JetBrains/compose-multiplatform-core/pull/1868
-compose-multiplatform-material3 = "1.9.0-alpha03"
+compose-multiplatform-material3 = "1.10.0-alpha02"
 compose-material-icons = "1.7.3"
 junit = "4.13.2"
-kotlin = "2.2.10"
+kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.6.2"
 kotlinx-serialization = "1.9.0"
-ksp = "2.2.10-2.0.2"
+ksp = "2.2.20-2.0.3"
 ktor = "3.2.3"
-metro = "0.6.3"
+metro = "0.6.9"
+navigationEventCompose = "1.0.0-alpha01"
+navigationEvent = "1.0.0-alpha09"
+navigation3 = "1.0.0-alpha10"
 okio = "3.16.0"
 ozone-atproto = "0.3.3"
-savedstate-multiplatform = "1.3.2"
+savedstate-multiplatform = "1.3.4"
 tunjid-state-holder = "1.1.0"
 tunjid-tiler = "1.2.0"
-tunjid-tree-nav = "0.0.43"
-tunjid-composables = "0.0.21"
-vinceglb-filekit = "0.11.0"
+tunjid-tree-nav = "0.0.44a"
+tunjid-composables = "0.0.22"
+vinceglb-filekit = "0.12.0"
 junit-jupiter = "5.13.4"
 aboutLibraries = "12.2.4"
 
@@ -81,7 +83,6 @@ androidx-media3-exoplayer-dash = { group = "androidx.media3", name = "media3-exo
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "androidx-media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "androidx-media3" }
-androidx-navigation-event = { group = "androidx.navigationevent", name = "navigationevent", version.ref = "androidxNavigationEvent" }
 androidx-room-GradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
@@ -152,6 +153,9 @@ ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serializatio
 ktor-io-core = { group = "io.ktor", name = "ktor-io", version.ref = "ktor" }
 ktor-io-jvm = { group = "io.ktor", name = "ktor-io-jvm", version.ref = "ktor" }
 metro-gradlePlugin = { group = "dev.zacsweers.metro", name = "gradle-plugin", version.ref = "metro" }
+navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+navigation-event = { group = "androidx.navigationevent", name = "navigationevent", version.ref = "navigationEvent" }
+navigation-event-compose = { group = "org.jetbrains.androidx.navigationevent", name = "navigationevent-compose", version.ref = "navigationEventCompose" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 ozone-atproto-runtime = { group = "sh.christian.ozone", name = "api-gen-runtime", version.ref = "ozone-atproto" }
 tunjid-composables = { group = "com.tunjid.composables", name = "composables", version.ref = "tunjid-composables" }
