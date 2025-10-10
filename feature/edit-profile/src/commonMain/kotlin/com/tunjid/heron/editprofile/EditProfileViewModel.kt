@@ -17,13 +17,21 @@
 package com.tunjid.heron.editprofile
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.MediaFile
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -31,9 +39,14 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
 
 internal typealias EditProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -48,6 +61,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualEditProfileViewModel(
     navActions: (NavigationMutation) -> Unit,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -66,6 +80,10 @@ class ActualEditProfileViewModel(
                     )
                     is Action.AvatarPicked -> action.flow.avatarPickedMutations()
                     is Action.BannerPicked -> action.flow.bannerPickedMutations()
+                    is Action.SaveProfile -> action.flow.saveProfileMutations(
+                        navActions = navActions,
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -80,3 +98,37 @@ private fun Flow<Action.BannerPicked>.bannerPickedMutations(): Flow<Mutation<Sta
     mapToMutation {
         copy(updatedBanner = it.item)
     }
+
+private fun Flow<Action.SaveProfile>.saveProfileMutations(
+    navActions: (NavigationMutation) -> Unit,
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+
+        val updateWrite = Writable.ProfileUpdate(
+            update = Profile.Update(
+                profileId = action.profileId,
+                displayName = action.displayName,
+                bio = action.bio,
+                avatar = action.avatar?.toMediaFile(),
+                banner = action.banner?.toMediaFile(),
+            ),
+        )
+
+        writeQueue.enqueue(updateWrite)
+        writeQueue.awaitDequeue(updateWrite)
+
+        emitAll(
+            flowOf(Action.Navigate.Pop).consumeNavigationActions(
+                navigationMutationConsumer = navActions,
+            ),
+        )
+    }
+
+private suspend fun MediaItem.Photo.toMediaFile(): MediaFile.Photo {
+    return MediaFile.Photo(
+        data = readBytes(),
+        width = size.width.toLong(),
+        height = size.height.toLong(),
+    )
+}

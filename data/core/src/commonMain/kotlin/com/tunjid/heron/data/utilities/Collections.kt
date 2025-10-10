@@ -31,12 +31,15 @@ import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
     const val Post = "app.bsky.feed.post"
+    const val Profile = "app.bsky.actor.profile"
     const val Repost = "app.bsky.feed.repost"
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
     const val List = "app.bsky.graph.list"
     const val StarterPack = "app.bsky.graph.list"
     const val FeedGenerator = "app.bsky.feed.generator"
+
+    val SelfRecordKey = RKey("self")
 
     // TODO: This should be more specific
     fun rKey(uri: GenericUri) = RKey(
