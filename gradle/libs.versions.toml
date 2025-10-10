@@ -21,7 +21,7 @@ burst = "2.8.1"
 javaDiffUtils = "4.16"
 # TODO: Compose runtime crashes when this is bumped
 # Figure out what changed between versions 2.9.1 and 2.9.2
-lifecycle = "2.9.1"
+lifecycle-multiplatform = "2.9.1"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.3.0"
 coil = "3.3.0"
@@ -41,7 +41,7 @@ ktor = "3.2.3"
 metro = "0.6.3"
 okio = "3.16.0"
 ozone-atproto = "0.3.3"
-saved-state = "1.3.2"
+savedstate-multiplatform = "1.3.2"
 tunjid-state-holder = "1.1.0"
 tunjid-tiler = "1.2.0"
 tunjid-tree-nav = "0.0.43"
@@ -91,21 +91,21 @@ coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref 
 coil-gif-android = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 coil-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
 compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
-compose-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
-compose-animation = { group = "org.jetbrains.compose.animation", name = "animation", version.ref = "compose-multiplatform" }
-compose-foundation-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
-compose-foundation-layout = { group = "org.jetbrains.compose.foundation", name = "foundation-layout", version.ref = "compose-multiplatform" }
-compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
-compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-material-icons" }
-compose-material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform-material3" }
-compose-gradlePlugin = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose-multiplatform" }
-compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
-compose-ui-test = { group = "org.jetbrains.compose.ui", name = "ui-test-junit4", version.ref = "compose-multiplatform" }
-compose-ui-testManifest = { group = "org.jetbrains.compose.ui", name = "ui-test-manifest", version.ref = "compose-multiplatform" }
-compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
-compose-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
-compose-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
+compose-multiplatform-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
+compose-multiplatform-animation = { group = "org.jetbrains.compose.animation", name = "animation", version.ref = "compose-multiplatform" }
+compose-multiplatform-foundation-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
+compose-multiplatform-foundation-layout = { group = "org.jetbrains.compose.foundation", name = "foundation-layout", version.ref = "compose-multiplatform" }
+compose-multiplatform-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
+compose-multiplatform-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-core", version.ref = "compose-material-icons" }
+compose-multiplatform-material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
+compose-multiplatform-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform-material3" }
+compose-multiplatform-gradlePlugin = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose-multiplatform" }
+compose-multiplatform-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-test = { group = "org.jetbrains.compose.ui", name = "ui-test-junit4", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-testManifest = { group = "org.jetbrains.compose.ui", name = "ui-test-manifest", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
 codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.11.0" }
 connectivity-core = { module = "dev.jordond.connectivity:connectivity-core", version.ref = "connectivity" }
 connectivity-device = { module = "dev.jordond.connectivity:connectivity-device", version.ref = "connectivity" }
@@ -117,12 +117,12 @@ crypto-apple = { module = "dev.whyoleg.cryptography:cryptography-provider-apple"
 filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "vinceglb-filekit" }
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "vinceglb-filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
-lifecycle-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }
-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
-savedstate-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "saved-state" }
-savedstate-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "saved-state" }
+lifecycle-multiplatform-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle-multiplatform" }
+lifecycle-multiplatform-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-multiplatform" }
+lifecycle-multiplatform-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle-multiplatform" }
+lifecycle-multiplatform-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-multiplatform" }
+savedstate-multiplatform-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "savedstate-multiplatform" }
+savedstate-multiplatform-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "savedstate-multiplatform" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 java-diff-utils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "javaDiffUtils" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit-jupiter" }

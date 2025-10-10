@@ -45,7 +45,7 @@ fun Project.configureKotlinMultiplatform(
 
             named("commonMain") {
                 dependencies {
-                    implementation(libs.compose.runtime)
+                    implementation(libs.compose.multiplatform.runtime)
                 }
             }
         }
