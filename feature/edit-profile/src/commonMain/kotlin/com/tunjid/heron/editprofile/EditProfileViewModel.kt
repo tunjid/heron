@@ -30,6 +30,7 @@ import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -102,28 +103,21 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
+    mapLatestToManyMutations { action ->
 
-        val updateWrite = withContext(Dispatchers.IO) {
-            Writable.ProfileUpdate(
-                update = Profile.Update(
-                    profileId = action.profileId,
-                    displayName = action.displayName,
-                    bio = action.bio,
-                    avatar = action.avatar?.toMediaFile(),
-                    banner = action.banner?.toMediaFile(),
-                ),
-            )
-        }
+        val updateWrite = Writable.ProfileUpdate(
+            update = Profile.Update(
+                profileId = action.profileId,
+                displayName = action.displayName,
+                bio = action.bio,
+                avatar = action.avatar?.toMediaFile(),
+                banner = action.banner?.toMediaFile(),
+            ),
+        )
 
         writeQueue.enqueue(updateWrite)
         writeQueue.awaitDequeue(updateWrite)
 
-        emit {
-            copy(
-                messages = messages + ScaffoldMessage.Text("Profile updated successfully!"),
-            )
-        }
         emitAll(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
                 navigationMutationConsumer = navActions,
