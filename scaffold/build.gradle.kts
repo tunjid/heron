@@ -48,15 +48,15 @@ kotlin {
 
                 implementation(libs.androidx.navigation.event)
 
-                implementation(libs.compose.animation)
-                implementation(libs.compose.components.resources)
-                implementation(libs.compose.foundation.foundation)
-                implementation(libs.compose.foundation.layout)
-                implementation(libs.compose.runtime)
-                implementation(libs.compose.material)
-                implementation(libs.compose.material.icons)
-                implementation(libs.compose.material.icons.extended)
-                implementation(libs.compose.material3)
+                implementation(libs.compose.multiplatform.animation)
+                implementation(libs.compose.multiplatform.components.resources)
+                implementation(libs.compose.multiplatform.foundation.foundation)
+                implementation(libs.compose.multiplatform.foundation.layout)
+                implementation(libs.compose.multiplatform.runtime)
+                implementation(libs.compose.multiplatform.material)
+                implementation(libs.compose.multiplatform.material.icons)
+                implementation(libs.compose.multiplatform.material.icons.extended)
+                implementation(libs.compose.multiplatform.material3)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
@@ -66,8 +66,8 @@ kotlin {
 
                 implementation(libs.okio)
 
-                implementation(libs.savedstate.compose)
-                implementation(libs.savedstate.savedstate)
+                implementation(libs.savedstate.multiplatform.compose)
+                implementation(libs.savedstate.multiplatform.savedstate)
 
                 implementation(libs.tunjid.composables)
 

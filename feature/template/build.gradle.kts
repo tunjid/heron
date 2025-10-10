@@ -31,9 +31,9 @@ kotlin {
             dependencies {
                 implementation(project(":data:core"))
 
-                implementation(libs.compose.runtime)
-                implementation(libs.lifecycle.runtime)
-                implementation(libs.lifecycle.viewmodel)
+                implementation(libs.compose.multiplatform.runtime)
+                implementation(libs.lifecycle.multiplatform.runtime)
+                implementation(libs.lifecycle.multiplatform.viewmodel)
 
                 implementation(libs.kotlinx.coroutines.core)
 

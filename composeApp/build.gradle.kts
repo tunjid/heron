@@ -81,18 +81,18 @@ kotlin {
 
             implementation(libs.androidx.room.runtime)
 
-            implementation(libs.compose.runtime)
-            implementation(libs.compose.foundation.foundation)
-            implementation(libs.compose.material)
-            implementation(libs.compose.ui.ui)
+            implementation(libs.compose.multiplatform.runtime)
+            implementation(libs.compose.multiplatform.foundation.foundation)
+            implementation(libs.compose.multiplatform.material)
+            implementation(libs.compose.multiplatform.ui.ui)
 
             implementation(libs.connectivity.core)
 
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
-            implementation(libs.lifecycle.viewmodel)
-            implementation(libs.lifecycle.runtime.compose)
+            implementation(libs.lifecycle.multiplatform.viewmodel)
+            implementation(libs.lifecycle.multiplatform.runtime.compose)
 
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.serialization.json)

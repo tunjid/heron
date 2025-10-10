@@ -32,24 +32,24 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":ui:tiling"))
                 implementation(project(":ui:timeline"))
 
-                api(libs.lifecycle.runtime)
-                api(libs.lifecycle.runtime.compose)
-                api(libs.lifecycle.viewmodel)
-                api(libs.lifecycle.viewmodel.compose)
+                api(libs.lifecycle.multiplatform.runtime)
+                api(libs.lifecycle.multiplatform.runtime.compose)
+                api(libs.lifecycle.multiplatform.viewmodel)
+                api(libs.lifecycle.multiplatform.viewmodel.compose)
 
-                api(libs.compose.components.resources)
-                api(libs.compose.runtime)
-                api(libs.compose.animation)
-                api(libs.compose.material.icons.extended)
-                api(libs.compose.material3)
-                api(libs.compose.foundation.layout)
+                api(libs.compose.multiplatform.components.resources)
+                api(libs.compose.multiplatform.runtime)
+                api(libs.compose.multiplatform.animation)
+                api(libs.compose.multiplatform.material.icons.extended)
+                api(libs.compose.multiplatform.material3)
+                api(libs.compose.multiplatform.foundation.layout)
 
                 api(libs.androidx.graphics.shapes)
 
                 api(libs.kotlinx.coroutines.core)
 
-                api(libs.savedstate.savedstate)
-                api(libs.savedstate.compose)
+                api(libs.savedstate.multiplatform.savedstate)
+                api(libs.savedstate.multiplatform.compose)
 
                 api(libs.tunjid.mutator.core.common)
                 api(libs.tunjid.mutator.coroutines.common)

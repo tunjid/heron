@@ -28,7 +28,7 @@ java {
 dependencies {
     implementation(libs.android.gradlePlugin)
     implementation(libs.compose.compiler.plugin)
-    implementation(libs.compose.gradlePlugin)
+    implementation(libs.compose.multiplatform.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.kotlin.serializationPlugin)
     implementation(libs.google.devtools.kspPlugin)

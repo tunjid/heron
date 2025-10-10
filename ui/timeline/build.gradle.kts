@@ -35,12 +35,12 @@ kotlin {
                 implementation(project(":ui:media"))
                 implementation(project(":ui:tiling"))
 
-                implementation(libs.compose.components.resources)
-                implementation(libs.compose.foundation.foundation)
-                implementation(libs.compose.material.icons.extended)
-                implementation(libs.compose.material3)
-                implementation(libs.compose.runtime)
-                implementation(libs.compose.ui.ui)
+                implementation(libs.compose.multiplatform.components.resources)
+                implementation(libs.compose.multiplatform.foundation.foundation)
+                implementation(libs.compose.multiplatform.material.icons.extended)
+                implementation(libs.compose.multiplatform.material3)
+                implementation(libs.compose.multiplatform.runtime)
+                implementation(libs.compose.multiplatform.ui.ui)
 
                 implementation(libs.androidx.graphics.shapes)
 
