@@ -31,10 +31,10 @@ import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.oauth.OauthFlowResult
-import com.tunjid.heron.signin.ui.FormField
-import com.tunjid.heron.signin.ui.Validator
+import com.tunjid.heron.ui.text.FormField
+import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.Validator
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_handle
@@ -75,6 +75,7 @@ data class State(
     val selectedServer: Server = Server.BlueSky,
     val availableServers: List<Server> = StartingServers,
     val showCustomServerPopup: Boolean = false,
+    @Transient
     val fields: List<FormField> = listOf(
         FormField(
             id = Username,
@@ -89,13 +90,13 @@ data class State(
                 keyboardType = KeyboardType.Uri,
                 imeAction = ImeAction.Next,
             ),
-            contentDescription = ScaffoldMessage.Resource(Res.string.username),
+            contentDescription = Memo.Resource(Res.string.username),
             validator = Validator(
-                String::isNotBlank to ScaffoldMessage.Resource(
+                String::isNotBlank to Memo.Resource(
                     Res.string.empty_form,
                     listOf(Res.string.username),
                 ),
-                DomainRegex::matches to ScaffoldMessage.Resource(
+                DomainRegex::matches to Memo.Resource(
                     Res.string.invalid_handle,
                 ),
             ),
@@ -113,9 +114,9 @@ data class State(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
             ),
-            contentDescription = ScaffoldMessage.Resource(Res.string.password),
+            contentDescription = Memo.Resource(Res.string.password),
             validator = Validator(
-                String::isNotBlank to ScaffoldMessage.Resource(
+                String::isNotBlank to Memo.Resource(
                     Res.string.empty_form,
                     listOf(Res.string.password),
                 ),
@@ -123,7 +124,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
@@ -203,7 +204,7 @@ sealed class Action(val key: String) {
     ) : Action("CreateSession")
 
     data class MessageConsumed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action("MessageConsumed")
 
     sealed class Navigate :

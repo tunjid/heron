@@ -23,9 +23,9 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.tiler.buildTiledList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -46,7 +46,7 @@ data class State(
         ),
     ),
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 ) : TilingState<NotificationsQuery, Notification>
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
@@ -86,7 +86,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
     data class MarkNotificationsRead(

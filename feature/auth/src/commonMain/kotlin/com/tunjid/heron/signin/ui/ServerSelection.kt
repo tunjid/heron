@@ -50,9 +50,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.DomainRegex
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.text.FormField
+import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.Validator
+import com.tunjid.heron.ui.text.copyWithValidation
+import com.tunjid.heron.ui.text.isValid
+import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.blacksky_server
 import heron.feature.auth.generated.resources.bluesky_server
@@ -248,13 +253,13 @@ private val CustomServerFormField = FormField(
         keyboardType = KeyboardType.Uri,
         imeAction = ImeAction.Done,
     ),
-    contentDescription = ScaffoldMessage.Resource(Res.string.custom_server),
+    contentDescription = Memo.Resource(Res.string.custom_server),
     validator = Validator(
-        String::isNotBlank to ScaffoldMessage.Resource(
+        String::isNotBlank to Memo.Resource(
             Res.string.empty_form,
             listOf(Res.string.custom_server),
         ),
-        DomainRegex::matches to ScaffoldMessage.Resource(
+        DomainRegex::matches to Memo.Resource(
             Res.string.invalid_domain,
         ),
     ),

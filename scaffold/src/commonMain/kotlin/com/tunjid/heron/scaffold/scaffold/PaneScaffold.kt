@@ -44,15 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNotNull
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.stringResource
 
 class PaneScaffoldState internal constructor(
     internal val appState: AppState,
@@ -136,8 +135,8 @@ fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
     showNavigation: Boolean = true,
     containerColor: Color = defaultContainerColor,
-    snackBarMessages: List<ScaffoldMessage> = emptyList(),
-    onSnackBarMessageConsumed: (ScaffoldMessage) -> Unit = {},
+    snackBarMessages: List<Memo> = emptyList(),
+    onSnackBarMessageConsumed: (Memo) -> Unit = {},
     topBar: @Composable PaneScaffoldState.() -> Unit = {},
     snackBarHost: @Composable PaneScaffoldState.() -> Unit = { PaneSnackbarHost() },
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
@@ -254,51 +253,3 @@ private val PaneClipModifier = Modifier.clip(
         topEnd = 16.dp,
     ),
 )
-
-suspend fun ScaffoldMessage.message(): String =
-    when (this) {
-        is ScaffoldMessage.Resource -> when {
-            args.isEmpty() -> getString(
-                resource = stringResource,
-            )
-            else -> getString(
-                resource = stringResource,
-                *(
-                    args
-                        .map { if (it is StringResource) getString(it) else it }
-                        .toTypedArray()
-                    ),
-            )
-        }
-        is ScaffoldMessage.Text -> message
-    }
-
-val ScaffoldMessage.message: String
-    @Composable get() =
-        when (this) {
-            is ScaffoldMessage.Resource -> when {
-                args.isEmpty() -> stringResource(
-                    resource = stringResource,
-                )
-                else -> stringResource(
-                    resource = stringResource,
-                    *(
-                        args
-                            .map { if (it is StringResource) stringResource(it) else it }
-                            .toTypedArray()
-                        ),
-                )
-            }
-            is ScaffoldMessage.Text -> message
-        }
-
-sealed interface ScaffoldMessage {
-    data class Resource(
-        val stringResource: StringResource,
-        val args: List<Any> = emptyList(),
-    ) : ScaffoldMessage
-
-    data class Text(
-        val message: String,
-    ) : ScaffoldMessage
-}
