@@ -176,7 +176,9 @@ internal fun EditProfileScreen(
                                     focusDirection = FocusDirection.Next,
                                 )
 
-                                Description -> Unit
+                                Description -> actions(
+                                    state.saveProfileAction()
+                                )
                             }
                         },
                     )

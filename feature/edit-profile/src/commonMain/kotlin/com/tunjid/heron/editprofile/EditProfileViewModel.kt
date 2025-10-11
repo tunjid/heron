@@ -42,6 +42,7 @@ import dev.zacsweers.metro.Inject
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.duplicate_profile_update
 import heron.feature.edit_profile.generated.resources.failed_profile_update
+import heron.feature.edit_profile.generated.resources.profile_background_update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -154,7 +155,9 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
             WriteQueue.Status.Duplicate -> emit {
                 copy(messages = messages + Memo.Resource(Res.string.duplicate_profile_update))
             }
-            WriteQueue.Status.Enqueued -> Unit
+            WriteQueue.Status.Enqueued -> emit {
+                copy(messages = messages + Memo.Resource(Res.string.profile_background_update))
+            }
         }
         writeQueue.awaitDequeue(updateWrite)
 
