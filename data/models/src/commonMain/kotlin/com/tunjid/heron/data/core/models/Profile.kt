@@ -74,7 +74,7 @@ data class Profile(
     data class Update(
         val profileId: ProfileId,
         val displayName: String,
-        val bio: String,
+        val description: String,
         val avatar: MediaFile.Photo?,
         val banner: MediaFile.Photo?,
     )
