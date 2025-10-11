@@ -48,7 +48,6 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
@@ -81,7 +80,6 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.time.Instant
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -640,7 +638,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     rkey = Collections.SelfRecordKey,
                     record = existingProfile.copy(
                         displayName = update.displayName,
-                        description = update.bio,
+                        description = update.description,
                         avatar = avatarBlob ?: existingProfile.avatar,
                         banner = bannerBlob ?: existingProfile.banner,
                     )

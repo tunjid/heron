@@ -20,30 +20,42 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -64,6 +76,7 @@ import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.FormField
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_avatar_icon
@@ -100,7 +113,10 @@ internal fun EditProfileScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .imePadding()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .verticalScroll(rememberScrollState()),
     ) {
         EditProfileHeader(
             modifier = Modifier
@@ -118,6 +134,7 @@ internal fun EditProfileScreen(
             if (paneScaffoldState.inPredictiveBack) Color.Transparent
             else surfaceColor,
         )
+        val focusManager = LocalFocusManager.current
         Box(
             modifier = with(paneScaffoldState) {
                 Modifier
@@ -131,6 +148,43 @@ internal fun EditProfileScreen(
                     .profileBioTabBackground(bioTabColorState::value)
             },
         )
+        Column(
+            modifier = Modifier
+                .padding(
+                    horizontal = 16.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            Spacer(Modifier.height(24.dp))
+            state.fields.forEach { field ->
+                key(field.id) {
+                    FormField(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        field = field,
+                        onValueChange = { field, newValue ->
+                            actions(
+                                Action.FieldChanged(
+                                    id = field.id,
+                                    text = newValue,
+                                ),
+                            )
+                        },
+                        keyboardActions = {
+                            when (it.id) {
+                                DisplayName -> focusManager.moveFocus(
+                                    focusDirection = FocusDirection.Next,
+                                )
+
+                                Description -> actions(
+                                    state.saveProfileAction(),
+                                )
+                            }
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 
