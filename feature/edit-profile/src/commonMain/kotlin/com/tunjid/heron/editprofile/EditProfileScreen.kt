@@ -151,9 +151,9 @@ internal fun EditProfileScreen(
         Column(
             modifier = Modifier
                 .padding(
-                    horizontal = 16.dp
+                    horizontal = 16.dp,
                 ),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Spacer(Modifier.height(24.dp))
             state.fields.forEach { field ->

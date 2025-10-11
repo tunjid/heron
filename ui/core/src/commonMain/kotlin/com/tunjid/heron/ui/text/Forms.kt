@@ -142,8 +142,8 @@ inline fun FormField(
         keyboardActions = KeyboardActions {
             keyboardActions(field)
         },
-        label = field.contentDescription?.let{
-             {
+        label = field.contentDescription?.let {
+            {
                 Text(it.message)
             }
         },

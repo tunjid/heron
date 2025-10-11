@@ -139,9 +139,11 @@ sealed class Action(val key: String) {
         Action(key = "Navigate"),
         NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
-
     }
 }
 
-private val String.isMaxDisplayName get() = length < 640
-private val String.isMaxDescription get() = length < 2_560
+private val String.isMaxDisplayName get() = length < MAX_DISPLAY_NAME_LENGTH
+private val String.isMaxDescription get() = length < MAX_DESCRIPTION_LENGTH
+
+private const val MAX_DISPLAY_NAME_LENGTH = 640
+private const val MAX_DESCRIPTION_LENGTH = 2_560

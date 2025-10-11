@@ -39,9 +39,9 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
-import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.like
-import heron.scaffold.generated.resources.unlike
+import heron.feature.edit_profile.generated.resources.Res
+import heron.feature.edit_profile.generated.resources.duplicate_profile_update
+import heron.feature.edit_profile.generated.resources.failed_profile_update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -107,11 +107,11 @@ private fun loadProfileMutations(
                 fields = fields
                     .copyWithValidation(
                         id = DisplayName,
-                        text = profile.displayName ?: "",
+                        text = signedInProfile.displayName ?: "",
                     )
                     .copyWithValidation(
                         id = Description,
-                        text = profile.description ?: "",
+                        text = signedInProfile.description ?: "",
                     ),
             )
         }
@@ -149,10 +149,10 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
 
         when (writeQueue.enqueue(updateWrite)) {
             WriteQueue.Status.Dropped -> emit {
-                copy(messages = messages + Memo.Resource(Res.string.unlike))
+                copy(messages = messages + Memo.Resource(Res.string.failed_profile_update))
             }
             WriteQueue.Status.Duplicate -> emit {
-                copy(messages = messages + Memo.Resource(Res.string.like))
+                copy(messages = messages + Memo.Resource(Res.string.duplicate_profile_update))
             }
             WriteQueue.Status.Enqueued -> Unit
         }
