@@ -32,10 +32,10 @@ import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.editprofile.ActualEditProfileViewModel
 import com.tunjid.heron.editprofile.EditProfileScreen
 import com.tunjid.heron.editprofile.RouteViewModelInitializer
+import com.tunjid.heron.editprofile.saveProfileAction
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -67,7 +67,6 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.edit_profile.generated.resources.Res
-import heron.feature.edit_profile.generated.resources.edit_profile
 import heron.feature.edit_profile.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
@@ -177,15 +176,7 @@ class EditProfileBindings(
                         icon = Icons.Rounded.Save,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
-                            viewModel.accept(
-                                Action.SaveProfile(
-                                    profileId = state.profile.did,
-                                    displayName = state.profile.displayName.orEmpty(),
-                                    bio = state.profile.description.orEmpty(),
-                                    avatar = state.updatedAvatar,
-                                    banner = state.updatedBanner,
-                                ),
-                            )
+                            viewModel.accept(state.saveProfileAction())
                         },
                     )
                 },

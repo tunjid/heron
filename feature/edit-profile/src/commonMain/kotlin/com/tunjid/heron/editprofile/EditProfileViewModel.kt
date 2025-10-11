@@ -19,6 +19,7 @@ package com.tunjid.heron.editprofile
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -26,6 +27,8 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -36,6 +39,9 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
+import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.like
+import heron.scaffold.generated.resources.unlike
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,8 +61,9 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @Inject
 class ActualEditProfileViewModel(
-    navActions: (NavigationMutation) -> Unit,
+    profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
+    navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -65,6 +72,11 @@ class ActualEditProfileViewModel(
     EditProfileStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            loadProfileMutations(
+                profileRepository = profileRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
                 keySelector = Action::key,
@@ -75,6 +87,7 @@ class ActualEditProfileViewModel(
                     )
                     is Action.AvatarPicked -> action.flow.avatarPickedMutations()
                     is Action.BannerPicked -> action.flow.bannerPickedMutations()
+                    is Action.FieldChanged -> action.flow.formEditMutations()
                     is Action.SaveProfile -> action.flow.saveProfileMutations(
                         navActions = navActions,
                         writeQueue = writeQueue,
@@ -84,6 +97,25 @@ class ActualEditProfileViewModel(
         },
     )
 
+private fun loadProfileMutations(
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.signedInProfile()
+        .mapToMutation { signedInProfile ->
+            copy(
+                profile = signedInProfile,
+                fields = fields
+                    .copyWithValidation(
+                        id = DisplayName,
+                        text = profile.displayName ?: "",
+                    )
+                    .copyWithValidation(
+                        id = Description,
+                        text = profile.description ?: "",
+                    ),
+            )
+        }
+
 private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(updatedAvatar = it.item)
@@ -92,6 +124,11 @@ private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<Sta
 private fun Flow<Action.BannerPicked>.bannerPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(updatedBanner = it.item)
+    }
+
+private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
+    mapToMutation { (id, text) ->
+        copy(fields = fields.copyWithValidation(id, text))
     }
 
 private fun Flow<Action.SaveProfile>.saveProfileMutations(
@@ -104,13 +141,21 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
             update = Profile.Update(
                 profileId = action.profileId,
                 displayName = action.displayName,
-                bio = action.bio,
+                description = action.description,
                 avatar = action.avatar?.toMediaFile(),
                 banner = action.banner?.toMediaFile(),
             ),
         )
 
-        writeQueue.enqueue(updateWrite)
+        when (writeQueue.enqueue(updateWrite)) {
+            WriteQueue.Status.Dropped -> emit {
+                copy(messages = messages + Memo.Resource(Res.string.unlike))
+            }
+            WriteQueue.Status.Duplicate -> emit {
+                copy(messages = messages + Memo.Resource(Res.string.like))
+            }
+            WriteQueue.Status.Enqueued -> Unit
+        }
         writeQueue.awaitDequeue(updateWrite)
 
         emitAll(

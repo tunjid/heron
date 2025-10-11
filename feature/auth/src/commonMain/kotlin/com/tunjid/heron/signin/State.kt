@@ -35,6 +35,7 @@ import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
+import com.tunjid.heron.ui.text.valueFor
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_handle
@@ -130,7 +131,7 @@ data class State(
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
 
 val State.profileHandle: ProfileHandle
-    get() = ProfileHandle(id = fields.first { it.id == Username }.value)
+    get() = ProfileHandle(id = fields.valueFor(Username))
 
 val State.canSignInLater: Boolean
     get() = fields.all { field ->
@@ -163,7 +164,7 @@ fun State.createSessionAction() = when {
         AuthMode.Password -> Action.CreateSession(
             request = SessionRequest.Credentials(
                 handle = profileHandle,
-                password = fields.first { it.id == Password }.value,
+                password = fields.valueFor(Password),
                 server = selectedServer,
             ),
         )

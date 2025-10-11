@@ -73,6 +73,9 @@ fun List<FormField>.copyWithValidation(
     else field
 }
 
+fun List<FormField>.valueFor(id: FormField.Id) =
+    first { it.id == id }.value
+
 fun FormField.copyWithValidation(
     text: String,
 ) = copy(
@@ -139,26 +142,27 @@ inline fun FormField(
         keyboardActions = KeyboardActions {
             keyboardActions(field)
         },
-        label = {
-            field.contentDescription?.let {
+        label = field.contentDescription?.let{
+             {
                 Text(it.message)
             }
         },
-        leadingIcon = {
-            field.leadingIcon?.let {
+        leadingIcon = field.leadingIcon?.let {
+            {
                 Icon(
                     imageVector = it,
                     contentDescription = field.contentDescription?.message,
                 )
             }
         },
-        supportingText = {
-            if (showError) field.errorMessage?.let {
+        supportingText = if (showError) field.errorMessage?.let {
+            {
                 Text(
                     text = it.message,
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-        },
+        }
+        else null,
     )
 }
