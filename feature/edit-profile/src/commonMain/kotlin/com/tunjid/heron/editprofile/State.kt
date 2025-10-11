@@ -25,7 +25,7 @@ import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -39,7 +39,7 @@ data class State(
     @Transient val updatedAvatar: MediaItem.Photo? = null,
     @Transient val updatedBanner: MediaItem.Photo? = null,
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 @OptIn(ExperimentalUuidApi::class)

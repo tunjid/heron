@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.signin.ui
+package com.tunjid.heron.ui.text
 
 import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,19 +35,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
-import com.tunjid.heron.scaffold.scaffold.message
 import kotlin.jvm.JvmInline
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
 data class FormField(
     val id: Id,
     val value: String,
     val maxLines: Int,
     @Transient
-    val errorMessage: ScaffoldMessage? = null,
+    val errorMessage: Memo? = null,
     @Transient
     val leadingIcon: ImageVector? = null,
     @Transient
@@ -55,13 +51,12 @@ data class FormField(
     @Transient
     val contentType: ContentType? = null,
     @Transient
-    val contentDescription: ScaffoldMessage? = null,
+    val contentDescription: Memo? = null,
     @Transient
     val keyboardOptions: KeyboardOptions = KeyboardOptions(),
     @Transient
     val validator: Validator? = null,
 ) {
-    @Serializable
     @JvmInline
     value class Id(
         private val id: String,
@@ -108,10 +103,10 @@ val FormField.isValid
 
 @JvmInline
 value class Validator(
-    val checks: List<Pair<(String) -> Boolean, ScaffoldMessage>>,
+    val checks: List<Pair<(String) -> Boolean, Memo>>,
 )
 
-fun Validator(vararg pairs: Pair<(String) -> Boolean, ScaffoldMessage>) =
+fun Validator(vararg pairs: Pair<(String) -> Boolean, Memo>) =
     Validator(
         checks = pairs.asList(),
     )

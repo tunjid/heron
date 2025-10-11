@@ -25,10 +25,10 @@ import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
@@ -44,7 +44,7 @@ data class State(
     @Transient
     val timelineStateHolder: TimelineStateHolder? = null,
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 fun State(
@@ -77,7 +77,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
     data object ScrollToTop : Action(key = "ScrollToTop")

@@ -23,8 +23,8 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -33,7 +33,7 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 ) : TilingState<CursorQuery, ProfileWithViewerState>
 
 sealed class Load {

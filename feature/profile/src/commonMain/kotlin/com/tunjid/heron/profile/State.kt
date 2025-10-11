@@ -39,10 +39,10 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
@@ -66,7 +66,7 @@ data class State(
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 fun State(route: Route) = State(
@@ -148,7 +148,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
     data class UpdatePageWithUpdates(

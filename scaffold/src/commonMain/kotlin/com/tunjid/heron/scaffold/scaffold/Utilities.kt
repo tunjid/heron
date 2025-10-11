@@ -17,6 +17,7 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.ui.text.Memo
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.bookmark
 import heron.scaffold.generated.resources.bookmark_removal
@@ -34,7 +35,7 @@ fun viewModelCoroutineScope() = CoroutineScope(
     SupervisorJob() + Dispatchers.Main.immediate,
 )
 
-fun Post.Interaction.duplicateWriteMessage() = ScaffoldMessage.Resource(
+fun Post.Interaction.duplicateWriteMessage() = Memo.Resource(
     stringResource = Res.string.duplicate_post_interaction,
     args = listOf(
         when (this) {
@@ -48,7 +49,7 @@ fun Post.Interaction.duplicateWriteMessage() = ScaffoldMessage.Resource(
     ),
 )
 
-fun Post.Interaction.failedWriteMessage() = ScaffoldMessage.Resource(
+fun Post.Interaction.failedWriteMessage() = Memo.Resource(
     stringResource = Res.string.failed_post_interaction,
 )
 

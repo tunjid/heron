@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -44,7 +44,7 @@ data class State(
         },
     ),
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 fun State(route: Route) = State(
@@ -59,7 +59,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
     sealed class Navigate :

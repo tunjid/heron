@@ -28,10 +28,10 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -120,7 +120,7 @@ data class State(
     @Transient
     val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
     @Transient
-    val messages: List<ScaffoldMessage> = emptyList(),
+    val messages: List<Memo> = emptyList(),
 )
 
 sealed class Action(val key: String) {
@@ -144,7 +144,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
-        val message: ScaffoldMessage,
+        val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(

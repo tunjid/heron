@@ -28,10 +28,10 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
-import com.tunjid.heron.scaffold.scaffold.ScaffoldMessage
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
-import com.tunjid.heron.signin.ui.copyWithValidation
+import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -169,7 +169,7 @@ private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
         when (val result = action.result) {
             OauthFlowResult.Failure -> emit {
                 copy(
-                    messages = messages + ScaffoldMessage.Resource(Res.string.oauth_flow_failed),
+                    messages = messages + Memo.Resource(Res.string.oauth_flow_failed),
                 )
             }
             is OauthFlowResult.Success -> {
@@ -204,7 +204,7 @@ private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
             },
             onFailure = {
                 emit {
-                    copy(messages = messages + ScaffoldMessage.Resource(Res.string.oauth_start_error))
+                    copy(messages = messages + Memo.Resource(Res.string.oauth_start_error))
                 }
             },
         )
@@ -256,8 +256,8 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
             copy(
                 messages = messages.plus(
                     exception.message
-                        ?.let(ScaffoldMessage::Text)
-                        ?: ScaffoldMessage.Resource(Res.string.oauth_flow_failed),
+                        ?.let(Memo::Text)
+                        ?: Memo.Resource(Res.string.oauth_flow_failed),
                 )
                     .distinct(),
             )
