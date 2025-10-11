@@ -23,7 +23,7 @@
     <string name="edit_avatar_icon">Edit Avatar</string>
     <string name="display_name">Display name</string>
     <string name="description">Description</string>
-    <string name="character_limit">%1$s should be under %2$d characters</string>
+    <string name="character_limit">%1$s must be %2$d characters or fewer</string>
     <string name="duplicate_profile_update">Your profile is being updated.</string>
     <string name="failed_profile_update">Cannot update your profile right now.</string>
     <string name="profile_background_update">Updating your profile in the background…</string>

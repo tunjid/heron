@@ -177,7 +177,7 @@ internal fun EditProfileScreen(
                                 )
 
                                 Description -> actions(
-                                    state.saveProfileAction()
+                                    state.saveProfileAction(),
                                 )
                             }
                         },

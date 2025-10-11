@@ -142,8 +142,8 @@ sealed class Action(val key: String) {
     }
 }
 
-private val String.isMaxDisplayName get() = length < MAX_DISPLAY_NAME_LENGTH
-private val String.isMaxDescription get() = length < MAX_DESCRIPTION_LENGTH
+private val String.isMaxDisplayName get() = length <= MAX_DISPLAY_NAME_LENGTH
+private val String.isMaxDescription get() = length <= MAX_DESCRIPTION_LENGTH
 
-private const val MAX_DISPLAY_NAME_LENGTH = 640
-private const val MAX_DESCRIPTION_LENGTH = 2_560
+private const val MAX_DISPLAY_NAME_LENGTH = 64
+private const val MAX_DESCRIPTION_LENGTH = 256
