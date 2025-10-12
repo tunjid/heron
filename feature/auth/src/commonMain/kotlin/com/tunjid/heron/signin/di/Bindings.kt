@@ -86,6 +86,7 @@ import heron.feature.auth.generated.resources.sign_in
 import heron.feature.auth.generated.resources.sign_in_later
 import heron.feature.auth.generated.resources.sign_with_oauth
 import heron.feature.auth.generated.resources.sign_with_password
+import heron.feature.auth.generated.resources.signing_in
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
@@ -187,6 +188,7 @@ class SignInBindings(
                             .alpha(if (state.submitButtonEnabled) 1f else 0.6f),
                         text = stringResource(
                             when {
+                                state.isSubmitting -> Res.string.signing_in
                                 state.canSignInLater -> Res.string.sign_in_later
                                 else -> when (state.authMode) {
                                     AuthMode.Oauth -> Res.string.sign_with_oauth

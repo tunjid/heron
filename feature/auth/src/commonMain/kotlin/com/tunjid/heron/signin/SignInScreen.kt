@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
+import com.tunjid.heron.signin.ui.NoAccountButton
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import com.tunjid.heron.ui.text.FormField
@@ -135,6 +136,8 @@ internal fun SignInScreen(
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,
         )
+
+        NoAccountButton()
 
         LaunchedEffect(Unit) {
             launch {
