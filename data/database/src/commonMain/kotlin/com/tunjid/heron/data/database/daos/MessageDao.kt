@@ -38,18 +38,18 @@ interface MessageDao {
     @Query(
         """
             SELECT conversations.*,
-                lastMessage.id AS lastMessage_id, 
-                lastMessage.rev AS lastMessage_rev, 
-                lastMessage.text AS lastMessage_text, 
-                lastMessage.senderId AS lastMessage_senderId, 
-                lastMessage.conversationId AS lastMessage_conversationId, 
+                lastMessage.id AS lastMessage_id,
+                lastMessage.rev AS lastMessage_rev,
+                lastMessage.text AS lastMessage_text,
+                lastMessage.senderId AS lastMessage_senderId,
+                lastMessage.conversationId AS lastMessage_conversationId,
                 lastMessage.isDeleted AS lastMessage_isDeleted,
                 lastMessage.sentAt AS lastMessage_sentAt,
-                lastMessageReactedTo.id AS lastMessageReactedTo_id, 
-                lastMessageReactedTo.rev AS lastMessageReactedTo_rev, 
-                lastMessageReactedTo.text AS lastMessageReactedTo_text, 
-                lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId, 
-                lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId, 
+                lastMessageReactedTo.id AS lastMessageReactedTo_id,
+                lastMessageReactedTo.rev AS lastMessageReactedTo_rev,
+                lastMessageReactedTo.text AS lastMessageReactedTo_text,
+                lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId,
+                lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId,
                 lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
                 lastMessageReactedTo.sentAt AS lastMessageReactedTo_sentAt,
                 lastReaction.messageId AS lastReaction_messageId,
@@ -69,6 +69,7 @@ interface MessageDao {
                 LIMIT 1
             ) AS lastReaction
             ON lastReactedToMessageId = lastReaction.messageId
+            WHERE ownerId = :ownerId
             ORDER BY sort
             DESC
             LIMIT :limit
@@ -76,6 +77,7 @@ interface MessageDao {
         """,
     )
     fun conversations(
+        ownerId: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedConversationEntity>>

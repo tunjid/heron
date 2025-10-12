@@ -18,6 +18,8 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
@@ -25,14 +27,28 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
+import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "conversations",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["ownerId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["id"]),
+        Index(value = ["ownerId"]),
+    ],
 )
 data class ConversationEntity(
     @PrimaryKey
     val id: ConversationId,
     val rev: String,
+    val ownerId: ProfileId,
     val lastMessageId: MessageId? = null,
     val lastReactedToMessageId: MessageId? = null,
     val muted: Boolean,
