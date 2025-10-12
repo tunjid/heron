@@ -20,7 +20,6 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
@@ -32,6 +31,10 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "notifications",
+    primaryKeys = [
+        "uri",
+        "ownerId",
+    ],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
@@ -62,7 +65,6 @@ import kotlinx.datetime.Instant
 )
 data class NotificationEntity(
     val cid: GenericId,
-    @PrimaryKey
     val uri: GenericUri,
     val authorId: ProfileId,
     val ownerId: ProfileId,

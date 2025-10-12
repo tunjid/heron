@@ -171,115 +171,119 @@ internal class OfflineMessageRepository @Inject constructor(
         query: MessageQuery,
         cursor: Cursor,
     ): Flow<CursorList<Message>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
-            combine(
-                messageDao.messages(
-                    conversationId = query.conversationId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChanged()
-                    .flatMapLatest { populatedMessageEntities ->
-                        val feedUris = populatedMessageEntities.mapNotNull {
-                            it.feed?.feedGeneratorUri
-                        }
-                        val listUris = populatedMessageEntities.mapNotNull {
-                            it.list?.listUri
-                        }
-                        val starterPackUris = populatedMessageEntities.mapNotNull {
-                            it.starterPack?.starterPackUri
-                        }
-                        val postUris = populatedMessageEntities.mapNotNull {
-                            it.post?.postUri
-                        }
-                        combine(
-                            flow = feedUris.toFlowOrEmpty(feedDao::feedGenerators),
-                            flow2 = listUris.toFlowOrEmpty(listDao::lists),
-                            flow3 = starterPackUris.toFlowOrEmpty(starterPackDao::starterPacks),
-                            flow4 = postUris.toFlowOrEmpty { postIds ->
-                                postDao.posts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postUris = postIds,
-                                )
-                            },
-                            flow5 = postUris.toFlowOrEmpty { postIds ->
-                                postDao.embeddedPosts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postUris = postIds,
-                                )
-                            },
-                        ) { feeds, lists, starterPacks, posts, embeddedPosts ->
-                            val urisToFeeds = feeds.associateBy { it.entity.uri }
-                            val urisToLists = lists.associateBy { it.entity.uri }
-                            val urisToStarterPacks = starterPacks.associateBy { it.entity.uri }
-                            val urisToPosts = posts.associateBy { it.entity.uri }
-                            val urisToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
-
-                            populatedMessageEntities.map { populatedMessageEntity ->
-                                populatedMessageEntity.asExternalModel(
-                                    feedGenerator = populatedMessageEntity.feed
-                                        ?.feedGeneratorUri
-                                        ?.let(urisToFeeds::get)
-                                        ?.asExternalModel(),
-                                    list = populatedMessageEntity.list
-                                        ?.listUri
-                                        ?.let(urisToLists::get)
-                                        ?.asExternalModel(),
-                                    starterPack = populatedMessageEntity.starterPack
-                                        ?.starterPackUri
-                                        ?.let(urisToStarterPacks::get)
-                                        ?.asExternalModel(),
-                                    post = populatedMessageEntity.post
-                                        ?.postUri
-                                        ?.let(urisToPosts::get)
-                                        ?.asExternalModel(
-                                            quote = populatedMessageEntity.post
-                                                ?.postUri
-                                                ?.let(urisToEmbeddedPosts::get)
-                                                ?.entity
-                                                ?.asExternalModel(quote = null),
-                                        ),
-                                )
+        savedStateDataSource.observedSignedInProfileId
+            .filterNotNull()
+            .flatMapLatest { signedInProfileId ->
+                combine(
+                    messageDao.messages(
+                        conversationId = query.conversationId.id,
+                        conversationOwnerId = signedInProfileId.id,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
+                        .distinctUntilChanged()
+                        .flatMapLatest { populatedMessageEntities ->
+                            val feedUris = populatedMessageEntities.mapNotNull {
+                                it.feed?.feedGeneratorUri
                             }
-                        }
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getMessages(
-                            params = GetMessagesQueryParams(
-                                convoId = query.conversationId.id,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetMessagesResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            messages.forEach {
-                                when (it) {
-                                    is GetMessagesResponseMessageUnion.DeletedMessageView -> add(
-                                        conversationId = query.conversationId,
-                                        deletedMessageView = it.value,
+                            val listUris = populatedMessageEntities.mapNotNull {
+                                it.list?.listUri
+                            }
+                            val starterPackUris = populatedMessageEntities.mapNotNull {
+                                it.starterPack?.starterPackUri
+                            }
+                            val postUris = populatedMessageEntities.mapNotNull {
+                                it.post?.postUri
+                            }
+                            combine(
+                                flow = feedUris.toFlowOrEmpty(feedDao::feedGenerators),
+                                flow2 = listUris.toFlowOrEmpty(listDao::lists),
+                                flow3 = starterPackUris.toFlowOrEmpty(starterPackDao::starterPacks),
+                                flow4 = postUris.toFlowOrEmpty { postIds ->
+                                    postDao.posts(
+                                        viewingProfileId = signedInProfileId.id,
+                                        postUris = postIds,
                                     )
-
-                                    is GetMessagesResponseMessageUnion.MessageView -> add(
-                                        viewingProfileId = signedInProfileId,
-                                        conversationId = query.conversationId,
-                                        messageView = it.value,
+                                },
+                                flow5 = postUris.toFlowOrEmpty { postIds ->
+                                    postDao.embeddedPosts(
+                                        viewingProfileId = signedInProfileId.id,
+                                        postUris = postIds,
                                     )
+                                },
+                            ) { feeds, lists, starterPacks, posts, embeddedPosts ->
+                                val urisToFeeds = feeds.associateBy { it.entity.uri }
+                                val urisToLists = lists.associateBy { it.entity.uri }
+                                val urisToStarterPacks = starterPacks.associateBy { it.entity.uri }
+                                val urisToPosts = posts.associateBy { it.entity.uri }
+                                val urisToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
 
-                                    is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                populatedMessageEntities.map { populatedMessageEntity ->
+                                    populatedMessageEntity.asExternalModel(
+                                        feedGenerator = populatedMessageEntity.feed
+                                            ?.feedGeneratorUri
+                                            ?.let(urisToFeeds::get)
+                                            ?.asExternalModel(),
+                                        list = populatedMessageEntity.list
+                                            ?.listUri
+                                            ?.let(urisToLists::get)
+                                            ?.asExternalModel(),
+                                        starterPack = populatedMessageEntity.starterPack
+                                            ?.starterPackUri
+                                            ?.let(urisToStarterPacks::get)
+                                            ?.asExternalModel(),
+                                        post = populatedMessageEntity.post
+                                            ?.postUri
+                                            ?.let(urisToPosts::get)
+                                            ?.asExternalModel(
+                                                quote = populatedMessageEntity.post
+                                                    ?.postUri
+                                                    ?.let(urisToEmbeddedPosts::get)
+                                                    ?.entity
+                                                    ?.asExternalModel(quote = null),
+                                            ),
+                                    )
                                 }
                             }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                        },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            getMessages(
+                                params = GetMessagesQueryParams(
+                                    convoId = query.conversationId.id,
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
+                                ),
+                            )
+                        },
+                        nextCursor = GetMessagesResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                messages.forEach {
+                                    when (it) {
+                                        is GetMessagesResponseMessageUnion.DeletedMessageView -> add(
+                                            conversationId = query.conversationId,
+                                            viewingProfileId = signedInProfileId,
+                                            deletedMessageView = it.value,
+                                        )
+
+                                        is GetMessagesResponseMessageUnion.MessageView -> add(
+                                            viewingProfileId = signedInProfileId,
+                                            conversationId = query.conversationId,
+                                            messageView = it.value,
+                                        )
+
+                                        is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                    }
+                                }
+                            }
+                        },
+                    ),
+                    ::CursorList,
+                )
+                    .distinctUntilChanged()
+            }
 
     override suspend fun monitorConversationLogs() {
         flow {
@@ -330,6 +334,7 @@ internal class OfflineMessageRepository @Inject constructor(
                     deletedMessages.list.forEach { (conversationId, message) ->
                         add(
                             conversationId = conversationId,
+                            viewingProfileId = signedInProfileId,
                             deletedMessageView = message,
                         )
                     }

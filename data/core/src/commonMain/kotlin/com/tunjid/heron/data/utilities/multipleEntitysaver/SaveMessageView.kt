@@ -42,6 +42,7 @@ internal fun MultipleEntitySaver.add(
     conversationId: ConversationId,
     messageView: MessageView,
 ) {
+    viewingProfileId ?: return
     add(
         entity = emptyProfileEntity(messageView.sender.did),
     )
@@ -53,6 +54,7 @@ internal fun MultipleEntitySaver.add(
             text = messageView.text,
             senderId = messageView.sender.did.did.let(::ProfileId),
             conversationId = conversationId,
+            conversationOwnerId = viewingProfileId,
             isDeleted = false,
             sentAt = messageView.sentAt,
         ),
@@ -171,9 +173,12 @@ private fun MultipleEntitySaver.add(
 }
 
 internal fun MultipleEntitySaver.add(
+    viewingProfileId: ProfileId?,
     conversationId: ConversationId,
     deletedMessageView: DeletedMessageView,
 ) {
+    viewingProfileId ?: return
+
     add(
         entity = emptyProfileEntity(deletedMessageView.sender.did),
     )
@@ -186,6 +191,7 @@ internal fun MultipleEntitySaver.add(
             isDeleted = true,
             senderId = deletedMessageView.sender.did.did.let(::ProfileId),
             conversationId = conversationId,
+            conversationOwnerId = viewingProfileId,
             sentAt = deletedMessageView.sentAt,
         ),
     )

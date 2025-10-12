@@ -41,8 +41,14 @@ import kotlinx.datetime.Instant
     foreignKeys = [
         ForeignKey(
             entity = ConversationEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["conversationId"],
+            parentColumns = [
+                "id",
+                "ownerId",
+            ],
+            childColumns = [
+                "conversationId",
+                "conversationOwnerId",
+            ],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -63,13 +69,10 @@ data class MessageEntity(
     val text: String,
     val senderId: ProfileId,
     val conversationId: ConversationId,
+    val conversationOwnerId: ProfileId,
     val isDeleted: Boolean,
     val sentAt: Instant,
-) {
-    data class RecordData(
-        val base64EncodedRecord: String?,
-    )
-}
+)
 
 data class PopulatedMessageEntity(
     @Embedded

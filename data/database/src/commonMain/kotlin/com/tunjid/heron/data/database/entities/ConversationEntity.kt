@@ -31,6 +31,10 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "conversations",
+    primaryKeys = [
+        "id",
+        "ownerId",
+    ],
     foreignKeys = [
         ForeignKey(
             entity = ProfileEntity::class,
@@ -45,7 +49,6 @@ import com.tunjid.heron.data.core.types.ProfileId
     ],
 )
 data class ConversationEntity(
-    @PrimaryKey
     val id: ConversationId,
     val rev: String,
     val ownerId: ProfileId,
