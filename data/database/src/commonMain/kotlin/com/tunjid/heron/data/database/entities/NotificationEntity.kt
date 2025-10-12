@@ -45,11 +45,18 @@ import kotlinx.datetime.Instant
             childColumns = ["authorId"],
             onDelete = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["ownerId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["uri"]),
         Index(value = ["cid"]),
         Index(value = ["authorId"]),
+        Index(value = ["ownerId"]),
         Index(value = ["indexedAt"]),
     ],
 )
@@ -58,6 +65,7 @@ data class NotificationEntity(
     @PrimaryKey
     val uri: GenericUri,
     val authorId: ProfileId,
+    val ownerId: ProfileId,
     val reason: Notification.Reason,
     val reasonSubject: GenericUri?,
     val associatedPostUri: PostUri?,

@@ -32,6 +32,7 @@ internal fun MultipleEntitySaver.add(
     listNotificationsNotification: List<ListNotificationsNotification>,
     associatedPosts: List<PostView>,
 ) {
+    viewingProfileId ?: return
     val postUris = mutableSetOf<PostUri>()
     associatedPosts.forEach { postView ->
         add(
@@ -51,6 +52,7 @@ internal fun MultipleEntitySaver.add(
                 uri = notification.uri.atUri.let(::GenericUri),
                 cid = notification.cid.cid.let(::GenericId),
                 authorId = notification.author.did.did.let(::ProfileId),
+                ownerId = viewingProfileId,
                 reason = when (notification.reason) {
                     ListNotificationsReason.Follow -> Notification.Reason.Follow
                     ListNotificationsReason.Like -> Notification.Reason.Like

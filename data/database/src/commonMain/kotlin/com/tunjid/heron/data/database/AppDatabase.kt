@@ -70,6 +70,7 @@ import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCrea
 import com.tunjid.heron.data.database.migrations.Migration17To18TimelineViewer
 import com.tunjid.heron.data.database.migrations.Migration18To19PostViewerStatistics
 import com.tunjid.heron.data.database.migrations.Migration19To20UriPrimaryKeys
+import com.tunjid.heron.data.database.migrations.Migration21To22NotificationsOwnerIds
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -78,7 +79,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 21,
+    version = 22,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -160,6 +161,7 @@ import kotlinx.coroutines.IO
         // Migration 19 - 20 is a manual migration
         // Add post bookmarks
         AutoMigration(from = 20, to = 21),
+        // Migration 21 - 22 is a manual migration
     ],
     exportSchema = true,
 )
@@ -203,6 +205,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration17To18TimelineViewer,
             Migration18To19PostViewerStatistics,
             Migration19To20UriPrimaryKeys,
+            Migration21To22NotificationsOwnerIds,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())
