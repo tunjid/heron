@@ -29,7 +29,8 @@ interface NotificationsDao {
     @Query(
         """
             SELECT * FROM notifications
-            WHERE indexedAt < :before
+            WHERE ownerId = :ownerId
+            AND indexedAt < :before
             ORDER BY indexedAt
             DESC
             LIMIT :limit
@@ -37,6 +38,7 @@ interface NotificationsDao {
         """,
     )
     fun notifications(
+        ownerId: String,
         before: Instant,
         limit: Long,
         offset: Long,

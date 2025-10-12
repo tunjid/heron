@@ -210,15 +210,17 @@ internal class OfflineNotificationsRepository @Inject constructor(
         query: NotificationsQuery,
     ): Flow<List<Notification>> =
         savedStateDataSource.observedSignedInProfileId
+            .filterNotNull()
             .flatMapLatest { signedInProfileId ->
                 notificationsDao.notifications(
+                    ownerId = signedInProfileId.id,
                     before = query.data.cursorAnchor,
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
                     .flatMapLatest { populatedNotificationEntities ->
                         postDao.posts(
-                            viewingProfileId = signedInProfileId?.id,
+                            viewingProfileId = signedInProfileId.id,
                             postUris = populatedNotificationEntities
                                 .mapNotNull { it.entity.associatedPostUri }
                                 .toSet(),
