@@ -22,33 +22,34 @@ import androidx.sqlite.execSQL
 
 internal object Migration21To22NotificationsOwnerIds : Migration(21, 22) {
 
+    // Destructively migrates notifications to persist the owner id.
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             """
-             CREATE TABLE IF NOT EXISTS `notifications_new` (
-             `cid` TEXT NOT NULL,
-             `uri` TEXT NOT NULL,
-             `authorId` TEXT NOT NULL,
-             `ownerId` TEXT NOT NULL,
-             `reason` TEXT NOT NULL,
-             `reasonSubject` TEXT,
-             `associatedPostUri` TEXT,
-             `isRead` INTEGER NOT NULL,
-             `indexedAt` INTEGER NOT NULL,
-             PRIMARY KEY(`uri`),
-             FOREIGN KEY(`associatedPostUri`)
-                REFERENCES `posts`(`uri`)
-                    ON UPDATE NO ACTION
-                    ON DELETE CASCADE ,
-            FOREIGN KEY(`authorId`)
-                REFERENCES `profiles`(`did`)
-                    ON UPDATE NO ACTION
-                    ON DELETE CASCADE ,
-            FOREIGN KEY(`ownerId`)
-                REFERENCES `profiles`(`did`)
-                    ON UPDATE NO ACTION
-                    ON DELETE CASCADE
-        )
+                CREATE TABLE IF NOT EXISTS `notifications_new` (
+                    `cid` TEXT NOT NULL,
+                    `uri` TEXT NOT NULL,
+                    `authorId` TEXT NOT NULL,
+                    `ownerId` TEXT NOT NULL,
+                    `reason` TEXT NOT NULL,
+                    `reasonSubject` TEXT,
+                    `associatedPostUri` TEXT,
+                    `isRead` INTEGER NOT NULL,
+                    `indexedAt` INTEGER NOT NULL,
+                    PRIMARY KEY(`uri`),
+                    FOREIGN KEY(`associatedPostUri`)
+                        REFERENCES `posts`(`uri`)
+                        ON UPDATE NO ACTION
+                        ON DELETE CASCADE,
+                    FOREIGN KEY(`authorId`)
+                        REFERENCES `profiles`(`did`)
+                        ON UPDATE NO ACTION
+                        ON DELETE CASCADE,
+                    FOREIGN KEY(`ownerId`)
+                        REFERENCES `profiles`(`did`)
+                        ON UPDATE NO ACTION
+                        ON DELETE CASCADE
+                )
             """.trimIndent(),
         )
 
