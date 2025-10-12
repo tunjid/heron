@@ -30,8 +30,14 @@ import com.tunjid.heron.data.core.types.ProfileId
     foreignKeys = [
         ForeignKey(
             entity = ConversationEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["conversationId"],
+            parentColumns = [
+                "id",
+                "ownerId",
+            ],
+            childColumns = [
+                "conversationId",
+                "conversationOwnerId",
+            ],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -44,5 +50,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 )
 data class ConversationMembersEntity(
     val conversationId: ConversationId,
+    val conversationOwnerId: ProfileId,
     val memberId: ProfileId,
 )

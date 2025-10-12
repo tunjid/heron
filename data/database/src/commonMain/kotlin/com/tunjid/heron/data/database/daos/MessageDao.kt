@@ -43,6 +43,7 @@ interface MessageDao {
                 lastMessage.text AS lastMessage_text,
                 lastMessage.senderId AS lastMessage_senderId,
                 lastMessage.conversationId AS lastMessage_conversationId,
+                lastMessage.conversationOwnerId AS lastMessage_conversationOwnerId,
                 lastMessage.isDeleted AS lastMessage_isDeleted,
                 lastMessage.sentAt AS lastMessage_sentAt,
                 lastMessageReactedTo.id AS lastMessageReactedTo_id,
@@ -50,6 +51,7 @@ interface MessageDao {
                 lastMessageReactedTo.text AS lastMessageReactedTo_text,
                 lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId,
                 lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId,
+                lastMessageReactedTo.conversationOwnerId AS lastMessageReactedTo_conversationOwnerId,
                 lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
                 lastMessageReactedTo.sentAt AS lastMessageReactedTo_sentAt,
                 lastReaction.messageId AS lastReaction_messageId,
@@ -86,6 +88,7 @@ interface MessageDao {
         """
             SELECT * FROM messages
             WHERE conversationId = :conversationId
+            AND conversationOwnerId = :conversationOwnerId
             ORDER BY sentAt
             DESC
             LIMIT :limit
@@ -94,6 +97,7 @@ interface MessageDao {
     )
     fun messages(
         conversationId: String,
+        conversationOwnerId: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedMessageEntity>>
