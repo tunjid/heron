@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -126,12 +127,17 @@ internal class OfflineMessageRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<Conversation>> =
         combine(
-            messageDao.conversations(
-                offset = query.data.offset,
-                limit = query.data.limit,
-            )
-                .map { populatedConversationEntities ->
-                    populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
+            savedStateDataSource.observedSignedInProfileId
+                .filterNotNull()
+                .flatMapLatest { signedInProfileId ->
+                    messageDao.conversations(
+                        ownerId = signedInProfileId.id,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
+                        .map { populatedConversationEntities ->
+                            populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
+                        }
                 },
             networkService.nextCursorFlow(
                 currentCursor = cursor,

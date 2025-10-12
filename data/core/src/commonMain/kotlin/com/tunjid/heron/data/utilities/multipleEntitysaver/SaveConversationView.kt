@@ -32,6 +32,7 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     convoView: ConvoView,
 ) {
+    viewingProfileId ?: return
     convoView.members.forEach { member ->
         add(
             viewingProfileId = viewingProfileId,
@@ -103,6 +104,7 @@ internal fun MultipleEntitySaver.add(
         ConversationEntity(
             id = convoView.id.let(::ConversationId),
             rev = convoView.rev,
+            ownerId = viewingProfileId,
             lastMessageId = lastMessageId,
             lastReactedToMessageId = lastReactedToMessageId,
             muted = convoView.muted,
