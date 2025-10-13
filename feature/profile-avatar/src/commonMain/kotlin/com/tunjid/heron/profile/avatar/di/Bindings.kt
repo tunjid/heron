@@ -154,6 +154,7 @@ class ProfileAvatarBindings(
                     PaneNavigationRail()
                 },
                 onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 content = {
                     AvatarScreen(

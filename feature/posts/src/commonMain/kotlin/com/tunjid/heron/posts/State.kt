@@ -29,6 +29,10 @@ data class State(
 
 sealed class Action(val key: String) {
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

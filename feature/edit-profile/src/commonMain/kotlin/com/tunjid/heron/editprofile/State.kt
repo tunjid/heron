@@ -135,6 +135,10 @@ sealed class Action(val key: String) {
         val text: String,
     ) : Action("FieldChanged")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

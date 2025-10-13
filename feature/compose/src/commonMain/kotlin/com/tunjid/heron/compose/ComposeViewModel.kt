@@ -113,6 +113,7 @@ class ActualComposeViewModel(
                 when (val action = type()) {
                     is Action.PostTextChanged -> action.flow.postTextMutations()
                     is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.EditMedia -> action.flow.editMediaMutations()
                     is Action.CreatePost -> action.flow.createPostMutations(
                         navActions = navActions,
@@ -169,6 +170,11 @@ private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<Stat
 private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(fabExpanded = action.expanded)
+    }
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
     }
 
 private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =

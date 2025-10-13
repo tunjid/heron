@@ -89,6 +89,7 @@ class ActualEditProfileViewModel(
                     is Action.AvatarPicked -> action.flow.avatarPickedMutations()
                     is Action.BannerPicked -> action.flow.bannerPickedMutations()
                     is Action.FieldChanged -> action.flow.formEditMutations()
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.SaveProfile -> action.flow.saveProfileMutations(
                         navActions = navActions,
                         writeQueue = writeQueue,
@@ -132,12 +133,16 @@ private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>>
         copy(fields = fields.copyWithValidation(id, text))
     }
 
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
+    }
+
 private fun Flow<Action.SaveProfile>.saveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
-
         val updateWrite = Writable.ProfileUpdate(
             update = Profile.Update(
                 profileId = action.profileId,

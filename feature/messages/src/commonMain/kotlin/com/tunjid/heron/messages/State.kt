@@ -50,6 +50,10 @@ sealed class Action(val key: String) {
         val tilingAction: TilingState.Action,
     ) : Action(key = "Tile")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
