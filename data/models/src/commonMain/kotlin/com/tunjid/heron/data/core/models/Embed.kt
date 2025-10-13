@@ -38,7 +38,10 @@ sealed class MediaFile : UrlEncodableModel {
         override val width: Long,
         override val height: Long,
         val altText: String = "",
-    ) : MediaFile()
+    ) : MediaFile() {
+        override fun toString(): String =
+            "Photo(data=${data.contentToString()}, width=$width, height=$height, altText='$altText')"
+    }
 
     @Serializable
     class Video(
@@ -46,7 +49,10 @@ sealed class MediaFile : UrlEncodableModel {
         override val width: Long,
         override val height: Long,
         val altText: String? = null,
-    ) : MediaFile()
+    ) : MediaFile() {
+        override fun toString(): String =
+            "Video(data=${data.contentToString()}, width=$width, height=$height, altText=$altText)"
+    }
 }
 
 /**
