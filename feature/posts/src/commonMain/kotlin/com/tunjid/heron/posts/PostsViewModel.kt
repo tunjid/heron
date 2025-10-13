@@ -20,14 +20,18 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 
@@ -46,6 +50,7 @@ class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
@@ -57,8 +62,16 @@ class ActualPostsViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.Navigate -> TODO()
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
                 }
             }
         },
     )
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
+    }

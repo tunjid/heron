@@ -18,15 +18,23 @@ package com.tunjid.heron.profile.avatar
 
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     val avatarSharedElementKey: String? = null,
     val profile: Profile?,
+    @Transient
+    val messages: List<Memo> = emptyList(),
 )
 
 sealed class Action(val key: String) {
+
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
 
     sealed class Navigate :
         Action(key = "Navigate"),

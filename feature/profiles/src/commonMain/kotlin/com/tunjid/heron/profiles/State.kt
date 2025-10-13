@@ -78,6 +78,10 @@ sealed class Action(val key: String) {
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

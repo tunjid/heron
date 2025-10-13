@@ -37,6 +37,10 @@ sealed class Action(val key: String) {
         val refreshHomeTimelinesOnLaunch: Boolean,
     ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     data object SignOut : Action(key = "SignOut")
 
     sealed class Navigate :

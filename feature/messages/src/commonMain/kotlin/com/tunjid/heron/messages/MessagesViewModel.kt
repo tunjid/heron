@@ -76,6 +76,7 @@ class ActualMessagesViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -103,4 +104,9 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
     }

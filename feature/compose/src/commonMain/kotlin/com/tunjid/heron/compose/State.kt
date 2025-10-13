@@ -112,6 +112,10 @@ sealed class Action(val key: String) {
         val expanded: Boolean,
     ) : Action("SetFabExpanded")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class EditMedia : Action("EditMedia") {
         data class AddPhotos(
             val photos: List<MediaItem.Photo>,
