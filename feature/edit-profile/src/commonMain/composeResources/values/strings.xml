@@ -27,4 +27,5 @@
     <string name="duplicate_profile_update">Your profile is being updated.</string>
     <string name="failed_profile_update">Cannot update your profile right now.</string>
     <string name="profile_background_update">Updating your profile in the background…</string>
+    <string name="profile_updating">Updating…</string>
 </resources>

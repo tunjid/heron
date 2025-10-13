@@ -67,6 +67,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.edit_profile.generated.resources.Res
+import heron.feature.edit_profile.generated.resources.profile_updating
 import heron.feature.edit_profile.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
@@ -172,9 +173,11 @@ class EditProfileBindings(
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(
-                            Res.string.save,
+                            if (state.submitting) Res.string.profile_updating
+                            else Res.string.save,
                         ),
                         icon = Icons.Rounded.Save,
+                        enabled = !state.submitting,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(state.saveProfileAction())

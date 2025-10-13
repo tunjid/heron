@@ -29,6 +29,7 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -51,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
@@ -77,6 +79,7 @@ fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
     enterTransition: EnterTransition = slideInVertically(initialOffsetY = { it }),
     exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
+    enabled: Boolean = true,
     text: String,
     icon: ImageVector?,
     expanded: Boolean,
@@ -87,6 +90,10 @@ fun PaneScaffoldState.PaneFab(
         enter = enterTransition,
         exit = exitTransition,
         content = {
+            val fabAlpha = animateFloatAsState(
+                if (enabled) 1f else 0.6f,
+            )
+
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
             FloatingActionButton(
@@ -97,8 +104,9 @@ fun PaneScaffoldState.PaneFab(
                             key = FabSharedElementKey,
                         ),
                         zIndexInOverlay = FabSharedElementZIndex,
-                    ),
-                onClick = onClick,
+                    )
+                    .graphicsLayer { alpha = fabAlpha.value },
+                onClick = { if (enabled) onClick() },
                 shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
                 content = {
                     Row(

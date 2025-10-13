@@ -50,6 +50,7 @@ internal val Description = FormField.Id("description")
 data class State(
     val profile: Profile,
     val avatarSharedElementKey: String,
+    @Transient val submitting: Boolean = false,
     @Transient val updatedAvatar: MediaItem.Photo? = null,
     @Transient val updatedBanner: MediaItem.Photo? = null,
     @Transient

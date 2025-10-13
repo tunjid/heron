@@ -18,6 +18,7 @@ package com.tunjid.heron.signin.di
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -184,8 +186,7 @@ class SignInBindings(
                     PaneFab(
                         modifier = Modifier
                             .animateBounds(lookaheadScope = this)
-                            .windowInsetsPadding(WindowInsets.ime)
-                            .alpha(if (state.submitButtonEnabled) 1f else 0.6f),
+                            .windowInsetsPadding(WindowInsets.ime),
                         text = stringResource(
                             when {
                                 state.isSubmitting -> Res.string.signing_in
@@ -201,11 +202,10 @@ class SignInBindings(
                             state.canSignInLater -> Icons.Rounded.Timer
                             else -> Icons.Rounded.Check
                         },
+                        enabled = state.submitButtonEnabled,
                         expanded = true,
                         onClick = {
-                            if (state.submitButtonEnabled) viewModel.accept(
-                                state.createSessionAction(),
-                            )
+                            viewModel.accept(state.createSessionAction())
                         },
                     )
                 },

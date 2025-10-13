@@ -77,6 +77,9 @@ class ActualEditProfileViewModel(
             loadProfileMutations(
                 profileRepository = profileRepository,
             ),
+            pendingUpdateSubmissionMutations(
+                writeQueue = writeQueue,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -118,6 +121,13 @@ private fun loadProfileMutations(
             )
         }
 
+private fun pendingUpdateSubmissionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    writeQueue.queueChanges.mapToMutation { writes ->
+        copy(submitting = writes.any { it is Writable.ProfileUpdate })
+    }
+
 private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(updatedAvatar = it.item)
@@ -143,6 +153,8 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
+        emit { copy(submitting = true) }
+
         val updateWrite = Writable.ProfileUpdate(
             update = Profile.Update(
                 profileId = action.profileId,
@@ -153,19 +165,28 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
             ),
         )
 
-        when (writeQueue.enqueue(updateWrite)) {
+        val writeStatus = writeQueue.enqueue(updateWrite)
+        when (writeStatus) {
             WriteQueue.Status.Dropped -> emit {
-                copy(messages = messages + Memo.Resource(Res.string.failed_profile_update))
+                copy(
+                    messages = messages + Memo.Resource(Res.string.failed_profile_update),
+                    submitting = false,
+                )
             }
             WriteQueue.Status.Duplicate -> emit {
-                copy(messages = messages + Memo.Resource(Res.string.duplicate_profile_update))
+                copy(
+                    messages = messages + Memo.Resource(Res.string.duplicate_profile_update),
+                    submitting = false,
+                )
             }
             WriteQueue.Status.Enqueued -> emit {
                 copy(messages = messages + Memo.Resource(Res.string.profile_background_update))
             }
         }
-        writeQueue.awaitDequeue(updateWrite)
 
+        if (writeStatus != WriteQueue.Status.Enqueued) return@mapLatestToManyMutations
+
+        writeQueue.awaitDequeue(updateWrite)
         emitAll(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
                 navigationMutationConsumer = navActions,
