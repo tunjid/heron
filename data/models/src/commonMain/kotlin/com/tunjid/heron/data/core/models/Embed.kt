@@ -40,7 +40,7 @@ sealed class MediaFile : UrlEncodableModel {
         val altText: String = "",
     ) : MediaFile() {
         override fun toString(): String =
-            "Photo(dataHash=${data.contentHashCode()}, width=$width, height=$height, altText='$altText')"
+            "Photo(data.size=${data.size}, width=$width, height=$height, altText='$altText')"
     }
 
     @Serializable
@@ -51,7 +51,7 @@ sealed class MediaFile : UrlEncodableModel {
         val altText: String? = null,
     ) : MediaFile() {
         override fun toString(): String =
-            "Video(dataHash=${data.contentHashCode()}, width=$width, height=$height, altText=$altText)"
+            "Video(data.size=${data.size}, width=$width, height=$height, altText=$altText)"
     }
 }
 
