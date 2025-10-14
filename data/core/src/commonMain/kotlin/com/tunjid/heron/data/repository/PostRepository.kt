@@ -61,6 +61,7 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity.Partial.*
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
@@ -439,7 +440,7 @@ internal class OfflinePostRepository @Inject constructor(
                             }
                             is Post.Interaction.Create.Bookmark -> {
                                 upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                    partial = Bookmark(
                                         bookmarked = true,
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
@@ -507,7 +508,7 @@ internal class OfflinePostRepository @Inject constructor(
                             }
                             is Post.Interaction.Delete.RemoveBookmark -> {
                                 upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                    partial = Bookmark(
                                         bookmarked = false,
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
@@ -521,6 +522,9 @@ internal class OfflinePostRepository @Inject constructor(
                         }
                     }
                 }
+            is Post.Interaction.Share -> Outcome.Success
+            // Share is a local-only action, no network or DB writes.
+            // Just emit success, or handle share logic here if needed.
         }
     }
 
