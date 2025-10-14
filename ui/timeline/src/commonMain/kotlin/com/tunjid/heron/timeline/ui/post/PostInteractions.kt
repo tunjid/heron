@@ -23,6 +23,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,18 +31,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -50,6 +58,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -61,15 +70,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,17 +91,24 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.cancel
+import heron.ui.timeline.generated.resources.copy_link_icon
+import heron.ui.timeline.generated.resources.copy_link_to_post
 import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
+import heron.ui.timeline.generated.resources.send_icon
+import heron.ui.timeline.generated.resources.send_via_direct_message
 import heron.ui.timeline.generated.resources.share
 import heron.ui.timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
@@ -522,13 +539,15 @@ private fun PostInteractionsBottomSheet(
                         }
                     }
                     is Post.Interaction.Share -> {
-                        Text(
-                            text = "Share Menu",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            textAlign = TextAlign.Center,
+                        SendDirectMessageCard(
+                            onSendClicked = {
+
+                            }
+                        )
+                        CopyLinkCard(
+                            onCopyLinkClicked = {
+
+                            }
                         )
                     }
                     else -> Unit
@@ -561,6 +580,121 @@ private fun PostInteractionsBottomSheet(
         },
     )
 }
+
+@Composable
+private fun SendDirectMessageCard(
+    onSendClicked: () -> Unit
+) {
+    ShareActionCard(
+        showDivider = true,
+        topContent = {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(6) { index ->
+                    val picId = 100 + index
+                    val dummyUrl = "https://picsum.photos/id/$picId/200/200"
+                    AsyncImage(
+                        args = ImageArgs(
+                            url = dummyUrl,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle
+                        ),
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .clickable { /* TODO: DM user */ }
+                    )
+                }
+            }
+        },
+        bottomContent = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSendClicked() }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text =  stringResource(Res.string.send_via_direct_message),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Send,
+                    contentDescription =  stringResource( Res.string.send_icon),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun CopyLinkCard(
+    onCopyLinkClicked: () -> Unit
+) {
+    ShareActionCard(
+        bottomContent = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onCopyLinkClicked() }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(Res.string.copy_link_to_post),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = stringResource(Res.string.copy_link_icon),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    )
+}
+
+
+@Composable
+private fun ShareActionCard(
+    modifier: Modifier = Modifier,
+    showDivider: Boolean = false,
+    topContent: (@Composable ColumnScope.() -> Unit)? = null,
+    bottomContent: @Composable ColumnScope.() -> Unit,
+) {
+    val cardColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            topContent?.invoke(this)
+
+            if (showDivider) {
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(0.3f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                    thickness = 0.6.dp
+                )
+            }
+            bottomContent()
+        }
+    }
+}
+
 
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)

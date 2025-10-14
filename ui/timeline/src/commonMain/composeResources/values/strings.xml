@@ -59,4 +59,8 @@
     <string name="mute_video">Mute video</string>
     <string name="unmute_video">Unmute video</string>
     <string name="play_video">Play video</string>
+    <string name="copy_link_icon">Copy link icon</string>
+    <string name="copy_link_to_post">Copy link to post</string>
+    <string name="send_via_direct_message">Send via Direct Message</string>
+    <string name="send_icon">Send icon</string>
 </resources>
