@@ -69,6 +69,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -279,7 +280,12 @@ private inline fun PostInteractionsButtons(
                                 )
                             },
                         )
-                        PostInteractionButton.Share -> {}
+                        PostInteractionButton.Share -> onPostInteraction(
+                              Post.Interaction.Share(
+                                   postId = postId,
+                                   postUri = postUri
+                              )
+                        )
                     }
                 },
             )
@@ -437,12 +443,12 @@ private fun PostInteractionsBottomSheet(
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
             null -> Unit
-            is Post.Interaction.Create.Repost -> state.showBottomSheet = true
-            is Post.Interaction.Create.Like,
-            is Post.Interaction.Delete.RemoveRepost,
-            is Post.Interaction.Delete.Unlike,
+            is Repost -> state.showBottomSheet = true
+            is Like,
+            is RemoveRepost,
+            is Unlike,
             is Post.Interaction.Create.Bookmark,
-            is Post.Interaction.Delete.RemoveBookmark,
+            is RemoveBookmark,
             -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)
@@ -451,6 +457,7 @@ private fun PostInteractionsBottomSheet(
                     state.showBottomSheet = true
                 }
             }
+            is Post.Interaction.Share -> state.showBottomSheet = true
         }
     }
 
@@ -460,56 +467,73 @@ private fun PostInteractionsBottomSheet(
         },
         sheetState = state.sheetState,
         content = {
+            val currentInteraction = state.currentInteraction
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (state.isSignedIn) repeat(2) { index ->
-                    val contentDescription = stringResource(
-                        if (index == 0) Res.string.repost
-                        else Res.string.quote,
-                    ).capitalize(locale = Locale.current)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(CircleShape)
-                            .clickable {
-                                when (index) {
-                                    0 ->
-                                        state.currentInteraction
-                                            ?.let(onInteractionConfirmed)
-
-                                    else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
-                                        ?.let(onQuotePostClicked)
-                                }
-                                state.hideSheet()
-                            }
-                            .padding(
-                                horizontal = 8.dp,
-                                vertical = 8.dp,
-                            )
-                            .semantics {
-                                this.contentDescription = contentDescription
-                            },
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = {
-                            Icon(
+                when(currentInteraction){
+                    is Repost -> {
+                        if (state.isSignedIn) repeat(2) { index ->
+                            val contentDescription = stringResource(
+                                if (index == 0) Res.string.repost
+                                else Res.string.quote,
+                            ).capitalize(locale = Locale.current)
+                            Row(
                                 modifier = Modifier
-                                    .size(24.dp),
-                                imageVector = if (index == 0) Icons.Rounded.Repeat
-                                else Icons.Rounded.FormatQuote,
-                                contentDescription = null,
+                                    .fillMaxWidth()
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        when (index) {
+                                            0 ->
+                                                state.currentInteraction
+                                                    ?.let(onInteractionConfirmed)
+
+                                            else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                                ?.let(onQuotePostClicked)
+                                        }
+                                        state.hideSheet()
+                                    }
+                                    .padding(
+                                        horizontal = 8.dp,
+                                        vertical = 8.dp,
+                                    )
+                                    .semantics {
+                                        this.contentDescription = contentDescription
+                                    },
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                content = {
+                                    Icon(
+                                        modifier = Modifier
+                                            .size(24.dp),
+                                        imageVector = if (index == 0) Icons.Rounded.Repeat
+                                        else Icons.Rounded.FormatQuote,
+                                        contentDescription = null,
+                                    )
+                                    Text(
+                                        modifier = Modifier,
+                                        text = contentDescription,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                    )
+                                },
                             )
-                            Text(
-                                modifier = Modifier,
-                                text = contentDescription,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                    )
+                        }
+                    }
+                    is Post.Interaction.Share -> {
+                        Text(
+                            text = "Share Menu",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    else -> Unit
                 }
+
 
                 // Sheet content
                 OutlinedButton(
