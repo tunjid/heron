@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +74,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.*
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.*
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -88,6 +91,7 @@ import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
+import heron.ui.timeline.generated.resources.share
 import heron.ui.timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -207,6 +211,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                     PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
+                    PostInteractionButton.Share -> button.icon(isChecked = false)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
@@ -216,6 +221,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> likeCount
                     PostInteractionButton.Repost -> repostCount
                     PostInteractionButton.Bookmark -> ""
+                    PostInteractionButton.Share -> ""
                 },
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
@@ -229,18 +235,19 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Bookmark ->
                         if (isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
+                    PostInteractionButton.Share -> MaterialTheme.colorScheme.outline
                 },
                 onClick = {
                     when (button) {
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Post.Interaction.Create.Like(
+                                null -> Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Post.Interaction.Delete.Unlike(
+                                else -> Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -249,12 +256,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Post.Interaction.Create.Repost(
+                                null -> Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Post.Interaction.Delete.RemoveRepost(
+                                else -> RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -262,16 +269,17 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Post.Interaction.Create.Bookmark(
+                                false -> Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> Post.Interaction.Delete.RemoveBookmark(
+                                true -> RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
                         )
+                        PostInteractionButton.Share -> {}
                     }
                 },
             )
@@ -562,6 +570,7 @@ private sealed class PostInteractionButton {
     data object Repost : PostInteractionButton()
     data object Like : PostInteractionButton()
     data object Bookmark : PostInteractionButton()
+    data object Share : PostInteractionButton()
 
     companion object {
         fun PostInteractionButton.icon(
@@ -571,6 +580,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
+            Share -> Icons.Rounded.MoreVert
         }
 
         val PostInteractionButton.stringResource
@@ -579,6 +589,7 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
+                Share -> Res.string.share
             }
 
         val PostButtons = listOf(
@@ -586,6 +597,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
+            Share
         )
 
         val MediaButtons = listOf(
@@ -593,6 +605,7 @@ private sealed class PostInteractionButton {
             Comment,
             Repost,
             Bookmark,
+            Share
         )
     }
 }
