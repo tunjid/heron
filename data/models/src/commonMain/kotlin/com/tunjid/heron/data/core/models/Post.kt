@@ -159,7 +159,6 @@ data class Post(
             ) : Delete()
         }
 
-
         @Serializable
         data class Share(
             val postId: PostId,

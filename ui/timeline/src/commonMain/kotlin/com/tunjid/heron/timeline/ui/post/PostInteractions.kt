@@ -85,8 +85,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Post.Interaction.Create.*
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete.*
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Repost
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveBookmark
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveRepost
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.Unlike
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -298,10 +302,10 @@ private inline fun PostInteractionsButtons(
                             },
                         )
                         PostInteractionButton.Share -> onPostInteraction(
-                              Post.Interaction.Share(
-                                   postId = postId,
-                                   postUri = postUri
-                              )
+                            Post.Interaction.Share(
+                                postId = postId,
+                                postUri = postUri,
+                            ),
                         )
                     }
                 },
@@ -490,7 +494,7 @@ private fun PostInteractionsBottomSheet(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                when(currentInteraction){
+                when (currentInteraction) {
                     is Repost -> {
                         if (state.isSignedIn) repeat(2) { index ->
                             val contentDescription = stringResource(
@@ -541,18 +545,15 @@ private fun PostInteractionsBottomSheet(
                     is Post.Interaction.Share -> {
                         SendDirectMessageCard(
                             onSendClicked = {
-
-                            }
+                            },
                         )
                         CopyLinkCard(
                             onCopyLinkClicked = {
-
-                            }
+                            },
                         )
                     }
                     else -> Unit
                 }
-
 
                 // Sheet content
                 OutlinedButton(
@@ -583,7 +584,7 @@ private fun PostInteractionsBottomSheet(
 
 @Composable
 private fun SendDirectMessageCard(
-    onSendClicked: () -> Unit
+    onSendClicked: () -> Unit,
 ) {
     ShareActionCard(
         showDivider = true,
@@ -596,12 +597,12 @@ private fun SendDirectMessageCard(
                         args = ImageArgs(
                             url = dummyUrl,
                             contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle
+                            shape = RoundedPolygonShape.Circle,
                         ),
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .clickable { /* TODO: DM user */ }
+                            .clickable { /* TODO: DM user */ },
                     )
                 }
             }
@@ -613,25 +614,25 @@ private fun SendDirectMessageCard(
                     .clickable { onSendClicked() }
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text =  stringResource(Res.string.send_via_direct_message),
-                    style = MaterialTheme.typography.bodyLarge
+                    text = stringResource(Res.string.send_via_direct_message),
+                    style = MaterialTheme.typography.bodyLarge,
                 )
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.Send,
-                    contentDescription =  stringResource( Res.string.send_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentDescription = stringResource(Res.string.send_icon),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
+        },
     )
 }
 
 @Composable
 private fun CopyLinkCard(
-    onCopyLinkClicked: () -> Unit
+    onCopyLinkClicked: () -> Unit,
 ) {
     ShareActionCard(
         bottomContent = {
@@ -641,22 +642,21 @@ private fun CopyLinkCard(
                     .clickable { onCopyLinkClicked() }
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(Res.string.copy_link_to_post),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
                 )
                 Icon(
                     imageVector = Icons.Rounded.ContentCopy,
                     contentDescription = stringResource(Res.string.copy_link_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
+        },
     )
 }
-
 
 @Composable
 private fun ShareActionCard(
@@ -671,13 +671,13 @@ private fun ShareActionCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             topContent?.invoke(this)
 
@@ -687,14 +687,13 @@ private fun ShareActionCard(
                         .fillMaxWidth()
                         .alpha(0.3f),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                    thickness = 0.6.dp
+                    thickness = 0.6.dp,
                 )
             }
             bottomContent()
         }
     }
 }
-
 
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
@@ -755,7 +754,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
-            Share
+            Share,
         )
 
         val MediaButtons = listOf(
@@ -763,7 +762,7 @@ private sealed class PostInteractionButton {
             Comment,
             Repost,
             Bookmark,
-            Share
+            Share,
         )
     }
 }
