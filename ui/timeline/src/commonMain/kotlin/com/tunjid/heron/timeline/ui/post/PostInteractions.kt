@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -45,6 +46,7 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.CardDefaults
@@ -468,7 +470,7 @@ private fun PostInteractionsBottomSheet(
             is Like,
             is RemoveRepost,
             is Unlike,
-            is Post.Interaction.Create.Bookmark,
+            is Bookmark,
             is RemoveBookmark,
             -> {
                 if (state.isSignedIn) {
@@ -545,10 +547,12 @@ private fun PostInteractionsBottomSheet(
                     is Post.Interaction.Share -> {
                         SendDirectMessageCard(
                             onSendClicked = {
+                                // TODO: Implement sending direct messages
                             },
                         )
                         CopyLinkCard(
                             onCopyLinkClicked = {
+                                // TODO: Implement copy link to clipboard
                             },
                         )
                     }
@@ -684,8 +688,7 @@ private fun ShareActionCard(
             if (showDivider) {
                 HorizontalDivider(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(0.3f),
+                        .fillMaxWidth(),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                     thickness = 0.6.dp,
                 )
