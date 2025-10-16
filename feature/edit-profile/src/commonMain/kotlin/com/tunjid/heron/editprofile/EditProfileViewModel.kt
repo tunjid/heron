@@ -17,14 +17,15 @@
 package com.tunjid.heron.editprofile
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.utilities.File
+import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
@@ -44,6 +45,8 @@ import heron.feature.edit_profile.generated.resources.duplicate_profile_update
 import heron.feature.edit_profile.generated.resources.failed_profile_update
 import heron.feature.edit_profile.generated.resources.profile_background_update
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,6 +66,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualEditProfileViewModel(
     profileRepository: ProfileRepository,
+    fileManager: FileManager,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -96,6 +100,7 @@ class ActualEditProfileViewModel(
                     is Action.SaveProfile -> action.flow.saveProfileMutations(
                         navActions = navActions,
                         writeQueue = writeQueue,
+                        fileManager = fileManager,
                     )
                 }
             }
@@ -150,6 +155,7 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 
 private fun Flow<Action.SaveProfile>.saveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
+    fileManager: FileManager,
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
@@ -160,8 +166,12 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
                 profileId = action.profileId,
                 displayName = action.displayName,
                 description = action.description,
-                avatar = action.avatar?.toMediaFile(),
-                banner = action.banner?.toMediaFile(),
+                avatarFile = action.avatar?.let {
+                    fileManager.toUnrestrictedPhotoFile(it)
+                },
+                bannerFile = action.banner?.let {
+                    fileManager.toUnrestrictedPhotoFile(it)
+                },
             ),
         )
 
@@ -194,10 +204,11 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
         )
     }
 
-private suspend fun MediaItem.Photo.toMediaFile(): MediaFile.Photo {
-    return MediaFile.Photo(
-        data = readBytes(),
-        width = size.width.toLong(),
-        height = size.height.toLong(),
-    )
+private suspend fun FileManager.toUnrestrictedPhotoFile(
+    file: RestrictedFile.Media.Photo,
+): File.Media.Photo? = when (val unrestrictedFile = cacheWithoutRestrictions(file)) {
+    is File.Media.Photo -> unrestrictedFile
+    is File.Media.Video,
+    null,
+    -> null
 }

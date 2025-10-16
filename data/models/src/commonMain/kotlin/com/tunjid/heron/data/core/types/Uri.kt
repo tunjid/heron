@@ -95,3 +95,11 @@ value class GenericUri(
 ) : Uri {
     override fun toString(): String = uri
 }
+
+@Serializable
+@JvmInline
+value class FileUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}

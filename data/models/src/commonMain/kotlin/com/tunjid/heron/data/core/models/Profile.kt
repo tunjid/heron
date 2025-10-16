@@ -21,8 +21,10 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.File
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class Profile(
@@ -72,11 +74,34 @@ data class Profile(
 
     @Serializable
     data class Update(
+        @ProtoNumber(1)
         val profileId: ProfileId,
+        @ProtoNumber(2)
         val displayName: String,
+        @ProtoNumber(3)
         val description: String,
-        val avatar: MediaFile.Photo?,
-        val banner: MediaFile.Photo?,
+        @Deprecated(
+            message = "Image data should be read separately.",
+            replaceWith = ReplaceWith(
+                "avatarFile",
+                "com.tunjid.heron.data.core.utilities.File",
+            ),
+        )
+        @ProtoNumber(4)
+        val avatar: MediaFile.Photo? = null,
+        @Deprecated(
+            message = "Image data should be read separately.",
+            replaceWith = ReplaceWith(
+                "bannerFile",
+                "com.tunjid.heron.data.core.utilities.File",
+            ),
+        )
+        @ProtoNumber(5)
+        val banner: MediaFile.Photo? = null,
+        @ProtoNumber(6)
+        val avatarFile: File.Media.Photo?,
+        @ProtoNumber(7)
+        val bannerFile: File.Media.Photo?,
     )
 }
 

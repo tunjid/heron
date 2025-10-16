@@ -46,10 +46,10 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.composables.ui.animate
-import com.tunjid.heron.media.picker.MediaItem
+import com.tunjid.heron.data.files.RestrictedFile
+import com.tunjid.heron.data.files.uiDisplayModel
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
-import io.github.vinceglb.filekit.PlatformFile
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +86,7 @@ sealed class ImageRequest {
     ) : ImageRequest()
 
     internal data class Local(
-        val file: PlatformFile,
+        val file: Any,
     ) : ImageRequest()
 }
 
@@ -219,14 +219,14 @@ fun ImageArgs(
 )
 
 fun ImageArgs(
-    item: MediaItem.Photo,
+    item: RestrictedFile.Media.Photo,
     contentDescription: String? = null,
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape,
 ) = ImageArgs(
     request = ImageRequest.Local(
-        file = item.file,
+        file = item.uiDisplayModel,
     ),
     contentDescription = contentDescription,
     contentScale = contentScale,

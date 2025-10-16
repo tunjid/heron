@@ -14,15 +14,11 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.data.files
 
-import androidx.compose.runtime.Composable
-import coil3.Image
-import coil3.PlatformContext
+import io.github.vinceglb.filekit.FileKit
 
-fun imageLoader(): ImageLoader = CoilImageLoader.create(
-    context = PlatformContext.INSTANCE,
-)
+internal actual fun initializeFileKit() =
+    FileKit.init(AppId)
 
-@Composable
-internal actual fun Image.AnimationEffect() = Unit
+private const val AppId = "com.tunjid.heron"

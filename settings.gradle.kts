@@ -49,6 +49,7 @@ dependencyResolutionManagement {
 include(
     ":composeApp",
     ":data:core",
+    ":data:files",
     ":data:models",
     ":data:database",
     ":data:lexicons",

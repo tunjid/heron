@@ -37,6 +37,7 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.utilities.File
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
@@ -44,24 +45,53 @@ import sh.christian.ozone.api.Uri as BskyUri
 import sh.christian.ozone.api.model.Blob
 
 internal sealed class MediaBlob {
-    data class Image(
-        val file: MediaFile.Photo,
-        val blob: Blob,
-    ) : MediaBlob()
+    sealed class Image : MediaBlob() {
+        data class Deprecated(
+            @Suppress("DEPRECATION")
+            val file: MediaFile.Photo,
+            val blob: Blob,
+        ) : Image()
 
-    data class Video(
-        val file: MediaFile.Video,
-        val blob: Blob,
-    ) : MediaBlob()
+        data class Local(
+            val file: File.Media.Photo,
+            val blob: Blob,
+        ) : Image()
+    }
+
+    sealed class Video : MediaBlob() {
+        data class Deprecated(
+            @Suppress("DEPRECATION")
+            val file: MediaFile.Video,
+            val blob: Blob,
+        ) : Video()
+
+        data class Local(
+            val file: File.Media.Video,
+            val blob: Blob,
+        ) : Video()
+    }
 }
 
+@Suppress("DEPRECATION")
 internal fun MediaFile.with(blob: Blob) = when (this) {
-    is MediaFile.Photo -> MediaBlob.Image(
+    is MediaFile.Photo -> MediaBlob.Image.Deprecated(
         file = this,
         blob = blob,
     )
 
-    is MediaFile.Video -> MediaBlob.Video(
+    is MediaFile.Video -> MediaBlob.Video.Deprecated(
+        file = this,
+        blob = blob,
+    )
+}
+
+internal fun File.Media.with(blob: Blob) = when (this) {
+    is File.Media.Photo -> MediaBlob.Image.Local(
+        file = this,
+        blob = blob,
+    )
+
+    is File.Media.Video -> MediaBlob.Video.Local(
         file = this,
         blob = blob,
     )
@@ -132,27 +162,47 @@ private fun List<MediaBlob>.video(): BskyVideo? =
     filterIsInstance<MediaBlob.Video>()
         .firstOrNull()
         ?.let { videoFile ->
-            BskyVideo(
-                video = videoFile.blob,
-                alt = videoFile.file.altText,
-                aspectRatio = AspectRatio(
-                    videoFile.file.width,
-                    videoFile.file.height,
-                ),
-            )
+            when (videoFile) {
+                is MediaBlob.Video.Deprecated -> BskyVideo(
+                    video = videoFile.blob,
+                    alt = videoFile.file.altText,
+                    aspectRatio = AspectRatio(
+                        videoFile.file.width,
+                        videoFile.file.height,
+                    ),
+                )
+                is MediaBlob.Video.Local -> BskyVideo(
+                    video = videoFile.blob,
+                    alt = videoFile.file.altText,
+                    aspectRatio = AspectRatio(
+                        videoFile.file.width.toLong(),
+                        videoFile.file.height.toLong(),
+                    ),
+                )
+            }
         }
 
 private fun List<MediaBlob>.images(): BskyImages? =
     filterIsInstance<MediaBlob.Image>()
         .map { photoFile ->
-            ImagesImage(
-                image = photoFile.blob,
-                alt = photoFile.file.altText,
-                aspectRatio = AspectRatio(
-                    photoFile.file.width,
-                    photoFile.file.height,
-                ),
-            )
+            when (photoFile) {
+                is MediaBlob.Image.Deprecated -> ImagesImage(
+                    image = photoFile.blob,
+                    alt = photoFile.file.altText,
+                    aspectRatio = AspectRatio(
+                        photoFile.file.width,
+                        photoFile.file.height,
+                    ),
+                )
+                is MediaBlob.Image.Local -> ImagesImage(
+                    image = photoFile.blob,
+                    alt = photoFile.file.altText ?: "",
+                    aspectRatio = AspectRatio(
+                        photoFile.file.width.toLong(),
+                        photoFile.file.height.toLong(),
+                    ),
+                )
+            }
         }
         .takeUnless(List<ImagesImage>::isEmpty)
         ?.let(::BskyImages)

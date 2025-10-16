@@ -25,7 +25,7 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.media.picker.MediaItem
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
@@ -46,9 +46,9 @@ data class State(
     @Transient // TODO: Write a custom serializer for this
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
-    val photos: List<MediaItem.Photo> = emptyList(),
+    val photos: List<RestrictedFile.Media.Photo> = emptyList(),
     @Transient
-    val video: MediaItem.Video? = null,
+    val video: RestrictedFile.Media.Video? = null,
     @Transient
     val messages: List<Memo> = emptyList(),
     @Transient
@@ -105,7 +105,7 @@ sealed class Action(val key: String) {
         val authorId: ProfileId,
         val text: String,
         val links: List<Link>,
-        val media: List<MediaItem>,
+        val media: List<RestrictedFile.Media>,
     ) : Action("CreatePost")
 
     data class SetFabExpanded(
@@ -118,19 +118,19 @@ sealed class Action(val key: String) {
 
     sealed class EditMedia : Action("EditMedia") {
         data class AddPhotos(
-            val photos: List<MediaItem.Photo>,
+            val photos: List<RestrictedFile.Media.Photo>,
         ) : EditMedia()
 
         data class AddVideo(
-            val video: MediaItem.Video?,
+            val video: RestrictedFile.Media.Video?,
         ) : EditMedia()
 
         data class RemoveMedia(
-            val media: MediaItem?,
+            val media: RestrictedFile.Media?,
         ) : EditMedia()
 
         data class UpdateMedia(
-            val media: MediaItem?,
+            val media: RestrictedFile.Media?,
         ) : EditMedia()
     }
 

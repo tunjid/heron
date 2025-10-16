@@ -16,14 +16,15 @@
 
 package com.tunjid.heron.compose
 
-import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.utilities.File
+import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.SearchQuery
@@ -33,7 +34,6 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
@@ -79,6 +79,7 @@ class ActualComposeViewModel(
     postRepository: PostRepository,
     searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
+    fileManager: FileManager,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -118,6 +119,7 @@ class ActualComposeViewModel(
                     is Action.CreatePost -> action.flow.createPostMutations(
                         navActions = navActions,
                         writeQueue = writeQueue,
+                        fileManager = fileManager,
                     )
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
@@ -192,12 +194,12 @@ private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
         .mapToMutation { (action, media) ->
             when (action) {
                 is Action.EditMedia.AddPhotos -> copy(
-                    photos = photos + media.filterIsInstance<MediaItem.Photo>(),
+                    photos = photos + media.filterIsInstance<RestrictedFile.Media.Photo>(),
                 )
 
                 is Action.EditMedia.AddVideo -> copy(
                     photos = emptyList(),
-                    video = media.filterIsInstance<MediaItem.Video>().firstOrNull(),
+                    video = media.filterIsInstance<RestrictedFile.Media.Video>().firstOrNull(),
                 )
 
                 is Action.EditMedia.RemoveMedia -> copy(
@@ -206,14 +208,14 @@ private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
                 )
 
                 is Action.EditMedia.UpdateMedia -> when (val item = media.first()) {
-                    is MediaItem.Photo -> copy(
+                    is RestrictedFile.Media.Photo -> copy(
                         photos = photos.map { photo ->
                             if (photo.path == item.path) item
                             else photo
                         },
                     )
 
-                    is MediaItem.Video -> copy(
+                    is RestrictedFile.Media.Video -> copy(
                         video = item,
                     )
                 }
@@ -222,38 +224,32 @@ private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
 
 private fun Flow<Action.CreatePost>.createPostMutations(
     navActions: (NavigationMutation) -> Unit,
+    fileManager: FileManager,
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        val postWrite = withContext(Dispatchers.IO) {
-            Writable.Create(
-                request = Post.Create.Request(
-                    authorId = action.authorId,
-                    text = action.text,
-                    links = action.links,
-                    metadata = Post.Create.Metadata(
-                        reply = action.postType as? Post.Create.Reply,
-                        quote = action.postType as? Post.Create.Quote,
-                        mediaFiles = action.media.mapNotNull { item ->
-                            when (item) {
-                                is MediaItem.Photo -> if (item.size != IntSize.Zero) MediaFile.Photo(
-                                    data = item.readBytes(),
-                                    width = item.size.width.toLong(),
-                                    height = item.size.height.toLong(),
-                                )
+        val postWrite = Writable.Create(
+            request = Post.Create.Request(
+                authorId = action.authorId,
+                text = action.text,
+                links = action.links,
+                metadata = Post.Create.Metadata(
+                    reply = action.postType as? Post.Create.Reply,
+                    quote = action.postType as? Post.Create.Quote,
+                    embeddedMedia = action.media.mapNotNull { item ->
+                        when (item) {
+                            is RestrictedFile.Media.Photo ->
+                                if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
                                 else null
 
-                                is MediaItem.Video -> MediaFile.Video(
-                                    data = item.readBytes(),
-                                    width = item.size.width.toLong(),
-                                    height = item.size.height.toLong(),
-                                )
-                            }
-                        },
-                    ),
+                            is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(
+                                item,
+                            )
+                        }
+                    }.filterIsInstance<File.Media>(),
                 ),
-            )
-        }
+            ),
+        )
 
         writeQueue.enqueue(postWrite)
         writeQueue.awaitDequeue(postWrite)

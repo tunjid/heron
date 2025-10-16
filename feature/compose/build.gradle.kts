@@ -29,6 +29,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
+                implementation(project(":data:files"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
 

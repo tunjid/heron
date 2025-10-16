@@ -64,6 +64,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
@@ -172,6 +173,7 @@ internal class OfflineProfileRepository @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
 ) : ProfileRepository {
 
@@ -606,19 +608,37 @@ internal class OfflineProfileRepository @Inject constructor(
     override suspend fun updateProfile(
         update: Profile.Update,
     ): Outcome = coroutineScope {
-        val (avatarBlob, bannerBlob) = listOf(
-            update.avatar,
-            update.banner,
-        ).map { file ->
-            async {
-                if (file == null) null
-                else networkService.runCatchingWithMonitoredNetworkRetry {
-                    uploadBlob(file.data)
+        val (avatarBlob, bannerBlob) = @Suppress("DEPRECATION")
+        when {
+            update.avatarFile != null || update.bannerFile != null -> listOf(
+                update.avatarFile,
+                update.bannerFile,
+            ).map { file ->
+                async {
+                    if (file == null) return@async null
+                    val bytes = fileManager.readBytes(file) ?: return@async null
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        uploadBlob(bytes)
+                    }
+                        .getOrNull()
+                        ?.blob
+                        ?.also { fileManager.delete(file) }
                 }
-                    .getOrNull()
-                    ?.blob
-            }
-        }.awaitAll()
+            }.awaitAll()
+            else -> listOf(
+                update.avatar,
+                update.banner,
+            ).map { file ->
+                async {
+                    if (file == null) null
+                    else networkService.runCatchingWithMonitoredNetworkRetry {
+                        uploadBlob(file.data)
+                    }
+                        .getOrNull()
+                        ?.blob
+                }
+            }.awaitAll()
+        }
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             getRecord(

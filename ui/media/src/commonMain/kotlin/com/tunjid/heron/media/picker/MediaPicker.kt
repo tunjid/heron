@@ -18,6 +18,7 @@ package com.tunjid.heron.media.picker
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.tunjid.heron.data.files.RestrictedFile
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -31,7 +32,7 @@ sealed interface MediaType {
 fun rememberMediaPicker(
     mediaType: MediaType,
     maxItems: Int?,
-    onItemsPicked: (List<MediaItem>) -> Unit,
+    onItemsPicked: (List<RestrictedFile.Media>) -> Unit,
 ): () -> Unit {
     val fileKitType = when (mediaType) {
         MediaType.Photo -> FileKitType.Image
@@ -45,8 +46,8 @@ fun rememberMediaPicker(
         ) { file ->
             onItemsPicked(
                 when (mediaType) {
-                    MediaType.Photo -> file?.let(MediaItem::Photo)
-                    MediaType.Video -> file?.let(MediaItem::Video)
+                    MediaType.Photo -> file?.let(RestrictedFile.Media::Photo)
+                    MediaType.Video -> file?.let(RestrictedFile.Media::Video)
                 }
                     ?.let(::listOf)
                     ?: emptyList(),
@@ -60,8 +61,8 @@ fun rememberMediaPicker(
         ) { files ->
             onItemsPicked(
                 when (mediaType) {
-                    MediaType.Photo -> files?.map(MediaItem::Photo)
-                    MediaType.Video -> files?.map(MediaItem::Video)
+                    MediaType.Photo -> files?.map(RestrictedFile.Media::Photo)
+                    MediaType.Video -> files?.map(RestrictedFile.Media::Video)
                 }
                     ?: emptyList(),
             )
