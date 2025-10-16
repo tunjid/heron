@@ -179,6 +179,12 @@ data class Post(
                 override val postUri: PostUri,
             ) : Delete()
         }
+
+        @Serializable
+        data class Share(
+            val postId: PostId,
+            override val postUri: PostUri,
+        ) : Interaction()
     }
 
     @Serializable

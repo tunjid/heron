@@ -35,5 +35,6 @@
     <string name="like">like</string>
     <string name="unlike">unlike</string>
     <string name="repost">repost</string>
+    <string name="share">Share</string>
     <string name="repost_removal">repost removal</string>
 </resources>

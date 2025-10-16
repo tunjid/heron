@@ -26,6 +26,7 @@ import heron.scaffold.generated.resources.failed_post_interaction
 import heron.scaffold.generated.resources.like
 import heron.scaffold.generated.resources.repost
 import heron.scaffold.generated.resources.repost_removal
+import heron.scaffold.generated.resources.share
 import heron.scaffold.generated.resources.unlike
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,7 @@ fun Post.Interaction.duplicateWriteMessage() = Memo.Resource(
             is Post.Interaction.Delete.RemoveBookmark -> Res.string.bookmark_removal
             is Post.Interaction.Delete.RemoveRepost -> Res.string.repost_removal
             is Post.Interaction.Delete.Unlike -> Res.string.unlike
+            is Post.Interaction.Share -> Res.string.share
         },
     ),
 )
