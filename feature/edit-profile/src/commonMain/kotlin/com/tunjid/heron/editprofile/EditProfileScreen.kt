@@ -60,9 +60,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.profile.AvatarHaloZIndex
@@ -96,7 +96,7 @@ internal fun EditProfileScreen(
         maxItems = 1,
     ) { mediaItems ->
         mediaItems
-            .filterIsInstance<MediaItem.Photo>()
+            .filterIsInstance<RestrictedFile.Media.Photo>()
             .firstOrNull()
             ?.let { actions(Action.AvatarPicked(it)) }
     }
@@ -106,7 +106,7 @@ internal fun EditProfileScreen(
         maxItems = 1,
     ) { mediaItems ->
         mediaItems
-            .filterIsInstance<MediaItem.Photo>()
+            .filterIsInstance<RestrictedFile.Media.Photo>()
             .firstOrNull()
             ?.let { actions(Action.BannerPicked(it)) }
     }
@@ -192,8 +192,8 @@ internal fun EditProfileScreen(
 fun EditProfileHeader(
     paneScaffoldState: PaneScaffoldState,
     avatarSharedElementKey: String,
-    avatarFile: MediaItem.Photo?,
-    bannerFile: MediaItem.Photo?,
+    avatarFile: RestrictedFile.Media.Photo?,
+    bannerFile: RestrictedFile.Media.Photo?,
     profile: Profile,
     onBannerEditClick: () -> Unit,
     onAvatarEditClick: () -> Unit,
@@ -238,7 +238,7 @@ fun ProfileAvatarEditableImage(
     paneScaffoldState: PaneScaffoldState,
     avatarSharedElementKey: String,
     profile: Profile,
-    localFile: MediaItem.Photo?,
+    localFile: RestrictedFile.Media.Photo?,
     shape: Shape,
     size: Dp,
     modifier: Modifier = Modifier,
@@ -311,7 +311,7 @@ fun ProfileBannerEditableImage(
     paneScaffoldState: PaneScaffoldState,
     avatarSharedElementKey: String,
     profile: Profile,
-    localFile: MediaItem.Photo?,
+    localFile: RestrictedFile.Media.Photo?,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -362,7 +362,7 @@ fun ProfileBannerEditableImage(
 @Composable
 private fun rememberEditableImageArgs(
     profile: Profile,
-    localFile: MediaItem.Photo?,
+    localFile: RestrictedFile.Media.Photo?,
     remoteUri: String?,
     shape: RoundedPolygonShape,
 ): ImageArgs {

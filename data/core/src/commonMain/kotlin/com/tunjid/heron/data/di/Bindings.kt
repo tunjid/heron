@@ -32,6 +32,8 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
@@ -114,6 +116,10 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideTidGenerator(): TidGenerator = TidGenerator()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideFileManager(): FileManager = createFileManager()
 
     @SingleIn(AppScope::class)
     @Provides

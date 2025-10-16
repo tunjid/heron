@@ -45,7 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.tunjid.heron.compose.Action
-import com.tunjid.heron.media.picker.MediaItem
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import de.cketti.codepoints.codePointCount
@@ -56,7 +56,7 @@ import kotlin.math.min
 internal fun ComposePostBottomBar(
     postText: TextFieldValue,
     modifier: Modifier = Modifier,
-    photos: List<MediaItem.Photo>,
+    photos: List<RestrictedFile.Media.Photo>,
     onMediaEdited: (Action.EditMedia) -> Unit,
 ) {
     Row(
@@ -74,7 +74,7 @@ internal fun ComposePostBottomBar(
             ).takeUnless(0::equals),
         ) { images ->
             images
-                .filterIsInstance<MediaItem.Photo>()
+                .filterIsInstance<RestrictedFile.Media.Photo>()
                 .let(Action.EditMedia::AddPhotos)
                 .let(onMediaEdited)
         }
@@ -84,7 +84,7 @@ internal fun ComposePostBottomBar(
             maxItems = 1,
         ) { videos ->
             videos
-                .filterIsInstance<MediaItem.Video>()
+                .filterIsInstance<RestrictedFile.Media.Video>()
                 .firstOrNull()
                 ?.let(Action.EditMedia::AddVideo)
                 ?.let(onMediaEdited)

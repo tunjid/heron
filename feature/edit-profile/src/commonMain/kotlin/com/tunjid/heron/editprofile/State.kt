@@ -24,8 +24,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.editprofile.di.profileHandleOrId
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.model
@@ -51,8 +51,8 @@ data class State(
     val profile: Profile,
     val avatarSharedElementKey: String,
     @Transient val submitting: Boolean = false,
-    @Transient val updatedAvatar: MediaItem.Photo? = null,
-    @Transient val updatedBanner: MediaItem.Photo? = null,
+    @Transient val updatedAvatar: RestrictedFile.Media.Photo? = null,
+    @Transient val updatedBanner: RestrictedFile.Media.Photo? = null,
     @Transient
     val fields: List<FormField> = listOf(
         FormField(
@@ -116,19 +116,19 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
 
 sealed class Action(val key: String) {
     data class AvatarPicked(
-        val item: MediaItem.Photo,
+        val item: RestrictedFile.Media.Photo,
     ) : Action(key = "AvatarPicked")
 
     data class BannerPicked(
-        val item: MediaItem.Photo,
+        val item: RestrictedFile.Media.Photo,
     ) : Action(key = "BannerPicked")
 
     data class SaveProfile(
         val profileId: ProfileId,
         val displayName: String,
         val description: String,
-        val avatar: MediaItem.Photo?,
-        val banner: MediaItem.Photo?,
+        val avatar: RestrictedFile.Media.Photo?,
+        val banner: RestrictedFile.Media.Photo?,
     ) : Action(key = "SaveProfile")
 
     data class FieldChanged(

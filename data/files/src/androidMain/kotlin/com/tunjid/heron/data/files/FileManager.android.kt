@@ -14,15 +14,6 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.data.files
 
-import androidx.compose.runtime.Composable
-import coil3.Image
-import coil3.PlatformContext
-
-fun imageLoader(): ImageLoader = CoilImageLoader.create(
-    context = PlatformContext.INSTANCE,
-)
-
-@Composable
-internal actual fun Image.AnimationEffect() = Unit
+internal actual fun initializeFileKit() = Unit

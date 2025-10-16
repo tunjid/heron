@@ -122,6 +122,7 @@ crypto-random = { module = "dev.whyoleg.cryptography:cryptography-random", versi
 crypto-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "crypto" }
 crypto-apple = { module = "dev.whyoleg.cryptography:cryptography-provider-apple", version.ref = "crypto" }
 filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "vinceglb-filekit" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "vinceglb-filekit" }
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "vinceglb-filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
 lifecycle-multiplatform-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle-multiplatform" }

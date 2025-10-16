@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
@@ -62,6 +63,7 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
@@ -141,6 +143,7 @@ internal class OfflinePostRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val transactionWriter: TransactionWriter,
+    private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
 ) : PostRepository {
     override fun likedBy(
@@ -316,28 +319,60 @@ internal class OfflinePostRepository @Inject constructor(
                 )
             }
         }
-        val blobs = if (request.metadata.mediaFiles.isNotEmpty()) coroutineScope {
-            request.metadata.mediaFiles.map { file ->
-                async {
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        when (file) {
-                            is MediaFile.Photo -> uploadBlob(file.data)
-                                .map(UploadBlobResponse::blob)
+        val blobs = when {
+            request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
+                request.metadata.embeddedMedia.map { file ->
+                    async {
+                        val bytes = fileManager.readBytes(file)
+                            ?: return@async Result.failure(
+                                Exception("Failed to read file: ${file.uri}"),
+                            )
 
-                            is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
+                        // No data to read, continue as normal
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            when (file) {
+                                is File.Media.Photo -> uploadBlob(bytes)
+                                    .map(UploadBlobResponse::blob)
+
+                                is File.Media.Video -> networkService.uploadVideoBlob(bytes)
+                            }
                         }
+                            .map(file::with)
+                            .onSuccess { fileManager.delete(file) }
                     }
-                        .map(file::with)
                 }
+                    .awaitAll()
+                    .mapNotNull(Result<MediaBlob?>::getOrNull)
             }
-                .awaitAll()
-                .mapNotNull(Result<MediaBlob>::getOrNull)
-        }
-        else emptyList()
+            @Suppress("DEPRECATION")
+            request.metadata.mediaFiles.isNotEmpty() -> coroutineScope {
+                @Suppress("DEPRECATION")
+                request.metadata.mediaFiles.map { file ->
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            @Suppress("DEPRECATION")
+                            when (file) {
+                                is MediaFile.Photo -> uploadBlob(file.data)
+                                    .map(UploadBlobResponse::blob)
 
-        if (blobs.size != request.metadata.mediaFiles.size) return Outcome.Failure(
-            Exception("Media upload failed"),
-        )
+                                is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
+                            }
+                        }
+                            .map(file::with)
+                    }
+                }
+                    .awaitAll()
+                    .mapNotNull(Result<MediaBlob>::getOrNull)
+            }
+            else -> emptyList()
+        }
+
+        val mediaToUploadCount = request.metadata.embeddedMedia.size.takeIf { it > 0 }
+            ?: @Suppress("DEPRECATION") request.metadata.mediaFiles.size
+
+        if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
+            return Outcome.Failure(Exception("Media upload failed"))
+        }
 
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),

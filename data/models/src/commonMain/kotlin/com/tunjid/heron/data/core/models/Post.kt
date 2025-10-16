@@ -21,8 +21,10 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.utilities.File
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class Post(
@@ -77,10 +79,29 @@ data class Post(
 
         @Serializable
         data class Metadata(
+            @ProtoNumber(1)
             val quote: Quote? = null,
+            @ProtoNumber(2)
             val reply: Reply? = null,
+            @ProtoNumber(3)
+            @Deprecated(
+                message = "Media data should be read separately",
+                replaceWith = ReplaceWith(
+                    "embeddedMedia",
+                    "com.tunjid.heron.data.core.utilities.File",
+                ),
+            )
             val mediaFiles: List<MediaFile> = emptyList(),
-        )
+            @ProtoNumber(4)
+            val embeddedMedia: List<File.Media> = emptyList(),
+        ) {
+            init {
+                @Suppress("DEPRECATION")
+                require(!(mediaFiles.isNotEmpty() && embeddedMedia.isNotEmpty())) {
+                    "Using both the deprecated mediaFiles and embeddedMedia fields is not allowed"
+                }
+            }
+        }
 
         @Serializable
         data class Reply(

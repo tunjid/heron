@@ -43,20 +43,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
-import com.tunjid.heron.media.picker.MediaItem
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun MediaUploadItems(
     modifier: Modifier = Modifier,
-    photos: List<MediaItem.Photo>,
-    video: MediaItem.Video?,
-    removeMediaItem: (MediaItem) -> Unit,
-    onMediaItemUpdated: (MediaItem) -> Unit,
+    photos: List<RestrictedFile.Media.Photo>,
+    video: RestrictedFile.Media.Video?,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) = LookaheadScope {
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
@@ -89,9 +89,9 @@ internal fun MediaUploadItems(
 @Composable
 private fun ImageUpload(
     modifier: Modifier = Modifier,
-    photo: MediaItem.Photo,
-    removeMediaItem: (MediaItem) -> Unit,
-    onMediaItemUpdated: (MediaItem) -> Unit,
+    photo: RestrictedFile.Media.Photo,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -128,7 +128,10 @@ private fun ImageUpload(
             snapshotFlow { state.imageSize }
                 .collect { size ->
                     onMediaItemUpdated(
-                        photo.updateSize(size),
+                        photo.withSize(
+                            width = size.width,
+                            height = size.height,
+                        ),
                     )
                 }
         }
