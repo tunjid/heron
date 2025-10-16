@@ -110,14 +110,14 @@ kotlin {
     }
 }
 
-val appVersion = providers.gradleProperty("appVersionName").get()
+val appVersion = providers.gradleProperty("heron.versionName").get()
 
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = providers.gradleProperty("appVersionCode").get().toInt()
+        versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
         versionName = appVersion
     }
     packaging {
