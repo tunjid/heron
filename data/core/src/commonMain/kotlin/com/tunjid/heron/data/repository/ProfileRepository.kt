@@ -620,9 +620,9 @@ internal class OfflineProfileRepository @Inject constructor(
                     networkService.runCatchingWithMonitoredNetworkRetry {
                         uploadBlob(bytes)
                     }
+                        .onSuccess { fileManager.delete(file) }
                         .getOrNull()
                         ?.blob
-                        ?.also { fileManager.delete(file) }
                 }
             }.awaitAll()
             else -> listOf(

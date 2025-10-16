@@ -364,21 +364,12 @@ internal class OfflinePostRepository @Inject constructor(
             else -> emptyList()
         }
 
-        request.metadata.embeddedMedia
-            .takeUnless(List<File.Media>::isEmpty)
-            ?.let {
-                if (blobs.size != it.size) return Outcome.Failure(
-                    Exception("Media upload failed"),
-                )
-            }
-        @Suppress("DEPRECATION")
-        request.metadata.mediaFiles
-            .takeUnless(List<MediaFile>::isEmpty)
-            ?.let {
-                if (blobs.size != it.size) return Outcome.Failure(
-                    Exception("Media upload failed"),
-                )
-            }
+        val mediaToUploadCount = request.metadata.embeddedMedia.size.takeIf { it > 0 }
+            ?: @Suppress("DEPRECATION") request.metadata.mediaFiles.size
+
+        if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
+            return Outcome.Failure(Exception("Media upload failed"))
+        }
 
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),

@@ -26,6 +26,7 @@ sealed class File {
     @Serializable
     sealed class Media : File() {
 
+        // This is deliberately not a data class so the data class copy method is not leaked
         @Serializable
         class Photo(
             override val uri: FileUri,
@@ -56,6 +57,7 @@ sealed class File {
             }
         }
 
+        // This is deliberately not a data class so the data class copy method is not leaked
         @Serializable
         class Video(
             override val uri: FileUri,
