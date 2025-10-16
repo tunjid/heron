@@ -57,7 +57,7 @@ internal class FileKitFileManager : FileManager {
             cachedFile = UnrestrictedCachedFilesDir / bookmarkFileName
             cachedFile.write(restrictedFile.file)
         } catch (e: Exception) {
-            e.printStackTrace()
+            println("Error caching file: ${e.message}")
             cachedFile
                 ?.takeIf(PlatformFile::exists)
                 ?.safeDelete()
@@ -91,7 +91,7 @@ internal class FileKitFileManager : FileManager {
             if (cachedFile.exists()) cachedFile.readBytes()
             else null
         } catch (e: Exception) {
-            e.printStackTrace()
+            println("Error reading bytes: ${e.message}")
             null
         }
     }
