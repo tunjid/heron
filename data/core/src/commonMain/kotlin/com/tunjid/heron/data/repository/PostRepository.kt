@@ -325,7 +325,7 @@ internal class OfflinePostRepository @Inject constructor(
                     async {
                         val bytes = fileManager.readBytes(file)
                             ?: return@async Result.failure(
-                                Exception("Failed to read file: ${file.uri}")
+                                Exception("Failed to read file: ${file.uri}"),
                             )
 
                         // No data to read, continue as normal
