@@ -324,9 +324,12 @@ internal class OfflinePostRepository @Inject constructor(
                 request.metadata.embeddedMedia.map { file ->
                     async {
                         val bytes = fileManager.readBytes(file)
+                            ?: return@async Result.failure(
+                                Exception("Failed to read file: ${file.uri}")
+                            )
+
                         // No data to read, continue as normal
-                        if (bytes == null) Result.success(null)
-                        else networkService.runCatchingWithMonitoredNetworkRetry {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
                             when (file) {
                                 is File.Media.Photo -> uploadBlob(bytes)
                                     .map(UploadBlobResponse::blob)

@@ -102,7 +102,16 @@ data class Profile(
         val avatarFile: File.Media.Photo?,
         @ProtoNumber(7)
         val bannerFile: File.Media.Photo?,
-    )
+    ) {
+        init {
+            @Suppress("DEPRECATION")
+            val usedDeprecatedFields = avatar != null || banner != null
+            val usedPreferredFields = avatarFile != null || bannerFile != null
+            require(!(usedDeprecatedFields && usedPreferredFields)) {
+                "Using both deprecated and new file fields is not allowed"
+            }
+        }
+    }
 }
 
 @Serializable
