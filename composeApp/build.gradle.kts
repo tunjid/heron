@@ -110,15 +110,15 @@ kotlin {
     }
 }
 
-val appVersion = "1.0.10"
+val appVersionProvider = providers.gradleProperty("heron.versionName")
 
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = 11
-        versionName = appVersion
+        versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
+        versionName = appVersionProvider.get()
     }
     packaging {
         resources {
@@ -165,7 +165,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.tunjid.heron"
-            packageVersion = appVersion
+            packageVersion = appVersionProvider.get()
         }
     }
 }
