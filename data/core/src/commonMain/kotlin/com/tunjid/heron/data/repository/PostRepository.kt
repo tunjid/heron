@@ -335,7 +335,7 @@ internal class OfflinePostRepository @Inject constructor(
                             }
                         }
                             .map(file::with)
-                            .also { fileManager.delete(file) }
+                            .onSuccess { fileManager.delete(file) }
                     }
                 }
                     .awaitAll()
