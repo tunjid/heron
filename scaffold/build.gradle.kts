@@ -49,6 +49,7 @@ kotlin {
                 implementation(libs.androidx.navigation.event)
 
                 implementation(libs.compose.multiplatform.animation)
+                implementation(libs.compose.multiplatform.animation.graphics)
                 implementation(libs.compose.multiplatform.components.resources)
                 implementation(libs.compose.multiplatform.foundation.foundation)
                 implementation(libs.compose.multiplatform.foundation.layout)

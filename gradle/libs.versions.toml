@@ -100,6 +100,7 @@ coil-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.r
 compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 compose-multiplatform-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
 compose-multiplatform-animation = { group = "org.jetbrains.compose.animation", name = "animation", version.ref = "compose-multiplatform" }
+compose-multiplatform-animation-graphics = { group = "org.jetbrains.compose.animation", name = "animation-graphics", version.ref = "compose-multiplatform" }
 compose-multiplatform-foundation-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
 compose-multiplatform-foundation-layout = { group = "org.jetbrains.compose.foundation", name = "foundation-layout", version.ref = "compose-multiplatform" }
 compose-multiplatform-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-multiplatform" }
