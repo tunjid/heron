@@ -17,8 +17,12 @@
 package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -48,6 +52,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -64,6 +69,7 @@ class ActualNotificationsViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     notificationsRepository: NotificationsRepository,
     @Assisted
     scope: CoroutineScope,
@@ -80,6 +86,9 @@ class ActualNotificationsViewModel(
             ),
             loadProfileMutations(
                 authRepository,
+            ),
+            conversationsMutation(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -115,6 +124,23 @@ private fun loadProfileMutations(
     authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
     }
+
+fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
+        }
 
 fun lastRefreshedMutations(
     notificationsRepository: NotificationsRepository,
