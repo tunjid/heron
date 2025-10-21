@@ -31,6 +31,8 @@ import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -73,6 +75,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -90,6 +93,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualProfileViewModel(
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
@@ -113,6 +117,9 @@ class ActualProfileViewModel(
             ),
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
+            ),
+            conversationsMutation(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -162,6 +169,22 @@ class ActualProfileViewModel(
         },
     )
 
+fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
+        }
 private fun commonFollowerMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,

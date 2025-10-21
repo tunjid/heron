@@ -86,6 +86,7 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.composables.ui.lerp
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -121,6 +122,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
@@ -407,6 +409,7 @@ internal fun ProfileScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
+                                conversations = state.conversations,
                             )
                         }
                     },
@@ -941,6 +944,7 @@ private fun ProfileTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    conversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -968,6 +972,7 @@ private fun ProfileTimeline(
                 ),
             )
         },
+        conversations = conversations,
     )
 
     LookaheadScope {
@@ -1154,7 +1159,7 @@ private fun TimelinePresentationSelector(
         }
     }.value
 
-    if (timeline != null) com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
+    if (timeline != null) TimelinePresentationSelector(
         modifier = modifier,
         selected = timeline.presentation,
         available = timeline.supportedPresentations,

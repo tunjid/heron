@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -61,6 +62,7 @@ data class State(
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
