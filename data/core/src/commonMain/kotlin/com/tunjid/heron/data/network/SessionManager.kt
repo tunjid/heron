@@ -255,11 +255,10 @@ internal class PersistedSessionManager @Inject constructor(
     ) = with(context) {
         when (tokens) {
             is SavedState.AuthTokens.Authenticated.Bearer -> {
-                val bearerAuthUrl = Url(tokens.authEndpoint)
-                url.host = bearerAuthUrl.host
                 bearerAuth(token = tokens.auth)
             }
             is SavedState.AuthTokens.Authenticated.DPoP -> {
+                // DPoP requests must always be made to the user's PDS
                 val pdsUrl = Url(tokens.pdsUrl)
                 url.protocol = pdsUrl.protocol
                 url.host = pdsUrl.host
