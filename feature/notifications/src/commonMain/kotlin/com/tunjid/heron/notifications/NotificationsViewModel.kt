@@ -17,6 +17,7 @@
 package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
@@ -24,6 +25,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -87,7 +89,7 @@ class ActualNotificationsViewModel(
             loadProfileMutations(
                 authRepository,
             ),
-            conversationsMutation(
+            recentConversationMutations(
                 messageRepository = messageRepository,
             ),
         ),
@@ -125,21 +127,12 @@ private fun loadProfileMutations(
         copy(signedInProfile = it)
     }
 
-fun conversationsMutation(
+fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = 8,
-            ),
-        ),
-        cursor = Cursor.Initial,
-    )
-        .mapToMutation { cursorList ->
-            copy(conversations = cursorList.items)
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
         }
 
 fun lastRefreshedMutations(

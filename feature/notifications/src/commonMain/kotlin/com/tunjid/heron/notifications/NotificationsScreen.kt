@@ -99,7 +99,7 @@ internal fun NotificationsScreen(
                 ),
             )
         },
-        conversations = state.conversations,
+        recentConversations = state.conversations,
     )
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }

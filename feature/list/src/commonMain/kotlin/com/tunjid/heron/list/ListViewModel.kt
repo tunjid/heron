@@ -17,6 +17,7 @@
 package com.tunjid.heron.list
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
@@ -29,6 +30,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -94,7 +96,7 @@ class ActualListViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            conversationsMutation(
+            recentConversationMutations(
                 messageRepository = messageRepository,
             ),
         ),
@@ -287,21 +289,12 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
         )
     }
 
-private fun conversationsMutation(
+fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = 8,
-            ),
-        ),
-        cursor = Cursor.Initial,
-    )
-        .mapToMutation { cursorList ->
-            copy(conversations = cursorList.items)
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
         }
 
 private fun timelineCreatorMutations(

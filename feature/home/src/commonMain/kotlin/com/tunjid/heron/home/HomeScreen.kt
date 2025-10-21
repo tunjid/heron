@@ -301,7 +301,7 @@ private fun HomeTimeline(
                 ),
             )
         },
-        conversations = conversations,
+        recentConversations = conversations,
     )
 
     PullToRefreshBox(

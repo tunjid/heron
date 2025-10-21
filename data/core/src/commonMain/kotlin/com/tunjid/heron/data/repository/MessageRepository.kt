@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -415,6 +416,20 @@ internal class OfflineMessageRepository @Inject constructor(
         }
     }
 }
+
+fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
+    conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = RecentConversationLimit,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+
+private const val RecentConversationLimit = 8L
 
 private fun Log.AddReaction.maxCursor(
     deletedMessages: LazyList<Pair<ConversationId, DeletedMessageView>>,

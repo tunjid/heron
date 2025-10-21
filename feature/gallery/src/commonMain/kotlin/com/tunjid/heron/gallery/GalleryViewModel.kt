@@ -17,6 +17,7 @@
 package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.PostUri
@@ -27,6 +28,7 @@ import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -95,7 +97,7 @@ class ActualGalleryViewModel(
                 profileId = route.profileId,
                 profileRepository = profileRepository,
             ),
-            conversationsMutation(
+            recentConversationMutations(
                 messageRepository = messageRepository,
             ),
         ),
@@ -140,23 +142,13 @@ private fun loadPostMutations(
     )
 }
 
-private fun conversationsMutation(
+fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = 8,
-            ),
-        ),
-        cursor = Cursor.Initial,
-    )
-        .mapToMutation { cursorList ->
-            copy(conversations = cursorList.items)
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
         }
-
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> =

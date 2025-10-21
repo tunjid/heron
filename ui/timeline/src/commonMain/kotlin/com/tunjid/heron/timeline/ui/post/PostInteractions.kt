@@ -39,7 +39,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -47,7 +46,6 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.CardDefaults
@@ -73,7 +71,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -431,7 +428,7 @@ class PostInteractionsSheetState private constructor(
         @Composable
         fun rememberUpdatedPostInteractionState(
             isSignedIn: Boolean,
-            conversations: List<Conversation>,
+            recentConversations: List<Conversation>,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
@@ -452,7 +449,7 @@ class PostInteractionsSheetState private constructor(
                 onSignInClicked = onSignInClicked,
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
-                conversations = conversations,
+                conversations = recentConversations,
             )
 
             return state
@@ -601,7 +598,7 @@ private fun SendDirectMessageCard(
         showDivider = true,
         topContent = {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(conversations.take(8)) { conversation ->
+                items(conversations) { conversation ->
                     val member = conversation.members.firstOrNull() ?: return@items
                     AsyncImage(
                         args = ImageArgs(

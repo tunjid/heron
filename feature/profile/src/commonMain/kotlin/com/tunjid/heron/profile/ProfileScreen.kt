@@ -972,7 +972,7 @@ private fun ProfileTimeline(
                 ),
             )
         },
-        conversations = conversations,
+        recentConversations = conversations,
     )
 
     LookaheadScope {

@@ -152,7 +152,7 @@ private fun FeedTimeline(
                 ),
             )
         },
-        conversations = conversations,
+        recentConversations = conversations,
     )
     PullToRefreshBox(
         modifier = Modifier

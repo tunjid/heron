@@ -17,6 +17,7 @@
 package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.PostUri
@@ -24,6 +25,7 @@ import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -88,7 +90,7 @@ class ActualPostDetailViewModel(
                 profileRepository = profileRepository,
                 timelineRepository = timelineRepository,
             ),
-            conversationsMutation(
+            recentConversationMutations(
                 messageRepository = messageRepository,
             ),
         ),
@@ -133,21 +135,12 @@ fun postThreadsMutations(
     )
 }
 
-fun conversationsMutation(
+fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = MAX_CONVERSATIONS.toLong(),
-            ),
-        ),
-        cursor = Cursor.Initial,
-    )
-        .mapToMutation { cursorList ->
-            copy(conversations = cursorList.items)
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
         }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
@@ -169,5 +162,3 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
-
-const val MAX_CONVERSATIONS = 8

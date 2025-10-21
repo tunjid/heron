@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -37,6 +38,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -118,7 +120,7 @@ class ActualProfileViewModel(
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
             ),
-            conversationsMutation(
+            recentConversationMutations(
                 messageRepository = messageRepository,
             ),
         ),
@@ -169,22 +171,14 @@ class ActualProfileViewModel(
         },
     )
 
-fun conversationsMutation(
+fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = 8,
-            ),
-        ),
-        cursor = Cursor.Initial,
-    )
-        .mapToMutation { cursorList ->
-            copy(conversations = cursorList.items)
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
         }
+
 private fun commonFollowerMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,

@@ -374,7 +374,7 @@ private fun ListTimeline(
                 ),
             )
         },
-        conversations = conversations,
+        recentConversations = conversations,
     )
     LookaheadScope {
         LazyVerticalStaggeredGrid(
