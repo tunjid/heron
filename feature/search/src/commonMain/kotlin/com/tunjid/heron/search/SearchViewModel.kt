@@ -24,7 +24,9 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
@@ -86,6 +88,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -122,6 +125,9 @@ class SearchViewModel(
             ),
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
+            ),
+            conversationsMutation(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -175,6 +181,23 @@ private fun loadProfileMutations(
             },
         )
     }
+
+fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
+        }
 
 private fun trendsMutations(
     searchRepository: SearchRepository,

@@ -179,6 +179,7 @@ internal fun SearchScreen(
                 ),
             )
         },
+        conversations = state.conversations,
     )
 
     val pagerState = rememberPagerState { state.searchStateHolders.size }

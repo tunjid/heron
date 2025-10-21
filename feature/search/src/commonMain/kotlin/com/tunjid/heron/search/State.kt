@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
@@ -111,6 +112,7 @@ data class State(
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
     @Transient
