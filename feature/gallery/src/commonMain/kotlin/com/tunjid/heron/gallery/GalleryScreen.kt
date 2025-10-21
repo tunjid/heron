@@ -151,6 +151,7 @@ internal fun GalleryScreen(
                 ),
             )
         },
+        conversations = state.conversations,
     )
 
     Box(

@@ -17,10 +17,14 @@
 package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -50,6 +54,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.Clock
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -65,6 +70,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
@@ -88,6 +94,9 @@ class ActualGalleryViewModel(
             profileRelationshipMutations(
                 profileId = route.profileId,
                 profileRepository = profileRepository,
+            ),
+            conversationsMutation(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -130,6 +139,23 @@ private fun loadPostMutations(
             .mapToMutation { copy(post = it) },
     )
 }
+
+private fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
+        }
 
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
