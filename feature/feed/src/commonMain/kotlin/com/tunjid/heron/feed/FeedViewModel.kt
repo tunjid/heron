@@ -17,7 +17,11 @@
 package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
@@ -53,6 +57,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
+import kotlinx.datetime.Clock
 
 internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -68,6 +73,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     @Assisted
@@ -78,6 +84,11 @@ class ActualFeedViewModel(
     FeedStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            conversationsMutation(
+                messageRepository = messageRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             merge(
                 timelineStateHolderMutations(
@@ -189,4 +200,21 @@ private fun timelineCreatorMutations(
     }
         .mapToMutation {
             copy(creator = it)
+        }
+
+fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
         }

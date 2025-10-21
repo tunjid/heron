@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -109,6 +110,7 @@ internal fun FeedScreen(
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
+                conversations = state.conversations,
             )
         }
     }
@@ -121,6 +123,7 @@ private fun FeedTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    conversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -149,6 +152,7 @@ private fun FeedTimeline(
                 ),
             )
         },
+        conversations = conversations,
     )
     PullToRefreshBox(
         modifier = Modifier
