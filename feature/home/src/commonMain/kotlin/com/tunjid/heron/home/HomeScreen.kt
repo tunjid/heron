@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -160,6 +161,7 @@ internal fun HomeScreen(
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
+                    conversations = state.conversations,
                 )
                 tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                     pagerState = pagerState,
@@ -271,6 +273,7 @@ private fun HomeTimeline(
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
+    conversations: List<Conversation>,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
@@ -298,6 +301,7 @@ private fun HomeTimeline(
                 ),
             )
         },
+        conversations = conversations,
     )
 
     PullToRefreshBox(

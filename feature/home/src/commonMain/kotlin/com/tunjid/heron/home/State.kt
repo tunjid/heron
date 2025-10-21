@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.home
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -30,6 +31,7 @@ import kotlinx.serialization.Transient
 data class State(
     val currentTabUri: Uri? = null,
     val tabLayout: TabLayout = TabLayout.Collapsed.All,
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val timelinePreferenceSaveRequestId: String? = null,
     @Transient
