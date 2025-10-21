@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.list
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -45,6 +46,7 @@ import kotlinx.serialization.Transient
 data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,
     @Transient

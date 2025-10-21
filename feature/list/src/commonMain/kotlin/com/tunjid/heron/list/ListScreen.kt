@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -87,6 +88,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.description
@@ -228,6 +230,7 @@ internal fun ListScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
+                                conversations = state.conversations,
                             )
                         }
                     },
@@ -289,7 +292,7 @@ private fun ListMembers(
             items = updatedMembers,
             key = { it.subject.did.id },
             itemContent = { item ->
-                com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState(
+                ProfileWithViewerState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
@@ -343,6 +346,7 @@ private fun ListTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    conversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -370,6 +374,7 @@ private fun ListTimeline(
                 ),
             )
         },
+        conversations = conversations,
     )
     LookaheadScope {
         LazyVerticalStaggeredGrid(

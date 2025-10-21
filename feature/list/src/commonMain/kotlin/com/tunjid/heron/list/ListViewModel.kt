@@ -17,12 +17,15 @@
 package com.tunjid.heron.list
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
@@ -78,6 +81,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualListViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     authRepository: AuthRepository,
@@ -89,6 +93,11 @@ class ActualListViewModel(
     ListStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            conversationsMutation(
+                messageRepository = messageRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             merge(
                 timelineStateHolderMutations(
@@ -277,6 +286,23 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
             ),
         )
     }
+
+private fun conversationsMutation(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.conversations(
+        query = ConversationQuery(
+            data = CursorQuery.Data(
+                cursorAnchor = Clock.System.now(),
+                page = 0,
+                limit = 8,
+            ),
+        ),
+        cursor = Cursor.Initial,
+    )
+        .mapToMutation { cursorList ->
+            copy(conversations = cursorList.items)
+        }
 
 private fun timelineCreatorMutations(
     timeline: Timeline,
