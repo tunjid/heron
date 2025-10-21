@@ -99,6 +99,7 @@ internal fun PostDetailScreen(
                 ),
             )
         },
+        conversations = state.conversations,
     )
 
     LazyVerticalStaggeredGrid(
