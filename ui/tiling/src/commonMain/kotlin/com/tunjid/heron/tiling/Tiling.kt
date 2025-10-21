@@ -92,6 +92,15 @@ val TilingState<*, *>.isRefreshing
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
+fun <Query : CursorQuery, Item> TilingState.Data<Query, Item>.withRefreshedStatus() = copy(
+    status = refreshedStatus(),
+)
+
+fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() =
+    TilingState.Status.Refreshed(
+        cursorAnchor = currentQuery.data.cursorAnchor,
+    )
+
 /**
  * Feed mutations as a function of the user's scroll position
  */
@@ -152,7 +161,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             // Refreshes need tear down the tiling pipeline all over
             val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
             merge(
-                queries.mapToMutation<Query, TilingState.Data<Query, Item>> { newQuery ->
+                queries.mapToMutation { newQuery ->
                     copy(
                         currentQuery = newQuery,
                         status = when {
@@ -246,10 +255,10 @@ inline fun <Query : CursorQuery, Item> cursorTileInputs(
     },
     queries.toPivotedTileInputs(
         numColumns.map { columns ->
-            val numColumns = max(1, columns)
+            val maxNumColumns = max(1, columns)
             PivotRequest(
-                onCount = numColumns * 3,
-                offCount = numColumns * 2,
+                onCount = maxNumColumns * 3,
+                offCount = maxNumColumns * 2,
                 comparator = cursorQueryComparator(),
                 previousQuery = {
                     if ((data.page - 1) < 0) null
