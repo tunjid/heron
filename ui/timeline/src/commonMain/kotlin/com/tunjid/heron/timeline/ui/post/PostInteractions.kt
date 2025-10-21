@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -86,6 +87,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
@@ -429,6 +431,7 @@ class PostInteractionsSheetState private constructor(
         @Composable
         fun rememberUpdatedPostInteractionState(
             isSignedIn: Boolean,
+            conversations: List<Conversation>,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
@@ -449,6 +452,7 @@ class PostInteractionsSheetState private constructor(
                 onSignInClicked = onSignInClicked,
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
+                conversations = conversations,
             )
 
             return state
@@ -459,6 +463,7 @@ class PostInteractionsSheetState private constructor(
 @Composable
 private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
+    conversations: List<Conversation>,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
@@ -549,6 +554,7 @@ private fun PostInteractionsBottomSheet(
                             onSendClicked = {
                                 // TODO: Implement sending direct messages
                             },
+                            conversations = conversations,
                         )
                         CopyLinkCard(
                             onCopyLinkClicked = {
@@ -588,25 +594,27 @@ private fun PostInteractionsBottomSheet(
 
 @Composable
 private fun SendDirectMessageCard(
+    conversations: List<Conversation>,
     onSendClicked: () -> Unit,
 ) {
     ShareActionCard(
         showDivider = true,
         topContent = {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(6) { index ->
-                    val picId = 100 + index
-                    val dummyUrl = "https://picsum.photos/id/$picId/200/200"
+                items(conversations.take(8)) { conversation ->
+                    val member = conversation.members.firstOrNull() ?: return@items
                     AsyncImage(
                         args = ImageArgs(
-                            url = dummyUrl,
+                            url = member.avatar?.uri,
                             contentScale = ContentScale.Crop,
                             shape = RoundedPolygonShape.Circle,
                         ),
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .clickable { /* TODO: DM user */ },
+                            .clickable {
+                                // TODO: DM to this conversation
+                            },
                     )
                 }
             }
