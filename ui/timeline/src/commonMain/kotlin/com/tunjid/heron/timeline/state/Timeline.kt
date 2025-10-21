@@ -26,10 +26,12 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
@@ -57,6 +59,8 @@ data class TimelineState(
             val timeline: Timeline,
             val presentation: Timeline.Presentation,
         ) : Action(key = "UpdatePreferredPresentation")
+
+        data object DismissRefresh : Action(key = "DismissRefresh")
     }
 }
 
@@ -121,6 +125,7 @@ fun CoroutineScope.timelineStateHolder(
                 is TimelineState.Action.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
                     timelineRepository = timelineRepository,
                 )
+                is TimelineState.Action.DismissRefresh -> action.flow.dismissRefreshMutations()
             }
         }
     },
@@ -131,14 +136,10 @@ private fun hasUpdatesMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> =
     timelineRepository.hasUpdates(timeline)
-        .mapToMutation {
+        .mapToMutation { updatesAvailable ->
             copy(
-                hasUpdates = it,
-                tilingData = if (hasUpdates) tilingData else tilingData.copy(
-                    status = TilingState.Status.Refreshed(
-                        cursorAnchor = tilingData.currentQuery.data.cursorAnchor,
-                    ),
-                ),
+                hasUpdates = updatesAvailable,
+                tilingData = if (updatesAvailable) tilingData else tilingData.withRefreshedStatus(),
             )
         }
 
@@ -170,7 +171,7 @@ private fun timelineUpdateMutations(
     )
         .mapToMutation { copy(timeline = it) }
 
-private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
+private fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<TimelineState>> = mapLatestToManyMutations {
     timelineRepository.updatePreferredPresentation(
@@ -178,6 +179,13 @@ private suspend fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updat
         presentation = it.presentation,
     )
 }
+
+private fun Flow<TimelineState.Action.DismissRefresh>.dismissRefreshMutations(): Flow<Mutation<TimelineState>> =
+    mapLatestToMutation {
+        copy(
+            tilingData = tilingData.withRefreshedStatus(),
+        )
+    }
 
 private fun TimelineQuery.updateData(
     data: CursorQuery.Data,

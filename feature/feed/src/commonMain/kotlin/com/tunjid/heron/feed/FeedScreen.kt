@@ -27,9 +27,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +66,7 @@ import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -114,7 +113,6 @@ internal fun FeedScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FeedTimeline(
     scrollToTopRequestId: String?,
@@ -181,7 +179,7 @@ private fun FeedTimeline(
             )
         },
         indicator = {
-            PullToRefreshDefaults.LoadingIndicator(
+            DismissableRefreshIndicator(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset {
@@ -189,6 +187,9 @@ private fun FeedTimeline(
                     },
                 state = pullToRefreshState,
                 isRefreshing = timelineState.isRefreshing,
+                onDismissRequest = {
+                    timelineStateHolder.accept(TimelineState.Action.DismissRefresh)
+                },
             )
         },
     ) {

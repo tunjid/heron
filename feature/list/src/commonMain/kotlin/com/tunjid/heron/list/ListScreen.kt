@@ -36,7 +36,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -80,6 +79,7 @@ import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
@@ -154,7 +154,7 @@ internal fun ListScreen(
             updatedStateHolders[pagerState.currentPage].refresh()
         },
         indicator = {
-            PullToRefreshDefaults.LoadingIndicator(
+            DismissableRefreshIndicator(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset {
@@ -162,6 +162,14 @@ internal fun ListScreen(
                     },
                 state = pullToRefreshState,
                 isRefreshing = isRefreshing,
+                onDismissRequest = {
+                    when (val holder = updatedStateHolders[pagerState.currentPage]) {
+                        is ListScreenStateHolders.Members -> Unit
+                        is ListScreenStateHolders.Timeline -> holder.accept(
+                            TimelineState.Action.DismissRefresh,
+                        )
+                    }
+                },
             )
         },
     ) {

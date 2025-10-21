@@ -29,6 +29,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.refreshedStatus
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
@@ -128,9 +129,7 @@ fun lastRefreshedMutations(
                     is TilingState.Status.Refreshed -> currentStatus
                     is TilingState.Status.Refreshing -> {
                         if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
-                        else TilingState.Status.Refreshed(
-                            cursorAnchor = tilingData.currentQuery.data.cursorAnchor,
-                        )
+                        else tilingData.refreshedStatus()
                     }
                 },
             ),
