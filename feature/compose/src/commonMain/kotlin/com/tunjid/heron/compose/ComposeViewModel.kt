@@ -195,6 +195,7 @@ private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
             when (action) {
                 is Action.EditMedia.AddPhotos -> copy(
                     photos = photos + media.filterIsInstance<RestrictedFile.Media.Photo>(),
+                    video = null,
                 )
 
                 is Action.EditMedia.AddVideo -> copy(

@@ -69,6 +69,7 @@ import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -98,7 +99,6 @@ import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
-import sh.christian.ozone.api.response.AtpResponse
 
 @Serializable
 data class PostDataQuery(
@@ -329,13 +329,9 @@ internal class OfflinePostRepository @Inject constructor(
                             )
 
                         // No data to read, continue as normal
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            when (file) {
-                                is File.Media.Photo -> uploadBlob(bytes)
-                                    .map(UploadBlobResponse::blob)
-
-                                is File.Media.Video -> networkService.uploadVideoBlob(bytes)
-                            }
+                        when (file) {
+                            is File.Media.Photo -> networkService.uploadImageBlob(bytes)
+                            is File.Media.Video -> networkService.uploadVideoBlob(bytes)
                         }
                             .map(file::with)
                             .onSuccess { fileManager.delete(file) }
@@ -349,14 +345,10 @@ internal class OfflinePostRepository @Inject constructor(
                 @Suppress("DEPRECATION")
                 request.metadata.mediaFiles.map { file ->
                     async {
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            @Suppress("DEPRECATION")
-                            when (file) {
-                                is MediaFile.Photo -> uploadBlob(file.data)
-                                    .map(UploadBlobResponse::blob)
-
-                                is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
-                            }
+                        @Suppress("DEPRECATION")
+                        when (file) {
+                            is MediaFile.Photo -> networkService.uploadImageBlob(file.data)
+                            is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
                         }
                             .map(file::with)
                     }
@@ -629,33 +621,36 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
+private suspend fun NetworkService.uploadImageBlob(
+    data: ByteArray,
+): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
+    api.uploadBlob(data)
+        .map(UploadBlobResponse::blob)
+}
+
 private suspend fun NetworkService.uploadVideoBlob(
     data: ByteArray,
-): AtpResponse<Blob> {
-    val uploadResponse = api.uploadVideo(data)
-    val status = uploadResponse.requireResponse().jobStatus
+): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
+    api.uploadVideo(data)
+}.mapCatchingUnlessCancelled { uploadResponse ->
+    val blob = uploadResponse.jobStatus.blob
+    if (blob != null) return@mapCatchingUnlessCancelled blob
 
-    // Fail fast here if the upload failed
-    uploadResponse.requireResponse()
-        .jobStatus
-        .blob
-        ?.let { processedBlob ->
-            return@uploadVideoBlob uploadResponse.map { processedBlob }
-        }
-
-    repeat(20) {
+    repeat(MaxVideoUploadStatusCheckCount) {
         val statusResponse = runCatchingWithMonitoredNetworkRetry {
-            getJobStatus(GetJobStatusQueryParams(status.jobId))
+            getJobStatus(GetJobStatusQueryParams(uploadResponse.jobStatus.jobId))
         }
         statusResponse
             .getOrNull()
             ?.jobStatus
             ?.blob
             ?.let { processedBlob ->
-                return@uploadVideoBlob uploadResponse.map { processedBlob }
+                return@mapCatchingUnlessCancelled processedBlob
             }
-        delay(2_000)
+        delay(MaxVideoUploadStatusCheckPollInterval)
     }
-
     throw Exception("Video upload timed out")
 }
+
+private const val MaxVideoUploadStatusCheckCount = 20
+private const val MaxVideoUploadStatusCheckPollInterval = 2_000L
