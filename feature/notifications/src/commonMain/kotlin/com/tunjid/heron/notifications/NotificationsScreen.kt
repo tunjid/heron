@@ -56,6 +56,7 @@ import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
@@ -100,6 +101,19 @@ internal fun NotificationsScreen(
             )
         },
         recentConversations = state.conversations,
+        onConversationClicked = { conversation, postUri ->
+            actions(
+                Action.Navigate.To(
+                    conversationDestination(
+                        id = conversation.id,
+                        members = conversation.members,
+                        sharedElementPrefix = conversation.id.id,
+                        sharedPostUri = postUri,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ),
+                ),
+            )
+        },
     )
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }

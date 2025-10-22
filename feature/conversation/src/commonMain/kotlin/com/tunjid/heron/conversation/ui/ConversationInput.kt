@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.formatTextPost
@@ -70,9 +71,14 @@ import org.jetbrains.compose.resources.stringResource
 fun PaneScaffoldState.UserInput(
     sendMessage: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
+    sharedPostUri: PostUri? = null,
 ) {
     var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue())
+        mutableStateOf(
+            TextFieldValue(
+                text = sharedPostUri?.toString().orEmpty(),
+            ),
+        )
     }
 
     // Used to decide if the keyboard should be shown
