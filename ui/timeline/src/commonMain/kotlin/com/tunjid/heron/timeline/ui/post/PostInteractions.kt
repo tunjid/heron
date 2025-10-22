@@ -431,7 +431,8 @@ class PostInteractionsSheetState private constructor(
             recentConversations: List<Conversation>,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
-            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+            onQuotePostClicked: (Repost) -> Unit,
+            onShareInConversationClicked: (Conversation, PostUri) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -450,6 +451,7 @@ class PostInteractionsSheetState private constructor(
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
                 conversations = recentConversations,
+                onShareInConversationClicked = onShareInConversationClicked,
             )
 
             return state
@@ -463,7 +465,8 @@ private fun PostInteractionsBottomSheet(
     conversations: List<Conversation>,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
-    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+    onQuotePostClicked: (Repost) -> Unit,
+    onShareInConversationClicked: (Conversation, PostUri) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -548,16 +551,21 @@ private fun PostInteractionsBottomSheet(
                     }
                     is Post.Interaction.Share -> {
                         SendDirectMessageCard(
-                            onSendClicked = {
-                                // TODO: Implement sending direct messages
-                            },
                             conversations = conversations,
-                        )
-                        CopyLinkCard(
-                            onCopyLinkClicked = {
-                                // TODO: Implement copy link to clipboard
+                            onSendClicked = {
+                                // Optional: implement "select conversation" later
+                            },
+                            onConversationClicked = { conversation ->
+                                val postUri = currentInteraction.postUri
+                                state.scope.launch {
+                                    state.hideSheet()
+                                    onShareInConversationClicked(conversation, postUri)
+                                }
                             },
                         )
+                        CopyLinkCard(onCopyLinkClicked = {
+                            // TODO: Implement copy link to clipboard
+                        })
                     }
                     else -> Unit
                 }
@@ -593,6 +601,7 @@ private fun PostInteractionsBottomSheet(
 private fun SendDirectMessageCard(
     conversations: List<Conversation>,
     onSendClicked: () -> Unit,
+    onConversationClicked: (Conversation) -> Unit,
 ) {
     ShareActionCard(
         showDivider = true,
@@ -610,7 +619,7 @@ private fun SendDirectMessageCard(
                             .size(56.dp)
                             .clip(CircleShape)
                             .clickable {
-                                // TODO: DM to this conversation
+                                onConversationClicked(conversation)
                             },
                     )
                 }

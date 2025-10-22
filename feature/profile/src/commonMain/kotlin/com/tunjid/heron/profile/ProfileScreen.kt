@@ -105,6 +105,7 @@ import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.editProfileDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
@@ -973,6 +974,19 @@ private fun ProfileTimeline(
             )
         },
         recentConversations = conversations,
+        onShareInConversationClicked = { conversation, postUri ->
+            actions(
+                Action.Navigate.To(
+                    conversationDestination(
+                        id = conversation.id,
+                        members = conversation.members,
+                        sharedElementPrefix = conversation.id.id,
+                        sharedPostUri = postUri,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ),
+                ),
+            )
+        },
     )
 
     LookaheadScope {
