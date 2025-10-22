@@ -190,6 +190,7 @@ class ConversationBindings(
                                 )
                             }
                         },
+                        sharedPostUri = state.sharedPostUri,
                     )
                 },
                 navigationRail = {

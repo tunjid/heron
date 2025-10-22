@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
@@ -46,6 +47,7 @@ data class State(
     val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
+    @Transient val sharedPostUri: PostUri? = null,
     @Transient
     val messages: List<Memo> = emptyList(),
 ) : TilingState<MessageQuery, MessageItem>
@@ -67,6 +69,9 @@ fun State(
             ),
         ),
     ),
+    sharedPostUri = route.routeParams.queryParams["sharedPostUri"]
+        ?.firstOrNull()
+        ?.let(::PostUri),
 )
 
 @Serializable
