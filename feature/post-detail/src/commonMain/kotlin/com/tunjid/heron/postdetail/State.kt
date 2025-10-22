@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -30,6 +31,7 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val items: List<TimelineItem> = listOfNotNull(
         anchorPost?.let {

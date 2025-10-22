@@ -17,12 +17,18 @@
 package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -50,6 +56,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.Clock
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -65,6 +72,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
@@ -88,6 +96,9 @@ class ActualGalleryViewModel(
             profileRelationshipMutations(
                 profileId = route.profileId,
                 profileRepository = profileRepository,
+            ),
+            recentConversationMutations(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -131,6 +142,13 @@ private fun loadPostMutations(
     )
 }
 
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
+        }
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> =

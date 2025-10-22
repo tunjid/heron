@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
@@ -39,6 +40,7 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
+    @Transient val conversations: List<Conversation> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,
     @Transient

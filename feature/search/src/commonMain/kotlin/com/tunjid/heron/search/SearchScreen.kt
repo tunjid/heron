@@ -102,6 +102,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
@@ -175,6 +176,20 @@ internal fun SearchScreen(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = null,
+                    ),
+                ),
+            )
+        },
+        recentConversations = state.conversations,
+        onShareInConversationClicked = { conversation, postUri ->
+            actions(
+                Action.Navigate.To(
+                    conversationDestination(
+                        id = conversation.id,
+                        members = conversation.members,
+                        sharedElementPrefix = conversation.id.id,
+                        sharedPostUri = postUri,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
             )

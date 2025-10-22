@@ -17,6 +17,7 @@
 package com.tunjid.heron.search
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -24,11 +25,14 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -86,6 +90,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -122,6 +127,9 @@ class SearchViewModel(
             ),
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
+            ),
+            recentConversationMutations(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -175,6 +183,14 @@ private fun loadProfileMutations(
             },
         )
     }
+
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
+        }
 
 private fun trendsMutations(
     searchRepository: SearchRepository,

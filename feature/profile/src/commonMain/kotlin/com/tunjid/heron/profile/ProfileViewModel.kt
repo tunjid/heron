@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -31,10 +32,13 @@ import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ConversationQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -73,6 +77,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -90,6 +95,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualProfileViewModel(
     authRepository: AuthRepository,
+    messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
@@ -113,6 +119,9 @@ class ActualProfileViewModel(
             ),
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
+            ),
+            recentConversationMutations(
+                messageRepository = messageRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -161,6 +170,14 @@ class ActualProfileViewModel(
             )
         },
     )
+
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(conversations = conversations)
+        }
 
 private fun commonFollowerMutations(
     profileId: Id.Profile,

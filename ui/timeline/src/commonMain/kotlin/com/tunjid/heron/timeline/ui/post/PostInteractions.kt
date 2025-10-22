@@ -32,13 +32,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -46,7 +46,6 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.CardDefaults
@@ -72,7 +71,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -86,6 +84,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
@@ -429,9 +428,11 @@ class PostInteractionsSheetState private constructor(
         @Composable
         fun rememberUpdatedPostInteractionState(
             isSignedIn: Boolean,
+            recentConversations: List<Conversation>,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
-            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+            onQuotePostClicked: (Repost) -> Unit,
+            onShareInConversationClicked: (Conversation, PostUri) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -449,6 +450,8 @@ class PostInteractionsSheetState private constructor(
                 onSignInClicked = onSignInClicked,
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
+                conversations = recentConversations,
+                onShareInConversationClicked = onShareInConversationClicked,
             )
 
             return state
@@ -459,9 +462,11 @@ class PostInteractionsSheetState private constructor(
 @Composable
 private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
+    conversations: List<Conversation>,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
-    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+    onQuotePostClicked: (Repost) -> Unit,
+    onShareInConversationClicked: (Conversation, PostUri) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -546,15 +551,21 @@ private fun PostInteractionsBottomSheet(
                     }
                     is Post.Interaction.Share -> {
                         SendDirectMessageCard(
+                            conversations = conversations,
                             onSendClicked = {
-                                // TODO: Implement sending direct messages
+                                // Optional: implement "select conversation" later
+                            },
+                            onConversationClicked = { conversation ->
+                                val postUri = currentInteraction.postUri
+                                state.scope.launch {
+                                    state.hideSheet()
+                                    onShareInConversationClicked(conversation, postUri)
+                                }
                             },
                         )
-                        CopyLinkCard(
-                            onCopyLinkClicked = {
-                                // TODO: Implement copy link to clipboard
-                            },
-                        )
+                        CopyLinkCard(onCopyLinkClicked = {
+                            // TODO: Implement copy link to clipboard
+                        })
                     }
                     else -> Unit
                 }
@@ -588,25 +599,28 @@ private fun PostInteractionsBottomSheet(
 
 @Composable
 private fun SendDirectMessageCard(
+    conversations: List<Conversation>,
     onSendClicked: () -> Unit,
+    onConversationClicked: (Conversation) -> Unit,
 ) {
     ShareActionCard(
         showDivider = true,
         topContent = {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(6) { index ->
-                    val picId = 100 + index
-                    val dummyUrl = "https://picsum.photos/id/$picId/200/200"
+                items(conversations) { conversation ->
+                    val member = conversation.members.firstOrNull() ?: return@items
                     AsyncImage(
                         args = ImageArgs(
-                            url = dummyUrl,
+                            url = member.avatar?.uri,
                             contentScale = ContentScale.Crop,
                             shape = RoundedPolygonShape.Circle,
                         ),
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .clickable { /* TODO: DM user */ },
+                            .clickable {
+                                onConversationClicked(conversation)
+                            },
                     )
                 }
             }

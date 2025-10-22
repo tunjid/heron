@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -71,6 +72,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
@@ -160,6 +162,7 @@ internal fun HomeScreen(
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
+                    conversations = state.conversations,
                 )
                 tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                     pagerState = pagerState,
@@ -271,6 +274,7 @@ private fun HomeTimeline(
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
+    conversations: List<Conversation>,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
@@ -294,6 +298,20 @@ private fun HomeTimeline(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                    ),
+                ),
+            )
+        },
+        recentConversations = conversations,
+        onShareInConversationClicked = { conversation, postUri ->
+            actions(
+                Action.Navigate.To(
+                    conversationDestination(
+                        id = conversation.id,
+                        members = conversation.members,
+                        sharedElementPrefix = conversation.id.id,
+                        sharedPostUri = postUri,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
             )
