@@ -303,7 +303,7 @@ private fun HomeTimeline(
             )
         },
         recentConversations = conversations,
-        onConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(

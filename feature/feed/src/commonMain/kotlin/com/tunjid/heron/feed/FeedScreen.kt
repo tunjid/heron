@@ -154,7 +154,7 @@ private fun FeedTimeline(
             )
         },
         recentConversations = conversations,
-        onConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(

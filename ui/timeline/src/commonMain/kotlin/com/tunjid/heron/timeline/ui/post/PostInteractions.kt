@@ -432,7 +432,7 @@ class PostInteractionsSheetState private constructor(
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Repost) -> Unit,
-            onConversationClicked: (Conversation, PostUri) -> Unit,
+            onShareInConversationClicked: (Conversation, PostUri) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -451,7 +451,7 @@ class PostInteractionsSheetState private constructor(
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
                 conversations = recentConversations,
-                onConversationClicked = onConversationClicked,
+                onShareInConversationClicked = onShareInConversationClicked,
             )
 
             return state
@@ -466,7 +466,7 @@ private fun PostInteractionsBottomSheet(
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Repost) -> Unit,
-    onConversationClicked: (Conversation, PostUri) -> Unit,
+    onShareInConversationClicked: (Conversation, PostUri) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -518,7 +518,7 @@ private fun PostInteractionsBottomSheet(
                                                 state.currentInteraction
                                                     ?.let(onInteractionConfirmed)
 
-                                            else -> (state.currentInteraction as? Repost)
+                                            else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
                                                 ?.let(onQuotePostClicked)
                                         }
                                         state.hideSheet()
@@ -559,7 +559,7 @@ private fun PostInteractionsBottomSheet(
                                 val postUri = currentInteraction.postUri
                                 state.scope.launch {
                                     state.hideSheet()
-                                    onConversationClicked(conversation, postUri)
+                                    onShareInConversationClicked(conversation, postUri)
                                 }
                             },
                         )

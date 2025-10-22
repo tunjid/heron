@@ -47,7 +47,8 @@ data class State(
     val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
-    @Transient val sharedPostUri: PostUri? = null,
+    @Transient
+    val sharedPostUri: PostUri? = null,
     @Transient
     val messages: List<Memo> = emptyList(),
 ) : TilingState<MessageQuery, MessageItem>

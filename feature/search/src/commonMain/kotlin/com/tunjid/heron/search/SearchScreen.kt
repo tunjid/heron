@@ -181,7 +181,7 @@ internal fun SearchScreen(
             )
         },
         recentConversations = state.conversations,
-        onConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(
