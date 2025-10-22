@@ -73,7 +73,7 @@ fun PaneScaffoldState.UserInput(
     modifier: Modifier = Modifier,
     sharedPostUri: PostUri? = null,
 ) {
-    var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+    var textState by rememberSaveable(sharedPostUri, stateSaver = TextFieldValue.Saver) {
         mutableStateOf(
             TextFieldValue(
                 text = sharedPostUri?.toString().orEmpty(),

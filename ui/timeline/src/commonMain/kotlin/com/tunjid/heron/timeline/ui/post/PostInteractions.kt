@@ -620,7 +620,6 @@ private fun SendDirectMessageCard(
                             .clip(CircleShape)
                             .clickable {
                                 onConversationClicked(conversation)
-                                // TODO: DM to this conversation
                             },
                     )
                 }
