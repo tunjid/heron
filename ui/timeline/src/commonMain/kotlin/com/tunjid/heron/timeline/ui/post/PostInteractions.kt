@@ -265,12 +265,12 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Like(
+                                null -> Post.Interaction.Create.Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Unlike(
+                                else -> Post.Interaction.Delete.Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -279,12 +279,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Repost(
+                                null -> Post.Interaction.Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> RemoveRepost(
+                                else -> Post.Interaction.Delete.RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -292,12 +292,12 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Bookmark(
+                                false -> Post.Interaction.Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> RemoveBookmark(
+                                true -> Post.Interaction.Delete.RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
@@ -471,12 +471,12 @@ private fun PostInteractionsBottomSheet(
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
             null -> Unit
-            is Repost -> state.showBottomSheet = true
-            is Like,
-            is RemoveRepost,
-            is Unlike,
-            is Bookmark,
-            is RemoveBookmark,
+            is Post.Interaction.Create.Repost -> state.showBottomSheet = true
+            is Post.Interaction.Create.Like,
+            is Post.Interaction.Delete.RemoveRepost,
+            is Post.Interaction.Delete.Unlike,
+            is Post.Interaction.Create.Bookmark,
+            is Post.Interaction.Delete.RemoveBookmark,
             -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)
