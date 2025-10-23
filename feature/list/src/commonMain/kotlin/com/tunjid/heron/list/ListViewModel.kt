@@ -23,9 +23,11 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -78,6 +80,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualListViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     authRepository: AuthRepository,
@@ -89,6 +92,11 @@ class ActualListViewModel(
     ListStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            recentConversationMutations(
+                messageRepository = messageRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             merge(
                 timelineStateHolderMutations(
@@ -277,6 +285,14 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
             ),
         )
     }
+
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(recentConversations = conversations)
+        }
 
 private fun timelineCreatorMutations(
     timeline: Timeline,

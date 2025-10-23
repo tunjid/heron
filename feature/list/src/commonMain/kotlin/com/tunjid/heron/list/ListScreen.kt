@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.pendingScrollOffsetState
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -67,6 +68,7 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
@@ -84,9 +86,11 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.description
@@ -236,6 +240,7 @@ internal fun ListScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
+                                recentConversations = state.recentConversations,
                             )
                         }
                     },
@@ -297,7 +302,7 @@ private fun ListMembers(
             items = updatedMembers,
             key = { it.subject.did.id },
             itemContent = { item ->
-                com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState(
+                ProfileWithViewerState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
@@ -351,6 +356,7 @@ private fun ListTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    recentConversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -379,6 +385,25 @@ private fun ListTimeline(
             )
         },
     )
+
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+        recentConversations = recentConversations,
+        onShareInConversationClicked = { currentPost, conversation ->
+            actions(
+                Action.Navigate.To(
+                    conversationDestination(
+                        id = conversation.id,
+                        members = conversation.members,
+                        sharedElementPrefix = conversation.id.id,
+                        sharedPostUri = currentPost.uri,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ),
+                ),
+            )
+        },
+    )
+
     LookaheadScope {
         LazyVerticalStaggeredGrid(
             modifier = Modifier
@@ -502,6 +527,7 @@ private fun ListTimeline(
                                     )
                                 },
                                 onPostInteraction = postInteractionState::onInteraction,
+                                onPostOptionsClicked = postOptionsState::showOptions,
                             )
                         },
                     )

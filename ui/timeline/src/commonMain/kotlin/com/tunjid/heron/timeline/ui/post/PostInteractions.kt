@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +74,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
+import com.tunjid.heron.data.core.models.Post.Interaction.Create.Repost
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveBookmark
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveRepost
+import com.tunjid.heron.data.core.models.Post.Interaction.Delete.Unlike
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -88,6 +95,7 @@ import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
+import heron.ui.timeline.generated.resources.share
 import heron.ui.timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -109,6 +117,7 @@ fun PostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: () -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -131,6 +140,7 @@ fun PostInteractions(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
+            onPostOptionsClicked = onPostOptionsClicked,
         )
         Spacer(Modifier.width(0.dp))
     }
@@ -144,6 +154,7 @@ fun MediaPostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -166,6 +177,7 @@ fun MediaPostInteractions(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
+            onPostOptionsClicked = onPostOptionsClicked,
         )
     }
 }
@@ -188,6 +200,7 @@ private inline fun PostInteractionsButtons(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
+    crossinline onPostOptionsClicked: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     interactionButtons.forEach { button ->
         key(button) {
@@ -207,6 +220,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                     PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
+                    PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
@@ -216,6 +230,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> likeCount
                     PostInteractionButton.Repost -> repostCount
                     PostInteractionButton.Bookmark -> ""
+                    PostInteractionButton.MoreOptions -> ""
                 },
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
@@ -229,6 +244,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Bookmark ->
                         if (isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
+                    PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
                 },
                 onClick = {
                     when (button) {
@@ -272,6 +288,7 @@ private inline fun PostInteractionsButtons(
                                 )
                             },
                         )
+                        PostInteractionButton.MoreOptions -> onPostOptionsClicked()
                     }
                 },
             )
@@ -394,7 +411,7 @@ class PostInteractionsSheetState private constructor(
             isSignedIn: Boolean,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
-            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+            onQuotePostClicked: (Repost) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -424,7 +441,7 @@ private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
-    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+    onQuotePostClicked: (Repost) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -452,55 +469,61 @@ private fun PostInteractionsBottomSheet(
         },
         sheetState = state.sheetState,
         content = {
+            val currentInteraction = state.currentInteraction
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (state.isSignedIn) repeat(2) { index ->
-                    val contentDescription = stringResource(
-                        if (index == 0) Res.string.repost
-                        else Res.string.quote,
-                    ).capitalize(locale = Locale.current)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(CircleShape)
-                            .clickable {
-                                when (index) {
-                                    0 ->
-                                        state.currentInteraction
-                                            ?.let(onInteractionConfirmed)
-
-                                    else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
-                                        ?.let(onQuotePostClicked)
-                                }
-                                state.hideSheet()
-                            }
-                            .padding(
-                                horizontal = 8.dp,
-                                vertical = 8.dp,
-                            )
-                            .semantics {
-                                this.contentDescription = contentDescription
-                            },
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = {
-                            Icon(
+                when (currentInteraction) {
+                    is Repost -> {
+                        if (state.isSignedIn) repeat(2) { index ->
+                            val contentDescription = stringResource(
+                                if (index == 0) Res.string.repost
+                                else Res.string.quote,
+                            ).capitalize(locale = Locale.current)
+                            Row(
                                 modifier = Modifier
-                                    .size(24.dp),
-                                imageVector = if (index == 0) Icons.Rounded.Repeat
-                                else Icons.Rounded.FormatQuote,
-                                contentDescription = null,
+                                    .fillMaxWidth()
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        when (index) {
+                                            0 ->
+                                                state.currentInteraction
+                                                    ?.let(onInteractionConfirmed)
+
+                                            else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                                ?.let(onQuotePostClicked)
+                                        }
+                                        state.hideSheet()
+                                    }
+                                    .padding(
+                                        horizontal = 8.dp,
+                                        vertical = 8.dp,
+                                    )
+                                    .semantics {
+                                        this.contentDescription = contentDescription
+                                    },
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                content = {
+                                    Icon(
+                                        modifier = Modifier
+                                            .size(24.dp),
+                                        imageVector = if (index == 0) Icons.Rounded.Repeat
+                                        else Icons.Rounded.FormatQuote,
+                                        contentDescription = null,
+                                    )
+                                    Text(
+                                        modifier = Modifier,
+                                        text = contentDescription,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                    )
+                                },
                             )
-                            Text(
-                                modifier = Modifier,
-                                text = contentDescription,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                    )
+                        }
+                    }
+                    else -> Unit
                 }
 
                 // Sheet content
@@ -529,7 +552,6 @@ private fun PostInteractionsBottomSheet(
         },
     )
 }
-
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
 private val BookmarkBlue = Color(0xFF1D9BF0)
@@ -562,6 +584,7 @@ private sealed class PostInteractionButton {
     data object Repost : PostInteractionButton()
     data object Like : PostInteractionButton()
     data object Bookmark : PostInteractionButton()
+    data object MoreOptions : PostInteractionButton()
 
     companion object {
         fun PostInteractionButton.icon(
@@ -571,6 +594,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
+            MoreOptions -> Icons.Rounded.MoreVert
         }
 
         val PostInteractionButton.stringResource
@@ -579,6 +603,7 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
+                MoreOptions -> Res.string.share
             }
 
         val PostButtons = listOf(
@@ -586,6 +611,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
+            MoreOptions,
         )
 
         val MediaButtons = listOf(
@@ -593,6 +619,7 @@ private sealed class PostInteractionButton {
             Comment,
             Repost,
             Bookmark,
+            MoreOptions,
         )
     }
 }

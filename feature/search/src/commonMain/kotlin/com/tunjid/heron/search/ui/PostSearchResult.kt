@@ -50,6 +50,7 @@ internal fun PostSearchResult(
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
 ) {
     val sharedElementPrefix = result.sharedElementPrefix
     ElevatedCard(
@@ -103,6 +104,7 @@ internal fun PostSearchResult(
                             onReplyToPost(result)
                         },
                         onPostInteraction = onPostInteraction,
+                        onPostOptionsClicked = onPostOptionsClicked,
                     )
                 },
             )

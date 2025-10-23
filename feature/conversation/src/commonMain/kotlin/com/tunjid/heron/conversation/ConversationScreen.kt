@@ -523,6 +523,8 @@ private fun PostMessage(
                 onPostInteraction = {
                     actions(Action.SendPostInteraction(it))
                 },
+                onPostOptionsClicked = {
+                },
             )
         },
     )

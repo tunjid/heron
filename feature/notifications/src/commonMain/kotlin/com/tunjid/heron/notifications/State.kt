@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.notifications
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
@@ -35,6 +36,8 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val lastRefreshed: Instant? = null,
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val signedInProfile: Profile? = null,
     override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(

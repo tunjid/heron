@@ -36,6 +36,7 @@ fun QuoteRow(
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
 ) {
     NotificationPostScaffold(
         modifier = modifier,
@@ -49,5 +50,6 @@ fun QuoteRow(
         onPostMediaClicked = { _, _, _ -> },
         onReplyToPost = {},
         onPostInteraction = onPostInteraction,
+        onPostOptionsClicked = onPostOptionsClicked,
     )
 }

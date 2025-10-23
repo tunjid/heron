@@ -327,6 +327,11 @@ private fun ActionsContent(
                 data.postActions.onReplyToPost(data.post)
             },
             onPostInteraction = data.postActions::onPostInteraction,
+            onPostOptionsClicked = {
+                data.postActions.onPostOptionsClicked(
+                    data.post,
+                )
+            },
         )
 
         Timeline.Presentation.Media.Condensed -> Unit

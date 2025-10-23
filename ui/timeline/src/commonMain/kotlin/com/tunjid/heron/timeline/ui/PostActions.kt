@@ -17,6 +17,7 @@
 package com.tunjid.heron.timeline.ui
 
 import androidx.compose.runtime.Stable
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -33,6 +34,7 @@ interface PostActions {
     fun onReplyToPost(post: Post)
     fun onPostInteraction(interaction: Post.Interaction)
     fun onPostMetadataClicked(metadata: Post.Metadata)
+    fun onPostOptionsClicked(post: Post)
 }
 
 fun postActions(
@@ -43,6 +45,7 @@ fun postActions(
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
     onPostMetadataClicked: (metadata: Post.Metadata) -> Unit = {},
+    onPostOptionsClicked: (post: Post) -> Unit,
 ) = object : PostActions {
     override fun onProfileClicked(
         profile: Profile,
@@ -89,6 +92,10 @@ fun postActions(
     ) = onPostMetadataClicked(
         metadata,
     )
+
+    override fun onPostOptionsClicked(
+        post: Post,
+    ) = onPostOptionsClicked(post)
 
     override fun onLinkTargetClicked(
         post: Post,

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
@@ -47,6 +48,8 @@ data class State(
     val viewedProfileId: ProfileId,
     val signedInProfileId: ProfileId? = null,
     val viewerState: ProfileViewerState?,
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val items: List<GalleryItem> = emptyList(),
     @Transient

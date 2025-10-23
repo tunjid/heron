@@ -26,6 +26,7 @@ import heron.scaffold.generated.resources.failed_post_interaction
 import heron.scaffold.generated.resources.like
 import heron.scaffold.generated.resources.repost
 import heron.scaffold.generated.resources.repost_removal
+import heron.scaffold.generated.resources.share
 import heron.scaffold.generated.resources.unlike
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

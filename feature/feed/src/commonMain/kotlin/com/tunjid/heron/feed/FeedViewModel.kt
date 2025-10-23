@@ -18,9 +18,11 @@ package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -68,6 +70,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     @Assisted
@@ -78,6 +81,11 @@ class ActualFeedViewModel(
     FeedStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            recentConversationMutations(
+                messageRepository = messageRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             merge(
                 timelineStateHolderMutations(
@@ -189,4 +197,12 @@ private fun timelineCreatorMutations(
     }
         .mapToMutation {
             copy(creator = it)
+        }
+
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(recentConversations = conversations)
         }
