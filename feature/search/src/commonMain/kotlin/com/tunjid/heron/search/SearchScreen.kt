@@ -120,6 +120,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
@@ -180,15 +181,19 @@ internal fun SearchScreen(
                 ),
             )
         },
+    )
+
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        isSignedIn = paneScaffoldState.isSignedIn,
         recentConversations = state.recentConversations,
-        onShareInConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { currentPost, conversation ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = postUri,
+                        sharedPostUri = currentPost.uri,
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
@@ -357,6 +362,7 @@ internal fun SearchScreen(
         }
     }
     val onPostInteraction = postInteractionState::onInteraction
+    val onPostOptionsClicked = postOptionsState::showOptions
 
     AnimatedContent(
         targetState = state.layout,
@@ -408,6 +414,7 @@ internal fun SearchScreen(
                 onPostInteraction = onPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
+                onPostOptionsClicked = onPostOptionsClicked,
             )
         }
     }
@@ -641,6 +648,7 @@ private fun TabbedSearchResults(
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
@@ -741,6 +749,7 @@ private fun TabbedSearchResults(
                             onReplyToPost = onReplyToPost,
                             onMediaClicked = onMediaClicked,
                             onPostInteraction = onPostInteraction,
+                            onPostOptionsClicked = onPostOptionsClicked,
                             searchResultActions = searchResultStateHolder.accept,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
@@ -832,6 +841,7 @@ private fun PostSearchResults(
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
@@ -869,6 +879,7 @@ private fun PostSearchResults(
                     onReplyToPost = onReplyToPost,
                     onMediaClicked = onMediaClicked,
                     onPostInteraction = onPostInteraction,
+                    onPostOptionsClicked = onPostOptionsClicked,
                 )
             },
         )
