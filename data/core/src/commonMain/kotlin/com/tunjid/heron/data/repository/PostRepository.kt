@@ -522,9 +522,6 @@ internal class OfflinePostRepository @Inject constructor(
                         }
                     }
                 }
-            is Post.Interaction.Share -> Outcome.Success
-            // Share is a local-only action, no network or DB writes.
-            // Just emit success, or handle share logic here if needed.
         }
     }
 
