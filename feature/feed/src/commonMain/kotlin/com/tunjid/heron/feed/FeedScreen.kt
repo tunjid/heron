@@ -74,6 +74,7 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -153,21 +154,26 @@ private fun FeedTimeline(
                 ),
             )
         },
+    )
+
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        isSignedIn = paneScaffoldState.isSignedIn,
         recentConversations = recentConversations,
-        onShareInConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { currentPost, conversation ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = postUri,
+                        sharedPostUri = currentPost.uri,
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
             )
         },
     )
+
     PullToRefreshBox(
         modifier = Modifier
             .padding(
@@ -317,6 +323,7 @@ private fun FeedTimeline(
                                         )
                                     },
                                     onPostInteraction = postInteractionState::onInteraction,
+                                    onPostOptionsClicked = postOptionsState::showOptions,
                                 )
                             },
                         )
