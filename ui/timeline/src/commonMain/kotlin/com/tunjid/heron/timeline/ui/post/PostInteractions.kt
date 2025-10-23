@@ -251,12 +251,12 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Like(
+                                null -> Post.Interaction.Create.Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Unlike(
+                                else -> Post.Interaction.Delete.Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -265,12 +265,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Repost(
+                                null -> Post.Interaction.Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> RemoveRepost(
+                                else -> Post.Interaction.Delete.RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -278,12 +278,12 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Bookmark(
+                                false -> Post.Interaction.Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> RemoveBookmark(
+                                true -> Post.Interaction.Delete.RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
