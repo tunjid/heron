@@ -36,7 +36,8 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val lastRefreshed: Instant? = null,
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val signedInProfile: Profile? = null,
     override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(

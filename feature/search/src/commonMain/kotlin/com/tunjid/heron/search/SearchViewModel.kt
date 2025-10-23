@@ -17,7 +17,6 @@
 package com.tunjid.heron.search
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -25,7 +24,6 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -189,7 +187,7 @@ fun recentConversationMutations(
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
-            copy(conversations = conversations)
+            copy(recentConversations = conversations)
         }
 
 private fun trendsMutations(

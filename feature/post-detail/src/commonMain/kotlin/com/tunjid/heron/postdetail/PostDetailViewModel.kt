@@ -17,11 +17,7 @@
 package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.PostUri
-import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -46,7 +42,6 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject
-import kotlin.String
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -54,10 +49,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onStart
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 
 internal typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -140,7 +131,7 @@ fun recentConversationMutations(
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
-            copy(conversations = conversations)
+            copy(recentConversations = conversations)
         }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(

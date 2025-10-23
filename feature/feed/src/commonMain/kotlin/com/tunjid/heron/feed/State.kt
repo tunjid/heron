@@ -40,7 +40,8 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,
     @Transient

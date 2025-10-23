@@ -62,7 +62,8 @@ data class State(
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient

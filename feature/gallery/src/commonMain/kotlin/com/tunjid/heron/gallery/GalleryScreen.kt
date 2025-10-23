@@ -152,7 +152,7 @@ internal fun GalleryScreen(
                 ),
             )
         },
-        recentConversations = state.conversations,
+        recentConversations = state.recentConversations,
         onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(

@@ -112,7 +112,8 @@ data class State(
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
     @Transient

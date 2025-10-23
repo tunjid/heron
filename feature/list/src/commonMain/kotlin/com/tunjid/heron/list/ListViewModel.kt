@@ -17,14 +17,11 @@
 package com.tunjid.heron.list
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -294,7 +291,7 @@ fun recentConversationMutations(
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
-            copy(conversations = conversations)
+            copy(recentConversations = conversations)
         }
 
 private fun timelineCreatorMutations(

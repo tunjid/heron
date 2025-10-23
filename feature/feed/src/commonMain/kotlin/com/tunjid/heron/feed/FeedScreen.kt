@@ -111,7 +111,7 @@ internal fun FeedScreen(
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
-                conversations = state.conversations,
+                recentConversations = state.recentConversations,
             )
         }
     }
@@ -124,7 +124,7 @@ private fun FeedTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    conversations: List<Conversation>,
+    recentConversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -153,7 +153,7 @@ private fun FeedTimeline(
                 ),
             )
         },
-        recentConversations = conversations,
+        recentConversations = recentConversations,
         onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(

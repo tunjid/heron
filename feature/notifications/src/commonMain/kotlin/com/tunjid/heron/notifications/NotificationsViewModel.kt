@@ -17,12 +17,8 @@
 package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.recentConversations
@@ -54,7 +50,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -132,7 +127,7 @@ fun recentConversationMutations(
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
-            copy(conversations = conversations)
+            copy(recentConversations = conversations)
         }
 
 fun lastRefreshedMutations(

@@ -31,7 +31,8 @@ import kotlinx.serialization.Transient
 data class State(
     val currentTabUri: Uri? = null,
     val tabLayout: TabLayout = TabLayout.Collapsed.All,
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val timelinePreferenceSaveRequestId: String? = null,
     @Transient

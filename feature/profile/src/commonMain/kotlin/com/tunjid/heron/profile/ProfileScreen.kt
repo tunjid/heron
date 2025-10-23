@@ -410,7 +410,7 @@ internal fun ProfileScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
-                                conversations = state.conversations,
+                                recentConversations = state.recentConversations,
                             )
                         }
                     },
@@ -945,7 +945,7 @@ private fun ProfileTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    conversations: List<Conversation>,
+    recentConversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -973,7 +973,7 @@ private fun ProfileTimeline(
                 ),
             )
         },
-        recentConversations = conversations,
+        recentConversations = recentConversations,
         onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(

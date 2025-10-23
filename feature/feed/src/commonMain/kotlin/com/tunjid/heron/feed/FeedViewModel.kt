@@ -17,11 +17,7 @@
 package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -59,7 +55,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
-import kotlinx.datetime.Clock
 
 internal typealias FeedStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -209,5 +204,5 @@ fun recentConversationMutations(
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
-            copy(conversations = conversations)
+            copy(recentConversations = conversations)
         }

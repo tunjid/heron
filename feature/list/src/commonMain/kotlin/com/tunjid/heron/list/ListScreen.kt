@@ -231,7 +231,7 @@ internal fun ListScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
-                                conversations = state.conversations,
+                                recentConversations = state.recentConversations,
                             )
                         }
                     },
@@ -347,7 +347,7 @@ private fun ListTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    conversations: List<Conversation>,
+    recentConversations: List<Conversation>,
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -375,7 +375,7 @@ private fun ListTimeline(
                 ),
             )
         },
-        recentConversations = conversations,
+        recentConversations = recentConversations,
         onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(

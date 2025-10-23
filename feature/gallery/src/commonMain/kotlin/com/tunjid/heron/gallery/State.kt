@@ -48,7 +48,8 @@ data class State(
     val viewedProfileId: ProfileId,
     val signedInProfileId: ProfileId? = null,
     val viewerState: ProfileViewerState?,
-    @Transient val conversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val items: List<GalleryItem> = emptyList(),
     @Transient

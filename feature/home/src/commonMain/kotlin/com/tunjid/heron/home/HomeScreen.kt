@@ -162,7 +162,7 @@ internal fun HomeScreen(
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
-                    conversations = state.conversations,
+                    recentConversations = state.recentConversations,
                 )
                 tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                     pagerState = pagerState,
@@ -274,7 +274,7 @@ private fun HomeTimeline(
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
-    conversations: List<Conversation>,
+    recentConversations: List<Conversation>,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
@@ -302,7 +302,7 @@ private fun HomeTimeline(
                 ),
             )
         },
-        recentConversations = conversations,
+        recentConversations = recentConversations,
         onShareInConversationClicked = { conversation, postUri ->
             actions(
                 Action.Navigate.To(
