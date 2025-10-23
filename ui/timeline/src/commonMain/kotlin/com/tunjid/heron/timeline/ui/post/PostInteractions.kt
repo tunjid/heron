@@ -523,24 +523,6 @@ private fun PostInteractionsBottomSheet(
                             )
                         }
                     }
-//                    is Post.Interaction.MoreOptions -> {
-//                        SendDirectMessageCard(
-//                            conversations = conversations,
-//                            onSendClicked = {
-//                                // Optional: implement "select conversation" later
-//                            },
-//                            onConversationClicked = { conversation ->
-//                                val postUri = currentInteraction.postUri
-//                                state.scope.launch {
-//                                    state.hideSheet()
-//                                    onShareInConversationClicked(conversation, postUri)
-//                                }
-//                            },
-//                        )
-//                        CopyLinkCard(onCopyLinkClicked = {
-//                            // TODO: Implement copy link to clipboard
-//                        })
-//                    }
                     else -> Unit
                 }
 
