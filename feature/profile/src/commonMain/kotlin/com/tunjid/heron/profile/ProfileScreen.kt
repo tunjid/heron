@@ -130,6 +130,7 @@ import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -973,15 +974,19 @@ private fun ProfileTimeline(
                 ),
             )
         },
+    )
+
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        isSignedIn = paneScaffoldState.isSignedIn,
         recentConversations = recentConversations,
-        onShareInConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { currentPost, conversation ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = postUri,
+                        sharedPostUri = currentPost.uri,
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
@@ -1111,6 +1116,7 @@ private fun ProfileTimeline(
                                     )
                                 },
                                 onPostInteraction = postInteractionState::onInteraction,
+                                onPostOptionsClicked = postOptionsState::showOptions,
                             )
                         },
                     )
