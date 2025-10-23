@@ -46,7 +46,6 @@ fun Post.Interaction.duplicateWriteMessage() = Memo.Resource(
             is Post.Interaction.Delete.RemoveBookmark -> Res.string.bookmark_removal
             is Post.Interaction.Delete.RemoveRepost -> Res.string.repost_removal
             is Post.Interaction.Delete.Unlike -> Res.string.unlike
-            is Post.Interaction.Share -> Res.string.share
         },
     ),
 )

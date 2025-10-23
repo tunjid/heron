@@ -51,7 +51,6 @@ sealed interface Writable {
                 is Post.Interaction.Delete.Unlike -> "remove-like-${interaction.postUri}"
                 is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
                 is Post.Interaction.Delete.RemoveBookmark -> "remove-bookmark-${interaction.postUri}"
-                is Post.Interaction.Share -> "share-${interaction.postUri}"
             }
 
         override suspend fun WriteQueue.write(): Outcome =
