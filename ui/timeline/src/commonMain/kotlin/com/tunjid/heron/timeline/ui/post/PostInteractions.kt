@@ -23,7 +23,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,26 +30,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -59,7 +50,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -75,7 +65,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
@@ -84,7 +73,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
 import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
@@ -96,24 +84,17 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.cancel
-import heron.ui.timeline.generated.resources.copy_link_icon
-import heron.ui.timeline.generated.resources.copy_link_to_post
 import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
-import heron.ui.timeline.generated.resources.send_icon
-import heron.ui.timeline.generated.resources.send_via_direct_message
 import heron.ui.timeline.generated.resources.share
 import heron.ui.timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
@@ -136,6 +117,7 @@ fun PostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: () -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -158,6 +140,7 @@ fun PostInteractions(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
+            onPostOptionsClicked = onPostOptionsClicked,
         )
         Spacer(Modifier.width(0.dp))
     }
@@ -171,6 +154,7 @@ fun MediaPostInteractions(
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -193,6 +177,7 @@ fun MediaPostInteractions(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
+            onPostOptionsClicked = onPostOptionsClicked,
         )
     }
 }
@@ -215,6 +200,7 @@ private inline fun PostInteractionsButtons(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
+    crossinline onPostOptionsClicked: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     interactionButtons.forEach { button ->
         key(button) {
@@ -234,7 +220,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
                     PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
                     PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
-                    PostInteractionButton.Share -> button.icon(isChecked = false)
+                    PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
@@ -244,7 +230,7 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Like -> likeCount
                     PostInteractionButton.Repost -> repostCount
                     PostInteractionButton.Bookmark -> ""
-                    PostInteractionButton.Share -> ""
+                    PostInteractionButton.MoreOptions -> ""
                 },
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
@@ -258,19 +244,19 @@ private inline fun PostInteractionsButtons(
                     PostInteractionButton.Bookmark ->
                         if (isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
-                    PostInteractionButton.Share -> MaterialTheme.colorScheme.outline
+                    PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
                 },
                 onClick = {
                     when (button) {
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
                             when (likeUri) {
-                                null -> Post.Interaction.Create.Like(
+                                null -> Like(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Post.Interaction.Delete.Unlike(
+                                else -> Unlike(
                                     postUri = postUri,
                                     likeUri = likeUri,
                                 )
@@ -279,12 +265,12 @@ private inline fun PostInteractionsButtons(
 
                         PostInteractionButton.Repost -> onPostInteraction(
                             when (repostUri) {
-                                null -> Post.Interaction.Create.Repost(
+                                null -> Repost(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                else -> Post.Interaction.Delete.RemoveRepost(
+                                else -> RemoveRepost(
                                     postUri = postUri,
                                     repostUri = repostUri,
                                 )
@@ -292,22 +278,17 @@ private inline fun PostInteractionsButtons(
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
                             when (isBookmarked) {
-                                false -> Post.Interaction.Create.Bookmark(
+                                false -> Bookmark(
                                     postId = postId,
                                     postUri = postUri,
                                 )
 
-                                true -> Post.Interaction.Delete.RemoveBookmark(
+                                true -> RemoveBookmark(
                                     postUri = postUri,
                                 )
                             },
                         )
-                        PostInteractionButton.Share -> onPostInteraction(
-                            Post.Interaction.Share(
-                                postId = postId,
-                                postUri = postUri,
-                            ),
-                        )
+                        PostInteractionButton.MoreOptions -> onPostOptionsClicked()
                     }
                 },
             )
@@ -428,11 +409,9 @@ class PostInteractionsSheetState private constructor(
         @Composable
         fun rememberUpdatedPostInteractionState(
             isSignedIn: Boolean,
-            recentConversations: List<Conversation>,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Repost) -> Unit,
-            onShareInConversationClicked: (Conversation, PostUri) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -450,8 +429,6 @@ class PostInteractionsSheetState private constructor(
                 onSignInClicked = onSignInClicked,
                 onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
-                conversations = recentConversations,
-                onShareInConversationClicked = onShareInConversationClicked,
             )
 
             return state
@@ -462,11 +439,9 @@ class PostInteractionsSheetState private constructor(
 @Composable
 private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
-    conversations: List<Conversation>,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Repost) -> Unit,
-    onShareInConversationClicked: (Conversation, PostUri) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -485,7 +460,6 @@ private fun PostInteractionsBottomSheet(
                     state.showBottomSheet = true
                 }
             }
-            is Post.Interaction.Share -> state.showBottomSheet = true
         }
     }
 
@@ -549,24 +523,24 @@ private fun PostInteractionsBottomSheet(
                             )
                         }
                     }
-                    is Post.Interaction.Share -> {
-                        SendDirectMessageCard(
-                            conversations = conversations,
-                            onSendClicked = {
-                                // Optional: implement "select conversation" later
-                            },
-                            onConversationClicked = { conversation ->
-                                val postUri = currentInteraction.postUri
-                                state.scope.launch {
-                                    state.hideSheet()
-                                    onShareInConversationClicked(conversation, postUri)
-                                }
-                            },
-                        )
-                        CopyLinkCard(onCopyLinkClicked = {
-                            // TODO: Implement copy link to clipboard
-                        })
-                    }
+//                    is Post.Interaction.MoreOptions -> {
+//                        SendDirectMessageCard(
+//                            conversations = conversations,
+//                            onSendClicked = {
+//                                // Optional: implement "select conversation" later
+//                            },
+//                            onConversationClicked = { conversation ->
+//                                val postUri = currentInteraction.postUri
+//                                state.scope.launch {
+//                                    state.hideSheet()
+//                                    onShareInConversationClicked(conversation, postUri)
+//                                }
+//                            },
+//                        )
+//                        CopyLinkCard(onCopyLinkClicked = {
+//                            // TODO: Implement copy link to clipboard
+//                        })
+//                    }
                     else -> Unit
                 }
 
@@ -596,122 +570,6 @@ private fun PostInteractionsBottomSheet(
         },
     )
 }
-
-@Composable
-private fun SendDirectMessageCard(
-    conversations: List<Conversation>,
-    onSendClicked: () -> Unit,
-    onConversationClicked: (Conversation) -> Unit,
-) {
-    ShareActionCard(
-        showDivider = true,
-        topContent = {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(conversations) { conversation ->
-                    val member = conversation.members.firstOrNull() ?: return@items
-                    AsyncImage(
-                        args = ImageArgs(
-                            url = member.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
-                        ),
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                onConversationClicked(conversation)
-                            },
-                    )
-                }
-            }
-        },
-        bottomContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSendClicked() }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.send_via_direct_message),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.Send,
-                    contentDescription = stringResource(Res.string.send_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    )
-}
-
-@Composable
-private fun CopyLinkCard(
-    onCopyLinkClicked: () -> Unit,
-) {
-    ShareActionCard(
-        bottomContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCopyLinkClicked() }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.copy_link_to_post),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Icon(
-                    imageVector = Icons.Rounded.ContentCopy,
-                    contentDescription = stringResource(Res.string.copy_link_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    )
-}
-
-@Composable
-private fun ShareActionCard(
-    modifier: Modifier = Modifier,
-    showDivider: Boolean = false,
-    topContent: (@Composable ColumnScope.() -> Unit)? = null,
-    bottomContent: @Composable ColumnScope.() -> Unit,
-) {
-    val cardColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            topContent?.invoke(this)
-
-            if (showDivider) {
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                    thickness = 0.6.dp,
-                )
-            }
-            bottomContent()
-        }
-    }
-}
-
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
 private val BookmarkBlue = Color(0xFF1D9BF0)
@@ -744,7 +602,7 @@ private sealed class PostInteractionButton {
     data object Repost : PostInteractionButton()
     data object Like : PostInteractionButton()
     data object Bookmark : PostInteractionButton()
-    data object Share : PostInteractionButton()
+    data object MoreOptions : PostInteractionButton()
 
     companion object {
         fun PostInteractionButton.icon(
@@ -754,7 +612,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            Share -> Icons.Rounded.MoreVert
+            MoreOptions -> Icons.Rounded.MoreVert
         }
 
         val PostInteractionButton.stringResource
@@ -763,7 +621,7 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
-                Share -> Res.string.share
+                MoreOptions -> Res.string.share
             }
 
         val PostButtons = listOf(
@@ -771,7 +629,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
-            Share,
+            MoreOptions,
         )
 
         val MediaButtons = listOf(
@@ -779,7 +637,7 @@ private sealed class PostInteractionButton {
             Comment,
             Repost,
             Bookmark,
-            Share,
+            MoreOptions,
         )
     }
 }
