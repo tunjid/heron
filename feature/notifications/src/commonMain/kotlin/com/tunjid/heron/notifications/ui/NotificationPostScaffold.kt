@@ -69,6 +69,7 @@ internal fun NotificationPostScaffold(
     onReplyToPost: (Notification.PostAssociated) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -141,6 +142,7 @@ internal fun NotificationPostScaffold(
                         onReplyToPost(notification)
                     },
                     onPostInteraction = onPostInteraction,
+                    onPostOptionsClicked = { onPostOptionsClicked(notification.associatedPost) },
                 )
             }
         }

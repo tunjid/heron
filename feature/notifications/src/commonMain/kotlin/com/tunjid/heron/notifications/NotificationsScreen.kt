@@ -67,6 +67,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -100,21 +101,25 @@ internal fun NotificationsScreen(
                 ),
             )
         },
+    )
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        isSignedIn = paneScaffoldState.isSignedIn,
         recentConversations = state.recentConversations,
-        onShareInConversationClicked = { conversation, postUri ->
+        onShareInConversationClicked = { currentPost, conversation ->
             actions(
                 Action.Navigate.To(
                     conversationDestination(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = postUri,
+                        sharedPostUri = currentPost.uri,
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
             )
         },
     )
+
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
     val onAggregatedProfileClicked: (Notification, Profile) -> Unit = remember {
@@ -186,6 +191,7 @@ internal fun NotificationsScreen(
         }
     }
     val onPostInteraction = postInteractionState::onInteraction
+    val onPostOptions = postOptionsState::showOptions
 
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -275,6 +281,7 @@ internal fun NotificationsScreen(
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
+                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.Quoted -> QuoteRow(
@@ -287,6 +294,7 @@ internal fun NotificationsScreen(
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
+                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.RepliedTo -> ReplyRow(
@@ -300,6 +308,7 @@ internal fun NotificationsScreen(
                             onPostClicked = onPostClicked,
                             onReplyToPost = onReplyToPost,
                             onPostInteraction = onPostInteraction,
+                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.Reposted -> RepostRow(

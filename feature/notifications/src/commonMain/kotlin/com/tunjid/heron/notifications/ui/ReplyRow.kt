@@ -37,6 +37,7 @@ fun ReplyRow(
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onReplyToPost: (Notification.PostAssociated) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
+    onPostOptionsClicked: (Post) -> Unit,
 ) {
     NotificationPostScaffold(
         modifier = modifier,
@@ -50,5 +51,6 @@ fun ReplyRow(
         onPostMediaClicked = { _, _, _ -> },
         onReplyToPost = onReplyToPost,
         onPostInteraction = onPostInteraction,
+        onPostOptionsClicked = onPostOptionsClicked,
     )
 }
