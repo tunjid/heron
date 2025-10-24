@@ -18,6 +18,7 @@ package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -70,6 +71,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
+    authRepository: AuthRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
@@ -82,6 +84,9 @@ class ActualFeedViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
+            signedInProfileIdMutations(
+                authRepository = authRepository,
+            ),
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
@@ -112,6 +117,14 @@ class ActualFeedViewModel(
             )
         },
     )
+
+fun signedInProfileIdMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser
+        .mapToMutation { signedInProfile ->
+            copy(signedInProfileId = signedInProfile?.did)
+        }
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfFeed,

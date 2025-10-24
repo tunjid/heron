@@ -17,6 +17,7 @@
 package com.tunjid.heron.conversation
 
 import com.tunjid.heron.conversation.di.conversationId
+import com.tunjid.heron.conversation.di.sharedPostUri
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Labeler
@@ -70,9 +71,7 @@ fun State(
             ),
         ),
     ),
-    sharedPostUri = route.routeParams.queryParams["sharedPostUri"]
-        ?.firstOrNull()
-        ?.let(::PostUri),
+    sharedPostUri = route.sharedPostUri,
 )
 
 @Serializable

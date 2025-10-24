@@ -96,6 +96,7 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -408,6 +409,7 @@ internal fun ProfileScreen(
                             )
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
+                                signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
@@ -943,6 +945,7 @@ private fun ProfileTabs(
 
 @Composable
 private fun ProfileTimeline(
+    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
@@ -977,7 +980,7 @@ private fun ProfileTimeline(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(

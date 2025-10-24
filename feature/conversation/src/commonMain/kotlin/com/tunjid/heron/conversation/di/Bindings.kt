@@ -39,6 +39,7 @@ import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.conversation.ui.conversationSharedElementKey
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -61,6 +62,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -82,6 +84,10 @@ private fun createRoute(
 
 internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
+)
+
+internal val Route.sharedPostUri by optionalMappedRouteQuery(
+    mapper = ::PostUri,
 )
 
 @BindingContainer

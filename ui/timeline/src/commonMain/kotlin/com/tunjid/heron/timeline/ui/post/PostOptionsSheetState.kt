@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -39,13 +38,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.copy_link_icon
 import heron.ui.timeline.generated.resources.copy_link_to_post
-import heron.ui.timeline.generated.resources.send_icon
 import heron.ui.timeline.generated.resources.send_via_direct_message
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -53,7 +52,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Stable
 class PostOptionsSheetState private constructor(
-    isSignedIn: Boolean,
+    signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     internal val sheetState: SheetState,
     internal val scope: CoroutineScope,
@@ -62,11 +61,14 @@ class PostOptionsSheetState private constructor(
     var showBottomSheet by mutableStateOf(false)
         internal set
 
-    internal var isSignedIn by mutableStateOf(isSignedIn)
+    internal var signedInProfileId by mutableStateOf(signedInProfileId)
 
     internal var recentConversations by mutableStateOf(recentConversations)
 
     internal var currentPost: Post? by mutableStateOf(null)
+
+    internal val isSignedIn
+        get() = signedInProfileId != null
 
     internal fun hideSheet() {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -77,7 +79,7 @@ class PostOptionsSheetState private constructor(
         }
     }
 
-    fun showOptions(post: Post?) {
+    fun showOptions(post: Post) {
         currentPost = post
         showBottomSheet = true
     }
@@ -85,7 +87,7 @@ class PostOptionsSheetState private constructor(
     companion object {
         @Composable
         fun rememberUpdatedPostOptionsState(
-            isSignedIn: Boolean,
+            signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
             onShareInConversationClicked: (Post, Conversation) -> Unit,
         ): PostOptionsSheetState {
@@ -94,20 +96,19 @@ class PostOptionsSheetState private constructor(
 
             val state = remember(sheetState, scope) {
                 PostOptionsSheetState(
-                    isSignedIn = isSignedIn,
+                    signedInProfileId = signedInProfileId,
                     recentConversations = recentConversations,
                     sheetState = sheetState,
                     scope = scope,
                 )
             }.also {
-                it.isSignedIn = isSignedIn
+                it.signedInProfileId = signedInProfileId
                 it.recentConversations = recentConversations
             }
 
             PostOptionsBottomSheet(
                 state = state,
                 onShareInConversationClicked = onShareInConversationClicked,
-                recentConversations = recentConversations,
             )
 
             return state
@@ -118,10 +119,10 @@ class PostOptionsSheetState private constructor(
 @Composable
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
-    recentConversations: List<Conversation>,
     onShareInConversationClicked: (Post, Conversation) -> Unit,
 ) {
-    if (state.showBottomSheet) {
+    val signedInProfileId = state.signedInProfileId
+    if (state.showBottomSheet && signedInProfileId != null) {
         ModalBottomSheet(
             onDismissRequest = {
                 state.showBottomSheet = false
@@ -134,7 +135,8 @@ private fun PostOptionsBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     SendDirectMessageCard(
-                        conversations = recentConversations,
+                        signedInProfileId = signedInProfileId,
+                        recentConversations = state.recentConversations,
                         onSendClicked = {
                             // TODO implement send direct message
                         },
@@ -160,22 +162,42 @@ private fun PostOptionsBottomSheet(
 
 @Composable
 private fun SendDirectMessageCard(
-    conversations: List<Conversation>,
+    signedInProfileId: ProfileId,
+    recentConversations: List<Conversation>,
     onSendClicked: () -> Unit,
     onConversationClicked: (Conversation) -> Unit,
 ) {
     ShareActionCard(
-        showDivider = true,
+        showDivider = false,
         topContent = {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(conversations) { conversation ->
-                    val member = conversation.members.firstOrNull() ?: return@items
+            Text(
+                modifier = Modifier
+                    .padding(
+                        vertical = 4.dp,
+                    ),
+                text = stringResource(Res.string.send_via_direct_message),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            LazyRow(
+                modifier = Modifier
+                    .clip(CircleShape),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(
+                    items = recentConversations,
+                    key = { it.id.id },
+                ) { conversation ->
+                    val member = conversation.members.firstOrNull {
+                        it.did != signedInProfileId
+                    } ?: return@items
                     AsyncImage(
-                        args = ImageArgs(
-                            url = member.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
-                        ),
+                        args = remember(member.avatar?.uri) {
+                            ImageArgs(
+                                url = member.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
@@ -187,24 +209,6 @@ private fun SendDirectMessageCard(
             }
         },
         bottomContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSendClicked() }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.send_via_direct_message),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.Send,
-                    contentDescription = stringResource(Res.string.send_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         },
     )
 }

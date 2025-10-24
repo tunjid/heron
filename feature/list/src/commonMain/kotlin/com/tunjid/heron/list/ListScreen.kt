@@ -64,6 +64,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -237,6 +238,7 @@ internal fun ListScreen(
                             )
 
                             is ListScreenStateHolders.Timeline -> ListTimeline(
+                                signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
@@ -353,6 +355,7 @@ private fun ListMembers(
 
 @Composable
 private fun ListTimeline(
+    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
@@ -387,7 +390,7 @@ private fun ListTimeline(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(

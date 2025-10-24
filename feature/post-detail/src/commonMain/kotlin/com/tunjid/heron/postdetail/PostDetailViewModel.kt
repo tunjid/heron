@@ -18,6 +18,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -62,6 +63,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @Inject
 class ActualPostDetailViewModel(
+    authRepository: AuthRepository,
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -76,6 +78,9 @@ class ActualPostDetailViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
+            signedInProfileIdMutations(
+                authRepository = authRepository,
+            ),
             postThreadsMutations(
                 route = route,
                 profileRepository = profileRepository,
@@ -125,6 +130,14 @@ fun postThreadsMutations(
             },
     )
 }
+
+fun signedInProfileIdMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser
+        .mapToMutation { signedInProfile ->
+            copy(signedInProfileId = signedInProfile?.did)
+        }
 
 fun recentConversationMutations(
     messageRepository: MessageRepository,

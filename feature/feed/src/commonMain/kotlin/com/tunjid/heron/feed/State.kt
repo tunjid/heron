@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
@@ -40,6 +41,8 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
+    @Transient
+    val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient

@@ -63,6 +63,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
 import com.tunjid.heron.home.ui.TabsCollapseEffect
@@ -158,12 +159,13 @@ internal fun HomeScreen(
                 val gridState = rememberLazyStaggeredGridState()
                 val timelineStateHolder = updatedTimelineStateHolders[page]
                 HomeTimeline(
-                    paneScaffoldState = paneScaffoldState,
                     gridState = gridState,
+                    paneScaffoldState = paneScaffoldState,
+                    signedInProfileId = state.signedInProfile?.did,
+                    recentConversations = state.recentConversations,
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     actions = actions,
-                    recentConversations = state.recentConversations,
                 )
                 tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                     pagerState = pagerState,
@@ -272,10 +274,11 @@ internal fun HomeScreen(
 private fun HomeTimeline(
     gridState: LazyStaggeredGridState,
     paneScaffoldState: PaneScaffoldState,
+    signedInProfileId: ProfileId?,
+    recentConversations: List<Conversation>,
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
-    recentConversations: List<Conversation>,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
@@ -306,7 +309,7 @@ private fun HomeTimeline(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(
