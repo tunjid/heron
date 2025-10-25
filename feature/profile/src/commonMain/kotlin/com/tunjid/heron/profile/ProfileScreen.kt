@@ -102,8 +102,8 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.profile.ui.ProfileCollection
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
+import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
@@ -319,7 +319,7 @@ internal fun ProfileScreen(
                     contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
-                            is ProfileScreenStateHolders.Collections.Feeds -> ProfileCollection(
+                            is ProfileScreenStateHolders.Records.Feeds -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 itemKey = { it.cid.id },
                                 itemContent = { feedGenerator ->
@@ -355,7 +355,7 @@ internal fun ProfileScreen(
                                 },
                             )
 
-                            is ProfileScreenStateHolders.Collections.StarterPacks -> ProfileCollection(
+                            is ProfileScreenStateHolders.Records.StarterPacks -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 itemKey = { it.cid.id },
                                 itemContent = { starterPack ->
@@ -381,7 +381,7 @@ internal fun ProfileScreen(
                                 },
                             )
 
-                            is ProfileScreenStateHolders.Collections.Lists -> ProfileCollection(
+                            is ProfileScreenStateHolders.Records.Lists -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 itemKey = { it.cid.id },
                                 itemContent = { list ->
@@ -429,7 +429,7 @@ private fun timelineTabs(
     sourceIdsToHasUpdates: Map<String, Boolean>,
 ): List<Tab> = updatedStateHolders.map { holder ->
     when (holder) {
-        is ProfileScreenStateHolders.Collections<*> -> Tab(
+        is ProfileScreenStateHolders.Records<*> -> Tab(
             title = stringResource(remember(holder.state.value::stringResource)),
             hasUpdate = false,
         )

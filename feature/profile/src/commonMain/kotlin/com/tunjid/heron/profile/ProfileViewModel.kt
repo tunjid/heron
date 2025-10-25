@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -355,11 +356,11 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
 private fun CoroutineScope.profileCollectionStateHolders(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): List<ProfileScreenStateHolders.Collections<*>> =
+): List<ProfileScreenStateHolders.Records<*>> =
     listOfNotNull(
-        ProfileScreenStateHolders.Collections.Feeds(
-            mutator = profileCollectionStateHolder(
-                initialState = ProfileCollectionState(
+        ProfileScreenStateHolders.Records.Feeds(
+            mutator = recordStateHolder(
+                initialState = RecordState(
                     stringResource = Res.string.feeds,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -372,9 +373,9 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 cursorListLoader = profileRepository::feedGenerators,
             ),
         ),
-        ProfileScreenStateHolders.Collections.StarterPacks(
-            mutator = profileCollectionStateHolder(
-                initialState = ProfileCollectionState(
+        ProfileScreenStateHolders.Records.StarterPacks(
+            mutator = recordStateHolder(
+                initialState = RecordState(
                     stringResource = Res.string.starter_packs,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -387,9 +388,9 @@ private fun CoroutineScope.profileCollectionStateHolders(
                 cursorListLoader = profileRepository::starterPacks,
             ),
         ),
-        ProfileScreenStateHolders.Collections.Lists(
-            mutator = profileCollectionStateHolder(
-                initialState = ProfileCollectionState(
+        ProfileScreenStateHolders.Records.Lists(
+            mutator = recordStateHolder(
+                initialState = RecordState(
                     stringResource = Res.string.lists,
                     tilingData = TilingState.Data(
                         currentQuery = ProfilesQuery(
@@ -410,11 +411,11 @@ private fun defaultQueryData() = CursorQuery.Data(
     limit = 15,
 )
 
-private fun <T> CoroutineScope.profileCollectionStateHolder(
-    initialState: ProfileCollectionState<T>,
+private fun <T : Record> CoroutineScope.recordStateHolder(
+    initialState: RecordState<T>,
     itemId: (T) -> Any,
     cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
-): ProfileCollectionStateHolder<T> = actionStateFlowMutator(
+): RecordStateHolder<T> = actionStateFlowMutator(
     initialState = initialState,
     actionTransform = transform@{ actions ->
         actions.toMutationStream {

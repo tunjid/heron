@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
@@ -83,22 +84,22 @@ fun State(route: Route) = State(
 
 sealed class ProfileScreenStateHolders {
 
-    sealed class Collections<T>(
-        private val mutator: ProfileCollectionStateHolder<T>,
+    sealed class Records<T : Record>(
+        private val mutator: RecordStateHolder<T>,
     ) : ProfileScreenStateHolders(),
-        ProfileCollectionStateHolder<T> by mutator {
+        RecordStateHolder<T> by mutator {
 
         class Feeds(
-            mutator: ProfileCollectionStateHolder<FeedGenerator>,
-        ) : Collections<FeedGenerator>(mutator)
+            mutator: RecordStateHolder<FeedGenerator>,
+        ) : Records<FeedGenerator>(mutator)
 
         class Lists(
-            mutator: ProfileCollectionStateHolder<FeedList>,
-        ) : Collections<FeedList>(mutator)
+            mutator: RecordStateHolder<FeedList>,
+        ) : Records<FeedList>(mutator)
 
         class StarterPacks(
-            mutator: ProfileCollectionStateHolder<StarterPack>,
-        ) : Collections<StarterPack>(mutator)
+            mutator: RecordStateHolder<StarterPack>,
+        ) : Records<StarterPack>(mutator)
     }
 
     class Timeline(
@@ -108,20 +109,20 @@ sealed class ProfileScreenStateHolders {
 
     val key
         get() = when (this) {
-            is Collections.Feeds -> "Feeds"
-            is Collections.Lists -> "Lists"
-            is Collections.StarterPacks -> "StarterPacks"
+            is Records.Feeds -> "Feeds"
+            is Records.Lists -> "Lists"
+            is Records.StarterPacks -> "StarterPacks"
             is Timeline -> state.value.timeline.sourceId
         }
 
     val tilingState: StateFlow<TilingState<*, *>>
         get() = when (this) {
-            is Collections<*> -> state
+            is Records<*> -> state
             is Timeline -> state
         }
 
     fun refresh() = when (this) {
-        is Collections<*> -> accept(
+        is Records<*> -> accept(
             TilingState.Action.Refresh,
         )
 
@@ -133,9 +134,9 @@ sealed class ProfileScreenStateHolders {
     }
 }
 
-typealias ProfileCollectionStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<ProfileCollectionState<T>>>
+typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
 
-data class ProfileCollectionState<T>(
+data class RecordState<T : Record>(
     val stringResource: StringResource,
     override val tilingData: TilingState.Data<ProfilesQuery, T>,
 ) : TilingState<ProfilesQuery, T>
