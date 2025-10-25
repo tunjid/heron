@@ -41,7 +41,7 @@ internal object Collections {
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
     const val List = "app.bsky.graph.list"
-    const val StarterPack = "app.bsky.graph.list"
+    const val StarterPack = "app.bsky.graph.starterpack"
     const val FeedGenerator = "app.bsky.feed.generator"
 
     val SelfRecordKey = RKey("self")
