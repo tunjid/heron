@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation.ui
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -99,7 +100,9 @@ fun PaneScaffoldState.UserInput(
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .padding(vertical = 8.dp)
+            .animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         pendingRecord?.let { record ->

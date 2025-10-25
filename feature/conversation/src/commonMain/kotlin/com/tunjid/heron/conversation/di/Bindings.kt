@@ -212,8 +212,7 @@ class ConversationBindings(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = paddingValues.calculateTopPadding())
-                            .imePadding(),
+                            .padding(paddingValues),
                     )
                 },
             )
