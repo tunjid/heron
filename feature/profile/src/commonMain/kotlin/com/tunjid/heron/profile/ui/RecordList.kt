@@ -26,14 +26,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
-internal fun <T> ProfileCollection(
-    collectionStateHolder: ProfileScreenStateHolders.Collections<T>,
+internal fun <T : Record> RecordList(
+    collectionStateHolder: ProfileScreenStateHolders.Records<T>,
     itemKey: (T) -> Any,
     itemContent: @Composable (LazyItemScope.(T) -> Unit),
 ) {

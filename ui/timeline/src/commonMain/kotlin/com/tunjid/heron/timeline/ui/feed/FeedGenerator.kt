@@ -36,8 +36,8 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.ui.CollectionLayout
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
@@ -59,7 +59,7 @@ fun FeedGenerator(
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onFeedGeneratorStatusUpdated: (Update) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
-    CollectionLayout(
+    RecordLayout(
         modifier = modifier,
         movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = feedGenerator.displayName,

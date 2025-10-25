@@ -35,7 +35,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun CollectionLayout(
+fun RecordLayout(
     modifier: Modifier = Modifier,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     title: String,

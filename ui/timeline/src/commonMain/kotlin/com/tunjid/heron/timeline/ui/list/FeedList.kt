@@ -31,7 +31,7 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
-import com.tunjid.heron.ui.CollectionLayout
+import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.list_by
@@ -47,7 +47,7 @@ fun FeedList(
     list: FeedList,
     onListClicked: (FeedList) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
-    CollectionLayout(
+    RecordLayout(
         modifier = modifier,
         movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = list.name,
@@ -94,7 +94,7 @@ fun StarterPack(
     starterPack: StarterPack,
     onStarterPackClicked: (StarterPack) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
-    CollectionLayout(
+    RecordLayout(
         modifier = modifier,
         movableElementSharedTransitionScope = movableElementSharedTransitionScope,
         title = starterPack.name,
