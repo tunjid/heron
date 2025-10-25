@@ -264,7 +264,7 @@ private fun loadProfileMutations(
                                             timelineRepository = timelineRepository,
                                         ),
                                     )
-                                } + scope.profileCollectionStateHolders(
+                                } + scope.recordStateHolders(
                                     profileId = profileId,
                                     profileRepository = profileRepository,
                                 ),
@@ -353,7 +353,7 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
         writeQueue.enqueue(Writable.TimelineUpdate(action.update))
     }
 
-private fun CoroutineScope.profileCollectionStateHolders(
+private fun CoroutineScope.recordStateHolders(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ): List<ProfileScreenStateHolders.Records<*>> =
