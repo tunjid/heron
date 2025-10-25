@@ -30,13 +30,17 @@ sealed interface Uri {
     }
 }
 
+@Serializable
+sealed interface RecordUri : Uri
+
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
 @Serializable
 @JvmInline
 value class PostUri(
     override val uri: String,
-) : Uri {
+) : Uri,
+    RecordUri {
     override fun toString(): String = uri
 }
 
@@ -52,7 +56,8 @@ value class ProfileUri(
 @JvmInline
 value class FeedGeneratorUri(
     override val uri: String,
-) : Uri {
+) : Uri,
+    RecordUri {
     override fun toString(): String = uri
 }
 
@@ -60,7 +65,8 @@ value class FeedGeneratorUri(
 @JvmInline
 value class ListUri(
     override val uri: String,
-) : Uri {
+) : Uri,
+    RecordUri {
     override fun toString(): String = uri
 }
 
@@ -68,7 +74,8 @@ value class ListUri(
 @JvmInline
 value class StarterPackUri(
     override val uri: String,
-) : Uri {
+) : Uri,
+    RecordUri {
     override fun toString(): String = uri
 }
 
