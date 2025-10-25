@@ -36,7 +36,15 @@ data class FeedGenerator(
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel {
+) : UrlEncodableModel,
+    Record.Post {
+
+    override val reference: Record.Reference =
+        Record.Reference(
+            id = cid,
+            uri = uri,
+        )
+
     enum class Status {
         Pinned,
         Saved,

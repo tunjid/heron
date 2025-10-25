@@ -45,7 +45,15 @@ data class Post(
 //    public val viewer: ViewerState? = null,
     val labels: List<Label>,
 //    public val threadgate: ThreadgateView? = null,
-) : UrlEncodableModel {
+) : UrlEncodableModel,
+    Record {
+
+    override val reference: com.tunjid.heron.data.core.models.Record.Reference =
+        com.tunjid.heron.data.core.models.Record.Reference(
+            id = cid,
+            uri = uri,
+        )
+
     @Serializable
     data class Record(
         val text: String,
