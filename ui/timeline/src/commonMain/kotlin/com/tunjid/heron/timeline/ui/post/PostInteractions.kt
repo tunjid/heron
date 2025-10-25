@@ -201,8 +201,8 @@ private inline fun PostInteractionsButtons(
     crossinline onPostOptionsClicked: () -> Unit,
     crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
 ) = with(paneMovableElementSharedTransitionScope) {
-    interactionButtons.forEachIndexed { index, button ->
-        key(index) {
+    interactionButtons.forEach { button ->
+        key("$button-prefix") {
             prefixContent(button)
         }
         key(button) {
