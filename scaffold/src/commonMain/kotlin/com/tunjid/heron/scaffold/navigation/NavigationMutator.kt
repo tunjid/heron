@@ -32,7 +32,6 @@ import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
@@ -143,15 +142,15 @@ fun conversationDestination(
     id: ConversationId,
     members: List<Profile> = emptyList(),
     sharedElementPrefix: String? = null,
-    sharedPostUri: PostUri? = null,
+    sharedUri: GenericUri? = null,
     referringRouteOption: ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = "/messages/${id.id}",
     models = members,
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = referringRouteOption,
-    miscQueryParams = sharedPostUri?.let {
-        mapOf("sharedPostUri" to listOf(it.uri))
+    miscQueryParams = sharedUri?.let {
+        mapOf("sharedUri" to listOf(it.uri))
     } ?: emptyMap(),
 )
 

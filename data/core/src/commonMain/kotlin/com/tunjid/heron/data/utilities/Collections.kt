@@ -18,8 +18,13 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.network.BlueskyJson
@@ -36,7 +41,7 @@ internal object Collections {
     const val Like = "app.bsky.feed.like"
     const val Follow = "app.bsky.graph.follow"
     const val List = "app.bsky.graph.list"
-    const val StarterPack = "app.bsky.graph.list"
+    const val StarterPack = "app.bsky.graph.starterpack"
     const val FeedGenerator = "app.bsky.feed.generator"
 
     val SelfRecordKey = RKey("self")
@@ -57,6 +62,8 @@ val GenericUri.tidInstant: Instant?
         null
     }
 
+fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
+
 internal val AtUri.tidInstant: Instant?
     get() = try {
         Instant.fromEpochMilliseconds(tidTimestampFromBase32(atUri.split("/").last()))
@@ -72,6 +79,19 @@ val Uri.path: String
         .last()
         .split(QueryDelimiter)
         .first()
+
+/**
+ * Returns this [Uri] as a [RecordUri] if applicable.
+ */
+fun Uri.asRecordUri(): RecordUri? = with(uri.split("/")) {
+    when {
+        contains(Collections.Post) -> PostUri(uri)
+        contains(Collections.List) -> ListUri(uri)
+        contains(Collections.StarterPack) -> StarterPackUri(uri)
+        contains(Collections.FeedGenerator) -> FeedGeneratorUri(uri)
+        else -> null
+    }
+}
 
 fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlash)
     .drop(1)

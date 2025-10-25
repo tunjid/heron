@@ -106,12 +106,15 @@ internal fun PostEmbed(
                 )
 
                 is ImageList -> PostImages(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     feature = embed,
                     postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentation = presentation,
                     isBlurred = isBlurred,
+                    matchHeightConstraintsFirst = false,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, null)
                     },
@@ -119,11 +122,14 @@ internal fun PostEmbed(
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     video = embed,
                     postUri = postUri,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
+                    matchHeightConstraintsFirst = false,
                     presentation = presentation,
                     onClicked = {
                         onPostMediaClicked(embed, 0, null)

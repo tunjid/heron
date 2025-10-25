@@ -16,12 +16,13 @@
 
 package com.tunjid.heron.conversation.ui
 
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +32,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -55,9 +60,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
 import heron.feature.conversation.generated.resources.Res
@@ -69,16 +79,13 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PaneScaffoldState.UserInput(
-    sendMessage: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
-    sharedPostUri: PostUri? = null,
+    pendingRecord: Record?,
+    sendMessage: (AnnotatedString) -> Unit,
+    removePendingRecordClicked: () -> Unit,
 ) {
-    var textState by rememberSaveable(sharedPostUri, stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(
-            TextFieldValue(
-                text = sharedPostUri?.toString().orEmpty(),
-            ),
-        )
+    var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue())
     }
 
     // Used to decide if the keyboard should be shown
@@ -92,52 +99,87 @@ fun PaneScaffoldState.UserInput(
         }
     }
 
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = modifier
+            .padding(vertical = 8.dp)
+            .animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        UserInputText(
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = UserInputShape,
+        pendingRecord?.let { record ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                when (record) {
+                    is Post -> PostRecord(
+                        modifier = Modifier
+                            .weight(1f),
+                        post = record,
+                        sharedElementPrefix = SharedRecordPrefix,
+                        paneScaffoldState = this@UserInput,
+                        postActions = NoOpPostActions,
+                    )
+                    is FeedGenerator -> Unit
+                    is FeedList -> Unit
+                    is StarterPack -> Unit
+                }
+
+                FilledTonalIconButton(
+                    onClick = removePendingRecordClicked,
+                    content = {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                        )
+                    },
                 )
-                .padding(vertical = 16.dp)
-                .weight(1f)
-                .heightIn(max = 80.dp),
-            textFieldValue = textState,
-            onTextChanged = {
-                textState = it.copy(
-                    annotatedString = formatTextPost(
-                        text = it.text,
-                        textLinks = it.annotatedString.links(),
-                        onLinkTargetClicked = {},
-                    ),
-                )
-            },
-            // Only show the keyboard if there's no input selector and text field has focus
-            keyboardShown = textFieldFocusState,
-            // Close extended selector if text field receives focus
-            onTextFieldFocused = { focused ->
-                textFieldFocusState = focused
-            },
-            onMessageSent = onSendMessage,
-            focusState = textFieldFocusState,
-        )
-        SendButton(
-            modifier = Modifier
-                .height(36.dp),
-            textFieldValue = textState,
-            onMessageSent = onSendMessage,
-        )
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            UserInputText(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = UserInputShape,
+                    )
+                    .padding(vertical = 16.dp)
+                    .weight(1f)
+                    .heightIn(max = 80.dp),
+                textFieldValue = textState,
+                onTextChanged = {
+                    textState = it.copy(
+                        annotatedString = formatTextPost(
+                            text = it.text,
+                            textLinks = it.annotatedString.links(),
+                            onLinkTargetClicked = {},
+                        ),
+                    )
+                },
+                // Only show the keyboard if there's no input selector and text field has focus
+                keyboardShown = textFieldFocusState,
+                // Close extended selector if text field receives focus
+                onTextFieldFocused = { focused ->
+                    textFieldFocusState = focused
+                },
+                onMessageSent = onSendMessage,
+                focusState = textFieldFocusState,
+            )
+            SendButton(
+                modifier = Modifier
+                    .height(36.dp),
+                textFieldValue = textState,
+                onMessageSent = onSendMessage,
+            )
+        }
     }
 }
 
 val KeyboardShownKey = SemanticsPropertyKey<Boolean>("KeyboardShownKey")
 var SemanticsPropertyReceiver.keyboardShownProperty by KeyboardShownKey
 
-@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalFoundationApi
 @Composable
 private fun UserInputText(
@@ -235,4 +277,17 @@ fun PaneScaffoldState.SendButton(
     )
 }
 
+private val NoOpPostActions = postActions(
+    onLinkTargetClicked = { _, _ -> },
+    onProfileClicked = { _, _, _ -> },
+    onPostClicked = { _, _ -> },
+    onPostMediaClicked = { _, _, _, _ -> },
+    onReplyToPost = {},
+    onPostInteraction = {},
+    onPostMetadataClicked = {},
+    onPostOptionsClicked = {},
+)
+
 private val UserInputShape = RoundedCornerShape(32.dp)
+
+private const val SharedRecordPrefix = "SharedRecordPrefix"

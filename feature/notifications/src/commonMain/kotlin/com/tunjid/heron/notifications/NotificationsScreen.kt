@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
@@ -112,7 +113,7 @@ internal fun NotificationsScreen(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = currentPost.uri,
+                        sharedUri = currentPost.uri.asGenericUri(),
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),

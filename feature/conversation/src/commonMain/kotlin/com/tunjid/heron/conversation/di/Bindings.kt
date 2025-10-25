@@ -34,12 +34,13 @@ import com.tunjid.heron.conversation.Action
 import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.RouteViewModelInitializer
+import com.tunjid.heron.conversation.pendingRecord
 import com.tunjid.heron.conversation.ui.ConversationTitle
 import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.conversation.ui.conversationSharedElementKey
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -86,8 +87,8 @@ internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
 )
 
-internal val Route.sharedPostUri by optionalMappedRouteQuery(
-    mapper = ::PostUri,
+internal val Route.sharedUri by optionalMappedRouteQuery(
+    mapper = ::GenericUri,
 )
 
 @BindingContainer
@@ -183,6 +184,7 @@ class ConversationBindings(
                             .imePadding()
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
+                        pendingRecord = state.sharedRecord.pendingRecord,
                         sendMessage = remember(viewModel, state.id) {
                             { annotatedString: AnnotatedString ->
                                 viewModel.accept(
@@ -196,7 +198,9 @@ class ConversationBindings(
                                 )
                             }
                         },
-                        sharedPostUri = state.sharedPostUri,
+                        removePendingRecordClicked = {
+                            viewModel.accept(Action.SharedRecord.Remove)
+                        },
                     )
                 },
                 navigationRail = {
@@ -208,8 +212,7 @@ class ConversationBindings(
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = paddingValues.calculateTopPadding())
-                            .imePadding(),
+                            .padding(paddingValues),
                     )
                 },
             )

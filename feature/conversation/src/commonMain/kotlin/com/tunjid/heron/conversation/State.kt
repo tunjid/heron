@@ -17,22 +17,21 @@
 package com.tunjid.heron.conversation
 
 import com.tunjid.heron.conversation.di.conversationId
-import com.tunjid.heron.conversation.di.sharedPostUri
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
-import kotlin.collections.filterIsInstance
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -49,7 +48,7 @@ data class State(
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Transient
-    val sharedPostUri: PostUri? = null,
+    val sharedRecord: SharedRecord = SharedRecord.None,
     @Transient
     val messages: List<Memo> = emptyList(),
 ) : TilingState<MessageQuery, MessageItem>
@@ -71,8 +70,28 @@ fun State(
             ),
         ),
     ),
-    sharedPostUri = route.sharedPostUri,
 )
+
+@Serializable
+sealed class SharedRecord {
+    @Serializable
+    data object None : SharedRecord()
+
+    @Serializable
+    data class Pending(
+        val record: Record,
+    ) : SharedRecord()
+
+    @Serializable
+    data object Consumed : SharedRecord()
+}
+
+val SharedRecord.pendingRecord
+    get() = when (this) {
+        SharedRecord.Consumed -> null
+        SharedRecord.None -> null
+        is SharedRecord.Pending -> record
+    }
 
 @Serializable
 sealed class MessageItem {
@@ -152,6 +171,14 @@ sealed class Action(val key: String) {
     data class UpdateMessageReaction(
         val reaction: Message.UpdateReaction,
     ) : Action(key = "UpdateMessageReaction")
+
+    sealed class SharedRecord : Action(key = "SharedRecord") {
+        data class Add(
+            val uri: RecordUri,
+        ) : SharedRecord()
+
+        data object Remove : SharedRecord()
+    }
 
     sealed class Navigate :
         Action(key = "Navigate"),

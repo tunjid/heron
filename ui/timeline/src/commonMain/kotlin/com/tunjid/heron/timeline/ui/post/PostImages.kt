@@ -17,17 +17,19 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -46,10 +48,12 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickyShar
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostImages(
+    modifier: Modifier = Modifier,
     feature: ImageList,
     postUri: PostUri,
     sharedElementPrefix: String,
     isBlurred: Boolean,
+    matchHeightConstraintsFirst: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
@@ -64,8 +68,7 @@ internal fun PostImages(
     else Modifier
 
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = spacedBy(8.dp),
     ) {
         val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
@@ -78,13 +81,17 @@ internal fun PostImages(
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 ->
                                 itemModifier
-                                    .fillParentMaxWidth()
-                                    .aspectRatio(image.aspectRatioOrSquare)
+                                    .aspectRatio(
+                                        ratio = image.aspectRatioOrSquare,
+                                        matchHeightConstraintsFirst = matchHeightConstraintsFirst,
+                                    )
 
                             else ->
                                 itemModifier
                                     .height(200.dp)
-                                    .aspectRatio(image.aspectRatioOrSquare)
+                                    .aspectRatio(
+                                        ratio = image.aspectRatioOrSquare,
+                                    )
                         }
 
                         Timeline.Presentation.Media.Condensed,

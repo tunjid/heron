@@ -97,6 +97,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -989,7 +990,7 @@ private fun ProfileTimeline(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = currentPost.uri,
+                        sharedUri = currentPost.uri.asGenericUri(),
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),

@@ -64,6 +64,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
 import com.tunjid.heron.home.ui.TabsCollapseEffect
@@ -318,7 +319,7 @@ private fun HomeTimeline(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = currentPost.uri,
+                        sharedUri = currentPost.uri.asGenericUri(),
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
