@@ -2,6 +2,7 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -35,16 +36,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.copy_link_icon
-import heron.ui.timeline.generated.resources.copy_link_to_post
+import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.send_via_direct_message
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -137,9 +142,6 @@ private fun PostOptionsBottomSheet(
                     SendDirectMessageCard(
                         signedInProfileId = signedInProfileId,
                         recentConversations = state.recentConversations,
-                        onSendClicked = {
-                            // TODO implement send direct message
-                        },
                         onConversationClicked = { conversation ->
                             state.scope.launch {
                                 state.hideSheet()
@@ -150,10 +152,9 @@ private fun PostOptionsBottomSheet(
                             }
                         },
                     )
-//                    CopyLinkCard(
-//                        onCopyLinkClicked = {
-//                        },
-//                    )
+                    state.currentPost?.let {
+                        CopyToClipboardCard(it.uri)
+                    }
                 }
             },
         )
@@ -164,7 +165,6 @@ private fun PostOptionsBottomSheet(
 private fun SendDirectMessageCard(
     signedInProfileId: ProfileId,
     recentConversations: List<Conversation>,
-    onSendClicked: () -> Unit,
     onConversationClicked: (Conversation) -> Unit,
 ) {
     ShareActionCard(
@@ -214,31 +214,42 @@ private fun SendDirectMessageCard(
 }
 
 @Composable
-private fun CopyLinkCard(
-    onCopyLinkClicked: () -> Unit,
+private fun CopyToClipboardCard(
+    uri: PostUri,
 ) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val copyToClipboardDescription = stringResource(Res.string.copy_link_to_clipboard)
+
     ShareActionCard(
-        bottomContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCopyLinkClicked() }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.copy_link_to_post),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Icon(
-                    imageVector = Icons.Rounded.ContentCopy,
-                    contentDescription = stringResource(Res.string.copy_link_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {
+            scope.launch {
+                clipboard.setClipEntry(uri.asClipEntry(copyToClipboardDescription))
             }
         },
-    )
+    ) {
+        Row(
+            modifier = Modifier
+                .semantics {
+                    contentDescription = copyToClipboardDescription
+                }
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = copyToClipboardDescription,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Icon(
+                imageVector = Icons.Rounded.ContentCopy,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable
@@ -248,31 +259,66 @@ private fun ShareActionCard(
     topContent: (@Composable ColumnScope.() -> Unit)? = null,
     bottomContent: @Composable ColumnScope.() -> Unit,
 ) {
+    ShareActionCard(
+        modifier = modifier,
+        onClick = null,
+        content = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                topContent?.invoke(this)
+
+                if (showDivider) {
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 0.6.dp,
+                    )
+                }
+                bottomContent()
+            }
+        },
+    )
+}
+
+@Composable
+private fun ShareActionCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)?,
+    content: @Composable () -> Unit,
+) {
     val cardColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
 
-    ElevatedCard(
+    if (onClick == null) ElevatedCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            topContent?.invoke(this)
-
-            if (showDivider) {
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                    thickness = 0.6.dp,
-                )
-            }
-            bottomContent()
+            content()
+        }
+    }
+    else ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = onClick,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            content()
         }
     }
 }
