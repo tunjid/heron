@@ -185,8 +185,6 @@ class ConversationBindings(
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
                         pendingRecord = state.sharedRecord.pendingRecord,
-                        labelers = state.labelers,
-                        contentPreferences = state.labelPreferences,
                         sendMessage = remember(viewModel, state.id) {
                             { annotatedString: AnnotatedString ->
                                 viewModel.accept(

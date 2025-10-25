@@ -76,6 +76,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostVideo(
+    modifier: Modifier = Modifier,
     video: Video,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -95,8 +96,7 @@ internal fun PostVideo(
         },
     )
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .aspectRatio(
                 when (presentation) {
                     Timeline.Presentation.Media.Condensed,

@@ -106,6 +106,8 @@ internal fun PostEmbed(
                 )
 
                 is ImageList -> PostImages(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     feature = embed,
                     postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
@@ -119,6 +121,8 @@ internal fun PostEmbed(
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     video = embed,
                     postUri = postUri,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,

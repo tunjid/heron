@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -136,6 +137,8 @@ fun QuotedPost(
                 )
 
                 is ImageList -> PostImages(
+                    modifier = Modifier
+                        .heightIn(max = 140.dp),
                     feature = embed,
                     postUri = quotedPost.uri,
                     sharedElementPrefix = sharedElementPrefix,
@@ -150,6 +153,8 @@ fun QuotedPost(
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
+                    modifier = Modifier
+                        .heightIn(max = 140.dp),
                     video = embed,
                     postUri = quotedPost.uri,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,

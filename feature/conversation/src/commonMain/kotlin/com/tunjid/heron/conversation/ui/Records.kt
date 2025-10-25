@@ -20,16 +20,10 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
-import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import kotlinx.datetime.Clock
 
 @Composable
@@ -37,35 +31,35 @@ internal fun PostRecord(
     modifier: Modifier = Modifier,
     post: Post,
     sharedElementPrefix: String,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
     paneScaffoldState: PaneScaffoldState,
     postActions: PostActions,
 ) {
     OutlinedCard(
         modifier = modifier,
     ) {
-        Post(
+        QuotedPost(
             paneMovableElementSharedTransitionScope = paneScaffoldState,
-            presentationLookaheadScope = paneScaffoldState,
             now = remember { Clock.System.now() },
-            post = post,
-            isAnchoredInTimeline = false,
-            avatarShape = RoundedPolygonShape.Circle,
+            quotedPost = post,
+            isBlurred = false,
             sharedElementPrefix = sharedElementPrefix,
-            createdAt = post.createdAt,
-            presentation = Timeline.Presentation.Text.WithEmbed,
-            labelVisibilitiesToDefinitions = remember(
-                post.labels,
-                labelers,
-                contentPreferences,
-            ) {
-                post.labelVisibilitiesToDefinitions(
-                    labelers = labelers,
-                    labelPreferences = contentPreferences,
+            onClick = {},
+            onLinkTargetClicked = postActions::onLinkTargetClicked,
+            onProfileClicked = { post, profile ->
+                postActions.onProfileClicked(
+                    profile = profile,
+                    post = post,
+                    quotingPostUri = null,
                 )
             },
-            postActions = postActions,
+            onPostMediaClicked = { mediaEmbed, index, post ->
+                postActions.onPostMediaClicked(
+                    media = mediaEmbed,
+                    index = index,
+                    post = post,
+                    quotingPostUri = null,
+                )
+            },
         )
     }
 }

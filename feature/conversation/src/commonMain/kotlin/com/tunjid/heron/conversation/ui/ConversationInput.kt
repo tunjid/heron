@@ -59,10 +59,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
@@ -82,8 +80,6 @@ import org.jetbrains.compose.resources.stringResource
 fun PaneScaffoldState.UserInput(
     modifier: Modifier = Modifier,
     pendingRecord: Record?,
-    labelers: Labelers,
-    contentPreferences: ContentLabelPreferences,
     sendMessage: (AnnotatedString) -> Unit,
     removePendingRecordClicked: () -> Unit,
 ) {
@@ -117,8 +113,6 @@ fun PaneScaffoldState.UserInput(
                             .weight(1f),
                         post = record,
                         sharedElementPrefix = SharedRecordPrefix,
-                        labelers = labelers,
-                        contentPreferences = contentPreferences,
                         paneScaffoldState = this@UserInput,
                         postActions = NoOpPostActions,
                     )

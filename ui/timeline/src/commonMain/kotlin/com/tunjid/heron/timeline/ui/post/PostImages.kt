@@ -20,7 +20,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -46,6 +45,7 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickyShar
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostImages(
+    modifier: Modifier = Modifier,
     feature: ImageList,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -64,8 +64,7 @@ internal fun PostImages(
     else Modifier
 
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = spacedBy(8.dp),
     ) {
         val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
@@ -79,12 +78,17 @@ internal fun PostImages(
                             1 ->
                                 itemModifier
                                     .fillParentMaxWidth()
-                                    .aspectRatio(image.aspectRatioOrSquare)
+                                    .aspectRatio(
+                                        ratio = image.aspectRatioOrSquare,
+                                        matchHeightConstraintsFirst = true,
+                                    )
 
                             else ->
                                 itemModifier
                                     .height(200.dp)
-                                    .aspectRatio(image.aspectRatioOrSquare)
+                                    .aspectRatio(
+                                        ratio = image.aspectRatioOrSquare,
+                                    )
                         }
 
                         Timeline.Presentation.Media.Condensed,
