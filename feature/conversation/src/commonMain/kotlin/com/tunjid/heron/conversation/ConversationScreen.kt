@@ -65,13 +65,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
+import com.tunjid.heron.conversation.ui.PostRecord
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -83,16 +82,13 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlinx.coroutines.flow.drop
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -447,7 +443,7 @@ private fun PostMessage(
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
 ) {
-    Post(
+    PostRecord(
         modifier = Modifier
             .padding(
                 top = 16.dp,
@@ -456,25 +452,11 @@ private fun PostMessage(
                 end = 16.dp,
             )
             .widthIn(max = 200.dp),
-        paneMovableElementSharedTransitionScope = paneScaffoldState,
-        presentationLookaheadScope = paneScaffoldState,
-        now = remember { Clock.System.now() },
         post = post,
-        isAnchoredInTimeline = false,
-        avatarShape = RoundedPolygonShape.Circle,
         sharedElementPrefix = item.id,
-        createdAt = post.createdAt,
-        presentation = Timeline.Presentation.Text.WithEmbed,
-        labelVisibilitiesToDefinitions = remember(
-            post.labels,
-            labelers,
-            contentPreferences,
-        ) {
-            post.labelVisibilitiesToDefinitions(
-                labelers = labelers,
-                labelPreferences = contentPreferences,
-            )
-        },
+        labelers = labelers,
+        contentPreferences = contentPreferences,
+        paneScaffoldState = paneScaffoldState,
         postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { _, linkTarget ->

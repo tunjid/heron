@@ -17,14 +17,18 @@
 package com.tunjid.heron.conversation
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.conversation.di.sharedUri
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.asRecordUri
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -40,6 +44,7 @@ import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -55,8 +60,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 
 internal typealias ConversationStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -72,6 +81,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualConversationViewModel(
     authRepository: AuthRepository,
+    recordRepository: RecordRepository,
     messagesRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
@@ -96,33 +106,46 @@ class ActualConversationViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+            merge(
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
 
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.SendMessage -> action.flow.sendMessageMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.SharedRecord -> action.flow.recordSharingMutations(
+                            recordRepository = recordRepository,
+                            state = state,
+                        )
 
-                    is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.SendMessage -> action.flow.sendMessageMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.Tile -> action.flow.messagingTilingMutations(
-                        currentState = { state() },
-                        messagesRepository = messagesRepository,
-                    )
-                }
-            }
+                        is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.Tile -> action.flow.messagingTilingMutations(
+                            currentState = { state() },
+                            messagesRepository = messagesRepository,
+                        )
+                    }
+                },
+                sharedRecordMutations(
+                    sharedUri = route.sharedUri,
+                    overrideExisting = false,
+                    recordRepository = recordRepository,
+                    state = state,
+                ),
+            )
         },
     )
 
@@ -159,6 +182,33 @@ private fun labelerMutations(
     timelineRepository.labelers()
         .mapToMutation { copy(labelers = it) }
 
+private fun sharedRecordMutations(
+    sharedUri: Uri?,
+    overrideExisting: Boolean,
+    recordRepository: RecordRepository,
+    state: suspend () -> State,
+): Flow<Mutation<State>> =
+    if (sharedUri == null) emptyFlow()
+    else flow {
+        val recordUri = sharedUri.asRecordUri() ?: return@flow
+        val shouldFetch = when (state().sharedRecord) {
+            SharedRecord.Consumed,
+            is SharedRecord.Pending,
+            -> overrideExisting
+            SharedRecord.None -> true
+        }
+        if (!shouldFetch) return@flow
+
+        emitAll(
+            recordRepository.record(recordUri)
+                // Take only one emission so user changes do not override it
+                .take(1)
+                .mapToMutation {
+                    copy(sharedRecord = SharedRecord.Pending(it))
+                },
+        )
+    }
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -184,6 +234,24 @@ private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Reaction(action.reaction))
+    }
+
+private fun Flow<Action.SharedRecord>.recordSharingMutations(
+    recordRepository: RecordRepository,
+    state: suspend () -> State,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        when (action) {
+            is Action.SharedRecord.Add -> sharedRecordMutations(
+                sharedUri = action.uri,
+                overrideExisting = true,
+                recordRepository = recordRepository,
+                state = state,
+            )
+            Action.SharedRecord.Remove -> emit {
+                copy(sharedRecord = SharedRecord.Consumed)
+            }
+        }
     }
 
 private fun Flow<Action.SendMessage>.sendMessageMutations(

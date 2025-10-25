@@ -97,6 +97,7 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -193,7 +194,7 @@ internal fun SearchScreen(
                         id = conversation.id,
                         members = conversation.members,
                         sharedElementPrefix = conversation.id.id,
-                        sharedPostUri = currentPost.uri,
+                        sharedUri = currentPost.uri.asGenericUri(),
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                     ),
                 ),
