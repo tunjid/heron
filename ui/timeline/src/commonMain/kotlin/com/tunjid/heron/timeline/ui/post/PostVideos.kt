@@ -66,7 +66,7 @@ import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
 import heron.ui.timeline.generated.resources.play_video
@@ -120,7 +120,7 @@ internal fun PostVideo(
             modifier = videoModifier,
             state = videoPlayerState,
         )
-        else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+        else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
             modifier = videoModifier,
             sharedContentState = with(paneMovableElementSharedTransitionScope) {
                 rememberSharedContentState(

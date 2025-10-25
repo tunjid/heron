@@ -111,7 +111,7 @@ import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.download
 import heron.feature.gallery.generated.resources.download_complete
@@ -370,7 +370,7 @@ private fun GalleryImage(
     postUri: PostUri,
     sharedElementPrefix: String,
 ) {
-    scaffoldState.updatedMovableStickySharedElementOf(
+    scaffoldState.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
         sharedContentState = with(scaffoldState) {
             rememberSharedContentState(
@@ -416,7 +416,7 @@ private fun GalleryVideo(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else paneMovableElementSharedTransitionScope.updatedMovableStickySharedElementOf(
+    else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
         sharedContentState = with(paneMovableElementSharedTransitionScope) {
             rememberSharedContentState(

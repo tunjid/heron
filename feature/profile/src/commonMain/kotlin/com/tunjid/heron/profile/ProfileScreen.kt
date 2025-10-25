@@ -160,7 +160,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.followed_by_others
@@ -607,7 +607,7 @@ private fun ProfileBanner(
     profile: Profile,
     avatarSharedElementKey: String,
 ) = with(paneScaffoldState) {
-    paneScaffoldState.updatedMovableStickySharedElementOf(
+    paneScaffoldState.UpdatedMovableStickySharedElementOf(
         sharedContentState = rememberSharedContentState(
             key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
         ),
@@ -686,7 +686,7 @@ private fun ProfileAvatar(
                     scaleY = scale.value
                 },
         )
-        paneScaffoldState.updatedMovableStickySharedElementOf(
+        paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
                     key = avatarSharedElementKey,
