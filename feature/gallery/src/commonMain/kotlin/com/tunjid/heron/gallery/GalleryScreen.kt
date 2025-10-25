@@ -156,7 +156,7 @@ internal fun GalleryScreen(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(
@@ -324,9 +324,7 @@ internal fun GalleryScreen(
                 },
                 onPostInteraction = postInteractionState::onInteraction,
                 onPostOptionsClicked = {
-                    postOptionsState.showOptions(
-                        post = state.post,
-                    )
+                    state.post?.let(postOptionsState::showOptions)
                 },
             )
             GalleryFooter(

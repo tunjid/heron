@@ -29,18 +29,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -74,12 +73,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Post.Interaction.Create.Bookmark
-import com.tunjid.heron.data.core.models.Post.Interaction.Create.Like
-import com.tunjid.heron.data.core.models.Post.Interaction.Create.Repost
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveBookmark
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete.RemoveRepost
-import com.tunjid.heron.data.core.models.Post.Interaction.Delete.Unlike
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostId
@@ -91,11 +84,11 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.cancel
+import heron.ui.timeline.generated.resources.expand_options
 import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
-import heron.ui.timeline.generated.resources.share
 import heron.ui.timeline.generated.resources.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -141,8 +134,13 @@ fun PostInteractions(
             onReplyToPost = onReplyToPost,
             onPostInteraction = onPostInteraction,
             onPostOptionsClicked = onPostOptionsClicked,
+            prefixContent = spacer@{ button ->
+                if (button != PostInteractionButton.MoreOptions) return@spacer
+                if (presentation != Timeline.Presentation.Media.Expanded) return@spacer
+
+                Spacer(Modifier.weight(1f))
+            },
         )
-        Spacer(Modifier.width(0.dp))
     }
 }
 
@@ -201,8 +199,12 @@ private inline fun PostInteractionsButtons(
     crossinline onReplyToPost: () -> Unit,
     crossinline onPostInteraction: (Post.Interaction) -> Unit,
     crossinline onPostOptionsClicked: () -> Unit,
+    crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
 ) = with(paneMovableElementSharedTransitionScope) {
     interactionButtons.forEach { button ->
+        key("$button-prefix") {
+            prefixContent(button)
+        }
         key(button) {
             PostInteraction(
                 modifier = Modifier
@@ -411,7 +413,7 @@ class PostInteractionsSheetState private constructor(
             isSignedIn: Boolean,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
-            onQuotePostClicked: (Repost) -> Unit,
+            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
         ): PostInteractionsSheetState {
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
@@ -441,7 +443,7 @@ private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
     onSignInClicked: () -> Unit,
     onInteractionConfirmed: (Post.Interaction) -> Unit,
-    onQuotePostClicked: (Repost) -> Unit,
+    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
@@ -476,7 +478,7 @@ private fun PostInteractionsBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 when (currentInteraction) {
-                    is Repost -> {
+                    is Post.Interaction.Create.Repost -> {
                         if (state.isSignedIn) repeat(2) { index ->
                             val contentDescription = stringResource(
                                 if (index == 0) Res.string.repost
@@ -552,6 +554,7 @@ private fun PostInteractionsBottomSheet(
         },
     )
 }
+
 private val LikeRed = Color(0xFFE0245E)
 private val RepostGreen = Color(0xFF17BF63)
 private val BookmarkBlue = Color(0xFF1D9BF0)
@@ -559,7 +562,7 @@ private val BookmarkBlue = Color(0xFF1D9BF0)
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
-        Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(24.dp)
+        Timeline.Presentation.Media.Expanded -> Arrangement.spacedBy(32.dp)
         Timeline.Presentation.Media.Condensed -> Arrangement.SpaceBetween
         Timeline.Presentation.Media.Grid -> Arrangement.SpaceBetween
     }
@@ -594,7 +597,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            MoreOptions -> Icons.Rounded.MoreVert
+            MoreOptions -> Icons.Rounded.ArrowCircleUp
         }
 
         val PostInteractionButton.stringResource
@@ -603,7 +606,7 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
-                MoreOptions -> Res.string.share
+                MoreOptions -> Res.string.expand_options
             }
 
         val PostButtons = listOf(

@@ -104,7 +104,7 @@ internal fun PostDetailScreen(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(

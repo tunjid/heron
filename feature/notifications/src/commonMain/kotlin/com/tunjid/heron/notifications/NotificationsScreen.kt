@@ -103,7 +103,7 @@ internal fun NotificationsScreen(
         },
     )
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(

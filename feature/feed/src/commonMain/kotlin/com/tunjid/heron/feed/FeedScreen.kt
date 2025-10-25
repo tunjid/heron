@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -85,6 +86,7 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.FormField
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
@@ -111,6 +113,7 @@ internal fun FeedScreen(
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
+                signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
             )
         }
@@ -120,6 +123,7 @@ internal fun FeedScreen(
 @Composable
 private fun FeedTimeline(
     scrollToTopRequestId: String?,
+    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
@@ -155,7 +159,7 @@ private fun FeedTimeline(
     )
 
     val postOptionsState = rememberUpdatedPostOptionsState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+        signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onShareInConversationClicked = { currentPost, conversation ->
             actions(

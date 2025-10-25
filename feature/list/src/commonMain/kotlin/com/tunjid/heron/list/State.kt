@@ -47,6 +47,8 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     @Transient
+    val signedInProfileId: ProfileId? = null,
+    @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,

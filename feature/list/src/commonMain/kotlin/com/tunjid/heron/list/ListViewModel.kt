@@ -93,6 +93,9 @@ class ActualListViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
+            signedInProfileIdMutations(
+                authRepository = authRepository,
+            ),
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
@@ -133,6 +136,14 @@ class ActualListViewModel(
             )
         },
     )
+
+fun signedInProfileIdMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser
+        .mapToMutation { signedInProfile ->
+            copy(signedInProfileId = signedInProfile?.did)
+        }
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfList,
