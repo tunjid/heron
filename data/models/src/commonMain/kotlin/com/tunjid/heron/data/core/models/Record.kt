@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
 
@@ -37,6 +38,6 @@ sealed interface Record {
     @Serializable
     data class Reference(
         val id: Id,
-        val uri: Uri,
+        val uri: RecordUri,
     )
 }
