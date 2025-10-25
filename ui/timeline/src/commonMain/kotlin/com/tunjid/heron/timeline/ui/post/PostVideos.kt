@@ -81,6 +81,7 @@ internal fun PostVideo(
     postUri: PostUri,
     sharedElementPrefix: String,
     isBlurred: Boolean,
+    matchHeightConstraintsFirst: Boolean,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onClicked: () -> Unit,
@@ -98,13 +99,14 @@ internal fun PostVideo(
     Box(
         modifier = modifier
             .aspectRatio(
-                when (presentation) {
+                ratio = when (presentation) {
                     Timeline.Presentation.Media.Condensed,
                     Timeline.Presentation.Media.Expanded,
                     Timeline.Presentation.Text.WithEmbed,
                     -> video.aspectRatioOrSquare
                     Timeline.Presentation.Media.Grid -> 1f
                 },
+                matchHeightConstraintsFirst = matchHeightConstraintsFirst,
             ),
     ) {
         val videoModifier = when {
