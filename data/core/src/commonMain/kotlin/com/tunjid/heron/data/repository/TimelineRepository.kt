@@ -27,7 +27,6 @@ import app.bsky.feed.GetActorLikesResponse
 import app.bsky.feed.GetAuthorFeedFilter
 import app.bsky.feed.GetAuthorFeedQueryParams
 import app.bsky.feed.GetAuthorFeedResponse
-import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetFeedQueryParams
 import app.bsky.feed.GetFeedResponse
 import app.bsky.feed.GetListFeedQueryParams
@@ -37,8 +36,6 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
-import app.bsky.graph.GetListQueryParams
-import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
@@ -1189,18 +1186,11 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getFeedGenerator(
-                    GetFeedGeneratorQueryParams(
-                        feed = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.view
-                ?.let {
-                    multipleEntitySaverProvider.saveInTransaction { add(it) }
-                }
+            networkService.refresh(
+                uri = uri,
+                savedStateDataSource = savedStateDataSource,
+                multipleEntitySaverProvider = multipleEntitySaverProvider,
+            )
         }
 
     private fun listTimeline(
@@ -1228,20 +1218,11 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getList(
-                    GetListQueryParams(
-                        cursor = null,
-                        limit = 1,
-                        list = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.list
-                ?.let {
-                    multipleEntitySaverProvider.saveInTransaction { add(it) }
-                }
+            networkService.refresh(
+                uri = uri,
+                savedStateDataSource = savedStateDataSource,
+                multipleEntitySaverProvider = multipleEntitySaverProvider,
+            )
         }
 
     private fun starterPackTimeline(
@@ -1267,18 +1248,11 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getStarterPack(
-                    GetStarterPackQueryParams(
-                        starterPack = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.starterPack
-                ?.let {
-                    multipleEntitySaverProvider.saveInTransaction { add(it) }
-                }
+            networkService.refresh(
+                uri = uri,
+                savedStateDataSource = savedStateDataSource,
+                multipleEntitySaverProvider = multipleEntitySaverProvider,
+            )
         }
 
     private fun spinThread(
