@@ -114,6 +114,7 @@ internal fun PostEmbed(
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentation = presentation,
                     isBlurred = isBlurred,
+                    matchHeightConstraintsFirst = false,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, null)
                     },
