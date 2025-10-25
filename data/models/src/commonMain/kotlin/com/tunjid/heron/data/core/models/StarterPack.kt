@@ -33,4 +33,12 @@ data class StarterPack(
     val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel
+) : UrlEncodableModel,
+    Record.Post {
+
+    override val reference: Record.Reference =
+        Record.Reference(
+            id = cid,
+            uri = uri,
+        )
+}

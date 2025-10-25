@@ -16,30 +16,27 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.ListId
-import com.tunjid.heron.data.core.types.ListUri
-import kotlinx.datetime.Instant
+import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
 
+/**
+ * An AtProto record
+ */
 @Serializable
-data class FeedList(
-    val cid: ListId,
-    val uri: ListUri,
-    val creator: Profile,
-    val name: String,
-    val description: String?,
-    val avatar: ImageUri?,
-    val listItemCount: Long?,
-    val purpose: String,
-    val indexedAt: Instant,
-    val labels: List<Label>,
-) : UrlEncodableModel,
-    Record.Post {
+sealed interface Record {
 
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+    val reference: Reference
+
+    /**
+     * An AtProto record that may be embedded in a [Post]
+     */
+    @Serializable
+    sealed interface Post : Record
+
+    @Serializable
+    data class Reference(
+        val id: Id,
+        val uri: Uri,
+    )
 }
