@@ -42,8 +42,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -153,7 +154,7 @@ private fun PostOptionsBottomSheet(
                         },
                     )
                     state.currentPost?.let {
-                        CopyToClipboardCard(it.uri)
+                        CopyToClipboardCard(it.shareUri())
                     }
                 }
             },
@@ -215,7 +216,7 @@ private fun SendDirectMessageCard(
 
 @Composable
 private fun CopyToClipboardCard(
-    uri: PostUri,
+    uri: GenericUri,
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -322,3 +323,6 @@ private fun ShareActionCard(
         }
     }
 }
+
+private fun Post.shareUri() =
+    GenericUri("https://bsky.app/profile/${author.handle.id}/post/${uri.recordKey.value}")
