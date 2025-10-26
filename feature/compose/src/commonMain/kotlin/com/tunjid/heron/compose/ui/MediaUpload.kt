@@ -164,7 +164,7 @@ private fun VideoUpload(
                         .aspectRatio(1f),
                     state = videoPlayerState,
                 )
-                LaunchedEffect(videoPath) {
+                LaunchedEffect(video) {
                     videoPlayerController.play(videoPath)
                     snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
                         .first(true::equals)
