@@ -81,6 +81,10 @@ internal fun PostImages(
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 ->
                                 itemModifier
+                                    .then(
+                                        if (matchHeightConstraintsFirst) Modifier
+                                        else Modifier.fillParentMaxWidth(),
+                                    )
                                     .aspectRatio(
                                         ratio = image.aspectRatioOrSquare,
                                         matchHeightConstraintsFirst = matchHeightConstraintsFirst,
