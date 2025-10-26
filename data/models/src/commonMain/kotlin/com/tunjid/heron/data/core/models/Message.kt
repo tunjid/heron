@@ -41,6 +41,7 @@ data class Message(
         val conversationId: ConversationId,
         val text: String,
         val links: List<Link>,
+        val recordReference: Record.Reference?,
     )
 
     @Serializable

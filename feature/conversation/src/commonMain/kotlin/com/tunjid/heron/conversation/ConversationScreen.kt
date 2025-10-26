@@ -66,13 +66,16 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
 import com.tunjid.heron.conversation.ui.PostRecord
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
@@ -82,6 +85,8 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.pendingOffsetFor
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -486,7 +491,19 @@ private fun PostMessage(
                         ),
                     )
                 },
-                onPostMediaClicked = { _, _, _, _ ->
+                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
+                    actions(
+                        Action.Navigate.To(
+                            galleryDestination(
+                                post = post,
+                                media = media,
+                                startIndex = index,
+                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
+                                    quotingPostUri = quotingPostUri,
+                                ),
+                            ),
+                        ),
+                    )
                 },
                 onReplyToPost = {
                 },

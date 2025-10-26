@@ -35,6 +35,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.removeQueryParamsFromCurrentRoute
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
@@ -121,11 +122,13 @@ class ActualConversationViewModel(
 
                         is Action.SharedRecord -> action.flow.recordSharingMutations(
                             recordRepository = recordRepository,
+                            navActions = navActions,
                             state = state,
                         )
 
                         is Action.SendMessage -> action.flow.sendMessageMutations(
                             writeQueue = writeQueue,
+                            navActions = navActions,
                         )
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
@@ -238,6 +241,7 @@ private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
 
 private fun Flow<Action.SharedRecord>.recordSharingMutations(
     recordRepository: RecordRepository,
+    navActions: (NavigationMutation) -> Unit,
     state: suspend () -> State,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
@@ -248,14 +252,16 @@ private fun Flow<Action.SharedRecord>.recordSharingMutations(
                 recordRepository = recordRepository,
                 state = state,
             )
-            Action.SharedRecord.Remove -> emit {
-                copy(sharedRecord = SharedRecord.Consumed)
+            Action.SharedRecord.Remove -> {
+                emit { copy(sharedRecord = SharedRecord.Consumed) }
+                navActions(ConsumeSharedUriQueryParam)
             }
         }
     }
 
 private fun Flow<Action.SendMessage>.sendMessageMutations(
     writeQueue: WriteQueue,
+    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         // Add the pending item to the chat
@@ -276,6 +282,10 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
             )
 
             copy(
+                sharedRecord = when (action.message.recordReference) {
+                    null -> sharedRecord
+                    else -> SharedRecord.Consumed
+                },
                 pendingItems = pendingItems + pendingItem,
                 tilingData = tilingData.copy(
                     items = currentItems + tiledListOf(
@@ -284,6 +294,7 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
                 ),
             )
         }
+        if (action.message.recordReference != null) navActions(ConsumeSharedUriQueryParam)
 
         // Write the message
         writeQueue.enqueue(Writable.Send(action.message))
@@ -345,3 +356,5 @@ private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
             }
         },
     )
+
+private val ConsumeSharedUriQueryParam = removeQueryParamsFromCurrentRoute(setOf("sharedUri"))
