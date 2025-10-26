@@ -52,6 +52,7 @@ import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.push
+import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
@@ -232,6 +233,21 @@ fun pathDestination(
     miscQueries = miscQueryParams,
     referringRouteOption = referringRouteOption,
 )
+
+fun removeQueryParamsFromCurrentRoute(
+    params: Set<String>,
+): NavigationMutation = {
+    val current = navState.requireCurrent<Route>()
+    if (current.routeParams.queryParams.none { (key) -> params.contains(key) }) navState
+    else navState
+        .pop()
+        .push(
+            routeString(
+                path = current.routeParams.pathAndQueries.substringBefore('?'),
+                queryParams = current.routeParams.queryParams.filterKeys { it !in params },
+            ).toRoute,
+        )
+}
 
 internal fun deepLinkTo(
     deepLink: GenericUri,

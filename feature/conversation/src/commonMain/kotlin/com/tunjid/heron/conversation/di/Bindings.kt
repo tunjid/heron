@@ -185,7 +185,7 @@ class ConversationBindings(
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
                         pendingRecord = state.sharedRecord.pendingRecord,
-                        sendMessage = remember(viewModel, state.id) {
+                        sendMessage = remember(viewModel, state.id, state.sharedRecord) {
                             { annotatedString: AnnotatedString ->
                                 viewModel.accept(
                                     Action.SendMessage(
@@ -193,6 +193,9 @@ class ConversationBindings(
                                             conversationId = state.id,
                                             text = annotatedString.text,
                                             links = annotatedString.links(),
+                                            recordReference = state.sharedRecord
+                                                .pendingRecord
+                                                ?.reference,
                                         ),
                                     ),
                                 )

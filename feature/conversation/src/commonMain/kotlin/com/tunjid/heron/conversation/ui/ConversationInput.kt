@@ -48,7 +48,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.SemanticsPropertyKey
@@ -171,6 +170,7 @@ fun PaneScaffoldState.UserInput(
                 modifier = Modifier
                     .height(36.dp),
                 textFieldValue = textState,
+                hasPendingRecord = pendingRecord != null,
                 onMessageSent = onSendMessage,
             )
         }
@@ -263,14 +263,15 @@ private fun BoxScope.UserInputTextField(
 fun PaneScaffoldState.SendButton(
     modifier: Modifier = Modifier,
     textFieldValue: TextFieldValue,
+    hasPendingRecord: Boolean,
     onMessageSent: (AnnotatedString) -> Unit,
 ) {
     PaneFab(
-        modifier = modifier
-            .alpha(if (textFieldValue.text.isNotBlank()) 1f else 0.6f),
+        modifier = modifier,
         text = stringResource(Res.string.textfield_send),
         icon = null,
         expanded = true,
+        enabled = textFieldValue.text.isNotBlank() || hasPendingRecord,
         onClick = onClick@{
             onMessageSent(textFieldValue.annotatedString)
         },

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.embed.Record as BskyRecord
 import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
@@ -31,10 +32,12 @@ import chat.bsky.convo.LogCreateMessageMessageUnion
 import chat.bsky.convo.LogDeleteMessageMessageUnion
 import chat.bsky.convo.LogRemoveReactionMessageUnion
 import chat.bsky.convo.MessageInput
+import chat.bsky.convo.MessageInputEmbedUnion
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.RemoveReactionRequest
 import chat.bsky.convo.RemoveReactionResponse
 import chat.bsky.convo.SendMessageRequest
+import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -76,6 +79,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Cid
 
 @Serializable
 data class ConversationQuery(
@@ -217,7 +222,8 @@ internal class OfflineMessageRepository @Inject constructor(
                                 val urisToLists = lists.associateBy { it.entity.uri }
                                 val urisToStarterPacks = starterPacks.associateBy { it.entity.uri }
                                 val urisToPosts = posts.associateBy { it.entity.uri }
-                                val urisToEmbeddedPosts = embeddedPosts.associateBy { it.parentPostUri }
+                                val urisToEmbeddedPosts =
+                                    embeddedPosts.associateBy { it.parentPostUri }
 
                                 populatedMessageEntities.map { populatedMessageEntity ->
                                     populatedMessageEntity.asExternalModel(
@@ -367,7 +373,16 @@ internal class OfflineMessageRepository @Inject constructor(
                     message = MessageInput(
                         text = message.text,
                         facets = resolvedLinks.facet(),
-                        embed = null,
+                        embed = message.recordReference?.let { ref ->
+                            MessageInputEmbedUnion.AppBskyEmbedRecord(
+                                value = BskyRecord(
+                                    record = StrongRef(
+                                        uri = ref.uri.uri.let(::AtUri),
+                                        cid = ref.id.id.let(::Cid),
+                                    ),
+                                ),
+                            )
+                        },
                     ),
                 ),
             )
