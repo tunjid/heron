@@ -62,7 +62,6 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity.Partial.Bookmark
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
@@ -475,7 +474,7 @@ internal class OfflinePostRepository @Inject constructor(
                             }
                             is Post.Interaction.Create.Bookmark -> {
                                 upsertInteraction(
-                                    partial = Bookmark(
+                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
                                         bookmarked = true,
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
@@ -543,7 +542,7 @@ internal class OfflinePostRepository @Inject constructor(
                             }
                             is Post.Interaction.Delete.RemoveBookmark -> {
                                 upsertInteraction(
-                                    partial = Bookmark(
+                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
                                         bookmarked = false,
                                         postUri = interaction.postUri,
                                         viewingProfileId = authorId,
