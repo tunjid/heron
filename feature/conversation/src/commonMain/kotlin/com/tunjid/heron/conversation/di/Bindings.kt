@@ -195,7 +195,7 @@ class ConversationBindings(
                                             links = annotatedString.links(),
                                             recordReference = state.sharedRecord
                                                 .pendingRecord
-                                                ?.reference
+                                                ?.reference,
                                         ),
                                     ),
                                 )

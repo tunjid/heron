@@ -296,7 +296,6 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
         }
         navActions(ConsumeSharedUriQueryParam)
 
-
         // Write the message
         writeQueue.enqueue(Writable.Send(action.message))
     }
