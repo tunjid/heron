@@ -303,10 +303,10 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
 
 private fun String.toRecordUriOrNull(): RecordUri? =
     when {
-        startsWith("at://") -> PostUri(this)
         contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
         contains("app.bsky.graph.list") -> ListUri(this)
         contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
+        startsWith("at://") -> PostUri(this)
         else -> null
     }
 

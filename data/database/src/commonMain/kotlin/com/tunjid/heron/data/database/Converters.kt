@@ -87,13 +87,15 @@ internal class UriConverters {
     fun imageUriFromString(value: String?): ImageUri? =
         value?.let(::ImageUri)
 
-    @TypeConverter
     fun recordUriFromString(value: String?): RecordUri? =
         value?.let { v ->
-            postUriFromString(v)
-                ?: feedGeneratorUriFromString(v)
-                ?: listUriFromString(v)
-                ?: starterPackUriFromString(v)
+            when {
+                v.contains("app.bsky.feed.generator") -> FeedGeneratorUri(v)
+                v.contains("app.bsky.graph.list") -> ListUri(v)
+                v.contains("app.bsky.graph.starterpack") -> StarterPackUri(v)
+                v.startsWith("at://") -> PostUri(v)
+                else -> null
+            }
         }
 
     @TypeConverter
