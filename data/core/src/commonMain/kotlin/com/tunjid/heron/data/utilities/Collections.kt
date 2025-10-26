@@ -43,6 +43,7 @@ internal object Collections {
     const val List = "app.bsky.graph.list"
     const val StarterPack = "app.bsky.graph.starterpack"
     const val FeedGenerator = "app.bsky.feed.generator"
+    const val UploadVideo = "com.atproto.repo.uploadBlob"
 
     val SelfRecordKey = RKey("self")
 

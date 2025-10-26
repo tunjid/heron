@@ -30,7 +30,6 @@ import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
-import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
@@ -41,7 +40,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -65,17 +63,18 @@ import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntit
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
-import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
@@ -83,7 +82,6 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -142,6 +140,7 @@ internal class OfflinePostRepository @Inject constructor(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
@@ -319,45 +318,32 @@ internal class OfflinePostRepository @Inject constructor(
                 )
             }
         }
-        val blobs = when {
-            request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
-                request.metadata.embeddedMedia.map { file ->
-                    async {
-                        val bytes = fileManager.readBytes(file)
-                            ?: return@async Result.failure(
-                                Exception("Failed to read file: ${file.uri}"),
-                            )
-
-                        // No data to read, continue as normal
-                        when (file) {
-                            is File.Media.Photo -> networkService.uploadImageBlob(bytes)
-                            is File.Media.Video -> networkService.uploadVideoBlob(bytes)
+        val blobs = runCatchingUnlessCancelled {
+            when {
+                request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
+                    request.metadata.embeddedMedia.map { file ->
+                        async {
+                            when (file) {
+                                is File.Media.Photo -> networkService.uploadImageBlob(
+                                    data = fileManager.readBytes(file),
+                                )
+                                is File.Media.Video -> videoUploadService.uploadVideo(
+                                    file = file,
+                                )
+                            }
+                                .map(file::with)
+                                .onSuccess { fileManager.delete(file) }
                         }
-                            .map(file::with)
-                            .onSuccess { fileManager.delete(file) }
                     }
+                        .awaitAll()
+                        .mapNotNull(Result<MediaBlob?>::getOrNull)
                 }
-                    .awaitAll()
-                    .mapNotNull(Result<MediaBlob?>::getOrNull)
-            }
-            @Suppress("DEPRECATION")
-            request.metadata.mediaFiles.isNotEmpty() -> coroutineScope {
                 @Suppress("DEPRECATION")
-                request.metadata.mediaFiles.map { file ->
-                    async {
-                        @Suppress("DEPRECATION")
-                        when (file) {
-                            is MediaFile.Photo -> networkService.uploadImageBlob(file.data)
-                            is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
-                        }
-                            .map(file::with)
-                    }
-                }
-                    .awaitAll()
-                    .mapNotNull(Result<MediaBlob>::getOrNull)
+                // Deprecated media upload path is no longer supported
+                request.metadata.mediaFiles.isNotEmpty() -> emptyList()
+                else -> emptyList()
             }
-            else -> emptyList()
-        }
+        }.getOrNull() ?: emptyList()
 
         val mediaToUploadCount = request.metadata.embeddedMedia.size.takeIf { it > 0 }
             ?: @Suppress("DEPRECATION") request.metadata.mediaFiles.size
@@ -627,30 +613,3 @@ private suspend fun NetworkService.uploadImageBlob(
     api.uploadBlob(data)
         .map(UploadBlobResponse::blob)
 }
-
-private suspend fun NetworkService.uploadVideoBlob(
-    data: ByteArray,
-): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    api.uploadVideo(data)
-}.mapCatchingUnlessCancelled { uploadResponse ->
-    val blob = uploadResponse.jobStatus.blob
-    if (blob != null) return@mapCatchingUnlessCancelled blob
-
-    repeat(MaxVideoUploadStatusCheckCount) {
-        val statusResponse = runCatchingWithMonitoredNetworkRetry {
-            getJobStatus(GetJobStatusQueryParams(uploadResponse.jobStatus.jobId))
-        }
-        statusResponse
-            .getOrNull()
-            ?.jobStatus
-            ?.blob
-            ?.let { processedBlob ->
-                return@mapCatchingUnlessCancelled processedBlob
-            }
-        delay(MaxVideoUploadStatusCheckPollInterval)
-    }
-    throw Exception("Video upload timed out")
-}
-
-private const val MaxVideoUploadStatusCheckCount = 20
-private const val MaxVideoUploadStatusCheckPollInterval = 2_000L

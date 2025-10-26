@@ -41,6 +41,8 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PersistedSessionManager
 import com.tunjid.heron.data.network.SessionManager
+import com.tunjid.heron.data.network.SuspendingVideoUploadService
+import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -157,6 +159,12 @@ class DataBindings(
     internal fun provideNetworkMonitor(
         connectivityNetworkMonitor: ConnectivityNetworkMonitor,
     ): NetworkMonitor = connectivityNetworkMonitor
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideVideoUploadService(
+        videoUploadService: SuspendingVideoUploadService,
+    ): VideoUploadService = videoUploadService
 
     @SingleIn(AppScope::class)
     @Provides
