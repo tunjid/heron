@@ -162,4 +162,4 @@ internal suspend fun NetworkService.refresh(
                 multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
             }
     }
-}.let {  }
+}.let { }
