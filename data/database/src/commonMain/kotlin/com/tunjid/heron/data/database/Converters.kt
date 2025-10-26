@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
@@ -85,6 +86,15 @@ internal class UriConverters {
     @TypeConverter
     fun imageUriFromString(value: String?): ImageUri? =
         value?.let(::ImageUri)
+
+    @TypeConverter
+    fun recordUriFromString(value: String?): RecordUri? =
+        value?.let { v ->
+            postUriFromString(v)
+                ?: feedGeneratorUriFromString(v)
+                ?: listUriFromString(v)
+                ?: starterPackUriFromString(v)
+        }
 
     @TypeConverter
     fun toUriString(uri: Uri?): String? =
