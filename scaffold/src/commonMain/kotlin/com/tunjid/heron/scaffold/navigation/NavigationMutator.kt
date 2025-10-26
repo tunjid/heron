@@ -242,16 +242,10 @@ fun removeQueryParamsFromCurrentRoute(
     else navState
         .pop()
         .push(
-            routeOf(
-                params = RouteParams(
-                    pathAndQueries = current.routeParams.pathAndQueries,
-                    pathArgs = current.routeParams.pathArgs,
-                    queryParams = current.routeParams.queryParams.filterKeys {
-                        it !in params
-                    },
-                ),
-                children = current.children,
-            ),
+            routeString(
+                path = current.routeParams.pathAndQueries.substringBefore('?'),
+                queryParams = current.routeParams.queryParams.filterKeys { it !in params },
+            ).toRoute,
         )
 }
 
