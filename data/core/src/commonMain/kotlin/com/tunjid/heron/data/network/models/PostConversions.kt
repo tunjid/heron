@@ -18,6 +18,7 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.RecordWithMediaViewMediaUnion
 import app.bsky.feed.Post as BskyPost
+import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
@@ -31,12 +32,16 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -273,16 +278,36 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
 }
 
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
-    // TODO can this be deterministic?
     try {
         val bskyPost = decodeAs<BskyPost>()
+
+        val embeddedUri: RecordUri? = when (val embed = bskyPost.embed) {
+            is PostEmbedUnion.Record ->
+                embed.value.record.uri.atUri.toRecordUriOrNull()
+
+            is PostEmbedUnion.RecordWithMedia ->
+                embed.value.record.record.uri.atUri.toRecordUriOrNull()
+
+            else -> null
+        }
+
         PostEntity.RecordData(
             text = bskyPost.text,
             base64EncodedRecord = bskyPost.toPostRecord().toUrlEncodedBase64(),
             createdAt = bskyPost.createdAt,
+            embeddedRecordUri = embeddedUri,
         )
     } catch (_: Exception) {
         null
+    }
+
+private fun String.toRecordUriOrNull(): RecordUri? =
+    when {
+        startsWith("at://") -> PostUri(this)
+        contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
+        contains("app.bsky.graph.list") -> ListUri(this)
+        contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
+        else -> null
     }
 
 private fun BskyPost.toPostRecord() =
