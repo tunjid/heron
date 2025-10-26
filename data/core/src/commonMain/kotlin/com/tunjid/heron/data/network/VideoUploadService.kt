@@ -45,6 +45,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
 import io.ktor.utils.io.ByteReadChannel
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
@@ -86,6 +87,8 @@ internal class SuspendingVideoUploadService @Inject constructor(
         }
     }
 
+    // Video upload implementation as recommended in:
+    // https://docs.bsky.app/docs/tutorials/video#recommended-method
     override suspend fun uploadVideo(
         file: File,
     ): Result<Blob> = savedStateDataSource.inCurrentProfileSession {
@@ -93,13 +96,13 @@ internal class SuspendingVideoUploadService @Inject constructor(
             .filterNotNull()
             .first()
 
-        val serviceUrl = authToken.serviceUrl ?: throw Exception("Not signed in")
+        val serviceUrl = authToken.serviceUrl ?: throw IllegalStateException("Not signed in")
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             getServiceAuth(
                 GetServiceAuthQueryParams(
                     aud = serviceUrlDid(serviceUrl),
-//            exp = Clock.System.now().toEpochMilliseconds() - 30.minutes.inWholeMilliseconds,
+                    exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
                     lxm = Nsid(Collections.UploadVideo),
                 ),
             )
@@ -122,7 +125,7 @@ internal class SuspendingVideoUploadService @Inject constructor(
             }
                 .let {
                     if (it.status.isSuccess()) it.body<VideoUploadResponse>()
-                    else throw IOException("Video upload failed")
+                    else throw IOException("Video upload failed with status: ${it.status}")
                 }
         }.mapCatchingUnlessCancelled { uploadResponse ->
             repeat(MaxVideoUploadStatusCheckCount) {
@@ -143,7 +146,7 @@ internal class SuspendingVideoUploadService @Inject constructor(
 
             throw IOException("Video upload timed out")
         }
-    } ?: Result.failure(IOException("Video upload failed"))
+    } ?: Result.failure(IOException("Video upload failed: Invalid user session."))
 }
 
 private fun serviceUrlDid(serviceUrl: String) =
@@ -165,6 +168,6 @@ private const val DidQueryParam = "did"
 private const val NameQueryParam = "name"
 private const val JobIdQueryParam = "jobId"
 
-private const val MaxVideoUploadStatusCheckCount = 20
+private const val MaxVideoUploadStatusCheckCount = 60
 
 private const val MaxVideoUploadStatusCheckPollInterval = 2_000L
