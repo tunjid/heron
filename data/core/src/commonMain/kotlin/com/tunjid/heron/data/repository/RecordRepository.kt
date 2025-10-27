@@ -68,6 +68,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 listOf(uri),
             )
                 .map { it.firstOrNull()?.asExternalModel() }
+
             is StarterPackUri -> starterPackDao.starterPacks(
                 listOf(uri),
             )
@@ -112,6 +113,7 @@ internal suspend fun NetworkService.refresh(
             ?.let { feedGeneratorView ->
                 multipleEntitySaverProvider.saveInTransaction { add(feedGeneratorView) }
             }
+
         is ListUri -> runCatchingWithMonitoredNetworkRetry(times = 2) {
             getList(
                 GetListQueryParams(
@@ -126,6 +128,7 @@ internal suspend fun NetworkService.refresh(
             ?.let {
                 multipleEntitySaverProvider.saveInTransaction { add(it) }
             }
+
         is PostUri -> runCatchingWithMonitoredNetworkRetry(times = 2) {
             getPosts(
                 GetPostsQueryParams(
@@ -145,6 +148,7 @@ internal suspend fun NetworkService.refresh(
                     }
                 }
             }
+
         is StarterPackUri -> runCatchingWithMonitoredNetworkRetry(times = 2) {
             getStarterPack(
                 GetStarterPackQueryParams(
@@ -158,4 +162,4 @@ internal suspend fun NetworkService.refresh(
                 multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
             }
     }
-}
+}.let { }

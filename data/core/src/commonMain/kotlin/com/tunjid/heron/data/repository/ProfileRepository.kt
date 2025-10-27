@@ -616,8 +616,8 @@ internal class OfflineProfileRepository @Inject constructor(
             ).map { file ->
                 async {
                     if (file == null) return@async null
-                    val bytes = fileManager.readBytes(file) ?: return@async null
                     networkService.runCatchingWithMonitoredNetworkRetry {
+                        val bytes = fileManager.readBytes(file)
                         uploadBlob(bytes)
                     }
                         .onSuccess { fileManager.delete(file) }

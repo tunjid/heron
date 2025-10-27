@@ -30,7 +30,6 @@ import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
-import app.bsky.video.GetJobStatusQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
@@ -41,7 +40,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -65,6 +63,7 @@ import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntit
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
@@ -75,6 +74,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
@@ -82,7 +82,6 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -98,7 +97,6 @@ import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
-import sh.christian.ozone.api.response.AtpResponse
 
 @Serializable
 data class PostDataQuery(
@@ -142,6 +140,7 @@ internal class OfflinePostRepository @Inject constructor(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
@@ -319,53 +318,32 @@ internal class OfflinePostRepository @Inject constructor(
                 )
             }
         }
-        val blobs = when {
-            request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
-                request.metadata.embeddedMedia.map { file ->
-                    async {
-                        val bytes = fileManager.readBytes(file)
-                            ?: return@async Result.failure(
-                                Exception("Failed to read file: ${file.uri}"),
-                            )
-
-                        // No data to read, continue as normal
-                        networkService.runCatchingWithMonitoredNetworkRetry {
+        val blobs = runCatchingUnlessCancelled {
+            when {
+                request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
+                    request.metadata.embeddedMedia.map { file ->
+                        async {
                             when (file) {
-                                is File.Media.Photo -> uploadBlob(bytes)
-                                    .map(UploadBlobResponse::blob)
-
-                                is File.Media.Video -> networkService.uploadVideoBlob(bytes)
+                                is File.Media.Photo -> networkService.uploadImageBlob(
+                                    data = fileManager.readBytes(file),
+                                )
+                                is File.Media.Video -> videoUploadService.uploadVideo(
+                                    file = file,
+                                )
                             }
+                                .map(file::with)
+                                .onSuccess { fileManager.delete(file) }
                         }
-                            .map(file::with)
-                            .onSuccess { fileManager.delete(file) }
                     }
+                        .awaitAll()
+                        .mapNotNull(Result<MediaBlob?>::getOrNull)
                 }
-                    .awaitAll()
-                    .mapNotNull(Result<MediaBlob?>::getOrNull)
-            }
-            @Suppress("DEPRECATION")
-            request.metadata.mediaFiles.isNotEmpty() -> coroutineScope {
                 @Suppress("DEPRECATION")
-                request.metadata.mediaFiles.map { file ->
-                    async {
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            @Suppress("DEPRECATION")
-                            when (file) {
-                                is MediaFile.Photo -> uploadBlob(file.data)
-                                    .map(UploadBlobResponse::blob)
-
-                                is MediaFile.Video -> networkService.uploadVideoBlob(file.data)
-                            }
-                        }
-                            .map(file::with)
-                    }
-                }
-                    .awaitAll()
-                    .mapNotNull(Result<MediaBlob>::getOrNull)
+                // Deprecated media upload path is no longer supported
+                request.metadata.mediaFiles.isNotEmpty() -> emptyList()
+                else -> emptyList()
             }
-            else -> emptyList()
-        }
+        }.getOrNull() ?: emptyList()
 
         val mediaToUploadCount = request.metadata.embeddedMedia.size.takeIf { it > 0 }
             ?: @Suppress("DEPRECATION") request.metadata.mediaFiles.size
@@ -629,33 +607,9 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
-private suspend fun NetworkService.uploadVideoBlob(
+private suspend fun NetworkService.uploadImageBlob(
     data: ByteArray,
-): AtpResponse<Blob> {
-    val uploadResponse = api.uploadVideo(data)
-    val status = uploadResponse.requireResponse().jobStatus
-
-    // Fail fast here if the upload failed
-    uploadResponse.requireResponse()
-        .jobStatus
-        .blob
-        ?.let { processedBlob ->
-            return@uploadVideoBlob uploadResponse.map { processedBlob }
-        }
-
-    repeat(20) {
-        val statusResponse = runCatchingWithMonitoredNetworkRetry {
-            getJobStatus(GetJobStatusQueryParams(status.jobId))
-        }
-        statusResponse
-            .getOrNull()
-            ?.jobStatus
-            ?.blob
-            ?.let { processedBlob ->
-                return@uploadVideoBlob uploadResponse.map { processedBlob }
-            }
-        delay(2_000)
-    }
-
-    throw Exception("Video upload timed out")
+): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
+    api.uploadBlob(data)
+        .map(UploadBlobResponse::blob)
 }

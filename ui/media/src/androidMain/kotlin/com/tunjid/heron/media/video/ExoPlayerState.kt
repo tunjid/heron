@@ -79,7 +79,7 @@ internal class ExoPlayerState internal constructor(
     internal var isLoading by mutableStateOf(true)
         private set
 
-    var videoSize by mutableStateOf(IntSize.Zero)
+    override var videoSize by mutableStateOf(IntSize.Zero)
         internal set
 
     override var lastPositionMs by mutableLongStateOf(0L)

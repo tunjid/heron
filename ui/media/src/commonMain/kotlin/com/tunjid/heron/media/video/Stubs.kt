@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 object StubVideoPlayerController : VideoPlayerController {
@@ -81,5 +82,6 @@ private data class NoOpVideoPlayerState(
     override var shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
     override val status: PlayerStatus = PlayerStatus.Idle.Initial,
     override val shouldReplay: Boolean = false,
+    override val videoSize: IntSize = IntSize.Zero,
     override val videoStill: ImageBitmap? = null,
 ) : VideoPlayerState

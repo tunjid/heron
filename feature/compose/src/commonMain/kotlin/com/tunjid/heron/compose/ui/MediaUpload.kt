@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,7 +48,11 @@ import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.images.rememberUpdatedImageState
+import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.media.video.VideoPlayer
+import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -60,7 +65,15 @@ internal fun MediaUploadItems(
 ) = LookaheadScope {
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
-        Row(
+        if (video != null) VideoUpload(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f),
+            video = video,
+            removeMediaItem = removeMediaItem,
+            onMediaItemUpdated = onMediaItemUpdated,
+        )
+        else Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
@@ -93,22 +106,96 @@ private fun ImageUpload(
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
+    MediaUpload(
+        modifier = modifier,
+        media = photo,
+        removeMediaItem = removeMediaItem,
+        content = {
+            val state = rememberUpdatedImageState(
+                args = ImageArgs(
+                    item = photo,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    shape = MediaUploadItemShape,
+                ),
+            )
+            AsyncImage(
+                modifier = Modifier
+                    .matchParentSize(),
+                state = state,
+            )
+            LaunchedEffect(state) {
+                snapshotFlow { state.imageSize }
+                    .collect { size ->
+                        onMediaItemUpdated(
+                            photo.withSize(
+                                width = size.width,
+                                height = size.height,
+                            ),
+                        )
+                    }
+            }
+        },
+    )
+}
+
+@Composable
+private fun VideoUpload(
+    modifier: Modifier = Modifier,
+    video: RestrictedFile.Media.Video,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
+) {
+    MediaUpload(
+        modifier = modifier,
+        media = video,
+        removeMediaItem = removeMediaItem,
+        content = {
+            video.path?.let { videoPath ->
+                val videoPlayerController = LocalVideoPlayerController.current
+                val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
+                    videoUrl = videoPath,
+                    thumbnail = null,
+                    shape = MediaUploadItemShape,
+                )
+                VideoPlayer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
+                    state = videoPlayerState,
+                )
+                LaunchedEffect(video) {
+                    videoPlayerController.play(videoPath)
+                    snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
+                        .first(true::equals)
+                    videoPlayerController.pauseActiveVideo()
+
+                    snapshotFlow { videoPlayerState.videoSize }
+                        .collect { size ->
+                            onMediaItemUpdated(
+                                video.withSize(
+                                    width = size.width,
+                                    height = size.height,
+                                ),
+                            )
+                        }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun MediaUpload(
+    modifier: Modifier = Modifier,
+    media: RestrictedFile.Media,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         modifier = modifier,
     ) {
-        val state = rememberUpdatedImageState(
-            args = ImageArgs(
-                item = photo,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                shape = MediaUploadItemShape,
-            ),
-        )
-        AsyncImage(
-            modifier = Modifier
-                .matchParentSize(),
-            state = state,
-        )
+        content()
         Icon(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -119,22 +206,10 @@ private fun ImageUpload(
                 )
                 .size(32.dp)
                 .clip(CircleShape)
-                .clickable { removeMediaItem(photo) },
+                .clickable { removeMediaItem(media) },
             imageVector = Icons.Rounded.DoNotDisturbOn,
             contentDescription = null,
         )
-
-        LaunchedEffect(state) {
-            snapshotFlow { state.imageSize }
-                .collect { size ->
-                    onMediaItemUpdated(
-                        photo.withSize(
-                            width = size.width,
-                            height = size.height,
-                        ),
-                    )
-                }
-        }
     }
 }
 

@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @Stable
@@ -82,6 +83,8 @@ interface VideoPlayerState {
     val status: PlayerStatus
 
     val hasRenderedFirstFrame: Boolean
+
+    val videoSize: IntSize
 
     val videoStill: ImageBitmap?
 }

@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.files
 
 import com.tunjid.heron.data.core.utilities.File
+import kotlinx.io.Source
 
 interface FileManager {
     suspend fun cacheWithoutRestrictions(
@@ -25,7 +26,15 @@ interface FileManager {
 
     suspend fun readBytes(
         file: File,
-    ): ByteArray?
+    ): ByteArray
+
+    suspend fun source(
+        file: File,
+    ): Source
+
+    suspend fun size(
+        file: File,
+    ): Long
 
     suspend fun delete(
         file: File,
