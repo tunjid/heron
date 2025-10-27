@@ -54,6 +54,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.utilities.asRecordUri
 import sh.christian.ozone.api.model.JsonContent
 
 internal fun PostEntity.postVideoEntity(
@@ -283,10 +284,10 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
 
         val embeddedUri: RecordUri? = when (val embed = bskyPost.embed) {
             is PostEmbedUnion.Record ->
-                embed.value.record.uri.atUri.toRecordUriOrNull()
+                embed.value.record.uri.atUri.asRecordUri()
 
             is PostEmbedUnion.RecordWithMedia ->
-                embed.value.record.record.uri.atUri.toRecordUriOrNull()
+                embed.value.record.record.uri.atUri.asRecordUri()
 
             else -> null
         }
@@ -300,16 +301,6 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     } catch (_: Exception) {
         null
     }
-
-private fun String.toRecordUriOrNull(): RecordUri? =
-    when {
-        contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
-        contains("app.bsky.graph.list") -> ListUri(this)
-        contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
-        startsWith("at://") -> PostUri(this)
-        else -> null
-    }
-
 private fun BskyPost.toPostRecord() =
     Post.Record(
         text = text,

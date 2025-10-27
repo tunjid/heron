@@ -87,16 +87,9 @@ internal class UriConverters {
     fun imageUriFromString(value: String?): ImageUri? =
         value?.let(::ImageUri)
 
+    @TypeConverter
     fun recordUriFromString(value: String?): RecordUri? =
-        value?.let { v ->
-            when {
-                v.contains("app.bsky.feed.generator") -> FeedGeneratorUri(v)
-                v.contains("app.bsky.graph.list") -> ListUri(v)
-                v.contains("app.bsky.graph.starterpack") -> StarterPackUri(v)
-                v.startsWith("at://") -> PostUri(v)
-                else -> null
-            }
-        }
+        value?.asRecordUri()
 
     @TypeConverter
     fun toUriString(uri: Uri?): String? =
@@ -147,4 +140,21 @@ internal class IdConverters {
     @TypeConverter
     fun toIdString(id: Id?): String? =
         id?.id
+}
+
+/**
+ * Local fallback mapping for converting a raw URI string to a [RecordUri].
+ *
+ * This is intentionally duplicated (lightweight version of core-data logic)
+ * because data-database should not depend on core-data.
+ *
+ * If URI patterns change in core-data (Collections), please update this mapping
+ * accordingly to stay consistent with the main implementation.
+ */
+private fun String.asRecordUri(): RecordUri? = when {
+    contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
+    contains("app.bsky.graph.list") -> ListUri(this)
+    contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
+    startsWith("at://") -> PostUri(this)
+    else -> null
 }
