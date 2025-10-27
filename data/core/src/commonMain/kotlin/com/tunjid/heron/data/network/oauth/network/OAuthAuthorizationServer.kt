@@ -31,37 +31,37 @@ import kotlinx.serialization.Serializable
 internal data class OAuthAuthorizationServer(
     val issuer: String,
     @SerialName("request_parameter_supported")
-    val requestParameterSupported: Boolean,
+    val requestParameterSupported: Boolean = false,
     @SerialName("request_uri_parameter_supported")
-    val requestUriParameterSupported: Boolean,
+    val requestUriParameterSupported: Boolean = false,
     @SerialName("require_request_uri_registration")
     val requireRequestUriRegistration: Boolean = true,
     @SerialName("scopes_supported")
     val scopesSupported: List<String>,
     @SerialName("subject_types_supported")
-    val subjectTypesSupported: List<String>,
+    val subjectTypesSupported: List<String>?,
     @SerialName("response_types_supported")
     val responseTypesSupported: List<String>,
     @SerialName("response_modes_supported")
-    val responseModesSupported: List<String>,
+    val responseModesSupported: List<String>?,
     @SerialName("grant_types_supported")
     val grantTypesSupported: List<String>,
     @SerialName("code_challenge_methods_supported")
     val codeChallengeMethodsSupported: List<String>,
     @SerialName("ui_locales_supported")
-    val uiLocalesSupported: List<String>,
+    val uiLocalesSupported: List<String>?,
     @SerialName("display_values_supported")
-    val displayValuesSupported: List<String>,
+    val displayValuesSupported: List<String>?,
     @SerialName("request_object_signing_alg_values_supported")
-    val requestObjectSigningAlgValuesSupported: List<String>,
+    val requestObjectSigningAlgValuesSupported: List<String>?,
     @SerialName("authorization_response_iss_parameter_supported")
     val authorizationResponseIssParameterSupported: Boolean = true,
     @SerialName("request_object_encryption_alg_values_supported")
-    val requestObjectEncryptionAlgValuesSupported: List<String>,
+    val requestObjectEncryptionAlgValuesSupported: List<String>?,
     @SerialName("request_object_encryption_enc_values_supported")
-    val requestObjectEncryptionEncValuesSupported: List<String>,
+    val requestObjectEncryptionEncValuesSupported: List<String>?,
     @SerialName("jwks_uri")
-    val jwksUri: String,
+    val jwksUri: String?,
     @SerialName("authorization_endpoint")
     val authorizationEndpoint: String,
     @SerialName("token_endpoint")
@@ -71,9 +71,9 @@ internal data class OAuthAuthorizationServer(
     @SerialName("token_endpoint_auth_signing_alg_values_supported")
     val tokenEndpointAuthSigningAlgValuesSupported: List<String>,
     @SerialName("revocation_endpoint")
-    val revocationEndpoint: String,
+    val revocationEndpoint: String?,
     @SerialName("introspection_endpoint")
-    val introspectionEndpoint: String,
+    val introspectionEndpoint: String?,
     @SerialName("pushed_authorization_request_endpoint")
     val pushedAuthorizationRequestEndpoint: String,
     @SerialName("require_pushed_authorization_requests")

@@ -295,7 +295,7 @@ class OAuthApi(
         keyPair: DpopKeyPair?,
     ) {
         val oauthServer = resolveOAuthAuthorizationServer()
-        val revokeUrl = Url(oauthServer.revocationEndpoint)
+        val revokeUrl = oauthServer.revocationEndpoint?.let(::Url) ?: return
 
         val dpopKeyPair = resolveDpopKeyPair(providedKeyPair = keyPair)
 
