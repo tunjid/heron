@@ -92,10 +92,6 @@ internal fun String.asRecordUri(): RecordUri? = when {
     else -> null
 }
 
-// Delegate version for Uri
-internal fun Uri.asRecordUri(): RecordUri? =
-    uri.asRecordUri()
-
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
 ): JsonContent = BlueskyJson.decodeFromString(
