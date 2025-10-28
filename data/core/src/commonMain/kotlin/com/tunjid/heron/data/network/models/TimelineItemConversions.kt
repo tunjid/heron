@@ -25,7 +25,6 @@ import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -78,7 +77,7 @@ internal fun FeedViewPost.feedItemEntity(
             is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
             is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
             is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.LabelerLabelerView -> LabelerUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.LabelerLabelerView -> null
             is RecordViewRecordUnion.Unknown -> null
             is RecordViewRecordUnion.ViewBlocked -> null // TODO: Handle blocked/muted posts later
             is RecordViewRecordUnion.ViewDetached -> null // TODO: Handle detached posts
@@ -90,7 +89,7 @@ internal fun FeedViewPost.feedItemEntity(
             is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
             is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
             is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.LabelerLabelerView -> LabelerUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.LabelerLabelerView -> null
             is RecordViewRecordUnion.Unknown -> null
             is RecordViewRecordUnion.ViewBlocked -> null // TODO
             is RecordViewRecordUnion.ViewDetached -> null // TODO

@@ -72,15 +72,6 @@ value class ListUri(
 
 @Serializable
 @JvmInline
-value class LabelerUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
-    override fun toString(): String = uri
-}
-
-@Serializable
-@JvmInline
 value class StarterPackUri(
     override val uri: String,
 ) : Uri,
