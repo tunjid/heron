@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 25,
-    "identityHash": "09477cbff37468933da4df0c8e5e8727",
+    "identityHash": "cef3bbc94f30ff51bed4ec741fef688b",
     "entities": [
       {
         "tableName": "externalEmbeds",
@@ -1770,7 +1770,7 @@
       },
       {
         "tableName": "timelineItems",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postUri` TEXT NOT NULL, `viewingProfileId` TEXT, `sourceId` TEXT NOT NULL, `reposter` TEXT, `hasMedia` INTEGER NOT NULL DEFAULT false, `isPinned` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, `id` TEXT NOT NULL, `rootPostUri` TEXT, `parentPostUri` TEXT, `grandParentPostAuthorId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`rootPostUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`grandParentPostAuthorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postUri` TEXT NOT NULL, `viewingProfileId` TEXT, `sourceId` TEXT NOT NULL, `embeddedRecordId` TEXT, `reposter` TEXT, `hasMedia` INTEGER NOT NULL DEFAULT false, `isPinned` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, `id` TEXT NOT NULL, `rootPostUri` TEXT, `parentPostUri` TEXT, `grandParentPostAuthorId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`rootPostUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`grandParentPostAuthorId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postUri",
@@ -1788,6 +1788,11 @@
             "columnName": "sourceId",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "embeddedRecordId",
+            "columnName": "embeddedRecordId",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "reposter",
@@ -2738,7 +2743,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '09477cbff37468933da4df0c8e5e8727')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cef3bbc94f30ff51bed4ec741fef688b')"
     ]
   }
 }
