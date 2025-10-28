@@ -85,7 +85,7 @@ internal fun FeedViewPost.feedItemEntity(
             else -> null
         }
         else -> null
-    }
+    },
 
 )
 
