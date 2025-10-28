@@ -32,8 +32,6 @@ import sh.christian.ozone.api.Did
 internal data class OAuthTokenResponse(
     @SerialName("access_token")
     val accessToken: String,
-    @SerialName("token_type")
-    val tokenType: String,
     @SerialName("expires_in")
     val expiresInSeconds: Int,
     @SerialName("refresh_token")
