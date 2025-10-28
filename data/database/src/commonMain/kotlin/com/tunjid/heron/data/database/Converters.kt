@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.RecordId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -136,6 +137,10 @@ internal class IdConverters {
     @TypeConverter
     fun messageIdFromString(value: String?): MessageId? =
         value?.let(::MessageId)
+
+    @TypeConverter
+    fun recordIdFromString(value: String?): RecordId? =
+        value?.let(::RecordId)
 
     @TypeConverter
     fun toIdString(id: Id?): String? =
