@@ -24,6 +24,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordId
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -68,6 +69,7 @@ data class TimelineItemEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId?,
     val sourceId: String,
+    val embeddedRecordId: RecordId?,
     @Embedded
     val reply: FeedReplyEntity?,
     val reposter: ProfileId?,
