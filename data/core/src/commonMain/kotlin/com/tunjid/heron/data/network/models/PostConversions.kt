@@ -93,14 +93,14 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
-            postEntity = quotedPostEntity,
-            profileEntity = quotedPostProfileEntity,
-            embeds = quotedPostEmbedEntities(),
-            viewerStatisticsEntity = null,
-            quote = null,
-            labels = emptyList(),
-        ) else null,
+//        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
+//            postEntity = quotedPostEntity,
+//            profileEntity = quotedPostProfileEntity,
+//            embeds = quotedPostEmbedEntities(),
+//            viewerStatisticsEntity = null,
+//            quote = null,
+//            labels = emptyList(),
+//        ) else null,
         labels = labels.map { atProtoLabel ->
             Label(
                 uri = atProtoLabel.uri.uri.let(::GenericUri),
@@ -110,6 +110,7 @@ internal fun PostView.post(
                 createdAt = atProtoLabel.cts,
             )
         },
+        embeddedRecord = postEntity.record?.asExternalModel(),
     )
 }
 
@@ -118,8 +119,9 @@ private fun post(
     profileEntity: ProfileEntity,
     embeds: List<PostEmbed>,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
-    quote: Post?,
+//    quote: Post?,
     labels: List<Label>,
+    embeddedRecord: Post.Record?,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -141,9 +143,10 @@ private fun post(
         is VideoEntity -> embedEntity.asExternalModel()
         null -> null
     },
-    quote = quote,
+    quote = null,
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
     labels = labels,
+    embeddedRecord = embeddedRecord,
 )
 
 internal fun PostView.postEntity() =

@@ -39,12 +39,14 @@ data class Post(
     val bookmarkCount: Long = 0,
     val indexedAt: Instant,
     val embed: Embed?,
+    @Deprecated("Replaced by embeddedRecord for embedded posts")
     val quote: Post?,
     val record: Record?,
     val viewerStats: ViewerStats?,
 //    public val viewer: ViewerState? = null,
     val labels: List<Label>,
 //    public val threadgate: ThreadgateView? = null,
+    val embeddedRecord: Record? = null,
 ) : UrlEncodableModel,
     Record {
 

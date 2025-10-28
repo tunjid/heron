@@ -102,6 +102,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -566,6 +567,10 @@ internal class OfflineTimelineRepository(
                                 val postUris = postThread.map {
                                     it.entity.uri
                                 }.toSet()
+                                fetchMissingEmbeddedRecords(
+                                    signedInProfileId = signedInProfileId,
+                                    postUris = postUris,
+                                )
                                 combine(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
@@ -991,6 +996,11 @@ internal class OfflineTimelineRepository(
                             destination = mutableSetOf(),
                             transform = TimelineItemEntity::reposter,
                         )
+
+                        fetchMissingEmbeddedRecords(
+                            signedInProfileId = signedInProfileId,
+                            postUris = postIds,
+                        )
                         combine(
                             flow = postIds.toFlowOrEmpty { ids ->
                                 postDao.posts(
@@ -1295,6 +1305,46 @@ internal class OfflineTimelineRepository(
         // Just tack the post to the current thread
         else -> list.dropLast(1) + list.last().let {
             it.copy(posts = it.posts + post)
+        }
+    }
+
+    private suspend fun fetchMissingEmbeddedRecords(
+        signedInProfileId: ProfileId?,
+        postUris: Set<PostUri>,
+    ) {
+        val postsWithEmbeddedUris = postDao.posts(
+            viewingProfileId = signedInProfileId?.id,
+            postUris = postUris,
+        ).firstOrNull() ?: return
+
+        val missingEmbeddedUris = postsWithEmbeddedUris
+            .mapNotNull { it.entity.record?.embeddedRecordUri }
+            .filterNot { embeddedUri ->
+                postDao.postExists(embeddedUri.uri)
+            }
+            .toSet()
+
+        if (missingEmbeddedUris.isNotEmpty()) {
+            missingEmbeddedUris.forEach { recordUri ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPostThread(
+                        GetPostThreadQueryParams(uri = AtUri(recordUri.uri)),
+                    )
+                }.getOrNull()?.thread?.let { thread ->
+                    when (thread) {
+                        is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    threadViewPost = thread.value,
+                                )
+                            }
+                        }
+
+                        else -> Unit
+                    }
+                }
+            }
         }
     }
 }
