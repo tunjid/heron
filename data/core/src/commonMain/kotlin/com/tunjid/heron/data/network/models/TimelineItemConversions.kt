@@ -23,11 +23,14 @@ import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -69,22 +72,36 @@ internal fun FeedViewPost.feedItemEntity(
         null,
         -> post.indexedAt
     },
-    embeddedRecordId = when (val embed = post.embed) {
+    embeddedRecordUri = when (val embed = post.embed) {
         is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-            is RecordViewRecordUnion.ViewRecord -> RecordId(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.ViewNotFound -> RecordId(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.ViewBlocked -> RecordId(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.ViewDetached -> RecordId(recordUnion.value.uri.atUri)
-            else -> null
+            is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.LabelerLabelerView -> LabelerUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.Unknown -> null
+            is RecordViewRecordUnion.ViewBlocked -> null // TODO: Handle blocked/muted posts later
+            is RecordViewRecordUnion.ViewDetached -> null // TODO: Handle detached posts
+            is RecordViewRecordUnion.ViewNotFound -> null // TODO: Handle deleted/missing posts
         }
-        is PostViewEmbedUnion.RecordWithMediaView -> when (val maybeRecord = embed.value.record.record) {
-            is RecordViewRecordUnion.ViewRecord -> RecordId(maybeRecord.value.uri.atUri)
-            is RecordViewRecordUnion.ViewNotFound -> RecordId(maybeRecord.value.uri.atUri)
-            is RecordViewRecordUnion.ViewBlocked -> RecordId(maybeRecord.value.uri.atUri)
-            is RecordViewRecordUnion.ViewDetached -> RecordId(maybeRecord.value.uri.atUri)
-            else -> null
+
+        is PostViewEmbedUnion.RecordWithMediaView -> when (val recordUnion = embed.value.record.record) {
+            is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.LabelerLabelerView -> LabelerUri(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.Unknown -> null
+            is RecordViewRecordUnion.ViewBlocked -> null // TODO
+            is RecordViewRecordUnion.ViewDetached -> null // TODO
+            is RecordViewRecordUnion.ViewNotFound -> null // TODO
         }
-        else -> null
+        is PostViewEmbedUnion.ExternalView,
+        is PostViewEmbedUnion.ImagesView,
+        is PostViewEmbedUnion.Unknown,
+        is PostViewEmbedUnion.VideoView,
+        null,
+        -> null
     },
 
 )

@@ -106,11 +106,3 @@ value class MessageId(
 ) : Id {
     override fun toString(): String = id
 }
-
-@Serializable
-@JvmInline
-value class RecordId(
-    override val id: String,
-) : Id {
-    override fun toString(): String = id
-}

@@ -22,6 +22,7 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
@@ -83,6 +84,7 @@ internal class OfflineRecordRepository @Inject constructor(
                         )
                     }
                     .map { it.firstOrNull()?.asExternalModel(quote = null) }
+            is LabelerUri -> TODO()
         }
             .filterNotNull()
             .withRefresh {
@@ -157,5 +159,6 @@ internal suspend fun NetworkService.refresh(
             ?.let { starterPackView ->
                 multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
             }
+        is LabelerUri -> TODO()
     }
 }
