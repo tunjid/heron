@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
@@ -87,6 +88,10 @@ internal class UriConverters {
         value?.let(::ImageUri)
 
     @TypeConverter
+    fun recordUriFromString(value: String?): RecordUri? =
+        value?.asRecordUri()
+
+    @TypeConverter
     fun toUriString(uri: Uri?): String? =
         uri?.uri
 }
@@ -135,4 +140,21 @@ internal class IdConverters {
     @TypeConverter
     fun toIdString(id: Id?): String? =
         id?.id
+}
+
+/**
+ * Local fallback mapping for converting a raw URI string to a [RecordUri].
+ *
+ * This is intentionally duplicated (lightweight version of core-data logic)
+ * because data-database should not depend on core-data.
+ *
+ * If URI patterns change in core-data (Collections), please update this mapping
+ * accordingly to stay consistent with the main implementation.
+ */
+private fun String.asRecordUri(): RecordUri? = when {
+    contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
+    contains("app.bsky.graph.list") -> ListUri(this)
+    contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
+    startsWith("at://") -> PostUri(this)
+    else -> null
 }

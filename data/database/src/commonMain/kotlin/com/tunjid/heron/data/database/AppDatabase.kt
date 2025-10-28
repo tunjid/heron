@@ -81,7 +81,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 24,
+    version = 25,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -166,6 +166,8 @@ import kotlinx.coroutines.IO
         // Migration 21 - 22 is a manual migration
         // Migration 22 - 23 is a manual migration
         // Migration 23 - 24 is a manual migration
+        // add support of embedded records in post
+        AutoMigration(from = 24, to = 25),
     ],
     exportSchema = true,
 )

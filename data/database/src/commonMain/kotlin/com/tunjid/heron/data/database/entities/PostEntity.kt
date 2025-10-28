@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -73,6 +74,7 @@ data class PostEntity(
     data class RecordData(
         val text: String,
         val base64EncodedRecord: String?,
+        val embeddedRecordUri: RecordUri?,
         val createdAt: Instant,
     )
 }
