@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.network.models
 
+import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.FeedViewPostReasonUnion
 import app.bsky.feed.PostViewEmbedUnion
@@ -26,6 +27,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordId
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -67,6 +69,24 @@ internal fun FeedViewPost.feedItemEntity(
         null,
         -> post.indexedAt
     },
+    embeddedRecordId = when (val embed = post.embed) {
+        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
+            is RecordViewRecordUnion.ViewRecord -> RecordId(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.ViewNotFound -> RecordId(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.ViewBlocked -> RecordId(recordUnion.value.uri.atUri)
+            is RecordViewRecordUnion.ViewDetached -> RecordId(recordUnion.value.uri.atUri)
+            else -> null
+        }
+        is PostViewEmbedUnion.RecordWithMediaView -> when (val maybeRecord = embed.value.record.record) {
+            is RecordViewRecordUnion.ViewRecord -> RecordId(maybeRecord.value.uri.atUri)
+            is RecordViewRecordUnion.ViewNotFound -> RecordId(maybeRecord.value.uri.atUri)
+            is RecordViewRecordUnion.ViewBlocked -> RecordId(maybeRecord.value.uri.atUri)
+            is RecordViewRecordUnion.ViewDetached -> RecordId(maybeRecord.value.uri.atUri)
+            else -> null
+        }
+        else -> null
+    }
+
 )
 
 internal fun ReplyRefRootUnion.profileEntity() = when (this) {
