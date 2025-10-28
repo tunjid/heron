@@ -38,6 +38,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -84,7 +85,7 @@ internal class OfflineRecordRepository @Inject constructor(
                         )
                     }
                     .map { it.firstOrNull()?.asExternalModel(quote = null) }
-            is LabelerUri -> TODO()
+            else -> emptyFlow() // safely ignore LabelerUri and any unknown ones for now
         }
             .filterNotNull()
             .withRefresh {
@@ -159,6 +160,6 @@ internal suspend fun NetworkService.refresh(
             ?.let { starterPackView ->
                 multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
             }
-        is LabelerUri -> TODO()
+        is LabelerUri -> null // not supported yet
     }
 }
