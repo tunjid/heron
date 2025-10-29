@@ -91,6 +91,9 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -1317,32 +1320,38 @@ internal class OfflineTimelineRepository(
             postUris = postUris,
         ).firstOrNull() ?: return
 
-        val missingEmbeddedUris = postsWithEmbeddedUris
-            .mapNotNull { it.entity.record?.embeddedRecordUri }
-            .filterNot { embeddedUri ->
-                postDao.postExists(embeddedUri.uri)
-            }
-            .toSet()
+        val missingEmbeddedUris = coroutineScope {
+            postsWithEmbeddedUris
+                .mapNotNull { it.entity.record?.embeddedRecordUri }
+                .map { uri -> async { uri to !postDao.postExists(uri.uri) } }
+                .awaitAll()
+                .filter { (_, isMissing) -> isMissing }
+                .map { (uri, _) -> uri }
+        }.toSet()
 
-        if (missingEmbeddedUris.isNotEmpty()) {
-            missingEmbeddedUris.forEach { recordUri ->
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPostThread(
-                        GetPostThreadQueryParams(uri = AtUri(recordUri.uri)),
+        if (missingEmbeddedUris.isEmpty()) return
+
+        val threadsToSave = coroutineScope {
+            missingEmbeddedUris.map { recordUri ->
+                async {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getPostThread(GetPostThreadQueryParams(uri = AtUri(recordUri.uri)))
+                    }.getOrNull()?.thread
+                }
+            }.awaitAll()
+        }
+
+        val postsToSave = threadsToSave.mapNotNull {
+            (it as? GetPostThreadResponseThreadUnion.ThreadViewPost)?.value
+        }
+
+        if (postsToSave.isNotEmpty()) {
+            multipleEntitySaverProvider.saveInTransaction {
+                postsToSave.forEach { threadViewPost ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        threadViewPost = threadViewPost,
                     )
-                }.getOrNull()?.thread?.let { thread ->
-                    when (thread) {
-                        is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                            multipleEntitySaverProvider.saveInTransaction {
-                                add(
-                                    viewingProfileId = signedInProfileId,
-                                    threadViewPost = thread.value,
-                                )
-                            }
-                        }
-
-                        else -> Unit
-                    }
                 }
             }
         }

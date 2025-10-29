@@ -82,8 +82,6 @@ internal fun PostView.post(
     viewingProfileId: ProfileId?,
 ): Post {
     val postEntity = postEntity()
-    val quotedPostEntity = quotedPostEntity()
-    val quotedPostProfileEntity = quotedPostProfileEntity()
     return post(
         postEntity = postEntity,
         profileEntity = profileEntity(),
@@ -93,14 +91,6 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-//        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
-//            postEntity = quotedPostEntity,
-//            profileEntity = quotedPostProfileEntity,
-//            embeds = quotedPostEmbedEntities(),
-//            viewerStatisticsEntity = null,
-//            quote = null,
-//            labels = emptyList(),
-//        ) else null,
         labels = labels.map { atProtoLabel ->
             Label(
                 uri = atProtoLabel.uri.uri.let(::GenericUri),
@@ -119,7 +109,6 @@ private fun post(
     profileEntity: ProfileEntity,
     embeds: List<PostEmbed>,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
-//    quote: Post?,
     labels: List<Label>,
     embeddedRecord: Post.Record?,
 ) = Post(
