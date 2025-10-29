@@ -85,9 +85,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
@@ -148,83 +150,96 @@ internal class OfflinePostRepository @Inject constructor(
     override fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = withPostEntity(
-        query.profileId,
-        query.postRecordKey,
-    ) { postEntity ->
-        combine(
-            postDao.likedBy(
-                postUri = postEntity.uri.uri,
-                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
-                offset = query.data.offset,
-                limit = query.data.limit,
-            )
-                .map(List<PopulatedProfileEntity>::asExternalModels),
-            networkService.nextCursorFlow(
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    getLikes(
-                        GetLikesQueryParams(
-                            uri = postEntity.uri.uri.let(::AtUri),
+    ): Flow<CursorList<ProfileWithViewerState>> = flow {
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession
+            emitAll(
+                withPostEntity(
+                    query.profileId,
+                    query.postRecordKey,
+                ) { postEntity ->
+                    combine(
+                        postDao.likedBy(
+                            postUri = postEntity.uri.uri,
+                            viewingProfileId = signedInProfileId.id,
+                            offset = query.data.offset,
                             limit = query.data.limit,
-                            cursor = cursor.value,
+                        ).map(List<PopulatedProfileEntity>::asExternalModels),
+
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getLikes(
+                                    GetLikesQueryParams(
+                                        uri = postEntity.uri.uri.let(::AtUri),
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
+                                    ),
+                                )
+                            },
+                            nextCursor = GetLikesResponse::cursor,
+                            onResponse = {
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    likes.forEach {
+                                        add(
+                                            viewingProfileId = signedInProfileId,
+                                            postUri = postEntity.uri,
+                                            like = it,
+                                        )
+                                    }
+                                }
+                            },
                         ),
-                    )
+                        ::CursorList,
+                    ).distinctUntilChanged()
                 },
-                nextCursor = GetLikesResponse::cursor,
-                onResponse = {
-                    multipleEntitySaverProvider.saveInTransaction {
-                        likes.forEach {
-                            add(
-                                viewingProfileId = savedStateDataSource.signedInProfileId,
-                                postUri = postEntity.uri,
-                                like = it,
-                            )
-                        }
-                    }
-                },
-            ),
-            ::CursorList,
-        )
-            .distinctUntilChanged()
+            )
+        }
     }
 
     override fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = withPostEntity(
-        query.profileId,
-        query.postRecordKey,
-    ) { postEntity ->
-        combine(
-            postDao.repostedBy(
-                postUri = postEntity.uri.uri,
-                viewingProfileId = savedStateDataSource.signedInProfileId?.id,
-                offset = query.data.offset,
-                limit = query.data.limit,
-            )
-                .map(List<PopulatedProfileEntity>::asExternalModels),
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        withPostEntity(
+            query.profileId,
+            query.postRecordKey,
+        ) { postEntity ->
+            flow {
+                savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                    if (signedInProfileId == null) return@inCurrentProfileSession
 
-            networkService.nextCursorFlow(
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    getRepostedBy(
-                        GetRepostedByQueryParams(
-                            uri = postEntity.uri.uri.let(::AtUri),
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        ),
+                    emitAll(
+                        combine(
+                            postDao.repostedBy(
+                                postUri = postEntity.uri.uri,
+                                viewingProfileId = signedInProfileId.id,
+                                offset = query.data.offset,
+                                limit = query.data.limit,
+                            ).map(List<PopulatedProfileEntity>::asExternalModels),
+
+                            networkService.nextCursorFlow(
+                                currentCursor = cursor,
+                                currentRequestWithNextCursor = {
+                                    getRepostedBy(
+                                        GetRepostedByQueryParams(
+                                            uri = postEntity.uri.uri.let(::AtUri),
+                                            limit = query.data.limit,
+                                            cursor = cursor.value,
+                                        ),
+                                    )
+                                },
+                                nextCursor = GetRepostedByResponse::cursor,
+                                onResponse = {
+                                    // TODO: add logic for repost saving if needed
+                                },
+                            ),
+                            ::CursorList,
+                        ).distinctUntilChanged(),
                     )
-                },
-                nextCursor = GetRepostedByResponse::cursor,
-                onResponse = {
-                    // TODO: Figure out how to get indexedAt for reposts
-                },
-            ),
-            ::CursorList,
-        )
-            .distinctUntilChanged()
-    }
+                }
+            }
+        }
 
     override fun quotes(
         query: PostDataQuery,
@@ -258,12 +273,14 @@ internal class OfflinePostRepository @Inject constructor(
                         },
                         nextCursor = GetQuotesResponse::cursor,
                         onResponse = {
-                            multipleEntitySaverProvider.saveInTransaction {
-                                posts.forEach {
-                                    add(
-                                        viewingProfileId = savedStateDataSource.signedInProfileId,
-                                        postView = it,
-                                    )
+                            savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    posts.forEach {
+                                        add(
+                                            viewingProfileId = signedInProfileId,
+                                            postView = it,
+                                        )
+                                    }
                                 }
                             }
                         },
@@ -375,11 +392,9 @@ internal class OfflinePostRepository @Inject constructor(
 
     override suspend fun sendInteraction(
         interaction: Post.Interaction,
-    ): Outcome {
-        val authorId = savedStateDataSource.signedInProfileId ?: return Outcome.Failure(
-            Exception("Not signed in"),
-        )
-        return when (interaction) {
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { authorId ->
+        if (authorId == null) return@inCurrentProfileSession Outcome.Failure(Exception("No signed in profile id"))
+        when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
                 when (interaction) {
                     is Post.Interaction.Create.Bookmark -> createBookmark(
@@ -387,8 +402,8 @@ internal class OfflinePostRepository @Inject constructor(
                             uri = interaction.postUri.uri.let(::AtUri),
                             cid = interaction.postId.id.let(::Cid),
                         ),
-                    )
-                        .map { true to interaction.postId.id }
+                    ).map { true to interaction.postId.id }
+
                     is Post.Interaction.Create.Like -> createRecord(
                         CreateRecordRequest(
                             repo = authorId.id.let(::Did),
@@ -401,8 +416,8 @@ internal class OfflinePostRepository @Inject constructor(
                                 createdAt = Clock.System.now(),
                             ).asJsonContent(Like.serializer()),
                         ),
-                    )
-                        .map(CreateRecordResponse::successWithUri)
+                    ).map(CreateRecordResponse::successWithUri)
+
                     is Post.Interaction.Create.Repost -> createRecord(
                         CreateRecordRequest(
                             repo = authorId.id.let(::Did),
@@ -415,62 +430,50 @@ internal class OfflinePostRepository @Inject constructor(
                                 createdAt = Clock.System.now(),
                             ).asJsonContent(Repost.serializer()),
                         ),
-                    )
-                        .map(CreateRecordResponse::successWithUri)
+                    ).map(CreateRecordResponse::successWithUri)
                 }
-            }
-                .toOutcome { (succeeded, uriOrCidString) ->
-                    if (!succeeded) throw Exception("Record creation failed validation")
-                    transactionWriter.inTransaction {
-                        when (interaction) {
-                            is Post.Interaction.Create.Like -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Like(
-                                        likeUri = uriOrCidString.let(::GenericUri),
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateLikeCount(
-                                    postUri = interaction.postUri.uri,
-                                    isIncrement = true,
-                                )
-                            }
-
-                            is Post.Interaction.Create.Repost -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Repost(
-                                        repostUri = uriOrCidString.let(::GenericUri),
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateRepostCount(
-                                    postUri = interaction.postUri.uri,
-                                    isIncrement = true,
-                                )
-                            }
-                            is Post.Interaction.Create.Bookmark -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
-                                        bookmarked = true,
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateBookmarkCount(
-                                    postUri = interaction.postUri.uri,
-                                    isBookmarked = true,
-                                )
-                            }
+            }.toOutcome { (succeeded, uriOrCidString) ->
+                if (!succeeded) throw Exception("Record creation failed validation")
+                transactionWriter.inTransaction {
+                    when (interaction) {
+                        is Post.Interaction.Create.Like -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Like(
+                                    likeUri = uriOrCidString.let(::GenericUri),
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateLikeCount(interaction.postUri.uri, true)
+                        }
+                        is Post.Interaction.Create.Repost -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Repost(
+                                    repostUri = uriOrCidString.let(::GenericUri),
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateRepostCount(interaction.postUri.uri, true)
+                        }
+                        is Post.Interaction.Create.Bookmark -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                    bookmarked = true,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateBookmarkCount(interaction.postUri.uri, true)
                         }
                     }
                 }
+            }
 
             is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
                 when (interaction) {
                     is Post.Interaction.Delete.RemoveBookmark -> deleteBookmark(
-                        DeleteBookmarkRequest(uri = interaction.postUri.uri.let(::AtUri)),
+                        DeleteBookmarkRequest(interaction.postUri.uri.let(::AtUri)),
                     )
                     is Post.Interaction.Delete.RemoveRepost -> deleteRecord(
                         DeleteRecordRequest(
@@ -487,55 +490,44 @@ internal class OfflinePostRepository @Inject constructor(
                         ),
                     )
                 }
-            }
-                .toOutcome {
-                    transactionWriter.inTransaction {
-                        when (interaction) {
-                            is Post.Interaction.Delete.Unlike -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Like(
-                                        likeUri = null,
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateLikeCount(
-                                    postUri = interaction.postUri.uri,
-                                    isIncrement = false,
-                                )
-                            }
-
-                            is Post.Interaction.Delete.RemoveRepost -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Repost(
-                                        repostUri = null,
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateRepostCount(
-                                    postUri = interaction.postUri.uri,
-                                    isIncrement = false,
-                                )
-                            }
-                            is Post.Interaction.Delete.RemoveBookmark -> {
-                                upsertInteraction(
-                                    partial = PostViewerStatisticsEntity.Partial.Bookmark(
-                                        bookmarked = false,
-                                        postUri = interaction.postUri,
-                                        viewingProfileId = authorId,
-                                    ),
-                                )
-                                postDao.updateBookmarkCount(
-                                    postUri = interaction.postUri.uri,
-                                    isBookmarked = false,
-                                )
-                            }
+            }.toOutcome {
+                transactionWriter.inTransaction {
+                    when (interaction) {
+                        is Post.Interaction.Delete.Unlike -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Like(
+                                    likeUri = null,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateLikeCount(interaction.postUri.uri, false)
+                        }
+                        is Post.Interaction.Delete.RemoveRepost -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Repost(
+                                    repostUri = null,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateRepostCount(interaction.postUri.uri, false)
+                        }
+                        is Post.Interaction.Delete.RemoveBookmark -> {
+                            upsertInteraction(
+                                partial = PostViewerStatisticsEntity.Partial.Bookmark(
+                                    bookmarked = false,
+                                    postUri = interaction.postUri,
+                                    viewingProfileId = authorId,
+                                ),
+                            )
+                            postDao.updateBookmarkCount(interaction.postUri.uri, false)
                         }
                     }
                 }
+            }
         }
-    }
+    } ?: Outcome.Failure(Exception("Profile session ended before completion"))
 
     private suspend fun upsertInteraction(
         partial: PostViewerStatisticsEntity.Partial,

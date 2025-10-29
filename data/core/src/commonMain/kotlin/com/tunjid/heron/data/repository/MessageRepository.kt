@@ -157,14 +157,14 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = ListConvosResponse::cursor,
                 onResponse = {
-                    val signedInProfileId = savedStateDataSource.signedInProfileId
-
-                    multipleEntitySaverProvider.saveInTransaction {
-                        convos.forEach {
-                            add(
-                                viewingProfileId = signedInProfileId,
-                                convoView = it,
-                            )
+                    savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            convos.forEach {
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    convoView = it,
+                                )
+                            }
                         }
                     }
                 },
@@ -335,22 +335,22 @@ internal class OfflineMessageRepository @Inject constructor(
                 // No changes
                 if (currentCursor <= latestCursor) return@scan latestCursor
 
-                val signedInProfileId = savedStateDataSource.signedInProfileId
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    deletedMessages.list.forEach { (conversationId, message) ->
-                        add(
-                            conversationId = conversationId,
-                            viewingProfileId = signedInProfileId,
-                            deletedMessageView = message,
-                        )
-                    }
-                    messages.list.forEach { (conversationId, message) ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            conversationId = conversationId,
-                            messageView = message,
-                        )
+                savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        deletedMessages.list.forEach { (conversationId, message) ->
+                            add(
+                                conversationId = conversationId,
+                                viewingProfileId = signedInProfileId,
+                                deletedMessageView = message,
+                            )
+                        }
+                        messages.list.forEach { (conversationId, message) ->
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                conversationId = conversationId,
+                                messageView = message,
+                            )
+                        }
                     }
                 }
                 return@scan currentCursor
@@ -387,14 +387,14 @@ internal class OfflineMessageRepository @Inject constructor(
                 ),
             )
         }.toOutcome { sentMessage ->
-            val signedInProfileId = savedStateDataSource.signedInProfileId
-
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    viewingProfileId = signedInProfileId,
-                    conversationId = message.conversationId,
-                    messageView = sentMessage,
-                )
+            savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        conversationId = message.conversationId,
+                        messageView = sentMessage,
+                    )
+                }
             }
         }
     }
@@ -420,14 +420,14 @@ internal class OfflineMessageRepository @Inject constructor(
             ).map(RemoveReactionResponse::message)
         }
     }.toOutcome { message ->
-        val signedInProfileId = savedStateDataSource.signedInProfileId
-
-        multipleEntitySaverProvider.saveInTransaction {
-            add(
-                viewingProfileId = signedInProfileId,
-                conversationId = reaction.convoId,
-                messageView = message,
-            )
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    viewingProfileId = signedInProfileId,
+                    conversationId = reaction.convoId,
+                    messageView = message,
+                )
+            }
         }
     }
 }
