@@ -243,9 +243,9 @@ internal class OfflineMessageRepository @Inject constructor(
                                                     ?.entity
                                                     ?.asExternalModel(
                                                         quote = null,
-                                                        embeddedRecord = null
+                                                        embeddedRecord = null,
                                                     ),
-                                                embeddedRecord = null
+                                                embeddedRecord = null,
                                             ),
                                     )
                                 }

@@ -232,7 +232,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                         ?.let(urisToPosts::get)
                                         ?.asExternalModel(
                                             quote = null,
-                                            embeddedRecord = null
+                                            embeddedRecord = null,
                                         ),
                                 )
                             }

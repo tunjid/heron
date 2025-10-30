@@ -246,7 +246,7 @@ internal class OfflinePostRepository @Inject constructor(
                             populatedPostEntities.map {
                                 it.asExternalModel(
                                     quote = null,
-                                    embeddedRecord = null
+                                    embeddedRecord = null,
                                 )
                             }
                         },
@@ -291,7 +291,7 @@ internal class OfflinePostRepository @Inject constructor(
                     .mapNotNull {
                         it.firstOrNull()?.asExternalModel(
                             quote = null,
-                            embeddedRecord = null
+                            embeddedRecord = null,
                         )
                     }
             }

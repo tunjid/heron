@@ -83,10 +83,12 @@ internal class OfflineRecordRepository @Inject constructor(
                             postUris = listOf(uri),
                         )
                     }
-                    .map { it.firstOrNull()?.asExternalModel(
-                        quote = null,
-                        embeddedRecord = null,
-                    ) }
+                    .map {
+                        it.firstOrNull()?.asExternalModel(
+                            quote = null,
+                            embeddedRecord = null,
+                        )
+                    }
         }
             .filterNotNull()
             .withRefresh {
