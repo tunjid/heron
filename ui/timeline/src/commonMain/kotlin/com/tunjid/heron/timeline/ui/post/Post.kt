@@ -109,12 +109,11 @@ fun Post(
             now = now,
             createdAt = createdAt,
         )
-        val verticalPadding = presentation.postVerticalPadding
         Column(
             modifier = Modifier
-                .padding(vertical = verticalPadding)
+                .padding(vertical = presentation.postVerticalPadding)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(verticalPadding),
+            verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
         ) {
             presentation.contentOrder.forEach { order ->
                 key(order.key) {
@@ -371,6 +370,14 @@ private fun Modifier.contentPresentationPadding(
  * Vertical content padding for the post composable
  */
 private val Timeline.Presentation.postVerticalPadding: Dp
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
+
+private val Timeline.Presentation.postContentSpacing: Dp
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 4.dp
         Timeline.Presentation.Media.Expanded -> 8.dp
