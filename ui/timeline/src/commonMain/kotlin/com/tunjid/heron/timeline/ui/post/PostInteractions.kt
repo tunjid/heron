@@ -315,10 +315,6 @@ private fun PostInteraction(
             indication = ripple(bounded = false),
             onClick = onClick,
         )
-        .padding(
-            top = 4.dp,
-            bottom = 2.dp,
-        )
 
     when (orientation) {
         Orientation.Vertical -> Column(

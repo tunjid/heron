@@ -102,8 +102,6 @@ fun TimelineItem(
                     .fillMaxWidth()
                     .timelineCardPresentationPadding(
                         presentation = presentation,
-                        top = if (item.isThreadedAnchor) 0.dp else 16.dp,
-                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp else 8.dp,
                     ),
             ) {
                 if (item is TimelineItem.Repost) {

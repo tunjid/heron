@@ -659,7 +659,7 @@ internal class OfflineTimelineRepository(
 
                         Type.Timeline -> followingTimeline(
                             signedInProfileId = signedInProfileId,
-                            name = preference.value,
+                            name = preference.value.replaceFirstChar(Char::titlecase),
                             position = index,
                             isPinned = preference.pinned,
                         )
@@ -1425,7 +1425,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
         "app.bsky.feed.defs#contentModeImage",
         "app.bsky.feed.defs#contentModeMedia",
         "com.tunjid.heron.defs#contentModeMedia",
-        -> true
+            -> true
 
         else -> false
     }

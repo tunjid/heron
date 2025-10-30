@@ -46,7 +46,7 @@ fun DismissableRefreshIndicator(
             isRefreshing = isRefreshing,
             threshold = threshold,
         )
-        Box(
+        if (isRefreshing) Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset {
