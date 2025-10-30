@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
@@ -97,8 +98,9 @@ fun PaneScaffoldState.PaneFab(
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
             FloatingActionButton(
-                modifier = modifier
+                modifier = Modifier
                     .animateFabSize()
+                    .then(modifier)
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = FabSharedElementKey,
@@ -111,8 +113,8 @@ fun PaneScaffoldState.PaneFab(
                 content = {
                     Row(
                         modifier = Modifier
-                            .animateFabSize()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 16.dp)
+                            .animateFabSize(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (icon != null) FabIcon(icon)
