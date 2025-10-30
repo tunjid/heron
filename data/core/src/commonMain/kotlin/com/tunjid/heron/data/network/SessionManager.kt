@@ -510,6 +510,7 @@ internal val BlueskyJson: Json = Json(
     from = buildXrpcJsonConfiguration(XrpcSerializersModule),
     builderAction = {
         explicitNulls = false
+        ignoreUnknownKeys = true
     },
 )
 
