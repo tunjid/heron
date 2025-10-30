@@ -382,9 +382,4 @@ interface PostDao {
     fun postThread(
         postUri: String,
     ): Flow<List<ThreadedPostEntity>>
-
-    @Query("SELECT EXISTS(SELECT 1 FROM posts WHERE uri = :postUri)")
-    suspend fun postExists(
-        postUri: String,
-    ): Boolean
 }
