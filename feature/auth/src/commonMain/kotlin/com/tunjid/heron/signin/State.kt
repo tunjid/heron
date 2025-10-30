@@ -48,7 +48,7 @@ internal val Username = FormField.Id("username")
 internal val Password = FormField.Id("password")
 
 internal val DomainRegex = Regex(
-    pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}\$",
+    pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,30}\$",
 )
 
 internal val StartingServers = Server.KnownServers.toList() +
