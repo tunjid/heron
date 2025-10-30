@@ -102,14 +102,13 @@ fun TimelineItem(
                     .fillMaxWidth()
                     .timelineCardPresentationPadding(
                         presentation = presentation,
-                        top = if (!item.isThreaded || item.isThreadedAnchor) 0.dp else 16.dp,
-                        bottom = if (!item.isThreaded || item.isThreadedAncestorOrAnchor) 0.dp else 8.dp,
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
                         modifier = Modifier.padding(
                             start = 32.dp,
+                            top = 4.dp,
                             bottom = 4.dp,
                         ),
                         item = item,
@@ -210,7 +209,7 @@ private fun ThreadedPost(
                             if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .padding(top = 52.dp),
+                                    .padding(top = 60.dp),
                             )
                         },
                     )
@@ -238,7 +237,7 @@ private fun ThreadedPost(
                     }
                     if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
                         Modifier
-                            .height(4.dp)
+                            .height(2.dp)
                             .childThreadNode(videoId = null),
                     )
                 }
@@ -479,9 +478,6 @@ private val TimelineItem.isThreadedAnchor
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
-
-private val TimelineItem.isThreaded
-    get() = this is TimelineItem.Thread
 
 private val NoOpInteractionSource = MutableInteractionSource()
 
