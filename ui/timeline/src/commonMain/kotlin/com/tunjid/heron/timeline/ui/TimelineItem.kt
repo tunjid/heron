@@ -102,6 +102,8 @@ fun TimelineItem(
                     .fillMaxWidth()
                     .timelineCardPresentationPadding(
                         presentation = presentation,
+                        top = if (!item.isThreaded || item.isThreadedAnchor) 0.dp else 16.dp,
+                        bottom = if (!item.isThreaded || item.isThreadedAncestorOrAnchor) 0.dp else 8.dp,
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
@@ -477,6 +479,9 @@ private val TimelineItem.isThreadedAnchor
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
+
+private val TimelineItem.isThreaded
+    get() = this is TimelineItem.Thread
 
 private val NoOpInteractionSource = MutableInteractionSource()
 
