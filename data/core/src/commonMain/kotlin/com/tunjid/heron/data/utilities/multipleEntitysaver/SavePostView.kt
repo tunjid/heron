@@ -20,11 +20,17 @@ import app.bsky.feed.PostView
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.feedGeneratorEntity
+import com.tunjid.heron.data.network.models.getEmbeddedFeedGenerator
+import com.tunjid.heron.data.network.models.getEmbeddedList
+import com.tunjid.heron.data.network.models.getEmbeddedStarterPack
+import com.tunjid.heron.data.network.models.listEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileEntity
+import com.tunjid.heron.data.network.models.starterPackEntity
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -43,7 +49,17 @@ internal fun MultipleEntitySaver.add(
             embedEntity = embedEntity,
         )
     }
+    postView.getEmbeddedFeedGenerator()?.let { generatorView ->
+        add(generatorView.feedGeneratorEntity())
+    }
 
+    postView.getEmbeddedList()?.let { listView ->
+        add(listView.listEntity())
+    }
+
+    postView.getEmbeddedStarterPack()?.let { starterPackView ->
+        add(starterPackView.starterPackEntity())
+    }
     postView.viewer?.postViewerStatisticsEntity(
         postUri = postEntity.uri,
         viewingProfileId = viewingProfileId,
@@ -62,6 +78,18 @@ internal fun MultipleEntitySaver.add(
                 postEntity = embeddedPostEntity,
                 embedEntity = embedEntity,
             )
+        }
+        // handle fetch embed records in quoted post
+        postView.getEmbeddedFeedGenerator()?.let { generatorView ->
+            add(generatorView.feedGeneratorEntity())
+        }
+
+        postView.getEmbeddedList()?.let { listView ->
+            add(listView.listEntity())
+        }
+
+        postView.getEmbeddedStarterPack()?.let { starterPackView ->
+            add(starterPackView.starterPackEntity())
         }
     }
     postView.quotedPostProfileEntity()?.let(::add)
