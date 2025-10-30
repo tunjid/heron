@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
@@ -163,7 +162,6 @@ fun PaneScaffoldState.UserInput(
                 onTextFieldFocused = { focused ->
                     textFieldFocusState = focused
                 },
-                onMessageSent = onSendMessage,
                 focusState = textFieldFocusState,
             )
             SendButton(
@@ -189,7 +187,6 @@ private fun UserInputText(
     textFieldValue: TextFieldValue,
     keyboardShown: Boolean,
     onTextFieldFocused: (Boolean) -> Unit,
-    onMessageSent: (AnnotatedString) -> Unit,
     focusState: Boolean,
 ) {
     val a11ylabel = stringResource(Res.string.textfield_desc)
@@ -203,7 +200,6 @@ private fun UserInputText(
             onTextFieldFocused = onTextFieldFocused,
             keyboardType = keyboardType,
             focusState = focusState,
-            onMessageSent = onMessageSent,
             modifier = Modifier.fillMaxWidth().semantics {
                 contentDescription = a11ylabel
                 keyboardShownProperty = keyboardShown
@@ -219,7 +215,6 @@ private fun BoxScope.UserInputTextField(
     onTextFieldFocused: (Boolean) -> Unit,
     keyboardType: KeyboardType,
     focusState: Boolean,
-    onMessageSent: (AnnotatedString) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var lastFocusState by remember { mutableStateOf(false) }
@@ -237,11 +232,8 @@ private fun BoxScope.UserInputTextField(
             },
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
-            imeAction = ImeAction.Send,
+            imeAction = ImeAction.Default,
         ),
-        keyboardActions = KeyboardActions {
-            if (textFieldValue.text.isNotBlank()) onMessageSent(textFieldValue.annotatedString)
-        },
         cursorBrush = SolidColor(LocalContentColor.current),
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
     )

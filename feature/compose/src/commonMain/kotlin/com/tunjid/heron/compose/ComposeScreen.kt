@@ -32,7 +32,6 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
@@ -112,18 +111,6 @@ internal fun ComposeScreen(
             labelers = state.labelers,
             paneMovableElementSharedTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
-            onCreatePost = onCreatePost@{
-                val authorId = state.signedInProfile?.did ?: return@onCreatePost
-                actions(
-                    Action.CreatePost(
-                        postType = state.postType,
-                        authorId = authorId,
-                        text = postText.text,
-                        links = postText.annotatedString.links(),
-                        media = state.video?.let(::listOf) ?: state.photos,
-                    ),
-                )
-            },
             onMentionDetected = {
                 actions(Action.SearchProfiles(it))
             },
@@ -179,7 +166,6 @@ private fun Post(
     labelers: List<Labeler>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
-    onCreatePost: () -> Unit,
     onMentionDetected: (String) -> Unit,
 ) {
     Column(
@@ -207,9 +193,6 @@ private fun Post(
                         .fillMaxWidth(),
                     postText = postText,
                     onPostTextChanged = onPostTextChanged,
-                    onCreatePost = onCreatePost@{
-                        onCreatePost()
-                    },
                     onMentionDetected = onMentionDetected,
                 )
             },
@@ -315,7 +298,6 @@ private fun PostComposition(
     modifier: Modifier,
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
-    onCreatePost: () -> Unit,
     onMentionDetected: (String) -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
@@ -357,13 +339,8 @@ private fun PostComposition(
             color = LocalContentColor.current,
         ),
         keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Send,
+            imeAction = ImeAction.Default,
         ),
-        keyboardActions = KeyboardActions {
-            if (postText.annotatedString.isNotEmpty()) {
-                onCreatePost()
-            }
-        },
     )
 
     LaunchedEffect(Unit) {
