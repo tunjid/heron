@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.network.models
 
-import app.bsky.embed.RecordViewRecord
 import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.GeneratorView
@@ -24,30 +23,19 @@ import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.graph.ListView
 import app.bsky.graph.StarterPackViewBasic
-import com.tunjid.heron.data.core.types.FeedGeneratorId
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.ListId
-import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StarterPackId
-import com.tunjid.heron.data.core.types.StarterPackUri
-import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
-import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import kotlinx.datetime.Clock
 
 internal fun PostView.quotedPostEntity(): PostEntity? =
     when (val embed = embed) {
@@ -208,80 +196,3 @@ private fun RecordViewRecordUnion.postEntity() =
                 record = value.value.asPostEntityRecordData(),
             )
     }
-
-fun PostView.getEmbeddedFeedGenerator(): GeneratorView? = when (val embed = embed) {
-    is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-        is RecordViewRecordUnion.FeedGeneratorView -> recordUnion.value
-        else -> null
-    }
-    is PostViewEmbedUnion.RecordWithMediaView -> when (val recordUnion = embed.value.record.record) {
-        is RecordViewRecordUnion.FeedGeneratorView -> recordUnion.value
-        else -> null
-    }
-    else -> null
-}
-
-fun PostView.getEmbeddedList(): ListView? = when (val embed = embed) {
-    is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-        is RecordViewRecordUnion.GraphListView -> recordUnion.value
-        else -> null
-    }
-    is PostViewEmbedUnion.RecordWithMediaView -> when (val recordUnion = embed.value.record.record) {
-        is RecordViewRecordUnion.GraphListView -> recordUnion.value
-        else -> null
-    }
-    else -> null
-}
-
-fun PostView.getEmbeddedStarterPack(): StarterPackViewBasic? = when (val embed = embed) {
-    is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-        is RecordViewRecordUnion.GraphStarterPackViewBasic -> recordUnion.value
-        else -> null
-    }
-    is PostViewEmbedUnion.RecordWithMediaView -> when (val recordUnion = embed.value.record.record) {
-        is RecordViewRecordUnion.GraphStarterPackViewBasic -> recordUnion.value
-        else -> null
-    }
-    else -> null
-}
-
-internal fun GeneratorView.feedGeneratorEntity() = FeedGeneratorEntity(
-    cid = FeedGeneratorId(cid.cid),
-    did = FeedGeneratorId(did.did),
-    uri = FeedGeneratorUri(uri.atUri),
-    avatar = avatar?.uri?.let(::ImageUri),
-    likeCount = likeCount,
-    creatorId = ProfileId(creator.did.did),
-    displayName = displayName,
-    description = description,
-    acceptsInteractions = acceptsInteractions,
-    contentMode = contentMode,
-    indexedAt = indexedAt,
-    createdAt = Clock.System.now(),
-)
-
-internal fun ListView.listEntity() = ListEntity(
-    cid = ListId(cid.cid),
-    uri = ListUri(uri.atUri),
-    creatorId = ProfileId(creator.did.did),
-    name = name,
-    description = description,
-    avatar = avatar?.uri?.let(::ImageUri),
-    listItemCount = listItemCount,
-    purpose = purpose.toString(),
-    indexedAt = indexedAt,
-    createdAt = Clock.System.now(),
-)
-
-internal fun StarterPackViewBasic.starterPackEntity() = StarterPackEntity(
-    cid = StarterPackId(cid.cid),
-    uri = StarterPackUri(uri.atUri),
-    creatorId = ProfileId(creator.did.did),
-    listUri = null, // You might need to handle this if available
-    name = "", // You might need to handle this if available
-    description = "", // You might need to handle this if available
-    joinedWeekCount = joinedWeekCount,
-    joinedAllTimeCount = joinedAllTimeCount,
-    indexedAt = indexedAt,
-    createdAt = Clock.System.now(),
-)

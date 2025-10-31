@@ -18,6 +18,7 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.embed.RecordWithMediaViewMediaUnion
+import app.bsky.feed.GeneratorView
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostView
@@ -25,6 +26,8 @@ import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
+import app.bsky.graph.ListView
+import app.bsky.graph.StarterPackViewBasic
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -93,8 +96,10 @@ internal fun PostView.post(
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileEntity = quotedPostProfileEntity()
 
-    val embeddedRecord = if (quotedPostEntity != null && quotedPostProfileEntity != null) {
-        buildPost(
+    val embeddedRecord = embeddedRecord()
+
+    val quotedPost = if (quotedPostEntity != null && quotedPostProfileEntity != null) {
+        post(
             postEntity = quotedPostEntity,
             profileEntity = quotedPostProfileEntity,
             embeds = quotedPostEmbedEntities(),
@@ -104,169 +109,9 @@ internal fun PostView.post(
             quote = null,
         )
     } else {
-        // Check the record union and extract the embedded types
-        when (val embed = embed) {
-            is PostViewEmbedUnion.RecordView -> {
-                when (val recordUnion = embed.value.record) {
-                    is RecordViewRecordUnion.FeedGeneratorView -> {
-                        val generator = recordUnion.value
-                        FeedGenerator(
-                            cid = FeedGeneratorId(generator.cid.cid),
-                            uri = FeedGeneratorUri(generator.uri.atUri),
-                            did = FeedGeneratorId(generator.did.did),
-                            avatar = generator.avatar?.uri?.let(::ImageUri),
-                            likeCount = generator.likeCount,
-                            creator = generator.creator.profileEntity().asExternalModel(),
-                            displayName = generator.displayName,
-                            description = generator.description,
-                            contentMode = generator.contentMode,
-                            acceptsInteractions = generator.acceptsInteractions,
-                            indexedAt = generator.indexedAt,
-                            labels = generator.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    is RecordViewRecordUnion.GraphListView -> {
-                        val list = recordUnion.value
-                        FeedList(
-                            cid = ListId(list.cid.cid),
-                            uri = ListUri(list.uri.atUri),
-                            creator = list.creator.profileEntity().asExternalModel(),
-                            name = list.name,
-                            description = list.description,
-                            avatar = list.avatar?.uri?.let(::ImageUri),
-                            listItemCount = list.listItemCount,
-                            purpose = list.purpose.toString(),
-                            indexedAt = list.indexedAt,
-                            labels = list.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    is RecordViewRecordUnion.GraphStarterPackViewBasic -> {
-                        val starterPack = recordUnion.value
-                        StarterPack(
-                            cid = StarterPackId(starterPack.cid.cid),
-                            uri = StarterPackUri(starterPack.uri.atUri),
-                            name = "", // You might need to handle this if available
-                            description = "", // You might need to handle this if available
-                            creator = starterPack.creator.profileEntity().asExternalModel(),
-                            list = null, // You might need to handle this if available
-                            joinedWeekCount = starterPack.joinedWeekCount,
-                            joinedAllTimeCount = starterPack.joinedAllTimeCount,
-                            indexedAt = starterPack.indexedAt,
-                            labels = starterPack.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    is RecordViewRecordUnion.ViewRecord -> {
-                        // This is a regular post, but we already handled the quotedPostEntity case above
-                        null
-                    }
-                    else -> null
-                }
-            }
-            is PostViewEmbedUnion.RecordWithMediaView -> {
-                when (val recordUnion = embed.value.record.record) {
-                    is RecordViewRecordUnion.FeedGeneratorView -> {
-                        val generator = recordUnion.value
-                        FeedGenerator(
-                            cid = FeedGeneratorId(generator.cid.cid),
-                            uri = FeedGeneratorUri(generator.uri.atUri),
-                            did = FeedGeneratorId(generator.did.did),
-                            avatar = generator.avatar?.uri?.let(::ImageUri),
-                            likeCount = generator.likeCount,
-                            creator = generator.creator.profileEntity().asExternalModel(),
-                            displayName = generator.displayName,
-                            description = generator.description,
-                            contentMode = generator.contentMode,
-                            acceptsInteractions = generator.acceptsInteractions,
-                            indexedAt = generator.indexedAt,
-                            labels = generator.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    is RecordViewRecordUnion.GraphListView -> {
-                        val list = recordUnion.value
-                        FeedList(
-                            cid = ListId(list.cid.cid),
-                            uri = ListUri(list.uri.atUri),
-                            creator = list.creator.profileEntity().asExternalModel(),
-                            name = list.name,
-                            description = list.description,
-                            avatar = list.avatar?.uri?.let(::ImageUri),
-                            listItemCount = list.listItemCount,
-                            purpose = list.purpose.toString(), // Token type from lexicons
-                            indexedAt = list.indexedAt,
-                            labels = list.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    is RecordViewRecordUnion.GraphStarterPackViewBasic -> {
-                        val starterPack = recordUnion.value
-                        StarterPack(
-                            cid = StarterPackId(starterPack.cid.cid),
-                            uri = StarterPackUri(starterPack.uri.atUri),
-                            name = "", // You might need to handle this if available
-                            description = "", // You might need to handle this if available
-                            creator = starterPack.creator.profileEntity().asExternalModel(),
-                            list = null,
-                            joinedWeekCount = starterPack.joinedWeekCount,
-                            joinedAllTimeCount = starterPack.joinedAllTimeCount,
-                            indexedAt = starterPack.indexedAt,
-                            labels = starterPack.labels.map { atProtoLabel ->
-                                Label(
-                                    uri = atProtoLabel.uri.uri.let(::GenericUri),
-                                    creatorId = atProtoLabel.src.did.let(::ProfileId),
-                                    value = Label.Value(atProtoLabel.`val`),
-                                    version = atProtoLabel.ver,
-                                    createdAt = atProtoLabel.cts,
-                                )
-                            },
-                        )
-                    }
-                    else -> null
-                }
-            }
-            else -> null
-        }
+        null
     }
-
-    return buildPost(
+    return post(
         postEntity = postEntity,
         profileEntity = profileEntity(),
         embeds = embedEntities(),
@@ -275,29 +120,13 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) buildPost(
-            postEntity = quotedPostEntity,
-            profileEntity = quotedPostProfileEntity,
-            embeds = quotedPostEmbedEntities(),
-            viewerStatisticsEntity = null,
-            quote = null,
-            labels = emptyList(),
-            embeddedRecord = null,
-        ) else null,
-        labels = labels.map { atProtoLabel ->
-            Label(
-                uri = atProtoLabel.uri.uri.let(::GenericUri),
-                creatorId = atProtoLabel.src.did.let(::ProfileId),
-                value = Label.Value(atProtoLabel.`val`),
-                version = atProtoLabel.ver,
-                createdAt = atProtoLabel.cts,
-            )
-        },
+        quote = quotedPost,
+        labels = labels.map(com.atproto.label.Label::asExternalModel),
         embeddedRecord = embeddedRecord,
     )
 }
 
-private fun buildPost(
+private fun post(
     postEntity: PostEntity,
     profileEntity: ProfileEntity,
     embeds: List<PostEmbed>,
@@ -517,5 +346,80 @@ private fun Facet.toLinkOrNull(): Link? {
         },
     )
 }
+private fun PostView.embeddedRecord(): Record? =
+    when (val embed = embed) {
+        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
+            is RecordViewRecordUnion.FeedGeneratorView ->
+                recordUnion.value.asExternalModel()
+            is RecordViewRecordUnion.GraphListView ->
+                recordUnion.value.asExternalModel()
+            is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                recordUnion.value.asExternalModel()
+            // This is a regular post, but we already handled the quotedPostEntity case above
+            is RecordViewRecordUnion.ViewRecord -> null
+            else -> null
+        }
+        is PostViewEmbedUnion.RecordWithMediaView -> {
+            when (val recordUnion = embed.value.record.record) {
+                is RecordViewRecordUnion.FeedGeneratorView ->
+                    recordUnion.value.asExternalModel()
+                is RecordViewRecordUnion.GraphListView ->
+                    recordUnion.value.asExternalModel()
+                is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                    recordUnion.value.asExternalModel()
+                else -> null
+            }
+        }
+        else -> null
+    }
+
+private fun StarterPackViewBasic.asExternalModel() = StarterPack(
+    cid = StarterPackId(cid.cid),
+    uri = StarterPackUri(uri.atUri),
+    name = "", // You might need to handle this if available
+    description = "", // You might need to handle this if available
+    creator = creator.profileEntity().asExternalModel(),
+    list = null, // You might need to handle this if available
+    joinedWeekCount = joinedWeekCount,
+    joinedAllTimeCount = joinedAllTimeCount,
+    indexedAt = indexedAt,
+    labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun ListView.asExternalModel() = FeedList(
+    cid = ListId(cid.cid),
+    uri = ListUri(uri.atUri),
+    creator = creator.profileEntity().asExternalModel(),
+    name = name,
+    description = description,
+    avatar = avatar?.uri?.let(::ImageUri),
+    listItemCount = listItemCount,
+    purpose = purpose.toString(),
+    indexedAt = indexedAt,
+    labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun GeneratorView.asExternalModel() = FeedGenerator(
+    cid = FeedGeneratorId(cid.cid),
+    uri = FeedGeneratorUri(uri.atUri),
+    did = FeedGeneratorId(did.did),
+    avatar = avatar?.uri?.let(::ImageUri),
+    likeCount = likeCount,
+    creator = creator.profileEntity().asExternalModel(),
+    displayName = displayName,
+    description = description,
+    contentMode = contentMode,
+    acceptsInteractions = acceptsInteractions,
+    indexedAt = indexedAt,
+    labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun com.atproto.label.Label.asExternalModel() = Label(
+    uri = uri.uri.let(::GenericUri),
+    creatorId = src.did.let(::ProfileId),
+    value = Label.Value(`val`),
+    version = ver,
+    createdAt = cts,
+)
 
 private fun Long?.orZero() = this ?: 0L
