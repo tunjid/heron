@@ -28,6 +28,7 @@ import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
 import app.bsky.graph.ListView
 import app.bsky.graph.StarterPackViewBasic
+import app.bsky.graph.Starterpack
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -372,18 +373,25 @@ private fun PostView.nonPostEmbeddedRecord(): Record? =
         else -> null
     }
 
-private fun StarterPackViewBasic.asExternalModel() = StarterPack(
-    cid = StarterPackId(cid.cid),
-    uri = StarterPackUri(uri.atUri),
-    name = "", // You might need to handle this if available
-    description = "", // You might need to handle this if available
-    creator = creator.profileEntity().asExternalModel(),
-    list = null, // You might need to handle this if available
-    joinedWeekCount = joinedWeekCount,
-    joinedAllTimeCount = joinedAllTimeCount,
-    indexedAt = indexedAt,
-    labels = labels.map(com.atproto.label.Label::asExternalModel),
-)
+private fun StarterPackViewBasic.asExternalModel(): StarterPack {
+    val bskyStarterPack = try {
+        record.decodeAs<Starterpack>()
+    } catch (_: Exception) {
+        null
+    }
+    return StarterPack(
+        cid = StarterPackId(cid.cid),
+        uri = StarterPackUri(uri.atUri),
+        name = bskyStarterPack?.name ?: "",
+        description = bskyStarterPack?.description ?: "",
+        creator = creator.profileEntity().asExternalModel(),
+        list = null, // You might need to handle this if available
+        joinedWeekCount = joinedWeekCount,
+        joinedAllTimeCount = joinedAllTimeCount,
+        indexedAt = indexedAt,
+        labels = labels.map(com.atproto.label.Label::asExternalModel),
+    )
+}
 
 private fun ListView.asExternalModel() = FeedList(
     cid = ListId(cid.cid),
