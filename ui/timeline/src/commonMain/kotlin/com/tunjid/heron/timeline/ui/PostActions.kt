@@ -22,14 +22,15 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.PostUri
 
 @Stable
 interface PostActions {
     fun onLinkTargetClicked(post: Post, linkTarget: LinkTarget)
-
     fun onProfileClicked(profile: Profile, post: Post, quotingPostUri: PostUri?)
-    fun onPostClicked(post: Post, quotingPostUri: PostUri?)
+    fun onPostClicked(post: Post)
+    fun onPostRecordClicked(record: Record, owningPostUri: PostUri)
     fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?)
     fun onReplyToPost(post: Post)
     fun onPostInteraction(interaction: Post.Interaction)
@@ -40,7 +41,8 @@ interface PostActions {
 fun postActions(
     onLinkTargetClicked: (post: Post, linkTarget: LinkTarget) -> Unit,
     onProfileClicked: (profile: Profile, post: Post, quotingPostUri: PostUri?) -> Unit,
-    onPostClicked: (post: Post, quotingPostUri: PostUri?) -> Unit,
+    onPostClicked: (post: Post) -> Unit,
+    onPostRecordClicked: (record: Record, owningPostUri: PostUri) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
@@ -59,10 +61,16 @@ fun postActions(
 
     override fun onPostClicked(
         post: Post,
-        quotingPostUri: PostUri?,
     ) = onPostClicked(
         post,
-        quotingPostUri,
+    )
+
+    override fun onPostRecordClicked(
+        record: Record,
+        owningPostUri: PostUri,
+    ) = onPostRecordClicked(
+        record,
+        owningPostUri,
     )
 
     override fun onPostMediaClicked(

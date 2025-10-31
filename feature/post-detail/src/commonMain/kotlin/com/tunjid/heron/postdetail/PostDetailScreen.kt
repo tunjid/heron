@@ -50,10 +50,10 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.postLikesDestination
 import com.tunjid.heron.scaffold.navigation.postRepostsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -165,15 +165,13 @@ internal fun PostDetailScreen(
                                     ),
                                 )
                             },
-                            onPostClicked = { post: Post, quotingPostUri: PostUri? ->
+                            onPostClicked = { post: Post ->
                                 actions(
                                     Action.Navigate.To(
-                                        postDestination(
+                                        recordDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
-                                                quotingPostUri = quotingPostUri,
-                                            ),
-                                            post = post,
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                            record = post,
                                         ),
                                     ),
                                 )
@@ -189,6 +187,19 @@ internal fun PostDetailScreen(
                                                 prefix = state.sharedElementPrefix,
                                                 quotingPostUri = quotingPostUri,
                                             ).takeIf { post.author.did == profile.did },
+                                        ),
+                                    ),
+                                )
+                            },
+                            onPostRecordClicked = { record, owningPostUri ->
+                                actions(
+                                    Action.Navigate.To(
+                                        recordDestination(
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                            sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
+                                                quotingPostUri = owningPostUri,
+                                            ),
+                                            record = record,
                                         ),
                                     ),
                                 )

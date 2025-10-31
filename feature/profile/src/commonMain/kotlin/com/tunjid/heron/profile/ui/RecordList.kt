@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.profile.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.profile.ProfileScreenStateHolders
@@ -46,6 +49,8 @@ internal fun <T : Record> RecordList(
         modifier = Modifier
             .fillMaxSize(),
         state = listState,
+        contentPadding = RecordContentPadding,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(
             items = updatedItems,
@@ -65,5 +70,9 @@ internal fun <T : Record> RecordList(
         },
     )
 }
+
+private val RecordContentPadding = PaddingValues(
+    horizontal = 8.dp,
+)
 
 internal const val ProfileCollectionSharedElementPrefix = "profile-collection"

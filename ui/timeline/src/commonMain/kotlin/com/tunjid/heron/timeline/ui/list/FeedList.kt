@@ -45,7 +45,6 @@ fun FeedList(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     list: FeedList,
-    onListClicked: (FeedList) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -79,9 +78,6 @@ fun FeedList(
                 },
             )
         },
-        onClicked = {
-            onListClicked(list)
-        },
     )
 }
 
@@ -92,7 +88,6 @@ fun StarterPack(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     starterPack: StarterPack,
-    onStarterPackClicked: (StarterPack) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -125,9 +120,6 @@ fun StarterPack(
                     )
                 },
             )
-        },
-        onClicked = {
-            onStarterPackClicked(starterPack)
         },
     )
 }

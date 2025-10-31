@@ -92,6 +92,7 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
@@ -106,8 +107,8 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
@@ -322,10 +323,10 @@ internal fun SearchScreen(
         { post: Post, sharedElementPrefix: String ->
             actions(
                 Action.Navigate.To(
-                    postDestination(
+                    recordDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = sharedElementPrefix,
-                        post = post,
+                        record = post,
                     ),
                 ),
             )
@@ -341,6 +342,19 @@ internal fun SearchScreen(
                             parent = result.post,
                         ),
                         sharedElementPrefix = result.sharedElementPrefix,
+                    ),
+                ),
+            )
+        }
+    }
+    val onPostRecordClicked = remember {
+        { record: Record, sharedElementPrefix: String ->
+            actions(
+                Action.Navigate.To(
+                    recordDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = sharedElementPrefix,
+                        record = record,
                     ),
                 ),
             )
@@ -411,6 +425,7 @@ internal fun SearchScreen(
                 onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                 onPostSearchResultClicked = onPostSearchResultClicked,
                 onReplyToPost = onReplyToPost,
+                onPostRecordClicked = onPostRecordClicked,
                 onMediaClicked = onMediaClicked,
                 onPostInteraction = onPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
@@ -548,6 +563,13 @@ private fun SuggestedContent(
                 FeedGenerator(
                     modifier = Modifier
                         .fillParentMaxWidth()
+                        .padding(
+                            vertical = 4.dp,
+                            horizontal = 16.dp,
+                        )
+                        .clickable {
+                            onFeedGeneratorClicked(feedGenerator)
+                        }
                         .animateItem(),
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
@@ -557,7 +579,6 @@ private fun SuggestedContent(
                         false -> FeedGenerator.Status.Saved
                         null -> FeedGenerator.Status.None
                     },
-                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                     onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
                 )
             },
@@ -647,6 +668,7 @@ private fun TabbedSearchResults(
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
+    onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
@@ -748,6 +770,7 @@ private fun TabbedSearchResults(
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                             onPostSearchResultClicked = onPostSearchResultClicked,
                             onReplyToPost = onReplyToPost,
+                            onPostRecordClicked = onPostRecordClicked,
                             onMediaClicked = onMediaClicked,
                             onPostInteraction = onPostInteraction,
                             onPostOptionsClicked = onPostOptionsClicked,
@@ -840,6 +863,7 @@ private fun PostSearchResults(
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
+    onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
@@ -878,6 +902,7 @@ private fun PostSearchResults(
                     onProfileClicked = onPostSearchResultProfileClicked,
                     onPostClicked = onPostSearchResultClicked,
                     onReplyToPost = onReplyToPost,
+                    onPostRecordClicked = onPostRecordClicked,
                     onMediaClicked = onMediaClicked,
                     onPostInteraction = onPostInteraction,
                     onPostOptionsClicked = onPostOptionsClicked,
@@ -987,6 +1012,11 @@ private fun FeedSearchResults(
             itemContent = { result ->
                 FeedGenerator(
                     modifier = Modifier
+                        .clip(FeedGeneratorShape)
+                        .clickable {
+                            onFeedGeneratorClicked(result.feedGenerator)
+                        }
+                        .padding(8.dp)
                         .animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
@@ -996,7 +1026,6 @@ private fun FeedSearchResults(
                         false -> FeedGenerator.Status.Saved
                         null -> FeedGenerator.Status.None
                     },
-                    onFeedGeneratorClicked = onFeedGeneratorClicked,
                     onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
                 )
             },
@@ -1015,6 +1044,8 @@ private fun FeedSearchResults(
         },
     )
 }
+
+private val FeedGeneratorShape = RoundedCornerShape(8.dp)
 
 private fun Profile.searchProfileAvatarSharedElementKey(): String =
     "suggested-profile-${did.id}"

@@ -76,8 +76,8 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.settingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -415,17 +415,15 @@ private fun HomeTimeline(
                                             ),
                                         )
                                     },
-                                    onPostClicked = { post: Post, quotingPostUri: PostUri? ->
+                                    onPostClicked = { post: Post ->
                                         pendingScrollOffsetState.value =
                                             gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
-                                                postDestination(
+                                                recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = quotingPostUri,
-                                                    ),
-                                                    post = post,
+                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                    record = post,
                                                 ),
                                             ),
                                         )
@@ -444,6 +442,21 @@ private fun HomeTimeline(
                                                             quotingPostUri = quotingPostUri,
                                                         )
                                                         .takeIf { post.author.did == profile.did },
+                                                ),
+                                            ),
+                                        )
+                                    },
+                                    onPostRecordClicked = { record, owningPostUri ->
+                                        pendingScrollOffsetState.value =
+                                            gridState.pendingOffsetFor(item)
+                                        actions(
+                                            Action.Navigate.To(
+                                                recordDestination(
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                        quotingPostUri = owningPostUri,
+                                                    ),
+                                                    record = record,
                                                 ),
                                             ),
                                         )
