@@ -346,32 +346,24 @@ private fun Facet.toLinkOrNull(): Link? {
         },
     )
 }
-private fun PostView.nonPostEmbeddedRecord(): Record? =
-    when (val embed = embed) {
-        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-            is RecordViewRecordUnion.FeedGeneratorView ->
-                recordUnion.value.asExternalModel()
-            is RecordViewRecordUnion.GraphListView ->
-                recordUnion.value.asExternalModel()
-            is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-                recordUnion.value.asExternalModel()
-            // This is a regular post, but we already handled the quotedPostEntity case above
-            is RecordViewRecordUnion.ViewRecord -> null
-            else -> null
-        }
-        is PostViewEmbedUnion.RecordWithMediaView -> {
-            when (val recordUnion = embed.value.record.record) {
-                is RecordViewRecordUnion.FeedGeneratorView ->
-                    recordUnion.value.asExternalModel()
-                is RecordViewRecordUnion.GraphListView ->
-                    recordUnion.value.asExternalModel()
-                is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-                    recordUnion.value.asExternalModel()
-                else -> null
-            }
-        }
+private fun PostView.nonPostEmbeddedRecord(): Record? {
+    val recordUnion = when (val embed = embed) {
+        is PostViewEmbedUnion.RecordView -> embed.value.record
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
+        else -> return null
+    }
+    return when (recordUnion) {
+        is RecordViewRecordUnion.FeedGeneratorView ->
+            recordUnion.value.asExternalModel()
+        is RecordViewRecordUnion.GraphListView ->
+            recordUnion.value.asExternalModel()
+        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+            recordUnion.value.asExternalModel()
+        // This is a regular post, but we already handled the quotedPostEntity case above
+        is RecordViewRecordUnion.ViewRecord -> null
         else -> null
     }
+}
 
 private fun StarterPackViewBasic.asExternalModel(): StarterPack {
     val bskyStarterPack = try {

@@ -66,28 +66,20 @@ internal fun MultipleEntitySaver.add(
             )
         }
     }
-    when (val embed = postView.embed) {
-        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-            is RecordViewRecordUnion.FeedGeneratorView ->
-                add(recordUnion.value)
-            is RecordViewRecordUnion.GraphListView ->
-                add(recordUnion.value)
-            is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-                add(recordUnion.value)
-            is RecordViewRecordUnion.ViewRecord -> Unit
-            else -> Unit
-        }
-        is PostViewEmbedUnion.RecordWithMediaView -> {
-            when (val recordUnion = embed.value.record.record) {
-                is RecordViewRecordUnion.FeedGeneratorView ->
-                    add(recordUnion.value)
-                is RecordViewRecordUnion.GraphListView ->
-                    add(recordUnion.value)
-                is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-                    add(recordUnion.value)
-                else -> Unit
-            }
-        }
+
+    val recordUnion = when (val embed = postView.embed) {
+        is PostViewEmbedUnion.RecordView -> embed.value.record
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
+        else -> null
+    }
+
+    when (recordUnion) {
+        is RecordViewRecordUnion.FeedGeneratorView ->
+            add(recordUnion.value)
+        is RecordViewRecordUnion.GraphListView ->
+            add(recordUnion.value)
+        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+            add(recordUnion.value)
         else -> Unit
     }
     postView.quotedPostProfileEntity()?.let(::add)
