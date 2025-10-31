@@ -39,12 +39,20 @@ data class Post(
     val bookmarkCount: Long = 0,
     val indexedAt: Instant,
     val embed: Embed?,
+    @Deprecated(
+        message = "Use the quotedPost extension instead",
+        replaceWith = ReplaceWith(
+            expression = "quotedPost",
+            "com.tunjid.heron.data.core.models.quotedPost",
+        ),
+    )
     val quote: Post?,
     val record: Record?,
     val viewerStats: ViewerStats?,
 //    public val viewer: ViewerState? = null,
     val labels: List<Label>,
 //    public val threadgate: ThreadgateView? = null,
+    val embeddedRecord: com.tunjid.heron.data.core.models.Record?,
 ) : UrlEncodableModel,
     Record {
 
@@ -210,6 +218,9 @@ data class Post(
         ) : Metadata()
     }
 }
+
+val Post.quotedPost: Post?
+    get() = embeddedRecord as? Post
 
 fun Post.labelVisibilitiesToDefinitions(
     labelers: List<Labeler>,

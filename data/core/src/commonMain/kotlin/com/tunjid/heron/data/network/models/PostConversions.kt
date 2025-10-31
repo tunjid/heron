@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.data.network.models
 
+import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.embed.RecordWithMediaViewMediaUnion
+import app.bsky.feed.GeneratorView
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostEmbedUnion
 import app.bsky.feed.PostView
@@ -24,23 +26,33 @@ import app.bsky.feed.PostViewEmbedUnion
 import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
+import app.bsky.graph.ListView
+import app.bsky.graph.StarterPackViewBasic
+import app.bsky.graph.Starterpack
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -84,6 +96,21 @@ internal fun PostView.post(
     val postEntity = postEntity()
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileEntity = quotedPostProfileEntity()
+
+    val quotedPost =
+        if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
+            postEntity = quotedPostEntity,
+            profileEntity = quotedPostProfileEntity,
+            embeds = quotedPostEmbedEntities(),
+            viewerStatisticsEntity = null,
+            labels = emptyList(),
+            embeddedRecord = null,
+            quote = null,
+        )
+        else null
+
+    val embeddedRecord = quotedPost ?: nonPostEmbeddedRecord()
+
     return post(
         postEntity = postEntity,
         profileEntity = profileEntity(),
@@ -93,23 +120,9 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-        quote = if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
-            postEntity = quotedPostEntity,
-            profileEntity = quotedPostProfileEntity,
-            embeds = quotedPostEmbedEntities(),
-            viewerStatisticsEntity = null,
-            quote = null,
-            labels = emptyList(),
-        ) else null,
-        labels = labels.map { atProtoLabel ->
-            Label(
-                uri = atProtoLabel.uri.uri.let(::GenericUri),
-                creatorId = atProtoLabel.src.did.let(::ProfileId),
-                value = Label.Value(atProtoLabel.`val`),
-                version = atProtoLabel.ver,
-                createdAt = atProtoLabel.cts,
-            )
-        },
+        quote = quotedPost,
+        labels = labels.map(com.atproto.label.Label::asExternalModel),
+        embeddedRecord = embeddedRecord,
     )
 }
 
@@ -120,6 +133,7 @@ private fun post(
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
     quote: Post?,
     labels: List<Label>,
+    embeddedRecord: Record?,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -144,6 +158,7 @@ private fun post(
     quote = quote,
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
     labels = labels,
+    embeddedRecord = embeddedRecord,
 )
 
 internal fun PostView.postEntity() =
@@ -331,5 +346,79 @@ private fun Facet.toLinkOrNull(): Link? {
         },
     )
 }
+private fun PostView.nonPostEmbeddedRecord(): Record? {
+    val recordUnion = when (val embed = embed) {
+        is PostViewEmbedUnion.RecordView -> embed.value.record
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
+        else -> return null
+    }
+    return when (recordUnion) {
+        is RecordViewRecordUnion.FeedGeneratorView ->
+            recordUnion.value.asExternalModel()
+        is RecordViewRecordUnion.GraphListView ->
+            recordUnion.value.asExternalModel()
+        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+            recordUnion.value.asExternalModel()
+        // This is a regular post, but we already handled the quotedPostEntity case above
+        is RecordViewRecordUnion.ViewRecord -> null
+        else -> null
+    }
+}
+
+private fun StarterPackViewBasic.asExternalModel(): StarterPack {
+    val bskyStarterPack = try {
+        record.decodeAs<Starterpack>()
+    } catch (_: Exception) {
+        null
+    }
+    return StarterPack(
+        cid = StarterPackId(cid.cid),
+        uri = StarterPackUri(uri.atUri),
+        name = bskyStarterPack?.name ?: "",
+        description = bskyStarterPack?.description ?: "",
+        creator = creator.profileEntity().asExternalModel(),
+        list = null, // You might need to handle this if available
+        joinedWeekCount = joinedWeekCount,
+        joinedAllTimeCount = joinedAllTimeCount,
+        indexedAt = indexedAt,
+        labels = labels.map(com.atproto.label.Label::asExternalModel),
+    )
+}
+
+private fun ListView.asExternalModel() = FeedList(
+    cid = ListId(cid.cid),
+    uri = ListUri(uri.atUri),
+    creator = creator.profileEntity().asExternalModel(),
+    name = name,
+    description = description,
+    avatar = avatar?.uri?.let(::ImageUri),
+    listItemCount = listItemCount,
+    purpose = purpose.toString(),
+    indexedAt = indexedAt,
+    labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun GeneratorView.asExternalModel() = FeedGenerator(
+    cid = FeedGeneratorId(cid.cid),
+    uri = FeedGeneratorUri(uri.atUri),
+    did = FeedGeneratorId(did.did),
+    avatar = avatar?.uri?.let(::ImageUri),
+    likeCount = likeCount,
+    creator = creator.profileEntity().asExternalModel(),
+    displayName = displayName,
+    description = description,
+    contentMode = contentMode,
+    acceptsInteractions = acceptsInteractions,
+    indexedAt = indexedAt,
+    labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun com.atproto.label.Label.asExternalModel() = Label(
+    uri = uri.uri.let(::GenericUri),
+    creatorId = src.did.let(::ProfileId),
+    value = Label.Value(`val`),
+    version = ver,
+    createdAt = cts,
+)
 
 private fun Long?.orZero() = this ?: 0L

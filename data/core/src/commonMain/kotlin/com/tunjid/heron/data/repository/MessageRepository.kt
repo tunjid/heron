@@ -247,7 +247,11 @@ internal class OfflineMessageRepository @Inject constructor(
                                                     ?.postUri
                                                     ?.let(urisToEmbeddedPosts::get)
                                                     ?.entity
-                                                    ?.asExternalModel(quote = null),
+                                                    ?.asExternalModel(
+                                                        quote = null,
+                                                        embeddedRecord = null,
+                                                    ),
+                                                embeddedRecord = null,
                                             ),
                                     )
                                 }

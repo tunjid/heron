@@ -18,8 +18,11 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
+import app.bsky.feed.GeneratorView
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
+import app.bsky.graph.ListView
+import app.bsky.graph.StarterPackViewBasic
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri

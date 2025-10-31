@@ -242,7 +242,10 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                         .map { populatedPostEntities ->
                             populatedPostEntities.map {
-                                it.asExternalModel(quote = null)
+                                it.asExternalModel(
+                                    quote = null,
+                                    embeddedRecord = null,
+                                )
                             }
                         },
                     networkService.nextCursorFlow(
@@ -284,7 +287,10 @@ internal class OfflinePostRepository @Inject constructor(
                     postUris = setOf(uri),
                 )
                     .mapNotNull {
-                        it.firstOrNull()?.asExternalModel(quote = null)
+                        it.firstOrNull()?.asExternalModel(
+                            quote = null,
+                            embeddedRecord = null,
+                        )
                     }
             }
 

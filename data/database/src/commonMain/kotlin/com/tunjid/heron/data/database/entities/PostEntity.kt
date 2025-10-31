@@ -25,6 +25,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
@@ -159,6 +160,7 @@ data class ThreadedPostEntity(
 
 fun PopulatedPostEntity.asExternalModel(
     quote: Post?,
+    embeddedRecord: Record?,
 ) = Post(
     cid = entity.cid,
     uri = entity.uri,
@@ -182,6 +184,7 @@ fun PopulatedPostEntity.asExternalModel(
     record = entity.record?.asExternalModel(),
     viewerStats = viewerStats?.asExternalModel(),
     labels = labelEntities.map(LabelEntity::asExternalModel),
+    embeddedRecord = embeddedRecord,
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =
