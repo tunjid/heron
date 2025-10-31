@@ -97,7 +97,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -126,7 +125,6 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
@@ -361,16 +359,14 @@ internal fun SearchScreen(
         }
     }
     val onMediaClicked = remember {
-        { media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri? ->
+        { media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String ->
             actions(
                 Action.Navigate.To(
                     galleryDestination(
-                        post = result.post,
+                        post = post,
                         media = media,
                         startIndex = index,
-                        sharedElementPrefix = result.sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = quotingPostUri,
-                        ),
+                        sharedElementPrefix = sharedElementPrefix,
                     ),
                 ),
             )
@@ -669,7 +665,7 @@ private fun TabbedSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
@@ -864,7 +860,7 @@ private fun PostSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,

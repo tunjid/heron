@@ -50,7 +50,7 @@ internal fun PostSearchResult(
     onPostClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
 ) {
@@ -105,8 +105,13 @@ internal fun PostSearchResult(
                                 sharedElementPrefix.withQuotingPostUriPrefix(owningPostUri),
                             )
                         },
-                        onPostMediaClicked = { media, index, _, quotingPostId ->
-                            onMediaClicked(media, index, result, quotingPostId)
+                        onPostMediaClicked = { media, index, post, quotingPostUri ->
+                            onMediaClicked(
+                                media,
+                                index,
+                                post,
+                                sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+                            )
                         },
                         onReplyToPost = {
                             onReplyToPost(result)
