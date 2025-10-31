@@ -96,10 +96,8 @@ internal fun PostView.post(
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileEntity = quotedPostProfileEntity()
 
-    val embeddedRecord = embeddedRecord()
-
-    val quotedPost = if (quotedPostEntity != null && quotedPostProfileEntity != null) {
-        post(
+    val quotedPost =
+        if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
             postEntity = quotedPostEntity,
             profileEntity = quotedPostProfileEntity,
             embeds = quotedPostEmbedEntities(),
@@ -108,9 +106,10 @@ internal fun PostView.post(
             embeddedRecord = null,
             quote = null,
         )
-    } else {
-        null
-    }
+        else null
+
+    val embeddedRecord = quotedPost ?: nonPostEmbeddedRecord()
+
     return post(
         postEntity = postEntity,
         profileEntity = profileEntity(),
@@ -346,7 +345,7 @@ private fun Facet.toLinkOrNull(): Link? {
         },
     )
 }
-private fun PostView.embeddedRecord(): Record? =
+private fun PostView.nonPostEmbeddedRecord(): Record? =
     when (val embed = embed) {
         is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
             is RecordViewRecordUnion.FeedGeneratorView ->

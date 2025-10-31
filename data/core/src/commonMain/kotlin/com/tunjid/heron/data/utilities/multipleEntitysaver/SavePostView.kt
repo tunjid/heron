@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
+import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
@@ -63,6 +65,30 @@ internal fun MultipleEntitySaver.add(
                 embedEntity = embedEntity,
             )
         }
+    }
+    when (val embed = postView.embed) {
+        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
+            is RecordViewRecordUnion.FeedGeneratorView ->
+                add(recordUnion.value)
+            is RecordViewRecordUnion.GraphListView ->
+                add(recordUnion.value)
+            is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                add(recordUnion.value)
+            is RecordViewRecordUnion.ViewRecord -> Unit
+            else -> Unit
+        }
+        is PostViewEmbedUnion.RecordWithMediaView -> {
+            when (val recordUnion = embed.value.record.record) {
+                is RecordViewRecordUnion.FeedGeneratorView ->
+                    add(recordUnion.value)
+                is RecordViewRecordUnion.GraphListView ->
+                    add(recordUnion.value)
+                is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                    add(recordUnion.value)
+                else -> Unit
+            }
+        }
+        else -> Unit
     }
     postView.quotedPostProfileEntity()?.let(::add)
 }

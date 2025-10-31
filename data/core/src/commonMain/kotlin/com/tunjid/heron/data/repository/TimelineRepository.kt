@@ -70,7 +70,6 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
@@ -96,11 +95,40 @@ import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.associateBy
+import kotlin.collections.distinctBy
+import kotlin.collections.dropLast
+import kotlin.collections.emptyList
+import kotlin.collections.emptySet
+import kotlin.collections.filter
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.flatMap
+import kotlin.collections.fold
+import kotlin.collections.forEach
+import kotlin.collections.getOrElse
+import kotlin.collections.getValue
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.last
+import kotlin.collections.listOf
+import kotlin.collections.listOfNotNull
+import kotlin.collections.map
+import kotlin.collections.mapIndexed
+import kotlin.collections.mapNotNull
+import kotlin.collections.mapNotNullTo
+import kotlin.collections.mapTo
+import kotlin.collections.mutableSetOf
+import kotlin.collections.partition
+import kotlin.collections.plus
+import kotlin.collections.setOf
+import kotlin.collections.sortedBy
+import kotlin.collections.toList
+import kotlin.collections.toSet
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -112,7 +140,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -602,12 +629,13 @@ internal class OfflineTimelineRepository(
                                             initial = emptyList<TimelineItem.Thread>(),
                                             operation = { list, thread ->
                                                 val populatedPostEntity = urisToPosts.getValue(thread.entity.uri)
-
+                                                val embeddedRecord = thread.entity
+                                                    .record
+                                                    ?.embeddedRecordUri
+                                                    ?.let(recordUrisToEmbeddedRecords::get)
                                                 val post = populatedPostEntity.asExternalModel(
-                                                    quote = null, // Quotes are now handled via embeddedRecord
-                                                    embeddedRecord = thread.entity.record?.embeddedRecordUri?.let {
-                                                        recordUrisToEmbeddedRecords[it]
-                                                    },
+                                                    quote = embeddedRecord as? Post,
+                                                    embeddedRecord = embeddedRecord,
                                                 )
                                                 spinThread(
                                                     list = list,
@@ -1038,12 +1066,12 @@ internal class OfflineTimelineRepository(
                             val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                             itemEntities.mapNotNull { entity ->
+                                val embeddedRecord = entity.embeddedRecordUri
+                                    ?.let(recordUrisToEmbeddedRecords::get)
                                 val mainPost = urisToPosts[entity.postUri]
                                     ?.asExternalModel(
-                                        quote = null, // Quotes are now handled via embeddedRecord
-                                        embeddedRecord = entity.embeddedRecordUri?.let {
-                                            recordUrisToEmbeddedRecords[it]
-                                        },
+                                        quote = embeddedRecord as? Post,
+                                        embeddedRecord = embeddedRecord,
                                     ) ?: return@mapNotNull null
 
                                 val postLabels = when {
@@ -1086,15 +1114,17 @@ internal class OfflineTimelineRepository(
                                         posts = listOf(
                                             replyRoot.asExternalModel(
                                                 quote = null,
-                                                embeddedRecord = replyRoot.entity.record?.embeddedRecordUri?.let {
-                                                    recordUrisToEmbeddedRecords[it]
-                                                },
+                                                embeddedRecord = replyRoot.entity
+                                                    .record
+                                                    ?.embeddedRecordUri
+                                                    ?.let(recordUrisToEmbeddedRecords::get),
                                             ),
                                             replyParent.asExternalModel(
                                                 quote = null,
-                                                embeddedRecord = replyParent.entity.record?.embeddedRecordUri?.let {
-                                                    recordUrisToEmbeddedRecords[it]
-                                                },
+                                                embeddedRecord = replyParent.entity
+                                                    .record
+                                                    ?.embeddedRecordUri
+                                                    ?.let(recordUrisToEmbeddedRecords::get),
                                             ),
                                             mainPost,
                                         ),
