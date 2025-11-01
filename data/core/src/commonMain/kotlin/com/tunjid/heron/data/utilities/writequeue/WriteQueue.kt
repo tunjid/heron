@@ -196,11 +196,13 @@ internal class PersistedWriteQueue @Inject constructor(
 }
 
 private fun SavedStateDataSource.signedInProfileWrites() =
-    singleAuthorizedSessionFlow {
+    singleAuthorizedSessionFlow { signedInProfileId ->
         savedState
             .mapNotNull { savedState ->
                 savedState
-                    .signedInProfileData
+                    // This should always be true, being doubly sure doesn't hurt however
+                    .takeIf { it.auth?.authProfileId == signedInProfileId }
+                    ?.signedInProfileData
                     ?.writes
                     ?.pendingWrites
             }
