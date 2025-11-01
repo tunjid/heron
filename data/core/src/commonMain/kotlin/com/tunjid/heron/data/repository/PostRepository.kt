@@ -233,54 +233,52 @@ internal class OfflinePostRepository @Inject constructor(
     override fun quotes(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> = savedStateDataSource.currentSessionFlow { viewSignedInProfileId ->
-        withPostEntity(
-            profileId = query.profileId,
-            postRecordKey = query.postRecordKey,
-        ) { postEntity ->
-            savedStateDataSource.observedSignedInProfileId
-                .flatMapLatest { signedInProfileId ->
-                    combine(
-                        postDao.quotedPosts(
-                            viewingProfileId = signedInProfileId?.id,
-                            quotedPostUri = postEntity.uri.uri,
-                        )
-                            .map { populatedPostEntities ->
-                                populatedPostEntities.map {
-                                    it.asExternalModel(
-                                        quote = null,
-                                        embeddedRecord = null,
+    ): Flow<CursorList<Post>> = withPostEntity(
+        profileId = query.profileId,
+        postRecordKey = query.postRecordKey,
+    ) { postEntity ->
+        savedStateDataSource.observedSignedInProfileId
+            .flatMapLatest { signedInProfileId ->
+                combine(
+                    postDao.quotedPosts(
+                        viewingProfileId = signedInProfileId?.id,
+                        quotedPostUri = postEntity.uri.uri,
+                    )
+                        .map { populatedPostEntities ->
+                            populatedPostEntities.map {
+                                it.asExternalModel(
+                                    quote = null,
+                                    embeddedRecord = null,
+                                )
+                            }
+                        },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            getQuotes(
+                                GetQuotesQueryParams(
+                                    uri = postEntity.uri.uri.let(::AtUri),
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
+                                ),
+                            )
+                        },
+                        nextCursor = GetQuotesResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                posts.forEach {
+                                    add(
+                                        viewingProfileId = savedStateDataSource.signedInProfileId,
+                                        postView = it,
                                     )
                                 }
-                            },
-                        networkService.nextCursorFlow(
-                            currentCursor = cursor,
-                            currentRequestWithNextCursor = {
-                                getQuotes(
-                                    GetQuotesQueryParams(
-                                        uri = postEntity.uri.uri.let(::AtUri),
-                                        limit = query.data.limit,
-                                        cursor = cursor.value,
-                                    ),
-                                )
-                            },
-                            nextCursor = GetQuotesResponse::cursor,
-                            onResponse = {
-                                multipleEntitySaverProvider.saveInTransaction {
-                                    posts.forEach {
-                                        add(
-                                            viewingProfileId = viewSignedInProfileId,
-                                            postView = it,
-                                        )
-                                    }
-                                }
-                            },
-                        ),
-                        ::CursorList,
-                    )
-                        .distinctUntilChanged()
-                }
-        }
+                            }
+                        },
+                    ),
+                    ::CursorList,
+                )
+                    .distinctUntilChanged()
+            }
     }
 
     override fun post(
